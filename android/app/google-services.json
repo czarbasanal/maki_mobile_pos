@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1075663897179",
+    "project_id": "maki-mobile-pos",
+    "storage_bucket": "maki-mobile-pos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1075663897179:android:2704cd0d843086b91e757e",
+        "android_client_info": {
+          "package_name": "com.example.maki_mobile_pos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_Z2GhSDR5cnt_9FAIJoqBTREAqQ24CQ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

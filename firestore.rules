@@ -1,0 +1,168 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==================== HELPER FUNCTIONS ====================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Get the current user's document
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Check if current user has a specific role
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+    
+    // Check if current user is admin
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    // Check if current user is staff or admin
+    function isStaffOrAdmin() {
+      return hasRole('staff') || hasRole('admin');
+    }
+    
+    // Check if current user is any valid role
+    function isValidUser() {
+      return hasRole('cashier') || hasRole('staff') || hasRole('admin');
+    }
+    
+    // Check if user is active
+    function isActiveUser() {
+      return isAuthenticated() && getUserData().isActive == true;
+    }
+    
+    // ==================== USERS COLLECTION ====================
+    
+    match /users/{userId} {
+      // Users can read their own document
+      // Admins can read all users
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == userId || isAdmin());
+      
+      // Only admins can create users
+      allow create: if isAdmin();
+      
+      // Users can update their own non-role fields
+      // Admins can update any user
+      allow update: if isAuthenticated() && (
+        (request.auth.uid == userId && 
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isActive'])) ||
+        isAdmin()
+      );
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== PRODUCTS COLLECTION ====================
+    
+    match /products/{productId} {
+      // Staff and admin can read products
+      // Cashiers can read for POS (limited fields enforced in app)
+      allow read: if isValidUser() && isActiveUser();
+      
+      // Only admin can create/update/delete products
+      allow create, update, delete: if isAdmin() && isActiveUser();
+      
+      // Price history subcollection
+      match /price_history/{historyId} {
+        allow read: if isAdmin() && isActiveUser();
+        allow write: if isAdmin() && isActiveUser();
+      }
+    }
+    
+    // ==================== SUPPLIERS COLLECTION ====================
+    
+    match /suppliers/{supplierId} {
+      // Only admin can access suppliers
+      allow read, write: if isAdmin() && isActiveUser();
+    }
+    
+    // ==================== SALES COLLECTION ====================
+    
+    match /sales/{saleId} {
+      // All valid users can read sales (for reports based on role)
+      allow read: if isValidUser() && isActiveUser();
+      
+      // All valid users can create sales (POS)
+      allow create: if isValidUser() && isActiveUser();
+      
+      // Only staff and admin can update (for voiding)
+      allow update: if isStaffOrAdmin() && isActiveUser();
+      
+      // No one can delete sales (audit trail)
+      allow delete: if false;
+      
+      // Sale items subcollection
+      match /items/{itemId} {
+        allow read: if isValidUser() && isActiveUser();
+        allow write: if isValidUser() && isActiveUser();
+      }
+    }
+    
+    // ==================== DRAFTS COLLECTION ====================
+    
+    match /drafts/{draftId} {
+      // Users can read their own drafts
+      allow read: if isAuthenticated() && isActiveUser() &&
+        resource.data.createdBy == request.auth.uid;
+      
+      // Users can create drafts
+      allow create: if isValidUser() && isActiveUser() &&
+        request.resource.data.createdBy == request.auth.uid;
+      
+      // Users can update/delete their own drafts
+      allow update, delete: if isAuthenticated() && isActiveUser() &&
+        resource.data.createdBy == request.auth.uid;
+    }
+    
+    // ==================== EXPENSES COLLECTION ====================
+    
+    match /expenses/{expenseId} {
+      // Admin can read all expenses
+      allow read: if isAdmin() && isActiveUser();
+      
+      // Admin can create/update/delete expenses
+      allow create, update, delete: if isAdmin() && isActiveUser();
+    }
+    
+    // ==================== PETTY CASH COLLECTION ====================
+    
+    match /petty_cash/{recordId} {
+      // Admin can manage petty cash
+      allow read, write: if isAdmin() && isActiveUser();
+    }
+    
+    // ==================== USER LOGS COLLECTION ====================
+    
+    match /user_logs/{logId} {
+      // Only admin can read logs
+      allow read: if isAdmin() && isActiveUser();
+      
+      // System can create logs (all authenticated users)
+      allow create: if isAuthenticated();
+      
+      // No one can update or delete logs (audit trail)
+      allow update, delete: if false;
+    }
+    
+    // ==================== SETTINGS COLLECTION ====================
+    
+    match /settings/{settingId} {
+      // All valid users can read settings
+      allow read: if isValidUser() && isActiveUser();
+      
+      // Only admin can modify settings
+      allow write: if isAdmin() && isActiveUser();
+    }
+  }
+}
