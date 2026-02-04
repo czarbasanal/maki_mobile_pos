@@ -46,7 +46,7 @@ abstract class AppTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.lightCard,
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.1),
@@ -153,7 +153,7 @@ abstract class AppTheme {
       ),
 
       // Tab Bar
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.lightAccent,
         unselectedLabelColor: AppColors.lightTextSecondary,
         indicatorColor: AppColors.lightAccent,
@@ -172,7 +172,7 @@ abstract class AppTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.lightBackground,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -307,7 +307,7 @@ abstract class AppTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkCard,
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.3),
@@ -414,7 +414,7 @@ abstract class AppTheme {
       ),
 
       // Tab Bar
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.darkAccent,
         unselectedLabelColor: AppColors.darkTextSecondary,
         indicatorColor: AppColors.darkAccent,
@@ -433,7 +433,7 @@ abstract class AppTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.darkCard,
         elevation: 8,
         shape: RoundedRectangleBorder(

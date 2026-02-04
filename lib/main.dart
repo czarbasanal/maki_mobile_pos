@@ -1,8 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/app.dart';
-import 'package:maki_mobile_pos/services/firebase_service.dart';
+import 'package:maki_mobile_pos/firebase_options.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -25,10 +26,14 @@ void main() async {
   );
 
   // Initialize Firebase
-  await FirebaseService.instance.initialize(
-    // Set to true during development to use emulators
-    useEmulator: false,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('✅ Firebase initialized');
+  } catch (e) {
+    debugPrint('❌ Firebase error: $e');
+  }
 
   // Run the app with Riverpod
   runApp(
