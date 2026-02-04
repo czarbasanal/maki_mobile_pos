@@ -12,7 +12,17 @@ class _PlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title Screen')),
+      body: Center(
+          child: Column(
+        children: [
+          Text('$title Screen'),
+          // In _PlaceholderScreen, add a button to test navigation:
+          ElevatedButton(
+            onPressed: () => context.go(RoutePaths.dashboard),
+            child: const Text('Go to Dashboard'),
+          ),
+        ],
+      )),
     );
   }
 }
