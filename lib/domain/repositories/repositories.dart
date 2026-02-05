@@ -7,11 +7,9 @@
 library;
 
 export 'auth_repository.dart';
-// Future repositories will be added here:
-// export 'user_repository.dart';
-// export 'product_repository.dart';
-// export 'supplier_repository.dart';
-// export 'sale_repository.dart';
-// export 'draft_repository.dart';
-// export 'expense_repository.dart';
-// export 'cost_code_repository.dart';
+export 'cost_code_repository.dart';
+export 'draft_repository.dart';
+export 'product_repository.dart';
+export 'sale_repository.dart';
+export 'supplier_repository.dart';
+export 'user_repository.dart';
