@@ -48,6 +48,7 @@ dependencies:
   riverpod_generator: ^2.6.5
   json_serializable: ^6.9.5
   fake_cloud_firestore: ^4.0.1
+  mocktail: ^1.0.4
 
 dev_dependencies:
   flutter_test:
