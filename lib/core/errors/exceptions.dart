@@ -126,6 +126,26 @@ class DuplicateEntryException extends AppException {
   });
 }
 
+/// Exception thrown when a database operation fails (e.g. Firestore).
+class DatabaseException extends AppException {
+  const DatabaseException({
+    required super.message,
+    super.code = 'database-error',
+    super.originalError,
+    super.stackTrace,
+  });
+}
+
+/// Exception thrown when a Firestore-specific operation fails.
+class FirestoreException extends DatabaseException {
+  const FirestoreException({
+    required super.message,
+    super.code = 'firestore-error',
+    super.originalError,
+    super.stackTrace,
+  });
+}
+
 // ==================== NETWORK EXCEPTIONS ====================
 
 /// Exception thrown when a network error occurs.

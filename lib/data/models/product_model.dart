@@ -129,10 +129,8 @@ class ProductModel {
       map['updatedBy'] = updatedBy;
       // Don't include createdAt and createdBy on updates
     } else {
-      if (createdAt != null) {
-        map['createdAt'] = Timestamp.fromDate(createdAt);
-      }
-      if (updatedAt != null) {
+      map['createdAt'] = Timestamp.fromDate(createdAt);
+          if (updatedAt != null) {
         map['updatedAt'] = Timestamp.fromDate(updatedAt!);
       }
       map['createdBy'] = createdBy;
