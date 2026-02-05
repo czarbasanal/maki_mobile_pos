@@ -1,0 +1,22 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "maki-mobile-pos",
+                    "appId": "1:1075663897179:android:2704cd0d843086b91e757e",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "maki-mobile-pos",
+                    "configurations": {
+                        "android": "1:1075663897179:android:2704cd0d843086b91e757e",
+                        "web": "1:1075663897179:web:3dc10a046226b8fe1e757e"
+                    }
+                }
+            }
+        }
+    }
+}
