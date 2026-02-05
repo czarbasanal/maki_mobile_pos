@@ -48,7 +48,7 @@ abstract class SkuGenerator {
   /// ```
   static String generateVariation(String baseSku, int variationNumber) {
     // Remove any existing variation number
-    final cleanSku = _removeVariationSuffix(baseSku);
+    final cleanSku = removeVariationSuffix(baseSku);
     return '$cleanSku${AppConstants.skuVariationSeparator}$variationNumber';
   }
 
@@ -62,7 +62,7 @@ abstract class SkuGenerator {
   /// // Returns 3
   /// ```
   static int getNextVariationNumber(String baseSku, List<String> existingSkus) {
-    final cleanBase = _removeVariationSuffix(baseSku);
+    final cleanBase = removeVariationSuffix(baseSku);
     int maxVariation = 0;
 
     for (final sku in existingSkus) {
@@ -93,7 +93,7 @@ abstract class SkuGenerator {
   /// SkuGenerator.isVariationOf('XYZ789', 'ABC123')   // Returns false
   /// ```
   static bool isVariationOf(String sku, String baseSku) {
-    final cleanBase = _removeVariationSuffix(baseSku);
+    final cleanBase = removeVariationSuffix(baseSku);
     if (sku == cleanBase) return false;
 
     return sku.startsWith('$cleanBase${AppConstants.skuVariationSeparator}');
@@ -107,7 +107,7 @@ abstract class SkuGenerator {
   /// SkuGenerator.getBaseSku('ABC123')   // Returns "ABC123"
   /// ```
   static String getBaseSku(String sku) {
-    return _removeVariationSuffix(sku);
+    return removeVariationSuffix(sku);
   }
 
   /// Gets the variation number from a SKU.
@@ -144,7 +144,7 @@ abstract class SkuGenerator {
   }
 
   /// Removes the variation suffix from a SKU.
-  static String _removeVariationSuffix(String sku) {
+  static String removeVariationSuffix(String sku) {
     final separatorIndex = sku.lastIndexOf(AppConstants.skuVariationSeparator);
     if (separatorIndex == -1) return sku;
 
