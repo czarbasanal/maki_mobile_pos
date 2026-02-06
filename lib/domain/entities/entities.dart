@@ -7,7 +7,6 @@
 library;
 
 export 'user_entity.dart';
-// Future entities will be added here:
 export 'product_entity.dart';
 export 'supplier_entity.dart';
 export 'sale_entity.dart';
@@ -16,3 +15,4 @@ export 'draft_entity.dart';
 // export 'expense_entity.dart';
 export 'cost_code_entity.dart';
 // export 'petty_cash_entity.dart';
+export 'receiving_entity.dart';
