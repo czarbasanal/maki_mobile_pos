@@ -5,7 +5,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/widgets/pos/checkout_success_dialog.dart';
-import 'package:maki_mobile_pos/presentation/widgets/pos/receit_widget.dart';
+import 'package:maki_mobile_pos/presentation/widgets/pos/receipt_widget.dart';
 
 /// Checkout confirmation screen.
 ///

@@ -6,7 +6,7 @@ import 'package:maki_mobile_pos/core/errors/errors.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/utils.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/widgets/common/widgets.dart';
+import 'package:maki_mobile_pos/presentation/widgets/common/common_widgets.dart';
 
 /// Login screen for user authentication.
 ///
