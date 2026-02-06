@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
-import 'package:maki_mobile_pos/data/repositories/sale_repository_impl.dart';
+import 'package:maki_mobile_pos/data/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 void main() {

@@ -22,6 +22,9 @@ abstract class FirestoreCollections {
   /// Drafts collection - saved incomplete sales
   static const String drafts = 'drafts';
 
+  /// Receivings collection - stock receiving records
+  static const String receivings = 'receivings';
+
   /// Expenses collection - business expenses
   static const String expenses = 'expenses';
 

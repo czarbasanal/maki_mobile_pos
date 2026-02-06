@@ -44,6 +44,7 @@ void main() {
     });
 
     test('paymentTermDays should return correct days', () {
+      // paymentTermDays returns int? from transactionType.daysUntilDue
       expect(supplier.paymentTermDays, 30);
 
       final terms45 = supplier.copyWith(
@@ -65,6 +66,11 @@ void main() {
         transactionType: TransactionType.cash,
       );
       expect(cash.paymentTermDays, 0);
+
+      final na = supplier.copyWith(
+        transactionType: TransactionType.notApplicable,
+      );
+      expect(na.paymentTermDays, isNull);
     });
 
     test('paymentTermsDisplay should return formatted string', () {
@@ -74,6 +80,11 @@ void main() {
         transactionType: TransactionType.cash,
       );
       expect(cashSupplier.paymentTermsDisplay, 'Cash on Delivery');
+
+      final naSupplier = supplier.copyWith(
+        transactionType: TransactionType.notApplicable,
+      );
+      expect(naSupplier.paymentTermsDisplay, 'Not Applicable');
     });
 
     test('hasContactInfo should return correct value', () {
@@ -105,6 +116,15 @@ void main() {
         createdAt: DateTime.now(),
       );
       expect(emailOnly.primaryContact, 'test@example.com');
+
+      final noAnyContact = SupplierEntity(
+        id: 'test',
+        name: 'Test',
+        transactionType: TransactionType.cash,
+        isActive: true,
+        createdAt: DateTime.now(),
+      );
+      expect(noAnyContact.primaryContact, '');
     });
 
     test('formattedContactNumbers should combine numbers', () {
@@ -123,6 +143,29 @@ void main() {
         createdAt: DateTime.now(),
       );
       expect(noNumbers.formattedContactNumbers, '');
+    });
+
+    test('hasAddress should return correct value', () {
+      expect(supplier.hasAddress, true);
+
+      final noAddress = supplier.copyWith(clearAddress: true);
+      expect(noAddress.hasAddress, false);
+    });
+
+    test('displayContact should return best available contact info', () {
+      expect(supplier.displayContact, '+639171234567');
+
+      final emailOnlyContact = supplier.copyWith(clearContactNumber: true);
+      expect(emailOnlyContact.displayContact, 'juan@abcdist.com');
+
+      final noContact = SupplierEntity(
+        id: 'test',
+        name: 'Test',
+        transactionType: TransactionType.cash,
+        isActive: true,
+        createdAt: DateTime.now(),
+      );
+      expect(noContact.displayContact, 'No contact');
     });
 
     test('copyWith should create new instance with updated values', () {
@@ -150,6 +193,18 @@ void main() {
       // These should remain unchanged
       expect(cleared.contactNumber, supplier.contactNumber);
       expect(cleared.email, supplier.email);
+    });
+
+    test('productCount and totalInventoryValue should have default values', () {
+      expect(supplier.productCount, 0);
+      expect(supplier.totalInventoryValue, 0);
+
+      final withValues = supplier.copyWith(
+        productCount: 10,
+        totalInventoryValue: 5000.0,
+      );
+      expect(withValues.productCount, 10);
+      expect(withValues.totalInventoryValue, 5000.0);
     });
   });
 
@@ -189,6 +244,7 @@ void main() {
 
       expect(fromEntity.name, entity.name);
       expect(fromEntity.transactionType, entity.transactionType);
+      expect(fromEntity.searchKeywords, isNotEmpty);
     });
 
     test('toMap should serialize correctly', () {
@@ -198,6 +254,7 @@ void main() {
       expect(map['transactionType'], 'terms_45d');
       expect(map['isActive'], true);
       expect(map['contactPerson'], 'Test Person');
+      expect(map['searchKeywords'], isNotEmpty);
     });
 
     test('fromMap should deserialize correctly', () {
@@ -210,6 +267,9 @@ void main() {
         'transactionType': 'terms_60d',
         'isActive': true,
         'notes': 'Test notes',
+        'productCount': 5,
+        'totalInventoryValue': 1000.0,
+        'searchKeywords': ['map', 'supplier'],
       };
 
       final fromMap = SupplierModel.fromMap(map, 'map-id');
@@ -218,6 +278,8 @@ void main() {
       expect(fromMap.name, 'Map Supplier');
       expect(fromMap.transactionType, TransactionType.terms60d);
       expect(fromMap.notes, 'Test notes');
+      expect(fromMap.productCount, 5);
+      expect(fromMap.totalInventoryValue, 1000.0);
     });
 
     test('fromMap should handle missing optional fields', () {
@@ -233,6 +295,8 @@ void main() {
       expect(fromMap.isActive, true);
       expect(fromMap.address, isNull);
       expect(fromMap.contactPerson, isNull);
+      expect(fromMap.productCount, 0);
+      expect(fromMap.totalInventoryValue, 0);
     });
 
     test('empty factory should create empty model', () {
@@ -245,8 +309,32 @@ void main() {
     });
 
     test('searchKeywords should contain name parts', () {
-      expect(model.searchKeywords.contains('test'), true);
-      expect(model.searchKeywords.contains('supp'), true);
+      expect(model.searchKeywords.any((k) => k.contains('test')), true);
+      expect(model.searchKeywords.any((k) => k.contains('supp')), true);
+    });
+
+    test('toCreateMap should include createdBy and generate keywords', () {
+      final createMap = model.toCreateMap('user-123');
+
+      expect(createMap['createdBy'], 'user-123');
+      expect(createMap['searchKeywords'], isNotEmpty);
+    });
+
+    test('toUpdateMap should include updatedBy', () {
+      final updateMap = model.toUpdateMap('user-456');
+
+      expect(updateMap['updatedBy'], 'user-456');
+    });
+
+    test('copyWith should create new instance with updated values', () {
+      final updated = model.copyWith(
+        name: 'Updated Supplier',
+        transactionType: TransactionType.terms90d,
+      );
+
+      expect(updated.name, 'Updated Supplier');
+      expect(updated.transactionType, TransactionType.terms90d);
+      expect(updated.contactPerson, model.contactPerson);
     });
   });
 
@@ -283,6 +371,15 @@ void main() {
       expect(TransactionType.terms60d.displayName, '60 Days');
       expect(TransactionType.terms90d.displayName, '90 Days');
       expect(TransactionType.notApplicable.displayName, 'N/A');
+    });
+
+    test('value should return correct Firestore values', () {
+      expect(TransactionType.cash.value, 'cash');
+      expect(TransactionType.terms30d.value, 'terms_30d');
+      expect(TransactionType.terms45d.value, 'terms_45d');
+      expect(TransactionType.terms60d.value, 'terms_60d');
+      expect(TransactionType.terms90d.value, 'terms_90d');
+      expect(TransactionType.notApplicable.value, 'na');
     });
   });
 }

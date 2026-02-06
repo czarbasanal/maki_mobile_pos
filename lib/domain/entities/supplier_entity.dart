@@ -1,57 +1,54 @@
 import 'package:equatable/equatable.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 
-/// Represents a supplier/vendor in the system.
-///
-/// Suppliers are the vendors from whom products are purchased.
-/// Each supplier can have different payment terms and contact information.
+/// Domain entity representing a supplier.
 class SupplierEntity extends Equatable {
-  /// Unique identifier
+  /// Unique identifier.
   final String id;
 
-  /// Supplier/company name
+  /// Supplier name.
   final String name;
 
-  /// Business address
+  /// Address.
   final String? address;
 
-  /// Name of the contact person
+  /// Contact person name.
   final String? contactPerson;
 
-  /// Contact phone number
+  /// Primary contact number.
   final String? contactNumber;
 
-  /// Alternative contact number
+  /// Alternative contact number.
   final String? alternativeNumber;
 
-  /// Email address
+  /// Email address.
   final String? email;
 
-  /// Payment terms (cash, 30 days, 45 days, etc.)
+  /// Transaction type (cash, credit, consignment).
   final TransactionType transactionType;
 
-  /// Whether this supplier is active
+  /// Whether supplier is active.
   final bool isActive;
 
-  /// Optional notes about the supplier
+  /// Notes about the supplier.
   final String? notes;
 
-  /// When supplier was created
+  /// When the supplier was created.
   final DateTime createdAt;
 
-  /// When supplier was last updated
+  /// When the supplier was last updated.
   final DateTime? updatedAt;
 
-  /// Who created this supplier
+  /// Who created this supplier.
   final String? createdBy;
 
-  /// Who last updated this supplier
+  /// Who last updated this supplier.
   final String? updatedBy;
 
-  /// Total number of products from this supplier
+  /// Number of products from this supplier.
   final int productCount;
 
-  /// Total value of inventory from this supplier (at cost)
+  /// Total inventory value from this supplier.
   final double totalInventoryValue;
 
   const SupplierEntity({
@@ -73,18 +70,34 @@ class SupplierEntity extends Equatable {
     this.totalInventoryValue = 0,
   });
 
-  // ==================== COMPUTED PROPERTIES ====================
+  /// Whether this supplier has contact information.
+  bool get hasContactInfo =>
+      (contactNumber != null && contactNumber!.isNotEmpty) ||
+      (email != null && email!.isNotEmpty);
 
-  /// Returns true if supplier has payment terms (not cash or N/A).
-  bool get hasPaymentTerms {
-    return transactionType != TransactionType.cash &&
-        transactionType != TransactionType.notApplicable;
+  /// Whether this supplier has an address.
+  bool get hasAddress => address != null && address!.isNotEmpty;
+
+  /// Display string for contact info.
+  String get displayContact {
+    if (contactNumber != null && contactNumber!.isNotEmpty) {
+      return contactNumber!;
+    }
+    if (email != null && email!.isNotEmpty) {
+      return email!;
+    }
+    return 'No contact';
   }
 
-  /// Returns the number of days for payment terms.
+  /// Whether this supplier has payment terms (not cash or N/A).
+  bool get hasPaymentTerms =>
+      transactionType != TransactionType.cash &&
+      transactionType != TransactionType.notApplicable;
+
+  /// Number of days for payment terms.
   int? get paymentTermDays => transactionType.daysUntilDue;
 
-  /// Returns a formatted display string for payment terms.
+  /// Formatted display string for payment terms.
   String get paymentTermsDisplay {
     switch (transactionType) {
       case TransactionType.cash:
@@ -102,14 +115,7 @@ class SupplierEntity extends Equatable {
     }
   }
 
-  /// Returns true if supplier has contact information.
-  bool get hasContactInfo {
-    return (contactPerson != null && contactPerson!.isNotEmpty) ||
-        (contactNumber != null && contactNumber!.isNotEmpty) ||
-        (email != null && email!.isNotEmpty);
-  }
-
-  /// Returns the primary contact display string.
+  /// Primary contact display string (prefers person name, then number, then email).
   String get primaryContact {
     if (contactPerson != null && contactPerson!.isNotEmpty) {
       return contactPerson!;
@@ -120,10 +126,10 @@ class SupplierEntity extends Equatable {
     if (email != null && email!.isNotEmpty) {
       return email!;
     }
-    return 'No contact info';
+    return '';
   }
 
-  /// Returns formatted contact number(s).
+  /// Formatted contact numbers (combines primary and alternative).
   String get formattedContactNumbers {
     final numbers = <String>[];
     if (contactNumber != null && contactNumber!.isNotEmpty) {
@@ -135,12 +141,6 @@ class SupplierEntity extends Equatable {
     return numbers.join(' / ');
   }
 
-  // ==================== COPY WITH ====================
-
-  /// Creates a copy with updated values.
-  ///
-  /// To explicitly set a nullable field to null, use the corresponding
-  /// `clear*` parameter set to true.
   SupplierEntity copyWith({
     String? id,
     String? name,
@@ -158,7 +158,6 @@ class SupplierEntity extends Equatable {
     String? updatedBy,
     int? productCount,
     double? totalInventoryValue,
-    // Clear flags for nullable fields
     bool clearAddress = false,
     bool clearContactPerson = false,
     bool clearContactNumber = false,
@@ -193,6 +192,17 @@ class SupplierEntity extends Equatable {
     );
   }
 
+  /// Creates an empty supplier entity.
+  factory SupplierEntity.empty() {
+    return SupplierEntity(
+      id: '',
+      name: '',
+      transactionType: TransactionType.cash,
+      isActive: true,
+      createdAt: DateTime.now(),
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,
@@ -212,9 +222,4 @@ class SupplierEntity extends Equatable {
         productCount,
         totalInventoryValue,
       ];
-
-  @override
-  String toString() {
-    return 'SupplierEntity(id: $id, name: $name, transactionType: ${transactionType.value})';
-  }
 }

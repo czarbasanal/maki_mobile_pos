@@ -6,7 +6,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/screens/reports/reports.dart';
 import 'package:maki_mobile_pos/presentation/screens/sales/sale_detail_screen.dart';
-import 'package:maki_mobile_pos/presentation/widgets/reports/date_range_picker.dart';
+import 'package:maki_mobile_pos/presentation/widgets/reports/reports_widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Screen displaying list of sales with filtering options.
