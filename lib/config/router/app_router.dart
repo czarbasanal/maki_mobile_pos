@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/screens/drafts/drafts_list_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/pos/checkout_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/pos/pos_screen.dart';
 
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
@@ -210,18 +213,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.pos,
         name: RouteNames.pos,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'POS',
-          icon: Icons.point_of_sale,
-        ),
+        builder: (context, state) => const POSScreen(),
         routes: [
           GoRoute(
             path: 'checkout',
             name: RouteNames.checkout,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Checkout',
-              icon: Icons.shopping_cart_checkout,
-            ),
+            builder: (context, state) => const CheckoutScreen(),
           ),
         ],
       ),
@@ -230,17 +227,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.drafts,
         name: RouteNames.drafts,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Drafts',
-          icon: Icons.drafts,
-        ),
+        builder: (context, state) => const DraftsListScreen(),
         routes: [
           GoRoute(
             path: ':id',
             name: RouteNames.draftEdit,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return _PlaceholderScreen(title: 'Edit Draft: $id');
+              return _PlaceholderScreen(title: 'Edit Draft: $id'); //draft edit screen coming soon
             },
           ),
         ],

@@ -5,7 +5,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/widgets/common/widgets.dart';
+import 'package:maki_mobile_pos/presentation/widgets/common/common_widgets.dart';
 
 /// Dashboard screen showing role-based menu items.
 ///
