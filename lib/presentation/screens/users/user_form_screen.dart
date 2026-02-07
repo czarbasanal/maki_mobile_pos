@@ -9,12 +9,16 @@ import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Screen for creating or editing a user.
 class UserFormScreen extends ConsumerStatefulWidget {
+  final String? userId;
   final UserEntity? user;
 
-  const UserFormScreen({super.key, this.user});
+  const UserFormScreen({
+    super.key,
+    this.userId,
+    this.user,
+  });
 
-  bool get isEditing => user != null;
-
+  bool get isEditing => userId != null || user != null;
   @override
   ConsumerState<UserFormScreen> createState() => _UserFormScreenState();
 }
@@ -36,10 +40,25 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
   void initState() {
     super.initState();
     if (widget.user != null) {
-      _emailController.text = widget.user!.email;
-      _displayNameController.text = widget.user!.displayName;
-      _selectedRole = widget.user!.role;
+      _initFromUser(widget.user!);
+    } else if (widget.userId != null) {
+      _loadUser();
     }
+  }
+
+  Future<void> _loadUser() async {
+    if (widget.userId == null) return;
+
+    final user = await ref.read(userByIdProvider(widget.userId!).future);
+    if (user != null && mounted) {
+      _initFromUser(user);
+    }
+  }
+
+  void _initFromUser(UserEntity user) {
+    _emailController.text = user.email;
+    _displayNameController.text = user.displayName;
+    setState(() => _selectedRole = user.role);
   }
 
   @override
