@@ -50,6 +50,7 @@ dependencies:
   fake_cloud_firestore: ^4.0.1
   mocktail: ^1.0.4
   file_picker: ^10.3.10
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:
