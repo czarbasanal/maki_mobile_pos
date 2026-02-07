@@ -13,3 +13,5 @@ export 'product_repository.dart';
 export 'sale_repository.dart';
 export 'supplier_repository.dart';
 export 'user_repository.dart';
+export 'receiving_repository.dart';
+export 'activity_log_repository.dart';

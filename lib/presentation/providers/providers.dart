@@ -13,6 +13,6 @@ export 'draft_provider.dart';
 export 'product_provider.dart';
 export 'sale_provider.dart';
 export 'supplier_provider.dart';
-export 'user_provider.dart';
 export 'inventory_provider.dart';
 export 'receiving_provider.dart';
+export 'activity_log_provider.dart';
