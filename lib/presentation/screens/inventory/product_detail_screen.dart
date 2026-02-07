@@ -4,7 +4,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/widgets/inventory/inventory_wdigets.dart';
+import 'package:maki_mobile_pos/presentation/widgets/inventory/inventory_widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Screen displaying detailed product information.

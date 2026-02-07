@@ -10,7 +10,12 @@ import 'package:maki_mobile_pos/presentation/widgets/receiving/receiving_widgets
 
 /// Screen for bulk stock receiving.
 class BulkReceivingScreen extends ConsumerStatefulWidget {
-  const BulkReceivingScreen({super.key});
+  final String? receivingId;
+
+  const BulkReceivingScreen({
+    super.key,
+    this.receivingId,
+  });
 
   @override
   ConsumerState<BulkReceivingScreen> createState() =>
@@ -22,6 +27,24 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   final _quantityController = TextEditingController(text: '1');
   final _costController = TextEditingController();
   ProductEntity? _selectedProduct;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.receivingId != null) {
+      // Load existing receiving
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref
+            .read(currentReceivingProvider.notifier)
+            .loadReceiving(widget.receivingId!);
+      });
+    } else {
+      // Initialize new receiving
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(currentReceivingProvider.notifier).initNewReceiving();
+      });
+    }
+  }
 
   @override
   void dispose() {

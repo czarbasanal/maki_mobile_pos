@@ -1,31 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/config/router/route_names.dart';
+import 'package:maki_mobile_pos/config/router/route_guards.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/screens/drafts/drafts_list_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/pos/checkout_screen.dart';
+
+// Auth screens
+import 'package:maki_mobile_pos/presentation/screens/auth/login_screen.dart';
+
+// Main screens
+import 'package:maki_mobile_pos/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:maki_mobile_pos/presentation/screens/pos/pos_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/pos/checkout_screen.dart';
 
-import '../../presentation/screens/auth/login_screen.dart';
-import '../../presentation/screens/dashboard/dashboard_screen.dart';
+// Draft screens
+import 'package:maki_mobile_pos/presentation/screens/drafts/drafts_list_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/drafts/draft_edit_screen.dart';
 
-// Temporary placeholder screen with navigation
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  final IconData icon;
+// Inventory screens
+import 'package:maki_mobile_pos/presentation/screens/inventory/inventory_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/inventory/product_form_screen.dart';
 
-  const _PlaceholderScreen({
-    required this.title,
-    this.icon = Icons.construction,
-  });
+// Receiving screens
+import 'package:maki_mobile_pos/presentation/screens/receiving/receiving_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/receiving/bulk_receiving_screen.dart';
+
+// Supplier screens
+import 'package:maki_mobile_pos/presentation/screens/suppliers/suppliers_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/suppliers/supplier_form_screen.dart';
+
+// Expense screens
+import 'package:maki_mobile_pos/presentation/screens/expenses/expenses_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/expenses/expense_form_screen.dart';
+
+// Report screens
+import 'package:maki_mobile_pos/presentation/screens/reports/sales_list_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/reports/sales_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/reports/profit_report_screen.dart';
+
+// User management screens
+import 'package:maki_mobile_pos/presentation/screens/users/users_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/users/user_form_screen.dart';
+
+// Settings screens
+import 'package:maki_mobile_pos/presentation/screens/settings/settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/settings/cost_code_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/settings/about_screen.dart';
+
+// Logs screens
+import 'package:maki_mobile_pos/presentation/screens/logs/activity_logs_screen.dart';
+
+// ==================== ACCESS DENIED SCREEN ====================
+
+class _AccessDeniedScreen extends StatelessWidget {
+  const _AccessDeniedScreen();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: const Text('Access Denied'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -37,51 +72,6 @@ class _PlaceholderScreen extends StatelessWidget {
             }
           },
         ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 80,
-              color: AppColors.primaryDark.withOpacity(0.5),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming soon...',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey,
-                  ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => context.go(RoutePaths.dashboard),
-              icon: const Icon(Icons.home),
-              label: const Text('Back to Dashboard'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Access denied screen shown when user lacks permission.
-class _AccessDeniedScreen extends StatelessWidget {
-  const _AccessDeniedScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Access Denied'),
-        centerTitle: true,
       ),
       body: Center(
         child: Column(
@@ -121,54 +111,52 @@ class _AccessDeniedScreen extends StatelessWidget {
   }
 }
 
-/// Provider for the GoRouter instance.
+// ==================== ROUTER PROVIDER ====================
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  // Create a key to force router refresh on auth changes
   final authState = ref.watch(currentUserProvider);
 
   return GoRouter(
     initialLocation: RoutePaths.login,
     debugLogDiagnostics: true,
 
-    // Global redirect for authentication and authorization
+    // ==================== GLOBAL REDIRECT ====================
     redirect: (context, state) {
       final path = state.uri.path;
       final isPublicRoute = RouteGuards.isPublicRoute(path);
 
-      // Get current user synchronously
       final user = authState.whenOrNull(data: (user) => user);
       final isLoading = authState.isLoading;
 
-      // Don't redirect while loading
-      if (isLoading) {
-        return null;
-      }
+      if (isLoading) return null;
 
       final isLoggedIn = user != null;
       final isLoginRoute = path == RoutePaths.login;
 
-      // If not logged in and trying to access protected route, go to login
       if (!isLoggedIn && !isPublicRoute) {
         return RoutePaths.login;
       }
 
-      // If logged in and on login page, go to dashboard
       if (isLoggedIn && isLoginRoute) {
         return RoutePaths.dashboard;
       }
 
-      // Check role-based access for protected routes
       if (isLoggedIn && !isPublicRoute && !RouteGuards.canAccess(path, user)) {
-        // Return to dashboard if access denied
         return RoutePaths.dashboard;
       }
 
       return null;
     },
 
-    // Error handling
+    // ==================== ERROR HANDLING ====================
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: const Text('Error')),
+      appBar: AppBar(
+        title: const Text('Error'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(RoutePaths.dashboard),
+        ),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -185,16 +173,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () => context.go(RoutePaths.dashboard),
-              child: const Text('Go to Dashboard'),
+              icon: const Icon(Icons.home),
+              label: const Text('Go to Dashboard'),
             ),
           ],
         ),
       ),
     ),
 
-    // Route definitions
+    // ==================== ROUTE DEFINITIONS ====================
     routes: [
       // ==================== AUTH ROUTES ====================
       GoRoute(
@@ -234,7 +223,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             name: RouteNames.draftEdit,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return _PlaceholderScreen(title: 'Edit Draft: $id'); //draft edit screen coming soon
+              return DraftEditScreen(draftId: id);
             },
           ),
         ],
@@ -244,25 +233,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.inventory,
         name: RouteNames.inventory,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Inventory',
-          icon: Icons.inventory,
-        ),
+        builder: (context, state) => const InventoryScreen(),
         routes: [
           GoRoute(
             path: 'add',
             name: RouteNames.productAdd,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Add Product',
-              icon: Icons.add_box,
-            ),
+            builder: (context, state) => const ProductFormScreen(),
           ),
           GoRoute(
             path: 'edit/:id',
             name: RouteNames.productEdit,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return _PlaceholderScreen(title: 'Edit Product: $id');
+              return ProductFormScreen(productId: id);
             },
           ),
           GoRoute(
@@ -270,7 +253,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             name: RouteNames.productDetail,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return _PlaceholderScreen(title: 'Product: $id');
+              return ProductFormScreen(
+                  productId: id); // Reuse form as detail view
             },
           ),
         ],
@@ -280,18 +264,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.receiving,
         name: RouteNames.receiving,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Receiving',
-          icon: Icons.local_shipping,
-        ),
+        builder: (context, state) => const ReceivingScreen(),
         routes: [
           GoRoute(
             path: 'bulk',
             name: RouteNames.bulkReceiving,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Bulk Receiving',
-              icon: Icons.inventory_2,
-            ),
+            builder: (context, state) => const BulkReceivingScreen(),
+          ),
+          GoRoute(
+            path: 'bulk/:id',
+            builder: (context, state) {
+              final id = state.pathParameters['id'];
+              return BulkReceivingScreen(receivingId: id);
+            },
           ),
         ],
       ),
@@ -300,25 +285,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.suppliers,
         name: RouteNames.suppliers,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Suppliers',
-          icon: Icons.people,
-        ),
+        builder: (context, state) => const SuppliersScreen(),
         routes: [
           GoRoute(
             path: 'add',
             name: RouteNames.supplierAdd,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Add Supplier',
-              icon: Icons.person_add,
-            ),
+            builder: (context, state) => const SupplierFormScreen(),
           ),
           GoRoute(
             path: 'edit/:id',
             name: RouteNames.supplierEdit,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return _PlaceholderScreen(title: 'Edit Supplier: $id');
+              return SupplierFormScreen(supplierId: id);
             },
           ),
         ],
@@ -328,25 +307,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.expenses,
         name: RouteNames.expenses,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Expenses',
-          icon: Icons.receipt_long,
-        ),
+        builder: (context, state) => const ExpensesScreen(),
         routes: [
           GoRoute(
             path: 'add',
             name: RouteNames.expenseAdd,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Add Expense',
-              icon: Icons.add_card,
-            ),
+            builder: (context, state) => const ExpenseFormScreen(),
           ),
           GoRoute(
             path: 'edit/:id',
             name: RouteNames.expenseEdit,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return _PlaceholderScreen(title: 'Edit Expense: $id');
+              return ExpenseFormScreen(expenseId: id);
             },
           ),
         ],
@@ -356,26 +329,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.reports,
         name: RouteNames.reports,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Reports',
-          icon: Icons.bar_chart,
-        ),
+        builder: (context, state) => const SalesListScreen(),
         routes: [
           GoRoute(
             path: 'sales',
             name: RouteNames.salesReport,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Sales Report',
-              icon: Icons.show_chart,
-            ),
+            builder: (context, state) => const SalesReportScreen(),
           ),
           GoRoute(
             path: 'profit',
             name: RouteNames.profitReport,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Profit Report',
-              icon: Icons.trending_up,
-            ),
+            builder: (context, state) => const ProfitReportScreen(),
           ),
         ],
       ),
@@ -384,25 +348,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.users,
         name: RouteNames.users,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Users',
-          icon: Icons.manage_accounts,
-        ),
+        builder: (context, state) => const UsersScreen(),
         routes: [
           GoRoute(
             path: 'add',
             name: RouteNames.userAdd,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Add User',
-              icon: Icons.person_add,
-            ),
+            builder: (context, state) => const UserFormScreen(),
           ),
           GoRoute(
             path: 'edit/:id',
             name: RouteNames.userEdit,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return _PlaceholderScreen(title: 'Edit User: $id');
+              return UserFormScreen(userId: id);
             },
           ),
         ],
@@ -412,18 +370,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.settings,
         name: RouteNames.settings,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Settings',
-          icon: Icons.settings,
-        ),
+        builder: (context, state) => const SettingsScreen(),
         routes: [
           GoRoute(
             path: 'cost-codes',
             name: RouteNames.costCodeSettings,
-            builder: (context, state) => const _PlaceholderScreen(
-              title: 'Cost Code Settings',
-              icon: Icons.code,
-            ),
+            builder: (context, state) => const CostCodeSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'about',
+            builder: (context, state) => const AboutScreen(),
           ),
         ],
       ),
@@ -432,10 +388,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.userLogs,
         name: RouteNames.userLogs,
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'User Logs',
-          icon: Icons.history,
-        ),
+        builder: (context, state) => const ActivityLogsScreen(),
       ),
 
       // ==================== ACCESS DENIED ====================
