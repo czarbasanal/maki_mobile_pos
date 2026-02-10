@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// Screen displaying app information.
@@ -34,6 +36,10 @@ class _AboutScreenState extends State<AboutScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.settings),
+        ),
         title: const Text('About'),
       ),
       body: ListView(

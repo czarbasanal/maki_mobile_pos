@@ -38,6 +38,7 @@ import 'package:maki_mobile_pos/presentation/screens/expenses/expense_form_scree
 import 'package:maki_mobile_pos/presentation/screens/reports/sales_list_screen.dart';
 import 'package:maki_mobile_pos/presentation/screens/reports/sales_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/screens/reports/profit_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/sales/sale_detail_screen.dart';
 
 // User management screens
 import 'package:maki_mobile_pos/presentation/screens/users/users_screen.dart';
@@ -340,6 +341,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'profit',
             name: RouteNames.profitReport,
             builder: (context, state) => const ProfitReportScreen(),
+          ),
+          GoRoute(
+            path: 'sale/:id',
+            name: RouteNames.saleDetail,
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return SaleDetailScreen(saleId: id);
+            },
           ),
         ],
       ),

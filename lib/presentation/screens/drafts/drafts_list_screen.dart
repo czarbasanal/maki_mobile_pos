@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/widgets/drafts/draft_detail_sheet.dart';
@@ -16,6 +19,10 @@ class DraftsListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.pos),
+        ),
         title: const Text('Saved Drafts'),
         actions: [
           // Refresh button
@@ -94,7 +101,7 @@ class DraftsListScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.go(RoutePaths.pos),
               icon: const Icon(Icons.point_of_sale),
               label: const Text('Go to POS'),
             ),
@@ -219,15 +226,14 @@ class DraftsListScreen extends ConsumerWidget {
           label: 'Go to POS',
           textColor: Colors.white,
           onPressed: () {
-            // Navigate to POS
-            Navigator.pop(context);
+            context.go(RoutePaths.pos);
           },
         ),
       ),
     );
 
     // Navigate back to POS
-    Navigator.pop(context);
+    context.go(RoutePaths.pos);
   }
 
   void _confirmDeleteDraft(

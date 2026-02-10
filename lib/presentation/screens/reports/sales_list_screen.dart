@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/screens/reports/reports.dart';
-import 'package:maki_mobile_pos/presentation/screens/sales/sale_detail_screen.dart';
 import 'package:maki_mobile_pos/presentation/widgets/reports/reports_widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -38,6 +39,10 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.dashboard),
+        ),
         title: const Text('Sales History'),
         actions: [
           IconButton(
@@ -445,21 +450,11 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   }
 
   void _navigateToSaleDetail(SaleEntity sale) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SaleDetailScreen(saleId: sale.id),
-      ),
-    );
+    context.push('${RoutePaths.reports}/sale/${sale.id}');
   }
 
   void _navigateToReports(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const SalesReportScreen(),
-      ),
-    );
+    context.push(RoutePaths.salesReport);
   }
 
   Map<DateTime, List<SaleEntity>> _groupSalesByDate(List<SaleEntity> sales) {

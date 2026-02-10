@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/widgets/reports/reports_widgets.dart';
 
@@ -34,6 +36,10 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.reports),
+        ),
         title: const Text('Sales Report'),
       ),
       body: RefreshIndicator(

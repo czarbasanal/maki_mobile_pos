@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
-import 'package:maki_mobile_pos/presentation/screens/users/user_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/widgets/users/user_list_tile.dart';
 
 /// Screen displaying list of all users (admin only).
@@ -27,7 +29,13 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     // Only admins can access this screen
     if (currentUser?.role != UserRole.admin) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Users')),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.goBackOr(RoutePaths.dashboard),
+          ),
+          title: const Text('Users'),
+        ),
         body: const Center(
           child: Text('Access denied. Admin privileges required.'),
         ),
@@ -36,6 +44,10 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.dashboard),
+        ),
         title: const Text('User Management'),
         actions: [
           // Filter by role
@@ -299,21 +311,11 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   }
 
   void _navigateToCreateUser(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const UserFormScreen(),
-      ),
-    );
+    context.push(RoutePaths.userAdd);
   }
 
   void _navigateToEditUser(BuildContext context, UserEntity user) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UserFormScreen(user: user),
-      ),
-    );
+    context.push('${RoutePaths.users}/edit/${user.id}');
   }
 
   Future<void> _toggleUserActive(UserEntity user) async {
