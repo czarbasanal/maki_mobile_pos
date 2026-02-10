@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/widgets/pos/cart_item_tile.dart';
@@ -38,6 +41,10 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.dashboard),
+        ),
         title: const Text('Point of Sale'),
         actions: [
           // Drafts button with badge
@@ -677,11 +684,6 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
   void _navigateToDrafts() {
-    // Navigate to drafts screen
-    // This will be implemented with go_router
-    // For now, show a placeholder
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigate to Drafts')),
-    );
+    context.push(RoutePaths.drafts);
   }
 }

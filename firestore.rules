@@ -112,19 +112,31 @@ service cloud.firestore {
     // ==================== DRAFTS COLLECTION ====================
     
     match /drafts/{draftId} {
-      // Users can read their own drafts
-      allow read: if isAuthenticated() && isActiveUser() &&
-        resource.data.createdBy == request.auth.uid;
-      
+      // All valid active users can read drafts
+      allow read: if isValidUser() && isActiveUser();
+
       // Users can create drafts
       allow create: if isValidUser() && isActiveUser() &&
         request.resource.data.createdBy == request.auth.uid;
-      
-      // Users can update/delete their own drafts
-      allow update, delete: if isAuthenticated() && isActiveUser() &&
-        resource.data.createdBy == request.auth.uid;
+
+      // Users can update/delete their own drafts, admins can update/delete any
+      allow update, delete: if isValidUser() && isActiveUser() &&
+        (resource.data.createdBy == request.auth.uid || isAdmin());
     }
     
+    // ==================== RECEIVINGS COLLECTION ====================
+
+    match /receivings/{receivingId} {
+      // Staff and admin can read receivings
+      allow read: if isStaffOrAdmin() && isActiveUser();
+
+      // Staff and admin can create/update receivings
+      allow create, update: if isStaffOrAdmin() && isActiveUser();
+
+      // Only admin can delete receivings
+      allow delete: if isAdmin() && isActiveUser();
+    }
+
     // ==================== EXPENSES COLLECTION ====================
     
     match /expenses/{expenseId} {

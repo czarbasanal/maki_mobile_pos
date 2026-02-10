@@ -333,8 +333,64 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not logged in');
 
-      // TODO: Implement product save/update logic
-      await Future.delayed(const Duration(seconds: 1));
+      // Encode cost to cost code
+      final costValue = double.tryParse(_costController.text) ?? 0.0;
+      final costCode = ref.read(encodeCostProvider(costValue));
+
+      // Get supplier name for denormalization
+      String? supplierName;
+      if (_selectedSupplierId != null) {
+        final suppliers = ref.read(suppliersProvider).value;
+        supplierName = suppliers
+            ?.where((s) => s.id == _selectedSupplierId)
+            .firstOrNull
+            ?.name;
+      }
+
+      final product = ProductEntity(
+        id: widget.isEditing ? _existingProduct!.id : '',
+        sku: _skuController.text.trim(),
+        name: _nameController.text.trim(),
+        costCode: costCode,
+        cost: costValue,
+        price: double.tryParse(_priceController.text) ?? 0.0,
+        quantity: int.tryParse(_quantityController.text) ?? 0,
+        reorderLevel: int.tryParse(_reorderLevelController.text) ?? 10,
+        unit: _unitController.text.trim().isEmpty
+            ? 'pcs'
+            : _unitController.text.trim(),
+        supplierId: _selectedSupplierId,
+        supplierName: supplierName,
+        isActive: true,
+        createdAt: widget.isEditing
+            ? _existingProduct!.createdAt
+            : DateTime.now(),
+        barcode: _barcodeController.text.trim().isEmpty
+            ? null
+            : _barcodeController.text.trim(),
+        category: _categoryController.text.trim().isEmpty
+            ? null
+            : _categoryController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+      );
+
+      final productOps = ref.read(productOperationsProvider.notifier);
+
+      if (widget.isEditing) {
+        final result = await productOps.updateProduct(
+          product: product,
+          updatedBy: currentUser.id,
+        );
+        if (result == null) throw Exception('Failed to update product');
+      } else {
+        final result = await productOps.createProduct(
+          product: product,
+          createdBy: currentUser.id,
+        );
+        if (result == null) throw Exception('Failed to create product');
+      }
 
       if (mounted) {
         context.showSuccessSnackBar(

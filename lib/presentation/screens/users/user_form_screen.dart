@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/utils/validators.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -76,6 +78,10 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.users),
+        ),
         title: Text(widget.isEditing ? 'Edit User' : 'Create User'),
       ),
       body: SingleChildScrollView(
@@ -416,13 +422,13 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
           }
 
           if (mounted) {
-            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('User updated successfully'),
                 backgroundColor: Colors.green,
               ),
             );
+            context.goBackOr(RoutePaths.users);
           }
         }
       } else {
@@ -446,13 +452,13 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
           );
 
           if (mounted) {
-            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('User created successfully'),
                 backgroundColor: Colors.green,
               ),
             );
+            context.goBackOr(RoutePaths.users);
           }
         }
       }

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/screens/logs/activity_logs_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/settings/cost_code_settings_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/settings/settings.dart';
-import 'package:maki_mobile_pos/presentation/screens/users/users_screen.dart';
 import 'package:maki_mobile_pos/presentation/widgets/settings/settings_wdigets.dart';
 
 /// Main settings screen with all configuration options.
@@ -20,6 +19,10 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.dashboard),
+        ),
         title: const Text('Settings'),
       ),
       body: ListView(
@@ -37,21 +40,21 @@ class SettingsScreen extends ConsumerWidget {
               iconColor: Colors.blue,
               title: 'User Management',
               subtitle: 'Add, edit, and manage users',
-              onTap: () => _navigateTo(context, const UsersScreen()),
+              onTap: () => context.push(RoutePaths.users),
             ),
             SettingsTile(
               icon: Icons.history,
               iconColor: Colors.purple,
               title: 'Activity Logs',
               subtitle: 'View user activity and audit trail',
-              onTap: () => _navigateTo(context, const ActivityLogsScreen()),
+              onTap: () => context.push(RoutePaths.userLogs),
             ),
             SettingsTile(
               icon: Icons.code,
               iconColor: Colors.orange,
               title: 'Cost Code Settings',
               subtitle: 'Configure cost encoding',
-              onTap: () => _navigateTo(context, const CostCodeSettingsScreen()),
+              onTap: () => context.push(RoutePaths.costCodeSettings),
             ),
             const Divider(height: 1),
           ],
@@ -103,7 +106,7 @@ class SettingsScreen extends ConsumerWidget {
             iconColor: Colors.grey,
             title: 'About',
             subtitle: '${AppConstants.appName} v${AppConstants.appVersion}',
-            onTap: () => _navigateTo(context, const AboutScreen()),
+            onTap: () => context.push('${RoutePaths.settings}/about'),
           ),
 
           const Divider(height: 1),
@@ -235,13 +238,6 @@ class SettingsScreen extends ConsumerWidget {
       case UserRole.cashier:
         return Icons.point_of_sale;
     }
-  }
-
-  void _navigateTo(BuildContext context, Widget screen) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => screen),
-    );
   }
 
   void _showComingSoon(BuildContext context) {

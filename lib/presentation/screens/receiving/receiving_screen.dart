@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
-import 'package:maki_mobile_pos/presentation/screens/receiving/bulk_receiving_screen.dart';
 import 'package:intl/intl.dart';
 
 /// Main receiving screen showing history and entry point for new receivings.
@@ -17,6 +19,10 @@ class ReceivingScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.dashboard),
+        ),
         title: const Text('Receiving'),
         actions: [
           IconButton(
@@ -307,12 +313,7 @@ class ReceivingScreen extends ConsumerWidget {
     await ref.read(currentReceivingProvider.notifier).initNewReceiving();
 
     if (context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const BulkReceivingScreen(),
-        ),
-      );
+      context.push(RoutePaths.bulkReceiving);
     }
   }
 }

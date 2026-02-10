@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/screens/inventory/inventory.dart';
 import 'package:maki_mobile_pos/presentation/widgets/inventory/inventory_widgets.dart';
 
 /// Main inventory management screen.
@@ -32,6 +34,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goBackOr(RoutePaths.dashboard),
+        ),
         title: const Text('Inventory'),
         actions: [
           // Cost visibility toggle (admin only)
@@ -472,12 +478,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   void _navigateToProductDetail(ProductEntity product) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductDetailScreen(productId: product.id),
-      ),
-    );
+    context.push('${RoutePaths.inventory}/${product.id}');
   }
 
   void _showStockAdjustment(ProductEntity product) {
@@ -492,10 +493,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   void _handleMenuAction(String action) {
     switch (action) {
       case 'add':
-        // Navigate to add product screen
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Add product screen coming soon')),
-        );
+        context.push(RoutePaths.productAdd);
         break;
       case 'import':
         ScaffoldMessenger.of(context).showSnackBar(
