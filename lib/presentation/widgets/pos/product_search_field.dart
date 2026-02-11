@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -26,6 +28,8 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
   bool _showResults = false;
   final _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
+  Timer? _debounceTimer;
+  String _debouncedQuery = '';
 
   @override
   void initState() {
@@ -36,6 +40,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     widget.controller.removeListener(_onSearchChanged);
     widget.focusNode.removeListener(_onFocusChanged);
     _removeOverlay();
@@ -44,14 +49,37 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
 
   void _onSearchChanged() {
     final query = widget.controller.text.trim();
+
+    if (query.isEmpty) {
+      _debounceTimer?.cancel();
+      setState(() {
+        _showResults = false;
+        _debouncedQuery = '';
+      });
+      _removeOverlay();
+      return;
+    }
+
     setState(() {
-      _showResults = query.isNotEmpty && widget.focusNode.hasFocus;
+      _showResults = widget.focusNode.hasFocus;
     });
 
+    // Debounce the search query to avoid excessive rebuilds
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _debouncedQuery = query;
+        });
+        if (_showResults) {
+          _showOverlay();
+        }
+      }
+    });
+
+    // Show overlay immediately (with previous results or loading)
     if (_showResults) {
       _showOverlay();
-    } else {
-      _removeOverlay();
     }
   }
 
@@ -142,13 +170,11 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
   }
 
   Widget _buildSearchResults() {
-    final query = widget.controller.text.trim();
-
-    if (query.isEmpty) {
+    if (_debouncedQuery.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final searchResults = ref.watch(productSearchProvider(query));
+    final searchResults = ref.watch(localProductSearchProvider(_debouncedQuery));
 
     return Container(
       constraints: const BoxConstraints(maxHeight: 300),

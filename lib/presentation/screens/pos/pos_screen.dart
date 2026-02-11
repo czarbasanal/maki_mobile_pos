@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/widgets/pos/cart_item_tile.dart';
@@ -140,8 +141,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       );
     }
 
-    // Use the product search provider
-    final searchResults = ref.watch(productSearchProvider(searchQuery));
+    // Use local in-memory search for instant results
+    final searchResults = ref.watch(localProductSearchProvider(searchQuery));
 
     return searchResults.when(
       data: (products) {
@@ -179,30 +180,61 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
   /// Cart section with items, discounts, and payment.
+  /// Everything scrolls except the action buttons which stay fixed at bottom.
   Widget _buildCartSection(CartState cart, ThemeData theme) {
     return Column(
       children: [
-        // Discount type selector
-        if (cart.isNotEmpty) _buildDiscountTypeSelector(cart),
-
-        // Cart items list
+        // Scrollable area: cart items, summary, payment
         Expanded(
-          child: cart.isEmpty ? _buildEmptyCart() : _buildCartList(cart),
+          child: cart.isEmpty
+              ? _buildEmptyCart()
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Discount type selector
+                      _buildDiscountTypeSelector(cart),
+
+                      // Cart items (inline, not separately scrollable)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: cart.items.length,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemBuilder: (context, index) {
+                          final item = cart.items[index];
+                          return CartItemTile(
+                            item: item,
+                            discountType: cart.discountType,
+                            onQuantityChanged: (qty) =>
+                                _updateItemQuantity(item.id, qty),
+                            onDiscountTap: () =>
+                                _showDiscountDialog(item, cart.discountType),
+                            onRemove: () => _removeItem(item.id),
+                          );
+                        },
+                      ),
+
+                      const Divider(height: 1),
+
+                      // Cart Summary
+                      CartSummary(cart: cart),
+
+                      const Divider(height: 1),
+
+                      // Payment Section
+                      PaymentSection(
+                        cart: cart,
+                        amountController: _amountReceivedController,
+                        onAmountChanged: _handleAmountChanged,
+                        onPaymentMethodChanged: _handlePaymentMethodChanged,
+                      ),
+                    ],
+                  ),
+                ),
         ),
 
-        // Cart summary and payment
-        if (cart.isNotEmpty) ...[
-          const Divider(height: 1),
-          CartSummary(cart: cart),
-          const Divider(height: 1),
-          PaymentSection(
-            cart: cart,
-            amountController: _amountReceivedController,
-            onAmountChanged: _handleAmountChanged,
-            onPaymentMethodChanged: _handlePaymentMethodChanged,
-          ),
-          _buildActionButtons(cart),
-        ],
+        // Fixed action buttons at bottom
+        if (cart.isNotEmpty) _buildActionButtons(cart),
       ],
     );
   }
@@ -235,24 +267,6 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  /// Cart items list.
-  Widget _buildCartList(CartState cart) {
-    return ListView.builder(
-      itemCount: cart.items.length,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemBuilder: (context, index) {
-        final item = cart.items[index];
-        return CartItemTile(
-          item: item,
-          discountType: cart.discountType,
-          onQuantityChanged: (qty) => _updateItemQuantity(item.id, qty),
-          onDiscountTap: () => _showDiscountDialog(item, cart.discountType),
-          onRemove: () => _removeItem(item.id),
-        );
-      },
     );
   }
 
@@ -558,48 +572,48 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     if (currentUser == null) return;
 
     final cartNotifier = ref.read(cartProvider.notifier);
-    final saleOps = ref.read(saleOperationsProvider.notifier);
-    final draftOps = ref.read(draftOperationsProvider.notifier);
-    final cart = ref.read(cartProvider);
 
     // Set processing state
     cartNotifier.setProcessing(true);
 
     try {
-      // Generate sale number
-      final saleNumber = await saleOps.generateSaleNumber(DateTime.now());
-      if (saleNumber == null) {
-        throw Exception('Failed to generate sale number');
-      }
+      // Create the use case
+      final useCase = ProcessSaleUseCase(
+        saleRepository: ref.read(saleRepositoryProvider),
+        productRepository: ref.read(productRepositoryProvider),
+        draftRepository: ref.read(draftRepositoryProvider),
+      );
 
-      // Create sale entity
+      // Build sale entity from cart
       final sale = cartNotifier.toSale(
-        saleNumber: saleNumber,
+        saleNumber: '', // Will be generated by use case
         cashierId: currentUser.id,
         cashierName: currentUser.displayName,
       );
 
-      // Process sale
-      final createdSale = await saleOps.createSale(sale);
+      // Process the sale (creates sale, deducts inventory, converts draft)
+      final result = await useCase.execute(sale: sale);
 
-      if (createdSale != null) {
-        // If from draft, mark it as converted
-        if (cart.isFromDraft && cart.sourceDraftId != null) {
-          await draftOps.markAsConverted(
-            draftId: cart.sourceDraftId!,
-            saleId: createdSale.id,
-          );
-        }
-
+      if (result.success && result.sale != null) {
         // Reset cart
         cartNotifier.resetAfterCheckout();
 
+        // Clear selected draft
+        ref.read(selectedDraftProvider.notifier).state = null;
+
+        // Invalidate providers to refresh data
+        ref.invalidate(todaysSalesProvider);
+        ref.invalidate(todaysSalesSummaryProvider);
+        ref.invalidate(activeDraftsProvider);
+        ref.invalidate(productsProvider);
+        ref.invalidate(lowStockProductsProvider);
+
         if (mounted) {
           // Show success with change info
-          _showCheckoutSuccessDialog(createdSale);
+          _showCheckoutSuccessDialog(result.sale!);
         }
       } else {
-        throw Exception('Failed to create sale');
+        throw Exception(result.errorMessage ?? 'Failed to process sale');
       }
     } catch (e) {
       cartNotifier.setError(e.toString());
