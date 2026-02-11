@@ -444,6 +444,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ref.invalidate(todaysSalesProvider);
         ref.invalidate(todaysSalesSummaryProvider);
         ref.invalidate(activeDraftsProvider);
+        ref.invalidate(productsProvider);
+        ref.invalidate(lowStockProductsProvider);
 
         if (mounted) {
           // Show success dialog

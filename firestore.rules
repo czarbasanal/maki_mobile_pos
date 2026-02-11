@@ -70,8 +70,15 @@ service cloud.firestore {
       // Cashiers can read for POS (limited fields enforced in app)
       allow read: if isValidUser() && isActiveUser();
       
-      // Only admin can create/update/delete products
-      allow create, update, delete: if isAdmin() && isActiveUser();
+      // Only admin can create/delete products and do full updates
+      allow create, delete: if isAdmin() && isActiveUser();
+
+      // Admin can update any product field
+      allow update: if isAdmin() && isActiveUser();
+
+      // Any valid user can update stock (quantity) during sale processing
+      allow update: if isValidUser() && isActiveUser() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['quantity', 'updatedAt', 'updatedBy']);
       
       // Price history subcollection
       match /price_history/{historyId} {

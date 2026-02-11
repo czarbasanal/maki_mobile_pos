@@ -46,13 +46,40 @@ final productByBarcodeProvider =
   return repository.getProductByBarcode(barcode);
 });
 
-/// Provides product search results.
+/// Provides product search results (Firestore query).
 final productSearchProvider =
     FutureProvider.family<List<ProductEntity>, String>((ref, query) async {
   if (query.trim().isEmpty) return [];
 
   final repository = ref.watch(productRepositoryProvider);
   return repository.searchProducts(query: query, limit: 20);
+});
+
+/// Provides instant product search from in-memory data.
+/// Falls back to Firestore search if products stream hasn't loaded yet.
+final localProductSearchProvider =
+    Provider.family<AsyncValue<List<ProductEntity>>, String>((ref, query) {
+  if (query.trim().isEmpty) return const AsyncValue.data([]);
+
+  final productsAsync = ref.watch(productsProvider);
+
+  return productsAsync.when(
+    data: (products) {
+      final searchTerms =
+          query.toLowerCase().split(' ').where((s) => s.isNotEmpty).toList();
+
+      final results = products.where((product) {
+        final searchable =
+            '${product.name} ${product.sku} ${product.barcode ?? ''} ${product.category ?? ''}'
+                .toLowerCase();
+        return searchTerms.every((term) => searchable.contains(term));
+      }).take(20).toList();
+
+      return AsyncValue.data(results);
+    },
+    loading: () => const AsyncValue.loading(),
+    error: (error, stack) => AsyncValue.error(error, stack),
+  );
 });
 
 /// Provides products by supplier.
@@ -242,6 +269,7 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     _ref.invalidate(lowStockProductsProvider);
     _ref.invalidate(inventoryValueAtCostProvider);
     _ref.invalidate(inventoryValueAtPriceProvider);
+    _ref.invalidate(categoriesProvider);
   }
 }
 

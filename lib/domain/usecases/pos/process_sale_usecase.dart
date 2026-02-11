@@ -62,7 +62,9 @@ class ProcessSaleUseCase {
 
       // 5. Update inventory
       if (updateInventory) {
-        await _updateInventory(sale.items, createdSale.cashierId);
+        final stockWarnings =
+            await _updateInventory(sale.items, createdSale.cashierId);
+        warnings.addAll(stockWarnings);
       }
 
       // 6. Mark draft as converted if applicable
@@ -144,10 +146,12 @@ class ProcessSaleUseCase {
   }
 
   /// Updates inventory for all items in the sale.
-  Future<void> _updateInventory(
+  /// Returns a list of warnings for any items that failed to update.
+  Future<List<String>> _updateInventory(
     List<SaleItemEntity> items,
     String updatedBy,
   ) async {
+    final warnings = <String>[];
     for (final item in items) {
       try {
         await _productRepository.updateStock(
@@ -156,11 +160,10 @@ class ProcessSaleUseCase {
           updatedBy: updatedBy,
         );
       } catch (e) {
-        // Log but don't fail - inventory can be corrected later
-        // In production, you might want to queue this for retry
-        print('Warning: Failed to update inventory for ${item.sku}: $e');
+        warnings.add('Stock update failed for ${item.sku}: $e');
       }
     }
+    return warnings;
   }
 }
 

@@ -393,10 +393,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       }
 
       if (mounted) {
+        // Ensure inventory list refreshes with fresh data
+        ref.invalidate(productsProvider);
         context.showSuccessSnackBar(
           widget.isEditing ? 'Product updated' : 'Product added',
         );
-        context.go(RoutePaths.inventory);
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(RoutePaths.inventory);
+        }
       }
     } catch (e) {
       if (mounted) {
