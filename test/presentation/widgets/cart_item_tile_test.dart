@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/presentation/widgets/pos/cart_item_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
 
 void main() {
   const testItem = SaleItemEntity(

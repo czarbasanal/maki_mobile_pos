@@ -6,8 +6,8 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/widgets/drafts/draft_detail_sheet.dart';
-import 'package:maki_mobile_pos/presentation/widgets/drafts/draft_list_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_detail_sheet.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_list_tile.dart';
 
 /// Screen displaying all active drafts.
 class DraftsListScreen extends ConsumerWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/presentation/widgets/inventory/product_list_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_list_tile.dart';
 
 void main() {
   final testProduct = ProductEntity(

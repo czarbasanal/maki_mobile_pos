@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:maki_mobile_pos/config/router/app_router.dart';
+import 'package:maki_mobile_pos/config/router/mobile_router.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -16,7 +16,7 @@ class MAKIPOSApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the router provider
-    final router = ref.watch(appRouterProvider);
+    final router = ref.watch(mobileRouterProvider);
 
     return MaterialApp.router(
       // App information

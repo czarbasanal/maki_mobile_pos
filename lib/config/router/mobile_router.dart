@@ -10,49 +10,49 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/screens/auth/login_screen.dart';
 
 // Main screens
-import 'package:maki_mobile_pos/presentation/screens/dashboard/dashboard_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/pos/pos_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/pos/checkout_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/dashboard/dashboard_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/pos/pos_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/pos/checkout_screen.dart';
 
 // Draft screens
-import 'package:maki_mobile_pos/presentation/screens/drafts/drafts_list_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/drafts/draft_edit_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/drafts_list_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/draft_edit_screen.dart';
 
 // Inventory screens
-import 'package:maki_mobile_pos/presentation/screens/inventory/inventory_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/inventory/product_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/inventory_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/product_form_screen.dart';
 
 // Receiving screens
-import 'package:maki_mobile_pos/presentation/screens/receiving/receiving_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/receiving/bulk_receiving_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/bulk_receiving_screen.dart';
 
 // Supplier screens
-import 'package:maki_mobile_pos/presentation/screens/suppliers/suppliers_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/suppliers/supplier_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/suppliers_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/supplier_form_screen.dart';
 
 // Expense screens
-import 'package:maki_mobile_pos/presentation/screens/expenses/expenses_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/expenses/expense_form_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/petty_cash/petty_cash_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/petty_cash/petty_cash_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expenses_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expense_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/petty_cash_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/petty_cash_form_screen.dart';
 
 // Report screens
-import 'package:maki_mobile_pos/presentation/screens/reports/sales_list_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/reports/sales_report_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/reports/profit_report_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/sales/sale_detail_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_list_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/sales/sale_detail_screen.dart';
 
 // User management screens
-import 'package:maki_mobile_pos/presentation/screens/users/users_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/users/user_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/users/users_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/users/user_form_screen.dart';
 
 // Settings screens
-import 'package:maki_mobile_pos/presentation/screens/settings/settings_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/settings/cost_code_settings_screen.dart';
-import 'package:maki_mobile_pos/presentation/screens/settings/about_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 
 // Logs screens
-import 'package:maki_mobile_pos/presentation/screens/logs/activity_logs_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
 
 // ==================== ACCESS DENIED SCREEN ====================
 
@@ -116,7 +116,7 @@ class _AccessDeniedScreen extends StatelessWidget {
 
 // ==================== ROUTER PROVIDER ====================
 
-final appRouterProvider = Provider<GoRouter>((ref) {
+final mobileRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(currentUserProvider);
 
   return GoRouter(

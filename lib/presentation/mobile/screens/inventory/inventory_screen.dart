@@ -6,7 +6,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/widgets/inventory/inventory_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 
 /// Main inventory management screen.
 class InventoryScreen extends ConsumerStatefulWidget {
