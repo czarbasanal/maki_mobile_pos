@@ -3,14 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/app_routes.dart';
 import 'package:maki_mobile_pos/config/router/route_guards.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
+import 'package:maki_mobile_pos/core/enums/user_role.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
-/// Router used by the mobile app (admin / staff / cashier).
+/// Router used by the web admin app.
 ///
-/// Role gating is delegated to [RouteGuards.canAccess]; the dashboard's menu
-/// is also driven by [RouteGuards.getMenuItems] so each role sees only the
-/// tabs it can use.
-final mobileRouterProvider = Provider<GoRouter>((ref) {
+/// Web is admin-only: any authenticated non-admin is bounced to /access-denied
+/// after login. Otherwise the route table is identical to mobile (admin sees
+/// every screen) and per-route permission gating still flows through
+/// [RouteGuards.canAccess] as a defence-in-depth check.
+final webRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(currentUserProvider);
 
   return GoRouter(
@@ -25,8 +27,14 @@ final mobileRouterProvider = Provider<GoRouter>((ref) {
 
       final isLoggedIn = user != null;
       final isLoginRoute = path == RoutePaths.login;
+      final isAccessDenied = path == '/access-denied';
 
       if (!isLoggedIn && !isPublicRoute) return RoutePaths.login;
+
+      if (isLoggedIn && user.role != UserRole.admin) {
+        return isAccessDenied ? null : '/access-denied';
+      }
+
       if (isLoggedIn && isLoginRoute) return RoutePaths.dashboard;
       if (isLoggedIn && !isPublicRoute && !RouteGuards.canAccess(path, user)) {
         return RoutePaths.dashboard;
