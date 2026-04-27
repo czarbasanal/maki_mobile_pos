@@ -1,40 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:maki_mobile_pos/config/router/mobile_router.dart';
+import 'package:maki_mobile_pos/config/router/web_router.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
-/// The root widget of the POS application.
+/// Root widget of the web admin app.
 ///
-/// Configures:
-/// - Theme (light/dark)
-/// - Router (go_router)
-/// - Localization (future)
-class MAKIPOSApp extends ConsumerWidget {
-  const MAKIPOSApp({super.key});
+/// Mounts the same screens as mobile until web-specific designs land in
+/// `presentation/web/`; the web router enforces admin-only access.
+class MAKIPOSWebApp extends ConsumerWidget {
+  const MAKIPOSWebApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the router provider
-    final router = ref.watch(mobileRouterProvider);
+    final router = ref.watch(webRouterProvider);
 
     return MaterialApp.router(
-      // App information
-      title: 'POS System',
+      title: 'POS Admin',
       debugShowCheckedModeBanner: false,
-
-      // Theme configuration
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light, // Default to light theme
-
-      // Router configuration
+      themeMode: ThemeMode.light,
       routerConfig: router,
-
-      // Builder for global overlays (loading, errors, etc.)
       builder: (context, child) {
         return MediaQuery(
-          // Prevent system font scaling from breaking layouts
           data: MediaQuery.of(context).copyWith(
             textScaler: TextScaler.noScaling,
           ),
@@ -45,7 +34,6 @@ class MAKIPOSApp extends ConsumerWidget {
   }
 }
 
-/// Displays a banner at the top when the device is offline.
 class _OfflineBanner extends ConsumerWidget {
   final Widget child;
 
