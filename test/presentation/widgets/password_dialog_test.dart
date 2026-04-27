@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:maki_mobile_pos/presentation/widgets/common/password_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/password_dialog.dart';
 
 void main() {
   group('PasswordDialog', () {

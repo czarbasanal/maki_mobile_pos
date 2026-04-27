@@ -7,7 +7,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 // Auth screens
-import 'package:maki_mobile_pos/presentation/screens/auth/login_screen.dart';
+import 'package:maki_mobile_pos/presentation/shared/screens/auth/login_screen.dart';
 
 // Main screens
 import 'package:maki_mobile_pos/presentation/screens/dashboard/dashboard_screen.dart';

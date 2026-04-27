@@ -2,7 +2,7 @@
 ///
 /// Import this file to access all common widgets:
 /// ```dart
-/// import 'package:pos_app/presentation/widgets/common/widgets.dart';
+/// import 'package:pos_app/presentation/shared/widgets/common/widgets.dart';
 /// ```
 library;
 

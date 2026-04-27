@@ -10,8 +10,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/widgets/dashboard/dashboard_widgets.dart';
-
-import '../../widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Dashboard screen showing role-based menu items and summary.
 ///
