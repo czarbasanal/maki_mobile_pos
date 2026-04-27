@@ -43,24 +43,26 @@ service cloud.firestore {
     // ==================== USERS COLLECTION ====================
     
     match /users/{userId} {
-      // Users can read their own document
-      // Admins can read all users
-      allow read: if isAuthenticated() && 
+      // Users can read their own document; admins can read all users.
+      // Read is intentionally NOT gated on isActiveUser() so a deactivated
+      // user can still discover their isActive=false state on login.
+      allow read: if isAuthenticated() &&
         (request.auth.uid == userId || isAdmin());
-      
-      // Only admins can create users
-      allow create: if isAdmin();
-      
-      // Users can update their own non-role fields (displayName, password handled by Auth)
-      // Admins can update any user
-      allow update: if isAuthenticated() && (
-        (request.auth.uid == userId && 
+
+      // Writes require an active session. Without isActiveUser() a
+      // deactivated admin could still mint/delete accounts as long as their
+      // auth session was valid (regression caught by the rules suite).
+      allow create: if isAdmin() && isActiveUser();
+
+      // Users can update their own non-role fields (displayName, password handled by Auth).
+      // Admins can update any user.
+      allow update: if isAuthenticated() && isActiveUser() && (
+        (request.auth.uid == userId &&
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isActive'])) ||
         isAdmin()
       );
-      
-      // Only admins can delete users
-      allow delete: if isAdmin();
+
+      allow delete: if isAdmin() && isActiveUser();
     }
     
     // ==================== PRODUCTS COLLECTION ====================
