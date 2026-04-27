@@ -7,7 +7,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
-import 'package:maki_mobile_pos/presentation/widgets/users/user_list_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/users/user_list_tile.dart';
 
 /// Screen displaying list of all users (admin only).
 class UsersScreen extends ConsumerStatefulWidget {

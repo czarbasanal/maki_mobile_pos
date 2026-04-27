@@ -9,7 +9,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/permissions/permissions.dart';
 import 'package:maki_mobile_pos/domain/entities/petty_cash_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/petty_cash_provider.dart';
-import 'package:maki_mobile_pos/presentation/screens/petty_cash/cut_off_dialog.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/cut_off_dialog.dart';
 
 /// Petty cash dashboard. Lists recent transactions and shows the running
 /// balance. Admin-only (gated by [Permission.managePettyCash]).

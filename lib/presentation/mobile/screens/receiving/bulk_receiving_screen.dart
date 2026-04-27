@@ -8,7 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
-import 'package:maki_mobile_pos/presentation/widgets/receiving/receiving_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
 
 /// Screen for bulk stock receiving.
 class BulkReceivingScreen extends ConsumerStatefulWidget {

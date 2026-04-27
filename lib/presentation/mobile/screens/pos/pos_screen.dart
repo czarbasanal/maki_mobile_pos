@@ -9,10 +9,10 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
-import 'package:maki_mobile_pos/presentation/widgets/pos/cart_item_tile.dart';
-import 'package:maki_mobile_pos/presentation/widgets/pos/cart_summary.dart';
-import 'package:maki_mobile_pos/presentation/widgets/pos/payment_section.dart';
-import 'package:maki_mobile_pos/presentation/widgets/pos/product_search_field.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/payment_section.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 
 /// Main POS screen for processing sales.
 class POSScreen extends ConsumerStatefulWidget {

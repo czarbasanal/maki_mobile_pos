@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:maki_mobile_pos/presentation/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 
 void main() {
   group('DateRangePicker', () {

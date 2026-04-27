@@ -5,7 +5,7 @@ import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 
 /// Sales report dashboard with summary and analytics.
 class SalesReportScreen extends ConsumerStatefulWidget {
