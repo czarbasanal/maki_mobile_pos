@@ -11,7 +11,13 @@ class MockProductRepository extends Mock implements ProductRepository {}
 
 class MockDraftRepository extends Mock implements DraftRepository {}
 
+class _FakeSaleEntity extends Fake implements SaleEntity {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeSaleEntity());
+  });
+
   late ProcessSaleUseCase useCase;
   late MockSaleRepository mockSaleRepo;
   late MockProductRepository mockProductRepo;
