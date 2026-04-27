@@ -15,3 +15,5 @@ export 'supplier_repository.dart';
 export 'user_repository.dart';
 export 'receiving_repository.dart';
 export 'activity_log_repository.dart';
+export 'expense_repository.dart';
+export 'petty_cash_repository.dart';

@@ -388,7 +388,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Stock updated: ${widget.product.name} → ${_newQuantity} ${widget.product.unit}',
+              'Stock updated: ${widget.product.name} → $_newQuantity ${widget.product.unit}',
             ),
             backgroundColor: Colors.green,
           ),

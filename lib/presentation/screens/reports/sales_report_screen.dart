@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -29,6 +30,19 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider).valueOrNull;
+    final dailyOnly =
+        user != null && RolePermissions.isDailyReportsOnly(user.role);
+
+    if (dailyOnly) {
+      // Force today regardless of any prior state — non-admin roles cannot
+      // view historical data.
+      final now = DateTime.now();
+      _startDate = DateTime(now.year, now.month, now.day);
+      _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      _selectedPreset = DateRangePreset.today;
+    }
+
     final params = DateRangeParams(
       startDate: _startDate,
       endDate: _endDate,
@@ -55,14 +69,37 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Date range picker
-              DateRangePicker(
-                startDate: _startDate,
-                endDate: _endDate,
-                selectedPreset: _selectedPreset,
-                onPresetChanged: _handlePresetChange,
-                onCustomRangeSelected: _handleCustomRange,
-              ),
+              // Date range picker — hidden for roles restricted to today.
+              if (dailyOnly)
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock_clock, color: Colors.amber[800]),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          "Showing today's sales only. "
+                          'Contact an admin for historical reports.',
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                DateRangePicker(
+                  startDate: _startDate,
+                  endDate: _endDate,
+                  selectedPreset: _selectedPreset,
+                  onPresetChanged: _handlePresetChange,
+                  onCustomRangeSelected: _handleCustomRange,
+                ),
 
               // Sales summary
               Padding(

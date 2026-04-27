@@ -61,11 +61,16 @@ class DraftsListScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemBuilder: (context, index) {
           final draft = drafts[index];
+          // Mirrors firestore.rules: creator or admin can delete.
+          final user = ref.read(currentUserProvider).valueOrNull;
+          final canDelete =
+              user != null && (user.isAdmin || draft.createdBy == user.id);
           return DraftListTile(
             draft: draft,
             onTap: () => _showDraftDetails(context, ref, draft),
             onLoadTap: () => _loadDraftIntoCart(context, ref, draft),
-            onDeleteTap: () => _confirmDeleteDraft(context, ref, draft),
+            onDeleteTap:
+                canDelete ? () => _confirmDeleteDraft(context, ref, draft) : null,
           );
         },
       ),

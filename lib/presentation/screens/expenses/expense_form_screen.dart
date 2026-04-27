@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
+import 'package:maki_mobile_pos/presentation/providers/expense_provider.dart';
 
 /// Screen for creating or editing an expense.
 class ExpenseFormScreen extends ConsumerStatefulWidget {
@@ -90,8 +92,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 validator: (value) {
                   if (value?.isEmpty == true) return 'Amount is required';
                   final amount = double.tryParse(value!);
-                  if (amount == null || amount <= 0)
+                  if (amount == null || amount <= 0) {
                     return 'Enter a valid amount';
+                  }
                   return null;
                 },
               ),
@@ -99,7 +102,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
               // Category
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category *',
                   prefixIcon: Icon(Icons.category),
@@ -190,9 +193,46 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
     setState(() => _isSaving = true);
 
+    final notifier = ref.read(expenseOperationsProvider.notifier);
+    final amount = double.parse(_amountController.text);
+    final notes = _notesController.text.trim();
+    final now = DateTime.now();
+
     try {
-      // TODO: Implement expense saving
-      await Future.delayed(const Duration(seconds: 1));
+      if (widget.isEditing) {
+        final existing =
+            await ref.read(expenseByIdProvider(widget.expenseId!).future);
+        if (existing == null) {
+          if (mounted) {
+            context.showErrorSnackBar('Expense not found');
+          }
+          return;
+        }
+        final updated = existing.copyWith(
+          description: _descriptionController.text.trim(),
+          amount: amount,
+          category: _selectedCategory,
+          date: _selectedDate,
+          notes: notes.isEmpty ? null : notes,
+          clearNotes: notes.isEmpty,
+        );
+        final saved = await notifier.updateExpense(expense: updated);
+        if (saved == null) throw _readOperationError();
+      } else {
+        final draft = ExpenseEntity(
+          id: '',
+          description: _descriptionController.text.trim(),
+          amount: amount,
+          category: _selectedCategory,
+          date: _selectedDate,
+          notes: notes.isEmpty ? null : notes,
+          createdAt: now,
+          createdBy: '',
+          createdByName: '',
+        );
+        final saved = await notifier.createExpense(expense: draft);
+        if (saved == null) throw _readOperationError();
+      }
 
       if (mounted) {
         context.showSuccessSnackBar(
@@ -207,5 +247,12 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  Object _readOperationError() {
+    final state = ref.read(expenseOperationsProvider);
+    return state.hasError
+        ? state.error ?? 'Operation failed'
+        : 'Operation failed';
   }
 }

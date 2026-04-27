@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/receiving_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
-import 'package:maki_mobile_pos/domain/repositories/receiving_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/domain/usecases/receiving/complete_receiving_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:uuid/uuid.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
@@ -11,6 +13,16 @@ import 'package:uuid/uuid.dart';
 final receivingRepositoryProvider = Provider<ReceivingRepository>((ref) {
   final productRepo = ref.watch(productRepositoryProvider);
   return ReceivingRepositoryImpl(productRepository: productRepo);
+});
+
+// ==================== USE-CASE PROVIDERS ====================
+
+final completeReceivingUseCaseProvider =
+    Provider<CompleteReceivingUseCase>((ref) {
+  return CompleteReceivingUseCase(
+    repository: ref.watch(receivingRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
 });
 
 // ==================== RECEIVING QUERIES ====================
@@ -287,15 +299,26 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
         receivingId = draft.id;
       }
 
-      // Complete the receiving
-      final result = await _repository.completeReceiving(
-        receivingId: receivingId,
-        completedBy: createdBy,
-      );
+      // Complete the receiving via the use-case (asserts permission, audit-logs).
+      final actor = _ref.read(currentUserProvider).valueOrNull;
+      if (actor == null) {
+        throw const UnauthenticatedException();
+      }
+      final useCaseResult = await _ref
+          .read(completeReceivingUseCaseProvider)
+          .execute(actor: actor, receivingId: receivingId);
+
+      if (!useCaseResult.success) {
+        state = state.copyWith(
+          isProcessing: false,
+          errorMessage: useCaseResult.errorMessage ?? 'Failed to complete',
+        );
+        return null;
+      }
 
       state = const CurrentReceivingState();
       _invalidateProviders();
-      return result;
+      return useCaseResult.data;
     } catch (e) {
       state = state.copyWith(
         isProcessing: false,

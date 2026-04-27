@@ -8,14 +8,16 @@ class DraftListTile extends StatelessWidget {
   final DraftEntity draft;
   final VoidCallback onTap;
   final VoidCallback onLoadTap;
-  final VoidCallback onDeleteTap;
+
+  /// Null when the current user lacks permission to delete this draft.
+  final VoidCallback? onDeleteTap;
 
   const DraftListTile({
     super.key,
     required this.draft,
     required this.onTap,
     required this.onLoadTap,
-    required this.onDeleteTap,
+    this.onDeleteTap,
   });
 
   @override
@@ -119,15 +121,17 @@ class DraftListTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // Delete button
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: onDeleteTap,
-                    tooltip: 'Delete draft',
-                    visualDensity: VisualDensity.compact,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 8),
+                  // Delete button — hidden when current user lacks permission.
+                  if (onDeleteTap != null) ...[
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: onDeleteTap,
+                      tooltip: 'Delete draft',
+                      visualDensity: VisualDensity.compact,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   // Load button
                   FilledButton.icon(
                     onPressed: onLoadTap,

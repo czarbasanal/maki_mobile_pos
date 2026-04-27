@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Card displaying sales summary metrics.
+///
+/// Role-based visibility:
+/// - All roles see: Total Sales, Voided count, Gross Sales, Discounts, Net Sales
+/// - Admin only sees: Average Daily Sales, Total Cost, Gross Profit (+ margin %)
 class SalesSummaryCard extends ConsumerWidget {
   final DateTime startDate;
   final DateTime endDate;
@@ -23,15 +29,18 @@ class SalesSummaryCard extends ConsumerWidget {
     );
 
     final summaryAsync = ref.watch(salesSummaryProvider(params));
+    final currentUser = ref.watch(currentUserProvider).value;
+    final isAdmin = currentUser?.role == UserRole.admin;
 
     return summaryAsync.when(
-      data: (summary) => _buildSummaryContent(context, summary),
+      data: (summary) => _buildSummaryContent(context, summary, isAdmin),
       loading: () => _buildLoadingState(),
       error: (error, _) => _buildErrorState(error),
     );
   }
 
-  Widget _buildSummaryContent(BuildContext context, SalesSummary summary) {
+  Widget _buildSummaryContent(
+      BuildContext context, SalesSummary summary, bool isAdmin) {
     final theme = Theme.of(context);
 
     return Card(
@@ -57,7 +66,7 @@ class SalesSummaryCard extends ConsumerWidget {
 
             const SizedBox(height: 20),
 
-            // Main metrics row
+            // Main metrics row - visible to all roles
             Row(
               children: [
                 Expanded(
@@ -84,7 +93,7 @@ class SalesSummaryCard extends ConsumerWidget {
 
             const SizedBox(height: 12),
 
-            // Revenue metrics
+            // Revenue metrics - visible to all roles
             Row(
               children: [
                 Expanded(
@@ -114,7 +123,7 @@ class SalesSummaryCard extends ConsumerWidget {
             const Divider(),
             const SizedBox(height: 16),
 
-            // Net sales highlight
+            // Net sales - visible to all roles
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -122,77 +131,88 @@ class SalesSummaryCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Net Sales',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        Text(
-                          '${AppConstants.currencySymbol}${summary.netAmount.toStringAsFixed(2)}',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
+                  const Text(
+                    'Net Sales',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Avg: ${AppConstants.currencySymbol}${summary.averageSaleAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
+                  Text(
+                    '${AppConstants.currencySymbol}${summary.netAmount.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
+            // ==================== ADMIN-ONLY SECTION ====================
+            // Average Daily Sales, Total Cost, and Gross Profit
+            // Hidden for staff and cashier
+            if (isAdmin) ...[
+              const SizedBox(height: 12),
 
-            // Profit section
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricCard(
-                    context,
-                    'Total Cost',
-                    '${AppConstants.currencySymbol}${summary.totalCost.toStringAsFixed(2)}',
-                    Icons.inventory,
-                    Colors.grey,
-                  ),
+              // Average sale amount badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildMetricCard(
-                    context,
-                    'Gross Profit',
-                    '${AppConstants.currencySymbol}${summary.totalProfit.toStringAsFixed(2)}',
-                    Icons.trending_up,
-                    Colors.green,
-                    subtitle:
-                        '${summary.profitMargin.toStringAsFixed(1)}% margin',
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.trending_flat,
+                        size: 16, color: Colors.purple),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Avg: ${AppConstants.currencySymbol}${summary.averageSaleAmount.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.purple,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Profit section - admin only
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetricCard(
+                      context,
+                      'Total Cost',
+                      '${AppConstants.currencySymbol}${summary.totalCost.toStringAsFixed(2)}',
+                      Icons.inventory,
+                      Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildMetricCard(
+                      context,
+                      'Gross Profit',
+                      '${AppConstants.currencySymbol}${summary.totalProfit.toStringAsFixed(2)}',
+                      Icons.trending_up,
+                      Colors.green,
+                      subtitle:
+                          '${summary.profitMargin.toStringAsFixed(1)}% margin',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -210,8 +230,9 @@ class SalesSummaryCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,15 +245,16 @@ class SalesSummaryCard extends ConsumerWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[700],
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(
@@ -241,14 +263,16 @@ class SalesSummaryCard extends ConsumerWidget {
               color: color,
             ),
           ),
-          if (subtitle != null)
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
             Text(
               subtitle,
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.grey[600],
+                color: Colors.grey[500],
               ),
             ),
+          ],
         ],
       ),
     );
@@ -257,7 +281,7 @@ class SalesSummaryCard extends ConsumerWidget {
   Widget _buildLoadingState() {
     return const Card(
       child: Padding(
-        padding: EdgeInsets.all(48),
+        padding: EdgeInsets.all(32),
         child: Center(child: CircularProgressIndicator()),
       ),
     );
@@ -266,12 +290,15 @@ class SalesSummaryCard extends ConsumerWidget {
   Widget _buildErrorState(Object error) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const Icon(Icons.error_outline, color: Colors.red, size: 32),
             const SizedBox(height: 8),
-            Text('Failed to load summary: $error'),
+            Text(
+              'Failed to load summary',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ],
         ),
       ),

@@ -158,6 +158,16 @@ enum ActivityType {
   settings('settings', 'Settings', '⚙️'),
   costCodeChanged('cost_code_changed', 'Cost Code Changed', '🔢'),
 
+  // Expenses
+  expense('expense', 'Expense', '🧾'),
+
+  // Suppliers
+  supplier('supplier', 'Supplier', '🚚'),
+
+  // Petty Cash
+  pettyCash('petty_cash', 'Petty Cash', '💵'),
+  pettyCashCutOff('petty_cash_cutoff', 'Petty Cash Cut-off', '🧮'),
+
   // General
   other('other', 'Other', '📝');
 

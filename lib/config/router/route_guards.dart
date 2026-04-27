@@ -23,22 +23,33 @@ abstract class RouteGuards {
 
   /// Routes that require specific permissions
   static const Map<String, Permission> protectedRoutes = {
+    // Inventory
     '/inventory': Permission.viewInventory,
     '/inventory/add': Permission.addProduct,
+    // Receiving
     '/receiving': Permission.accessReceiving,
     '/receiving/bulk': Permission.bulkReceive,
+    // Suppliers
     '/suppliers': Permission.viewSuppliers,
     '/suppliers/add': Permission.addSupplier,
+    // Expenses
     '/expenses': Permission.viewExpenses,
     '/expenses/add': Permission.addExpense,
+    // Reports
     '/reports': Permission.viewSalesReports,
     '/reports/sales': Permission.viewSalesReports,
     '/reports/profit': Permission.viewProfitReports,
+    // Users
     '/users': Permission.viewUsers,
     '/users/add': Permission.addUser,
+    // Settings
     '/settings': Permission.viewSettings,
     '/settings/cost-codes': Permission.editCostCodeMapping,
+    // Logs
     '/logs': Permission.viewUserLogs,
+    // Petty Cash
+    '/petty-cash': Permission.managePettyCash,
+    '/petty-cash/new': Permission.managePettyCash,
   };
 
   /// Checks if a route is public (no auth required).
@@ -107,9 +118,14 @@ abstract class RouteGuards {
 
   /// Checks access for dynamic routes (with parameters).
   static bool _checkDynamicRoute(String path, UserEntity user) {
-    // Inventory edit/detail routes
-    if (path.startsWith('/inventory/edit/') ||
-        RegExp(r'^/inventory/[^/]+$').hasMatch(path)) {
+    // Inventory edit routes - staff needs editProductLimited, admin needs editProduct
+    if (path.startsWith('/inventory/edit/')) {
+      return user.hasPermission(Permission.editProduct) ||
+          user.hasPermission(Permission.editProductLimited);
+    }
+
+    // Inventory detail routes (view) - anyone with viewInventory
+    if (RegExp(r'^/inventory/[^/]+$').hasMatch(path)) {
       return user.hasPermission(Permission.viewInventory);
     }
 
@@ -118,9 +134,14 @@ abstract class RouteGuards {
       return user.hasPermission(Permission.editSupplier);
     }
 
-    // Expense edit routes
+    // Expense edit routes - only admin can edit
     if (path.startsWith('/expenses/edit/')) {
       return user.hasPermission(Permission.editExpense);
+    }
+
+    // Report sale detail routes - anyone with viewSalesReports
+    if (path.startsWith('/reports/sale/')) {
+      return user.hasPermission(Permission.viewSalesReports);
     }
 
     // User edit routes
@@ -144,6 +165,11 @@ abstract class RouteGuards {
   }
 
   /// Gets available menu items for a user role.
+  ///
+  /// Updated role permissions:
+  /// - Cashier: POS, Drafts, Inventory (view), Reports (daily), Expenses (add), Settings (profile)
+  /// - Staff: POS, Drafts, Inventory (edit no price), Receiving, Reports (daily), Expenses (add), Settings (profile)
+  /// - Admin: Everything
   static List<MenuItem> getMenuItems(UserRole role) {
     final items = <MenuItem>[];
 
@@ -161,7 +187,7 @@ abstract class RouteGuards {
       path: '/drafts',
     ));
 
-    // Inventory - staff and admin
+    // Inventory - all roles can view
     if (RolePermissions.hasPermission(role, Permission.viewInventory)) {
       items.add(const MenuItem(
         title: 'Inventory',
@@ -188,7 +214,7 @@ abstract class RouteGuards {
       ));
     }
 
-    // Expenses - admin only
+    // Expenses - all roles can view/add
     if (RolePermissions.hasPermission(role, Permission.viewExpenses)) {
       items.add(const MenuItem(
         title: 'Expenses',
@@ -197,7 +223,16 @@ abstract class RouteGuards {
       ));
     }
 
-    // Reports - admin only
+    // Petty Cash - admin only
+    if (RolePermissions.hasPermission(role, Permission.managePettyCash)) {
+      items.add(const MenuItem(
+        title: 'Petty Cash',
+        icon: Icons.savings,
+        path: '/petty-cash',
+      ));
+    }
+
+    // Reports - all roles (daily for cashier/staff, full for admin)
     if (RolePermissions.hasPermission(role, Permission.viewSalesReports)) {
       items.add(const MenuItem(
         title: 'Reports',
@@ -215,7 +250,7 @@ abstract class RouteGuards {
       ));
     }
 
-    // Settings - admin only
+    // Settings - all roles (profile for cashier/staff, full for admin)
     if (RolePermissions.hasPermission(role, Permission.viewSettings)) {
       items.add(const MenuItem(
         title: 'Settings',

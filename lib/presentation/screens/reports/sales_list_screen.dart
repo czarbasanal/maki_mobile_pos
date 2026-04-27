@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -36,6 +37,15 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = ref.watch(currentUserProvider).valueOrNull;
+    final dailyOnly =
+        user != null && RolePermissions.isDailyReportsOnly(user.role);
+    if (dailyOnly) {
+      final now = DateTime.now();
+      _startDate = DateTime(now.year, now.month, now.day);
+      _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      _selectedPreset = DateRangePreset.today;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -59,14 +69,15 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       ),
       body: Column(
         children: [
-          // Date range picker
-          DateRangePicker(
-            startDate: _startDate,
-            endDate: _endDate,
-            selectedPreset: _selectedPreset,
-            onPresetChanged: _handlePresetChange,
-            onCustomRangeSelected: _handleCustomRange,
-          ),
+          // Date range picker — hidden when role is restricted to today.
+          if (!dailyOnly)
+            DateRangePicker(
+              startDate: _startDate,
+              endDate: _endDate,
+              selectedPreset: _selectedPreset,
+              onPresetChanged: _handlePresetChange,
+              onCustomRangeSelected: _handleCustomRange,
+            ),
 
           // Active filters display
           if (_statusFilter != null || _cashierFilter != null)

@@ -108,6 +108,14 @@ abstract class RouteNames {
 
   /// User logs route
   static const String userLogs = 'userLogs';
+
+  // ==================== PETTY CASH ROUTES ====================
+
+  /// Petty cash dashboard
+  static const String pettyCash = 'pettyCash';
+
+  /// New petty cash entry (cash in/out)
+  static const String pettyCashNew = 'pettyCashNew';
 }
 
 /// Route paths (URL paths).
@@ -175,4 +183,9 @@ abstract class RoutePaths {
   // ==================== LOGS PATHS ====================
 
   static const String userLogs = '/logs';
+
+  // ==================== PETTY CASH PATHS ====================
+
+  static const String pettyCash = '/petty-cash';
+  static const String pettyCashNew = '/petty-cash/new';
 }

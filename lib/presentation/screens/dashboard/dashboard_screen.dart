@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -17,10 +18,15 @@ import '../../widgets/common/common_widgets.dart';
 /// Features:
 /// - Displays logged-in user info
 /// - Shows today's sales summary
-/// - Quick action buttons
+/// - Quick action buttons (role-based)
 /// - Recent transactions
 /// - Role-based menu items
 /// - Sign out functionality
+///
+/// Updated role access:
+/// - All roles see: Inventory, Reports (daily), Expenses quick actions
+/// - Staff/Admin see: Receiving quick action
+/// - Admin only sees: Profit summary cards
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -84,6 +90,26 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     return 'Good evening';
   }
 
+  // ==================== PERMISSION HELPERS ====================
+
+  UserRole get _role => widget.user.role;
+
+  bool get _isAdmin => _role == UserRole.admin;
+
+  bool get _canViewInventory =>
+      RolePermissions.hasPermission(_role, Permission.viewInventory);
+
+  bool get _canAccessReceiving =>
+      RolePermissions.hasPermission(_role, Permission.accessReceiving);
+
+  bool get _canViewReports =>
+      RolePermissions.hasPermission(_role, Permission.viewSalesReports);
+
+  bool get _canViewExpenses =>
+      RolePermissions.hasPermission(_role, Permission.viewExpenses);
+
+  // ==================== ACTIONS ====================
+
   Future<void> _handleSignOut() async {
     final shouldSignOut = await showDialog<bool>(
       context: context,
@@ -134,12 +160,11 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     ref.invalidate(inventorySummaryProvider);
   }
 
+  // ==================== BUILD ====================
+
   @override
   Widget build(BuildContext context) {
     final menuItems = RouteGuards.getMenuItems(widget.user.role);
-    final isAdmin = widget.user.role == UserRole.admin;
-    final isStaffOrAdmin = widget.user.role == UserRole.admin ||
-        widget.user.role == UserRole.staff;
 
     return LoadingOverlay(
       isLoading: _isLoggingOut,
@@ -193,7 +218,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
           child: RefreshIndicator(
             onRefresh: _handleRefresh,
             child: _showDetailedView
-                ? _buildDetailedView(isAdmin, isStaffOrAdmin)
+                ? _buildDetailedView()
                 : _buildGridView(menuItems),
           ),
         ),
@@ -207,7 +232,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     );
   }
 
-  Widget _buildDetailedView(bool isAdmin, bool isStaffOrAdmin) {
+  Widget _buildDetailedView() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -216,41 +241,46 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
         const SizedBox(height: 16),
 
-        // Quick actions
+        // Quick actions - role-based
         QuickActions(
           onNewSale: () => context.go(RoutePaths.pos),
-          onReceiving:
-              isStaffOrAdmin ? () => context.go(RoutePaths.receiving) : null,
+          onReceiving: _canAccessReceiving
+              ? () => context.go(RoutePaths.receiving)
+              : null,
           onInventory:
-              isStaffOrAdmin ? () => context.go(RoutePaths.inventory) : null,
+              _canViewInventory ? () => context.go(RoutePaths.inventory) : null,
+          onExpenses:
+              _canViewExpenses ? () => context.go(RoutePaths.expenses) : null,
           onReports:
-              isStaffOrAdmin ? () => context.go(RoutePaths.reports) : null,
+              _canViewReports ? () => context.go(RoutePaths.reports) : null,
         ),
 
         const SizedBox(height: 24),
 
-        // Sales summary section
+        // Sales summary section - all roles can see today's sales
         _buildSectionHeader('Today\'s Sales'),
         const SizedBox(height: 12),
-        _buildSalesSummary(isAdmin),
+        _buildSalesSummary(_isAdmin),
 
         const SizedBox(height: 24),
 
-        // Inventory summary (staff and admin only)
-        if (isStaffOrAdmin) ...[
+        // Inventory summary - all roles can view inventory now
+        if (_canViewInventory) ...[
           _buildSectionHeader('Inventory Status'),
           const SizedBox(height: 12),
           const InventoryStatusWidget(),
           const SizedBox(height: 24),
         ],
 
-        // Recent sales
+        // Recent sales - all roles can see
         _buildSectionHeader(
           'Recent Transactions',
-          trailing: TextButton(
-            onPressed: () => context.go(RoutePaths.reports),
-            child: const Text('View All'),
-          ),
+          trailing: _canViewReports
+              ? TextButton(
+                  onPressed: () => context.go(RoutePaths.reports),
+                  child: const Text('View All'),
+                )
+              : null,
         ),
         const SizedBox(height: 12),
         const RecentSalesWidget(limit: 5),
@@ -383,6 +413,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 ),
               ],
             ),
+            // Profit cards - admin only
             if (showProfit) ...[
               const SizedBox(height: 12),
               Row(
