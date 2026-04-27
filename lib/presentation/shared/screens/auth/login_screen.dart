@@ -9,13 +9,6 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Login screen for user authentication.
-///
-/// Features:
-/// - Email and password input
-/// - Form validation
-/// - Loading state
-/// - Error handling
-/// - Forgot password link
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -43,46 +36,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    // Clear previous error
-    setState(() {
-      _errorMessage = null;
-    });
-
-    // Validate form
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    // Show loading
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _errorMessage = null);
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
 
     try {
-      // Attempt sign in
       await ref.read(authActionsProvider).signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
-
-      // Navigate to dashboard on success
-      if (mounted) {
-        context.go(RoutePaths.dashboard);
-      }
+      if (mounted) context.go(RoutePaths.dashboard);
     } on AuthException catch (e) {
-      setState(() {
-        _errorMessage = e.message;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
-      });
+      setState(() => _errorMessage = e.message);
+    } catch (_) {
+      setState(() =>
+          _errorMessage = 'An unexpected error occurred. Please try again.');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -111,14 +81,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    // Show confirmation dialog
     final shouldSend = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: Text(
-          'Send password reset email to:\n$email',
-        ),
+        title: const Text('Reset password'),
+        content: Text('Send password reset email to:\n$email'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -134,13 +101,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (shouldSend != true) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       await ref.read(authActionsProvider).sendPasswordResetEmail(email);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -149,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -159,110 +123,85 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final isSmallScreen = screenHeight < 700;
-
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       body: LoadingOverlay(
         isLoading: _isLoading,
-        message: 'Signing in...',
+        message: 'Signing in…',
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: 24,
-                vertical: isSmallScreen ? 16 : 32,
+                vertical: 32,
               ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Logo and Title
-                    _buildHeader(isSmallScreen),
-
-                    SizedBox(height: isSmallScreen ? 32 : 48),
-
-                    // Error Message
-                    if (_errorMessage != null) ...[
-                      _buildErrorMessage(),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 40),
+                      if (_errorMessage != null) ...[
+                        _buildErrorMessage(),
+                        const SizedBox(height: 16),
+                      ],
+                      AppTextField(
+                        controller: _emailController,
+                        focusNode: _emailFocusNode,
+                        labelText: 'Email',
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofocus: true,
+                        onSubmitted: (_) => _passwordFocusNode.requestFocus(),
+                        validator: Validators.email,
+                      ),
                       const SizedBox(height: 16),
-                    ],
-
-                    // Email Field
-                    AppTextField(
-                      controller: _emailController,
-                      focusNode: _emailFocusNode,
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
-                      prefixIcon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      autofocus: true,
-                      onSubmitted: (_) => _passwordFocusNode.requestFocus(),
-                      validator: Validators.email,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Password Field
-                    AppTextField(
-                      controller: _passwordController,
-                      focusNode: _passwordFocusNode,
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: true,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _handleLogin(),
-                      validator: Validators.password,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Forgot Password Link
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _handleForgotPassword,
-                        child: Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            color: AppColors.primaryDark,
-                            fontWeight: FontWeight.w500,
+                      AppTextField(
+                        controller: _passwordController,
+                        focusNode: _passwordFocusNode,
+                        labelText: 'Password',
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _handleLogin(),
+                        validator: Validators.password,
+                      ),
+                      const SizedBox(height: 24),
+                      AppButton(
+                        text: 'Sign in',
+                        onPressed: _handleLogin,
+                        isLoading: _isLoading,
+                        isFullWidth: true,
+                      ),
+                      const SizedBox(height: 4),
+                      Center(
+                        child: TextButton(
+                          onPressed: _handleForgotPassword,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.lightTextSecondary,
+                          ),
+                          child: const Text(
+                            'Forgot password?',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Login Button
-                    AppButton(
-                      text: 'Sign In',
-                      onPressed: _handleLogin,
-                      isLoading: _isLoading,
-                      isFullWidth: true,
-                      leadingIcon: Icons.login,
-                    ),
-
-                    SizedBox(height: isSmallScreen ? 24 : 48),
-
-                    // Footer
-                    _buildFooter(),
-                  ],
+                      const SizedBox(height: 48),
+                      _buildFooter(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -272,47 +211,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildHeader(bool isSmallScreen) {
+  Widget _buildHeader() {
     return Column(
       children: [
-        // Logo
         Container(
-          width: isSmallScreen ? 80 : 100,
-          height: isSmallScreen ? 80 : 100,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
-            color: AppColors.primaryDark,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryDark.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.lightBorder,
+              width: 1.2,
+            ),
           ),
-          child: Icon(
-            Icons.point_of_sale,
-            size: isSmallScreen ? 48 : 56,
-            color: Colors.white,
+          alignment: Alignment.center,
+          child: Text(
+            'M',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryDark,
+              height: 1,
+            ),
           ),
         ),
-
-        SizedBox(height: isSmallScreen ? 16 : 24),
-
-        // Title
+        const SizedBox(height: 20),
         Text(
-          'POS System',
-          style: AppTextStyles.headingLarge.copyWith(
+          'MAKI POS',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.4,
             color: AppColors.primaryDark,
           ),
         ),
-
         const SizedBox(height: 8),
-
-        // Subtitle
         Text(
-          'Sign in to continue',
-          style: AppTextStyles.bodyMedium.copyWith(
+          'Sign in to your account',
+          style: TextStyle(
+            fontSize: 14,
             color: AppColors.lightTextSecondary,
           ),
         ),
@@ -322,39 +259,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Widget _buildErrorMessage() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.errorLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.error.withOpacity(0.3),
-        ),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.error_outline,
-            color: AppColors.error,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.errorDark,
-                fontSize: 14,
+                fontSize: 13,
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 20),
-            color: AppColors.error,
-            onPressed: () {
-              setState(() {
-                _errorMessage = null;
-              });
-            },
+          InkWell(
+            onTap: () => setState(() => _errorMessage = null),
+            child: const Icon(Icons.close, size: 16, color: AppColors.error),
           ),
         ],
       ),
@@ -362,22 +287,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildFooter() {
-    return Column(
-      children: [
-        Text(
-          'POS System v1.0.0',
-          style: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.lightTextHint,
-          ),
+    return Center(
+      child: Text(
+        'v1.0.0',
+        style: TextStyle(
+          fontSize: 11,
+          color: AppColors.lightTextHint,
+          letterSpacing: 0.5,
         ),
-        const SizedBox(height: 4),
-        Text(
-          '© 2025 Your Company',
-          style: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.lightTextHint,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
