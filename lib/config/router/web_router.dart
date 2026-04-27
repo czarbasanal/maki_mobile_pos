@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/config/router/route_guards.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/enums/user_role.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/web/layouts/web_shell.dart';
 
 /// Router used by the web admin app.
 ///
@@ -42,6 +43,12 @@ final webRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     errorBuilder: buildRouterErrorScreen,
-    routes: appRoutes(),
+    routes: [
+      ...authRoutes(),
+      ShellRoute(
+        builder: (context, state, child) => WebShell(child: child),
+        routes: featureRoutes(Surface.web),
+      ),
+    ],
   );
 });

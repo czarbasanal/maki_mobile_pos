@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/dashboard/summary_card.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
 
 /// Widget displaying inventory status summary.
 class InventoryStatusWidget extends ConsumerWidget {

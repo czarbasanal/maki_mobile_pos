@@ -34,6 +34,9 @@ final mobileRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     errorBuilder: buildRouterErrorScreen,
-    routes: appRoutes(),
+    routes: [
+      ...authRoutes(),
+      ...featureRoutes(Surface.mobile),
+    ],
   );
 });
