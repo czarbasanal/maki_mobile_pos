@@ -17,3 +17,5 @@ export 'inventory_provider.dart';
 export 'receiving_provider.dart';
 export 'activity_log_provider.dart';
 export 'connectivity_provider.dart';
+export 'expense_provider.dart';
+export 'petty_cash_provider.dart';

@@ -33,6 +33,8 @@ import 'package:maki_mobile_pos/presentation/screens/suppliers/supplier_form_scr
 // Expense screens
 import 'package:maki_mobile_pos/presentation/screens/expenses/expenses_screen.dart';
 import 'package:maki_mobile_pos/presentation/screens/expenses/expense_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/petty_cash/petty_cash_screen.dart';
+import 'package:maki_mobile_pos/presentation/screens/petty_cash/petty_cash_form_screen.dart';
 
 // Report screens
 import 'package:maki_mobile_pos/presentation/screens/reports/sales_list_screen.dart';
@@ -398,6 +400,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.userLogs,
         name: RouteNames.userLogs,
         builder: (context, state) => const ActivityLogsScreen(),
+      ),
+
+      // ==================== PETTY CASH ROUTES ====================
+      GoRoute(
+        path: RoutePaths.pettyCash,
+        name: RouteNames.pettyCash,
+        builder: (context, state) => const PettyCashScreen(),
+        routes: [
+          GoRoute(
+            path: 'new',
+            name: RouteNames.pettyCashNew,
+            builder: (context, state) => const PettyCashFormScreen(),
+          ),
+        ],
       ),
 
       // ==================== ACCESS DENIED ====================

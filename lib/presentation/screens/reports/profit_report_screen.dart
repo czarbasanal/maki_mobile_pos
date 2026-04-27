@@ -43,7 +43,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
           // Date range indicator
           Container(
             padding: const EdgeInsets.all(16),
-            color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
             child: Row(
               children: [
                 const Icon(Icons.date_range, size: 20),

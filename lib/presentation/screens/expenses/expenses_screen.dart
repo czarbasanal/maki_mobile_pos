@@ -2,56 +2,159 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:intl/intl.dart';
 
-/// Screen displaying list of expenses.
+/// Expenses list screen.
+///
+/// Role-based behavior:
+/// - Admin: Full CRUD on expenses.
+/// - Staff/Cashier: Can view and add expenses. Cannot edit or delete.
 class ExpensesScreen extends ConsumerWidget {
   const ExpensesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: Implement expense provider
-    final dateFormat = DateFormat('MMM d, y');
+    final expensesAsync = ref.watch(expensesProvider);
+    final currentUser = ref.watch(currentUserProvider).value;
+    final userRole = currentUser?.role ?? UserRole.cashier;
+    final canAdd =
+        RolePermissions.hasPermission(userRole, Permission.addExpense);
+    final canEdit =
+        RolePermissions.hasPermission(userRole, Permission.editExpense);
+    final canDelete =
+        RolePermissions.hasPermission(userRole, Permission.deleteExpense);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expenses'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              // TODO: Show filter options
+        title: const Text('Expenses'),
+      ),
+      body: expensesAsync.when(
+        data: (expenses) {
+          if (expenses.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No Expenses',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap + to add an expense',
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final currencyFormat = NumberFormat.currency(
+            symbol: AppConstants.currencySymbol,
+            decimalDigits: 2,
+          );
+          final dateFormat = DateFormat('MMM d, y • h:mm a');
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: expenses.length,
+            itemBuilder: (context, index) {
+              final expense = expenses[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.orange[100],
+                    child: const Icon(Icons.receipt, color: Colors.orange),
+                  ),
+                  title: Text(
+                    expense.description,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    dateFormat.format(expense.createdAt),
+                  ),
+                  trailing: Text(
+                    currencyFormat.format(expense.amount),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  onTap: canEdit
+                      ? () => context
+                          .push('${RoutePaths.expenses}/edit/${expense.id}')
+                      : null,
+                  // Only show edit/delete for admin
+                  onLongPress: canDelete
+                      ? () => _showDeleteConfirmation(context, ref, expense)
+                      : null,
+                ),
+              );
             },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text('Error: $error')),
+      ),
+      // FAB for adding expense - available to all roles with addExpense permission
+      floatingActionButton: canAdd
+          ? FloatingActionButton(
+              onPressed: () => context.push(RoutePaths.expenseAdd),
+              child: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
+
+  void _showDeleteConfirmation(
+      BuildContext context, WidgetRef ref, ExpenseEntity expense) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Expense'),
+        content: Text('Delete "${expense.description}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                await ref
+                    .read(expenseOperationsProvider.notifier)
+                    .deleteExpense(expense.id);
+                if (context.mounted) {
+                  context.showSuccessSnackBar('Expense deleted');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  context.showErrorSnackBar('Failed to delete: $e');
+                }
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No expenses yet',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add your first expense',
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(RoutePaths.expenseAdd),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Expense'),
       ),
     );
   }

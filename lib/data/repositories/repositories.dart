@@ -13,3 +13,5 @@ export 'product_repository_impl.dart';
 export 'sale_repository_impl.dart';
 export 'supplier_repository_impl.dart';
 export 'user_repository_impl.dart';
+export 'expense_repository_impl.dart';
+export 'petty_cash_repository_impl.dart';

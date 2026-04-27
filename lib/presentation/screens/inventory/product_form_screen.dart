@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -9,6 +8,12 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Screen for creating or editing a product.
+///
+/// Role-based behavior:
+/// - Admin: Full edit access including price, cost, SKU, and all fields.
+/// - Staff: Can edit all fields EXCEPT price, cost, and costCode.
+///          The price/cost fields are visible but disabled.
+/// - Cashier: Should not reach this screen (no edit permission).
 class ProductFormScreen extends ConsumerStatefulWidget {
   final String? productId;
 
@@ -92,7 +97,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Widget build(BuildContext context) {
     final suppliersAsync = ref.watch(suppliersProvider);
     final currentUser = ref.watch(currentUserProvider).value;
-    final canViewCost = currentUser?.role == UserRole.admin;
+    final userRole = currentUser?.role ?? UserRole.cashier;
+
+    // Determine edit capabilities based on role
+    final bool canEditPrice = userRole == UserRole.admin;
+    final bool canEditCost = userRole == UserRole.admin;
+    final bool canViewCost = userRole == UserRole.admin;
+    final bool canEditSku =
+        !widget.isEditing; // SKU never editable after creation
+    final bool canSelectSupplier = userRole == UserRole.admin;
 
     return Scaffold(
       appBar: AppBar(
@@ -111,6 +124,34 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Role info banner for staff
+                    if (userRole == UserRole.staff && widget.isEditing)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline,
+                                color: Colors.blue[700], size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'You can edit product details except price and cost fields.',
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     // SKU
                     TextFormField(
                       controller: _skuController,
@@ -119,7 +160,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         prefixIcon: Icon(Icons.qr_code),
                         border: OutlineInputBorder(),
                       ),
-                      enabled: !widget.isEditing,
+                      enabled: canEditSku,
                       validator: (value) =>
                           value?.isEmpty == true ? 'SKU is required' : null,
                     ),
@@ -135,81 +176,102 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       ),
                       validator: (value) =>
                           value?.isEmpty == true ? 'Name is required' : null,
-                      textCapitalization: TextCapitalization.words,
                     ),
                     const SizedBox(height: 16),
 
-                    // Price and Cost row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _priceController,
-                            decoration: const InputDecoration(
-                              labelText: 'Selling Price *',
-                              prefixText: '₱ ',
-                              border: OutlineInputBorder(),
+                    // Price - disabled for staff
+                    TextFormField(
+                      controller: _priceController,
+                      decoration: InputDecoration(
+                        labelText:
+                            'Selling Price (${AppConstants.currencySymbol}) *',
+                        prefixIcon: const Icon(Icons.sell),
+                        border: const OutlineInputBorder(),
+                        helperText:
+                            canEditPrice ? null : 'Only admin can change price',
+                        helperStyle: TextStyle(
+                          color: Colors.orange[700],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      enabled: canEditPrice,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Price is required';
+                        }
+                        final price = double.tryParse(value);
+                        if (price == null || price < 0) {
+                          return 'Enter a valid price';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Cost - only visible and editable for admin
+                    if (canViewCost)
+                      Column(
+                        children: [
+                          TextFormField(
+                            controller: _costController,
+                            decoration: InputDecoration(
+                              labelText:
+                                  'Cost (${AppConstants.currencySymbol}) *',
+                              prefixIcon: const Icon(Icons.money),
+                              border: const OutlineInputBorder(),
                             ),
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
+                            enabled: canEditCost,
                             validator: (value) {
-                              if (value?.isEmpty == true) return 'Required';
-                              if (double.tryParse(value!) == null)
-                                return 'Invalid';
+                              if (value == null || value.isEmpty) {
+                                return 'Cost is required';
+                              }
+                              final cost = double.tryParse(value);
+                              if (cost == null || cost < 0) {
+                                return 'Enter a valid cost';
+                              }
                               return null;
                             },
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        if (canViewCost)
-                          Expanded(
-                            child: TextFormField(
-                              controller: _costController,
-                              decoration: const InputDecoration(
-                                labelText: 'Cost *',
-                                prefixText: '₱ ',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
-                              validator: (value) {
-                                if (value?.isEmpty == true) return 'Required';
-                                if (double.tryParse(value!) == null)
-                                  return 'Invalid';
-                                return null;
-                              },
-                            ),
-                          ),
-                      ],
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+
+                    // Quantity
+                    TextFormField(
+                      controller: _quantityController,
+                      decoration: const InputDecoration(
+                        labelText: 'Initial Quantity *',
+                        prefixIcon: Icon(Icons.numbers),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Quantity is required';
+                        }
+                        final qty = int.tryParse(value);
+                        if (qty == null || qty < 0) {
+                          return 'Enter a valid quantity';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
-                    // Quantity and Reorder Level row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _quantityController,
-                            decoration: const InputDecoration(
-                              labelText: 'Initial Quantity',
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _reorderLevelController,
-                            decoration: const InputDecoration(
-                              labelText: 'Reorder Level',
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                      ],
+                    // Reorder Level
+                    TextFormField(
+                      controller: _reorderLevelController,
+                      decoration: const InputDecoration(
+                        labelText: 'Reorder Level',
+                        prefixIcon: Icon(Icons.warning_amber),
+                        border: OutlineInputBorder(),
+                        helperText: 'Alert when stock falls below this level',
+                      ),
+                      keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 16),
 
@@ -228,45 +290,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Barcode
                     TextFormField(
                       controller: _barcodeController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Barcode',
-                        prefixIcon: const Icon(Icons.qr_code_scanner),
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.camera_alt),
-                          onPressed: () {
-                            // TODO: Implement barcode scanning
-                          },
-                        ),
+                        prefixIcon: Icon(Icons.barcode_reader),
+                        border: OutlineInputBorder(),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Supplier dropdown
-                    suppliersAsync.when(
-                      data: (suppliers) => DropdownButtonFormField<String?>(
-                        value: _selectedSupplierId,
-                        decoration: const InputDecoration(
-                          labelText: 'Supplier',
-                          prefixIcon: Icon(Icons.business),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('No supplier'),
-                          ),
-                          ...suppliers.map((s) => DropdownMenuItem(
-                                value: s.id,
-                                child: Text(s.name),
-                              )),
-                        ],
-                        onChanged: (value) {
-                          setState(() => _selectedSupplierId = value);
-                        },
-                      ),
-                      loading: () => const LinearProgressIndicator(),
-                      error: (_, __) => const Text('Error loading suppliers'),
                     ),
                     const SizedBox(height: 16),
 
@@ -278,8 +306,51 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         prefixIcon: Icon(Icons.category),
                         border: OutlineInputBorder(),
                       ),
-                      textCapitalization: TextCapitalization.words,
                     ),
+                    const SizedBox(height: 16),
+
+                    // Supplier - admin only can change supplier
+                    if (canSelectSupplier)
+                      suppliersAsync.when(
+                        data: (suppliers) => DropdownButtonFormField<String>(
+                          value: _selectedSupplierId,
+                          decoration: const InputDecoration(
+                            labelText: 'Supplier',
+                            prefixIcon: Icon(Icons.business),
+                            border: OutlineInputBorder(),
+                          ),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('No supplier'),
+                            ),
+                            ...suppliers.map((s) => DropdownMenuItem(
+                                  value: s.id,
+                                  child: Text(s.name),
+                                )),
+                          ],
+                          onChanged: (value) {
+                            setState(() => _selectedSupplierId = value);
+                          },
+                        ),
+                        loading: () => const LinearProgressIndicator(),
+                        error: (_, __) =>
+                            const Text('Could not load suppliers'),
+                      ),
+
+                    // Show supplier as read-only for staff
+                    if (!canSelectSupplier &&
+                        _existingProduct?.supplierName != null)
+                      TextFormField(
+                        initialValue: _existingProduct?.supplierName ?? 'None',
+                        decoration: const InputDecoration(
+                          labelText: 'Supplier',
+                          prefixIcon: Icon(Icons.business),
+                          border: OutlineInputBorder(),
+                        ),
+                        enabled: false,
+                      ),
+
                     const SizedBox(height: 16),
 
                     // Notes
@@ -291,30 +362,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
-                      textCapitalization: TextCapitalization.sentences,
                     ),
                     const SizedBox(height: 32),
 
-                    // Submit Button
+                    // Submit button
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      height: 48,
+                      child: FilledButton.icon(
                         onPressed: _isSaving ? null : _handleSubmit,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: _isSaving
+                        icon: _isSaving
                             ? const SizedBox(
-                                height: 20,
                                 width: 20,
+                                height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color: Colors.white,
                                 ),
                               )
-                            : Text(widget.isEditing
-                                ? 'Update Product'
-                                : 'Add Product'),
+                            : const Icon(Icons.save),
+                        label: Text(widget.isEditing
+                            ? 'Update Product'
+                            : 'Add Product'),
                       ),
                     ),
                   ],
@@ -333,58 +402,130 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not logged in');
 
-      // Encode cost to cost code
-      final costValue = double.tryParse(_costController.text) ?? 0.0;
-      final costCode = ref.read(encodeCostProvider(costValue));
+      final userRole = currentUser.role;
 
-      // Get supplier name for denormalization
-      String? supplierName;
-      if (_selectedSupplierId != null) {
-        final suppliers = ref.read(suppliersProvider).value;
-        supplierName = suppliers
-            ?.where((s) => s.id == _selectedSupplierId)
-            .firstOrNull
-            ?.name;
-      }
+      if (widget.isEditing && _existingProduct != null) {
+        // ==================== UPDATE LOGIC ====================
+        if (userRole == UserRole.admin) {
+          // Admin: full update including price and cost
+          final costValue = double.tryParse(_costController.text) ?? 0.0;
+          final costCode = ref.read(encodeCostProvider(costValue));
 
-      final product = ProductEntity(
-        id: widget.isEditing ? _existingProduct!.id : '',
-        sku: _skuController.text.trim(),
-        name: _nameController.text.trim(),
-        costCode: costCode,
-        cost: costValue,
-        price: double.tryParse(_priceController.text) ?? 0.0,
-        quantity: int.tryParse(_quantityController.text) ?? 0,
-        reorderLevel: int.tryParse(_reorderLevelController.text) ?? 10,
-        unit: _unitController.text.trim().isEmpty
-            ? 'pcs'
-            : _unitController.text.trim(),
-        supplierId: _selectedSupplierId,
-        supplierName: supplierName,
-        isActive: true,
-        createdAt: widget.isEditing
-            ? _existingProduct!.createdAt
-            : DateTime.now(),
-        barcode: _barcodeController.text.trim().isEmpty
-            ? null
-            : _barcodeController.text.trim(),
-        category: _categoryController.text.trim().isEmpty
-            ? null
-            : _categoryController.text.trim(),
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-      );
+          String? supplierName;
+          if (_selectedSupplierId != null) {
+            final suppliers = ref.read(suppliersProvider).value;
+            supplierName = suppliers
+                ?.where((s) => s.id == _selectedSupplierId)
+                .firstOrNull
+                ?.name;
+          }
 
-      final productOps = ref.read(productOperationsProvider.notifier);
+          final product = _existingProduct!.copyWith(
+            name: _nameController.text.trim(),
+            costCode: costCode,
+            cost: costValue,
+            price: double.tryParse(_priceController.text) ?? 0.0,
+            quantity: int.tryParse(_quantityController.text) ?? 0,
+            reorderLevel: int.tryParse(_reorderLevelController.text) ?? 10,
+            unit: _unitController.text.trim().isEmpty
+                ? 'pcs'
+                : _unitController.text.trim(),
+            supplierId: _selectedSupplierId,
+            supplierName: supplierName,
+            barcode: _barcodeController.text.trim().isEmpty
+                ? null
+                : _barcodeController.text.trim(),
+            category: _categoryController.text.trim().isEmpty
+                ? null
+                : _categoryController.text.trim(),
+            notes: _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+          );
 
-      if (widget.isEditing) {
-        final result = await productOps.updateProduct(
-          product: product,
-          updatedBy: currentUser.id,
-        );
-        if (result == null) throw Exception('Failed to update product');
+          final productOps = ref.read(productOperationsProvider.notifier);
+          final result = await productOps.updateProduct(
+            product: product,
+            updatedBy: currentUser.id,
+          );
+          if (result == null) throw Exception('Failed to update product');
+        } else if (userRole == UserRole.staff) {
+          // Staff: update everything EXCEPT price, cost, costCode, supplierId
+          // Keep original price, cost, costCode, and supplier
+          final product = _existingProduct!.copyWith(
+            name: _nameController.text.trim(),
+            // Preserve original price, cost, costCode
+            price: _existingProduct!.price,
+            cost: _existingProduct!.cost,
+            costCode: _existingProduct!.costCode,
+            quantity: int.tryParse(_quantityController.text) ?? 0,
+            reorderLevel: int.tryParse(_reorderLevelController.text) ?? 10,
+            unit: _unitController.text.trim().isEmpty
+                ? 'pcs'
+                : _unitController.text.trim(),
+            // Preserve original supplier
+            supplierId: _existingProduct!.supplierId,
+            supplierName: _existingProduct!.supplierName,
+            barcode: _barcodeController.text.trim().isEmpty
+                ? null
+                : _barcodeController.text.trim(),
+            category: _categoryController.text.trim().isEmpty
+                ? null
+                : _categoryController.text.trim(),
+            notes: _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+          );
+
+          final productOps = ref.read(productOperationsProvider.notifier);
+          final result = await productOps.updateProduct(
+            product: product,
+            updatedBy: currentUser.id,
+          );
+          if (result == null) throw Exception('Failed to update product');
+        }
       } else {
+        // ==================== CREATE LOGIC (ADMIN ONLY) ====================
+        final costValue = double.tryParse(_costController.text) ?? 0.0;
+        final costCode = ref.read(encodeCostProvider(costValue));
+
+        String? supplierName;
+        if (_selectedSupplierId != null) {
+          final suppliers = ref.read(suppliersProvider).value;
+          supplierName = suppliers
+              ?.where((s) => s.id == _selectedSupplierId)
+              .firstOrNull
+              ?.name;
+        }
+
+        final product = ProductEntity(
+          id: '',
+          sku: _skuController.text.trim(),
+          name: _nameController.text.trim(),
+          costCode: costCode,
+          cost: costValue,
+          price: double.tryParse(_priceController.text) ?? 0.0,
+          quantity: int.tryParse(_quantityController.text) ?? 0,
+          reorderLevel: int.tryParse(_reorderLevelController.text) ?? 10,
+          unit: _unitController.text.trim().isEmpty
+              ? 'pcs'
+              : _unitController.text.trim(),
+          supplierId: _selectedSupplierId,
+          supplierName: supplierName,
+          isActive: true,
+          createdAt: DateTime.now(),
+          barcode: _barcodeController.text.trim().isEmpty
+              ? null
+              : _barcodeController.text.trim(),
+          category: _categoryController.text.trim().isEmpty
+              ? null
+              : _categoryController.text.trim(),
+          notes: _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
+        );
+
+        final productOps = ref.read(productOperationsProvider.notifier);
         final result = await productOps.createProduct(
           product: product,
           createdBy: currentUser.id,
@@ -393,16 +534,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       }
 
       if (mounted) {
-        // Ensure inventory list refreshes with fresh data
         ref.invalidate(productsProvider);
         context.showSuccessSnackBar(
-          widget.isEditing ? 'Product updated' : 'Product added',
+          widget.isEditing
+              ? 'Product updated successfully'
+              : 'Product created successfully',
         );
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go(RoutePaths.inventory);
-        }
+        context.goBackOr(RoutePaths.inventory);
       }
     } catch (e) {
       if (mounted) {

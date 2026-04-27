@@ -51,7 +51,7 @@ service cloud.firestore {
       // Only admins can create users
       allow create: if isAdmin();
       
-      // Users can update their own non-role fields
+      // Users can update their own non-role fields (displayName, password handled by Auth)
       // Admins can update any user
       allow update: if isAuthenticated() && (
         (request.auth.uid == userId && 
@@ -66,15 +66,18 @@ service cloud.firestore {
     // ==================== PRODUCTS COLLECTION ====================
     
     match /products/{productId} {
-      // Staff and admin can read products
-      // Cashiers can read for POS (limited fields enforced in app)
+      // All valid users can read products (for POS and inventory view)
       allow read: if isValidUser() && isActiveUser();
       
-      // Only admin can create/delete products and do full updates
+      // Only admin can create/delete products
       allow create, delete: if isAdmin() && isActiveUser();
 
       // Admin can update any product field
       allow update: if isAdmin() && isActiveUser();
+
+      // Staff can update product fields EXCEPT price, cost, and costCode
+      allow update: if hasRole('staff') && isActiveUser() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['price', 'cost', 'costCode']);
 
       // Any valid user can update stock (quantity) during sale processing
       allow update: if isValidUser() && isActiveUser() &&
@@ -98,13 +101,15 @@ service cloud.firestore {
     
     match /sales/{saleId} {
       // All valid users can read sales (for reports based on role)
+      // App-level logic restricts cashier/staff to today's sales only
       allow read: if isValidUser() && isActiveUser();
       
       // All valid users can create sales (POS)
       allow create: if isValidUser() && isActiveUser();
       
-      // Only staff and admin can update (for voiding)
-      allow update: if isStaffOrAdmin() && isActiveUser();
+      // Only admin can update sales (for voiding)
+      // Staff and cashier CANNOT void sales
+      allow update: if isAdmin() && isActiveUser();
       
       // No one can delete sales (audit trail)
       allow delete: if false;
@@ -147,11 +152,14 @@ service cloud.firestore {
     // ==================== EXPENSES COLLECTION ====================
     
     match /expenses/{expenseId} {
-      // Admin can read all expenses
-      allow read: if isAdmin() && isActiveUser();
+      // All valid users can read expenses
+      allow read: if isValidUser() && isActiveUser();
       
-      // Admin can create/update/delete expenses
-      allow create, update, delete: if isAdmin() && isActiveUser();
+      // All valid users can create expenses (cashier/staff can add)
+      allow create: if isValidUser() && isActiveUser();
+      
+      // Only admin can update/delete expenses
+      allow update, delete: if isAdmin() && isActiveUser();
     }
     
     // ==================== PETTY CASH COLLECTION ====================

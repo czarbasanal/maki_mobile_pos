@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Quick action buttons for the dashboard.
+///
+/// Updated to include Expenses and use role-based visibility:
+/// - New Sale: all roles
+/// - Receive Stock: staff + admin
+/// - Inventory: all roles
+/// - Expenses: all roles
+/// - Reports: all roles
 class QuickActions extends StatelessWidget {
   final VoidCallback onNewSale;
   final VoidCallback? onReceiving;
   final VoidCallback? onInventory;
+  final VoidCallback? onExpenses;
   final VoidCallback? onReports;
 
   const QuickActions({
@@ -13,6 +21,7 @@ class QuickActions extends StatelessWidget {
     required this.onNewSale,
     this.onReceiving,
     this.onInventory,
+    this.onExpenses,
     this.onReports,
   });
 
@@ -41,6 +50,13 @@ class QuickActions extends StatelessWidget {
               label: 'Inventory',
               color: Colors.orange,
               onTap: onInventory!,
+            ),
+          if (onExpenses != null)
+            _QuickActionButton(
+              icon: Icons.receipt_long,
+              label: 'Expenses',
+              color: Colors.red[400]!,
+              onTap: onExpenses!,
             ),
           if (onReports != null)
             _QuickActionButton(

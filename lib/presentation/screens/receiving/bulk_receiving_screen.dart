@@ -131,7 +131,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             child: suppliersAsync.when(
               data: (suppliers) {
                 return DropdownButtonFormField<String>(
-                  value: state.supplierId,
+                  initialValue: state.supplierId,
                   decoration: const InputDecoration(
                     labelText: 'Supplier (optional)',
                     border: OutlineInputBorder(),

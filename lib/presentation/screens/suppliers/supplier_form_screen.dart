@@ -176,7 +176,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
                     // Transaction Type
                     DropdownButtonFormField<TransactionType>(
-                      value: _transactionType,
+                      initialValue: _transactionType,
                       decoration: const InputDecoration(
                         labelText: 'Payment Terms *',
                         prefixIcon: Icon(Icons.payment),
@@ -272,11 +272,9 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                     ? null
                     : _notesController.text.trim(),
               ),
-              updatedBy: currentUser.id,
             );
       } else {
         await ref.read(supplierOperationsProvider.notifier).createSupplier(
-              createdBy: currentUser.id,
               supplier: SupplierEntity(
                 id: '',
                 name: _nameController.text.trim(),

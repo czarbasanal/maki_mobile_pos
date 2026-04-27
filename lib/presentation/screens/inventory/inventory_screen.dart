@@ -40,7 +40,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         ),
         title: const Text('Inventory'),
         actions: [
-          // Cost visibility toggle (admin only)
+          // Cost visibility toggle (admin only; password-confirmed by widget)
           if (isAdmin)
             CostDisplayToggle(
               showCost: inventoryState.showCost,

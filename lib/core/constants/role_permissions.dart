@@ -18,7 +18,8 @@ enum Permission {
   viewInventory,
   viewProductCost, // Requires password confirmation
   addProduct,
-  editProduct,
+  editProduct, // Full edit including price (admin only)
+  editProductLimited, // Edit without price field (staff only)
   deleteProduct,
 
   // Receiving Permissions
@@ -26,6 +27,7 @@ enum Permission {
   receiveStock,
   bulkReceive,
   importCsv,
+  viewReceivingHistory,
 
   // Supplier Permissions
   viewSuppliers,
@@ -46,6 +48,7 @@ enum Permission {
   // Reports Permissions
   viewSalesReports,
   viewProfitReports, // Shows cost-based profit data
+  viewDailySalesOnly, // Can only view today's sales (cashier & staff)
 
   // User Management Permissions
   viewUsers,
@@ -56,6 +59,7 @@ enum Permission {
 
   // Settings Permissions
   viewSettings,
+  editOwnProfile, // Edit own display name and password
   editCostCodeMapping,
 
   // Logs
@@ -68,35 +72,65 @@ enum Permission {
 /// Any permission check in the app should reference this class.
 abstract class RolePermissions {
   // ==================== CASHIER PERMISSIONS ====================
-  // POS only - most restricted role
+  // POS + view-only inventory + today's sales report + add expenses + own profile
   static const Set<Permission> _cashierPermissions = {
+    // POS
     Permission.accessPos,
     Permission.processSale,
     Permission.applyDiscount,
+    // Note: voidSale is NOT included (admin only)
+    // Drafts
     Permission.saveDraft,
     Permission.viewDrafts,
     Permission.editDraft,
     Permission.deleteDraft,
+    // Inventory (view only, no cost, no edit)
+    Permission.viewInventory,
+    // Reports (daily only)
+    Permission.viewSalesReports,
+    Permission.viewDailySalesOnly,
+    // Expenses (add only)
+    Permission.viewExpenses,
+    Permission.addExpense,
+    // Settings (own profile only)
+    Permission.viewSettings,
+    Permission.editOwnProfile,
   };
 
   // ==================== STAFF PERMISSIONS ====================
-  // POS + Receiving + Inventory (no cost visibility)
+  // POS + edit inventory (no price) + today's sales + add expenses
+  // + receiving & history + own profile
   static const Set<Permission> _staffPermissions = {
     // POS
     Permission.accessPos,
     Permission.processSale,
     Permission.applyDiscount,
+    // Note: voidSale is NOT included (admin only)
+    // Drafts
     Permission.saveDraft,
     Permission.viewDrafts,
     Permission.editDraft,
     Permission.deleteDraft,
-    // Inventory (read-only, no cost)
+    // Inventory (edit without price, no cost visibility)
     Permission.viewInventory,
+    Permission.editProductLimited,
     // Note: viewProductCost is NOT included
-    // Receiving
+    // Note: addProduct is NOT included (admin only)
+    // Note: deleteProduct is NOT included (admin only)
+    // Receiving (full access + history)
     Permission.accessReceiving,
     Permission.receiveStock,
     Permission.bulkReceive,
+    Permission.viewReceivingHistory,
+    // Reports (daily only)
+    Permission.viewSalesReports,
+    Permission.viewDailySalesOnly,
+    // Expenses (add only)
+    Permission.viewExpenses,
+    Permission.addExpense,
+    // Settings (own profile only)
+    Permission.viewSettings,
+    Permission.editOwnProfile,
   };
 
   // ==================== ADMIN PERMISSIONS ====================
@@ -117,12 +151,14 @@ abstract class RolePermissions {
     Permission.viewProductCost,
     Permission.addProduct,
     Permission.editProduct,
+    Permission.editProductLimited,
     Permission.deleteProduct,
     // Receiving
     Permission.accessReceiving,
     Permission.receiveStock,
     Permission.bulkReceive,
     Permission.importCsv,
+    Permission.viewReceivingHistory,
     // Suppliers
     Permission.viewSuppliers,
     Permission.addSupplier,
@@ -136,7 +172,7 @@ abstract class RolePermissions {
     // Cash Management
     Permission.managePettyCash,
     Permission.performCutOff,
-    // Reports
+    // Reports (full access, no daily restriction)
     Permission.viewSalesReports,
     Permission.viewProfitReports,
     // User Management
@@ -145,8 +181,9 @@ abstract class RolePermissions {
     Permission.editUser,
     Permission.deleteUser,
     Permission.editUserPermissions,
-    // Settings
+    // Settings (full)
     Permission.viewSettings,
+    Permission.editOwnProfile,
     Permission.editCostCodeMapping,
     // Logs
     Permission.viewUserLogs,
@@ -205,5 +242,21 @@ abstract class RolePermissions {
   /// Checks if a permission requires password confirmation.
   static bool requiresPassword(Permission permission) {
     return passwordProtectedPermissions.contains(permission);
+  }
+
+  /// Checks if a role is restricted to daily reports only.
+  static bool isDailyReportsOnly(UserRole role) {
+    return hasPermission(role, Permission.viewDailySalesOnly);
+  }
+
+  /// Checks if a role can edit product fields (limited = no price).
+  static bool canEditProductLimited(UserRole role) {
+    return hasPermission(role, Permission.editProductLimited) &&
+        !hasPermission(role, Permission.editProduct);
+  }
+
+  /// Checks if a role can do full product edits (including price).
+  static bool canEditProductFull(UserRole role) {
+    return hasPermission(role, Permission.editProduct);
   }
 }

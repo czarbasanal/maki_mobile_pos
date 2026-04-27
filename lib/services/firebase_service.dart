@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/firebase_options.dart';
 
 /// Service class for Firebase initialization and configuration.
@@ -152,3 +153,19 @@ class FirebaseService {
     return _auth!.userChanges();
   }
 }
+
+// ==================== RIVERPOD PROVIDERS ====================
+
+/// Provides the singleton [FirebaseFirestore] instance.
+///
+/// Repository providers should `ref.watch(firestoreProvider)` rather than
+/// instantiating `FirebaseFirestore.instance` directly. This keeps tests
+/// overrideable via `ProviderScope(overrides: [firestoreProvider.overrideWith(...)])`.
+final firestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseService.instance.firestore;
+});
+
+/// Provides the singleton [FirebaseAuth] instance.
+final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
+  return FirebaseService.instance.auth;
+});
