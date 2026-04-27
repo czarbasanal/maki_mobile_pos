@@ -655,7 +655,7 @@ describe("cross-cutting", () => {
     await assertFails(unauth().collection("settings").doc("s-1").get());
   });
 
-  it("inactive admin cannot write petty_cash (isActive gate works on most collections)", async () => {
+  it("inactive admin cannot write petty_cash", async () => {
     await assertFails(
       as("inactiveAdmin").collection("petty_cash").doc("pc-x").set({
         type: "cash_in", amount: 1,
@@ -663,20 +663,24 @@ describe("cross-cutting", () => {
     );
   });
 
-  // KNOWN GAP — surfaced by these tests:
-  // /users rules check isAdmin() but NOT isActiveUser(), so a deactivated
-  // admin can still create + delete user docs as long as their session is
-  // valid. Every other admin-gated collection in firestore.rules combines
-  // both predicates. To close the gap, the rules should read:
-  //   allow create: if isAdmin() && isActiveUser();
-  //   allow delete: if isAdmin() && isActiveUser();
-  // and the update branch's `isAdmin()` should likewise be `isAdmin() &&
-  // isActiveUser()`. Pinned as a passing test reflecting current behavior so
-  // it fails loudly the moment the rule changes (in either direction).
-  it("inactive admin CAN still create users (rules gap — see comment)", async () => {
-    await assertSucceeds(
+  it("inactive admin cannot create users", async () => {
+    await assertFails(
       as("inactiveAdmin").collection("users").doc("anyone-new").set({
         role: "cashier", isActive: true, email: "x@test", displayName: "X",
+      })
+    );
+  });
+
+  it("inactive admin cannot delete users", async () => {
+    await assertFails(
+      as("inactiveAdmin").collection("users").doc(USERS.cashier.uid).delete()
+    );
+  });
+
+  it("inactive admin cannot update other users", async () => {
+    await assertFails(
+      as("inactiveAdmin").collection("users").doc(USERS.cashier.uid).update({
+        role: "staff",
       })
     );
   });
