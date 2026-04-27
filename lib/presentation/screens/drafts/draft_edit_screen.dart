@@ -8,7 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 import 'package:intl/intl.dart';
-import 'package:maki_mobile_pos/presentation/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen for editing/viewing a draft and converting to checkout.
 class DraftEditScreen extends ConsumerStatefulWidget {
