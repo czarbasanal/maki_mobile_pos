@@ -104,6 +104,14 @@ void main() {
 
       expect(result.success, true);
       expect(result.sale?.status, SaleStatus.voided);
+
+      // Stock must be RESTORED on void: positive change equal to qty sold.
+      // A regression that decrements again on void would otherwise pass.
+      verify(() => mockProductRepo.updateStock(
+            productId: 'prod-1',
+            quantityChange: 2,
+            updatedBy: any(named: 'updatedBy'),
+          )).called(1);
     });
 
     test('should fail with invalid password', () async {

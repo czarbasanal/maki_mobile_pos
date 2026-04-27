@@ -112,6 +112,14 @@ void main() {
       expect(result.success, true);
       expect(result.sale, isNotNull);
       expect(result.sale!.saleNumber, 'SALE-001');
+
+      // Stock must be DECREMENTED by exactly the qty sold (negative change).
+      // A regression that increments on sale would otherwise pass.
+      verify(() => mockProductRepo.updateStock(
+            productId: 'prod-1',
+            quantityChange: -2,
+            updatedBy: any(named: 'updatedBy'),
+          )).called(1);
     });
 
     test('should fail when cart is empty', () async {
