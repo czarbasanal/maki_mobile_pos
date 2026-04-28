@@ -696,8 +696,8 @@ class ProductDetailScreen extends ConsumerWidget {
                 await ref
                     .read(productOperationsProvider.notifier)
                     .deactivateProduct(
+                      actor: currentUser,
                       productId: productId,
-                      updatedBy: currentUser.id,
                     );
                 if (context.mounted) {
                   Navigator.pop(context);

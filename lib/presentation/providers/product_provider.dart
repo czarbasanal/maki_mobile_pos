@@ -2,6 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/data/repositories/product_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
+import 'package:maki_mobile_pos/domain/usecases/product/create_product_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/product/deactivate_product_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/product/update_product_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -133,55 +137,94 @@ final inventoryValueAtPriceProvider = FutureProvider<double>((ref) async {
   return repository.getTotalInventoryValueAtPrice();
 });
 
+// ==================== USE CASE PROVIDERS ====================
+
+final createProductUseCaseProvider = Provider<CreateProductUseCase>((ref) {
+  return CreateProductUseCase(
+    repository: ref.watch(productRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
+final updateProductUseCaseProvider = Provider<UpdateProductUseCase>((ref) {
+  return UpdateProductUseCase(
+    repository: ref.watch(productRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
+final deactivateProductUseCaseProvider =
+    Provider<DeactivateProductUseCase>((ref) {
+  return DeactivateProductUseCase(
+    repository: ref.watch(productRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
 // ==================== PRODUCT OPERATIONS ====================
 
-/// Notifier for product operations (create, update, delete).
+/// Notifier for product operations.
+///
+/// User-facing mutations (create / update / deactivate) flow through use
+/// cases that own permission gating (admin vs staff-limited price/cost
+/// lock) and audit logging. Internal stock adjustments triggered by
+/// process_sale_usecase / void_sale_usecase still call the repo directly
+/// — those callers gate the operation upstream.
 class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
   final ProductRepository _repository;
+  final CreateProductUseCase _createUseCase;
+  final UpdateProductUseCase _updateUseCase;
+  final DeactivateProductUseCase _deactivateUseCase;
   final Ref _ref;
 
-  ProductOperationsNotifier(this._repository, this._ref)
-      : super(const AsyncValue.data(null));
+  ProductOperationsNotifier({
+    required ProductRepository repository,
+    required CreateProductUseCase createUseCase,
+    required UpdateProductUseCase updateUseCase,
+    required DeactivateProductUseCase deactivateUseCase,
+    required Ref ref,
+  })  : _repository = repository,
+        _createUseCase = createUseCase,
+        _updateUseCase = updateUseCase,
+        _deactivateUseCase = deactivateUseCase,
+        _ref = ref,
+        super(const AsyncValue.data(null));
 
-  /// Creates a new product.
   Future<ProductEntity?> createProduct({
+    required UserEntity actor,
     required ProductEntity product,
-    required String createdBy,
   }) async {
     state = const AsyncValue.loading();
-    try {
-      final created = await _repository.createProduct(
-        product: product,
-        createdBy: createdBy,
-      );
+    final result = await _createUseCase.execute(actor: actor, product: product);
+    if (result.success) {
       state = const AsyncValue.data(null);
       _invalidateProductProviders();
-      return created;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
+      return result.data;
     }
+    state = AsyncValue.error(
+      result.errorMessage ?? 'Failed to create product',
+      StackTrace.current,
+    );
+    return null;
   }
 
-  /// Updates an existing product.
   Future<ProductEntity?> updateProduct({
+    required UserEntity actor,
     required ProductEntity product,
-    required String updatedBy,
   }) async {
     state = const AsyncValue.loading();
-    try {
-      final updated = await _repository.updateProduct(
-        product: product,
-        updatedBy: updatedBy,
-      );
+    final result = await _updateUseCase.execute(actor: actor, product: product);
+    if (result.success) {
       state = const AsyncValue.data(null);
       _invalidateProductProviders();
       _ref.invalidate(productByIdProvider(product.id));
-      return updated;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
+      return result.data;
     }
+    state = AsyncValue.error(
+      result.errorMessage ?? 'Failed to update product',
+      StackTrace.current,
+    );
+    return null;
   }
 
   /// Updates product stock.
@@ -207,24 +250,24 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Deactivates a product.
+  /// Deactivates a product (admin-only via use case).
   Future<bool> deactivateProduct({
+    required UserEntity actor,
     required String productId,
-    required String updatedBy,
   }) async {
     state = const AsyncValue.loading();
-    try {
-      await _repository.deactivateProduct(
-        productId: productId,
-        updatedBy: updatedBy,
-      );
+    final result =
+        await _deactivateUseCase.execute(actor: actor, productId: productId);
+    if (result.success) {
       state = const AsyncValue.data(null);
       _invalidateProductProviders();
       return true;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return false;
     }
+    state = AsyncValue.error(
+      result.errorMessage ?? 'Failed to deactivate product',
+      StackTrace.current,
+    );
+    return false;
   }
 
   /// Creates a SKU variation.
@@ -276,8 +319,13 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
 /// Provider for product operations.
 final productOperationsProvider =
     StateNotifierProvider<ProductOperationsNotifier, AsyncValue<void>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return ProductOperationsNotifier(repository, ref);
+  return ProductOperationsNotifier(
+    repository: ref.watch(productRepositoryProvider),
+    createUseCase: ref.watch(createProductUseCaseProvider),
+    updateUseCase: ref.watch(updateProductUseCaseProvider),
+    deactivateUseCase: ref.watch(deactivateProductUseCaseProvider),
+    ref: ref,
+  );
 });
 
 // ==================== SELECTED PRODUCT ====================

@@ -445,8 +445,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
           final productOps = ref.read(productOperationsProvider.notifier);
           final result = await productOps.updateProduct(
+            actor: currentUser,
             product: product,
-            updatedBy: currentUser.id,
           );
           if (result == null) throw Exception('Failed to update product');
         } else if (userRole == UserRole.staff) {
@@ -479,8 +479,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
           final productOps = ref.read(productOperationsProvider.notifier);
           final result = await productOps.updateProduct(
+            actor: currentUser,
             product: product,
-            updatedBy: currentUser.id,
           );
           if (result == null) throw Exception('Failed to update product');
         }
@@ -527,8 +527,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
         final productOps = ref.read(productOperationsProvider.notifier);
         final result = await productOps.createProduct(
+          actor: currentUser,
           product: product,
-          createdBy: currentUser.id,
         );
         if (result == null) throw Exception('Failed to create product');
       }
