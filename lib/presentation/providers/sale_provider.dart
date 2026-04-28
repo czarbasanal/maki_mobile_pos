@@ -1,8 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/sale_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/domain/usecases/reports/get_profit_report_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/reports/get_sales_report_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/reports/get_top_selling_usecase.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -64,39 +69,113 @@ final recentSalesProvider =
   );
 });
 
+// ==================== REPORT USE-CASE PROVIDERS ====================
+
+final getSalesReportUseCaseProvider = Provider<GetSalesReportUseCase>((ref) {
+  return GetSalesReportUseCase(repository: ref.watch(saleRepositoryProvider));
+});
+
+final getProfitReportUseCaseProvider = Provider<GetProfitReportUseCase>((ref) {
+  return GetProfitReportUseCase(repository: ref.watch(saleRepositoryProvider));
+});
+
+final getTopSellingUseCaseProvider = Provider<GetTopSellingUseCase>((ref) {
+  return GetTopSellingUseCase(repository: ref.watch(saleRepositoryProvider));
+});
+
+/// Helper: read the current user or throw Unauthenticated. Reports must
+/// always have an authenticated actor — a null user means the caller
+/// reached this provider before/after sign-in transition.
+UserEntity _requireActor(Ref ref) {
+  final actor = ref.watch(currentUserProvider).valueOrNull;
+  if (actor == null) {
+    throw const UnauthenticatedException();
+  }
+  return actor;
+}
+
 // ==================== SALES SUMMARY ====================
 
-/// Provides today's sales summary.
+/// Provides today's sales summary. Routes through [GetSalesReportUseCase] so
+/// permission gating + the daily-only check are enforced at the domain layer
+/// (not just by the UI date picker).
 final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
-  final repository = ref.watch(saleRepositoryProvider);
+  final actor = _requireActor(ref);
   final today = DateTime.now();
-  return repository.getSalesSummary(
-    startDate: today,
-    endDate: today,
-  );
+  final dayStart = DateTime(today.year, today.month, today.day);
+  final dayEnd = DateTime(today.year, today.month, today.day, 23, 59, 59, 999);
+
+  final result = await ref.watch(getSalesReportUseCaseProvider).execute(
+        actor: actor,
+        startDate: dayStart,
+        endDate: dayEnd,
+      );
+  if (!result.success) {
+    throw AppExceptionWrapper(
+        message: result.errorMessage ?? 'Failed to load summary',
+        code: result.errorCode);
+  }
+  return result.data!;
 });
 
 /// Provides sales summary for a date range.
 final salesSummaryProvider =
     FutureProvider.family<SalesSummary, DateRangeParams>((ref, params) async {
-  final repository = ref.watch(saleRepositoryProvider);
-  return repository.getSalesSummary(
-    startDate: params.startDate,
-    endDate: params.endDate,
-  );
+  final actor = _requireActor(ref);
+  final result = await ref.watch(getSalesReportUseCaseProvider).execute(
+        actor: actor,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      );
+  if (!result.success) {
+    throw AppExceptionWrapper(
+        message: result.errorMessage ?? 'Failed to load summary',
+        code: result.errorCode);
+  }
+  return result.data!;
+});
+
+/// Provides admin-only profit report (same payload, gated separately).
+final profitReportProvider =
+    FutureProvider.family<SalesSummary, DateRangeParams>((ref, params) async {
+  final actor = _requireActor(ref);
+  final result = await ref.watch(getProfitReportUseCaseProvider).execute(
+        actor: actor,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      );
+  if (!result.success) {
+    throw AppExceptionWrapper(
+        message: result.errorMessage ?? 'Failed to load profit report',
+        code: result.errorCode);
+  }
+  return result.data!;
 });
 
 /// Provides top selling products for a date range.
 final topSellingProductsProvider =
     FutureProvider.family<List<ProductSalesData>, TopSellingParams>(
         (ref, params) async {
-  final repository = ref.watch(saleRepositoryProvider);
-  return repository.getTopSellingProducts(
-    startDate: params.startDate,
-    endDate: params.endDate,
-    limit: params.limit,
-  );
+  final actor = _requireActor(ref);
+  final result = await ref.watch(getTopSellingUseCaseProvider).execute(
+        actor: actor,
+        startDate: params.startDate,
+        endDate: params.endDate,
+        limit: params.limit,
+      );
+  if (!result.success) {
+    throw AppExceptionWrapper(
+        message: result.errorMessage ?? 'Failed to load top selling',
+        code: result.errorCode);
+  }
+  return result.data!;
 });
+
+/// Wraps a [UseCaseResult.failure] as an exception so AsyncValue.error
+/// surfaces the message + code. Used by the report providers above.
+class AppExceptionWrapper extends AppException {
+  const AppExceptionWrapper({required super.message, super.code});
+}
 
 // ==================== SALE OPERATIONS ====================
 
