@@ -350,13 +350,13 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
       if (user.isActive) {
         await ref.read(userOperationsProvider.notifier).deactivateUser(
-              userId: user.id,
-              updatedBy: currentUser.id,
+              actor: currentUser,
+              user: user,
             );
       } else {
         await ref.read(userOperationsProvider.notifier).reactivateUser(
-              userId: user.id,
-              updatedBy: currentUser.id,
+              actor: currentUser,
+              user: user,
             );
       }
 

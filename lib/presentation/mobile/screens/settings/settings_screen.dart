@@ -256,11 +256,14 @@ class SettingsScreen extends ConsumerWidget {
               }
 
               try {
-                // Update the user's display name in Firestore
+                // Update the user's display name in Firestore.
+                // The user is editing themselves (editOwnProfile path); the
+                // use-case enforces editUser permission and skips role-change
+                // / last-admin guards because the role isn't changing.
                 final userOps = ref.read(userOperationsProvider.notifier);
                 await userOps.updateUser(
+                  actor: user,
                   user: user.copyWith(displayName: newName),
-                  updatedBy: user.id,
                 );
 
                 if (dialogContext.mounted) {

@@ -3,13 +3,32 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/data/repositories/user_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/user_repository.dart';
+import 'package:maki_mobile_pos/domain/usecases/user/create_user_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/user/update_user_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
 /// Provides the UserRepository instance.
 final userRepositoryProvider = Provider<UserRepository>((ref) {
   return UserRepositoryImpl();
+});
+
+// ==================== USE CASE PROVIDERS ====================
+
+final createUserUseCaseProvider = Provider<CreateUserUseCase>((ref) {
+  return CreateUserUseCase(
+    repository: ref.watch(userRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
+final updateUserUseCaseProvider = Provider<UpdateUserUseCase>((ref) {
+  return UpdateUserUseCase(
+    repository: ref.watch(userRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
 });
 
 // ==================== USER QUERIES ====================
@@ -76,154 +95,106 @@ class UserOperationsState {
 }
 
 /// Notifier for user operations.
+///
+/// All mutations route through use-cases that own permission gating, business
+/// guards (last-admin, self-demote, self-deactivate), and activity logging.
+/// The notifier just owns transient UI state (loading + error message).
 class UserOperationsNotifier extends StateNotifier<UserOperationsState> {
-  final UserRepository _repository;
+  final CreateUserUseCase _createUseCase;
+  final UpdateUserUseCase _updateUseCase;
   final Ref _ref;
 
-  UserOperationsNotifier(this._repository, this._ref)
-      : super(const UserOperationsState());
+  UserOperationsNotifier({
+    required CreateUserUseCase createUseCase,
+    required UpdateUserUseCase updateUseCase,
+    required Ref ref,
+  })  : _createUseCase = createUseCase,
+        _updateUseCase = updateUseCase,
+        _ref = ref,
+        super(const UserOperationsState());
 
-  /// Creates a new user with Firebase Auth and Firestore document.
+  /// Creates a new user. Returns null on failure (errorMessage is set).
   Future<UserEntity?> createUser({
+    required UserEntity actor,
     required String email,
     required String password,
     required String displayName,
     required UserRole role,
-    required String createdBy,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
-    try {
-      final user = await _repository.createUser(
-        email: email,
-        password: password,
-        displayName: displayName,
-        role: role,
-        createdBy: createdBy,
-      );
+    final result = await _createUseCase.execute(
+      actor: actor,
+      email: email,
+      password: password,
+      displayName: displayName,
+      role: role,
+    );
 
+    if (result.success) {
       state = state.copyWith(isLoading: false);
       _invalidateProviders();
-      return user;
-    } catch (e) {
+      return result.data;
+    } else {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: result.errorMessage,
       );
       return null;
     }
   }
 
-  /// Updates an existing user.
+  /// Updates an existing user (handles role + active changes too).
   Future<UserEntity?> updateUser({
+    required UserEntity actor,
     required UserEntity user,
-    required String updatedBy,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
-    try {
-      final updated = await _repository.updateUser(
-        user: user,
-        updatedBy: updatedBy,
-      );
+    final result = await _updateUseCase.execute(actor: actor, user: user);
 
+    if (result.success) {
       state = state.copyWith(isLoading: false);
       _invalidateProviders();
       _ref.invalidate(userByIdProvider(user.id));
-      return updated;
-    } catch (e) {
+      return result.data;
+    } else {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: result.errorMessage,
       );
       return null;
     }
   }
 
-  /// Updates a user's role.
-  Future<bool> updateUserRole({
-    required String userId,
-    required UserRole newRole,
-    required String updatedBy,
-  }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    try {
-      await _repository.updateUserRole(
-        userId: userId,
-        newRole: newRole,
-        updatedBy: updatedBy,
-      );
-
-      state = state.copyWith(isLoading: false);
-      _invalidateProviders();
-      _ref.invalidate(userByIdProvider(userId));
-      return true;
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
-      return false;
-    }
-  }
-
-  /// Deactivates a user.
+  /// Convenience: deactivate (route through updateUser so all guards apply).
   Future<bool> deactivateUser({
-    required String userId,
-    required String updatedBy,
+    required UserEntity actor,
+    required UserEntity user,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    try {
-      await _repository.deactivateUser(
-        userId: userId,
-        updatedBy: updatedBy,
-      );
-
-      state = state.copyWith(isLoading: false);
-      _invalidateProviders();
-      _ref.invalidate(userByIdProvider(userId));
-      return true;
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
-      return false;
-    }
+    final updated = await updateUser(
+      actor: actor,
+      user: user.copyWith(isActive: false),
+    );
+    return updated != null;
   }
 
-  /// Reactivates a user.
+  /// Convenience: reactivate.
   Future<bool> reactivateUser({
-    required String userId,
-    required String updatedBy,
+    required UserEntity actor,
+    required UserEntity user,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    try {
-      await _repository.reactivateUser(
-        userId: userId,
-        updatedBy: updatedBy,
-      );
-
-      state = state.copyWith(isLoading: false);
-      _invalidateProviders();
-      _ref.invalidate(userByIdProvider(userId));
-      return true;
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
-      return false;
-    }
+    final updated = await updateUser(
+      actor: actor,
+      user: user.copyWith(isActive: true),
+    );
+    return updated != null;
   }
 
   /// Checks if email exists.
   Future<bool> emailExists(String email) async {
     try {
-      return await _repository.emailExists(email);
+      return await _ref.read(userRepositoryProvider).emailExists(email);
     } catch (e) {
       return false;
     }
@@ -243,8 +214,11 @@ class UserOperationsNotifier extends StateNotifier<UserOperationsState> {
 /// Provider for user operations.
 final userOperationsProvider =
     StateNotifierProvider<UserOperationsNotifier, UserOperationsState>((ref) {
-  final repository = ref.watch(userRepositoryProvider);
-  return UserOperationsNotifier(repository, ref);
+  return UserOperationsNotifier(
+    createUseCase: ref.watch(createUserUseCaseProvider),
+    updateUseCase: ref.watch(updateUserUseCaseProvider),
+    ref: ref,
+  );
 });
 
 // ==================== ROLE HELPERS ====================
