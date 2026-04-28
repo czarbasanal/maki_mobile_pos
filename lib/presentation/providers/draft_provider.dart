@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/data/repositories/draft_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/domain/usecases/draft/delete_draft_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/draft/save_draft_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/draft/update_draft_usecase.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -64,95 +67,109 @@ final userActiveDraftCountProvider =
   return repository.getActiveDraftCount(createdBy: userId);
 });
 
+// ==================== USE CASE PROVIDERS ====================
+
+final saveDraftUseCaseProvider = Provider<SaveDraftUseCase>((ref) {
+  return SaveDraftUseCase(repository: ref.watch(draftRepositoryProvider));
+});
+
+final updateDraftUseCaseProvider = Provider<UpdateDraftUseCase>((ref) {
+  return UpdateDraftUseCase(repository: ref.watch(draftRepositoryProvider));
+});
+
+final deleteDraftUseCaseProvider = Provider<DeleteDraftUseCase>((ref) {
+  return DeleteDraftUseCase(repository: ref.watch(draftRepositoryProvider));
+});
+
 // ==================== DRAFT OPERATIONS ====================
 
-/// Notifier for draft operations (create, update, delete, convert).
+/// Notifier for draft operations.
+///
+/// Mutations (save / update / delete) flow through use cases that own the
+/// permission check + owner-or-admin guard. Convenience methods
+/// (updateDraftItems, updateDraftName) construct the desired DraftEntity
+/// and route through [updateDraft] so guards apply uniformly.
+/// `markAsConverted` stays a direct repo call — it's invoked from
+/// [ProcessSaleUseCase] which has already gated the operation.
 class DraftOperationsNotifier extends StateNotifier<AsyncValue<void>> {
   final DraftRepository _repository;
+  final SaveDraftUseCase _saveUseCase;
+  final UpdateDraftUseCase _updateUseCase;
+  final DeleteDraftUseCase _deleteUseCase;
   final Ref _ref;
 
-  DraftOperationsNotifier(this._repository, this._ref)
-      : super(const AsyncValue.data(null));
+  DraftOperationsNotifier({
+    required DraftRepository repository,
+    required SaveDraftUseCase saveUseCase,
+    required UpdateDraftUseCase updateUseCase,
+    required DeleteDraftUseCase deleteUseCase,
+    required Ref ref,
+  })  : _repository = repository,
+        _saveUseCase = saveUseCase,
+        _updateUseCase = updateUseCase,
+        _deleteUseCase = deleteUseCase,
+        _ref = ref,
+        super(const AsyncValue.data(null));
 
-  /// Creates a new draft.
-  Future<DraftEntity?> createDraft(DraftEntity draft) async {
-    state = const AsyncValue.loading();
-    try {
-      final created = await _repository.createDraft(draft);
-      state = const AsyncValue.data(null);
-      _invalidateDraftProviders();
-      return created;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
-    }
-  }
-
-  /// Updates an existing draft.
-  Future<DraftEntity?> updateDraft({
+  Future<DraftEntity?> createDraft({
+    required UserEntity actor,
     required DraftEntity draft,
-    required String updatedBy,
   }) async {
     state = const AsyncValue.loading();
-    try {
-      final updated = await _repository.updateDraft(
-        draft: draft,
-        updatedBy: updatedBy,
-      );
+    final result = await _saveUseCase.execute(actor: actor, draft: draft);
+    if (result.success) {
       state = const AsyncValue.data(null);
       _invalidateDraftProviders();
-      return updated;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      return result.data;
+    } else {
+      state = AsyncValue.error(
+        result.errorMessage ?? 'Failed to save draft',
+        StackTrace.current,
+      );
       return null;
     }
   }
 
-  /// Updates draft items only.
+  Future<DraftEntity?> updateDraft({
+    required UserEntity actor,
+    required DraftEntity draft,
+  }) async {
+    state = const AsyncValue.loading();
+    final result = await _updateUseCase.execute(actor: actor, draft: draft);
+    if (result.success) {
+      state = const AsyncValue.data(null);
+      _invalidateDraftProviders();
+      _ref.invalidate(draftByIdProvider(draft.id));
+      return result.data;
+    } else {
+      state = AsyncValue.error(
+        result.errorMessage ?? 'Failed to update draft',
+        StackTrace.current,
+      );
+      return null;
+    }
+  }
+
+  /// Convenience: update items via [updateDraft] with a fresh DraftEntity.
   Future<DraftEntity?> updateDraftItems({
-    required String draftId,
+    required UserEntity actor,
+    required DraftEntity draft,
     required List<SaleItemEntity> items,
-    required String updatedBy,
   }) async {
-    state = const AsyncValue.loading();
-    try {
-      final updated = await _repository.updateDraftItems(
-        draftId: draftId,
-        items: items,
-        updatedBy: updatedBy,
-      );
-      state = const AsyncValue.data(null);
-      _ref.invalidate(draftByIdProvider(draftId));
-      return updated;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
-    }
+    return updateDraft(actor: actor, draft: draft.copyWith(items: items));
   }
 
-  /// Updates draft name.
+  /// Convenience: update name via [updateDraft] with a fresh DraftEntity.
   Future<DraftEntity?> updateDraftName({
-    required String draftId,
+    required UserEntity actor,
+    required DraftEntity draft,
     required String name,
-    required String updatedBy,
   }) async {
-    state = const AsyncValue.loading();
-    try {
-      final updated = await _repository.updateDraftName(
-        draftId: draftId,
-        name: name,
-        updatedBy: updatedBy,
-      );
-      state = const AsyncValue.data(null);
-      _ref.invalidate(draftByIdProvider(draftId));
-      return updated;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
-    }
+    return updateDraft(actor: actor, draft: draft.copyWith(name: name));
   }
 
-  /// Marks a draft as converted to a sale.
+  /// Marks a draft as converted. Internal sale-flow side-effect, not user-
+  /// driven — process_sale_usecase already gated the operation.
   Future<DraftEntity?> markAsConverted({
     required String draftId,
     required String saleId,
@@ -172,16 +189,22 @@ class DraftOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Deletes a draft.
-  Future<bool> deleteDraft(String draftId) async {
+  Future<bool> deleteDraft({
+    required UserEntity actor,
+    required String draftId,
+  }) async {
     state = const AsyncValue.loading();
-    try {
-      await _repository.deleteDraft(draftId);
+    final result =
+        await _deleteUseCase.execute(actor: actor, draftId: draftId);
+    if (result.success) {
       state = const AsyncValue.data(null);
       _invalidateDraftProviders();
       return true;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    } else {
+      state = AsyncValue.error(
+        result.errorMessage ?? 'Failed to delete draft',
+        StackTrace.current,
+      );
       return false;
     }
   }
@@ -221,8 +244,13 @@ class DraftOperationsNotifier extends StateNotifier<AsyncValue<void>> {
 /// Provider for draft operations.
 final draftOperationsProvider =
     StateNotifierProvider<DraftOperationsNotifier, AsyncValue<void>>((ref) {
-  final repository = ref.watch(draftRepositoryProvider);
-  return DraftOperationsNotifier(repository, ref);
+  return DraftOperationsNotifier(
+    repository: ref.watch(draftRepositoryProvider),
+    saveUseCase: ref.watch(saveDraftUseCaseProvider),
+    updateUseCase: ref.watch(updateDraftUseCaseProvider),
+    deleteUseCase: ref.watch(deleteDraftUseCaseProvider),
+    ref: ref,
+  );
 });
 
 // ==================== SELECTED DRAFT ====================

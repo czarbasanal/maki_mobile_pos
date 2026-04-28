@@ -478,9 +478,11 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     setState(() => _isDeleting = true);
 
     try {
+      final actor = ref.read(currentUserProvider).value;
+      if (actor == null) return;
       final success = await ref
           .read(draftOperationsProvider.notifier)
-          .deleteDraft(draft.id);
+          .deleteDraft(actor: actor, draftId: draft.id);
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
