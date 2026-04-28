@@ -553,8 +553,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
 
     final result = cart.isFromDraft
-        ? await draftOps.updateDraft(draft: draft, updatedBy: currentUser.id)
-        : await draftOps.createDraft(draft);
+        ? await draftOps.updateDraft(actor: currentUser, draft: draft)
+        : await draftOps.createDraft(actor: currentUser, draft: draft);
 
     if (result != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

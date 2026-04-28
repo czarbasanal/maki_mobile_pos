@@ -311,8 +311,11 @@ class DraftsListScreen extends ConsumerWidget {
     WidgetRef ref,
     DraftEntity draft,
   ) async {
+    final actor = ref.read(currentUserProvider).value;
+    if (actor == null) return;
     final draftOps = ref.read(draftOperationsProvider.notifier);
-    final success = await draftOps.deleteDraft(draft.id);
+    final success =
+        await draftOps.deleteDraft(actor: actor, draftId: draft.id);
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
