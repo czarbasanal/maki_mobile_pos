@@ -7,7 +7,6 @@ import 'package:maki_mobile_pos/core/utils/validators.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
-import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Screen for creating or editing a user.
 class UserFormScreen extends ConsumerStatefulWidget {
@@ -388,79 +387,53 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not logged in');
 
-      final activityLogger = ref.read(activityLoggerProvider);
-
+      // The use-case (CreateUserUseCase / UpdateUserUseCase, called via the
+      // notifier) handles permission checks, business guards (last-admin,
+      // self-demote, self-deactivate), and the activity-log writes.
       if (widget.isEditing) {
-        // Update existing user
-        final oldRole = widget.user!.role;
         final updated =
             await ref.read(userOperationsProvider.notifier).updateUser(
+                  actor: currentUser,
                   user: widget.user!.copyWith(
                     displayName: _displayNameController.text.trim(),
                     role: _selectedRole,
                   ),
-                  updatedBy: currentUser.id,
                 );
 
-        if (updated != null) {
-          // Log activity
-          await activityLogger.logUserUpdated(
-            performedBy: currentUser,
-            updatedUserId: updated.id,
-            updatedUserName: updated.displayName,
-            changes: 'Name: ${updated.displayName}',
+        if (updated != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User updated successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
-
-          if (oldRole != _selectedRole) {
-            await activityLogger.logRoleChanged(
-              performedBy: currentUser,
-              targetUserId: updated.id,
-              targetUserName: updated.displayName,
-              oldRole: oldRole.displayName,
-              newRole: _selectedRole.displayName,
-            );
-          }
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('User updated successfully'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            context.goBackOr(RoutePaths.users);
-          }
+          context.goBackOr(RoutePaths.users);
         }
       } else {
-        // Create new user
         final created =
             await ref.read(userOperationsProvider.notifier).createUser(
+                  actor: currentUser,
                   email: _emailController.text.trim(),
                   password: _passwordController.text,
                   displayName: _displayNameController.text.trim(),
                   role: _selectedRole,
-                  createdBy: currentUser.id,
                 );
 
-        if (created != null) {
-          // Log activity
-          await activityLogger.logUserCreated(
-            performedBy: currentUser,
-            newUserId: created.id,
-            newUserName: created.displayName,
-            newUserRole: _selectedRole.displayName,
+        if (created != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User created successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('User created successfully'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            context.goBackOr(RoutePaths.users);
-          }
+          context.goBackOr(RoutePaths.users);
         }
+      }
+
+      // Surface notifier-level errors (use-case failures) to the form.
+      final opState = ref.read(userOperationsProvider);
+      if (opState.errorMessage != null && mounted) {
+        setState(() => _errorMessage = opState.errorMessage);
       }
     } catch (e) {
       setState(() {
