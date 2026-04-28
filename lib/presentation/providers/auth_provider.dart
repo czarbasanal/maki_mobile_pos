@@ -1,7 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/domain/usecases/auth/sign_in_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/auth/sign_out_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/auth/verify_password_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Provider for the AuthRepository instance.
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -36,10 +41,25 @@ final currentUserRoleProvider = Provider<String?>((ref) {
 });
 
 /// Auth state notifier for handling sign in/out actions.
+///
+/// State-changing auth operations route through use cases that own the
+/// activity-log writes (logLogin / logLogout / logPasswordVerified).
 class AuthNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
   final AuthRepository _authRepository;
+  final SignInUseCase _signInUseCase;
+  final SignOutUseCase _signOutUseCase;
+  final VerifyPasswordUseCase _verifyPasswordUseCase;
 
-  AuthNotifier(this._authRepository) : super(const AsyncValue.loading()) {
+  AuthNotifier({
+    required AuthRepository authRepository,
+    required SignInUseCase signInUseCase,
+    required SignOutUseCase signOutUseCase,
+    required VerifyPasswordUseCase verifyPasswordUseCase,
+  })  : _authRepository = authRepository,
+        _signInUseCase = signInUseCase,
+        _signOutUseCase = signOutUseCase,
+        _verifyPasswordUseCase = verifyPasswordUseCase,
+        super(const AsyncValue.loading()) {
     _init();
   }
 
@@ -52,39 +72,48 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
     }
   }
 
-  /// Signs in with email and password.
   Future<UserEntity?> signIn({
     required String email,
     required String password,
   }) async {
     state = const AsyncValue.loading();
-    try {
-      final user = await _authRepository.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      state = AsyncValue.data(user);
-      return user;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
+    final result = await _signInUseCase.execute(email: email, password: password);
+    if (result.success) {
+      state = AsyncValue.data(result.data);
+      return result.data;
     }
+    final err = AuthException(
+      message: result.errorMessage ?? 'Sign-in failed',
+      code: result.errorCode,
+    );
+    state = AsyncValue.error(err, StackTrace.current);
+    throw err;
   }
 
-  /// Signs out the current user.
   Future<void> signOut() async {
-    try {
-      await _authRepository.signOut();
+    final actor = state.valueOrNull;
+    final result = await _signOutUseCase.execute(actor: actor);
+    if (result.success) {
       state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
+    } else {
+      final err = AuthException(
+        message: result.errorMessage ?? 'Auth operation failed',
+        code: result.errorCode);
+      state = AsyncValue.error(err, StackTrace.current);
+      throw err;
     }
   }
 
   /// Verifies the current user's password.
-  Future<bool> verifyPassword(String password) async {
-    return await _authRepository.verifyPassword(password);
+  Future<bool> verifyPassword(String password, {String purpose = 'sensitive action'}) async {
+    final actor = state.valueOrNull;
+    if (actor == null) return false;
+    final result = await _verifyPasswordUseCase.execute(
+      actor: actor,
+      password: password,
+      purpose: purpose,
+    );
+    return result.data ?? false;
   }
 
   /// Sends a password reset email.
@@ -104,11 +133,38 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
   }
 }
 
+// ==================== AUTH USE CASE PROVIDERS ====================
+
+final signInUseCaseProvider = Provider<SignInUseCase>((ref) {
+  return SignInUseCase(
+    repository: ref.watch(authRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
+final signOutUseCaseProvider = Provider<SignOutUseCase>((ref) {
+  return SignOutUseCase(
+    repository: ref.watch(authRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
+final verifyPasswordUseCaseProvider = Provider<VerifyPasswordUseCase>((ref) {
+  return VerifyPasswordUseCase(
+    repository: ref.watch(authRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
 /// Provider for the AuthNotifier.
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<UserEntity?>>((ref) {
-  final authRepository = ref.watch(authRepositoryProvider);
-  return AuthNotifier(authRepository);
+  return AuthNotifier(
+    authRepository: ref.watch(authRepositoryProvider),
+    signInUseCase: ref.watch(signInUseCaseProvider),
+    signOutUseCase: ref.watch(signOutUseCaseProvider),
+    verifyPasswordUseCase: ref.watch(verifyPasswordUseCaseProvider),
+  );
 });
 
 /// Provider for easy access to auth actions.
