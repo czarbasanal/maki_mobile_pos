@@ -9,16 +9,19 @@ export const colors = {
   primaryAccent: '#E8B84C',
   brandSlate: '#334E58',
 
-  // Light theme
+  // Light theme — values tuned for an airy Vercel-style admin: pure white
+  // surface, near-invisible hairlines, subtle hover backgrounds.
   light: {
     background: '#FFFFFF',
-    surface: '#F5F5F5',
+    surface: '#FAFAFA',
     card: '#FFFFFF',
-    text: '#000000',
+    text: '#0A0A0A',
     textSecondary: '#666666',
-    textHint: '#999999',
-    divider: '#E0E0E0',
-    border: '#D0D0D0',
+    textHint: '#A0A0A0',
+    divider: '#EAEAEA',
+    border: '#E0E0E0',
+    hairline: '#EAEAEA',
+    subtle: '#FAFAFA',
     accent: '#334E58',
     accentText: '#FFFFFF',
   },
