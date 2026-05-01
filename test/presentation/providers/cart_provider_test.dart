@@ -223,9 +223,13 @@ void main() {
 
       final state = container.read(cartProvider);
       expect(state.items.length, 1);
-      expect(state.sourceDraftId, 'draft-1');
       expect(state.notes, 'Draft notes');
-      expect(state.isFromDraft, true);
+      // Loading is destructive: callers delete the source draft right
+      // after, so the cart deliberately does not retain a sourceDraftId.
+      // That ensures a follow-up "Save as Draft" creates a new entry
+      // rather than failing to update a draft that no longer exists.
+      expect(state.sourceDraftId, isNull);
+      expect(state.isFromDraft, false);
     });
 
     test('reset should clear all state', () {

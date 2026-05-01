@@ -346,18 +346,22 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
   /// Drafts button with badge showing count.
+  ///
+  /// The Badge wraps the Icon (not the IconButton), so the count anchors
+  /// to the 24×24 icon corner instead of the 48×48 hit target — keeps the
+  /// number visually attached to the drafts glyph.
   Widget _buildDraftsButton() {
     final draftCount = ref.watch(activeDraftCountProvider);
 
     return draftCount.when(
-      data: (count) => Badge(
-        isLabelVisible: count > 0,
-        label: Text('$count'),
-        child: IconButton(
-          icon: const Icon(Icons.drafts_outlined),
-          tooltip: 'Drafts',
-          onPressed: _navigateToDrafts,
+      data: (count) => IconButton(
+        tooltip: 'Drafts',
+        icon: Badge(
+          isLabelVisible: count > 0,
+          label: Text('$count'),
+          child: const Icon(Icons.drafts_outlined),
         ),
+        onPressed: _navigateToDrafts,
       ),
       loading: () => IconButton(
         icon: const Icon(Icons.drafts_outlined),
