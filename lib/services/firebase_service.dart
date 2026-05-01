@@ -86,8 +86,12 @@ class FirebaseService {
         cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
       );
 
-      // Configure Auth persistence
-      await _auth!.setPersistence(Persistence.LOCAL);
+      // Configure Auth persistence — web-only API. Mobile/desktop already
+      // persist auth state to disk by default; calling setPersistence on
+      // those platforms throws 'unsupported-operation'.
+      if (kIsWeb) {
+        await _auth!.setPersistence(Persistence.LOCAL);
+      }
 
       // Connect to emulators in development
       if (useEmulator) {
