@@ -19,6 +19,8 @@ const config: Config = {
           'text-hint': colors.light.textHint,
           divider: colors.light.divider,
           border: colors.light.border,
+          hairline: colors.light.hairline,
+          subtle: colors.light.subtle,
           accent: colors.light.accent,
           'accent-text': colors.light.accentText,
         },
