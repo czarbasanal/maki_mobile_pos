@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 // ==================== ACTIVITY LOG QUERIES ====================
@@ -59,12 +60,13 @@ final activityLogsProvider =
 final activityLogsStreamProvider =
     StreamProvider.family<List<ActivityLogEntity>, ActivityLogParams>(
   (ref, params) {
-    final repository = ref.watch(activityLogRepositoryProvider);
-    return repository.watchActivityLogs(
-      type: params.type,
-      userId: params.userId,
-      limit: params.limit,
-    );
+    return authGatedStream(ref, (_) {
+      return ref.watch(activityLogRepositoryProvider).watchActivityLogs(
+            type: params.type,
+            userId: params.userId,
+            limit: params.limit,
+          );
+    });
   },
 );
 

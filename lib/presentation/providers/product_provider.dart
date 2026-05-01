@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/create_product_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/deactivate_product_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/update_product_usecase.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
@@ -18,8 +19,9 @@ final productRepositoryProvider = Provider<ProductRepository>((ref) {
 
 /// Provides all active products as a real-time stream.
 final productsProvider = StreamProvider<List<ProductEntity>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.watchProducts();
+  return authGatedStream(ref, (_) {
+    return ref.watch(productRepositoryProvider).watchProducts();
+  });
 });
 
 /// Provides a single product by ID.
@@ -32,8 +34,9 @@ final productByIdProvider =
 /// Provides a single product by ID as a stream.
 final productStreamProvider =
     StreamProvider.family<ProductEntity?, String>((ref, productId) {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.watchProduct(productId);
+  return authGatedStream(ref, (_) {
+    return ref.watch(productRepositoryProvider).watchProduct(productId);
+  });
 });
 
 /// Provides a single product by SKU.
@@ -102,8 +105,9 @@ final productsByCategoryProvider =
 
 /// Provides low stock products as a real-time stream.
 final lowStockProductsProvider = StreamProvider<List<ProductEntity>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.watchLowStockProducts();
+  return authGatedStream(ref, (_) {
+    return ref.watch(productRepositoryProvider).watchLowStockProducts();
+  });
 });
 
 /// Provides out of stock products.

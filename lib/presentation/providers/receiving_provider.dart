@@ -29,14 +29,18 @@ final completeReceivingUseCaseProvider =
 
 /// Provides recent receiving records.
 final recentReceivingsProvider = StreamProvider<List<ReceivingEntity>>((ref) {
-  final repository = ref.watch(receivingRepositoryProvider);
-  return repository.watchReceivings(limit: 50);
+  return authGatedStream(ref, (_) {
+    return ref.watch(receivingRepositoryProvider).watchReceivings(limit: 50);
+  });
 });
 
 /// Provides draft receivings.
 final draftReceivingsProvider = StreamProvider<List<ReceivingEntity>>((ref) {
-  final repository = ref.watch(receivingRepositoryProvider);
-  return repository.watchReceivings(status: ReceivingStatus.draft);
+  return authGatedStream(ref, (_) {
+    return ref
+        .watch(receivingRepositoryProvider)
+        .watchReceivings(status: ReceivingStatus.draft);
+  });
 });
 
 /// Provides a single receiving by ID.

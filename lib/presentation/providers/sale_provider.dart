@@ -20,14 +20,18 @@ final saleRepositoryProvider = Provider<SaleRepository>((ref) {
 
 /// Provides today's sales as a real-time stream.
 final todaysSalesProvider = StreamProvider<List<SaleEntity>>((ref) {
-  final repository = ref.watch(saleRepositoryProvider);
-  return repository.watchTodaysSales();
+  return authGatedStream(ref, (_) {
+    return ref.watch(saleRepositoryProvider).watchTodaysSales();
+  });
 });
 
 /// Provides today's completed sales only.
 final todaysCompletedSalesProvider = StreamProvider<List<SaleEntity>>((ref) {
-  final repository = ref.watch(saleRepositoryProvider);
-  return repository.watchTodaysSales(status: SaleStatus.completed);
+  return authGatedStream(ref, (_) {
+    return ref
+        .watch(saleRepositoryProvider)
+        .watchTodaysSales(status: SaleStatus.completed);
+  });
 });
 
 /// Provides sales for a specific date.

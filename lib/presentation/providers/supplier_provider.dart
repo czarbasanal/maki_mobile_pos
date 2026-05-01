@@ -45,8 +45,9 @@ final setSupplierActiveUseCaseProvider =
 
 /// Provides all active suppliers as a stream.
 final suppliersProvider = StreamProvider<List<SupplierEntity>>((ref) {
-  final repository = ref.watch(supplierRepositoryProvider);
-  return repository.watchSuppliers();
+  return authGatedStream(ref, (_) {
+    return ref.watch(supplierRepositoryProvider).watchSuppliers();
+  });
 });
 
 /// Provides all suppliers including inactive ones.
@@ -65,8 +66,9 @@ final supplierByIdProvider =
 /// Provides a single supplier by ID as a stream.
 final supplierStreamProvider =
     StreamProvider.family<SupplierEntity?, String>((ref, supplierId) {
-  final repository = ref.watch(supplierRepositoryProvider);
-  return repository.watchSupplier(supplierId);
+  return authGatedStream(ref, (_) {
+    return ref.watch(supplierRepositoryProvider).watchSupplier(supplierId);
+  });
 });
 
 /// Provides supplier search results.

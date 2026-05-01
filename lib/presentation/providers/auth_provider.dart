@@ -171,3 +171,22 @@ final authNotifierProvider =
 final authActionsProvider = Provider<AuthNotifier>((ref) {
   return ref.watch(authNotifierProvider.notifier);
 });
+
+/// Gates a Firestore-backed stream on auth-ready state.
+///
+/// Why: StreamProviders that subscribe at app boot fire before the user's
+/// role document is hot in Firestore rules' `getUserData()` cache, so the
+/// first packet hits while `request.auth.token` exists but the role lookup
+/// hasn't happened yet — denial. On manual refresh, auth is warm and the
+/// same query passes. Wrapping a stream in this helper makes it wait for
+/// [currentUserProvider] to emit a non-null user before subscribing, and
+/// re-fires on sign-in/out (the future re-resolves when the underlying
+/// stream provider rebuilds).
+Stream<T> authGatedStream<T>(
+  Ref ref,
+  Stream<T> Function(UserEntity user) build,
+) async* {
+  final user = await ref.watch(currentUserProvider.future);
+  if (user == null) return;
+  yield* build(user);
+}

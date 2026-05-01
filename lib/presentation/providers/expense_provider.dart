@@ -43,8 +43,9 @@ final deleteExpenseUseCaseProvider = Provider<DeleteExpenseUseCase>((ref) {
 
 /// Provides all expenses as a real-time stream.
 final expensesProvider = StreamProvider<List<ExpenseEntity>>((ref) {
-  final repository = ref.watch(expenseRepositoryProvider);
-  return repository.watchExpenses();
+  return authGatedStream(ref, (_) {
+    return ref.watch(expenseRepositoryProvider).watchExpenses();
+  });
 });
 
 /// Provides a single expense by ID.
