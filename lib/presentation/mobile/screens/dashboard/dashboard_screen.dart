@@ -34,23 +34,13 @@ class DashboardScreen extends ConsumerWidget {
     final userAsync = ref.watch(currentUserProvider);
 
     return userAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () => const Scaffold(body: LoadingView()),
       error: (error, stack) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go(RoutePaths.login),
-                child: const Text('Go to Login'),
-              ),
-            ],
+        body: ErrorStateView(
+          message: 'Error: $error',
+          action: ElevatedButton(
+            onPressed: () => context.go(RoutePaths.login),
+            child: const Text('Go to Login'),
           ),
         ),
       ),
@@ -59,9 +49,7 @@ class DashboardScreen extends ConsumerWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.go(RoutePaths.login);
           });
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: LoadingView());
         }
         return _DashboardContent(user: user);
       },

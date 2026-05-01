@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/void_sale_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Screen displaying sale details with void option.
@@ -46,12 +47,18 @@ class SaleDetailScreen extends ConsumerWidget {
       body: saleAsync.when(
         data: (sale) {
           if (sale == null) {
-            return const Center(child: Text('Sale not found'));
+            return const EmptyStateView(
+              icon: Icons.receipt_long_outlined,
+              title: 'Sale not found',
+            );
           }
           return _buildSaleDetails(context, ref, sale);
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingView(),
+        error: (error, _) => ErrorStateView(
+          message: 'Error: $error',
+          onRetry: () => ref.invalidate(saleByIdProvider(saleId)),
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/permissions/permissions.dart';
 import 'package:maki_mobile_pos/domain/entities/petty_cash_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/petty_cash_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/cut_off_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Petty cash dashboard. Lists recent transactions and shows the running
 /// balance. Admin-only (gated by [Permission.managePettyCash]).
@@ -47,14 +48,9 @@ class PettyCashScreen extends ConsumerWidget {
             child: recordsAsync.when(
               data: (records) {
                 if (records.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text(
-                        'No petty cash transactions yet.',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  return const EmptyStateView(
+                    icon: Icons.savings_outlined,
+                    title: 'No petty cash transactions yet',
                   );
                 }
                 return RefreshIndicator(
@@ -70,10 +66,11 @@ class PettyCashScreen extends ConsumerWidget {
                   ),
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Center(child: Text('Failed to load records: $e')),
+              loading: () => const LoadingView(),
+              error: (e, _) => ErrorStateView(
+                message: 'Failed to load records: $e',
+                onRetry: () => ref.invalidate(pettyCashRecordsProvider),
+              ),
             ),
           ),
         ],

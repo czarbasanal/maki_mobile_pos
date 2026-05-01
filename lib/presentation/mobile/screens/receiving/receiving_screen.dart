@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Main receiving screen showing history and entry point for new receivings.
@@ -47,8 +48,11 @@ class ReceivingScreen extends ConsumerWidget {
             child: receivingsAsync.when(
               data: (receivings) =>
                   _buildReceivingsList(context, ref, receivings),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('Error: $error')),
+              loading: () => const LoadingView(),
+              error: (error, _) => ErrorStateView(
+                message: 'Error: $error',
+                onRetry: () => ref.invalidate(recentReceivingsProvider),
+              ),
             ),
           ),
         ],

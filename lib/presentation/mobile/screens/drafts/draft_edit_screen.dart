@@ -34,23 +34,15 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     return draftAsync.when(
       loading: () => Scaffold(
         appBar: AppBar(title: const Text('Loading Draft...')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const LoadingView(),
       ),
       error: (error, _) => Scaffold(
         appBar: AppBar(title: const Text('Error')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error loading draft: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go(RoutePaths.drafts),
-                child: const Text('Back to Drafts'),
-              ),
-            ],
+        body: ErrorStateView(
+          message: 'Error loading draft: $error',
+          action: ElevatedButton(
+            onPressed: () => context.go(RoutePaths.drafts),
+            child: const Text('Back to Drafts'),
           ),
         ),
       ),
@@ -58,19 +50,12 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         if (draft == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Draft Not Found')),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  const Text('Draft not found or has been deleted'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.go(RoutePaths.drafts),
-                    child: const Text('Back to Drafts'),
-                  ),
-                ],
+            body: EmptyStateView(
+              icon: Icons.search_off,
+              title: 'Draft not found or has been deleted',
+              action: ElevatedButton(
+                onPressed: () => context.go(RoutePaths.drafts),
+                child: const Text('Back to Drafts'),
               ),
             ),
           );
