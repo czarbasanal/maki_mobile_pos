@@ -28,17 +28,20 @@ final webRouterProvider = Provider<GoRouter>((ref) {
 
       final isLoggedIn = user != null;
       final isLoginRoute = path == RoutePaths.login;
-      final isAccessDenied = path == '/access-denied';
+      final isAccessDenied = path == RoutePaths.accessDenied;
 
       if (!isLoggedIn && !isPublicRoute) return RoutePaths.login;
 
       if (isLoggedIn && user.role != UserRole.admin) {
-        return isAccessDenied ? null : '/access-denied';
+        return isAccessDenied ? null : RoutePaths.accessDenied;
       }
 
       if (isLoggedIn && isLoginRoute) return RoutePaths.dashboard;
-      if (isLoggedIn && !isPublicRoute && !RouteGuards.canAccess(path, user)) {
-        return RoutePaths.dashboard;
+      if (isLoggedIn &&
+          !isPublicRoute &&
+          !isAccessDenied &&
+          !RouteGuards.canAccess(path, user)) {
+        return RoutePaths.accessDenied;
       }
       return null;
     },

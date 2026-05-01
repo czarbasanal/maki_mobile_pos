@@ -8,6 +8,10 @@ abstract class RouteNames {
   /// Login screen route
   static const String login = 'login';
 
+  /// Access denied route — landing for authenticated users hitting a route
+  /// they don't have permission to view.
+  static const String accessDenied = 'accessDenied';
+
   // ==================== MAIN ROUTES ====================
 
   /// Dashboard/home route
@@ -48,6 +52,9 @@ abstract class RouteNames {
 
   /// Bulk receiving route
   static const String bulkReceiving = 'bulkReceiving';
+
+  /// Bulk receiving detail (resume a draft) — `/receiving/bulk/:id`.
+  static const String bulkReceivingDetail = 'bulkReceivingDetail';
 
   // ==================== SUPPLIER ROUTES ====================
 
@@ -104,6 +111,9 @@ abstract class RouteNames {
   /// Cost code settings route
   static const String costCodeSettings = 'costCodeSettings';
 
+  /// About screen route — `/settings/about`.
+  static const String about = 'about';
+
   // ==================== LOGS ROUTES ====================
 
   /// User logs route
@@ -126,6 +136,7 @@ abstract class RoutePaths {
   // ==================== AUTH PATHS ====================
 
   static const String login = '/login';
+  static const String accessDenied = '/access-denied';
 
   // ==================== MAIN PATHS ====================
 
@@ -179,6 +190,7 @@ abstract class RoutePaths {
 
   static const String settings = '/settings';
   static const String costCodeSettings = '/settings/cost-codes';
+  static const String about = '/settings/about';
 
   // ==================== LOGS PATHS ====================
 

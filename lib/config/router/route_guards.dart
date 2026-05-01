@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -90,6 +91,12 @@ abstract class RouteGuards {
       return false;
     }
 
+    // Access-denied is reachable by any authenticated user — it's the
+    // landing screen for permission failures.
+    if (path == RoutePaths.accessDenied) {
+      return true;
+    }
+
     // Common routes - any authenticated user
     if (isCommonRoute(path)) {
       return true;
@@ -101,8 +108,7 @@ abstract class RouteGuards {
       return user.hasPermission(permission);
     }
 
-    // Default: allow access (for routes not explicitly defined)
-    // This handles dynamic routes like /inventory/edit/:id
+    // Dynamic / nested routes (e.g. /inventory/edit/:id) — fail-safe deny.
     return _checkDynamicRoute(path, user);
   }
 
@@ -149,8 +155,20 @@ abstract class RouteGuards {
       return user.hasPermission(Permission.editUser);
     }
 
-    // Default allow for undefined routes
-    return true;
+    // Bulk receiving detail (resume a saved bulk draft) — same gate as
+    // /receiving/bulk.
+    if (path.startsWith('/receiving/bulk/')) {
+      return user.hasPermission(Permission.bulkReceive);
+    }
+
+    // About screen lives under /settings/about — anyone with viewSettings.
+    if (path == RoutePaths.about) {
+      return user.hasPermission(Permission.viewSettings);
+    }
+
+    // Fail-safe: deny everything not explicitly allowlisted above. Any new
+    // dynamic route must be added here, otherwise we'd leak access.
+    return false;
   }
 
   /// Gets the redirect path when access is denied.

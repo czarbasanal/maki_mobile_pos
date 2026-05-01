@@ -148,7 +148,8 @@ List<RouteBase> authRoutes() => [
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: '/access-denied',
+        path: RoutePaths.accessDenied,
+        name: RouteNames.accessDenied,
         builder: (context, state) => const _AccessDeniedScreen(),
       ),
     ];
@@ -232,6 +233,7 @@ List<RouteBase> featureRoutes(Surface surface) => [
           ),
           GoRoute(
             path: 'bulk/:id',
+            name: RouteNames.bulkReceivingDetail,
             builder: (context, state) {
               final id = state.pathParameters['id'];
               return BulkReceivingScreen(receivingId: id);
@@ -336,6 +338,7 @@ List<RouteBase> featureRoutes(Surface surface) => [
           ),
           GoRoute(
             path: 'about',
+            name: RouteNames.about,
             builder: (context, state) => const AboutScreen(),
           ),
         ],

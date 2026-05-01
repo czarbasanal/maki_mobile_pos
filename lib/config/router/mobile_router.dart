@@ -25,11 +25,17 @@ final mobileRouterProvider = Provider<GoRouter>((ref) {
 
       final isLoggedIn = user != null;
       final isLoginRoute = path == RoutePaths.login;
+      final isAccessDenied = path == RoutePaths.accessDenied;
 
       if (!isLoggedIn && !isPublicRoute) return RoutePaths.login;
       if (isLoggedIn && isLoginRoute) return RoutePaths.dashboard;
-      if (isLoggedIn && !isPublicRoute && !RouteGuards.canAccess(path, user)) {
-        return RoutePaths.dashboard;
+      // 403s land on /access-denied so the user gets visible feedback —
+      // silent redirects to / made deep links look broken to cashier/staff.
+      if (isLoggedIn &&
+          !isPublicRoute &&
+          !isAccessDenied &&
+          !RouteGuards.canAccess(path, user)) {
+        return RoutePaths.accessDenied;
       }
       return null;
     },
