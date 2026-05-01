@@ -13,6 +13,10 @@ abstract class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      // Roboto is bundled by Material on Android. To get Roboto on iOS/web
+      // too, drop Roboto-Regular/Medium/Bold.ttf into assets/fonts/ and
+      // declare them under flutter.fonts in pubspec.yaml.
+      fontFamily: AppTextStyles.fontFamily,
 
       // Color Scheme
       colorScheme: const ColorScheme.light(
@@ -36,6 +40,7 @@ abstract class AppTheme {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
           color: AppColors.lightText,
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -274,6 +279,7 @@ abstract class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: AppTextStyles.fontFamily,
 
       // Color Scheme
       colorScheme: const ColorScheme.dark(
@@ -297,6 +303,7 @@ abstract class AppTheme {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
           color: AppColors.darkText,
           fontSize: 20,
           fontWeight: FontWeight.w600,
