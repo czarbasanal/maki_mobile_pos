@@ -7,12 +7,19 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 /// Styles are organized by semantic purpose.
 abstract class AppTextStyles {
   // ==================== BASE FONT FAMILY ====================
+  //
+  // Primary text uses Roboto via GoogleFonts (applied centrally in
+  // app_theme.dart's textTheme). These constants are kept for places that
+  // explicitly reference a family string — but most TextStyles below omit
+  // fontFamily and inherit Roboto from the active TextTheme.
 
   /// Primary font family
-  static const String fontFamily = 'SF Pro Display';
+  static const String fontFamily = 'Roboto';
 
-  /// Monospace font family (for prices, codes)
-  static const String monoFontFamily = 'SF Mono';
+  /// Monospace font family — uses the platform monospace fallback so the
+  /// existing 'fontFamily: monospace' call sites (cost codes, SKUs, CSV
+  /// previews) keep their tabular look.
+  static const String monoFontFamily = 'monospace';
 
   // ==================== HEADING STYLES ====================
 

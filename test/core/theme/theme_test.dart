@@ -4,8 +4,8 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 void main() {
   group('AppColors', () {
-    test('light theme accent is primaryDark', () {
-      expect(AppColors.lightAccent, AppColors.primaryDark);
+    test('light theme accent is brandSlate (softened from primaryDark)', () {
+      expect(AppColors.lightAccent, AppColors.brandSlate);
     });
 
     test('dark theme accent is primaryAccent (gold)', () {
@@ -16,8 +16,12 @@ void main() {
       expect(AppColors.primaryDark, const Color(0xFF121C1D));
     });
 
-    test('primaryAccent has correct value', () {
-      expect(AppColors.primaryAccent, const Color(0xFFFCAC18));
+    test('primaryAccent has correct value (softened gold)', () {
+      expect(AppColors.primaryAccent, const Color(0xFFE8B84C));
+    });
+
+    test('brandSlate has correct value', () {
+      expect(AppColors.brandSlate, const Color(0xFF334E58));
     });
   });
 

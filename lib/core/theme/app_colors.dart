@@ -7,11 +7,17 @@ import 'package:flutter/material.dart';
 abstract class AppColors {
   // ==================== BRAND COLORS ====================
 
-  /// Primary dark color - used as dark theme background and light theme accent
+  /// Primary dark color — dark-theme background. Stays near-black so the
+  /// dark surface keeps its identity.
   static const Color primaryDark = Color(0xFF121C1D);
 
-  /// Primary accent color - used as dark theme accent
-  static const Color primaryAccent = Color(0xFFFCAC18);
+  /// Primary accent — gold used as the dark-theme accent. Softened from the
+  /// older fully-saturated 0xFFFCAC18 to read less harsh on screen.
+  static const Color primaryAccent = Color(0xFFE8B84C);
+
+  /// Slate used for the light-theme primary (buttons, FAB, focus). Replaces
+  /// the previous near-black so filled buttons feel less aggressive.
+  static const Color brandSlate = Color(0xFF334E58);
 
   // ==================== LIGHT THEME COLORS ====================
 
@@ -23,7 +29,7 @@ abstract class AppColors {
   static const Color lightTextHint = Color(0xFF999999);
   static const Color lightDivider = Color(0xFFE0E0E0);
   static const Color lightBorder = Color(0xFFD0D0D0);
-  static const Color lightAccent = primaryDark;
+  static const Color lightAccent = brandSlate;
   static const Color lightAccentText = Color(0xFFFFFFFF);
 
   // ==================== DARK THEME COLORS ====================
