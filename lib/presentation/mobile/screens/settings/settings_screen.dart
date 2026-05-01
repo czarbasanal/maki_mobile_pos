@@ -68,6 +68,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // ==================== GENERAL SECTION (ALL ROLES) ====================
           _buildSectionHeader(context, 'General'),
+          _buildThemeTile(context, ref),
           SettingsTile(
             icon: Icons.store,
             iconColor: Colors.teal,
@@ -405,6 +406,54 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildThemeTile(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(themeModeProvider);
+    final (label, icon) = switch (mode) {
+      ThemeMode.system => ('System', Icons.brightness_auto),
+      ThemeMode.light => ('Light', Icons.light_mode),
+      ThemeMode.dark => ('Dark', Icons.dark_mode),
+    };
+    return SettingsTile(
+      icon: icon,
+      iconColor: Colors.indigo,
+      title: 'Theme',
+      subtitle: label,
+      onTap: () => _showThemePicker(context, ref),
+    );
+  }
+
+  void _showThemePicker(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        final current = ref.read(themeModeProvider);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final entry in const [
+                (ThemeMode.system, 'System default', Icons.brightness_auto),
+                (ThemeMode.light, 'Light', Icons.light_mode),
+                (ThemeMode.dark, 'Dark', Icons.dark_mode),
+              ])
+                RadioListTile<ThemeMode>(
+                  value: entry.$1,
+                  groupValue: current,
+                  title: Text(entry.$2),
+                  secondary: Icon(entry.$3),
+                  onChanged: (mode) {
+                    if (mode == null) return;
+                    ref.read(themeModeProvider.notifier).set(mode);
+                    Navigator.pop(sheetContext);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
