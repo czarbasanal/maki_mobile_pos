@@ -379,8 +379,16 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Load draft into cart
+      // Load draft into cart and consume it — see drafts_list_screen for
+      // the rationale on destructive load.
       ref.read(cartProvider.notifier).loadFromDraft(draft);
+      ref.read(selectedDraftProvider.notifier).state = null;
+      final actor = ref.read(currentUserProvider).valueOrNull;
+      if (actor != null) {
+        ref
+            .read(draftOperationsProvider.notifier)
+            .deleteDraft(actor: actor, draftId: draft.id);
+      }
 
       if (mounted) {
         // Navigate to POS
@@ -406,8 +414,16 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Load draft into cart
+      // Load draft into cart and consume it — see drafts_list_screen for
+      // the rationale on destructive load.
       ref.read(cartProvider.notifier).loadFromDraft(draft);
+      ref.read(selectedDraftProvider.notifier).state = null;
+      final actor = ref.read(currentUserProvider).valueOrNull;
+      if (actor != null) {
+        ref
+            .read(draftOperationsProvider.notifier)
+            .deleteDraft(actor: actor, draftId: draft.id);
+      }
 
       if (mounted) {
         // Navigate to checkout

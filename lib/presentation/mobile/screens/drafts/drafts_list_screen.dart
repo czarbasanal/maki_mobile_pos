@@ -155,28 +155,25 @@ class DraftsListScreen extends ConsumerWidget {
     WidgetRef ref,
     DraftEntity draft,
   ) {
-    // Load draft into cart
+    // Load draft into cart and immediately drop it from the saved-drafts
+    // collection. Loading consumes the draft — if the user cancels and
+    // saves again, a new entry is created. The activeDraftCountProvider
+    // stream picks up the deletion and decrements the badge.
     ref.read(cartProvider.notifier).loadFromDraft(draft);
+    ref.read(selectedDraftProvider.notifier).state = null;
 
-    // Store selected draft for reference
-    ref.read(selectedDraftProvider.notifier).state = draft;
+    final actor = ref.read(currentUserProvider).valueOrNull;
+    if (actor != null) {
+      // Fire-and-forget; UI already moved on. Errors surface via the
+      // operations notifier's AsyncValue.error if we ever wire them up.
+      ref
+          .read(draftOperationsProvider.notifier)
+          .deleteDraft(actor: actor, draftId: draft.id);
+    }
 
-    // Show confirmation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Loaded draft: ${draft.name}'),
-        backgroundColor: Colors.green,
-        action: SnackBarAction(
-          label: 'Go to POS',
-          textColor: Colors.white,
-          onPressed: () {
-            context.go(RoutePaths.pos);
-          },
-        ),
-      ),
-    );
-
-    // Navigate back to POS
+    // Navigate back to POS — visual feedback (cart populated + draft gone
+    // from the list) is sufficient; previous toast didn't reliably dismiss
+    // through the route transition.
     context.go(RoutePaths.pos);
   }
 

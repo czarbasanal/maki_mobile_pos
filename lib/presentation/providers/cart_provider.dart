@@ -339,6 +339,11 @@ class CartNotifier extends StateNotifier<CartState> {
   // ==================== DRAFT OPERATIONS ====================
 
   /// Loads a draft into the cart.
+  ///
+  /// Loading is destructive: the caller is expected to delete the source
+  /// draft right after — see [drafts_list_screen]. We deliberately don't
+  /// retain `sourceDraftId` so a follow-up "Save as Draft" creates a new
+  /// entry rather than trying to update a draft that's already been removed.
   void loadFromDraft(DraftEntity draft) {
     state = CartState(
       items: List<SaleItemEntity>.from(draft.items),
@@ -346,7 +351,6 @@ class CartNotifier extends StateNotifier<CartState> {
       paymentMethod: PaymentMethod.cash,
       amountReceived: 0,
       notes: draft.notes,
-      sourceDraftId: draft.id,
     );
   }
 
