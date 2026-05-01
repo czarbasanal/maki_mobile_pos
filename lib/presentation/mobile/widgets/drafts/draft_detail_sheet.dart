@@ -152,27 +152,29 @@ class DraftDetailSheet extends StatelessWidget {
                 child: SafeArea(
                   child: Row(
                     children: [
-                      // Delete button
-                      OutlinedButton.icon(
+                      // Delete: icon-only — labelled buttons collided with the
+                      // primary action on narrow phones / large text scale.
+                      OutlinedButton(
                         onPressed: onDelete,
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Delete'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                           side: const BorderSide(color: Colors.red),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
+                            horizontal: 16,
                             vertical: 16,
                           ),
                         ),
+                        child: const Icon(Icons.delete_outline),
                       ),
-                      const SizedBox(width: 16),
-                      // Load button
+                      const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton.icon(
                           onPressed: onLoad,
                           icon: const Icon(Icons.shopping_cart_checkout),
-                          label: const Text('Load into Cart'),
+                          label: const Text(
+                            'Load into Cart',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
@@ -209,7 +211,6 @@ class DraftDetailSheet extends StatelessWidget {
         border: Border.all(color: Colors.green[200]!),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.local_offer,
@@ -217,13 +218,16 @@ class DraftDetailSheet extends StatelessWidget {
             color: Colors.green[700],
           ),
           const SizedBox(width: 8),
-          Text(
-            draft.discountType == DiscountType.percentage
-                ? 'Percentage Discounts Applied'
-                : 'Amount Discounts Applied',
-            style: TextStyle(
-              color: Colors.green[700],
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              draft.discountType == DiscountType.percentage
+                  ? 'Percentage Discounts Applied'
+                  : 'Amount Discounts Applied',
+              style: TextStyle(
+                color: Colors.green[700],
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
