@@ -43,8 +43,9 @@ final performCutOffUseCaseProvider = Provider<PerformCutOffUseCase>((ref) {
 
 /// Provides petty cash records as a real-time stream.
 final pettyCashRecordsProvider = StreamProvider<List<PettyCashEntity>>((ref) {
-  final repository = ref.watch(pettyCashRepositoryProvider);
-  return repository.watchRecords();
+  return authGatedStream(ref, (_) {
+    return ref.watch(pettyCashRepositoryProvider).watchRecords();
+  });
 });
 
 /// Provides the current petty cash balance.

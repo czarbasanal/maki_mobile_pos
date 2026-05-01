@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/usecases/draft/delete_draft_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/draft/save_draft_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/draft/update_draft_usecase.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -17,22 +18,27 @@ final draftRepositoryProvider = Provider<DraftRepository>((ref) {
 
 /// Provides active (non-converted) drafts as a real-time stream.
 final activeDraftsProvider = StreamProvider<List<DraftEntity>>((ref) {
-  final repository = ref.watch(draftRepositoryProvider);
-  return repository.watchActiveDrafts();
+  return authGatedStream(ref, (_) {
+    return ref.watch(draftRepositoryProvider).watchActiveDrafts();
+  });
 });
 
 /// Provides active drafts for a specific user.
 final userActiveDraftsProvider =
     StreamProvider.family<List<DraftEntity>, String>((ref, userId) {
-  final repository = ref.watch(draftRepositoryProvider);
-  return repository.watchActiveDrafts(createdBy: userId);
+  return authGatedStream(ref, (_) {
+    return ref
+        .watch(draftRepositoryProvider)
+        .watchActiveDrafts(createdBy: userId);
+  });
 });
 
 /// Provides a single draft by ID as a real-time stream.
 final draftByIdStreamProvider =
     StreamProvider.family<DraftEntity?, String>((ref, draftId) {
-  final repository = ref.watch(draftRepositoryProvider);
-  return repository.watchDraft(draftId);
+  return authGatedStream(ref, (_) {
+    return ref.watch(draftRepositoryProvider).watchDraft(draftId);
+  });
 });
 
 /// Provides a single draft by ID (one-time fetch).

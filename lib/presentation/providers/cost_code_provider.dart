@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/data/repositories/cost_code_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/cost_code_repository.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -20,8 +21,9 @@ final costCodeMappingProvider = FutureProvider<CostCodeEntity>((ref) async {
 
 /// Provides the cost code mapping as a stream for real-time updates.
 final costCodeMappingStreamProvider = StreamProvider<CostCodeEntity>((ref) {
-  final repository = ref.watch(costCodeRepositoryProvider);
-  return repository.watchCostCodeMapping();
+  return authGatedStream(ref, (_) {
+    return ref.watch(costCodeRepositoryProvider).watchCostCodeMapping();
+  });
 });
 
 // ==================== COST CODE OPERATIONS ====================
