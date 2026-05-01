@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Expenses list screen.
@@ -41,27 +42,10 @@ class ExpensesScreen extends ConsumerWidget {
       body: expensesAsync.when(
         data: (expenses) {
           if (expenses.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Expenses',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to add an expense',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                ],
-              ),
+            return const EmptyStateView(
+              icon: Icons.receipt_long,
+              title: 'No Expenses',
+              subtitle: 'Tap + to add an expense',
             );
           }
 
@@ -110,8 +94,11 @@ class ExpensesScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingView(),
+        error: (error, _) => ErrorStateView(
+          message: 'Error: $error',
+          onRetry: () => ref.invalidate(expensesProvider),
+        ),
       ),
       // FAB for adding expense - available to all roles with addExpense permission
       floatingActionButton: canAdd

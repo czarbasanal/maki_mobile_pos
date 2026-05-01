@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/users/user_list_tile.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen displaying list of all users (admin only).
 class UsersScreen extends ConsumerStatefulWidget {
@@ -92,8 +93,11 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           Expanded(
             child: usersAsync.when(
               data: (users) => _buildUsersList(users, currentUser!),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('Error: $error')),
+              loading: () => const LoadingView(),
+              error: (error, _) => ErrorStateView(
+                message: 'Error: $error',
+                onRetry: () => ref.invalidate(allUsersProvider),
+              ),
             ),
           ),
         ],
@@ -270,21 +274,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     });
 
     if (filteredUsers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No users found',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
+      return const EmptyStateView(
+        icon: Icons.people_outline,
+        title: 'No users found',
       );
     }
 

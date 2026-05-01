@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Main inventory management screen.
 class InventoryScreen extends ConsumerStatefulWidget {
@@ -398,69 +399,31 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text('Error: $error'),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () => ref.invalidate(productsProvider),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      loading: () => const LoadingView(),
+      error: (error, _) => ErrorStateView(
+        message: 'Error: $error',
+        onRetry: () => ref.invalidate(productsProvider),
       ),
     );
   }
 
   Widget _buildEmptyState(InventoryState state) {
     final hasFilters = _hasActiveFilters(state);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              hasFilters ? Icons.filter_alt_off : Icons.inventory_2_outlined,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              hasFilters ? 'No products match filters' : 'No Products Yet',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              hasFilters
-                  ? 'Try adjusting your search or filters'
-                  : 'Add your first product to get started',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-            if (hasFilters) ...[
-              const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: () {
-                  ref.read(inventoryStateProvider.notifier).resetFilters();
-                  _searchController.clear();
-                },
-                child: const Text('Clear Filters'),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return EmptyStateView(
+      icon: hasFilters ? Icons.filter_alt_off : Icons.inventory_2_outlined,
+      title: hasFilters ? 'No products match filters' : 'No Products Yet',
+      subtitle: hasFilters
+          ? 'Try adjusting your search or filters'
+          : 'Add your first product to get started',
+      action: hasFilters
+          ? OutlinedButton(
+              onPressed: () {
+                ref.read(inventoryStateProvider.notifier).resetFilters();
+                _searchController.clear();
+              },
+              child: const Text('Clear Filters'),
+            )
+          : null,
     );
   }
 

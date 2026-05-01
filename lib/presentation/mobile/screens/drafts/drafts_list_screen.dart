@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_detail_sheet.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_list_tile.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen displaying all active drafts.
 class DraftsListScreen extends ConsumerWidget {
@@ -35,8 +36,11 @@ class DraftsListScreen extends ConsumerWidget {
       ),
       body: draftsAsync.when(
         data: (drafts) => _buildDraftsList(context, ref, drafts),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _buildErrorState(context, ref, error),
+        loading: () => const LoadingView(),
+        error: (error, _) => ErrorStateView(
+          message: 'Failed to load drafts\n$error',
+          onRetry: () => ref.invalidate(activeDraftsProvider),
+        ),
       ),
     );
   }
@@ -47,7 +51,16 @@ class DraftsListScreen extends ConsumerWidget {
     List<DraftEntity> drafts,
   ) {
     if (drafts.isEmpty) {
-      return _buildEmptyState(context);
+      return EmptyStateView(
+        icon: Icons.drafts_outlined,
+        title: 'No Saved Drafts',
+        subtitle: 'Drafts you save from the POS screen will appear here.',
+        action: FilledButton.icon(
+          onPressed: () => context.go(RoutePaths.pos),
+          icon: const Icon(Icons.point_of_sale),
+          label: const Text('Go to POS'),
+        ),
+      );
     }
 
     return RefreshIndicator(
@@ -73,80 +86,6 @@ class DraftsListScreen extends ConsumerWidget {
                 canDelete ? () => _confirmDeleteDraft(context, ref, draft) : null,
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.drafts_outlined,
-              size: 80,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Saved Drafts',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Drafts you save from the POS screen will appear here.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[500],
-                  ),
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () => context.go(RoutePaths.pos),
-              icon: const Icon(Icons.point_of_sale),
-              label: const Text('Go to POS'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, WidgetRef ref, Object error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load drafts',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error.toString(),
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => ref.invalidate(activeDraftsProvider),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
       ),
     );
   }

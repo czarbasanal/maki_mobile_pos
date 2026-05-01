@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Screen displaying list of sales with filtering options.
@@ -143,7 +144,11 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     return salesAsync.when(
       data: (sales) {
         if (sales.isEmpty) {
-          return _buildEmptyState();
+          return const EmptyStateView(
+            icon: Icons.receipt_long,
+            title: 'No Sales Found',
+            subtitle: 'Try adjusting your date range or filters',
+          );
         }
 
         // Group sales by date
@@ -163,8 +168,11 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _buildErrorState(error),
+      loading: () => const LoadingView(),
+      error: (error, _) => ErrorStateView(
+        message: 'Failed to load sales\n$error',
+        onRetry: () => ref.invalidate(salesByDateRangeProvider(params)),
+      ),
     );
   }
 
@@ -310,74 +318,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No Sales Found',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Try adjusting your date range or filters',
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState(Object error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load sales',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error.toString(),
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () {
-                ref.invalidate(salesByDateRangeProvider(DateRangeParams(
-                  startDate: _startDate,
-                  endDate: _endDate,
-                )));
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
       ),
     );
   }

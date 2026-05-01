@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen displaying list of suppliers.
 class SuppliersScreen extends ConsumerStatefulWidget {
@@ -73,25 +74,14 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
           }).toList();
 
           if (filtered.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isNotEmpty
-                        ? 'No suppliers found'
-                        : 'No suppliers yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Add your first supplier',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                ],
-              ),
+            return EmptyStateView(
+              icon: Icons.people_outline,
+              title: _searchQuery.isNotEmpty
+                  ? 'No suppliers found'
+                  : 'No suppliers yet',
+              subtitle: _searchQuery.isNotEmpty
+                  ? 'Try a different search'
+                  : 'Add your first supplier',
             );
           }
 
@@ -108,8 +98,11 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingView(),
+        error: (error, _) => ErrorStateView(
+          message: 'Error: $error',
+          onRetry: () => ref.invalidate(suppliersProvider),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(RoutePaths.supplierAdd),

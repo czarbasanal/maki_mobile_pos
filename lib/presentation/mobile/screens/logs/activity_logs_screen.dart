@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/activity_log_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Screen displaying activity logs for audit trail.
@@ -88,8 +89,12 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
           Expanded(
             child: logsAsync.when(
               data: (logs) => _buildLogsList(logs),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('Error: $error')),
+              loading: () => const LoadingView(),
+              error: (error, _) => ErrorStateView(
+                message: 'Error: $error',
+                onRetry: () => ref
+                    .invalidate(activityLogsStreamProvider(params)),
+              ),
             ),
           ),
         ],
