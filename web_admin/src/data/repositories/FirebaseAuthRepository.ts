@@ -12,7 +12,13 @@ import {
   type Auth,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, type Firestore } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  serverTimestamp,
+  updateDoc,
+  type Firestore,
+} from 'firebase/firestore';
 import type {
   AuthRepository,
   AuthStateListener,
@@ -32,6 +38,34 @@ export class AuthError extends Error {
   }
 }
 
+// Map Firebase Auth error codes to copy that matches the Flutter app's
+// _mapFirebaseAuthException, so users see the same messages in both clients.
+function friendlyAuthMessage(code: string | undefined, fallback: string): string {
+  switch (code) {
+    case 'auth/user-not-found':
+      return 'No account found with this email';
+    case 'auth/wrong-password':
+      return 'Incorrect password';
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+      return 'Invalid email or password';
+    case 'auth/invalid-email':
+      return 'Invalid email address';
+    case 'auth/user-disabled':
+      return 'This account has been deactivated.';
+    case 'auth/too-many-requests':
+      return 'Too many failed attempts. Please try again later.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection.';
+    case 'auth/weak-password':
+      return 'Password is too weak';
+    case 'auth/requires-recent-login':
+      return 'Please sign in again to perform this action';
+    default:
+      return fallback || 'Authentication failed';
+  }
+}
+
 export class FirebaseAuthRepository implements AuthRepository {
   constructor(
     private readonly auth: Auth,
@@ -48,7 +82,7 @@ export class FirebaseAuthRepository implements AuthRepository {
 
   async signInWithEmailAndPassword(email: string, password: string): Promise<User> {
     try {
-      const cred = await fbSignIn(this.auth, email, password);
+      const cred = await fbSignIn(this.auth, email.trim(), password);
       const user = await this.loadProfile(cred.user.uid);
       if (!user) {
         await fbSignOut(this.auth);
@@ -58,11 +92,23 @@ export class FirebaseAuthRepository implements AuthRepository {
         await fbSignOut(this.auth);
         throw new AuthError('This account has been deactivated.', 'inactive');
       }
+      // Best-effort lastLoginAt update — never block sign-in on this.
+      void this.recordLastLogin(user.id);
       return user;
     } catch (e) {
       if (e instanceof AuthError) throw e;
       const fb = e as { code?: string; message?: string };
-      throw new AuthError(fb.message ?? 'Sign-in failed', fb.code);
+      throw new AuthError(friendlyAuthMessage(fb.code, fb.message ?? ''), fb.code);
+    }
+  }
+
+  private async recordLastLogin(uid: string): Promise<void> {
+    try {
+      await updateDoc(doc(this.db, FirestoreCollections.users, uid), {
+        lastLoginAt: serverTimestamp(),
+      });
+    } catch {
+      // Ignore — don't fail sign-in if this write doesn't go through.
     }
   }
 
@@ -104,7 +150,12 @@ export class FirebaseAuthRepository implements AuthRepository {
   }
 
   async sendPasswordResetEmail(email: string): Promise<void> {
-    await fbSendPasswordResetEmail(this.auth, email);
+    try {
+      await fbSendPasswordResetEmail(this.auth, email.trim());
+    } catch (e) {
+      const fb = e as { code?: string; message?: string };
+      throw new AuthError(friendlyAuthMessage(fb.code, fb.message ?? ''), fb.code);
+    }
   }
 
   async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
