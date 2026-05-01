@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CloudOff } from 'lucide-react';
+import { SignalSlashIcon } from '@heroicons/react/24/outline';
 import { useUiStore } from '@/presentation/stores/uiStore';
 
 export function OfflineBanner() {
@@ -21,8 +21,8 @@ export function OfflineBanner() {
   if (!offline) return null;
 
   return (
-    <div className="flex items-center gap-tk-sm bg-light-text-secondary px-tk-md py-tk-sm text-white">
-      <CloudOff className="h-4 w-4" />
+    <div className="flex items-center gap-tk-sm border-b border-light-hairline bg-light-subtle px-tk-lg py-tk-xs text-light-text-secondary">
+      <SignalSlashIcon className="h-4 w-4" />
       <span className="text-[13px]">Offline — changes will sync automatically</span>
     </div>
   );

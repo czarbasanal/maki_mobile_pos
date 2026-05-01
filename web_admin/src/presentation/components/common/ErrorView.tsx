@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 export function ErrorView({
   title = 'Something went wrong',
@@ -11,14 +11,14 @@ export function ErrorView({
 }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-tk-sm p-tk-xl text-center">
-      <AlertCircle className="h-8 w-8 text-error" />
-      <h3 className="text-headingSmall text-light-text">{title}</h3>
-      {message ? <p className="text-bodyMedium text-light-text-secondary">{message}</p> : null}
+      <ExclamationCircleIcon className="h-8 w-8 text-error" />
+      <h3 className="text-headingSmall font-semibold text-light-text">{title}</h3>
+      {message ? <p className="text-bodySmall text-light-text-secondary">{message}</p> : null}
       {onRetry ? (
         <button
           type="button"
           onClick={onRetry}
-          className="mt-tk-sm rounded-md bg-brand-slate px-tk-md py-tk-sm text-bodySmall font-medium text-white hover:bg-primary-dark"
+          className="mt-tk-sm rounded-md border border-light-hairline bg-light-card px-tk-md py-tk-xs text-bodySmall font-medium text-light-text hover:bg-light-subtle"
         >
           Try again
         </button>
