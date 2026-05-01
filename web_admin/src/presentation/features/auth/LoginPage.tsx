@@ -1,18 +1,24 @@
-// /admin/login form. Mirrors lib/presentation/shared/screens/auth/login_screen.dart:
-// branded header, email + password form, inline error banner, forgot-password
-// flow, friendly error copy from FirebaseAuthRepository.
+// /admin/login form. Vercel-airy refresh of the original — flat surface,
+// hairline borders, monogram brand, minimal Heroicons. Friendly error copy
+// still flows up from FirebaseAuthRepository.
 
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, X } from 'lucide-react';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { useSignIn } from '@/presentation/hooks/useSignIn';
 import { useSendPasswordReset } from '@/presentation/hooks/useSendPasswordReset';
 import { RoutePaths } from '@/presentation/router/routePaths';
-import { LoadingView } from '@/presentation/components/common/LoadingView';
+import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { cn } from '@/core/utils/cn';
 
 const loginSchema = z.object({
@@ -60,17 +66,12 @@ export function LoginPage() {
     setResetSuccess(null);
     try {
       const signedIn = await signIn.mutateAsync(values);
-      // The auth store updates via onAuthStateChanged; navigate eagerly so the
-      // user sees the dashboard immediately rather than the login screen
-      // flashing during the round-trip.
       if (signedIn.role !== 'admin') {
         navigate(RoutePaths.accessDenied, { replace: true });
         return;
       }
       navigate(from, { replace: true });
     } catch (e) {
-      // Surface Firebase errors on the password field so the user sees them
-      // attached to where they typed, plus the banner above for redundancy.
       const message = e instanceof Error ? e.message : 'Sign-in failed';
       setFieldError('password', { type: 'auth', message });
     }
@@ -100,11 +101,13 @@ export function LoginPage() {
   const banner = signIn.error?.message ?? sendReset.error?.message ?? null;
 
   return (
-    <div className="space-y-tk-lg">
+    <div className="space-y-tk-xl">
       <Header />
 
       {banner ? <ErrorBanner message={banner} onDismiss={() => signIn.reset()} /> : null}
-      {resetSuccess ? <SuccessBanner message={resetSuccess} onDismiss={() => setResetSuccess(null)} /> : null}
+      {resetSuccess ? (
+        <SuccessBanner message={resetSuccess} onDismiss={() => setResetSuccess(null)} />
+      ) : null}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-tk-md" noValidate>
         <Field
@@ -135,10 +138,14 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-tk-xs text-light-text-secondary hover:bg-light-surface"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeSlashIcon className="h-4 w-4" />
+                ) : (
+                  <EyeIcon className="h-4 w-4" />
+                )}
               </button>
             </div>
           }
@@ -147,13 +154,13 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="flex w-full items-center justify-center gap-tk-sm rounded-md bg-brand-slate px-tk-md py-tk-sm text-bodyMedium font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-tk-sm rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {submitting ? <Spinner className="h-4 w-4" /> : null}
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center pt-tk-xs">
           {resetMode ? (
             <ResetConfirm
               email={getValues('email').trim()}
@@ -168,7 +175,7 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => setResetMode(true)}
-              className="text-bodySmall text-light-text-secondary hover:text-light-text"
+              className="text-bodySmall text-light-text-secondary underline-offset-2 hover:text-light-text hover:underline"
             >
               Forgot password?
             </button>
@@ -183,9 +190,11 @@ export function LoginPage() {
 
 function inputCls(hasError: boolean): string {
   return cn(
-    'w-full rounded-md border bg-light-card px-tk-md py-tk-sm text-bodyMedium text-light-text outline-none transition-colors',
-    'focus:border-brand-slate focus:ring-2 focus:ring-brand-slate/20',
-    hasError ? 'border-error' : 'border-light-border',
+    'w-full rounded-md border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none transition-colors',
+    // Thicker outline on focus, no glow: drop the soft ring shadow and use a
+    // real CSS outline (no layout shift) layered just outside the border.
+    'focus:border-light-text focus:outline focus:outline-1 focus:outline-light-text focus:outline-offset-0',
+    hasError ? 'border-error focus:border-error focus:outline-error' : 'border-light-border',
   );
 }
 
@@ -200,9 +209,9 @@ function Field({
 }) {
   return (
     <label className="block space-y-tk-xs">
-      <span className="text-labelMedium text-light-text">{label}</span>
+      <span className="text-bodySmall font-medium text-light-text">{label}</span>
       {input}
-      {error ? <span className="block text-bodySmall text-error">{error}</span> : null}
+      {error ? <span className="block text-[12px] text-error">{error}</span> : null}
     </label>
   );
 }
@@ -210,14 +219,14 @@ function Field({
 function Header() {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="grid h-16 w-16 place-items-center rounded-[14px] border-[1.2px] border-light-border">
-        <span className="text-[26px] font-semibold leading-none text-primary-dark">M</span>
+      <div className="grid h-12 w-12 place-items-center rounded-md border border-light-border">
+        <span className="text-[20px] font-semibold leading-none text-light-text">M</span>
       </div>
-      <h1 className="mt-tk-md text-[18px] font-bold tracking-[2.4px] text-primary-dark">
-        MAKI POS
+      <h1 className="mt-tk-md text-bodyLarge font-semibold tracking-tight text-light-text">
+        MAKI POS Admin
       </h1>
       <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-        Sign in to your account
+        Sign in to continue
       </p>
     </div>
   );
@@ -231,11 +240,11 @@ function Footer() {
 
 function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
   return (
-    <div className="flex items-start gap-tk-sm rounded-md bg-error-light px-tk-md py-tk-sm text-error-dark">
-      <AlertCircle className="mt-[2px] h-4 w-4 shrink-0 text-error" />
+    <div className="flex items-start gap-tk-sm rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-error-dark">
+      <ExclamationCircleIcon className="mt-[2px] h-4 w-4 shrink-0 text-error" />
       <p className="flex-1 text-[13px]">{message}</p>
       <button type="button" onClick={onDismiss} aria-label="Dismiss">
-        <X className="h-4 w-4 text-error" />
+        <XMarkIcon className="h-4 w-4 text-error" />
       </button>
     </div>
   );
@@ -243,11 +252,11 @@ function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () =>
 
 function SuccessBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
   return (
-    <div className="flex items-start gap-tk-sm rounded-md bg-success-light px-tk-md py-tk-sm text-success-dark">
-      <CheckCircle2 className="mt-[2px] h-4 w-4 shrink-0 text-success" />
+    <div className="flex items-start gap-tk-sm rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-success-dark">
+      <CheckCircleIcon className="mt-[2px] h-4 w-4 shrink-0 text-success" />
       <p className="flex-1 text-[13px]">{message}</p>
       <button type="button" onClick={onDismiss} aria-label="Dismiss">
-        <X className="h-4 w-4 text-success" />
+        <XMarkIcon className="h-4 w-4 text-success" />
       </button>
     </div>
   );
@@ -265,17 +274,21 @@ function ResetConfirm({
   onCancel: () => void;
 }) {
   return (
-    <div className="flex w-full flex-col items-center gap-tk-sm rounded-md border border-light-divider bg-light-surface p-tk-md text-center">
+    <div className="flex w-full flex-col items-center gap-tk-sm rounded-md border border-light-hairline bg-light-subtle p-tk-md text-center">
       <p className="text-bodySmall text-light-text">
-        {email
-          ? <>Send password reset email to <span className="font-semibold">{email}</span>?</>
-          : 'Enter your email above first.'}
+        {email ? (
+          <>
+            Send password reset email to <span className="font-semibold">{email}</span>?
+          </>
+        ) : (
+          'Enter your email above first.'
+        )}
       </p>
       <div className="flex gap-tk-sm">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md px-tk-md py-tk-xs text-bodySmall text-light-text hover:bg-light-divider/50"
+          className="rounded-md px-tk-md py-tk-xs text-bodySmall text-light-text hover:bg-light-hairline"
         >
           Cancel
         </button>
@@ -283,9 +296,9 @@ function ResetConfirm({
           type="button"
           onClick={onSend}
           disabled={pending || !email}
-          className="flex items-center gap-tk-xs rounded-md bg-brand-slate px-tk-md py-tk-xs text-bodySmall font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-xs text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+          {pending ? <Spinner className="h-3 w-3" /> : null}
           {pending ? 'Sending…' : 'Send'}
         </button>
       </div>
