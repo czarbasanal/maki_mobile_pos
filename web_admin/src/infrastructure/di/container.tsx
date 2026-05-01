@@ -8,14 +8,17 @@ import { db } from '@/infrastructure/firebase/firestore';
 import { FirebaseAuthRepository } from '@/data/repositories/FirebaseAuthRepository';
 import { FirestoreSaleRepository } from '@/data/repositories/FirestoreSaleRepository';
 import { FirestoreProductRepository } from '@/data/repositories/FirestoreProductRepository';
+import { FirestoreCostCodeRepository } from '@/data/repositories/FirestoreCostCodeRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
+import type { CostCodeRepository } from '@/domain/repositories/CostCodeRepository';
 
 export interface Container {
   authRepo: AuthRepository;
   saleRepo: SaleRepository;
   productRepo: ProductRepository;
+  costCodeRepo: CostCodeRepository;
   // Other repositories slot in here as their phases land:
   // userRepo, supplierRepo, expenseRepo, ...
 }
@@ -25,6 +28,7 @@ function buildDefaultContainer(): Container {
     authRepo: new FirebaseAuthRepository(auth, db),
     saleRepo: new FirestoreSaleRepository(db),
     productRepo: new FirestoreProductRepository(db),
+    costCodeRepo: new FirestoreCostCodeRepository(db),
   };
 }
 
@@ -60,4 +64,8 @@ export function useSaleRepo(): SaleRepository {
 
 export function useProductRepo(): ProductRepository {
   return useContainer().productRepo;
+}
+
+export function useCostCodeRepo(): CostCodeRepository {
+  return useContainer().costCodeRepo;
 }
