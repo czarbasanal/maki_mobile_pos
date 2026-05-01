@@ -9,6 +9,9 @@ import { RoutePaths } from './routePaths';
 import { LoginPage } from '@/presentation/features/auth/LoginPage';
 import { AccessDeniedPage } from '@/presentation/features/access-denied/AccessDeniedPage';
 import { DashboardPage } from '@/presentation/features/dashboard/DashboardPage';
+import { SettingsPage } from '@/presentation/features/settings/SettingsPage';
+import { AboutPage } from '@/presentation/features/settings/AboutPage';
+import { CostCodeSettingsPage } from '@/presentation/features/settings/CostCodeSettingsPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -58,9 +61,9 @@ export const router = createBrowserRouter(
         { path: RoutePaths.userAdd, element: placeholder('New user', 'phase 4') },
         { path: RoutePaths.userEdit, element: placeholder('Edit user', 'phase 4') },
         { path: RoutePaths.userLogs, element: placeholder('Activity logs', 'phase 5') },
-        { path: RoutePaths.settings, element: placeholder('Settings', 'phase 3') },
-        { path: RoutePaths.costCodeSettings, element: placeholder('Cost codes', 'phase 3') },
-        { path: RoutePaths.about, element: placeholder('About', 'phase 3') },
+        { path: RoutePaths.settings, element: <SettingsPage /> },
+        { path: RoutePaths.costCodeSettings, element: <CostCodeSettingsPage /> },
+        { path: RoutePaths.about, element: <AboutPage /> },
       ],
     },
     { path: '*', element: <Navigate to={RoutePaths.dashboard} replace /> },
