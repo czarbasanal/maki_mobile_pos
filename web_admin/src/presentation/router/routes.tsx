@@ -8,6 +8,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { RoutePaths } from './routePaths';
 import { LoginPage } from '@/presentation/features/auth/LoginPage';
 import { AccessDeniedPage } from '@/presentation/features/access-denied/AccessDeniedPage';
+import { DashboardPage } from '@/presentation/features/dashboard/DashboardPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -30,7 +31,7 @@ export const router = createBrowserRouter(
         </ProtectedRoute>
       ),
       children: [
-        { path: RoutePaths.dashboard, element: placeholder('Dashboard', 'phase 2') },
+        { path: RoutePaths.dashboard, element: <DashboardPage /> },
         { path: RoutePaths.pos, element: placeholder('POS', 'phase 11') },
         { path: RoutePaths.checkout, element: placeholder('Checkout', 'phase 11') },
         { path: RoutePaths.drafts, element: placeholder('Drafts', 'phase 10') },
