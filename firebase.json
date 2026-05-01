@@ -4,5 +4,13 @@
     "location": "asia-southeast1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      { "source": "/admin/**", "destination": "/admin/index.html" },
+      { "source": "**", "destination": "/index.html" }
+    ]
   }
 }
