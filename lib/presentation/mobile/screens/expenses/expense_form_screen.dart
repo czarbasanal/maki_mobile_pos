@@ -71,7 +71,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Description *',
                   prefixIcon: Icon(CupertinoIcons.doc_text),
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
                     value?.isEmpty == true ? 'Description is required' : null,
@@ -86,7 +85,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                   labelText: 'Amount *',
                   prefixIcon: Icon(CupertinoIcons.money_dollar),
                   prefixText: '₱ ',
-                  border: OutlineInputBorder(),
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -107,7 +105,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Category *',
                   prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
-                  border: OutlineInputBorder(),
                 ),
                 items: _categories.map((cat) {
                   return DropdownMenuItem(value: cat, child: Text(cat));
@@ -127,8 +124,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Date *',
                     prefixIcon: Icon(CupertinoIcons.calendar),
-                    border: OutlineInputBorder(),
-                  ),
+                    ),
                   child: Text(
                     '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
                   ),
@@ -142,7 +138,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Notes',
                   prefixIcon: Icon(CupertinoIcons.list_bullet),
-                  border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
                 textCapitalization: TextCapitalization.sentences,

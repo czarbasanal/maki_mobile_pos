@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -41,17 +42,16 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.sm + 4,
+            ),
             child: TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search suppliers...',
-                prefixIcon: const Icon(CupertinoIcons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                prefixIcon: Icon(CupertinoIcons.search),
               ),
               onChanged: (value) => setState(() => _searchQuery = value),
             ),
@@ -125,23 +125,25 @@ class _SupplierListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: supplier.isActive
-              ? Colors.blue.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.1),
-          child: Icon(
-            CupertinoIcons.briefcase,
-            color: supplier.isActive ? Colors.blue : Colors.grey,
-          ),
+        leading: Icon(
+          CupertinoIcons.briefcase,
+          color: muted,
+          size: 24,
         ),
         title: Text(
           supplier.name,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             decoration: supplier.isActive ? null : TextDecoration.lineThrough,
+            color: supplier.isActive ? null : muted,
           ),
         ),
         subtitle: Column(
@@ -150,14 +152,11 @@ class _SupplierListTile extends StatelessWidget {
             if (supplier.contactPerson != null) Text(supplier.contactPerson!),
             Text(
               supplier.transactionType.displayName,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: muted),
             ),
           ],
         ),
-        trailing: const Icon(CupertinoIcons.chevron_right),
+        trailing: Icon(CupertinoIcons.chevron_right, color: muted, size: 18),
         onTap: onTap,
       ),
     );

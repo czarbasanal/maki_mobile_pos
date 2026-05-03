@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/petty_cash_provider.dart';
 
 /// Dialog for the end-of-day petty cash cut-off.
@@ -87,7 +88,6 @@ class _CutOffDialogState extends ConsumerState<CutOffDialog> {
               decoration: const InputDecoration(
                 labelText: 'Counted cash *',
                 prefixText: '₱ ',
-                border: OutlineInputBorder(),
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Counted cash is required';
@@ -104,8 +104,8 @@ class _CutOffDialogState extends ConsumerState<CutOffDialog> {
                 'Variance',
                 '${variance >= 0 ? '+' : ''}${AppConstants.currencySymbol}${variance.toStringAsFixed(2)}',
                 color: variance == 0
-                    ? Colors.green
-                    : (variance < 0 ? Colors.red : Colors.orange),
+                    ? AppColors.successDark
+                    : (variance < 0 ? AppColors.error : AppColors.warningDark),
               ),
             ],
             const SizedBox(height: 12),
@@ -115,7 +115,6 @@ class _CutOffDialogState extends ConsumerState<CutOffDialog> {
               maxLines: 2,
               decoration: const InputDecoration(
                 labelText: 'Notes',
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 4),

@@ -102,7 +102,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Supplier Name *',
                         prefixIcon: Icon(CupertinoIcons.briefcase),
-                        border: OutlineInputBorder(),
                       ),
                       validator: Validators.required,
                       textCapitalization: TextCapitalization.words,
@@ -115,7 +114,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Contact Person',
                         prefixIcon: Icon(CupertinoIcons.person),
-                        border: OutlineInputBorder(),
                       ),
                       textCapitalization: TextCapitalization.words,
                     ),
@@ -127,7 +125,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Contact Number',
                         prefixIcon: Icon(CupertinoIcons.phone),
-                        border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.phone,
                       validator: Validators.phoneNumber,
@@ -140,7 +137,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Alternative Number',
                         prefixIcon: Icon(CupertinoIcons.device_phone_portrait),
-                        border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.phone,
                     ),
@@ -152,7 +148,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(CupertinoIcons.envelope),
-                        border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
@@ -168,7 +163,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Address',
                         prefixIcon: Icon(CupertinoIcons.location),
-                        border: OutlineInputBorder(),
                       ),
                       maxLines: 2,
                       textCapitalization: TextCapitalization.sentences,
@@ -181,7 +175,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Payment Terms *',
                         prefixIcon: Icon(CupertinoIcons.creditcard),
-                        border: OutlineInputBorder(),
                       ),
                       items: TransactionType.values.map((type) {
                         return DropdownMenuItem(
@@ -203,7 +196,6 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Notes',
                         prefixIcon: Icon(CupertinoIcons.list_bullet),
-                        border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
                       textCapitalization: TextCapitalization.sentences,

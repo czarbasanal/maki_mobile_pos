@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -56,17 +57,23 @@ class ExpensesScreen extends ConsumerWidget {
           );
           final dateFormat = DateFormat('MMM d, y • h:mm a');
 
+          final theme = Theme.of(context);
+          final muted = theme.colorScheme.onSurfaceVariant;
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             itemCount: expenses.length,
             itemBuilder: (context, index) {
               final expense = expenses[index];
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.xs,
+                ),
                 child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.orange[100],
-                    child: const Icon(CupertinoIcons.doc_plaintext, color: Colors.orange),
+                  leading: Icon(
+                    CupertinoIcons.doc_plaintext,
+                    color: muted,
+                    size: 24,
                   ),
                   title: Text(
                     expense.description,
@@ -74,19 +81,18 @@ class ExpensesScreen extends ConsumerWidget {
                   ),
                   subtitle: Text(
                     dateFormat.format(expense.createdAt),
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                   trailing: Text(
                     currencyFormat.format(expense.amount),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   onTap: canEdit
                       ? () => context
                           .push('${RoutePaths.expenses}/edit/${expense.id}')
                       : null,
-                  // Only show edit/delete for admin
                   onLongPress: canDelete
                       ? () => _showDeleteConfirmation(context, ref, expense)
                       : null,
@@ -139,7 +145,7 @@ class ExpensesScreen extends ConsumerWidget {
                 }
               }
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Delete'),
           ),
         ],
