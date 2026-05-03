@@ -10,11 +10,13 @@ import { FirestoreSaleRepository } from '@/data/repositories/FirestoreSaleReposi
 import { FirestoreProductRepository } from '@/data/repositories/FirestoreProductRepository';
 import { FirestoreCostCodeRepository } from '@/data/repositories/FirestoreCostCodeRepository';
 import { FirestoreUserRepository } from '@/data/repositories/FirestoreUserRepository';
+import { FirestoreActivityLogRepository } from '@/data/repositories/FirestoreActivityLogRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
 import type { CostCodeRepository } from '@/domain/repositories/CostCodeRepository';
 import type { UserRepository } from '@/domain/repositories/UserRepository';
+import type { ActivityLogRepository } from '@/domain/repositories/ActivityLogRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -22,6 +24,7 @@ export interface Container {
   productRepo: ProductRepository;
   costCodeRepo: CostCodeRepository;
   userRepo: UserRepository;
+  activityLogRepo: ActivityLogRepository;
   // Other repositories slot in here as their phases land:
   // supplierRepo, expenseRepo, ...
 }
@@ -33,6 +36,7 @@ function buildDefaultContainer(): Container {
     productRepo: new FirestoreProductRepository(db),
     costCodeRepo: new FirestoreCostCodeRepository(db),
     userRepo: new FirestoreUserRepository(db),
+    activityLogRepo: new FirestoreActivityLogRepository(db),
   };
 }
 
@@ -76,4 +80,8 @@ export function useCostCodeRepo(): CostCodeRepository {
 
 export function useUserRepo(): UserRepository {
   return useContainer().userRepo;
+}
+
+export function useActivityLogRepo(): ActivityLogRepository {
+  return useContainer().activityLogRepo;
 }
