@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
@@ -58,7 +59,10 @@ class ProductDetailScreen extends ConsumerWidget {
                 const PopupMenuItem(
                   value: 'deactivate',
                   child: ListTile(
-                    leading: Icon(CupertinoIcons.archivebox, color: Colors.orange),
+                    leading: Icon(
+                      CupertinoIcons.archivebox,
+                      color: AppColors.warningDark,
+                    ),
                     title: Text('Deactivate'),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -94,45 +98,29 @@ class ProductDetailScreen extends ConsumerWidget {
     ProductEntity product,
     InventoryState inventoryState,
   ) {
-    final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header card
           _buildHeaderCard(context, product),
-
-          const SizedBox(height: 16),
-
-          // Stock status card
+          const SizedBox(height: AppSpacing.md),
           _buildStockCard(context, product),
-
-          const SizedBox(height: 16),
-
-          // Pricing card
+          const SizedBox(height: AppSpacing.md),
           _buildPricingCard(context, product, inventoryState.showCost),
-
-          const SizedBox(height: 16),
-
-          // Details card
+          const SizedBox(height: AppSpacing.md),
           _buildDetailsCard(context, product, dateFormat),
-
-          // Supplier card (if available)
           if (product.supplierName != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             _buildSupplierCard(context, product),
           ],
-
-          // Notes card (if available)
           if (product.notes != null && product.notes!.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             _buildNotesCard(context, product),
           ],
-
-          const SizedBox(height: 80), // Space for FAB
+          const SizedBox(height: AppSpacing.xxl + 32), // Space for FAB
         ],
       ),
     );
@@ -140,31 +128,37 @@ class ProductDetailScreen extends ConsumerWidget {
 
   Widget _buildHeaderCard(BuildContext context, ProductEntity product) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final mutedFill =
+        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Product image placeholder
+                // Outlined product glyph (no tinted background box)
                 Container(
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: hairline),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Icon(
                     CupertinoIcons.cube_box,
-                    size: 40,
-                    color: theme.colorScheme.onPrimaryContainer,
+                    size: 36,
+                    color: muted,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,29 +166,30 @@ class ProductDetailScreen extends ConsumerWidget {
                       Text(
                         product.name,
                         style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
+                          horizontal: AppSpacing.sm,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(4),
+                          color: mutedFill,
+                          border: Border.all(color: hairline),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Text(
                           product.sku,
                           style: TextStyle(
                             fontFamily: 'monospace',
-                            color: Colors.grey[700],
+                            color: muted,
                           ),
                         ),
                       ),
                       if (product.category != null) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.sm),
                         Chip(
                           label: Text(product.category!),
                           visualDensity: VisualDensity.compact,
@@ -206,14 +201,14 @@ class ProductDetailScreen extends ConsumerWidget {
               ],
             ),
             if (product.barcode != null && product.barcode!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
-                  const Icon(CupertinoIcons.qrcode, size: 20, color: Colors.grey),
-                  const SizedBox(width: 8),
+                  Icon(CupertinoIcons.qrcode, size: 18, color: muted),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     'Barcode: ${product.barcode}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: muted),
                   ),
                 ],
               ),
@@ -226,82 +221,58 @@ class ProductDetailScreen extends ConsumerWidget {
 
   Widget _buildStockCard(BuildContext context, ProductEntity product) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
-    Color statusColor;
-    String statusText;
-    IconData statusIcon;
-
-    if (product.isOutOfStock) {
-      statusColor = Colors.red;
-      statusText = 'Out of Stock';
-      statusIcon = CupertinoIcons.exclamationmark_circle;
-    } else if (product.isLowStock) {
-      statusColor = Colors.orange;
-      statusText = 'Low Stock';
-      statusIcon = CupertinoIcons.exclamationmark_triangle;
-    } else {
-      statusColor = Colors.green;
-      statusText = 'In Stock';
-      statusIcon = CupertinoIcons.checkmark_circle;
-    }
+    final (statusColor, statusText, statusIcon) = _stockStatus(product);
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(CupertinoIcons.cube_box, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                const Text(
-                  'Stock Information',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            _CardHeader(
+              icon: CupertinoIcons.cube_box,
+              title: 'Stock Information',
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
                   child: _buildStockMetric(
+                    context,
                     'Current Stock',
                     '${product.quantity}',
                     product.unit,
                     statusColor,
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 60,
-                  color: Colors.grey[300],
-                ),
+                Container(width: 1, height: 60, color: hairline),
                 Expanded(
                   child: _buildStockMetric(
+                    context,
                     'Reorder Level',
                     '${product.reorderLevel}',
                     product.unit,
-                    Colors.grey[600]!,
+                    muted,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.sm + 4),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: statusColor.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: statusColor),
               ),
               child: Row(
                 children: [
-                  Icon(statusIcon, color: statusColor),
-                  const SizedBox(width: 8),
+                  Icon(statusIcon, color: statusColor, size: 20),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     statusText,
                     style: TextStyle(
@@ -319,35 +290,31 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildStockMetric(
+    BuildContext context,
     String label,
     String value,
     String unit,
     Color color,
   ) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Column(
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w600,
             color: color,
           ),
         ),
         Text(
           unit,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
       ],
     );
@@ -359,100 +326,87 @@ class ProductDetailScreen extends ConsumerWidget {
     bool showCost,
   ) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(CupertinoIcons.money_dollar, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                const Text(
-                  'Pricing',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            _CardHeader(
+              icon: CupertinoIcons.money_dollar,
+              title: 'Pricing',
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
                   child: _buildPriceColumn(
+                    context,
                     'Selling Price',
                     '${AppConstants.currencySymbol}${product.price.toStringAsFixed(2)}',
                     theme.colorScheme.primary,
                   ),
                 ),
                 if (showCost) ...[
-                  Container(
-                    width: 1,
-                    height: 60,
-                    color: Colors.grey[300],
-                  ),
+                  Container(width: 1, height: 60, color: hairline),
                   Expanded(
                     child: _buildPriceColumn(
+                      context,
                       'Cost',
                       '${AppConstants.currencySymbol}${product.cost.toStringAsFixed(2)}',
-                      Colors.grey[700]!,
+                      theme.colorScheme.onSurface,
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 60,
-                    color: Colors.grey[300],
-                  ),
+                  Container(width: 1, height: 60, color: hairline),
                   Expanded(
                     child: _buildPriceColumn(
+                      context,
                       'Profit',
                       '${AppConstants.currencySymbol}${product.profit.toStringAsFixed(2)}',
-                      Colors.green[700]!,
+                      AppColors.successDark,
                       subtitle: '${product.profitMargin.toStringAsFixed(1)}%',
                     ),
                   ),
                 ] else ...[
-                  Container(
-                    width: 1,
-                    height: 60,
-                    color: Colors.grey[300],
-                  ),
+                  Container(width: 1, height: 60, color: hairline),
                   Expanded(
                     child: Column(
                       children: [
                         Text(
                           'Cost Code',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: muted),
                         ),
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: AppSpacing.sm + 4,
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.amber[100],
-                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.warning),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(CupertinoIcons.lock,
-                                  size: 16, color: Colors.amber[800]),
+                              const Icon(
+                                CupertinoIcons.lock,
+                                size: 16,
+                                color: AppColors.warningDark,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 product.costCode,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontFamily: 'monospace',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.amber[800],
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.warningDark,
                                 ),
                               ),
                             ],
@@ -465,20 +419,25 @@ class ProductDetailScreen extends ConsumerWidget {
               ],
             ),
             if (showCost) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.sm + 4),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: hairline),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Inventory Value (at cost)'),
+                    Text(
+                      'Inventory Value (at cost)',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                    ),
                     Text(
                       '${AppConstants.currencySymbol}${product.inventoryValueAtCost.toStringAsFixed(2)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -491,36 +450,32 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildPriceColumn(
+    BuildContext context,
     String label,
     String value,
     Color color, {
     String? subtitle,
   }) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Column(
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
             color: color,
           ),
         ),
         if (subtitle != null)
           Text(
             subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
       ],
     );
@@ -533,51 +488,57 @@ class ProductDetailScreen extends ConsumerWidget {
   ) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
-              children: [
-                Icon(CupertinoIcons.info_circle),
-                SizedBox(width: 8),
-                Text(
-                  'Details',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            _CardHeader(
+              icon: CupertinoIcons.info_circle,
+              title: 'Details',
             ),
-            const SizedBox(height: 16),
-            _buildDetailRow('Unit', product.unit),
-            _buildDetailRow('Status', product.isActive ? 'Active' : 'Inactive'),
-            _buildDetailRow('Created', dateFormat.format(product.createdAt)),
+            const SizedBox(height: AppSpacing.md),
+            _buildDetailRow(context, 'Unit', product.unit),
+            _buildDetailRow(
+              context,
+              'Status',
+              product.isActive ? 'Active' : 'Inactive',
+            ),
+            _buildDetailRow(
+              context,
+              'Created',
+              dateFormat.format(product.createdAt),
+            ),
             if (product.updatedAt != null)
               _buildDetailRow(
-                  'Last Updated', dateFormat.format(product.updatedAt!)),
+                context,
+                'Last Updated',
+                dateFormat.format(product.updatedAt!),
+              ),
             if (product.isVariation)
-              _buildDetailRow('Base SKU', product.baseSku ?? ''),
+              _buildDetailRow(context, 'Base SKU', product.baseSku ?? ''),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.grey[600]),
+            style: theme.textTheme.bodyMedium?.copyWith(color: muted),
           ),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -585,42 +546,37 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildSupplierCard(BuildContext context, ProductEntity product) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(CupertinoIcons.briefcase, color: Colors.blue[700]),
+            Icon(
+              CupertinoIcons.briefcase,
+              color: muted,
+              size: 24,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Supplier',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                   Text(
                     product.supplierName!,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(CupertinoIcons.chevron_right),
+            Icon(CupertinoIcons.chevron_right, color: muted, size: 18),
           ],
         ),
       ),
@@ -628,27 +584,19 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildNotesCard(BuildContext context, ProductEntity product) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(CupertinoIcons.doc_text, color: Colors.amber[700]),
-                const SizedBox(width: 8),
-                const Text(
-                  'Notes',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            _CardHeader(
+              icon: CupertinoIcons.doc_text,
+              title: 'Notes',
             ),
-            const SizedBox(height: 12),
-            Text(product.notes!),
+            const SizedBox(height: AppSpacing.sm + 4),
+            Text(product.notes!, style: theme.textTheme.bodyMedium),
           ],
         ),
       ),
@@ -705,17 +653,65 @@ class ProductDetailScreen extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Product deactivated'),
-                      backgroundColor: Colors.orange,
+                      backgroundColor: AppColors.warningDark,
                     ),
                   );
                 }
               }
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.orange),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.warningDark,
+            ),
             child: const Text('Deactivate'),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Status -> (color, label, icon) for a product's stock state.
+(Color, String, IconData) _stockStatus(ProductEntity product) {
+  if (product.isOutOfStock) {
+    return (
+      AppColors.error,
+      'Out of Stock',
+      CupertinoIcons.exclamationmark_circle,
+    );
+  }
+  if (product.isLowStock) {
+    return (
+      AppColors.warning,
+      'Low Stock',
+      CupertinoIcons.exclamationmark_triangle,
+    );
+  }
+  return (
+    AppColors.success,
+    'In Stock',
+    CupertinoIcons.checkmark_circle,
+  );
+}
+
+class _CardHeader extends StatelessWidget {
+  const _CardHeader({required this.icon, required this.title});
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, color: theme.colorScheme.primary, size: 20),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

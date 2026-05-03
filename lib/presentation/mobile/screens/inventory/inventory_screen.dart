@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
@@ -29,7 +30,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final inventoryState = ref.watch(inventoryStateProvider);
     final currentUser = ref.watch(currentUserProvider).value;
     final isAdmin = currentUser?.role == UserRole.admin;
@@ -141,10 +141,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   Widget _buildSummaryRow() {
     final summaryAsync = ref.watch(inventorySummaryProvider);
+    final state = ref.watch(inventoryStateProvider);
 
     return summaryAsync.when(
-      data: (summary) => Container(
-        padding: const EdgeInsets.all(16),
+      data: (summary) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
             Expanded(
@@ -152,37 +153,40 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 'Total',
                 '${summary.totalProducts}',
                 CupertinoIcons.cube_box,
-                Colors.blue,
+                AppColors.info,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _buildSummaryCard(
                 'In Stock',
                 '${summary.inStockCount}',
                 CupertinoIcons.checkmark_circle,
-                Colors.green,
+                AppColors.success,
                 onTap: () => _setStockFilter(StockFilter.inStock),
+                selected: state.stockFilter == StockFilter.inStock,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _buildSummaryCard(
                 'Low',
                 '${summary.lowStockCount}',
                 CupertinoIcons.exclamationmark_triangle,
-                Colors.orange,
+                AppColors.warning,
                 onTap: () => _setStockFilter(StockFilter.lowStock),
+                selected: state.stockFilter == StockFilter.lowStock,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _buildSummaryCard(
                 'Out',
                 '${summary.outOfStockCount}',
                 CupertinoIcons.exclamationmark_circle,
-                Colors.red,
+                AppColors.error,
                 onTap: () => _setStockFilter(StockFilter.outOfStock),
+                selected: state.stockFilter == StockFilter.outOfStock,
               ),
             ),
           ],
@@ -202,16 +206,27 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     IconData icon,
     Color color, {
     VoidCallback? onTap,
+    bool selected = false,
   }) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.sm + 4,
+          horizontal: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: selected ? color : hairline,
+            width: selected ? 1.5 : 1,
+          ),
         ),
         child: Column(
           children: [
@@ -219,17 +234,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
                 color: color,
               ),
             ),
             Text(
               label,
-              style: TextStyle(
+              style: theme.textTheme.labelSmall?.copyWith(
                 fontSize: 10,
-                color: Colors.grey[600],
+                color: muted,
               ),
             ),
           ],
@@ -243,7 +257,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Search field
+          // Search field — theme provides muted fill, hairline border,
+          // and rounded corners; no overrides needed.
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -260,11 +275,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       },
                     )
                   : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: Colors.grey[100],
             ),
             onChanged: (value) {
               ref.read(inventoryStateProvider.notifier).setSearchQuery(value);
@@ -352,13 +362,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   Widget _buildActiveFilters(InventoryState state) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Row(
         children: [
-          const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
-          const SizedBox(width: 8),
-          const Text('Filters active'),
+          Icon(
+            CupertinoIcons.line_horizontal_3_decrease,
+            size: 16,
+            color: muted,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            'Filters active',
+            style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+          ),
           const Spacer(),
           TextButton(
             onPressed: () {

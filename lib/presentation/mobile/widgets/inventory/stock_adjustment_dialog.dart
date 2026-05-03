@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -66,96 +67,89 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
+        child: Builder(builder: (context) {
+          final muted = theme.colorScheme.onSurfaceVariant;
+          final isDark = theme.brightness == Brightness.dark;
+          final hairline =
+              isDark ? AppColors.darkHairline : AppColors.lightHairline;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: hairline,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Header
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(CupertinoIcons.cube_box),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Adjust Stock',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+              const SizedBox(height: AppSpacing.lg - 4),
+              // Header — outlined cube_box glyph
+              Row(
+                children: [
+                  Icon(CupertinoIcons.cube_box, color: muted, size: 24),
+                  const SizedBox(width: AppSpacing.sm + 4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Adjust Stock',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                        Text(
+                          widget.product.name,
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: muted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg - 4),
+              // Current vs New stock — themed Card with hairline
+              Card(
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStockColumn(
+                        'Current',
+                        '${widget.product.quantity}',
+                        theme.colorScheme.onSurface,
                       ),
-                      Text(
-                        widget.product.name,
-                        style: TextStyle(color: Colors.grey[600]),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Icon(CupertinoIcons.forward, color: muted, size: 18),
+                      _buildStockColumn(
+                        'New',
+                        '$_newQuantity',
+                        _getNewQuantityColor(),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // Current stock display
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStockColumn(
-                    'Current',
-                    '${widget.product.quantity}',
-                    Colors.grey[700]!,
-                  ),
-                  Icon(CupertinoIcons.forward, color: Colors.grey[400]),
-                  _buildStockColumn(
-                    'New',
-                    '$_newQuantity',
-                    _getNewQuantityColor(),
-                  ),
-                ],
+              const SizedBox(height: AppSpacing.lg - 4),
+              // Adjustment type selector
+              Text(
+                'Adjustment Type',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Adjustment type selector
-            const Text(
-              'Adjustment Type',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
             SegmentedButton<AdjustmentType>(
               segments: const [
                 ButtonSegment(
@@ -193,7 +187,6 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                     ? 'New Quantity'
                     : 'Quantity',
                 hintText: 'Enter quantity',
-                border: const OutlineInputBorder(),
                 prefixIcon: Icon(
                   _adjustmentType == AdjustmentType.add
                       ? CupertinoIcons.plus_circle
@@ -226,7 +219,6 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
               decoration: const InputDecoration(
                 labelText: 'Reason / Note (optional)',
                 hintText: 'e.g., Received shipment, Damaged items',
-                border: OutlineInputBorder(),
                 prefixIcon: Icon(CupertinoIcons.doc_text),
               ),
               maxLines: 2,
@@ -266,36 +258,32 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
 
             const SizedBox(height: 8),
           ],
-        ),
+        );
+        }),
       ),
     );
   }
 
   Widget _buildStockColumn(String label, String value, Color color) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Column(
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w600,
             color: color,
           ),
         ),
         Text(
           widget.product.unit,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
       ],
     );
@@ -322,10 +310,9 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
 
   Color _getNewQuantityColor() {
     final newQty = _newQuantity;
-    if (newQty < 0) return Colors.red;
-    if (newQty == 0) return Colors.red;
-    if (newQty <= widget.product.reorderLevel) return Colors.orange;
-    return Colors.green;
+    if (newQty <= 0) return AppColors.error;
+    if (newQty <= widget.product.reorderLevel) return AppColors.warning;
+    return AppColors.success;
   }
 
   Future<void> _handleAdjustment() async {
@@ -391,7 +378,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
             content: Text(
               'Stock updated: ${widget.product.name} → $_newQuantity ${widget.product.unit}',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.successDark,
           ),
         );
       }
