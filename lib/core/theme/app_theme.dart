@@ -91,11 +91,12 @@ abstract class AppTheme {
         ),
       ),
 
-      // Outlined Button
+      // Outlined Button — light-grey hairline border instead of the
+      // accent slate; text still uses accent for readable contrast.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.lightAccent,
-          side: const BorderSide(color: AppColors.lightAccent, width: 1.5),
+          side: const BorderSide(color: AppColors.lightBorder, width: 1),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -113,6 +114,35 @@ abstract class AppTheme {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: AppTextStyles.button,
+        ),
+      ),
+
+      // Segmented Button — same corner language as the other buttons,
+      // a light-grey outline instead of the M3 onSurface default, and
+      // a green-tinted selected fill (rather than the brand-yellow
+      // M3 default which reads as a warning).
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.success.withValues(alpha: 0.18);
+            }
+            return null;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.successDark;
+            }
+            return null;
+          }),
+          side: WidgetStateProperty.all(
+            const BorderSide(color: AppColors.lightBorder, width: 1),
+          ),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+          ),
         ),
       ),
 
@@ -388,11 +418,11 @@ abstract class AppTheme {
         ),
       ),
 
-      // Outlined Button
+      // Outlined Button — light-grey (dark variant) hairline border.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.darkAccent,
-          side: const BorderSide(color: AppColors.darkAccent, width: 1.5),
+          side: const BorderSide(color: AppColors.darkBorder, width: 1),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -410,6 +440,34 @@ abstract class AppTheme {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: AppTextStyles.button,
+        ),
+      ),
+
+      // Segmented Button — green-tinted selected fill (status semantic),
+      // light-grey (dark variant) hairline border, shape matches the
+      // other buttons.
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.success.withValues(alpha: 0.18);
+            }
+            return null;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.success;
+            }
+            return null;
+          }),
+          side: WidgetStateProperty.all(
+            const BorderSide(color: AppColors.darkBorder, width: 1),
+          ),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+          ),
         ),
       ),
 
