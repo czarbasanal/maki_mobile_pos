@@ -142,6 +142,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
       ),
       color: AppColors.successLight,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
             CupertinoIcons.checkmark_circle,
@@ -149,11 +150,12 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             size: 18,
           ),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(
+          Flexible(
             child: Text(
               dateText != null
                   ? 'Completed on $dateText. Read-only.'
                   : 'Completed. Read-only.',
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.successDark,
                 fontWeight: FontWeight.w500,
