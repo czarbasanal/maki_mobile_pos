@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/activity_log_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -18,10 +19,14 @@ class ActivityLogsScreen extends ConsumerStatefulWidget {
 
 class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
   ActivityType? _typeFilter;
-  final _dateFormat = DateFormat('MMM d, y • h:mm a');
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final params = ActivityLogParams(
       type: _typeFilter,
       limit: 100,
@@ -37,7 +42,6 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
         ),
         title: const Text('Activity Logs'),
         actions: [
-          // Filter by type
           PopupMenuButton<ActivityType?>(
             icon: const Icon(CupertinoIcons.line_horizontal_3_decrease),
             tooltip: 'Filter by type',
@@ -55,7 +59,7 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
                     child: Row(
                       children: [
                         Text(type.emoji),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Text(type.displayName),
                       ],
                     ),
@@ -66,15 +70,24 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
       ),
       body: Column(
         children: [
-          // Active filter
+          // Active filter — flat with hairline bottom border
           if (_typeFilter != null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.grey[100],
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: hairline)),
+              ),
               child: Row(
                 children: [
-                  const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
+                  Icon(
+                    CupertinoIcons.line_horizontal_3_decrease,
+                    size: 16,
+                    color: muted,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
                   Chip(
                     avatar: Text(_typeFilter!.emoji),
                     label: Text(_typeFilter!.displayName),
@@ -85,16 +98,14 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
                 ],
               ),
             ),
-
-          // Logs list
           Expanded(
             child: logsAsync.when(
               data: (logs) => _buildLogsList(logs),
               loading: () => const LoadingView(),
               error: (error, _) => ErrorStateView(
                 message: 'Error: $error',
-                onRetry: () => ref
-                    .invalidate(activityLogsStreamProvider(params)),
+                onRetry: () =>
+                    ref.invalidate(activityLogsStreamProvider(params)),
               ),
             ),
           ),
@@ -121,31 +132,29 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
   }
 
   Widget _buildLogsList(List<ActivityLogEntity> logs) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     if (logs.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.clock, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
+            Icon(CupertinoIcons.clock, size: 56, color: muted),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'No activity logs found',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
+              style: theme.textTheme.titleMedium?.copyWith(color: muted),
             ),
           ],
         ),
       );
     }
 
-    // Group logs by date
     final groupedLogs = _groupLogsByDate(logs);
 
     return ListView.builder(
       itemCount: groupedLogs.length,
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       itemBuilder: (context, index) {
         final dateGroup = groupedLogs.entries.elementAt(index);
         return _buildDateGroup(dateGroup.key, dateGroup.value);
@@ -170,6 +179,10 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
 
   Widget _buildDateGroup(DateTime date, List<ActivityLogEntity> logs) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final dateStr = _isToday(date)
         ? 'Today'
         : _isYesterday(date)
@@ -179,21 +192,28 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date header
+        // Date header — flat with hairline borders
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: Colors.grey[100],
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: hairline),
+              bottom: BorderSide(color: hairline),
+            ),
+          ),
           width: double.infinity,
           child: Text(
-            dateStr,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+            dateStr.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+              color: muted,
             ),
           ),
         ),
-
-        // Logs for this date
         ...logs.map((log) => _buildLogItem(log)),
       ],
     );
@@ -201,37 +221,42 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
 
   Widget _buildLogItem(ActivityLogEntity log) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final timeStr = DateFormat('h:mm a').format(log.createdAt);
+    final accent = _typeAccent(log.type);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 4,
+      ),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(bottom: BorderSide(color: hairline)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Type emoji
+          // Emoji glyph — outlined circle for security/financial events,
+          // hairline circle otherwise. Carries semantic accent only when
+          // the action matters for audit (security-related / financial).
           Container(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: _getTypeColor(log.type).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              shape: BoxShape.circle,
+              border: Border.all(color: accent ?? hairline),
             ),
             child: Center(
               child: Text(
                 log.type.emoji,
-                style: const TextStyle(fontSize: 20),
+                style: const TextStyle(fontSize: 18),
               ),
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          // Log details
+          const SizedBox(width: AppSpacing.sm + 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,9 +273,7 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
                     ),
                     Text(
                       timeStr,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[500],
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
                   ],
                 ),
@@ -258,38 +281,34 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
                   const SizedBox(height: 2),
                   Text(
                     log.details!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ],
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(CupertinoIcons.person,
-                        size: 14, color: Colors.grey[500]),
+                    Icon(CupertinoIcons.person, size: 14, color: muted),
                     const SizedBox(width: 4),
                     Text(
                       log.userName,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: hairline),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
                         log.userRole,
-                        style: const TextStyle(
+                        style: theme.textTheme.labelSmall?.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
+                          color: muted,
                         ),
                       ),
                     ),
@@ -303,27 +322,14 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
     );
   }
 
-  Color _getTypeColor(ActivityType type) {
-    if (type.isSecurityRelated) return Colors.red;
-    if (type.isFinancialAction) return Colors.green;
-
-    switch (type) {
-      case ActivityType.inventory:
-      case ActivityType.stockAdjustment:
-      case ActivityType.receiving:
-        return Colors.blue;
-      case ActivityType.userManagement:
-      case ActivityType.userCreated:
-      case ActivityType.userUpdated:
-      case ActivityType.userDeactivated:
-      case ActivityType.roleChanged:
-        return Colors.purple;
-      case ActivityType.settings:
-      case ActivityType.costCodeChanged:
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
+  /// Reserve color for the audit-meaningful events: security
+  /// (failed/verified password, role change) and financial (sale, void,
+  /// petty cash, cost-code change). Everything else stays neutral —
+  /// the emoji already gives the categorical hint.
+  Color? _typeAccent(ActivityType type) {
+    if (type.isSecurityRelated) return AppColors.error;
+    if (type.isFinancialAction) return AppColors.success;
+    return null;
   }
 
   bool _isToday(DateTime date) {

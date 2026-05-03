@@ -117,7 +117,6 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                   labelText: 'Amount *',
                   prefixText: '₱ ',
                   prefixIcon: Icon(CupertinoIcons.money_dollar),
-                  border: OutlineInputBorder(),
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -137,7 +136,6 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Description *',
                   prefixIcon: Icon(CupertinoIcons.doc_text),
-                  border: OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.sentences,
                 validator: (v) =>
@@ -150,7 +148,6 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Notes',
                   prefixIcon: Icon(CupertinoIcons.list_bullet),
-                  border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
                 textCapitalization: TextCapitalization.sentences,
