@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Dialog for entering item-level discount.
+///
+/// The discount-type toggle (Amount vs Percentage) is hosted here rather
+/// than at the cart level. Type is a cart-wide property in the data
+/// model — switching it while other cart items already have discounts
+/// is a destructive change, so the modal confirms before resetting.
 class DiscountInputDialog extends StatefulWidget {
   final String itemName;
   final double currentDiscount;
   final DiscountType discountType;
   final double maxAmount;
   final ValueChanged<double> onApply;
+
+  /// Called when the user toggles the discount type inside the dialog.
+  /// The caller is expected to update the cart's discount-type state and
+  /// reset other items' discount values when [hasOtherDiscounts] is true.
+  final ValueChanged<DiscountType>? onTypeChanged;
+
+  /// True if any cart item *other* than the one being edited currently
+  /// has a non-zero discount. Used to gate the confirmation step when
+  /// the user toggles type.
+  final bool hasOtherDiscounts;
 
   const DiscountInputDialog({
     super.key,
@@ -18,6 +35,8 @@ class DiscountInputDialog extends StatefulWidget {
     required this.discountType,
     required this.maxAmount,
     required this.onApply,
+    this.onTypeChanged,
+    this.hasOtherDiscounts = false,
   });
 
   @override
@@ -26,16 +45,18 @@ class DiscountInputDialog extends StatefulWidget {
 
 class _DiscountInputDialogState extends State<DiscountInputDialog> {
   late TextEditingController _controller;
+  late DiscountType _discountType;
   String? _errorText;
 
-  bool get isPercentage => widget.discountType == DiscountType.percentage;
+  bool get _isPercentage => _discountType == DiscountType.percentage;
 
   @override
   void initState() {
     super.initState();
+    _discountType = widget.discountType;
     _controller = TextEditingController(
       text: widget.currentDiscount > 0
-          ? widget.currentDiscount.toStringAsFixed(isPercentage ? 0 : 2)
+          ? widget.currentDiscount.toStringAsFixed(_isPercentage ? 0 : 2)
           : '',
     );
   }
@@ -52,9 +73,9 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
     setState(() {
       if (value < 0) {
         _errorText = 'Cannot be negative';
-      } else if (isPercentage && value > 100) {
+      } else if (_isPercentage && value > 100) {
         _errorText = 'Cannot exceed 100%';
-      } else if (!isPercentage && value > widget.maxAmount) {
+      } else if (!_isPercentage && value > widget.maxAmount) {
         _errorText =
             'Cannot exceed item total (${AppConstants.currencySymbol}${widget.maxAmount.toStringAsFixed(2)})';
       } else {
@@ -63,13 +84,50 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
     });
   }
 
+  Future<void> _toggleType(DiscountType newType) async {
+    if (newType == _discountType) return;
+
+    // Switching type changes the meaning of every existing discount value
+    // on the cart (50% vs ₱50). When other items already have a discount,
+    // confirm before letting it reset them.
+    if (widget.hasOtherDiscounts) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Change Discount Type?'),
+          content: const Text(
+            'Other cart items already have discounts in the current type. '
+            'Switching will reset all item discounts to zero.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Switch'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    setState(() {
+      _discountType = newType;
+      _controller.clear();
+      _errorText = null;
+    });
+    widget.onTypeChanged?.call(newType);
+  }
+
   void _applyDiscount() {
     final value = double.tryParse(_controller.text) ?? 0;
 
-    // Validate
     if (value < 0) return;
-    if (isPercentage && value > 100) return;
-    if (!isPercentage && value > widget.maxAmount) return;
+    if (_isPercentage && value > 100) return;
+    if (!_isPercentage && value > widget.maxAmount) return;
 
     widget.onApply(value);
     Navigator.pop(context);
@@ -83,6 +141,7 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
     return AlertDialog(
       title: const Text('Apply Discount'),
@@ -90,54 +149,54 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Item name
           Text(
             widget.itemName,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
-
-          const SizedBox(height: 8),
-
-          // Discount type indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              isPercentage ? 'Percentage Discount' : 'Amount Discount',
-              style: TextStyle(
-                color: Colors.blue[700],
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+          const SizedBox(height: AppSpacing.sm + 4),
+          // Discount type toggle — hosted in the modal now.
+          SegmentedButton<DiscountType>(
+            segments: const [
+              ButtonSegment(
+                value: DiscountType.amount,
+                label: Text('Amount'),
+                icon: Icon(AppIcons.peso),
               ),
-            ),
+              ButtonSegment(
+                value: DiscountType.percentage,
+                label: Text('Percent'),
+                icon: Icon(CupertinoIcons.percent),
+              ),
+            ],
+            selected: {_discountType},
+            onSelectionChanged: (selected) {
+              if (selected.isNotEmpty) {
+                _toggleType(selected.first);
+              }
+            },
           ),
-
-          const SizedBox(height: 16),
-
+          const SizedBox(height: AppSpacing.md),
           // Discount input
           TextField(
             controller: _controller,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: isPercentage ? 'Discount (%)' : 'Discount Amount',
+              labelText: _isPercentage ? 'Discount (%)' : 'Discount Amount',
               prefixText:
-                  isPercentage ? null : '${AppConstants.currencySymbol} ',
-              suffixText: isPercentage ? '%' : null,
-              border: const OutlineInputBorder(),
+                  _isPercentage ? null : '${AppConstants.currencySymbol} ',
+              suffixText: _isPercentage ? '%' : null,
               errorText: _errorText,
-              helperText: isPercentage
+              helperText: _isPercentage
                   ? 'Enter percentage (0-100)'
                   : 'Max: ${AppConstants.currencySymbol}${widget.maxAmount.toStringAsFixed(2)}',
+              helperStyle: TextStyle(color: muted),
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(
-                isPercentage
+                _isPercentage
                     ? RegExp(r'^\d*\.?\d{0,1}')
                     : RegExp(r'^\d*\.?\d{0,2}'),
               ),
@@ -145,32 +204,24 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
             onChanged: (_) => _validate(),
             onSubmitted: (_) => _applyDiscount(),
           ),
-
-          const SizedBox(height: 16),
-
-          // Quick percentage buttons (for percentage mode)
-          if (isPercentage) _buildQuickPercentButtons(),
-
-          // Quick amount buttons (for amount mode)
-          if (!isPercentage) _buildQuickAmountButtons(),
+          const SizedBox(height: AppSpacing.md),
+          if (_isPercentage)
+            _buildQuickPercentButtons()
+          else
+            _buildQuickAmountButtons(),
         ],
       ),
       actions: [
-        // Remove discount button
         if (widget.currentDiscount > 0)
           TextButton(
             onPressed: _removeDiscount,
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Remove'),
           ),
-
-        // Cancel
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-
-        // Apply
         FilledButton(
           onPressed: _errorText == null ? _applyDiscount : null,
           child: const Text('Apply'),
@@ -183,8 +234,8 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
     final percentages = [5, 10, 15, 20, 25, 50];
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: percentages.map((percent) {
         return ActionChip(
           label: Text('$percent%'),
@@ -198,7 +249,6 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
   }
 
   Widget _buildQuickAmountButtons() {
-    // Calculate reasonable quick amounts based on item total
     final maxAmount = widget.maxAmount;
     List<int> amounts;
 
@@ -212,12 +262,11 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
       amounts = [100, 200, 500, 1000];
     }
 
-    // Filter amounts that don't exceed max
     amounts = amounts.where((a) => a <= maxAmount).toList();
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: amounts.map((amount) {
         return ActionChip(
           label: Text('${AppConstants.currencySymbol}$amount'),

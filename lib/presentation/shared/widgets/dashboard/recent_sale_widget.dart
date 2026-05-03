@@ -162,7 +162,9 @@ class _RecentSaleItem extends StatelessWidget {
   IconData _paymentIcon(PaymentMethod method) {
     switch (method) {
       case PaymentMethod.cash:
-        return CupertinoIcons.money_dollar_circle;
+        return AppIcons.peso;
+      case PaymentMethod.maya:
+        return CupertinoIcons.creditcard;
       case PaymentMethod.gcash:
         return CupertinoIcons.device_phone_portrait;
     }

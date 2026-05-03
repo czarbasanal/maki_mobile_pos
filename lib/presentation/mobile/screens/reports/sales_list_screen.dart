@@ -313,9 +313,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                sale.paymentMethod == PaymentMethod.cash
-                    ? CupertinoIcons.money_dollar
-                    : CupertinoIcons.device_phone_portrait,
+                _paymentIcon(sale.paymentMethod),
                 size: 14,
                 color: muted,
               ),
@@ -435,6 +433,17 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     return date.year == now.year &&
         date.month == now.month &&
         date.day == now.day;
+  }
+
+  IconData _paymentIcon(PaymentMethod method) {
+    switch (method) {
+      case PaymentMethod.cash:
+        return AppIcons.peso;
+      case PaymentMethod.maya:
+        return CupertinoIcons.creditcard;
+      case PaymentMethod.gcash:
+        return CupertinoIcons.device_phone_portrait;
+    }
   }
 }
 

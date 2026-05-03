@@ -8,12 +8,10 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
-import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/payment_section.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 
 /// Main POS screen for processing sales.
@@ -27,13 +25,11 @@ class POSScreen extends ConsumerStatefulWidget {
 class _POSScreenState extends ConsumerState<POSScreen> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
-  final _amountReceivedController = TextEditingController();
 
   @override
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
-    _amountReceivedController.dispose();
     super.dispose();
   }
 
@@ -219,10 +215,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               : SingleChildScrollView(
                   child: Column(
                     children: [
-                      // Discount type selector
-                      _buildDiscountTypeSelector(cart),
-
-                      // Cart items (inline, not separately scrollable)
+                      // Cart items (inline, not separately scrollable).
+                      // Discount type is now selected inside the per-item
+                      // discount dialog instead of on the cart screen.
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -244,18 +239,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
                       const Divider(height: 1),
 
-                      // Cart Summary
+                      // Cart Summary — payment is now collected on the
+                      // dedicated Checkout screen, not inline.
                       CartSummary(cart: cart),
-
-                      const Divider(height: 1),
-
-                      // Payment Section
-                      PaymentSection(
-                        cart: cart,
-                        amountController: _amountReceivedController,
-                        onAmountChanged: _handleAmountChanged,
-                        onPaymentMethodChanged: _handlePaymentMethodChanged,
-                      ),
                     ],
                   ),
                 ),
@@ -291,66 +277,41 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
   }
 
-  /// Discount type selector (Amount vs Percentage).
-  Widget _buildDiscountTypeSelector(CartState cart) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          const Text(
-            'Discount Type:',
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: SegmentedButton<DiscountType>(
-              segments: const [
-                ButtonSegment(
-                  value: DiscountType.amount,
-                  label: Text('Amount (₱)'),
-                  icon: Icon(CupertinoIcons.money_dollar),
-                ),
-                ButtonSegment(
-                  value: DiscountType.percentage,
-                  label: Text('Percent (%)'),
-                  icon: Icon(CupertinoIcons.percent),
-                ),
-              ],
-              selected: {cart.discountType},
-              onSelectionChanged: (selected) {
-                if (selected.isNotEmpty) {
-                  _handleDiscountTypeChanged(selected.first);
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Action buttons (Checkout, Save Draft).
+  /// Action buttons stacked vertically — both span the full viewport
+  /// width, share the same 64px height, and use the same lg corner
+  /// radius as the Confirm Payment button on the checkout screen.
+  /// Proceed-to-Checkout sits on top as the primary action; Save as
+  /// Draft sits below as the secondary path.
   Widget _buildActionButtons(CartState cart) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+    );
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
+          SizedBox(
+            width: double.infinity,
+            height: 64,
+            child: FilledButton.icon(
+              // canSaveAsDraft = has items, not processing — same gate
+              // we want for "proceed to checkout" since payment entry
+              // happens on the next screen.
+              onPressed: cart.canSaveAsDraft ? _proceedToCheckout : null,
+              icon: const Icon(CupertinoIcons.arrow_right),
+              label: const Text('Proceed to Checkout'),
+              style: FilledButton.styleFrom(shape: shape),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm + 4),
+          SizedBox(
+            width: double.infinity,
+            height: 64,
             child: OutlinedButton.icon(
               onPressed: cart.canSaveAsDraft ? _showSaveDraftDialog : null,
               icon: const Icon(CupertinoIcons.tray_arrow_down),
-              label: const Text('Save Draft'),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            flex: 2,
-            child: FilledButton.icon(
-              onPressed: cart.canCheckout ? _processCheckout : null,
-              icon: const Icon(CupertinoIcons.checkmark_circle),
-              label: Text(
-                'Checkout ${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
-              ),
+              label: const Text('Save as Draft'),
+              style: OutlinedButton.styleFrom(shape: shape),
             ),
           ),
         ],
@@ -425,39 +386,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     HapticFeedback.mediumImpact();
   }
 
-  void _handleDiscountTypeChanged(DiscountType type) {
-    final cart = ref.read(cartProvider);
-
-    // Warn if there are existing discounts
-    if (cart.hasDiscount) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Change Discount Type?'),
-          content: const Text(
-            'Changing the discount type will reset all item discounts to zero. Continue?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ref.read(cartProvider.notifier).setDiscountType(type);
-              },
-              child: const Text('Continue'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      ref.read(cartProvider.notifier).setDiscountType(type);
-    }
-  }
-
   void _showDiscountDialog(dynamic item, DiscountType discountType) {
+    final cart = ref.read(cartProvider);
+    // Has any *other* item already accrued a discount? If so, switching
+    // the discount type from inside the modal will reset their values.
+    final hasOtherDiscounts = cart.items.any(
+      (other) => other.id != item.id && other.hasDiscount,
+    );
+
     showDialog(
       context: context,
       builder: (context) => DiscountInputDialog(
@@ -465,20 +401,15 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         currentDiscount: item.discountValue,
         discountType: discountType,
         maxAmount: item.grossAmount,
+        hasOtherDiscounts: hasOtherDiscounts,
         onApply: (value) {
           ref.read(cartProvider.notifier).applyItemDiscount(item.id, value);
         },
+        onTypeChanged: (type) {
+          ref.read(cartProvider.notifier).setDiscountType(type);
+        },
       ),
     );
-  }
-
-  void _handleAmountChanged(String value) {
-    final amount = double.tryParse(value) ?? 0;
-    ref.read(cartProvider.notifier).setAmountReceived(amount);
-  }
-
-  void _handlePaymentMethodChanged(PaymentMethod method) {
-    ref.read(cartProvider.notifier).setPaymentMethod(method);
   }
 
   void _showClearCartDialog() {
@@ -583,134 +514,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     }
   }
 
-  Future<void> _processCheckout() async {
-    final currentUser = ref.read(currentUserProvider).value;
-    if (currentUser == null) return;
-
-    final cartNotifier = ref.read(cartProvider.notifier);
-
-    // Set processing state
-    cartNotifier.setProcessing(true);
-
-    try {
-      // Create the use case
-      final useCase = ProcessSaleUseCase(
-        saleRepository: ref.read(saleRepositoryProvider),
-        productRepository: ref.read(productRepositoryProvider),
-        draftRepository: ref.read(draftRepositoryProvider),
-      );
-
-      // Build sale entity from cart
-      final sale = cartNotifier.toSale(
-        saleNumber: '', // Will be generated by use case
-        cashierId: currentUser.id,
-        cashierName: currentUser.displayName,
-      );
-
-      // Process the sale (creates sale, deducts inventory, converts draft)
-      final result = await useCase.execute(sale: sale);
-
-      if (result.success && result.sale != null) {
-        // Reset cart
-        cartNotifier.resetAfterCheckout();
-
-        // Clear selected draft
-        ref.read(selectedDraftProvider.notifier).state = null;
-
-        // Invalidate providers to refresh data
-        ref.invalidate(todaysSalesProvider);
-        ref.invalidate(todaysSalesSummaryProvider);
-        ref.invalidate(activeDraftsProvider);
-        ref.invalidate(productsProvider);
-        ref.invalidate(lowStockProductsProvider);
-
-        if (mounted) {
-          // Show success with change info
-          _showCheckoutSuccessDialog(result.sale!);
-        }
-      } else {
-        throw Exception(result.errorMessage ?? 'Failed to process sale');
-      }
-    } catch (e) {
-      cartNotifier.setError(e.toString());
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Checkout failed: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
-
-  void _showCheckoutSuccessDialog(dynamic sale) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        icon: const Icon(
-          CupertinoIcons.checkmark_circle,
-          color: AppColors.successDark,
-          size: 56,
-        ),
-        title: const Text('Sale Complete!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Sale #${sale.saleNumber}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _buildReceiptRow('Total', sale.grandTotal),
-            _buildReceiptRow('Received', sale.amountReceived),
-            const Divider(),
-            _buildReceiptRow(
-              'Change',
-              sale.changeGiven,
-              isHighlighted: true,
-            ),
-          ],
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _searchFocusNode.requestFocus();
-            },
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReceiptRow(String label, double amount,
-      {bool isHighlighted = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
-              fontSize: isHighlighted ? 18 : 14,
-            ),
-          ),
-          Text(
-            '${AppConstants.currencySymbol}${amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
-              fontSize: isHighlighted ? 18 : 14,
-              color: isHighlighted ? AppColors.successDark : null,
-            ),
-          ),
-        ],
-      ),
-    );
+  /// Navigate to the dedicated Checkout screen — payment entry and the
+  /// final "Confirm Payment" step happen there. The cart provider keeps
+  /// the items, so the back button on the Checkout screen returns the
+  /// user to a fully populated cart.
+  void _proceedToCheckout() {
+    context.push(RoutePaths.checkout);
   }
 
   void _navigateToDrafts() {
