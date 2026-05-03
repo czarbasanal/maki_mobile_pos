@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Screen for creating or editing a product.
@@ -100,6 +101,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final suppliersAsync = ref.watch(suppliersProvider);
     final currentUser = ref.watch(currentUserProvider).value;
     final userRole = currentUser?.role ?? UserRole.cashier;
+    final inventoryState = ref.watch(inventoryStateProvider);
 
     // Determine edit capabilities based on role
     final bool canEditPrice = userRole == UserRole.admin;
@@ -108,6 +110,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final bool canEditSku =
         !widget.isEditing; // SKU never editable after creation
     final bool canSelectSupplier = userRole == UserRole.admin;
+    // Cost is hidden by default. Admin reveals it via the AppBar toggle
+    // (password-confirmed). On create, the field is always shown because
+    // the admin needs to enter a cost value.
+    final bool showCostField =
+        canViewCost && (!widget.isEditing || inventoryState.showCost);
 
     return Scaffold(
       appBar: AppBar(
@@ -116,6 +123,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.inventory),
         ),
+        actions: [
+          if (canViewCost && widget.isEditing)
+            CostDisplayToggle(
+              showCost: inventoryState.showCost,
+              onToggle: (show) {
+                ref
+                    .read(inventoryStateProvider.notifier)
+                    .toggleCostVisibility(show);
+              },
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -211,8 +229,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Cost - only visible and editable for admin
-                    if (canViewCost)
+                    // Cost - admin only. On create the field is shown so a
+                    // cost can be entered; on edit it's hidden by default and
+                    // revealed via the AppBar toggle.
+                    if (showCostField)
                       Column(
                         children: [
                           TextFormField(
@@ -220,7 +240,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             decoration: InputDecoration(
                               labelText:
                                   'Cost (${AppConstants.currencySymbol}) *',
-                              prefixIcon: const Icon(CupertinoIcons.money_dollar),
+                              prefixIcon: const Icon(AppIcons.peso),
                                   ),
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
