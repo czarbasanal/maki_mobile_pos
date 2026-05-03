@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
@@ -132,12 +133,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   /// Product search results (for wide layout).
   Widget _buildProductSearchResults() {
     final searchQuery = _searchController.text.trim();
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
     if (searchQuery.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Search for products or scan barcode',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(color: muted),
         ),
       );
     }
@@ -148,26 +151,50 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     return searchResults.when(
       data: (products) {
         if (products.isEmpty) {
-          return const Center(
-            child: Text('No products found'),
-          );
+          return const Center(child: Text('No products found'));
         }
         return ListView.builder(
           itemCount: products.length,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           itemBuilder: (context, index) {
             final product = products[index];
+            final stockColor = product.isOutOfStock
+                ? AppColors.error
+                : product.isLowStock
+                    ? AppColors.warning
+                    : AppColors.success;
             return ListTile(
-              leading: CircleAvatar(
-                child: Text(product.name[0].toUpperCase()),
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: stockColor, width: 1.2),
+                ),
+                child: Center(
+                  child: Text(
+                    product.name[0].toUpperCase(),
+                    style: TextStyle(
+                      color: stockColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
               title: Text(product.name),
               subtitle: Text(
-                  '${product.sku} • ${AppConstants.currencySymbol}${product.price.toStringAsFixed(2)}'),
+                '${product.sku} • ${AppConstants.currencySymbol}${product.price.toStringAsFixed(2)}',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
               trailing: Text(
                 'Stock: ${product.quantity}',
-                style: TextStyle(
-                  color: product.isLowStock ? Colors.orange : Colors.grey,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: product.isLowStock || product.isOutOfStock
+                      ? stockColor
+                      : muted,
+                  fontWeight: product.isLowStock || product.isOutOfStock
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                 ),
               ),
               onTap: () => _addProductToCart(product),
@@ -242,29 +269,22 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   /// Empty cart placeholder.
   Widget _buildEmptyCart() {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            CupertinoIcons.cart,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
+          Icon(CupertinoIcons.cart, size: 56, color: muted),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Cart is empty',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
+            style: theme.textTheme.titleMedium?.copyWith(color: muted),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Search for products or scan barcode',
-            style: TextStyle(
-              color: Colors.grey[500],
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ],
       ),
@@ -311,23 +331,18 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   /// Action buttons (Checkout, Save Draft).
   Widget _buildActionButtons(CartState cart) {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
-          // Save as Draft button
           Expanded(
             child: OutlinedButton.icon(
               onPressed: cart.canSaveAsDraft ? _showSaveDraftDialog : null,
               icon: const Icon(CupertinoIcons.tray_arrow_down),
               label: const Text('Save Draft'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
             ),
           ),
-          const SizedBox(width: 16),
-          // Checkout button
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             flex: 2,
             child: FilledButton.icon(
@@ -335,9 +350,6 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               icon: const Icon(CupertinoIcons.checkmark_circle),
               label: Text(
                 'Checkout ${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
-              ),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
           ),
@@ -397,7 +409,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Product not found: $barcode'),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppColors.warningDark,
           ),
         );
       }
@@ -486,7 +498,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               ref.read(cartProvider.notifier).reset();
             },
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
             child: const Text('Clear'),
           ),
@@ -514,7 +526,6 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           decoration: const InputDecoration(
             labelText: 'Draft Name',
             hintText: 'e.g., Table 5, Customer waiting',
-            border: OutlineInputBorder(),
           ),
           autofocus: true,
           textCapitalization: TextCapitalization.words,
@@ -565,7 +576,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(cart.isFromDraft ? 'Draft updated' : 'Draft saved'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.successDark,
         ),
       );
       cartNotifier.reset();
@@ -626,7 +637,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Checkout failed: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -640,8 +651,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       builder: (context) => AlertDialog(
         icon: const Icon(
           CupertinoIcons.checkmark_circle,
-          color: Colors.green,
-          size: 64,
+          color: AppColors.successDark,
+          size: 56,
         ),
         title: const Text('Sale Complete!'),
         content: Column(
@@ -692,9 +703,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           Text(
             '${AppConstants.currencySymbol}${amount.toStringAsFixed(2)}',
             style: TextStyle(
-              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
               fontSize: isHighlighted ? 18 : 14,
-              color: isHighlighted ? Colors.green : null,
+              color: isHighlighted ? AppColors.successDark : null,
             ),
           ),
         ],

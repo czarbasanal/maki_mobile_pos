@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:intl/intl.dart';
 
 /// Widget displaying a printable receipt.
+///
+/// The outer modal wraps the airy theme (hairline handle, themed
+/// dividers); the receipt body itself stays paper-like — white
+/// background, dashed dividers, monochrome — because it represents
+/// a printable artifact and benefits from looking that way.
 class ReceiptWidget extends StatelessWidget {
   final SaleEntity sale;
   final ScrollController? scrollController;
@@ -22,36 +28,39 @@ class ReceiptWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
     return Container(
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       child: Column(
         children: [
-          // Handle
+          // Drag handle — hairline color, theme-aware
           Container(
-            margin: const EdgeInsets.only(top: 12),
+            margin: const EdgeInsets.only(top: AppSpacing.sm + 4),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+              color: hairline,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-
-          // Header with actions
+          // Header
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
               children: [
-                const Text(
+                Text(
                   'Receipt',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const Spacer(),
@@ -74,64 +83,40 @@ class ReceiptWidget extends StatelessWidget {
               ],
             ),
           ),
-
           const Divider(height: 1),
-
-          // Receipt content
+          // Receipt body — paper-like, white background, hairline border
           Expanded(
             child: SingleChildScrollView(
               controller: scrollController,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.lightHairline),
                 ),
                 child: Column(
                   children: [
-                    // Store header
                     _buildStoreHeader(theme),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.md),
                     _buildDottedDivider(),
-                    const SizedBox(height: 16),
-
-                    // Transaction info
+                    const SizedBox(height: AppSpacing.md),
                     _buildTransactionInfo(theme, dateFormat),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.md),
                     _buildDottedDivider(),
-                    const SizedBox(height: 16),
-
-                    // Items
+                    const SizedBox(height: AppSpacing.md),
                     _buildItemsSection(theme),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.md),
                     _buildDottedDivider(),
-                    const SizedBox(height: 16),
-
-                    // Totals
+                    const SizedBox(height: AppSpacing.md),
                     _buildTotalsSection(theme),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.md),
                     _buildDottedDivider(),
-                    const SizedBox(height: 16),
-
-                    // Payment info
+                    const SizedBox(height: AppSpacing.md),
                     _buildPaymentSection(theme),
-
-                    const SizedBox(height: 24),
-
-                    // Footer
+                    const SizedBox(height: AppSpacing.lg),
                     _buildFooter(theme),
                   ],
                 ),
@@ -146,9 +131,8 @@ class ReceiptWidget extends StatelessWidget {
   Widget _buildStoreHeader(ThemeData theme) {
     return Column(
       children: [
-        // Store logo placeholder
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.sm + 4),
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
             shape: BoxShape.circle,
@@ -159,17 +143,19 @@ class ReceiptWidget extends StatelessWidget {
             size: 32,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.sm + 4),
         Text(
           AppConstants.appName,
           style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
+            color: Colors.black, // Receipt body forces black text on white
           ),
         ),
-        Text(
+        const Text(
           'Official Receipt',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
+          style: TextStyle(
+            fontSize: 12,
+            color: _ReceiptColors.label,
           ),
         ),
       ],
@@ -198,16 +184,14 @@ class ReceiptWidget extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: _ReceiptColors.label, fontSize: 12),
         ),
         Text(
           value,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 12,
+            color: Colors.black,
           ),
         ),
       ],
@@ -218,52 +202,53 @@ class ReceiptWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
-        Row(
+        const Row(
           children: [
-            const Expanded(
+            Expanded(
               flex: 3,
               child: Text(
                 'Item',
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   fontSize: 12,
+                  color: Colors.black,
                 ),
               ),
             ),
-            const SizedBox(
+            SizedBox(
               width: 40,
               child: Text(
                 'Qty',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   fontSize: 12,
+                  color: Colors.black,
                 ),
               ),
             ),
-            const SizedBox(
+            SizedBox(
               width: 70,
               child: Text(
                 'Amount',
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   fontSize: 12,
+                  color: Colors.black,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        // Items
+        const SizedBox(height: AppSpacing.sm),
         ...sale.items.map((item) {
           final netAmount = item.calculateNetAmount(
             isPercentage: sale.isPercentageDiscount,
           );
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -277,13 +262,16 @@ class ReceiptWidget extends StatelessWidget {
                         children: [
                           Text(
                             item.name,
-                            style: const TextStyle(fontSize: 12),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black,
+                            ),
                           ),
                           Text(
                             '@${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 10,
-                              color: Colors.grey[600],
+                              color: _ReceiptColors.label,
                             ),
                           ),
                         ],
@@ -294,7 +282,10 @@ class ReceiptWidget extends StatelessWidget {
                       child: Text(
                         '${item.quantity}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                     SizedBox(
@@ -302,7 +293,10 @@ class ReceiptWidget extends StatelessWidget {
                       child: Text(
                         '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
                         textAlign: TextAlign.right,
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ],
@@ -314,9 +308,9 @@ class ReceiptWidget extends StatelessWidget {
                       sale.isPercentageDiscount
                           ? '  Discount: ${item.discountValue.toStringAsFixed(0)}%'
                           : '  Discount: -${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
-                        color: Colors.green[700],
+                        color: AppColors.successDark,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -337,7 +331,7 @@ class ReceiptWidget extends StatelessWidget {
           const SizedBox(height: 4),
           _buildTotalRow('Discount', -sale.totalDiscount, isDiscount: true),
         ],
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         _buildTotalRow('TOTAL', sale.grandTotal, isGrandTotal: true),
       ],
     );
@@ -355,16 +349,17 @@ class ReceiptWidget extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontWeight: isGrandTotal ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isGrandTotal ? FontWeight.w600 : FontWeight.normal,
             fontSize: isGrandTotal ? 16 : 12,
+            color: Colors.black,
           ),
         ),
         Text(
           '${isDiscount ? '-' : ''}${AppConstants.currencySymbol}${amount.abs().toStringAsFixed(2)}',
           style: TextStyle(
-            fontWeight: isGrandTotal ? FontWeight.bold : FontWeight.w500,
+            fontWeight: isGrandTotal ? FontWeight.w600 : FontWeight.w500,
             fontSize: isGrandTotal ? 16 : 12,
-            color: isDiscount ? Colors.green[700] : null,
+            color: isDiscount ? AppColors.successDark : Colors.black,
           ),
         ),
       ],
@@ -373,10 +368,10 @@ class ReceiptWidget extends StatelessWidget {
 
   Widget _buildPaymentSection(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.lightHairline),
       ),
       child: Column(
         children: [
@@ -396,16 +391,17 @@ class ReceiptWidget extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontWeight: isChange ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isChange ? FontWeight.w600 : FontWeight.normal,
             fontSize: isChange ? 14 : 12,
+            color: Colors.black,
           ),
         ),
         Text(
           '${AppConstants.currencySymbol}${amount.toStringAsFixed(2)}',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: isChange ? 18 : 12,
-            color: isChange ? Colors.green[700] : null,
+            color: isChange ? AppColors.successDark : Colors.black,
           ),
         ),
       ],
@@ -415,32 +411,34 @@ class ReceiptWidget extends StatelessWidget {
   Widget _buildFooter(ThemeData theme) {
     return Column(
       children: [
-        Text(
+        const Text(
           'Thank you for your purchase!',
-          style: theme.textTheme.bodyMedium?.copyWith(
+          style: TextStyle(
             fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: Colors.black,
           ),
         ),
         const SizedBox(height: 4),
-        Text(
+        const Text(
           'Please come again',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
+          style: TextStyle(
+            fontSize: 12,
+            color: _ReceiptColors.label,
           ),
         ),
-        const SizedBox(height: 16),
-        // QR code placeholder
+        const SizedBox(height: AppSpacing.md),
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: AppColors.lightHairline),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          child: Icon(
+          child: const Icon(
             CupertinoIcons.qrcode,
             size: 60,
-            color: Colors.grey[400],
+            color: _ReceiptColors.label,
           ),
         ),
       ],
@@ -454,10 +452,18 @@ class ReceiptWidget extends StatelessWidget {
         (index) => Expanded(
           child: Container(
             height: 1,
-            color: index.isOdd ? Colors.transparent : Colors.grey[300],
+            color:
+                index.isOdd ? Colors.transparent : AppColors.lightHairline,
           ),
         ),
       ),
     );
   }
+}
+
+/// Hard-coded receipt-body greys. The receipt is always rendered on a
+/// white paper background regardless of theme, so theme-aware tokens
+/// would be wrong here.
+abstract class _ReceiptColors {
+  static const Color label = Color(0xFF666666);
 }
