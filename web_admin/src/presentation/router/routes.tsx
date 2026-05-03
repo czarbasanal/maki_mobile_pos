@@ -14,6 +14,7 @@ import { AboutPage } from '@/presentation/features/settings/AboutPage';
 import { CostCodeSettingsPage } from '@/presentation/features/settings/CostCodeSettingsPage';
 import { UsersListPage } from '@/presentation/features/users/UsersListPage';
 import { UserFormPage } from '@/presentation/features/users/UserFormPage';
+import { ActivityLogsPage } from '@/presentation/features/logs/ActivityLogsPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -62,7 +63,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.users, element: <UsersListPage /> },
         { path: RoutePaths.userAdd, element: <UserFormPage /> },
         { path: RoutePaths.userEdit, element: <UserFormPage /> },
-        { path: RoutePaths.userLogs, element: placeholder('Activity logs', 'phase 5') },
+        { path: RoutePaths.userLogs, element: <ActivityLogsPage /> },
         { path: RoutePaths.settings, element: <SettingsPage /> },
         { path: RoutePaths.costCodeSettings, element: <CostCodeSettingsPage /> },
         { path: RoutePaths.about, element: <AboutPage /> },
