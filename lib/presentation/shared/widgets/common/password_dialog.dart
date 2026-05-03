@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter/cupertino.dart';
 /// Reusable password verification dialog.
 ///
 /// Used for sensitive operations like voiding sales or viewing costs.
@@ -137,7 +138,7 @@ class _PasswordDialogState extends State<PasswordDialog> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.lock_outline,
+              CupertinoIcons.lock,
               color: Colors.amber[800],
             ),
           ),
@@ -175,10 +176,10 @@ class _PasswordDialogState extends State<PasswordDialog> {
             decoration: InputDecoration(
               labelText: 'Password',
               border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.password),
+              prefixIcon: const Icon(CupertinoIcons.lock),
               suffixIcon: IconButton(
                 icon: Icon(
-                  _isObscured ? Icons.visibility : Icons.visibility_off,
+                  _isObscured ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
                 ),
                 onPressed: () {
                   setState(() {
@@ -202,7 +203,7 @@ class _PasswordDialogState extends State<PasswordDialog> {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
+                Icon(CupertinoIcons.info_circle, size: 16, color: Colors.blue[700]),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

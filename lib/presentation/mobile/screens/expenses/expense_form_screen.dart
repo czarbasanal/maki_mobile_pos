@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -53,7 +54,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Expense' : 'Add Expense'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.expenses),
         ),
       ),
@@ -69,7 +70,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 controller: _descriptionController,
                 decoration: const InputDecoration(
                   labelText: 'Description *',
-                  prefixIcon: Icon(Icons.description),
+                  prefixIcon: Icon(CupertinoIcons.doc_text),
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
@@ -83,7 +84,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 controller: _amountController,
                 decoration: const InputDecoration(
                   labelText: 'Amount *',
-                  prefixIcon: Icon(Icons.attach_money),
+                  prefixIcon: Icon(CupertinoIcons.money_dollar),
                   prefixText: '₱ ',
                   border: OutlineInputBorder(),
                 ),
@@ -105,7 +106,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category *',
-                  prefixIcon: Icon(Icons.category),
+                  prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
                   border: OutlineInputBorder(),
                 ),
                 items: _categories.map((cat) {
@@ -125,7 +126,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 child: InputDecorator(
                   decoration: const InputDecoration(
                     labelText: 'Date *',
-                    prefixIcon: Icon(Icons.calendar_today),
+                    prefixIcon: Icon(CupertinoIcons.calendar),
                     border: OutlineInputBorder(),
                   ),
                   child: Text(
@@ -140,7 +141,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 controller: _notesController,
                 decoration: const InputDecoration(
                   labelText: 'Notes',
-                  prefixIcon: Icon(Icons.notes),
+                  prefixIcon: Icon(CupertinoIcons.list_bullet),
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,

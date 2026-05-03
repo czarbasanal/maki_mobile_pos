@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -182,7 +183,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
             // Toggle view button
             IconButton(
               icon: Icon(
-                _showDetailedView ? Icons.grid_view : Icons.view_agenda,
+                _showDetailedView ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square_stack,
               ),
               onPressed: () {
                 setState(() => _showDetailedView = !_showDetailedView);
@@ -195,7 +196,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
               tooltip: 'Settings',
             ),
             IconButton(
-              icon: const Icon(Icons.logout),
+              icon: const Icon(CupertinoIcons.square_arrow_right),
               onPressed: _handleSignOut,
               tooltip: 'Sign Out',
             ),
@@ -211,7 +212,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => context.go(RoutePaths.pos),
-          icon: const Icon(Icons.add),
+          icon: const Icon(CupertinoIcons.add),
           label: const Text('New Sale'),
           backgroundColor: AppColors.primaryAccent,
         ),
@@ -329,7 +330,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       child: Row(
         children: [
           Icon(
-            Icons.calendar_today,
+            CupertinoIcons.calendar,
             color: AppColors.primaryDark,
             size: 20,
           ),
@@ -378,7 +379,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                   child: SummaryCard(
                     title: 'Total Sales',
                     value: '${summary.totalSalesCount}',
-                    icon: Icons.receipt_long,
+                    icon: CupertinoIcons.doc_text,
                     iconColor: Colors.blue,
                     subtitle: summary.voidedSalesCount > 0
                         ? '${summary.voidedSalesCount} voided'
@@ -391,7 +392,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                     title: 'Revenue',
                     value:
                         '${AppConstants.currencySymbol}${_formatNumber(summary.netAmount)}',
-                    icon: Icons.payments,
+                    icon: CupertinoIcons.money_dollar_circle,
                     iconColor: Colors.green,
                     subtitle: summary.totalDiscounts > 0
                         ? '${AppConstants.currencySymbol}${_formatNumber(summary.totalDiscounts)} discount'
@@ -410,7 +411,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                       title: 'Gross Profit',
                       value:
                           '${AppConstants.currencySymbol}${_formatNumber(summary.totalProfit)}',
-                      icon: Icons.trending_up,
+                      icon: CupertinoIcons.arrow_up_right,
                       iconColor: Colors.orange,
                       subtitle:
                           '${summary.profitMargin.toStringAsFixed(1)}% margin',
@@ -422,7 +423,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                       title: 'Avg Order',
                       value:
                           '${AppConstants.currencySymbol}${_formatNumber(summary.averageSaleAmount)}',
-                      icon: Icons.shopping_cart,
+                      icon: CupertinoIcons.cart,
                       iconColor: Colors.purple,
                     ),
                   ),
@@ -453,7 +454,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       ),
       child: Column(
         children: [
-          Icon(Icons.point_of_sale, size: 48, color: Colors.grey[400]),
+          Icon(CupertinoIcons.cart, size: 48, color: Colors.grey[400]),
           const SizedBox(height: 12),
           Text(
             'No sales today yet',

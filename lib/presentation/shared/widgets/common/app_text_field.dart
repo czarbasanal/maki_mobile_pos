@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
@@ -113,8 +114,8 @@ class _AppTextFieldState extends State<AppTextField> {
             ? IconButton(
                 icon: Icon(
                   _obscureText
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
+                      ? CupertinoIcons.eye
+                      : CupertinoIcons.eye_slash,
                   size: 22,
                   color: AppColors.lightTextSecondary,
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -78,7 +79,7 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
       appBar: AppBar(
         title: const Text('Petty Cash Entry'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.pettyCash),
         ),
       ),
@@ -94,12 +95,12 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                   ButtonSegment(
                     value: _Direction.cashOut,
                     label: Text('Cash out'),
-                    icon: Icon(Icons.arrow_downward),
+                    icon: Icon(CupertinoIcons.arrow_down),
                   ),
                   ButtonSegment(
                     value: _Direction.cashIn,
                     label: Text('Cash in'),
-                    icon: Icon(Icons.arrow_upward),
+                    icon: Icon(CupertinoIcons.arrow_up),
                   ),
                 ],
                 selected: {_direction},
@@ -115,7 +116,7 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Amount *',
                   prefixText: '₱ ',
-                  prefixIcon: Icon(Icons.attach_money),
+                  prefixIcon: Icon(CupertinoIcons.money_dollar),
                   border: OutlineInputBorder(),
                 ),
                 keyboardType:
@@ -135,7 +136,7 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                 enabled: !_busy,
                 decoration: const InputDecoration(
                   labelText: 'Description *',
-                  prefixIcon: Icon(Icons.description),
+                  prefixIcon: Icon(CupertinoIcons.doc_text),
                   border: OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.sentences,
@@ -148,7 +149,7 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                 enabled: !_busy,
                 decoration: const InputDecoration(
                   labelText: 'Notes',
-                  prefixIcon: Icon(Icons.notes),
+                  prefixIcon: Icon(CupertinoIcons.list_bullet),
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,

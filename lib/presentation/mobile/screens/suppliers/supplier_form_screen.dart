@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -82,7 +83,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Supplier' : 'Add Supplier'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.suppliers),
         ),
       ),
@@ -100,7 +101,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       controller: _nameController,
                       decoration: const InputDecoration(
                         labelText: 'Supplier Name *',
-                        prefixIcon: Icon(Icons.business),
+                        prefixIcon: Icon(CupertinoIcons.briefcase),
                         border: OutlineInputBorder(),
                       ),
                       validator: Validators.required,
@@ -113,7 +114,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       controller: _contactPersonController,
                       decoration: const InputDecoration(
                         labelText: 'Contact Person',
-                        prefixIcon: Icon(Icons.person),
+                        prefixIcon: Icon(CupertinoIcons.person),
                         border: OutlineInputBorder(),
                       ),
                       textCapitalization: TextCapitalization.words,
@@ -125,7 +126,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       controller: _contactNumberController,
                       decoration: const InputDecoration(
                         labelText: 'Contact Number',
-                        prefixIcon: Icon(Icons.phone),
+                        prefixIcon: Icon(CupertinoIcons.phone),
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.phone,
@@ -138,7 +139,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       controller: _alternativeNumberController,
                       decoration: const InputDecoration(
                         labelText: 'Alternative Number',
-                        prefixIcon: Icon(Icons.phone_android),
+                        prefixIcon: Icon(CupertinoIcons.device_phone_portrait),
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.phone,
@@ -150,7 +151,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       controller: _emailController,
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: Icon(Icons.email),
+                        prefixIcon: Icon(CupertinoIcons.envelope),
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.emailAddress,
@@ -166,7 +167,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       controller: _addressController,
                       decoration: const InputDecoration(
                         labelText: 'Address',
-                        prefixIcon: Icon(Icons.location_on),
+                        prefixIcon: Icon(CupertinoIcons.location),
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 2,
@@ -179,7 +180,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       initialValue: _transactionType,
                       decoration: const InputDecoration(
                         labelText: 'Payment Terms *',
-                        prefixIcon: Icon(Icons.payment),
+                        prefixIcon: Icon(CupertinoIcons.creditcard),
                         border: OutlineInputBorder(),
                       ),
                       items: TransactionType.values.map((type) {
@@ -201,7 +202,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                       controller: _notesController,
                       decoration: const InputDecoration(
                         labelText: 'Notes',
-                        prefixIcon: Icon(Icons.notes),
+                        prefixIcon: Icon(CupertinoIcons.list_bullet),
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,

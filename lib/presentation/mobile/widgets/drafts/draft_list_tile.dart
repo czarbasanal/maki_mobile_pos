@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:intl/intl.dart';
@@ -47,7 +48,7 @@ class DraftListTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      Icons.description_outlined,
+                      CupertinoIcons.doc_text,
                       color: theme.colorScheme.onPrimaryContainer,
                       size: 20,
                     ),
@@ -124,7 +125,7 @@ class DraftListTile extends StatelessWidget {
                   // Delete button — hidden when current user lacks permission.
                   if (onDeleteTap != null) ...[
                     IconButton(
-                      icon: const Icon(Icons.delete_outline),
+                      icon: const Icon(CupertinoIcons.trash),
                       onPressed: onDeleteTap,
                       tooltip: 'Delete draft',
                       visualDensity: VisualDensity.compact,
@@ -135,7 +136,7 @@ class DraftListTile extends StatelessWidget {
                   // Load button
                   FilledButton.icon(
                     onPressed: onLoadTap,
-                    icon: const Icon(Icons.shopping_cart_checkout, size: 18),
+                    icon: const Icon(CupertinoIcons.cart_badge_plus, size: 18),
                     label: const Text('Load'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(

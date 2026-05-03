@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -58,7 +59,7 @@ class RecentSalesWidget extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.receipt_long, size: 40, color: Colors.grey[400]),
+          Icon(CupertinoIcons.doc_text, size: 40, color: Colors.grey[400]),
           const SizedBox(height: 8),
           Text(
             'No recent transactions',
@@ -96,7 +97,7 @@ class _RecentSaleItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
-            isVoided ? Icons.cancel : _getPaymentIcon(sale.paymentMethod),
+            isVoided ? CupertinoIcons.xmark_circle : _getPaymentIcon(sale.paymentMethod),
             color: isVoided ? Colors.red : _getPaymentColor(sale.paymentMethod),
           ),
         ),
@@ -148,9 +149,9 @@ class _RecentSaleItem extends StatelessWidget {
   IconData _getPaymentIcon(PaymentMethod method) {
     switch (method) {
       case PaymentMethod.cash:
-        return Icons.payments;
+        return CupertinoIcons.money_dollar_circle;
       case PaymentMethod.gcash:
-        return Icons.phone_android;
+        return CupertinoIcons.device_phone_portrait;
     }
   }
 

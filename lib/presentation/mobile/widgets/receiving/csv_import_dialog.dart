@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -29,7 +30,7 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.upload_file),
+          Icon(CupertinoIcons.cloud_upload),
           SizedBox(width: 12),
           Text('Import from CSV'),
         ],
@@ -87,7 +88,7 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
                   ? const CircularProgressIndicator()
                   : OutlinedButton.icon(
                       onPressed: _selectFile,
-                      icon: const Icon(Icons.file_open),
+                      icon: const Icon(CupertinoIcons.folder_open),
                       label: const Text('Select CSV File'),
                     ),
             ),
@@ -104,7 +105,7 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red[700]),
+                    Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red[700]),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
@@ -51,7 +52,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         title: const Text('Sales Report'),
@@ -81,7 +82,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.lock_clock, color: Colors.amber[800]),
+                      Icon(Icons.lock_clock_outlined, color: Colors.amber[800]),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(

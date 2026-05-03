@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
@@ -27,7 +28,7 @@ class ReceivingItemRow extends StatelessWidget {
         color: Colors.red,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: const Icon(CupertinoIcons.trash, color: Colors.white),
       ),
       onDismissed: (_) => onRemove(),
       child: Card(
@@ -97,7 +98,7 @@ class ReceivingItemRow extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove_circle_outline),
+                    icon: const Icon(CupertinoIcons.minus_circle),
                     onPressed: item.quantity > 1
                         ? () => onQuantityChanged(item.quantity - 1)
                         : null,
@@ -125,7 +126,7 @@ class ReceivingItemRow extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
+                    icon: const Icon(CupertinoIcons.plus_circle),
                     onPressed: () => onQuantityChanged(item.quantity + 1),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -157,7 +158,7 @@ class ReceivingItemRow extends StatelessWidget {
 
               // Remove button
               IconButton(
-                icon: Icon(Icons.close, color: Colors.grey[400]),
+                icon: Icon(CupertinoIcons.xmark, color: Colors.grey[400]),
                 onPressed: onRemove,
                 visualDensity: VisualDensity.compact,
               ),

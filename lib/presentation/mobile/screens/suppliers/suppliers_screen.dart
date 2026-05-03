@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -27,12 +28,12 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
       appBar: AppBar(
         title: const Text('Suppliers'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         actions: [
           IconButton(
-            icon: Icon(_showInactive ? Icons.visibility : Icons.visibility_off),
+            icon: Icon(_showInactive ? CupertinoIcons.eye : CupertinoIcons.eye_slash),
             tooltip: _showInactive ? 'Hide inactive' : 'Show inactive',
             onPressed: () => setState(() => _showInactive = !_showInactive),
           ),
@@ -44,7 +45,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search suppliers...',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(CupertinoIcons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -75,7 +76,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
 
           if (filtered.isEmpty) {
             return EmptyStateView(
-              icon: Icons.people_outline,
+              icon: CupertinoIcons.person_2,
               title: _searchQuery.isNotEmpty
                   ? 'No suppliers found'
                   : 'No suppliers yet',
@@ -106,7 +107,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(RoutePaths.supplierAdd),
-        icon: const Icon(Icons.add),
+        icon: const Icon(CupertinoIcons.add),
         label: const Text('Add Supplier'),
       ),
     );
@@ -132,7 +133,7 @@ class _SupplierListTile extends StatelessWidget {
               ? Colors.blue.withOpacity(0.1)
               : Colors.grey.withOpacity(0.1),
           child: Icon(
-            Icons.business,
+            CupertinoIcons.briefcase,
             color: supplier.isActive ? Colors.blue : Colors.grey,
           ),
         ),
@@ -156,7 +157,7 @@ class _SupplierListTile extends StatelessWidget {
             ),
           ],
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const Icon(CupertinoIcons.chevron_right),
         onTap: onTap,
       ),
     );

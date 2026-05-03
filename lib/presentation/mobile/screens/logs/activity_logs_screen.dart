@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -31,14 +32,14 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.settings),
         ),
         title: const Text('Activity Logs'),
         actions: [
           // Filter by type
           PopupMenuButton<ActivityType?>(
-            icon: const Icon(Icons.filter_list),
+            icon: const Icon(CupertinoIcons.line_horizontal_3_decrease),
             tooltip: 'Filter by type',
             onSelected: (type) {
               setState(() => _typeFilter = type);
@@ -72,12 +73,12 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
               color: Colors.grey[100],
               child: Row(
                 children: [
-                  const Icon(Icons.filter_alt, size: 16, color: Colors.grey),
+                  const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
                   Chip(
                     avatar: Text(_typeFilter!.emoji),
                     label: Text(_typeFilter!.displayName),
-                    deleteIcon: const Icon(Icons.close, size: 16),
+                    deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
                     onDeleted: () => setState(() => _typeFilter = null),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -125,7 +126,7 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history, size: 64, color: Colors.grey[400]),
+            Icon(CupertinoIcons.clock, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No activity logs found',
@@ -265,7 +266,7 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.person_outline,
+                    Icon(CupertinoIcons.person,
                         size: 14, color: Colors.grey[500]),
                     const SizedBox(width: 4),
                     Text(

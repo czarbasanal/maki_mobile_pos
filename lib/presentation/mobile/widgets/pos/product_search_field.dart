@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -134,20 +135,20 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
         focusNode: widget.focusNode,
         decoration: InputDecoration(
           hintText: 'Search products or scan barcode...',
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: const Icon(CupertinoIcons.search),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.controller.text.isNotEmpty)
                 IconButton(
-                  icon: const Icon(Icons.clear),
+                  icon: const Icon(CupertinoIcons.xmark),
                   onPressed: () {
                     widget.controller.clear();
                     widget.focusNode.requestFocus();
                   },
                 ),
               IconButton(
-                icon: const Icon(Icons.qr_code_scanner),
+                icon: const Icon(CupertinoIcons.qrcode_viewfinder),
                 tooltip: 'Scan barcode',
                 onPressed: _openBarcodeScanner,
               ),
@@ -255,7 +256,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
           child: Center(child: CircularProgressIndicator()),
         ),
         error: (error, _) => ListTile(
-          leading: const Icon(Icons.error, color: Colors.red),
+          leading: const Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red),
           title: Text('Error: $error'),
         ),
       ),

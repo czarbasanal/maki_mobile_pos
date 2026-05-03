@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Quick action buttons for the dashboard.
@@ -39,28 +40,28 @@ class QuickActions extends StatelessWidget {
           ),
           if (onReceiving != null)
             _QuickActionButton(
-              icon: Icons.inventory,
+              icon: CupertinoIcons.square_arrow_down,
               label: 'Receive Stock',
               color: Colors.green,
               onTap: onReceiving!,
             ),
           if (onInventory != null)
             _QuickActionButton(
-              icon: Icons.inventory_2,
+              icon: CupertinoIcons.cube_box,
               label: 'Inventory',
               color: Colors.orange,
               onTap: onInventory!,
             ),
           if (onExpenses != null)
             _QuickActionButton(
-              icon: Icons.receipt_long,
+              icon: CupertinoIcons.doc_text,
               label: 'Expenses',
               color: Colors.red[400]!,
               onTap: onExpenses!,
             ),
           if (onReports != null)
             _QuickActionButton(
-              icon: Icons.analytics,
+              icon: CupertinoIcons.chart_bar,
               label: 'Reports',
               color: Colors.purple,
               onTap: onReports!,

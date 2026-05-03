@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -180,7 +181,7 @@ class ProductListTile extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.lock,
+                                  CupertinoIcons.lock,
                                   size: 12,
                                   color: Colors.amber[800],
                                 ),
@@ -232,7 +233,7 @@ class ProductListTile extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.edit,
+                            CupertinoIcons.pencil,
                             size: 14,
                             color: Colors.grey[600],
                           ),
@@ -263,13 +264,13 @@ class ProductListTile extends StatelessWidget {
 
     if (product.isOutOfStock) {
       color = Colors.red;
-      icon = Icons.error;
+      icon = CupertinoIcons.exclamationmark_circle;
     } else if (product.isLowStock) {
       color = Colors.orange;
-      icon = Icons.warning;
+      icon = CupertinoIcons.exclamationmark_triangle;
     } else {
       color = Colors.green;
-      icon = Icons.check_circle;
+      icon = CupertinoIcons.checkmark_circle;
     }
 
     return Container(

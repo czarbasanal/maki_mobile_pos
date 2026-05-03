@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
@@ -52,7 +53,7 @@ class SalesSummaryCard extends ConsumerWidget {
             // Header
             Row(
               children: [
-                Icon(Icons.analytics, color: theme.colorScheme.primary),
+                Icon(CupertinoIcons.chart_bar, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 const Text(
                   'Sales Summary',
@@ -74,7 +75,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     context,
                     'Total Sales',
                     '${summary.totalSalesCount}',
-                    Icons.receipt_long,
+                    CupertinoIcons.doc_text,
                     Colors.blue,
                   ),
                 ),
@@ -84,7 +85,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     context,
                     'Voided',
                     '${summary.voidedSalesCount}',
-                    Icons.cancel,
+                    CupertinoIcons.xmark_circle,
                     Colors.red,
                   ),
                 ),
@@ -101,7 +102,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     context,
                     'Gross Sales',
                     '${AppConstants.currencySymbol}${summary.grossAmount.toStringAsFixed(2)}',
-                    Icons.attach_money,
+                    CupertinoIcons.money_dollar,
                     Colors.green,
                     subtitle: 'Before discounts',
                   ),
@@ -112,7 +113,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     context,
                     'Discounts',
                     '-${AppConstants.currencySymbol}${summary.totalDiscounts.toStringAsFixed(2)}',
-                    Icons.local_offer,
+                    CupertinoIcons.tag,
                     Colors.orange,
                   ),
                 ),
@@ -169,7 +170,7 @@ class SalesSummaryCard extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.trending_flat,
+                    const Icon(CupertinoIcons.arrow_right,
                         size: 16, color: Colors.purple),
                     const SizedBox(width: 4),
                     Text(
@@ -194,7 +195,7 @@ class SalesSummaryCard extends ConsumerWidget {
                       context,
                       'Total Cost',
                       '${AppConstants.currencySymbol}${summary.totalCost.toStringAsFixed(2)}',
-                      Icons.inventory,
+                      CupertinoIcons.cube_box,
                       Colors.grey,
                     ),
                   ),
@@ -204,7 +205,7 @@ class SalesSummaryCard extends ConsumerWidget {
                       context,
                       'Gross Profit',
                       '${AppConstants.currencySymbol}${summary.totalProfit.toStringAsFixed(2)}',
-                      Icons.trending_up,
+                      CupertinoIcons.arrow_up_right,
                       Colors.green,
                       subtitle:
                           '${summary.profitMargin.toStringAsFixed(1)}% margin',
@@ -293,7 +294,7 @@ class SalesSummaryCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 32),
+            const Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 32),
             const SizedBox(height: 8),
             Text(
               'Failed to load summary',

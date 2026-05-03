@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -34,7 +35,7 @@ class ExpensesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Expenses'),
@@ -43,7 +44,7 @@ class ExpensesScreen extends ConsumerWidget {
         data: (expenses) {
           if (expenses.isEmpty) {
             return const EmptyStateView(
-              icon: Icons.receipt_long,
+              icon: CupertinoIcons.doc_text,
               title: 'No Expenses',
               subtitle: 'Tap + to add an expense',
             );
@@ -65,7 +66,7 @@ class ExpensesScreen extends ConsumerWidget {
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.orange[100],
-                    child: const Icon(Icons.receipt, color: Colors.orange),
+                    child: const Icon(CupertinoIcons.doc_plaintext, color: Colors.orange),
                   ),
                   title: Text(
                     expense.description,
@@ -104,7 +105,7 @@ class ExpensesScreen extends ConsumerWidget {
       floatingActionButton: canAdd
           ? FloatingActionButton(
               onPressed: () => context.push(RoutePaths.expenseAdd),
-              child: const Icon(Icons.add),
+              child: const Icon(CupertinoIcons.add),
             )
           : null,
     );

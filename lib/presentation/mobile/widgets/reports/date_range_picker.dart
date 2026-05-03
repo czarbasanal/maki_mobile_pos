@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 /// Date range presets.
@@ -92,7 +93,7 @@ class DateRangePicker extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.calendar_today,
+                    CupertinoIcons.calendar,
                     size: 16,
                     color: theme.colorScheme.primary,
                   ),
@@ -108,7 +109,7 @@ class DateRangePicker extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Icon(
-                    Icons.arrow_drop_down,
+                    CupertinoIcons.chevron_down,
                     color: theme.colorScheme.primary,
                   ),
                 ],

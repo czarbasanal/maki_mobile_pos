@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -64,7 +65,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.receiving),
         ),
         title: Column(
@@ -82,14 +83,14 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
         actions: [
           // Import CSV button
           IconButton(
-            icon: const Icon(Icons.upload_file),
+            icon: const Icon(CupertinoIcons.cloud_upload),
             tooltip: 'Import CSV',
             onPressed: () => _showCsvImport(context),
           ),
           // Save as draft
           TextButton.icon(
             onPressed: receivingState.isEmpty ? null : _saveDraft,
-            icon: const Icon(Icons.save_outlined),
+            icon: const Icon(CupertinoIcons.tray_arrow_down),
             label: const Text('Save Draft'),
           ),
         ],
@@ -125,7 +126,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          const Icon(Icons.business, color: Colors.grey),
+          const Icon(CupertinoIcons.briefcase, color: Colors.grey),
           const SizedBox(width: 12),
           Expanded(
             child: suppliersAsync.when(
@@ -199,11 +200,11 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                 focusNode: focusNode,
                 decoration: InputDecoration(
                   labelText: 'Search product by name or SKU',
-                  prefixIcon: const Icon(Icons.search),
+                  prefixIcon: const Icon(CupertinoIcons.search),
                   border: const OutlineInputBorder(),
                   suffixIcon: controller.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear),
+                          icon: const Icon(CupertinoIcons.xmark),
                           onPressed: () {
                             controller.clear();
                             setState(() => _selectedProduct = null);
@@ -327,7 +328,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
       child: Row(
         children: [
           Icon(
-            isIncrease ? Icons.trending_up : Icons.trending_down,
+            isIncrease ? CupertinoIcons.arrow_up_right : CupertinoIcons.arrow_down_right,
             color: isIncrease ? Colors.orange[700] : Colors.blue[700],
             size: 20,
           ),

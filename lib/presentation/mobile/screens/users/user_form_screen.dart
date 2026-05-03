@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -78,7 +79,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.users),
         ),
         title: Text(widget.isEditing ? 'Edit User' : 'Create User'),
@@ -123,7 +124,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                 controller: _emailController,
                 decoration: const InputDecoration(
                   labelText: 'Email *',
-                  prefixIcon: Icon(Icons.email),
+                  prefixIcon: Icon(CupertinoIcons.envelope),
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
@@ -138,7 +139,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                 controller: _displayNameController,
                 decoration: const InputDecoration(
                   labelText: 'Display Name *',
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icon(CupertinoIcons.person),
                   border: OutlineInputBorder(),
                 ),
                 validator: Validators.required,
@@ -164,13 +165,13 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password *',
-                    prefixIcon: const Icon(Icons.lock),
+                    prefixIcon: const Icon(CupertinoIcons.lock),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                            ? CupertinoIcons.eye
+                            : CupertinoIcons.eye_slash,
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
@@ -185,13 +186,13 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                   controller: _confirmPasswordController,
                   decoration: InputDecoration(
                     labelText: 'Confirm Password *',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(CupertinoIcons.lock),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                            ? CupertinoIcons.eye
+                            : CupertinoIcons.eye_slash,
                       ),
                       onPressed: () {
                         setState(() =>
@@ -221,7 +222,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red[700]),
+                      Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red[700]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -332,7 +333,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                     ),
                   ),
                   if (isSelected)
-                    Icon(Icons.check_circle, color: _getRoleColor(role)),
+                    Icon(CupertinoIcons.checkmark_circle, color: _getRoleColor(role)),
                 ],
               ),
             ),
@@ -356,11 +357,11 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
   IconData _getRoleIcon(UserRole role) {
     switch (role) {
       case UserRole.admin:
-        return Icons.admin_panel_settings;
+        return CupertinoIcons.shield_lefthalf_fill;
       case UserRole.staff:
-        return Icons.badge;
+        return CupertinoIcons.tag;
       case UserRole.cashier:
-        return Icons.point_of_sale;
+        return CupertinoIcons.cart;
     }
   }
 

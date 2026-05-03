@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -76,7 +77,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.cancel_outlined,
+              CupertinoIcons.xmark_circle,
               color: Colors.red[700],
             ),
           ),
@@ -125,7 +126,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
                   labelText: 'Reason for voiding',
                   hintText: 'Enter detailed reason...',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.note_alt_outlined),
+                  prefixIcon: Icon(CupertinoIcons.square_pencil),
                 ),
                 maxLines: 2,
                 maxLength: 200,
@@ -243,7 +244,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber, color: Colors.red[700]),
+          Icon(CupertinoIcons.exclamationmark_triangle, color: Colors.red[700]),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -303,7 +304,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+          Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red[700], size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

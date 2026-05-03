@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -111,7 +112,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Product' : 'Add Product'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.inventory),
         ),
       ),
@@ -136,7 +137,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline,
+                            Icon(CupertinoIcons.info_circle,
                                 color: Colors.blue[700], size: 20),
                             const SizedBox(width: 8),
                             Expanded(
@@ -157,7 +158,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       controller: _skuController,
                       decoration: const InputDecoration(
                         labelText: 'SKU *',
-                        prefixIcon: Icon(Icons.qr_code),
+                        prefixIcon: Icon(CupertinoIcons.qrcode),
                         border: OutlineInputBorder(),
                       ),
                       enabled: canEditSku,
@@ -171,7 +172,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       controller: _nameController,
                       decoration: const InputDecoration(
                         labelText: 'Product Name *',
-                        prefixIcon: Icon(Icons.inventory_2),
+                        prefixIcon: Icon(CupertinoIcons.cube_box),
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) =>
@@ -185,7 +186,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       decoration: InputDecoration(
                         labelText:
                             'Selling Price (${AppConstants.currencySymbol}) *',
-                        prefixIcon: const Icon(Icons.sell),
+                        prefixIcon: const Icon(CupertinoIcons.tag),
                         border: const OutlineInputBorder(),
                         helperText:
                             canEditPrice ? null : 'Only admin can change price',
@@ -219,7 +220,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             decoration: InputDecoration(
                               labelText:
                                   'Cost (${AppConstants.currencySymbol}) *',
-                              prefixIcon: const Icon(Icons.money),
+                              prefixIcon: const Icon(CupertinoIcons.money_dollar),
                               border: const OutlineInputBorder(),
                             ),
                             keyboardType: const TextInputType.numberWithOptions(
@@ -245,7 +246,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       controller: _quantityController,
                       decoration: const InputDecoration(
                         labelText: 'Initial Quantity *',
-                        prefixIcon: Icon(Icons.numbers),
+                        prefixIcon: Icon(CupertinoIcons.number),
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
@@ -267,7 +268,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       controller: _reorderLevelController,
                       decoration: const InputDecoration(
                         labelText: 'Reorder Level',
-                        prefixIcon: Icon(Icons.warning_amber),
+                        prefixIcon: Icon(CupertinoIcons.exclamationmark_triangle),
                         border: OutlineInputBorder(),
                         helperText: 'Alert when stock falls below this level',
                       ),
@@ -292,7 +293,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       controller: _barcodeController,
                       decoration: const InputDecoration(
                         labelText: 'Barcode',
-                        prefixIcon: Icon(Icons.barcode_reader),
+                        prefixIcon: Icon(CupertinoIcons.barcode_viewfinder),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -303,7 +304,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       controller: _categoryController,
                       decoration: const InputDecoration(
                         labelText: 'Category',
-                        prefixIcon: Icon(Icons.category),
+                        prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -316,7 +317,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           value: _selectedSupplierId,
                           decoration: const InputDecoration(
                             labelText: 'Supplier',
-                            prefixIcon: Icon(Icons.business),
+                            prefixIcon: Icon(CupertinoIcons.briefcase),
                             border: OutlineInputBorder(),
                           ),
                           items: [
@@ -345,7 +346,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         initialValue: _existingProduct?.supplierName ?? 'None',
                         decoration: const InputDecoration(
                           labelText: 'Supplier',
-                          prefixIcon: Icon(Icons.business),
+                          prefixIcon: Icon(CupertinoIcons.briefcase),
                           border: OutlineInputBorder(),
                         ),
                         enabled: false,
@@ -358,7 +359,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       controller: _notesController,
                       decoration: const InputDecoration(
                         labelText: 'Notes',
-                        prefixIcon: Icon(Icons.notes),
+                        prefixIcon: Icon(CupertinoIcons.list_bullet),
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
@@ -380,7 +381,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.save),
+                            : const Icon(CupertinoIcons.tray_arrow_down),
                         label: Text(widget.isEditing
                             ? 'Update Product'
                             : 'Add Product'),

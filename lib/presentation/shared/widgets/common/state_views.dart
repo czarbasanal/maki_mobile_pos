@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/theme/app_spacing.dart';
 
 /// Standard empty-state view: icon + title + optional subtitle + optional CTA.
@@ -103,7 +104,7 @@ class ErrorStateView extends StatelessWidget {
         (onRetry != null
             ? FilledButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(CupertinoIcons.refresh),
                 label: const Text('Retry'),
               )
             : null);
@@ -113,7 +114,7 @@ class ErrorStateView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline,
+            Icon(CupertinoIcons.exclamationmark_circle,
                 size: 64, color: theme.colorScheme.error),
             const SizedBox(height: AppSpacing.md),
             Text(

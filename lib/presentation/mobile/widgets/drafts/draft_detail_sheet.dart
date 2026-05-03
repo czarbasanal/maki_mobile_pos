@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -58,7 +59,7 @@ class DraftDetailSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        Icons.description,
+                        CupertinoIcons.doc_text,
                         color: theme.colorScheme.onPrimaryContainer,
                         size: 28,
                       ),
@@ -86,7 +87,7 @@ class DraftDetailSheet extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(CupertinoIcons.xmark),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -164,13 +165,13 @@ class DraftDetailSheet extends StatelessWidget {
                             vertical: 16,
                           ),
                         ),
-                        child: const Icon(Icons.delete_outline),
+                        child: const Icon(CupertinoIcons.trash),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton.icon(
                           onPressed: onLoad,
-                          icon: const Icon(Icons.shopping_cart_checkout),
+                          icon: const Icon(CupertinoIcons.cart_badge_plus),
                           label: const Text(
                             'Load into Cart',
                             overflow: TextOverflow.ellipsis,
@@ -213,7 +214,7 @@ class DraftDetailSheet extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.local_offer,
+            CupertinoIcons.tag,
             size: 16,
             color: Colors.green[700],
           ),
@@ -412,14 +413,14 @@ class DraftDetailSheet extends StatelessWidget {
         children: [
           _buildInfoRow(
             theme,
-            Icons.person_outline,
+            CupertinoIcons.person,
             'Created by',
             draft.createdByName,
           ),
           const SizedBox(height: 12),
           _buildInfoRow(
             theme,
-            Icons.calendar_today_outlined,
+            CupertinoIcons.calendar,
             'Created',
             dateFormat.format(draft.createdAt),
           ),
@@ -427,7 +428,7 @@ class DraftDetailSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _buildInfoRow(
               theme,
-              Icons.update,
+              CupertinoIcons.arrow_2_circlepath,
               'Last updated',
               dateFormat.format(draft.updatedAt!),
             ),
@@ -435,7 +436,7 @@ class DraftDetailSheet extends StatelessWidget {
           const SizedBox(height: 12),
           _buildInfoRow(
             theme,
-            Icons.inventory_2_outlined,
+            CupertinoIcons.cube_box,
             'Items',
             '${draft.totalItemCount} (${draft.uniqueProductCount} products)',
           ),
@@ -486,7 +487,7 @@ class DraftDetailSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.sticky_note_2_outlined,
+              Icon(CupertinoIcons.square_list,
                   size: 16, color: Colors.amber[700]),
               const SizedBox(width: 8),
               Text(

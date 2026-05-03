@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -93,7 +94,7 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.check_circle,
+                  CupertinoIcons.checkmark_circle,
                   color: Colors.green[600],
                   size: 64,
                 ),
@@ -150,7 +151,7 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: widget.onPrintReceipt,
-                      icon: const Icon(Icons.receipt_long),
+                      icon: const Icon(CupertinoIcons.doc_text),
                       label: const Text('Receipt'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -267,7 +268,7 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber, size: 16, color: Colors.orange[700]),
+              Icon(CupertinoIcons.exclamationmark_triangle, size: 16, color: Colors.orange[700]),
               const SizedBox(width: 8),
               Text(
                 'Warnings',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -27,13 +28,13 @@ class SaleDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         title: const Text('Sale Details'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.receipt_long),
+            icon: const Icon(CupertinoIcons.doc_text),
             tooltip: 'View Receipt',
             onPressed: () {
               final sale = saleAsync.valueOrNull;
@@ -48,7 +49,7 @@ class SaleDetailScreen extends ConsumerWidget {
         data: (sale) {
           if (sale == null) {
             return const EmptyStateView(
-              icon: Icons.receipt_long_outlined,
+              icon: CupertinoIcons.doc_text,
               title: 'Sale not found',
             );
           }
@@ -142,7 +143,7 @@ class SaleDetailScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.cancel, color: Colors.red[700], size: 32),
+          Icon(CupertinoIcons.xmark_circle, color: Colors.red[700], size: 32),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -416,21 +417,21 @@ class SaleDetailScreen extends ConsumerWidget {
         children: [
           _buildDetailRow(
             theme,
-            Icons.person_outline,
+            CupertinoIcons.person,
             'Cashier',
             sale.cashierName,
           ),
           const SizedBox(height: 12),
           _buildDetailRow(
             theme,
-            Icons.payment,
+            CupertinoIcons.creditcard,
             'Payment Method',
             sale.paymentMethod.displayName,
           ),
           const SizedBox(height: 12),
           _buildDetailRow(
             theme,
-            Icons.shopping_bag_outlined,
+            CupertinoIcons.bag,
             'Items',
             '${sale.totalItemCount} (${sale.uniqueProductCount} products)',
           ),
@@ -438,7 +439,7 @@ class SaleDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildDetailRow(
               theme,
-              Icons.drafts_outlined,
+              CupertinoIcons.envelope,
               'From Draft',
               'Yes',
             ),
@@ -492,7 +493,7 @@ class SaleDetailScreen extends ConsumerWidget {
         children: [
           _buildDetailRow(
             theme,
-            Icons.person_outline,
+            CupertinoIcons.person,
             'Voided by',
             sale.voidedByName ?? 'Unknown',
           ),
@@ -500,7 +501,7 @@ class SaleDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildDetailRow(
               theme,
-              Icons.access_time,
+              CupertinoIcons.clock,
               'Voided at',
               dateFormat.format(sale.voidedAt!),
             ),
@@ -510,7 +511,7 @@ class SaleDetailScreen extends ConsumerWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.note_outlined, size: 20, color: Colors.grey[600]),
+                Icon(CupertinoIcons.doc_text, size: 20, color: Colors.grey[600]),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -554,7 +555,7 @@ class SaleDetailScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.sticky_note_2_outlined,
+              Icon(CupertinoIcons.square_list,
                   size: 16, color: Colors.amber[700]),
               const SizedBox(width: 8),
               Text(
@@ -582,7 +583,7 @@ class SaleDetailScreen extends ConsumerWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () => _handleVoid(context, ref, sale),
-        icon: const Icon(Icons.cancel_outlined),
+        icon: const Icon(CupertinoIcons.xmark_circle),
         label: const Text('Void This Sale'),
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.red,

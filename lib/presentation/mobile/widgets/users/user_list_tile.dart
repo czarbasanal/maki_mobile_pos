@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:intl/intl.dart';
@@ -133,7 +134,7 @@ class UserListTile extends StatelessWidget {
                 if (onToggleActive != null) ...[
                   const SizedBox(width: 8),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
+                    icon: const Icon(CupertinoIcons.ellipsis_vertical),
                     onSelected: (action) {
                       if (action == 'toggle') {
                         onToggleActive?.call();
@@ -144,7 +145,7 @@ class UserListTile extends StatelessWidget {
                         value: 'toggle',
                         child: ListTile(
                           leading: Icon(
-                            user.isActive ? Icons.block : Icons.check_circle,
+                            user.isActive ? CupertinoIcons.nosign : CupertinoIcons.checkmark_circle,
                             color: user.isActive ? Colors.red : Colors.green,
                           ),
                           title:
@@ -155,7 +156,7 @@ class UserListTile extends StatelessWidget {
                     ],
                   ),
                 ] else
-                  const Icon(Icons.chevron_right, color: Colors.grey),
+                  const Icon(CupertinoIcons.chevron_right, color: Colors.grey),
               ],
             ),
           ),
@@ -208,11 +209,11 @@ class UserListTile extends StatelessWidget {
   IconData _getRoleIcon(UserRole role) {
     switch (role) {
       case UserRole.admin:
-        return Icons.admin_panel_settings;
+        return CupertinoIcons.shield_lefthalf_fill;
       case UserRole.staff:
-        return Icons.badge;
+        return CupertinoIcons.tag;
       case UserRole.cashier:
-        return Icons.point_of_sale;
+        return CupertinoIcons.cart;
     }
   }
 }
