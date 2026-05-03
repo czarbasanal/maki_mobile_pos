@@ -11,12 +11,14 @@ import { FirestoreProductRepository } from '@/data/repositories/FirestoreProduct
 import { FirestoreCostCodeRepository } from '@/data/repositories/FirestoreCostCodeRepository';
 import { FirestoreUserRepository } from '@/data/repositories/FirestoreUserRepository';
 import { FirestoreActivityLogRepository } from '@/data/repositories/FirestoreActivityLogRepository';
+import { FirestoreSupplierRepository } from '@/data/repositories/FirestoreSupplierRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
 import type { CostCodeRepository } from '@/domain/repositories/CostCodeRepository';
 import type { UserRepository } from '@/domain/repositories/UserRepository';
 import type { ActivityLogRepository } from '@/domain/repositories/ActivityLogRepository';
+import type { SupplierRepository } from '@/domain/repositories/SupplierRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -25,8 +27,9 @@ export interface Container {
   costCodeRepo: CostCodeRepository;
   userRepo: UserRepository;
   activityLogRepo: ActivityLogRepository;
+  supplierRepo: SupplierRepository;
   // Other repositories slot in here as their phases land:
-  // supplierRepo, expenseRepo, ...
+  // expenseRepo, receivingRepo, ...
 }
 
 function buildDefaultContainer(): Container {
@@ -37,6 +40,7 @@ function buildDefaultContainer(): Container {
     costCodeRepo: new FirestoreCostCodeRepository(db),
     userRepo: new FirestoreUserRepository(db),
     activityLogRepo: new FirestoreActivityLogRepository(db),
+    supplierRepo: new FirestoreSupplierRepository(db),
   };
 }
 
@@ -84,4 +88,8 @@ export function useUserRepo(): UserRepository {
 
 export function useActivityLogRepo(): ActivityLogRepository {
   return useContainer().activityLogRepo;
+}
+
+export function useSupplierRepo(): SupplierRepository {
+  return useContainer().supplierRepo;
 }
