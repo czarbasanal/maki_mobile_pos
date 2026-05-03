@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
@@ -25,189 +27,90 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Settings'),
       ),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
         children: [
-          // ==================== PROFILE SECTION (ALL ROLES) ====================
-          // All users can edit their display name and password
-          _buildSectionHeader(context, 'My Profile'),
-          _buildUserSection(context, ref, currentUser),
-
-          const Divider(height: 1),
-
-          // ==================== ADMIN SECTION (ADMIN ONLY) ====================
-          if (isAdmin) ...[
-            _buildSectionHeader(context, 'Administration'),
-            SettingsTile(
-              icon: Icons.people,
-              iconColor: Colors.blue,
-              title: 'User Management',
-              subtitle: 'Add, edit, and manage users',
-              onTap: () => context.push(RoutePaths.users),
+          if (currentUser != null) ...[
+            const _SectionHeader('My Profile'),
+            _SectionCard(
+              children: [
+                _ProfileHero(user: currentUser),
+                SettingsTile(
+                  icon: CupertinoIcons.person,
+                  iconColor: Colors.blue,
+                  title: 'Display Name',
+                  subtitle: currentUser.displayName,
+                  onTap: () =>
+                      _showEditDisplayNameDialog(context, ref, currentUser),
+                ),
+                SettingsTile(
+                  icon: CupertinoIcons.lock,
+                  iconColor: Colors.red,
+                  title: 'Change Password',
+                  subtitle: 'Update your login password',
+                  onTap: () => _showChangePasswordDialog(context, ref),
+                ),
+              ],
             ),
-            SettingsTile(
-              icon: Icons.history,
-              iconColor: Colors.purple,
-              title: 'Activity Logs',
-              subtitle: 'View user activity and audit trail',
-              onTap: () => context.push(RoutePaths.userLogs),
-            ),
-            SettingsTile(
-              icon: Icons.code,
-              iconColor: Colors.orange,
-              title: 'Cost Code Settings',
-              subtitle: 'Configure cost encoding',
-              onTap: () => context.push(RoutePaths.costCodeSettings),
-            ),
-            const Divider(height: 1),
           ],
-
-          // ==================== GENERAL SECTION (ALL ROLES) ====================
-          _buildSectionHeader(context, 'General'),
-          _buildThemeTile(context, ref),
-          SettingsTile(
-            icon: Icons.store,
-            iconColor: Colors.teal,
-            title: 'Store Information',
-            subtitle: 'Business name and details',
-            onTap: () {
-              // TODO: Store info screen
-            },
-          ),
-          SettingsTile(
-            icon: Icons.info_outline,
-            iconColor: Colors.grey,
-            title: 'About',
-            subtitle: 'App version ${AppConstants.appVersion}',
-            onTap: () => _showAboutDialog(context),
+          if (isAdmin) ...[
+            const _SectionHeader('Administration'),
+            _SectionCard(
+              children: [
+                SettingsTile(
+                  icon: CupertinoIcons.person_2,
+                  iconColor: Colors.blue,
+                  title: 'User Management',
+                  subtitle: 'Add, edit, and manage users',
+                  onTap: () => context.push(RoutePaths.users),
+                ),
+                SettingsTile(
+                  icon: CupertinoIcons.clock,
+                  iconColor: Colors.purple,
+                  title: 'Activity Logs',
+                  subtitle: 'View user activity and audit trail',
+                  onTap: () => context.push(RoutePaths.userLogs),
+                ),
+                SettingsTile(
+                  icon: CupertinoIcons.chevron_left_slash_chevron_right,
+                  iconColor: Colors.orange,
+                  title: 'Cost Code Settings',
+                  subtitle: 'Configure cost encoding',
+                  onTap: () => context.push(RoutePaths.costCodeSettings),
+                ),
+              ],
+            ),
+          ],
+          const _SectionHeader('General'),
+          _SectionCard(
+            children: [
+              _buildThemeTile(context, ref),
+              SettingsTile(
+                icon: Icons.store_outlined,
+                iconColor: Colors.teal,
+                title: 'Store Information',
+                subtitle: 'Business name and details',
+                onTap: () {
+                  // TODO: Store info screen
+                },
+              ),
+              SettingsTile(
+                icon: CupertinoIcons.info_circle,
+                iconColor: Colors.grey,
+                title: 'About',
+                subtitle: 'App version ${AppConstants.appVersion}',
+                onTap: () => _showAboutDialog(context),
+              ),
+            ],
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-      ),
-    );
-  }
-
-  /// Builds the user profile section where all users can edit display name and password.
-  Widget _buildUserSection(
-      BuildContext context, WidgetRef ref, UserEntity? user) {
-    if (user == null) return const SizedBox.shrink();
-
-    return Column(
-      children: [
-        // Current user info display
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: _getRoleColor(user.role).withOpacity(0.2),
-                child: Icon(
-                  _getRoleIcon(user.role),
-                  color: _getRoleColor(user.role),
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.displayName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      user.email,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _getRoleColor(user.role).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        user.role.displayName,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: _getRoleColor(user.role),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Edit display name
-        SettingsTile(
-          icon: Icons.person_outline,
-          iconColor: Colors.blue,
-          title: 'Display Name',
-          subtitle: user.displayName,
-          onTap: () => _showEditDisplayNameDialog(context, ref, user),
-        ),
-
-        // Change password
-        SettingsTile(
-          icon: Icons.lock_outline,
-          iconColor: Colors.red,
-          title: 'Change Password',
-          subtitle: 'Update your login password',
-          onTap: () => _showChangePasswordDialog(context, ref),
-        ),
-      ],
-    );
-  }
-
-  Color _getRoleColor(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return Colors.red;
-      case UserRole.staff:
-        return Colors.blue;
-      case UserRole.cashier:
-        return Colors.green;
-    }
-  }
-
-  IconData _getRoleIcon(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return Icons.admin_panel_settings;
-      case UserRole.staff:
-        return Icons.badge;
-      case UserRole.cashier:
-        return Icons.point_of_sale;
-    }
   }
 
   /// Shows dialog to edit display name.
@@ -226,8 +129,7 @@ class SettingsScreen extends ConsumerWidget {
             controller: controller,
             decoration: const InputDecoration(
               labelText: 'Display Name',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.person),
+              prefixIcon: Icon(CupertinoIcons.person),
             ),
             autofocus: true,
             validator: (value) {
@@ -308,8 +210,7 @@ class SettingsScreen extends ConsumerWidget {
                   controller: currentPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'Current Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                    prefixIcon: Icon(CupertinoIcons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -319,13 +220,12 @@ class SettingsScreen extends ConsumerWidget {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: newPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'New Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: Icon(CupertinoIcons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -338,13 +238,12 @@ class SettingsScreen extends ConsumerWidget {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: confirmPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'Confirm New Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: Icon(CupertinoIcons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -412,9 +311,9 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildThemeTile(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final (label, icon) = switch (mode) {
-      ThemeMode.system => ('System', Icons.brightness_auto),
-      ThemeMode.light => ('Light', Icons.light_mode),
-      ThemeMode.dark => ('Dark', Icons.dark_mode),
+      ThemeMode.system => ('System', CupertinoIcons.brightness),
+      ThemeMode.light => ('Light', CupertinoIcons.sun_max),
+      ThemeMode.dark => ('Dark', CupertinoIcons.moon),
     };
     return SettingsTile(
       icon: icon,
@@ -435,9 +334,9 @@ class SettingsScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               for (final entry in const [
-                (ThemeMode.system, 'System default', Icons.brightness_auto),
-                (ThemeMode.light, 'Light', Icons.light_mode),
-                (ThemeMode.dark, 'Dark', Icons.dark_mode),
+                (ThemeMode.system, 'System default', CupertinoIcons.brightness),
+                (ThemeMode.light, 'Light', CupertinoIcons.sun_max),
+                (ThemeMode.dark, 'Dark', CupertinoIcons.moon),
               ])
                 RadioListTile<ThemeMode>(
                   value: entry.$1,
@@ -464,5 +363,164 @@ class SettingsScreen extends ConsumerWidget {
       applicationVersion: AppConstants.appVersion,
       applicationLegalese: '© ${DateTime.now().year} ${AppConstants.appName}',
     );
+  }
+}
+
+// ==================== LAYOUT PRIMITIVES ====================
+
+/// Small uppercase header that introduces a section card.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md + AppSpacing.xs,
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
+      child: Text(
+        title.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+}
+
+/// Rounded card grouping a list of rows separated by hairline dividers.
+///
+/// Hairlines are indented past the icon column so the divider lines up
+/// under the row text — the classic iOS-settings rhythm.
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: _withDividers(children),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _withDividers(List<Widget> items) {
+    if (items.length <= 1) return items;
+    final out = <Widget>[];
+    for (var i = 0; i < items.length; i++) {
+      if (i > 0) {
+        out.add(const Divider(
+          height: 1,
+          indent: AppSpacing.md + 22 + AppSpacing.md, // align under title
+        ));
+      }
+      out.add(items[i]);
+    }
+    return out;
+  }
+}
+
+/// Profile hero block — avatar, name, email, role pill — sits at the top
+/// of the profile section card.
+class _ProfileHero extends StatelessWidget {
+  const _ProfileHero({required this.user});
+
+  final UserEntity user;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final roleColor = _roleColor(user.role);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: roleColor.withOpacity(0.08),
+            child: Icon(
+              _roleIcon(user.role),
+              color: roleColor,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.displayName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  user.email,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: roleColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    user.role.displayName,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: roleColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _roleColor(UserRole role) {
+    switch (role) {
+      case UserRole.admin:
+        return Colors.red;
+      case UserRole.staff:
+        return Colors.blue;
+      case UserRole.cashier:
+        return Colors.green;
+    }
+  }
+
+  IconData _roleIcon(UserRole role) {
+    switch (role) {
+      case UserRole.admin:
+        return CupertinoIcons.shield_lefthalf_fill;
+      case UserRole.staff:
+        return CupertinoIcons.tag;
+      case UserRole.cashier:
+        return CupertinoIcons.cart;
+    }
   }
 }

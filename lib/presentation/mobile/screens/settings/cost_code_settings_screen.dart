@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/password_dialog.dart';
@@ -32,7 +34,7 @@ class _CostCodeSettingsScreenState
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.settings),
         ),
         title: const Text('Cost Code Settings'),
@@ -44,7 +46,7 @@ class _CostCodeSettingsScreenState
             )
           else
             IconButton(
-              icon: const Icon(Icons.edit),
+              icon: const Icon(CupertinoIcons.pencil),
               tooltip: 'Edit mapping',
               onPressed: () => _startEditing(mappingAsync.value),
             ),
@@ -83,7 +85,7 @@ class _CostCodeSettingsScreenState
           Text(
             'Each digit (0-9) is encoded as a letter to hide costs.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
 
@@ -124,7 +126,7 @@ class _CostCodeSettingsScreenState
             Center(
               child: OutlinedButton.icon(
                 onPressed: () => _resetToDefault(mapping),
-                icon: const Icon(Icons.restore),
+                icon: const Icon(CupertinoIcons.arrow_counterclockwise),
                 label: const Text('Reset to Default'),
               ),
             ),
@@ -136,49 +138,54 @@ class _CostCodeSettingsScreenState
   }
 
   Widget _buildInfoCard(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline, color: Colors.blue[700]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'About Cost Codes',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[700],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Cost codes hide actual product costs from unauthorized users. '
-                  'Only admins can view or modify this mapping.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue[700],
-                  ),
-                ),
-              ],
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              CupertinoIcons.info_circle,
+              color: theme.colorScheme.primary,
+              size: 22,
             ),
-          ),
-        ],
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'About Cost Codes',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Cost codes hide actual product costs from unauthorized users. '
+                    'Only admins can view or modify this mapping.',
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMappingDisplay(ThemeData theme, CostCodeEntity mapping) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final mutedFill =
+        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
             // Header row
@@ -187,50 +194,54 @@ class _CostCodeSettingsScreenState
                 Expanded(
                   child: Text(
                     'Digit',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
+                      color: muted,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const Icon(Icons.arrow_forward, color: Colors.grey),
+                Icon(CupertinoIcons.forward, size: 14, color: muted),
                 Expanded(
                   child: Text(
                     'Code',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
+                      color: muted,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ],
             ),
-            const Divider(),
+            const SizedBox(height: AppSpacing.sm),
+            const Divider(height: 1),
             // Mapping rows
             ...List.generate(10, (index) {
               final digit = index.toString();
               final letter = mapping.digitToLetter[digit] ?? '?';
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 child: Row(
                   children: [
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
+                          color: mutedFill,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: hairline),
                         ),
                         child: Text(
                           digit,
                           style: const TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             fontFamily: 'monospace',
                           ),
                           textAlign: TextAlign.center,
@@ -238,30 +249,32 @@ class _CostCodeSettingsScreenState
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       child: Icon(
-                        Icons.arrow_forward,
-                        color: theme.colorScheme.primary,
+                        CupertinoIcons.forward,
+                        size: 16,
+                        color: muted,
                       ),
                     ),
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            color: theme.colorScheme.primary,
+                            width: 1.2,
                           ),
                         ),
                         child: Text(
                           letter,
                           style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             fontFamily: 'monospace',
                             color: theme.colorScheme.primary,
                           ),
@@ -310,37 +323,53 @@ class _CostCodeSettingsScreenState
     String code,
     String label,
   ) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final mutedFill =
+        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm + 4,
+              vertical: AppSpacing.xs + 2,
+            ),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(6),
+              color: mutedFill,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: hairline),
             ),
             child: Text(
               digits,
               style: const TextStyle(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 fontFamily: 'monospace',
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Icon(Icons.arrow_forward, color: Colors.grey[400], size: 16),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
+          Icon(CupertinoIcons.forward, color: muted, size: 14),
+          const SizedBox(width: AppSpacing.md),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm + 4,
+              vertical: AppSpacing.xs + 2,
+            ),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(
+                color: theme.colorScheme.primary,
+                width: 1.2,
+              ),
             ),
             child: Text(
               code,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 fontFamily: 'monospace',
                 color: theme.colorScheme.primary,
               ),
@@ -349,10 +378,7 @@ class _CostCodeSettingsScreenState
           const Spacer(),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ],
       ),
@@ -386,52 +412,57 @@ class _CostCodeSettingsScreenState
 
   Widget _buildTestRow(CostCodeEntity mapping, double cost, String display) {
     final encoded = mapping.encode(cost);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              display,
-              style: const TextStyle(fontFamily: 'monospace'),
-            ),
-          ),
-          const Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.green[200]!),
-            ),
-            child: Text(
-              encoded,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: 'monospace',
-                color: Colors.green[700],
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final muted = theme.colorScheme.onSurfaceVariant;
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 80,
+                child: Text(
+                  display,
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
               ),
-            ),
+              Icon(CupertinoIcons.forward, size: 14, color: muted),
+              const SizedBox(width: AppSpacing.md),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: AppColors.success),
+                ),
+                child: Text(
+                  encoded,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'monospace',
+                    color: AppColors.successDark,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildBottomBar(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        border: Border(top: BorderSide(color: hairline)),
       ),
       child: SafeArea(
         child: Column(
@@ -439,19 +470,16 @@ class _CostCodeSettingsScreenState
           children: [
             if (_errorMessage != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm + 4),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+                  style: TextStyle(color: theme.colorScheme.error),
                 ),
               ),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: _isSaving ? null : _saveChanges,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
                 child: _isSaving
                     ? const SizedBox(
                         height: 20,
