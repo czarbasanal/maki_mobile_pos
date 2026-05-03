@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -101,21 +102,35 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
     _removeOverlay();
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        width: context.findRenderObject() != null
-            ? (context.findRenderObject() as RenderBox).size.width
-            : 300,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, 60),
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(8),
-            child: _buildSearchResults(),
+      builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final hairline =
+            isDark ? AppColors.darkHairline : AppColors.lightHairline;
+        return Positioned(
+          width: context.findRenderObject() != null
+              ? (context.findRenderObject() as RenderBox).size.width
+              : 300,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: const Offset(0, 60),
+            child: Material(
+              elevation: 0,
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: hairline),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: _buildSearchResults(),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -154,9 +169,6 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
               ),
             ],
           ),
-          border: const OutlineInputBorder(),
-          filled: true,
-          fillColor: Colors.grey[50],
         ),
         textInputAction: TextInputAction.search,
         onSubmitted: (value) {
@@ -188,26 +200,33 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
             );
           }
 
+          final theme = Theme.of(context);
+          final muted = theme.colorScheme.onSurfaceVariant;
           return ListView.builder(
             shrinkWrap: true,
             itemCount: products.length > 10 ? 10 : products.length,
             itemBuilder: (context, index) {
               final product = products[index];
+              final stockColor = product.isOutOfStock
+                  ? AppColors.error
+                  : product.isLowStock
+                      ? AppColors.warning
+                      : AppColors.success;
               return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: product.isOutOfStock
-                      ? Colors.red[100]
-                      : product.isLowStock
-                          ? Colors.orange[100]
-                          : Colors.green[100],
-                  child: Text(
-                    product.name[0].toUpperCase(),
-                    style: TextStyle(
-                      color: product.isOutOfStock
-                          ? Colors.red[700]
-                          : product.isLowStock
-                              ? Colors.orange[700]
-                              : Colors.green[700],
+                leading: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: stockColor, width: 1.2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      product.name[0].toUpperCase(),
+                      style: TextStyle(
+                        color: stockColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -218,27 +237,18 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
                 ),
                 subtitle: Text(
                   '${product.sku} • ₱${product.price.toStringAsFixed(2)}',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
                 ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Stock: ${product.quantity}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: product.isOutOfStock
-                            ? Colors.red
-                            : product.isLowStock
-                                ? Colors.orange
-                                : Colors.grey[600],
-                        fontWeight: product.isLowStock || product.isOutOfStock
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
+                trailing: Text(
+                  'Stock: ${product.quantity}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: product.isLowStock || product.isOutOfStock
+                        ? stockColor
+                        : muted,
+                    fontWeight: product.isLowStock || product.isOutOfStock
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
                 ),
                 enabled: !product.isOutOfStock,
                 onTap: product.isOutOfStock
@@ -252,11 +262,14 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
           );
         },
         loading: () => const Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Center(child: CircularProgressIndicator()),
         ),
         error: (error, _) => ListTile(
-          leading: const Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red),
+          leading: const Icon(
+            CupertinoIcons.exclamationmark_circle,
+            color: AppColors.error,
+          ),
           title: Text('Error: $error'),
         ),
       ),
@@ -277,7 +290,6 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
             autofocus: true,
             decoration: const InputDecoration(
               hintText: 'Scan or type barcode...',
-              border: OutlineInputBorder(),
             ),
             onSubmitted: (value) => Navigator.pop(context, value),
           ),
