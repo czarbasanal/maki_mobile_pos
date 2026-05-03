@@ -7,11 +7,14 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/checkout_success_dialog.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/payment_section.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
 
 /// Checkout confirmation screen.
 ///
-/// Shows order summary and processes the sale.
+/// Shows the order, takes payment input (method + amount received),
+/// and confirms the sale. The cart provider supplies the items and
+/// keeps payment-method / amount-received state across navigation.
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -20,8 +23,35 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
+  late final TextEditingController _amountReceivedController;
   bool _isProcessing = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill from CartState in case the user backed out and returned,
+    // or arrived from drafts with a previously stored amount.
+    final initialAmount = ref.read(cartProvider).amountReceived;
+    _amountReceivedController = TextEditingController(
+      text: initialAmount > 0 ? initialAmount.toStringAsFixed(2) : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _amountReceivedController.dispose();
+    super.dispose();
+  }
+
+  void _handleAmountChanged(String value) {
+    final amount = double.tryParse(value) ?? 0;
+    ref.read(cartProvider.notifier).setAmountReceived(amount);
+  }
+
+  void _handlePaymentMethodChanged(PaymentMethod method) {
+    ref.read(cartProvider.notifier).setPaymentMethod(method);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +83,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     _buildPaymentSummary(theme, cart),
                     const SizedBox(height: AppSpacing.lg),
-                    const _SectionHeader('Payment Details'),
+                    const _SectionHeader('Payment'),
                     const SizedBox(height: AppSpacing.sm),
-                    _buildPaymentDetails(theme, cart),
+                    Card(
+                      margin: EdgeInsets.zero,
+                      child: PaymentSection(
+                        cart: cart,
+                        amountController: _amountReceivedController,
+                        onAmountChanged: _handleAmountChanged,
+                        onPaymentMethodChanged: _handlePaymentMethodChanged,
+                      ),
+                    ),
                     if (_errorMessage != null) ...[
                       const SizedBox(height: AppSpacing.md),
                       _buildErrorMessage(),
@@ -197,47 +235,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildPaymentDetails(ThemeData theme, CartState cart) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: theme.colorScheme.primary),
-      ),
-      child: Column(
-        children: [
-          _buildDetailRow(
-            theme,
-            CupertinoIcons.creditcard,
-            'Payment Method',
-            cart.paymentMethod == PaymentMethod.cash ? 'Cash' : 'GCash',
-          ),
-          const SizedBox(height: AppSpacing.sm + 4),
-          _buildDetailRow(
-            theme,
-            CupertinoIcons.money_dollar_circle,
-            'Amount Received',
-            '${AppConstants.currencySymbol}${cart.amountReceived.toStringAsFixed(2)}',
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm + 4),
-            child: Divider(height: 1),
-          ),
-          _buildDetailRow(
-            theme,
-            CupertinoIcons.arrow_2_circlepath,
-            'Change',
-            '${AppConstants.currencySymbol}${cart.change.toStringAsFixed(2)}',
-            valueStyle: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.successDark,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSummaryRow(
     ThemeData theme,
     String label,
@@ -266,35 +263,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   color: valueColor,
                   fontWeight: valueColor != null ? FontWeight.w600 : null,
                 ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(
-    ThemeData theme,
-    IconData icon,
-    String label,
-    String value, {
-    TextStyle? valueStyle,
-  }) {
-    final muted = theme.colorScheme.onSurfaceVariant;
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
-        const SizedBox(width: AppSpacing.sm + 4),
-        Expanded(
-          child: Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(color: muted),
-          ),
-        ),
-        Text(
-          value,
-          style: valueStyle ??
-              theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
         ),
       ],
     );
@@ -339,10 +307,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
+          height: 64,
           child: FilledButton(
             onPressed: _isProcessing ? null : () => _processCheckout(cart),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.success,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
             ),
             child: _isProcessing
                 ? const SizedBox(

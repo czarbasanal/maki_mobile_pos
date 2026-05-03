@@ -28,36 +28,35 @@ class PaymentSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text(
-                'Payment:',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: SegmentedButton<PaymentMethod>(
-                  segments: const [
-                    ButtonSegment(
-                      value: PaymentMethod.cash,
-                      label: Text('Cash'),
-                      icon: Icon(CupertinoIcons.money_dollar),
-                    ),
-                    ButtonSegment(
-                      value: PaymentMethod.gcash,
-                      label: Text('GCash'),
-                      icon: Icon(CupertinoIcons.device_phone_portrait),
-                    ),
-                  ],
-                  selected: {cart.paymentMethod},
-                  onSelectionChanged: (selected) {
-                    if (selected.isNotEmpty) {
-                      onPaymentMethodChanged(selected.first);
-                    }
-                  },
+          // Payment method selector — full-width segmented control,
+          // no prefix label (the segmented appearance is self-explanatory).
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<PaymentMethod>(
+              segments: const [
+                ButtonSegment(
+                  value: PaymentMethod.maya,
+                  label: Text('Maya'),
+                  icon: Icon(CupertinoIcons.creditcard),
                 ),
-              ),
-            ],
+                ButtonSegment(
+                  value: PaymentMethod.cash,
+                  label: Text('Cash'),
+                  icon: Icon(AppIcons.peso),
+                ),
+                ButtonSegment(
+                  value: PaymentMethod.gcash,
+                  label: Text('GCash'),
+                  icon: Icon(CupertinoIcons.device_phone_portrait),
+                ),
+              ],
+              selected: {cart.paymentMethod},
+              onSelectionChanged: (selected) {
+                if (selected.isNotEmpty) {
+                  onPaymentMethodChanged(selected.first);
+                }
+              },
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           // Amount received input — theme-driven outlined input.
@@ -92,7 +91,7 @@ class PaymentSection extends StatelessWidget {
   }
 
   Widget _buildQuickAmountButtons(BuildContext context) {
-    final amounts = [20, 50, 100, 200, 500, 1000];
+    final amounts = [100, 200, 500, 1000];
 
     return Wrap(
       spacing: AppSpacing.sm,

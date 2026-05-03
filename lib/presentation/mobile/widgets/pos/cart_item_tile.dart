@@ -152,6 +152,7 @@ class _QuantityControls extends StatelessWidget {
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
     return Container(
+      height: _kPillHeight,
       decoration: BoxDecoration(
         border: Border.all(color: hairline),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -162,11 +163,15 @@ class _QuantityControls extends StatelessWidget {
           IconButton(
             icon: const Icon(CupertinoIcons.minus),
             onPressed: quantity > 1 ? () => onChanged(quantity - 1) : null,
-            visualDensity: VisualDensity.compact,
-            iconSize: 20,
+            iconSize: 18,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(
+              width: _kPillHeight,
+              height: _kPillHeight,
+            ),
           ),
           Container(
-            constraints: const BoxConstraints(minWidth: 40),
+            constraints: const BoxConstraints(minWidth: 36),
             alignment: Alignment.center,
             child: Text(
               '$quantity',
@@ -179,14 +184,22 @@ class _QuantityControls extends StatelessWidget {
           IconButton(
             icon: const Icon(CupertinoIcons.add),
             onPressed: () => onChanged(quantity + 1),
-            visualDensity: VisualDensity.compact,
-            iconSize: 20,
+            iconSize: 18,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(
+              width: _kPillHeight,
+              height: _kPillHeight,
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+/// Shared height for the cart row's outlined controls so the quantity
+/// stepper and discount button line up at the same touch-target size.
+const double _kPillHeight = 40;
 
 class _DiscountButton extends StatelessWidget {
   const _DiscountButton({
@@ -214,10 +227,9 @@ class _DiscountButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm + 4,
-          vertical: AppSpacing.sm,
-        ),
+        height: _kPillHeight,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm + 4),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: borderColor),

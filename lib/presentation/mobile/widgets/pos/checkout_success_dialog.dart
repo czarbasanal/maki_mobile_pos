@@ -5,6 +5,13 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
+/// Shared button shape so the stacked Receipt + Done actions render
+/// with identical corners (theme defaults differ between Outlined and
+/// Filled buttons; we pin both to AppRadius.lg).
+final RoundedRectangleBorder _kButtonShape = RoundedRectangleBorder(
+  borderRadius: BorderRadius.circular(AppRadius.lg),
+);
+
 /// Dialog shown after successful checkout.
 class CheckoutSuccessDialog extends StatefulWidget {
   final SaleEntity sale;
@@ -138,33 +145,40 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
                 _buildWarningsCard(theme),
               ],
               const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: widget.onPrintReceipt,
-                      icon: const Icon(CupertinoIcons.doc_text),
-                      label: const Text('Receipt'),
+              // Stacked actions — Receipt on top, Done at the bottom
+              // (Done is the primary close action, so it anchors the
+              // dialog's bottom edge). Both pinned to the same 56px
+              // height and lg corner radius so the secondary
+              // OutlinedButton.icon and the primary FilledButton
+              // render identically.
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: widget.onPrintReceipt,
+                  icon: const Icon(CupertinoIcons.doc_text),
+                  label: const Text('Receipt'),
+                  style: OutlinedButton.styleFrom(shape: _kButtonShape),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm + 4),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  onPressed: widget.onDone,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    shape: _kButtonShape,
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm + 4),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      onPressed: widget.onDone,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.success,
-                      ),
-                      child: const Text(
-                        'Done',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),

@@ -1,8 +1,11 @@
 /// Payment methods accepted by the POS system.
 ///
-/// Note: GCash payments may have associated fees that are
-/// deducted from total sales during reporting.
+/// Note: e-wallet payments (Maya, GCash) may have associated merchant
+/// fees that are deducted from total sales during reporting.
 enum PaymentMethod {
+  /// Maya e-wallet (formerly PayMaya). Fees may apply.
+  maya('maya', 'Maya'),
+
   /// Physical cash payment
   cash('cash', 'Cash'),
 
@@ -26,6 +29,7 @@ enum PaymentMethod {
     );
   }
 
-  /// Whether this payment method has transaction fees
-  bool get hasFees => this == PaymentMethod.gcash;
+  /// Whether this payment method has transaction fees.
+  bool get hasFees =>
+      this == PaymentMethod.gcash || this == PaymentMethod.maya;
 }
