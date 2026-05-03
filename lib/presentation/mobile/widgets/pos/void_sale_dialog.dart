@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/void_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -67,25 +68,14 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Row(
+      title: const Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.red[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              CupertinoIcons.xmark_circle,
-              color: Colors.red[700],
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
+          Icon(CupertinoIcons.xmark_circle, color: AppColors.error),
+          SizedBox(width: AppSpacing.sm + 4),
+          Expanded(
             child: Text(
               'Void Sale',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -125,7 +115,6 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Reason for voiding',
                   hintText: 'Enter detailed reason...',
-                  border: OutlineInputBorder(),
                   prefixIcon: Icon(CupertinoIcons.square_pencil),
                 ),
                 maxLines: 2,
@@ -177,7 +166,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
         FilledButton(
           onPressed: _isProcessing ? null : _handleVoid,
           style: FilledButton.styleFrom(
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
           child: _isProcessing
               ? const SizedBox(
@@ -195,11 +184,18 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
   }
 
   Widget _buildSaleInfo(ThemeData theme) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final mutedFill =
+        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        color: mutedFill,
+        border: Border.all(color: hairline),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,13 +206,13 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
               Text(
                 widget.sale.saleNumber,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 '${AppConstants.currencySymbol}${widget.sale.grandTotal.toStringAsFixed(2)}',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,
                 ),
               ),
@@ -225,9 +221,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
           const SizedBox(height: 4),
           Text(
             '${widget.sale.totalItemCount} item(s) • ${widget.sale.cashierName}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ],
       ),
@@ -236,16 +230,18 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
 
   Widget _buildWarningBanner(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        color: Colors.red[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red[200]!),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.error),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          Icon(CupertinoIcons.exclamationmark_triangle, color: Colors.red[700]),
-          const SizedBox(width: 12),
+          Icon(
+            CupertinoIcons.exclamationmark_triangle,
+            color: AppColors.error,
+          ),
+          SizedBox(width: AppSpacing.sm + 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,15 +250,15 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
                   'This action cannot be undone',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Colors.red[700],
+                    color: AppColors.error,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   'The sale will be marked as voided and recorded in the audit log.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.red[600],
+                    color: AppColors.error,
                   ),
                 ),
               ],
@@ -296,20 +292,23 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
 
   Widget _buildErrorBanner(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        color: Colors.red[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red[200]!),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.error),
       ),
       child: Row(
         children: [
-          Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red[700], size: 20),
-          const SizedBox(width: 8),
+          const Icon(
+            CupertinoIcons.exclamationmark_circle,
+            color: AppColors.error,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: TextStyle(color: Colors.red[700], fontSize: 13),
+              style: const TextStyle(color: AppColors.error, fontSize: 13),
             ),
           ),
         ],
@@ -326,7 +325,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
       title: 'Confirm Void',
       subtitle: 'Enter your password to void this sale.',
       confirmButtonText: 'Verify & Void',
-      confirmButtonColor: Colors.red,
+      confirmButtonColor: AppColors.error,
       onVerify: (password) async {
         return await _processVoid(password);
       },
@@ -375,7 +374,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Warnings: ${result.warnings.join(", ")}'),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.warningDark,
             ),
           );
         }

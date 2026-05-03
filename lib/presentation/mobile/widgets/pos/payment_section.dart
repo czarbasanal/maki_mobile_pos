@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Payment method selection and amount received input.
@@ -22,21 +23,18 @@ class PaymentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Payment method selector
           Row(
             children: [
               const Text(
                 'Payment:',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: SegmentedButton<PaymentMethod>(
                   segments: const [
@@ -61,50 +59,32 @@ class PaymentSection extends StatelessWidget {
               ),
             ],
           ),
-
-          const SizedBox(height: 16),
-
-          // Amount received input
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: amountController,
-                  decoration: InputDecoration(
-                    labelText: 'Amount Received',
-                    prefixText: '${AppConstants.currencySymbol} ',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: const Icon(CupertinoIcons.checkmark_circle),
-                      tooltip: 'Exact amount',
-                      onPressed: () {
-                        amountController.text =
-                            cart.grandTotal.toStringAsFixed(2);
-                        onAmountChanged(amountController.text);
-                      },
-                    ),
-                  ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d{0,2}')),
-                  ],
-                  onChanged: onAmountChanged,
-                ),
+          const SizedBox(height: AppSpacing.md),
+          // Amount received input — theme-driven outlined input.
+          TextField(
+            controller: amountController,
+            decoration: InputDecoration(
+              labelText: 'Amount Received',
+              prefixText: '${AppConstants.currencySymbol} ',
+              suffixIcon: IconButton(
+                icon: const Icon(CupertinoIcons.checkmark_circle),
+                tooltip: 'Exact amount',
+                onPressed: () {
+                  amountController.text = cart.grandTotal.toStringAsFixed(2);
+                  onAmountChanged(amountController.text);
+                },
               ),
+            ),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
             ],
+            onChanged: onAmountChanged,
           ),
-
-          const SizedBox(height: 12),
-
-          // Quick amount buttons
+          const SizedBox(height: AppSpacing.sm + 4),
           _buildQuickAmountButtons(context),
-
-          const SizedBox(height: 16),
-
-          // Change display
+          const SizedBox(height: AppSpacing.md),
           _buildChangeDisplay(context),
         ],
       ),
@@ -112,12 +92,11 @@ class PaymentSection extends StatelessWidget {
   }
 
   Widget _buildQuickAmountButtons(BuildContext context) {
-    // Common peso denominations
     final amounts = [20, 50, 100, 200, 500, 1000];
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: amounts.map((amount) {
         return ActionChip(
           label: Text('${AppConstants.currencySymbol}$amount'),
@@ -134,25 +113,29 @@ class PaymentSection extends StatelessWidget {
 
   Widget _buildChangeDisplay(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final change = cart.change;
-    final isInsufficient = cart.amountReceived > 0 && !cart.isPaymentSufficient;
+    final isInsufficient =
+        cart.amountReceived > 0 && !cart.isPaymentSufficient;
+    final hasReceipt = cart.amountReceived > 0;
+
+    // Border carries status: red when short, green when sufficient,
+    // hairline-neutral when no payment yet.
+    final borderColor = isInsufficient
+        ? AppColors.error
+        : hasReceipt
+            ? AppColors.success
+            : hairline;
+    final valueColor =
+        isInsufficient ? AppColors.error : AppColors.successDark;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: isInsufficient
-            ? Colors.red[50]
-            : cart.amountReceived > 0
-                ? Colors.green[50]
-                : Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isInsufficient
-              ? Colors.red[200]!
-              : cart.amountReceived > 0
-                  ? Colors.green[200]!
-                  : Colors.grey[300]!,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -168,8 +151,8 @@ class PaymentSection extends StatelessWidget {
                 ? '${AppConstants.currencySymbol}${(cart.grandTotal - cart.amountReceived).toStringAsFixed(2)}'
                 : '${AppConstants.currencySymbol}${change.toStringAsFixed(2)}',
             style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: isInsufficient ? Colors.red : Colors.green[700],
+              fontWeight: FontWeight.w600,
+              color: hasReceipt ? valueColor : null,
             ),
           ),
         ],

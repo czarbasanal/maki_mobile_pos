@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 /// Displays a single item in the cart with quantity controls and discount.
@@ -26,6 +27,7 @@ class CartItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     final discountAmount = item.calculateDiscountAmount(
       isPercentage: isPercentageDiscount,
     );
@@ -38,15 +40,18 @@ class CartItemTile extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: Colors.red,
+        padding: const EdgeInsets.only(right: AppSpacing.lg - 4),
+        color: AppColors.error,
         child: const Icon(CupertinoIcons.trash, color: Colors.white),
       ),
       onDismissed: (_) => onRemove(),
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.sm + 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -71,57 +76,52 @@ class CartItemTile extends StatelessWidget {
                   ),
                 ],
               ),
-
-              // SKU and unit price
+              // SKU and unit price — muted secondary line
               Text(
                 '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} / ${item.unit}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
-
-              const SizedBox(height: 12),
-
-              // Quantity controls and totals
+              const SizedBox(height: AppSpacing.sm + 4),
+              // Quantity controls + discount button + line total
               Row(
                 children: [
-                  // Quantity controls
-                  _buildQuantityControls(context),
-
-                  const SizedBox(width: 16),
-
-                  // Discount button
-                  _buildDiscountButton(context),
-
+                  _QuantityControls(
+                    quantity: item.quantity,
+                    onChanged: onQuantityChanged,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  _DiscountButton(
+                    hasDiscount: item.hasDiscount,
+                    label: isPercentageDiscount
+                        ? '${item.discountValue.toStringAsFixed(0)}%'
+                        : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(0)}',
+                    onTap: onDiscountTap,
+                  ),
                   const Spacer(),
-
-                  // Line total
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       if (item.hasDiscount) ...[
-                        // Original amount (struck through)
                         Text(
                           '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             decoration: TextDecoration.lineThrough,
-                            color: Colors.grey,
+                            color: muted,
                           ),
                         ),
-                        // Discount amount
                         Text(
                           '-${AppConstants.currencySymbol}${discountAmount.toStringAsFixed(2)}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.green,
+                            color: AppColors.successDark,
                           ),
                         ),
                       ],
-                      // Net amount
                       Text(
                         '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: item.hasDiscount ? Colors.green[700] : null,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              item.hasDiscount ? AppColors.successDark : null,
                         ),
                       ),
                     ],
@@ -134,41 +134,51 @@ class CartItemTile extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildQuantityControls(BuildContext context) {
+class _QuantityControls extends StatelessWidget {
+  const _QuantityControls({
+    required this.quantity,
+    required this.onChanged,
+  });
+
+  final int quantity;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: hairline),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Decrement button
           IconButton(
             icon: const Icon(CupertinoIcons.minus),
-            onPressed: item.quantity > 1
-                ? () => onQuantityChanged(item.quantity - 1)
-                : null,
+            onPressed: quantity > 1 ? () => onChanged(quantity - 1) : null,
             visualDensity: VisualDensity.compact,
             iconSize: 20,
           ),
-          // Quantity display
           Container(
             constraints: const BoxConstraints(minWidth: 40),
             alignment: Alignment.center,
             child: Text(
-              '${item.quantity}',
+              '$quantity',
               style: const TextStyle(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 fontSize: 16,
               ),
             ),
           ),
-          // Increment button
           IconButton(
             icon: const Icon(CupertinoIcons.add),
-            onPressed: () => onQuantityChanged(item.quantity + 1),
+            onPressed: () => onChanged(quantity + 1),
             visualDensity: VisualDensity.compact,
             iconSize: 20,
           ),
@@ -176,40 +186,53 @@ class CartItemTile extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildDiscountButton(BuildContext context) {
-    final hasDiscount = item.hasDiscount;
-    final discountLabel = isPercentageDiscount
-        ? '${item.discountValue.toStringAsFixed(0)}%'
-        : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(0)}';
+class _DiscountButton extends StatelessWidget {
+  const _DiscountButton({
+    required this.hasDiscount,
+    required this.label,
+    required this.onTap,
+  });
+
+  final bool hasDiscount;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+
+    final borderColor = hasDiscount ? AppColors.success : hairline;
+    final fgColor = hasDiscount ? AppColors.successDark : muted;
 
     return InkWell(
-      onTap: onDiscountTap,
-      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm + 4,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          color: hasDiscount ? Colors.green[50] : Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: hasDiscount ? Colors.green : Colors.grey[300]!,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              hasDiscount ? CupertinoIcons.tag : CupertinoIcons.tag,
-              size: 16,
-              color: hasDiscount ? Colors.green : Colors.grey[600],
-            ),
+            Icon(CupertinoIcons.tag, size: 16, color: fgColor),
             const SizedBox(width: 4),
             Text(
-              hasDiscount ? discountLabel : 'Discount',
+              hasDiscount ? label : 'Discount',
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: hasDiscount ? FontWeight.bold : FontWeight.normal,
-                color: hasDiscount ? Colors.green[700] : Colors.grey[600],
+                fontWeight: hasDiscount ? FontWeight.w600 : FontWeight.normal,
+                color: fgColor,
               ),
             ),
           ],
