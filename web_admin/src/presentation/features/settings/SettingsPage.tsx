@@ -1,9 +1,5 @@
 // /admin/settings — settings overview. Mirrors the Flutter settings_screen
 // structure: profile section + admin section + general section.
-//
-// Display-name editing is deferred to phase 4 (when UserRepository writes
-// land). For phase 3 the profile is read-only with a working change-password
-// flow via FirebaseAuthRepository.
 
 import { useEffect, useState, type ComponentType, type SVGProps } from 'react';
 import { Link } from 'react-router-dom';
@@ -19,6 +15,7 @@ import {
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
+import { EditDisplayNameDialog } from './EditDisplayNameDialog';
 import { userRoleDisplayName } from '@/domain/enums';
 import { toneBadgeClasses, type Tone } from '@/core/theme/tones';
 import { cn } from '@/core/utils/cn';
@@ -27,6 +24,8 @@ export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const [pwOpen, setPwOpen] = useState(false);
   const [pwSuccess, setPwSuccess] = useState(false);
+  const [nameOpen, setNameOpen] = useState(false);
+  const [nameSuccess, setNameSuccess] = useState(false);
 
   useEffect(() => {
     document.title = 'Settings · MAKI POS Admin';
@@ -45,9 +44,9 @@ export function SettingsPage() {
         </p>
       </header>
 
-      {pwSuccess ? (
+      {pwSuccess || nameSuccess ? (
         <div className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
-          Password updated.
+          {pwSuccess ? 'Password updated.' : 'Display name updated.'}
         </div>
       ) : null}
 
@@ -72,8 +71,7 @@ export function SettingsPage() {
           tone="blue"
           title="Display name"
           subtitle={user.displayName || '—'}
-          hint="Editable in phase 4"
-          disabled
+          onClick={() => setNameOpen(true)}
         />
         <Row
           icon={KeyIcon}
@@ -125,6 +123,16 @@ export function SettingsPage() {
           setPwOpen(false);
           setPwSuccess(true);
           setTimeout(() => setPwSuccess(false), 4000);
+        }}
+      />
+      <EditDisplayNameDialog
+        open={nameOpen}
+        user={user}
+        onClose={() => setNameOpen(false)}
+        onSuccess={() => {
+          setNameOpen(false);
+          setNameSuccess(true);
+          setTimeout(() => setNameSuccess(false), 4000);
         }}
       />
     </div>
