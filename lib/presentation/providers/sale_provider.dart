@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/week_range.dart';
 import 'package:maki_mobile_pos/data/repositories/sale_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -120,6 +121,39 @@ final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
         code: result.errorCode);
   }
   return result.data!;
+});
+
+/// Sales summary for the current week-to-date (Monday → now). Drives the
+/// dashboard's Avg Daily Sales card; the SalesSummary itself is reused for
+/// any other week-scoped totals.
+final weekToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
+  final actor = _requireActor(ref);
+  final w = weekToDate(DateTime.now());
+
+  final result = await ref.watch(getSalesReportUseCaseProvider).execute(
+        actor: actor,
+        startDate: w.start,
+        endDate: w.end,
+      );
+  if (!result.success) {
+    throw AppExceptionWrapper(
+        message: result.errorMessage ?? 'Failed to load summary',
+        code: result.errorCode);
+  }
+  return result.data!;
+});
+
+/// Average daily gross sales for the current week so far.
+///
+/// Derived from [weekToDateSummaryProvider] — gross amount divided by the
+/// number of days elapsed in the current Monday→Sunday week. Recomputes
+/// daily as the day count advances.
+final avgDailySalesProvider = Provider<AsyncValue<double>>((ref) {
+  final summaryAsync = ref.watch(weekToDateSummaryProvider);
+  final daysElapsed = weekToDate(DateTime.now()).daysElapsed;
+  return summaryAsync.whenData(
+    (summary) => avgDailyFromGross(summary.grossAmount, daysElapsed),
+  );
 });
 
 /// Provides sales summary for a date range.
