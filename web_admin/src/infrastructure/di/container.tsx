@@ -9,18 +9,21 @@ import { FirebaseAuthRepository } from '@/data/repositories/FirebaseAuthReposito
 import { FirestoreSaleRepository } from '@/data/repositories/FirestoreSaleRepository';
 import { FirestoreProductRepository } from '@/data/repositories/FirestoreProductRepository';
 import { FirestoreCostCodeRepository } from '@/data/repositories/FirestoreCostCodeRepository';
+import { FirestoreUserRepository } from '@/data/repositories/FirestoreUserRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
 import type { CostCodeRepository } from '@/domain/repositories/CostCodeRepository';
+import type { UserRepository } from '@/domain/repositories/UserRepository';
 
 export interface Container {
   authRepo: AuthRepository;
   saleRepo: SaleRepository;
   productRepo: ProductRepository;
   costCodeRepo: CostCodeRepository;
+  userRepo: UserRepository;
   // Other repositories slot in here as their phases land:
-  // userRepo, supplierRepo, expenseRepo, ...
+  // supplierRepo, expenseRepo, ...
 }
 
 function buildDefaultContainer(): Container {
@@ -29,6 +32,7 @@ function buildDefaultContainer(): Container {
     saleRepo: new FirestoreSaleRepository(db),
     productRepo: new FirestoreProductRepository(db),
     costCodeRepo: new FirestoreCostCodeRepository(db),
+    userRepo: new FirestoreUserRepository(db),
   };
 }
 
@@ -68,4 +72,8 @@ export function useProductRepo(): ProductRepository {
 
 export function useCostCodeRepo(): CostCodeRepository {
   return useContainer().costCodeRepo;
+}
+
+export function useUserRepo(): UserRepository {
+  return useContainer().userRepo;
 }
