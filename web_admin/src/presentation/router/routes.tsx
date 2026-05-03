@@ -12,6 +12,8 @@ import { DashboardPage } from '@/presentation/features/dashboard/DashboardPage';
 import { SettingsPage } from '@/presentation/features/settings/SettingsPage';
 import { AboutPage } from '@/presentation/features/settings/AboutPage';
 import { CostCodeSettingsPage } from '@/presentation/features/settings/CostCodeSettingsPage';
+import { UsersListPage } from '@/presentation/features/users/UsersListPage';
+import { UserFormPage } from '@/presentation/features/users/UserFormPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -57,9 +59,9 @@ export const router = createBrowserRouter(
         { path: RoutePaths.salesReport, element: placeholder('Sales report', 'phase 12') },
         { path: RoutePaths.profitReport, element: placeholder('Profit report', 'phase 12') },
         { path: RoutePaths.saleDetail, element: placeholder('Sale detail', 'phase 12') },
-        { path: RoutePaths.users, element: placeholder('Users', 'phase 4') },
-        { path: RoutePaths.userAdd, element: placeholder('New user', 'phase 4') },
-        { path: RoutePaths.userEdit, element: placeholder('Edit user', 'phase 4') },
+        { path: RoutePaths.users, element: <UsersListPage /> },
+        { path: RoutePaths.userAdd, element: <UserFormPage /> },
+        { path: RoutePaths.userEdit, element: <UserFormPage /> },
         { path: RoutePaths.userLogs, element: placeholder('Activity logs', 'phase 5') },
         { path: RoutePaths.settings, element: <SettingsPage /> },
         { path: RoutePaths.costCodeSettings, element: <CostCodeSettingsPage /> },
