@@ -40,6 +40,18 @@ extension StringExtensions on String {
     return '${this[0].toUpperCase()}${substring(1).toLowerCase()}';
   }
 
+  /// Returns the first whitespace-separated token of the string. Used to
+  /// surface a cashier or user "first name" from a stored full name.
+  /// Trims surrounding whitespace and collapses runs of separators, so
+  /// `' Alice  Bautista '.firstName == 'Alice'`. Empty strings stay
+  /// empty; single-token names return as-is.
+  String get firstName {
+    final trimmed = trim();
+    if (trimmed.isEmpty) return '';
+    final i = trimmed.indexOf(RegExp(r'\s'));
+    return i == -1 ? trimmed : trimmed.substring(0, i);
+  }
+
   // ==================== VALIDATION ====================
 
   /// Checks if the string is a valid email address.
