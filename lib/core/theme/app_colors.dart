@@ -23,12 +23,22 @@ abstract class AppColors {
 
   static const Color lightBackground = Color(0xFFFFFFFF);
   static const Color lightSurface = Color(0xFFF5F5F5);
+
+  /// Near-white surface used for inputs and quiet panels — lighter than
+  /// [lightSurface] so the airy theme keeps a hint of fill without feeling
+  /// boxed in.
+  static const Color lightSurfaceMuted = Color(0xFFFAFAFA);
   static const Color lightCard = Color(0xFFFFFFFF);
   static const Color lightText = Color(0xFF000000);
   static const Color lightTextSecondary = Color(0xFF666666);
   static const Color lightTextHint = Color(0xFF999999);
   static const Color lightDivider = Color(0xFFE0E0E0);
   static const Color lightBorder = Color(0xFFD0D0D0);
+
+  /// Hairline border used for outlined cards and quiet separators in the
+  /// airy/minimal theme. Lighter than [lightBorder] so flat surfaces still
+  /// read as discrete panels without any shadow.
+  static const Color lightHairline = Color(0xFFECECEC);
   static const Color lightAccent = brandSlate;
   static const Color lightAccentText = Color(0xFFFFFFFF);
 
@@ -36,12 +46,25 @@ abstract class AppColors {
 
   static const Color darkBackground = primaryDark;
   static const Color darkSurface = Color(0xFF1E2A2B);
-  static const Color darkCard = Color(0xFF243334);
+
+  /// Quiet near-background surface for inputs and muted panels in dark mode.
+  /// Slightly lifted from [darkBackground] so input fields read as fields
+  /// without leaning on a heavy fill.
+  static const Color darkSurfaceMuted = Color(0xFF182425);
+
+  /// Dark-theme card colour — nudged a touch lighter than the previous value
+  /// so flat (elevation 0) cards still separate from [darkBackground] via
+  /// surface contrast alone.
+  static const Color darkCard = Color(0xFF263637);
   static const Color darkText = Color(0xFFFFFFFF);
   static const Color darkTextSecondary = Color(0xFFB0B0B0);
   static const Color darkTextHint = Color(0xFF808080);
   static const Color darkDivider = Color(0xFF3A4A4B);
   static const Color darkBorder = Color(0xFF4A5A5B);
+
+  /// Hairline border for dark-theme outlined surfaces. Soft enough to read
+  /// without competing with content.
+  static const Color darkHairline = Color(0xFF2E3E3F);
   static const Color darkAccent = primaryAccent;
   static const Color darkAccentText = Color(0xFF000000);
 

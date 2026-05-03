@@ -50,25 +50,30 @@ abstract class AppTheme {
         ),
       ),
 
-      // Card
+      // Card — flat surface with a hairline border. Cards no longer cast a
+      // shadow; the border carries the visual separation.
       cardTheme: CardThemeData(
         color: AppColors.lightCard,
-        elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.1),
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: const BorderSide(color: AppColors.lightHairline),
         ),
       ),
 
-      // Elevated Button
+      // Elevated Button — flat fill, generous corners, no shadow.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.lightAccent,
           foregroundColor: AppColors.lightAccentText,
-          elevation: 2,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           textStyle: AppTextStyles.button,
         ),
@@ -79,9 +84,9 @@ abstract class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.lightAccent,
           side: const BorderSide(color: AppColors.lightAccent, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           textStyle: AppTextStyles.button,
         ),
@@ -91,43 +96,52 @@ abstract class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.lightAccent,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
           textStyle: AppTextStyles.button,
         ),
       ),
 
-      // Floating Action Button
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      // Floating Action Button — flat circle, no shadow.
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.lightAccent,
         foregroundColor: AppColors.lightAccentText,
-        elevation: 4,
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
       ),
 
-      // Input Decoration
+      // Input Decoration — quiet near-white fill with rounded outline.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.lightSurface,
+        fillColor: AppColors.lightSurfaceMuted,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.lightBorder),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.lightHairline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.lightBorder),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.lightHairline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.lightAccent, width: 2),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.lightAccent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         labelStyle: const TextStyle(color: AppColors.lightTextSecondary),
         hintStyle: const TextStyle(color: AppColors.lightTextHint),
@@ -136,25 +150,27 @@ abstract class AppTheme {
 
       // Divider
       dividerTheme: const DividerThemeData(
-        color: AppColors.lightDivider,
+        color: AppColors.lightHairline,
         thickness: 1,
         space: 1,
       ),
 
       // List Tile
       listTileTheme: const ListTileThemeData(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         tileColor: Colors.transparent,
         iconColor: AppColors.lightTextSecondary,
       ),
 
-      // Bottom Navigation Bar
+      // Bottom Navigation Bar — flat with a hairline above (drawn by the
+      // bar's own border via the surrounding scaffold; elevation removed
+      // here to keep the airy feel).
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.lightBackground,
         selectedItemColor: AppColors.lightAccent,
         unselectedItemColor: AppColors.lightTextSecondary,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0,
       ),
 
       // Tab Bar
@@ -165,23 +181,26 @@ abstract class AppTheme {
         indicatorSize: TabBarIndicatorSize.tab,
       ),
 
-      // Chip
+      // Chip — pill-shaped on the muted surface.
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.lightSurface,
+        backgroundColor: AppColors.lightSurfaceMuted,
+        side: const BorderSide(color: AppColors.lightHairline),
         labelStyle:
             AppTextStyles.labelSmall.copyWith(color: AppColors.lightText),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
       ),
 
       // Dialog
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.lightBackground,
-        elevation: 8,
+        elevation: 1,
+        shadowColor: Colors.black12,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         titleTextStyle:
             AppTextStyles.headingSmall.copyWith(color: AppColors.lightText),
@@ -192,9 +211,11 @@ abstract class AppTheme {
       // Bottom Sheet
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.lightBackground,
-        elevation: 8,
+        elevation: 1,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         ),
       ),
 
@@ -205,14 +226,14 @@ abstract class AppTheme {
             AppTextStyles.bodyMedium.copyWith(color: AppColors.lightBackground),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
       ),
 
       // Progress Indicator
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.lightAccent,
-        linearTrackColor: AppColors.lightDivider,
+        linearTrackColor: AppColors.lightHairline,
       ),
 
       // Switch
@@ -227,11 +248,11 @@ abstract class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return AppColors.lightAccent.withOpacity(0.5);
           }
-          return AppColors.lightDivider;
+          return AppColors.lightHairline;
         }),
       ),
 
-      // Checkbox
+      // Checkbox — softer corner to match the rounded language.
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -240,8 +261,9 @@ abstract class AppTheme {
           return Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(AppColors.lightAccentText),
+        side: const BorderSide(color: AppColors.lightBorder, width: 1.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(6),
         ),
       ),
 
@@ -255,10 +277,11 @@ abstract class AppTheme {
         }),
       ),
 
-      // Icon
+      // Icon — slightly smaller default to support the airy feel; outlined
+      // glyphs are applied at call sites in Phase 2.
       iconTheme: const IconThemeData(
         color: AppColors.lightText,
-        size: 24,
+        size: 22,
       ),
 
       // Cupertino Override
@@ -313,13 +336,16 @@ abstract class AppTheme {
         ),
       ),
 
-      // Card
+      // Card — flat with hairline border (dark equivalent).
       cardTheme: CardThemeData(
         color: AppColors.darkCard,
-        elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.3),
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: const BorderSide(color: AppColors.darkHairline),
         ),
       ),
 
@@ -328,10 +354,11 @@ abstract class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkAccent,
           foregroundColor: AppColors.darkAccentText,
-          elevation: 2,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           textStyle: AppTextStyles.button,
         ),
@@ -342,9 +369,9 @@ abstract class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.darkAccent,
           side: const BorderSide(color: AppColors.darkAccent, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           textStyle: AppTextStyles.button,
         ),
@@ -354,43 +381,52 @@ abstract class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.darkAccent,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
           textStyle: AppTextStyles.button,
         ),
       ),
 
-      // Floating Action Button
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      // Floating Action Button — flat in dark mode too.
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.darkAccent,
         foregroundColor: AppColors.darkAccentText,
-        elevation: 4,
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
       ),
 
       // Input Decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.darkSurface,
+        fillColor: AppColors.darkSurfaceMuted,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.darkHairline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.darkHairline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.darkAccent, width: 2),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.darkAccent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         labelStyle: const TextStyle(color: AppColors.darkTextSecondary),
         hintStyle: const TextStyle(color: AppColors.darkTextHint),
@@ -399,14 +435,14 @@ abstract class AppTheme {
 
       // Divider
       dividerTheme: const DividerThemeData(
-        color: AppColors.darkDivider,
+        color: AppColors.darkHairline,
         thickness: 1,
         space: 1,
       ),
 
       // List Tile
       listTileTheme: const ListTileThemeData(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         tileColor: Colors.transparent,
         iconColor: AppColors.darkTextSecondary,
       ),
@@ -417,7 +453,7 @@ abstract class AppTheme {
         selectedItemColor: AppColors.darkAccent,
         unselectedItemColor: AppColors.darkTextSecondary,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0,
       ),
 
       // Tab Bar
@@ -430,21 +466,24 @@ abstract class AppTheme {
 
       // Chip
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.darkSurface,
+        backgroundColor: AppColors.darkSurfaceMuted,
+        side: const BorderSide(color: AppColors.darkHairline),
         labelStyle:
             AppTextStyles.labelSmall.copyWith(color: AppColors.darkText),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
       ),
 
       // Dialog
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.darkCard,
-        elevation: 8,
+        elevation: 1,
+        shadowColor: Colors.black54,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         titleTextStyle:
             AppTextStyles.headingSmall.copyWith(color: AppColors.darkText),
@@ -455,9 +494,11 @@ abstract class AppTheme {
       // Bottom Sheet
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.darkCard,
-        elevation: 8,
+        elevation: 1,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         ),
       ),
 
@@ -468,14 +509,14 @@ abstract class AppTheme {
             AppTextStyles.bodyMedium.copyWith(color: AppColors.darkBackground),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
       ),
 
       // Progress Indicator
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.darkAccent,
-        linearTrackColor: AppColors.darkDivider,
+        linearTrackColor: AppColors.darkHairline,
       ),
 
       // Switch
@@ -490,7 +531,7 @@ abstract class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return AppColors.darkAccent.withOpacity(0.5);
           }
-          return AppColors.darkDivider;
+          return AppColors.darkHairline;
         }),
       ),
 
@@ -503,8 +544,9 @@ abstract class AppTheme {
           return Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(AppColors.darkAccentText),
+        side: const BorderSide(color: AppColors.darkBorder, width: 1.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(6),
         ),
       ),
 
@@ -521,7 +563,7 @@ abstract class AppTheme {
       // Icon
       iconTheme: const IconThemeData(
         color: AppColors.darkText,
-        size: 24,
+        size: 22,
       ),
 
       // Cupertino Override
