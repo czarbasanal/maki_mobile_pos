@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -67,7 +68,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg - 4),
         child: Builder(builder: (context) {
           final muted = theme.colorScheme.onSurfaceVariant;
@@ -150,32 +151,35 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
-            SegmentedButton<AdjustmentType>(
-              segments: const [
-                ButtonSegment(
-                  value: AdjustmentType.add,
-                  icon: Icon(CupertinoIcons.add),
-                  label: Text('Add'),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<AdjustmentType>(
+                  segments: const [
+                    ButtonSegment(
+                      value: AdjustmentType.add,
+                      icon: Icon(CupertinoIcons.add),
+                      label: Text('Add'),
+                    ),
+                    ButtonSegment(
+                      value: AdjustmentType.remove,
+                      icon: Icon(CupertinoIcons.minus),
+                      label: Text('Remove'),
+                    ),
+                    ButtonSegment(
+                      value: AdjustmentType.set,
+                      icon: Icon(CupertinoIcons.pencil),
+                      label: Text('Set To'),
+                    ),
+                  ],
+                  selected: {_adjustmentType},
+                  onSelectionChanged: (selected) {
+                    setState(() {
+                      _adjustmentType = selected.first;
+                      _errorMessage = null;
+                    });
+                  },
                 ),
-                ButtonSegment(
-                  value: AdjustmentType.remove,
-                  icon: Icon(CupertinoIcons.minus),
-                  label: Text('Remove'),
-                ),
-                ButtonSegment(
-                  value: AdjustmentType.set,
-                  icon: Icon(CupertinoIcons.pencil),
-                  label: Text('Set To'),
-                ),
-              ],
-              selected: {_adjustmentType},
-              onSelectionChanged: (selected) {
-                setState(() {
-                  _adjustmentType = selected.first;
-                  _errorMessage = null;
-                });
-              },
-            ),
+              ),
 
             const SizedBox(height: 20),
 
@@ -372,15 +376,13 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
       }
 
       if (result != null && mounted) {
+        final newQty = _newQuantity;
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Stock updated: ${widget.product.name} → $_newQuantity ${widget.product.unit}',
-            ),
-            backgroundColor: AppColors.successDark,
-          ),
-        );
+        if (mounted) {
+          context.showSuccessSnackBar(
+            'Stock updated: ${widget.product.name} → $newQty ${widget.product.unit}',
+          );
+        }
       }
     } catch (e) {
       setState(() {

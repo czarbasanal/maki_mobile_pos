@@ -474,12 +474,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   void _showStockAdjustment(ProductEntity product) {
-    // Will be implemented in stock_adjustment_dialog.dart
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => StockAdjustmentSheet(product: product),
-    );
+    StockAdjustmentDialog.show(context: context, product: product);
   }
 
   void _handleMenuAction(String action) {
@@ -501,24 +496,3 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 }
 
-/// Placeholder for stock adjustment - will be replaced
-class StockAdjustmentSheet extends StatelessWidget {
-  final ProductEntity product;
-
-  const StockAdjustmentSheet({super.key, required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Adjust Stock: ${product.name}'),
-          const SizedBox(height: 16),
-          const Text('Full implementation in stock_adjustment_dialog.dart'),
-        ],
-      ),
-    );
-  }
-}
