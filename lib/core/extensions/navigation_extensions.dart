@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Navigation extension methods for BuildContext.
 extension NavigationExtensions on BuildContext {
@@ -23,28 +24,89 @@ extension NavigationExtensions on BuildContext {
   }
 
   /// Shows a snackbar with the given message.
+  ///
+  /// Default styling matches the app's airy/minimal language: translucent
+  /// fill, solid 1.5pt border in the accent color, and dark accent text.
+  /// Pass [accent] / [textColor] / [icon] to vary the semantic intent
+  /// (success / warning / error). The convenience wrappers below cover
+  /// the common cases; call this directly only for one-off styling.
   void showSnackBar(
     String message, {
-    Color? backgroundColor,
+    Color accent = AppColors.lightAccent,
+    Color? textColor,
+    IconData? icon,
     Duration duration = const Duration(seconds: 3),
   }) {
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-        duration: duration,
-      ),
+    final fg = textColor ?? accent;
+    ScaffoldMessenger.of(this)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          padding: EdgeInsets.zero,
+          behavior: SnackBarBehavior.floating,
+          duration: duration,
+          content: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm + 2,
+            ),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              border: Border.all(color: accent, width: 1.5),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: fg, size: 20),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: fg,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+  }
+
+  /// Shows a success snackbar — green outline + translucent green fill.
+  void showSuccessSnackBar(String message) {
+    showSnackBar(
+      message,
+      accent: AppColors.success,
+      textColor: AppColors.successDark,
+      icon: Icons.check_circle_outline,
     );
   }
 
-  /// Shows a success snackbar.
-  void showSuccessSnackBar(String message) {
-    showSnackBar(message, backgroundColor: Colors.green);
+  /// Shows a warning snackbar — amber outline + translucent amber fill.
+  void showWarningSnackBar(String message) {
+    showSnackBar(
+      message,
+      accent: AppColors.warningDark,
+      textColor: AppColors.warningDark,
+      icon: Icons.warning_amber_rounded,
+    );
   }
 
-  /// Shows an error snackbar.
+  /// Shows an error snackbar — red outline + translucent red fill.
   void showErrorSnackBar(String message) {
-    showSnackBar(message, backgroundColor: Colors.red);
+    showSnackBar(
+      message,
+      accent: AppColors.error,
+      textColor: AppColors.errorDark,
+      icon: Icons.error_outline,
+    );
   }
 
   /// Shows a confirmation dialog.
