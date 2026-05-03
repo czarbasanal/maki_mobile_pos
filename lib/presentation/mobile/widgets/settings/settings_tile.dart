@@ -5,11 +5,12 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 /// Reusable settings row tile.
 ///
 /// Outlined icon + title + optional subtitle. Icons sit naturally on the
-/// row (no tinted background box) so the tile reads as a quiet line of
-/// text. The per-row [iconColor] still carries the categorical hint.
+/// row (no tinted background) and default to the theme's muted variant
+/// so settings groups read as a quiet list. Pass [iconColor] only when
+/// the row carries a status meaning (success / warning / error).
 class SettingsTile extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
+  final Color? iconColor;
   final String title;
   final String? subtitle;
   final Widget? trailing;
@@ -19,7 +20,7 @@ class SettingsTile extends StatelessWidget {
   const SettingsTile({
     super.key,
     required this.icon,
-    required this.iconColor,
+    this.iconColor,
     required this.title,
     this.subtitle,
     this.trailing,
@@ -37,7 +38,7 @@ class SettingsTile extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      leading: Icon(icon, color: iconColor, size: 22),
+      leading: Icon(icon, color: iconColor ?? muted, size: 22),
       title: Text(
         title,
         style: theme.textTheme.bodyLarge?.copyWith(
@@ -69,7 +70,7 @@ class SettingsTile extends StatelessWidget {
 /// Settings tile with a switch toggle.
 class SettingsSwitchTile extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
+  final Color? iconColor;
   final String title;
   final String? subtitle;
   final bool value;
@@ -78,7 +79,7 @@ class SettingsSwitchTile extends StatelessWidget {
   const SettingsSwitchTile({
     super.key,
     required this.icon,
-    required this.iconColor,
+    this.iconColor,
     required this.title,
     this.subtitle,
     required this.value,

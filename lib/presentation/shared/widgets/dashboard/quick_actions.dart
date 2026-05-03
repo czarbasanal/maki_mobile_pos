@@ -33,37 +33,33 @@ class QuickActions extends StatelessWidget {
       child: Row(
         children: [
           _QuickActionButton(
-            icon: Icons.add_shopping_cart,
+            icon: CupertinoIcons.cart_badge_plus,
             label: 'New Sale',
-            color: AppColors.primaryAccent,
+            isPrimary: true,
             onTap: onNewSale,
           ),
           if (onReceiving != null)
             _QuickActionButton(
               icon: CupertinoIcons.square_arrow_down,
               label: 'Receive Stock',
-              color: Colors.green,
               onTap: onReceiving!,
             ),
           if (onInventory != null)
             _QuickActionButton(
               icon: CupertinoIcons.cube_box,
               label: 'Inventory',
-              color: Colors.orange,
               onTap: onInventory!,
             ),
           if (onExpenses != null)
             _QuickActionButton(
               icon: CupertinoIcons.doc_text,
               label: 'Expenses',
-              color: Colors.red[400]!,
               onTap: onExpenses!,
             ),
           if (onReports != null)
             _QuickActionButton(
               icon: CupertinoIcons.chart_bar,
               label: 'Reports',
-              color: Colors.purple,
               onTap: onReports!,
             ),
         ],
@@ -72,39 +68,62 @@ class QuickActions extends StatelessWidget {
   }
 }
 
+/// Outlined pill button for the dashboard's quick-actions row.
+///
+/// All actions share the same neutral treatment so the row reads as a
+/// quiet menu of options. The single primary action gets a filled
+/// treatment in the brand slate to anchor the row.
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
+  final bool isPrimary;
   final VoidCallback onTap;
 
   const _QuickActionButton({
     required this.icon,
     required this.label,
-    required this.color,
     required this.onTap,
+    this.isPrimary = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+
+    final fg = isPrimary
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
+    final bg = isPrimary ? theme.colorScheme.primary : Colors.transparent;
+    final border = isPrimary ? theme.colorScheme.primary : hairline;
+
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: AppSpacing.sm + 4),
       child: Material(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: border),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md + 4,
+              vertical: AppSpacing.md,
+            ),
             child: Row(
               children: [
-                Icon(icon, color: Colors.white),
-                const SizedBox(width: 8),
+                Icon(icon, color: fg, size: 20),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: fg,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

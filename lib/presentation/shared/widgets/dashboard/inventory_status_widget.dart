@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
 
 /// Widget displaying inventory status summary.
+///
+/// Inventory state is colour-coded across all four cards — the
+/// at-a-glance scannability is more valuable here than strict
+/// monochrome discipline elsewhere. Low / Out also receive a status
+/// border highlight when their count is non-zero.
 class InventoryStatusWidget extends ConsumerWidget {
   const InventoryStatusWidget({super.key});
 
@@ -14,6 +20,8 @@ class InventoryStatusWidget extends ConsumerWidget {
 
     return summaryAsync.when(
       data: (summary) {
+        final hasLow = summary.lowStockCount > 0;
+        final hasOut = summary.outOfStockCount > 0;
         return Row(
           children: [
             Expanded(
@@ -21,40 +29,40 @@ class InventoryStatusWidget extends ConsumerWidget {
                 title: 'Total',
                 value: '${summary.totalProducts}',
                 icon: CupertinoIcons.cube_box,
-                iconColor: Colors.blue,
+                iconColor: AppColors.info,
                 compact: true,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: SummaryCard(
                 title: 'In Stock',
                 value: '${summary.inStockCount}',
                 icon: CupertinoIcons.checkmark_circle,
-                iconColor: Colors.green,
+                iconColor: AppColors.success,
                 compact: true,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: SummaryCard(
                 title: 'Low',
                 value: '${summary.lowStockCount}',
                 icon: CupertinoIcons.exclamationmark_triangle,
-                iconColor: Colors.orange,
+                iconColor: AppColors.warning,
                 compact: true,
-                highlighted: summary.lowStockCount > 0,
+                highlighted: hasLow,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: SummaryCard(
                 title: 'Out',
                 value: '${summary.outOfStockCount}',
                 icon: CupertinoIcons.exclamationmark_circle,
-                iconColor: Colors.red,
+                iconColor: AppColors.error,
                 compact: true,
-                highlighted: summary.outOfStockCount > 0,
+                highlighted: hasOut,
               ),
             ),
           ],
@@ -66,10 +74,10 @@ class InventoryStatusWidget extends ConsumerWidget {
       ),
       error: (error, _) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Text(
             'Error: $error',
-            style: TextStyle(color: Colors.red[700]),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ),
       ),

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter/cupertino.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
+
 /// Card displaying a summary metric on the dashboard.
+///
+/// Pass [iconColor] only when the value carries a status meaning
+/// (success/warning/error). For neutral metrics, leave it null and the
+/// card falls back to the theme's muted variant — the value is the
+/// hero, not the icon.
 class SummaryCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
-  final Color iconColor;
+  final Color? iconColor;
   final String? subtitle;
   final bool compact;
   final bool highlighted;
@@ -17,7 +23,7 @@ class SummaryCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.icon,
-    required this.iconColor,
+    this.iconColor,
     this.subtitle,
     this.compact = false,
     this.highlighted = false,
@@ -27,56 +33,46 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     if (compact) {
       return _buildCompactCard(theme);
     }
-
     return _buildFullCard(theme);
   }
 
   Widget _buildFullCard(ThemeData theme) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final accent = iconColor ?? muted;
     return Card(
-      elevation: highlighted ? 4 : 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: highlighted
-            ? BorderSide(color: iconColor, width: 2)
-            : BorderSide.none,
-      ),
+      shape: highlighted
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              side: BorderSide(color: accent, width: 1.5),
+            )
+          : null,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: iconColor, size: 20),
-                  ),
+                  Icon(icon, color: accent, size: 20),
                   const Spacer(),
                   if (onTap != null)
                     Icon(
                       CupertinoIcons.chevron_right,
-                      color: Colors.grey[400],
-                      size: 20,
+                      color: muted,
+                      size: 16,
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm + 4),
               Text(
                 title,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
               const SizedBox(height: 4),
               FittedBox(
@@ -85,7 +81,7 @@ class SummaryCard extends StatelessWidget {
                 child: Text(
                   value,
                   style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -93,9 +89,7 @@ class SummaryCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[500],
-                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
                 ),
               ],
             ],
@@ -106,35 +100,45 @@ class SummaryCard extends StatelessWidget {
   }
 
   Widget _buildCompactCard(ThemeData theme) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final accent = iconColor ?? muted;
     return Card(
-      elevation: highlighted ? 2 : 0,
-      color: highlighted ? iconColor.withOpacity(0.1) : Colors.grey[100],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: highlighted
-            ? BorderSide(color: iconColor.withOpacity(0.5))
-            : BorderSide.none,
-      ),
+      shape: highlighted
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              side: BorderSide(color: accent, width: 1.5),
+            )
+          : RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              side: BorderSide(
+                color: theme.brightness == Brightness.dark
+                    ? AppColors.darkHairline
+                    : AppColors.lightHairline,
+              ),
+            ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.sm + 4,
+          ),
           child: Column(
             children: [
-              Icon(icon, color: iconColor, size: 20),
+              Icon(icon, color: accent, size: 20),
               const SizedBox(height: 4),
               Text(
                 value,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: highlighted ? iconColor : null,
+                  fontWeight: FontWeight.w600,
+                  color: highlighted ? accent : null,
                 ),
               ),
               Text(
                 title,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: muted,
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.center,

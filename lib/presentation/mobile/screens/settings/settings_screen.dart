@@ -42,7 +42,6 @@ class SettingsScreen extends ConsumerWidget {
                 _ProfileHero(user: currentUser),
                 SettingsTile(
                   icon: CupertinoIcons.person,
-                  iconColor: Colors.blue,
                   title: 'Display Name',
                   subtitle: currentUser.displayName,
                   onTap: () =>
@@ -50,7 +49,6 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 SettingsTile(
                   icon: CupertinoIcons.lock,
-                  iconColor: Colors.red,
                   title: 'Change Password',
                   subtitle: 'Update your login password',
                   onTap: () => _showChangePasswordDialog(context, ref),
@@ -64,21 +62,18 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 SettingsTile(
                   icon: CupertinoIcons.person_2,
-                  iconColor: Colors.blue,
                   title: 'User Management',
                   subtitle: 'Add, edit, and manage users',
                   onTap: () => context.push(RoutePaths.users),
                 ),
                 SettingsTile(
                   icon: CupertinoIcons.clock,
-                  iconColor: Colors.purple,
                   title: 'Activity Logs',
                   subtitle: 'View user activity and audit trail',
                   onTap: () => context.push(RoutePaths.userLogs),
                 ),
                 SettingsTile(
                   icon: CupertinoIcons.chevron_left_slash_chevron_right,
-                  iconColor: Colors.orange,
                   title: 'Cost Code Settings',
                   subtitle: 'Configure cost encoding',
                   onTap: () => context.push(RoutePaths.costCodeSettings),
@@ -92,7 +87,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildThemeTile(context, ref),
               SettingsTile(
                 icon: Icons.store_outlined,
-                iconColor: Colors.teal,
                 title: 'Store Information',
                 subtitle: 'Business name and details',
                 onTap: () {
@@ -101,7 +95,6 @@ class SettingsScreen extends ConsumerWidget {
               ),
               SettingsTile(
                 icon: CupertinoIcons.info_circle,
-                iconColor: Colors.grey,
                 title: 'About',
                 subtitle: 'App version ${AppConstants.appVersion}',
                 onTap: () => _showAboutDialog(context),
@@ -317,7 +310,6 @@ class SettingsScreen extends ConsumerWidget {
     };
     return SettingsTile(
       icon: icon,
-      iconColor: Colors.indigo,
       title: 'Theme',
       subtitle: label,
       onTap: () => _showThemePicker(context, ref),
