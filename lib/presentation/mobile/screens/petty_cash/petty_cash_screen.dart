@@ -51,7 +51,7 @@ class PettyCashScreen extends ConsumerWidget {
               data: (records) {
                 if (records.isEmpty) {
                   return const EmptyStateView(
-                    icon: CupertinoIcons.money_dollar_circle,
+                    icon: AppIcons.peso,
                     title: 'No petty cash transactions yet',
                   );
                 }

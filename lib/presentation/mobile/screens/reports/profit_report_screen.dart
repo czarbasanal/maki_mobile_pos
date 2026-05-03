@@ -83,7 +83,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
                   child: _buildSummaryCard(
                     'Total Revenue',
                     '${AppConstants.currencySymbol}0.00',
-                    CupertinoIcons.money_dollar_circle,
+                    AppIcons.peso,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm + 4),

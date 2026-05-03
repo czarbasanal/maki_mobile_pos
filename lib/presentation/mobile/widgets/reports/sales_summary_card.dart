@@ -97,7 +97,7 @@ class SalesSummaryCard extends ConsumerWidget {
                       label: 'Gross Sales',
                       value:
                           '${AppConstants.currencySymbol}${summary.grossAmount.toStringAsFixed(2)}',
-                      icon: CupertinoIcons.money_dollar,
+                      icon: AppIcons.peso,
                       subtitle: 'Before discounts',
                     ),
                   ),
