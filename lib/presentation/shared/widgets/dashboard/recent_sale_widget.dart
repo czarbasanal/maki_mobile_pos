@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -23,52 +24,63 @@ class RecentSalesWidget extends ConsumerWidget {
     return salesAsync.when(
       data: (sales) {
         if (sales.isEmpty) {
-          return _buildEmptyState();
+          return const _EmptyState();
         }
 
         final recentSales = sales.take(limit).toList();
         return Column(
-          children:
-              recentSales.map((sale) => _RecentSaleItem(sale: sale)).toList(),
+          children: [
+            for (var i = 0; i < recentSales.length; i++) ...[
+              _RecentSaleItem(sale: recentSales[i]),
+              if (i < recentSales.length - 1)
+                const SizedBox(height: AppSpacing.sm),
+            ],
+          ],
         );
       },
       loading: () => const Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: EdgeInsets.all(AppSpacing.xl),
           child: CircularProgressIndicator(),
         ),
       ),
       error: (error, _) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Text(
             'Error loading sales: $error',
-            style: TextStyle(color: Colors.red[700]),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildEmptyState() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(CupertinoIcons.doc_text, size: 40, color: Colors.grey[400]),
-          const SizedBox(height: 8),
-          Text(
-            'No recent transactions',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.doc_text, size: 36, color: muted),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'No recent transactions',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: muted,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -84,46 +96,47 @@ class _RecentSaleItem extends StatelessWidget {
     final theme = Theme.of(context);
     final timeFormat = DateFormat('h:mm a');
     final isVoided = sale.status == SaleStatus.voided;
+    final muted = theme.colorScheme.onSurfaceVariant;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: EdgeInsets.zero,
       child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isVoided
-                ? Colors.red.withOpacity(0.1)
-                : _getPaymentColor(sale.paymentMethod).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            isVoided ? CupertinoIcons.xmark_circle : _getPaymentIcon(sale.paymentMethod),
-            color: isVoided ? Colors.red : _getPaymentColor(sale.paymentMethod),
-          ),
+        leading: Icon(
+          isVoided
+              ? CupertinoIcons.xmark_circle
+              : _paymentIcon(sale.paymentMethod),
+          color: isVoided ? AppColors.error : muted,
         ),
         title: Row(
           children: [
-            Text(
-              sale.saleNumber,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                decoration: isVoided ? TextDecoration.lineThrough : null,
+            Flexible(
+              child: Text(
+                sale.saleNumber,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  decoration: isVoided ? TextDecoration.lineThrough : null,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (isVoided) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.red[100],
-                  borderRadius: BorderRadius.circular(4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
                 ),
-                child: Text(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: AppColors.error),
+                ),
+                child: const Text(
                   'VOID',
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red[700],
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.error,
+                    letterSpacing: 0.6,
                   ),
                 ),
               ),
@@ -132,13 +145,13 @@ class _RecentSaleItem extends StatelessWidget {
         ),
         subtitle: Text(
           '${sale.totalItemCount} items • ${timeFormat.format(sale.createdAt)}',
-          style: theme.textTheme.bodySmall,
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
         trailing: Text(
           '${AppConstants.currencySymbol}${sale.grandTotal.toStringAsFixed(2)}',
           style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: isVoided ? Colors.grey : theme.colorScheme.primary,
+            fontWeight: FontWeight.w600,
+            color: isVoided ? muted : null,
             decoration: isVoided ? TextDecoration.lineThrough : null,
           ),
         ),
@@ -146,21 +159,12 @@ class _RecentSaleItem extends StatelessWidget {
     );
   }
 
-  IconData _getPaymentIcon(PaymentMethod method) {
+  IconData _paymentIcon(PaymentMethod method) {
     switch (method) {
       case PaymentMethod.cash:
         return CupertinoIcons.money_dollar_circle;
       case PaymentMethod.gcash:
         return CupertinoIcons.device_phone_portrait;
-    }
-  }
-
-  Color _getPaymentColor(PaymentMethod method) {
-    switch (method) {
-      case PaymentMethod.cash:
-        return Colors.green;
-      case PaymentMethod.gcash:
-        return Colors.blue;
     }
   }
 }

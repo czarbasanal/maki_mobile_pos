@@ -109,9 +109,9 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
+            style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
             ),
             child: const Text('Sign Out'),
@@ -158,7 +158,6 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       isLoading: _isLoggingOut,
       message: 'Signing out...',
       child: Scaffold(
-        backgroundColor: AppColors.lightBackground,
         appBar: AppBar(
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,13 +165,13 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
               Text(
                 _greeting,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
               Text(
                 widget.user.displayName,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
               ),
             ],
@@ -210,70 +209,78 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 : _buildGridView(menuItems),
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => context.go(RoutePaths.pos),
-          icon: const Icon(CupertinoIcons.add),
-          label: const Text('New Sale'),
-          backgroundColor: AppColors.primaryAccent,
-        ),
       ),
     );
   }
 
   Widget _buildDetailedView() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Date display
-        _buildDateHeader(),
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              // Date display
+              _buildDateHeader(),
 
-        const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-        // Quick actions - role-based
-        QuickActions(
-          onNewSale: () => context.go(RoutePaths.pos),
-          onReceiving: _canAccessReceiving
-              ? () => context.go(RoutePaths.receiving)
-              : null,
-          onInventory:
-              _canViewInventory ? () => context.go(RoutePaths.inventory) : null,
-          onExpenses:
-              _canViewExpenses ? () => context.go(RoutePaths.expenses) : null,
-          onReports:
-              _canViewReports ? () => context.go(RoutePaths.reports) : null,
+              // Quick actions - role-based
+              QuickActions(
+                onNewSale: () => context.go(RoutePaths.pos),
+                onReceiving: _canAccessReceiving
+                    ? () => context.go(RoutePaths.receiving)
+                    : null,
+                onInventory: _canViewInventory
+                    ? () => context.go(RoutePaths.inventory)
+                    : null,
+                onExpenses: _canViewExpenses
+                    ? () => context.go(RoutePaths.expenses)
+                    : null,
+                onReports: _canViewReports
+                    ? () => context.go(RoutePaths.reports)
+                    : null,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Sales summary section - all roles can see today's sales
+              _buildSectionHeader('Today\'s Sales'),
+              const SizedBox(height: 12),
+              _buildSalesSummary(_isAdmin),
+
+              const SizedBox(height: 24),
+
+              // Inventory summary - all roles can view inventory now
+              if (_canViewInventory) ...[
+                _buildSectionHeader('Inventory Status'),
+                const SizedBox(height: 12),
+                const InventoryStatusWidget(),
+                const SizedBox(height: 24),
+              ],
+
+              // Recent sales header
+              _buildSectionHeader(
+                'Recent Transactions',
+                trailing: _canViewReports
+                    ? TextButton(
+                        onPressed: () => context.go(RoutePaths.reports),
+                        child: const Text('View All'),
+                      )
+                    : null,
+              ),
+            ]),
+          ),
         ),
-
-        const SizedBox(height: 24),
-
-        // Sales summary section - all roles can see today's sales
-        _buildSectionHeader('Today\'s Sales'),
-        const SizedBox(height: 12),
-        _buildSalesSummary(_isAdmin),
-
-        const SizedBox(height: 24),
-
-        // Inventory summary - all roles can view inventory now
-        if (_canViewInventory) ...[
-          _buildSectionHeader('Inventory Status'),
-          const SizedBox(height: 12),
-          const InventoryStatusWidget(),
-          const SizedBox(height: 24),
-        ],
-
-        // Recent sales - all roles can see
-        _buildSectionHeader(
-          'Recent Transactions',
-          trailing: _canViewReports
-              ? TextButton(
-                  onPressed: () => context.go(RoutePaths.reports),
-                  child: const Text('View All'),
-                )
-              : null,
+        // Recent Transactions fills the rest of the viewport when the page
+        // is shorter than the screen, and grows naturally when it isn't.
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: const RecentSalesWidget(limit: 5),
+          ),
         ),
-        const SizedBox(height: 12),
-        const RecentSalesWidget(limit: 5),
-
-        const SizedBox(height: 80), // Space for FAB
       ],
     );
   }
@@ -320,30 +327,21 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
   Widget _buildDateHeader() {
     final now = DateTime.now();
     final dateFormat = DateFormat('EEEE, MMMM d, y');
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.primaryAccent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            CupertinoIcons.calendar,
-            color: AppColors.primaryDark,
-            size: 20,
+    return Row(
+      children: [
+        Icon(CupertinoIcons.calendar, color: muted, size: 18),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          dateFormat.format(now),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: muted,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(width: 12),
-          Text(
-            dateFormat.format(now),
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -373,61 +371,63 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
         return Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: SummaryCard(
-                    title: 'Total Sales',
-                    value: '${summary.totalSalesCount}',
-                    icon: CupertinoIcons.doc_text,
-                    iconColor: Colors.blue,
-                    subtitle: summary.voidedSalesCount > 0
-                        ? '${summary.voidedSalesCount} voided'
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SummaryCard(
-                    title: 'Revenue',
-                    value:
-                        '${AppConstants.currencySymbol}${_formatNumber(summary.netAmount)}',
-                    icon: CupertinoIcons.money_dollar_circle,
-                    iconColor: Colors.green,
-                    subtitle: summary.totalDiscounts > 0
-                        ? '${AppConstants.currencySymbol}${_formatNumber(summary.totalDiscounts)} discount'
-                        : null,
-                  ),
-                ),
-              ],
-            ),
-            // Profit cards - admin only
-            if (showProfit) ...[
-              const SizedBox(height: 12),
-              Row(
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                     child: SummaryCard(
-                      title: 'Gross Profit',
-                      value:
-                          '${AppConstants.currencySymbol}${_formatNumber(summary.totalProfit)}',
-                      icon: CupertinoIcons.arrow_up_right,
-                      iconColor: Colors.orange,
-                      subtitle:
-                          '${summary.profitMargin.toStringAsFixed(1)}% margin',
+                      title: 'Total Sales',
+                      value: '${summary.totalSalesCount}',
+                      icon: CupertinoIcons.doc_text,
+                      subtitle: summary.voidedSalesCount > 0
+                          ? '${summary.voidedSalesCount} voided'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: SummaryCard(
-                      title: 'Avg Order',
+                      title: 'Revenue',
                       value:
-                          '${AppConstants.currencySymbol}${_formatNumber(summary.averageSaleAmount)}',
-                      icon: CupertinoIcons.cart,
-                      iconColor: Colors.purple,
+                          '${AppConstants.currencySymbol}${_formatNumber(summary.netAmount)}',
+                      icon: CupertinoIcons.money_dollar_circle,
+                      subtitle: summary.totalDiscounts > 0
+                          ? '${AppConstants.currencySymbol}${_formatNumber(summary.totalDiscounts)} discount'
+                          : null,
                     ),
                   ),
                 ],
+              ),
+            ),
+            // Profit cards - admin only
+            if (showProfit) ...[
+              const SizedBox(height: 12),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: SummaryCard(
+                        title: 'Gross Profit',
+                        value:
+                            '${AppConstants.currencySymbol}${_formatNumber(summary.totalProfit)}',
+                        icon: CupertinoIcons.arrow_up_right,
+                        subtitle:
+                            '${summary.profitMargin.toStringAsFixed(1)}% margin',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SummaryCard(
+                        title: 'Avg Order',
+                        value:
+                            '${AppConstants.currencySymbol}${_formatNumber(summary.averageSaleAmount)}',
+                        icon: CupertinoIcons.cart,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -446,72 +446,52 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
   }
 
   Widget _buildEmptySalesSummary() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(CupertinoIcons.cart, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          Text(
-            'No sales today yet',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          children: [
+            Icon(CupertinoIcons.cart, size: 40, color: muted),
+            const SizedBox(height: AppSpacing.sm + 4),
+            Text(
+              'No sales today yet',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Start a new sale to see summary',
-            style: TextStyle(color: Colors.grey[500]),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              'Start a new sale to see summary',
+              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMenuTile(MenuItem item) {
-    return Material(
-      color: Colors.transparent,
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.go(item.path),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryDark.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  item.icon,
-                  size: 32,
-                  color: AppColors.primaryDark,
-                ),
+              Icon(
+                item.icon,
+                size: 32,
+                color: theme.colorScheme.onSurface,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm + 4),
               Text(
                 item.title,
-                style: AppTextStyles.labelLarge.copyWith(
+                style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -520,19 +500,19 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
+                    horizontal: AppSpacing.sm,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.error,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     item.badge!,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -545,13 +525,13 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
   }
 
   Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Text(
         '${AppConstants.appName} v${AppConstants.appVersion}',
-        style: TextStyle(
-          color: Colors.grey[500],
-          fontSize: 12,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
         textAlign: TextAlign.center,
       ),
