@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
 
 /// Screen for bulk stock receiving.
@@ -62,6 +65,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
     final theme = Theme.of(context);
     final receivingState = ref.watch(currentReceivingProvider);
 
+    final isReadOnly = receivingState.isReadOnly;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -71,7 +76,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Receive Stock'),
+            Text(isReadOnly ? 'Receiving Details' : 'Receive Stock'),
             Text(
               receivingState.referenceNumber,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -80,40 +85,81 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             ),
           ],
         ),
-        actions: [
-          // Import CSV button
-          IconButton(
-            icon: const Icon(CupertinoIcons.cloud_upload),
-            tooltip: 'Import CSV',
-            onPressed: () => _showCsvImport(context),
-          ),
-          // Save as draft
-          TextButton.icon(
-            onPressed: receivingState.isEmpty ? null : _saveDraft,
-            icon: const Icon(CupertinoIcons.tray_arrow_down),
-            label: const Text('Save Draft'),
-          ),
-        ],
+        actions: isReadOnly
+            ? const []
+            : [
+                // Import CSV button
+                IconButton(
+                  icon: const Icon(CupertinoIcons.cloud_upload),
+                  tooltip: 'Import CSV',
+                  onPressed: () => _showCsvImport(context),
+                ),
+                // Save as draft
+                TextButton.icon(
+                  onPressed: receivingState.isEmpty ? null : _saveDraft,
+                  icon: const Icon(CupertinoIcons.tray_arrow_down),
+                  label: const Text('Save Draft'),
+                ),
+              ],
       ),
       body: Column(
         children: [
+          if (isReadOnly) _buildReadOnlyBanner(receivingState),
+
           // Supplier selection
           _buildSupplierSection(receivingState),
 
           const Divider(height: 1),
 
-          // Product entry section
-          _buildProductEntrySection(theme),
-
-          const Divider(height: 1),
+          // Product entry section (hidden when read-only)
+          if (!isReadOnly) ...[
+            _buildProductEntrySection(theme),
+            const Divider(height: 1),
+          ],
 
           // Items list
           Expanded(
             child: _buildItemsList(receivingState),
           ),
 
-          // Summary and complete button
+          // Summary + action — Complete in edit mode, Done in read-only.
           _buildBottomSection(theme, receivingState),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyBanner(CurrentReceivingState state) {
+    final completedAt = state.completedAt;
+    final dateText = completedAt != null
+        ? DateFormat('MMM d, y • h:mm a').format(completedAt)
+        : null;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 2,
+      ),
+      color: AppColors.successLight,
+      child: Row(
+        children: [
+          const Icon(
+            CupertinoIcons.checkmark_circle,
+            color: AppColors.successDark,
+            size: 18,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              dateText != null
+                  ? 'Completed on $dateText. Read-only.'
+                  : 'Completed. Read-only.',
+              style: const TextStyle(
+                color: AppColors.successDark,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -149,16 +195,22 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                           child: Text(s.name),
                         )),
                   ],
-                  onChanged: (value) {
-                    final supplier = suppliers.firstWhere(
-                      (s) => s.id == value,
-                      orElse: () => suppliers.first,
-                    );
-                    ref.read(currentReceivingProvider.notifier).setSupplier(
-                          value,
-                          value != null ? supplier.name : null,
-                        );
-                  },
+                  // Disabled when read-only — passing null to onChanged
+                  // greys the field out and blocks selection.
+                  onChanged: state.isReadOnly
+                      ? null
+                      : (value) {
+                          final supplier = suppliers.firstWhere(
+                            (s) => s.id == value,
+                            orElse: () => suppliers.first,
+                          );
+                          ref
+                              .read(currentReceivingProvider.notifier)
+                              .setSupplier(
+                                value,
+                                value != null ? supplier.name : null,
+                              );
+                        },
                 );
               },
               loading: () => const LinearProgressIndicator(),
@@ -379,8 +431,12 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemBuilder: (context, index) {
         final item = state.items[index];
+        // On completed lines, allow opening stock adjustment for the
+        // product (using the variation id when one was created).
+        final pid = item.newProductId ?? item.productId;
         return ReceivingItemRow(
           item: item,
+          readOnly: state.isReadOnly,
           onQuantityChanged: (quantity) {
             ref.read(currentReceivingProvider.notifier).updateItemQuantity(
                   item.id,
@@ -390,9 +446,22 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
           onRemove: () {
             ref.read(currentReceivingProvider.notifier).removeItem(item.id);
           },
+          onAdjustStock: state.isReadOnly && pid != null
+              ? () => _openStockAdjustment(pid)
+              : null,
         );
       },
     );
+  }
+
+  Future<void> _openStockAdjustment(String productId) async {
+    final product = await ref.read(productByIdProvider(productId).future);
+    if (!mounted) return;
+    if (product == null) {
+      context.showErrorSnackBar('Product no longer exists');
+      return;
+    }
+    await StockAdjustmentDialog.show(context: context, product: product);
   }
 
   Widget _buildBottomSection(ThemeData theme, CurrentReceivingState state) {
@@ -449,8 +518,9 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
 
             const SizedBox(height: 16),
 
-            // Error message
-            if (state.errorMessage != null)
+            // Error message — only relevant during edit; suppress when
+            // viewing a completed receiving.
+            if (state.errorMessage != null && !state.isReadOnly)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
@@ -459,28 +529,28 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                 ),
               ),
 
-            // Complete button
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: state.isEmpty || state.isProcessing
-                    ? null
-                    : _completeReceiving,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+            // Bottom action — Complete in edit mode; nothing in read-only
+            // (the back arrow handles navigation, and there's no edit to
+            // commit, so a button would just be visual noise).
+            if (!state.isReadOnly)
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: state.isEmpty || state.isProcessing
+                      ? null
+                      : _completeReceiving,
+                  child: state.isProcessing
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Complete Receiving'),
                 ),
-                child: state.isProcessing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Complete Receiving'),
               ),
-            ),
           ],
         ),
       ),

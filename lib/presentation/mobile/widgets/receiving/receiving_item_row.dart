@@ -10,16 +10,30 @@ class ReceivingItemRow extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onRemove;
 
+  /// When true, hides the quantity steppers, the inline quantity input,
+  /// the swipe-to-delete affordance, and the remove button. Used when
+  /// viewing a completed receiving — its stock side effects have already
+  /// been applied so the line items are immutable.
+  final bool readOnly;
+
+  /// Optional corrective path for completed receivings. When provided
+  /// (and [readOnly] is true), a trailing pencil button opens the stock
+  /// adjustment dialog scoped to this line's product.
+  final VoidCallback? onAdjustStock;
+
   const ReceivingItemRow({
     super.key,
     required this.item,
     required this.onQuantityChanged,
     required this.onRemove,
+    this.readOnly = false,
+    this.onAdjustStock,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final card = _buildCard(context);
+    if (readOnly) return card;
 
     return Dismissible(
       key: Key(item.id),
@@ -31,7 +45,13 @@ class ReceivingItemRow extends StatelessWidget {
         child: const Icon(CupertinoIcons.trash, color: Colors.white),
       ),
       onDismissed: (_) => onRemove(),
-      child: Card(
+      child: card,
+    );
+  }
+
+  Widget _buildCard(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -94,44 +114,59 @@ class ReceivingItemRow extends StatelessWidget {
                 ),
               ),
 
-              // Quantity controls
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.minus_circle),
-                    onPressed: item.quantity > 1
-                        ? () => onQuantityChanged(item.quantity - 1)
-                        : null,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  SizedBox(
-                    width: 50,
-                    child: TextField(
-                      controller:
-                          TextEditingController(text: '${item.quantity}'),
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
-                        isDense: true,
-                      ),
-                      onSubmitted: (value) {
-                        final qty = int.tryParse(value);
-                        if (qty != null && qty > 0) {
-                          onQuantityChanged(qty);
-                        }
-                      },
+              // Quantity controls — steppers + inline input in edit mode,
+              // or the static received quantity when read-only.
+              if (readOnly)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    '×${item.quantity}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.plus_circle),
-                    onPressed: () => onQuantityChanged(item.quantity + 1),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
+                )
+              else
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.minus_circle),
+                      onPressed: item.quantity > 1
+                          ? () => onQuantityChanged(item.quantity - 1)
+                          : null,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    SizedBox(
+                      width: 50,
+                      child: TextField(
+                        controller:
+                            TextEditingController(text: '${item.quantity}'),
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+                          isDense: true,
+                        ),
+                        onSubmitted: (value) {
+                          final qty = int.tryParse(value);
+                          if (qty != null && qty > 0) {
+                            onQuantityChanged(qty);
+                          }
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.plus_circle),
+                      onPressed: () => onQuantityChanged(item.quantity + 1),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
 
               // Total
               SizedBox(
@@ -156,16 +191,24 @@ class ReceivingItemRow extends StatelessWidget {
                 ),
               ),
 
-              // Remove button
-              IconButton(
-                icon: Icon(CupertinoIcons.xmark, color: Colors.grey[400]),
-                onPressed: onRemove,
-                visualDensity: VisualDensity.compact,
-              ),
+              // Trailing action — Remove (X) in edit mode; Adjust stock
+              // (pencil) on a completed line when a productId is available.
+              if (!readOnly)
+                IconButton(
+                  icon: Icon(CupertinoIcons.xmark, color: Colors.grey[400]),
+                  onPressed: onRemove,
+                  visualDensity: VisualDensity.compact,
+                )
+              else if (onAdjustStock != null)
+                IconButton(
+                  icon: const Icon(CupertinoIcons.pencil),
+                  tooltip: 'Adjust stock',
+                  onPressed: onAdjustStock,
+                  visualDensity: VisualDensity.compact,
+                ),
             ],
           ),
         ),
-      ),
     );
   }
 }
