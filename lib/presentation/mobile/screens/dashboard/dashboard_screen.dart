@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -69,7 +68,6 @@ class _DashboardContent extends ConsumerStatefulWidget {
 
 class _DashboardContentState extends ConsumerState<_DashboardContent> {
   bool _isLoggingOut = false;
-  bool _showDetailedView = true; // Toggle between detailed and grid view
 
   String get _greeting {
     final hour = DateTime.now().hour;
@@ -152,8 +150,6 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
   @override
   Widget build(BuildContext context) {
-    final menuItems = RouteGuards.getMenuItems(widget.user.role);
-
     return LoadingOverlay(
       isLoading: _isLoggingOut,
       message: 'Signing out...',
@@ -179,16 +175,6 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
           centerTitle: false,
           automaticallyImplyLeading: false,
           actions: [
-            // Toggle view button
-            IconButton(
-              icon: Icon(
-                _showDetailedView ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square_stack,
-              ),
-              onPressed: () {
-                setState(() => _showDetailedView = !_showDetailedView);
-              },
-              tooltip: _showDetailedView ? 'Show Menu Grid' : 'Show Details',
-            ),
             IconButton(
               icon: const Icon(Icons.settings_outlined),
               onPressed: () => context.go(RoutePaths.settings),
@@ -204,9 +190,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: _handleRefresh,
-            child: _showDetailedView
-                ? _buildDetailedView()
-                : _buildGridView(menuItems),
+            child: _buildDetailedView(),
           ),
         ),
       ),
@@ -285,45 +269,6 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     );
   }
 
-  Widget _buildGridView(List<MenuItem> menuItems) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth > 600 ? 3 : 2;
-
-    return Column(
-      children: [
-        // User Info Section
-        Container(
-          margin: const EdgeInsets.all(16),
-          child: UserInfoCard(user: widget.user),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Menu Grid
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                return _buildMenuTile(menuItems[index]);
-              },
-            ),
-          ),
-        ),
-
-        // Footer
-        _buildFooter(),
-      ],
-    );
-  }
-
   Widget _buildDateHeader() {
     final now = DateTime.now();
     final dateFormat = DateFormat('EEEE, MMMM d, y');
@@ -391,7 +336,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                       title: 'Revenue',
                       value:
                           '${AppConstants.currencySymbol}${_formatNumber(summary.netAmount)}',
-                      icon: CupertinoIcons.money_dollar_circle,
+                      icon: AppIcons.peso,
                       subtitle: summary.totalDiscounts > 0
                           ? '${AppConstants.currencySymbol}${_formatNumber(summary.totalDiscounts)} discount'
                           : null,
@@ -468,72 +413,6 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMenuTile(MenuItem item) {
-    final theme = Theme.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.go(item.path),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                item.icon,
-                size: 32,
-                color: theme.colorScheme.onSurface,
-              ),
-              const SizedBox(height: AppSpacing.sm + 4),
-              Text(
-                item.title,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (item.badge != null) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Text(
-                    item.badge!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Text(
-        '${AppConstants.appName} v${AppConstants.appVersion}',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-        textAlign: TextAlign.center,
       ),
     );
   }
