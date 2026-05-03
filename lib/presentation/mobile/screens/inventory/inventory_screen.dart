@@ -131,10 +131,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _handleMenuAction('add'),
-        icon: const Icon(CupertinoIcons.add),
-        label: const Text('Add Product'),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => _handleMenuAction('add'),
+            icon: const Icon(CupertinoIcons.add),
+            label: const Text('Add Product'),
+          ),
+        ),
       ),
     );
   }

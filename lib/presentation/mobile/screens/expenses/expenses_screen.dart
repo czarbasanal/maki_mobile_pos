@@ -118,11 +118,18 @@ class ExpensesScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(expensesProvider),
         ),
       ),
-      // FAB for adding expense - available to all roles with addExpense permission
-      floatingActionButton: canAdd
-          ? FloatingActionButton(
-              onPressed: () => context.push(RoutePaths.expenseAdd),
-              child: const Icon(CupertinoIcons.add),
+      // Primary action — available to all roles with addExpense permission.
+      bottomNavigationBar: canAdd
+          ? SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => context.push(RoutePaths.expenseAdd),
+                  icon: const Icon(CupertinoIcons.add),
+                  label: const Text('Add Expense'),
+                ),
+              ),
             )
           : null,
     );

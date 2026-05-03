@@ -81,12 +81,18 @@ class ProductDetailScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('Error: $error')),
       ),
-      floatingActionButton: productAsync.valueOrNull != null
-          ? FloatingActionButton.extended(
-              onPressed: () =>
-                  _showStockAdjustment(context, productAsync.value!),
-              icon: const Icon(CupertinoIcons.pencil),
-              label: const Text('Adjust Stock'),
+      bottomNavigationBar: productAsync.valueOrNull != null
+          ? SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () =>
+                      _showStockAdjustment(context, productAsync.value!),
+                  icon: const Icon(CupertinoIcons.pencil),
+                  label: const Text('Adjust Stock'),
+                ),
+              ),
             )
           : null,
     );
