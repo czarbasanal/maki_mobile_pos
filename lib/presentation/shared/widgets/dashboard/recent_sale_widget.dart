@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/string_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -144,7 +145,7 @@ class _RecentSaleItem extends StatelessWidget {
           ],
         ),
         subtitle: Text(
-          '${sale.totalItemCount} items • ${timeFormat.format(sale.createdAt)}',
+          _subtitle(sale, timeFormat),
           style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
         trailing: Text(
@@ -168,5 +169,14 @@ class _RecentSaleItem extends StatelessWidget {
       case PaymentMethod.gcash:
         return CupertinoIcons.device_phone_portrait;
     }
+  }
+
+  /// Subtitle reads "Alice • 3 items • 2:35 PM". The cashier first name
+  /// leads so the operator sees who handled the transaction at a glance;
+  /// it's omitted entirely when the snapshot has no name.
+  String _subtitle(SaleEntity sale, DateFormat timeFormat) {
+    final cashierFirst = sale.cashierName.firstName;
+    final tail = '${sale.totalItemCount} items • ${timeFormat.format(sale.createdAt)}';
+    return cashierFirst.isEmpty ? tail : '$cashierFirst • $tail';
   }
 }
