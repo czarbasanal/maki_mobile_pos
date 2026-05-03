@@ -79,6 +79,18 @@ abstract class AppTheme {
         ),
       ),
 
+      // Filled Button — same shape as Elevated; Material's default is a
+      // full pill, which clashes with the rest of the button language.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          textStyle: AppTextStyles.button,
+        ),
+      ),
+
       // Outlined Button
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
@@ -356,6 +368,18 @@ abstract class AppTheme {
           foregroundColor: AppColors.darkAccentText,
           elevation: 0,
           shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          textStyle: AppTextStyles.button,
+        ),
+      ),
+
+      // Filled Button — same shape as Elevated; Material's default is a
+      // full pill, which clashes with the rest of the button language.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
