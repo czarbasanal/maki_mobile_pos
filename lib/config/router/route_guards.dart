@@ -30,6 +30,8 @@ abstract class RouteGuards {
     // Receiving
     '/receiving': Permission.accessReceiving,
     '/receiving/bulk': Permission.bulkReceive,
+    '/receiving/history': Permission.viewReceivingHistory,
+    '/receiving/drafts': Permission.accessReceiving,
     // Suppliers
     '/suppliers': Permission.viewSuppliers,
     '/suppliers/add': Permission.addSupplier,

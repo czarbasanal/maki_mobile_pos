@@ -35,12 +35,18 @@ final recentReceivingsProvider = StreamProvider<List<ReceivingEntity>>((ref) {
 });
 
 /// Provides draft receivings.
-final draftReceivingsProvider = StreamProvider<List<ReceivingEntity>>((ref) {
-  return authGatedStream(ref, (_) {
-    return ref
-        .watch(receivingRepositoryProvider)
-        .watchReceivings(status: ReceivingStatus.draft);
-  });
+///
+/// Derived from [recentReceivingsProvider] rather than its own Firestore
+/// query so the (status == draft, orderBy createdAt) combination doesn't
+/// trigger Firestore's composite-index requirement. Limited to whatever
+/// `recentReceivingsProvider` returns (50), which is fine for a drafts
+/// surface — drafts older than that are extremely unlikely.
+final draftReceivingsProvider =
+    Provider<AsyncValue<List<ReceivingEntity>>>((ref) {
+  final all = ref.watch(recentReceivingsProvider);
+  return all.whenData(
+    (list) => list.where((r) => r.status == ReceivingStatus.draft).toList(),
+  );
 });
 
 /// Provides a single receiving by ID.
@@ -55,6 +61,26 @@ final receivingCountsProvider =
     FutureProvider<Map<ReceivingStatus, int>>((ref) async {
   final repository = ref.watch(receivingRepositoryProvider);
   return repository.getReceivingCounts();
+});
+
+/// Month-to-date count of completed receivings.
+///
+/// Derived client-side from [recentReceivingsProvider] so we don't need a
+/// (status == completed, completedAt >= start-of-month) composite index.
+/// The 50-record cap on the source stream is fine here — month-to-date
+/// counts above that are not realistic for this surface.
+final monthToDateCompletedReceivingsProvider =
+    Provider<AsyncValue<int>>((ref) {
+  final all = ref.watch(recentReceivingsProvider);
+  return all.whenData((list) {
+    final now = DateTime.now();
+    final monthStart = DateTime(now.year, now.month);
+    return list.where((r) {
+      if (r.status != ReceivingStatus.completed) return false;
+      final ts = r.completedAt ?? r.createdAt;
+      return !ts.isBefore(monthStart);
+    }).length;
+  });
 });
 
 // ==================== CURRENT RECEIVING STATE ====================

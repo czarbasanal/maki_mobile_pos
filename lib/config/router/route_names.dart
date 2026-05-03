@@ -56,6 +56,12 @@ abstract class RouteNames {
   /// Bulk receiving detail (resume a draft) — `/receiving/bulk/:id`.
   static const String bulkReceivingDetail = 'bulkReceivingDetail';
 
+  /// Full receiving history — `/receiving/history`.
+  static const String receivingHistory = 'receivingHistory';
+
+  /// All draft receivings — `/receiving/drafts`.
+  static const String receivingDrafts = 'receivingDrafts';
+
   // ==================== SUPPLIER ROUTES ====================
 
   /// Suppliers list route
@@ -160,6 +166,8 @@ abstract class RoutePaths {
 
   static const String receiving = '/receiving';
   static const String bulkReceiving = '/receiving/bulk';
+  static const String receivingHistory = '/receiving/history';
+  static const String receivingDrafts = '/receiving/drafts';
 
   // ==================== SUPPLIER PATHS ====================
 

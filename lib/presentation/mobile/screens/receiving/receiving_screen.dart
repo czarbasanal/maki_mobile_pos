@@ -26,23 +26,11 @@ class ReceivingScreen extends ConsumerWidget {
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Receiving'),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.clock),
-            tooltip: 'History',
-            onPressed: () {
-              // Navigate to full history
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
           // Summary cards
-          _buildSummaryCards(ref),
-
-          // Draft receivings
-          _buildDraftSection(ref),
+          _buildSummaryCards(context, ref),
 
           // Recent receivings
           Expanded(
@@ -58,16 +46,23 @@ class ReceivingScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _startNewReceiving(context, ref),
-        icon: const Icon(CupertinoIcons.add),
-        label: const Text('New Receiving'),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => _startNewReceiving(context, ref),
+            icon: const Icon(CupertinoIcons.add),
+            label: const Text('New Receiving'),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildSummaryCards(WidgetRef ref) {
+  Widget _buildSummaryCards(BuildContext context, WidgetRef ref) {
     final countsAsync = ref.watch(receivingCountsProvider);
+    final mtdCount = ref.watch(monthToDateCompletedReceivingsProvider);
 
     return countsAsync.when(
       data: (counts) => Container(
@@ -80,6 +75,7 @@ class ReceivingScreen extends ConsumerWidget {
                 '${counts[ReceivingStatus.draft] ?? 0}',
                 CupertinoIcons.square_pencil,
                 Colors.orange,
+                onTap: () => context.push(RoutePaths.receivingDrafts),
               ),
             ),
             const SizedBox(width: 12),
@@ -89,13 +85,14 @@ class ReceivingScreen extends ConsumerWidget {
                 '${counts[ReceivingStatus.completed] ?? 0}',
                 CupertinoIcons.checkmark_circle,
                 Colors.green,
+                onTap: () => context.push(RoutePaths.receivingHistory),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildCountCard(
                 'This Month',
-                '${(counts[ReceivingStatus.completed] ?? 0) + (counts[ReceivingStatus.draft] ?? 0)}',
+                '${mtdCount.valueOrNull ?? 0}',
                 CupertinoIcons.calendar,
                 Colors.blue,
               ),
@@ -112,9 +109,10 @@ class ReceivingScreen extends ConsumerWidget {
     String label,
     String value,
     IconData icon,
-    Color color,
-  ) {
-    return Container(
+    Color color, {
+    VoidCallback? onTap,
+  }) {
+    final card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
@@ -143,69 +141,12 @@ class ReceivingScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
 
-  Widget _buildDraftSection(WidgetRef ref) {
-    final draftsAsync = ref.watch(draftReceivingsProvider);
-
-    return draftsAsync.when(
-      data: (drafts) {
-        if (drafts.isEmpty) return const SizedBox.shrink();
-
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.orange[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.orange[200]!),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(CupertinoIcons.square_pencil, color: Colors.orange[700]),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${drafts.length} Draft${drafts.length > 1 ? 's' : ''} Pending',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.orange[700],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ...drafts.take(3).map((draft) => _buildDraftItem(ref, draft)),
-            ],
-          ),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildDraftItem(WidgetRef ref, ReceivingEntity draft) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '${draft.referenceNumber} - ${draft.uniqueProductCount} items',
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              // Resume draft
-            },
-            child: const Text('Resume'),
-          ),
-        ],
-      ),
+    if (onTap == null) return card;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: card,
     );
   }
 
@@ -214,10 +155,7 @@ class ReceivingScreen extends ConsumerWidget {
     WidgetRef ref,
     List<ReceivingEntity> receivings,
   ) {
-    final completedReceivings =
-        receivings.where((r) => r.status == ReceivingStatus.completed).toList();
-
-    if (completedReceivings.isEmpty) {
+    if (receivings.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -245,10 +183,10 @@ class ReceivingScreen extends ConsumerWidget {
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
     return ListView.builder(
-      itemCount: completedReceivings.length,
+      itemCount: receivings.length,
       padding: const EdgeInsets.only(bottom: 80),
       itemBuilder: (context, index) {
-        final receiving = completedReceivings[index];
+        final receiving = receivings[index];
         return _buildReceivingItem(context, receiving, dateFormat);
       },
     );
@@ -260,6 +198,7 @@ class ReceivingScreen extends ConsumerWidget {
     DateFormat dateFormat,
   ) {
     final theme = Theme.of(context);
+    final (bg, fg, icon) = _statusVisuals(receiving.status);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -267,14 +206,15 @@ class ReceivingScreen extends ConsumerWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green[50],
+            color: bg,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(CupertinoIcons.square_arrow_down, color: Colors.green[700]),
+          child: Icon(icon, color: fg),
         ),
         title: Text(
           receiving.referenceNumber,
           style: const TextStyle(fontWeight: FontWeight.w600),
+          overflow: TextOverflow.ellipsis,
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,6 +234,23 @@ class ReceivingScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                receiving.status.displayName,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
             Text(
               '${receiving.totalQuantity} items',
               style: const TextStyle(fontWeight: FontWeight.w600),
@@ -307,11 +264,23 @@ class ReceivingScreen extends ConsumerWidget {
             ),
           ],
         ),
-        onTap: () {
-          // Navigate to receiving detail
-        },
+        onTap: () =>
+            context.push('${RoutePaths.bulkReceiving}/${receiving.id}'),
       ),
     );
+  }
+
+  (Color, Color, IconData) _statusVisuals(ReceivingStatus status) {
+    switch (status) {
+      case ReceivingStatus.completed:
+        return (Colors.green[50]!, Colors.green[700]!,
+            CupertinoIcons.checkmark_circle);
+      case ReceivingStatus.draft:
+        return (Colors.orange[50]!, Colors.orange[700]!,
+            CupertinoIcons.square_pencil);
+      case ReceivingStatus.cancelled:
+        return (Colors.grey[200]!, Colors.grey[700]!, CupertinoIcons.xmark);
+    }
   }
 
   Future<void> _startNewReceiving(BuildContext context, WidgetRef ref) async {
