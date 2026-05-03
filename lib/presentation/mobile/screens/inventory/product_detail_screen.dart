@@ -338,7 +338,7 @@ class ProductDetailScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _CardHeader(
-              icon: CupertinoIcons.money_dollar,
+              icon: AppIcons.peso,
               title: 'Pricing',
             ),
             const SizedBox(height: AppSpacing.md),

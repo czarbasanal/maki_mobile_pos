@@ -116,7 +116,6 @@ class _PettyCashFormScreenState extends ConsumerState<PettyCashFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Amount *',
                   prefixText: '₱ ',
-                  prefixIcon: Icon(CupertinoIcons.money_dollar),
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
