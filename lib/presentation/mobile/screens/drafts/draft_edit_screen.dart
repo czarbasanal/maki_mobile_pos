@@ -99,58 +99,54 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         body: Column(
           children: [
             // Draft info header
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.clock,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Created ${dateFormat.format(draft.createdAt)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (draft.updatedAt != null) ...[
-                    const SizedBox(height: 4),
+            Builder(builder: (context) {
+              final muted = theme.colorScheme.onSurfaceVariant;
+              final isDark = theme.brightness == Brightness.dark;
+              final hairline = isDark
+                  ? AppColors.darkHairline
+                  : AppColors.lightHairline;
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: hairline)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(
                       children: [
-                        Icon(
-                          CupertinoIcons.pencil,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 8),
+                        Icon(CupertinoIcons.clock, size: 14, color: muted),
+                        const SizedBox(width: AppSpacing.sm),
                         Text(
-                          'Updated ${dateFormat.format(draft.updatedAt!)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                          'Created ${dateFormat.format(draft.createdAt)}',
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: muted),
                         ),
                       ],
                     ),
+                    if (draft.updatedAt != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(CupertinoIcons.pencil, size: 14, color: muted),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            'Updated ${dateFormat.format(draft.updatedAt!)}',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: muted),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (draft.notes != null && draft.notes!.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(draft.notes!, style: theme.textTheme.bodyMedium),
+                    ],
                   ],
-                  if (draft.notes != null && draft.notes!.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      draft.notes!,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ],
-              ),
-            ),
+                ),
+              );
+            }),
 
             // Items list
             Expanded(
@@ -174,18 +170,17 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   }
 
   Widget _buildEmptyItems() {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(CupertinoIcons.cart, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
+          Icon(CupertinoIcons.cart, size: 56, color: muted),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'No items in this draft',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: muted),
           ),
         ],
       ),
@@ -194,35 +189,39 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
 
   Widget _buildDraftItem(SaleItemEntity item) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.sm + 4),
         child: Row(
           children: [
-            // Quantity badge
+            // Quantity badge — outlined, no fill
             Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primaryAccent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: theme.colorScheme.primary,
+                  width: 1.2,
+                ),
               ),
               child: Center(
                 child: Text(
                   '${item.quantity}x',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryAccent,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(width: 12),
-
-            // Product info
+            const SizedBox(width: AppSpacing.sm + 4),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,25 +237,19 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'SKU: ${item.sku}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                   Text(
                     '${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} each',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ],
               ),
             ),
-
-            // Line total
             Text(
               '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
               style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -267,23 +260,19 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
 
   Widget _buildSummarySection(DraftEntity draft) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        border: Border(top: BorderSide(color: hairline)),
       ),
       child: SafeArea(
         child: Column(
           children: [
-            // Summary rows
             _buildSummaryRow(
               'Subtotal',
               '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
@@ -293,39 +282,31 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               _buildSummaryRow(
                 'Discount',
                 '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
-                valueColor: Colors.green,
+                valueColor: AppColors.successDark,
               ),
             ],
-            const Divider(height: 16),
+            const Divider(height: AppSpacing.md),
             _buildSummaryRow(
               'Total (${draft.totalItemCount} items)',
               '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
               isBold: true,
               valueStyle: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryAccent,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Action buttons
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                // Edit in POS button
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed:
                         draft.items.isEmpty ? null : () => _editInPos(draft),
                     icon: const Icon(CupertinoIcons.pencil),
                     label: const Text('Edit in POS'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                // Checkout button
+                const SizedBox(width: AppSpacing.sm + 4),
                 Expanded(
                   flex: 2,
                   child: FilledButton.icon(
@@ -334,9 +315,6 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                         : () => _proceedToCheckout(draft),
                     icon: const Icon(CupertinoIcons.cart_badge_plus),
                     label: const Text('Checkout'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
                   ),
                 ),
               ],
@@ -354,21 +332,22 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     Color? valueColor,
     TextStyle? valueStyle,
   }) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: Colors.grey[700],
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         Text(
           value,
           style: valueStyle ??
-              TextStyle(
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+              theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: isBold ? FontWeight.w600 : FontWeight.w500,
                 color: valueColor,
               ),
         ),
@@ -400,7 +379,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading draft: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -435,7 +414,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading draft: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -463,7 +442,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
             child: const Text('Delete'),
           ),
@@ -490,7 +469,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Draft deleted'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.successDark,
           ),
         );
         context.go(RoutePaths.drafts);
@@ -500,7 +479,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error deleting draft: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }

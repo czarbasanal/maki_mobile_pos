@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:intl/intl.dart';
 
@@ -24,37 +25,32 @@ class DraftListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     final dateFormat = DateFormat('MMM d, h:mm a');
     final updatedAt = draft.updatedAt ?? draft.createdAt;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Name and status
+              // Header: outlined doc icon + name/date + total
               Row(
                 children: [
-                  // Draft icon
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      CupertinoIcons.doc_text,
-                      color: theme.colorScheme.onPrimaryContainer,
-                      size: 20,
-                    ),
+                  Icon(
+                    CupertinoIcons.doc_text,
+                    color: muted,
+                    size: 22,
                   ),
-                  const SizedBox(width: 12),
-                  // Name and date
+                  const SizedBox(width: AppSpacing.sm + 4),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,20 +67,19 @@ class DraftListTile extends StatelessWidget {
                         Text(
                           dateFormat.format(updatedAt),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: muted,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Total amount
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
                         '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: theme.colorScheme.primary,
                         ),
                       ),
@@ -93,55 +88,44 @@ class DraftListTile extends StatelessWidget {
                             ? '1 item'
                             : '${draft.totalItemCount} items',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                          color: muted,
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-
-              const SizedBox(height: 12),
-
-              // Items preview
+              const SizedBox(height: AppSpacing.sm + 4),
               _buildItemsPreview(context),
-
-              const SizedBox(height: 12),
-
-              // Action buttons
+              const SizedBox(height: AppSpacing.sm + 4),
               Row(
                 children: [
-                  // Created by
                   Expanded(
                     child: Text(
                       'By ${draft.createdByName}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[500],
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // Delete button — hidden when current user lacks permission.
                   if (onDeleteTap != null) ...[
                     IconButton(
                       icon: const Icon(CupertinoIcons.trash),
                       onPressed: onDeleteTap,
                       tooltip: 'Delete draft',
                       visualDensity: VisualDensity.compact,
-                      color: Colors.grey[600],
+                      color: muted,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                   ],
-                  // Load button
                   FilledButton.icon(
                     onPressed: onLoadTap,
                     icon: const Icon(CupertinoIcons.cart_badge_plus, size: 18),
                     label: const Text('Load'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
                       ),
                     ),
                   ),
@@ -156,14 +140,22 @@ class DraftListTile extends StatelessWidget {
 
   Widget _buildItemsPreview(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final mutedFill =
+        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
+
     final previewItems = draft.items.take(3).toList();
     final remainingCount = draft.items.length - previewItems.length;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
+        color: mutedFill,
+        border: Border.all(color: hairline),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,11 +174,9 @@ class DraftListTile extends StatelessWidget {
                     ),
                     Text(
                       '×${item.quantity}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.sm + 4),
                     Text(
                       '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -202,7 +192,7 @@ class DraftListTile extends StatelessWidget {
               child: Text(
                 '+$remainingCount more item${remainingCount > 1 ? 's' : ''}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[500],
+                  color: muted,
                   fontStyle: FontStyle.italic,
                 ),
               ),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_detail_sheet.dart';
@@ -185,61 +186,70 @@ class DraftsListScreen extends ConsumerWidget {
   ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Draft?'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Are you sure you want to delete "${draft.name}"?'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
+      builder: (context) {
+        final theme = Theme.of(context);
+        final muted = theme.colorScheme.onSurfaceVariant;
+        final isDark = theme.brightness == Brightness.dark;
+        final hairline =
+            isDark ? AppColors.darkHairline : AppColors.lightHairline;
+        final mutedFill =
+            isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
+        return AlertDialog(
+          title: const Text('Delete Draft?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Are you sure you want to delete "${draft.name}"?'),
+              const SizedBox(height: AppSpacing.sm + 4),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm + 4),
+                decoration: BoxDecoration(
+                  color: mutedFill,
+                  border: Border.all(color: hairline),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${draft.totalItemCount} item(s)',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      'Total: ${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${draft.totalItemCount} item(s)',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    'Total: ${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
+              const SizedBox(height: AppSpacing.sm + 4),
+              Text(
+                'This action cannot be undone.',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: AppColors.error,
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 12),
-            Text(
-              'This action cannot be undone.',
-              style: TextStyle(
-                color: Colors.red[700],
-                fontSize: 12,
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _performDeleteDraft(context, ref, draft);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
               ),
+              child: const Text('Delete'),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _performDeleteDraft(context, ref, draft);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -260,7 +270,8 @@ class DraftsListScreen extends ConsumerWidget {
           content: Text(
             success ? 'Draft deleted' : 'Failed to delete draft',
           ),
-          backgroundColor: success ? Colors.green : Colors.red,
+          backgroundColor:
+              success ? AppColors.successDark : AppColors.error,
         ),
       );
     }

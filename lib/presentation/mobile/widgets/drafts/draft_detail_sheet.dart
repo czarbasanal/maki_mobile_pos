@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:intl/intl.dart';
 
@@ -21,6 +22,10 @@ class DraftDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final dateFormat = DateFormat('EEEE, MMMM d, y • h:mm a');
 
     return DraggableScrollableSheet(
@@ -32,56 +37,49 @@ class DraftDetailSheet extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: theme.scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
           ),
           child: Column(
             children: [
-              // Handle
+              // Drag handle
               Container(
-                margin: const EdgeInsets.only(top: 12),
+                margin: const EdgeInsets.only(top: AppSpacing.sm + 4),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                  color: hairline,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
 
-              // Header
+              // Header — outlined doc icon, title, date, close
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppSpacing.lg - 4),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        CupertinoIcons.doc_text,
-                        color: theme.colorScheme.onPrimaryContainer,
-                        size: 28,
-                      ),
+                    Icon(
+                      CupertinoIcons.doc_text,
+                      color: muted,
+                      size: 28,
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             draft.name,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             dateFormat
                                 .format(draft.updatedAt ?? draft.createdAt),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: muted),
                           ),
                         ],
                       ),
@@ -100,74 +98,58 @@ class DraftDetailSheet extends StatelessWidget {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(AppSpacing.lg - 4),
                   children: [
-                    // Discount type indicator
-                    if (draft.hasDiscount) _buildDiscountTypeIndicator(theme),
-
-                    // Items list
-                    _buildSectionHeader(theme, 'Items (${draft.items.length})'),
-                    const SizedBox(height: 8),
+                    if (draft.hasDiscount)
+                      _buildDiscountTypeIndicator(theme, hairline),
+                    _SectionHeader('Items (${draft.items.length})'),
+                    const SizedBox(height: AppSpacing.sm),
                     ...draft.items.map((item) => _buildItemRow(theme, item)),
-
-                    const SizedBox(height: 24),
-
-                    // Summary
-                    _buildSectionHeader(theme, 'Summary'),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _SectionHeader('Summary'),
+                    const SizedBox(height: AppSpacing.sm),
                     _buildSummaryCard(theme),
-
-                    const SizedBox(height: 24),
-
-                    // Info
-                    _buildSectionHeader(theme, 'Information'),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _SectionHeader('Information'),
+                    const SizedBox(height: AppSpacing.sm),
                     _buildInfoCard(theme),
-
-                    // Notes
                     if (draft.notes != null && draft.notes!.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(theme, 'Notes'),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.lg),
+                      const _SectionHeader('Notes'),
+                      const SizedBox(height: AppSpacing.sm),
                       _buildNotesCard(theme),
                     ],
-
-                    const SizedBox(height: 100), // Space for buttons
+                    const SizedBox(height: AppSpacing.xxl + 32),
                   ],
                 ),
               ),
 
-              // Action buttons
+              // Action buttons — hairline-bordered bar instead of shadow
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppSpacing.lg - 4),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
+                  border: Border(top: BorderSide(color: hairline)),
                 ),
                 child: SafeArea(
                   child: Row(
                     children: [
-                      // Delete: icon-only — labelled buttons collided with the
-                      // primary action on narrow phones / large text scale.
+                      // Delete: icon-only outlined button — labelled buttons
+                      // collided with the primary action on narrow phones /
+                      // large text scale.
                       OutlinedButton(
                         onPressed: onDelete,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
+                          foregroundColor: AppColors.error,
+                          side: const BorderSide(color: AppColors.error),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.md,
                           ),
                         ),
                         child: const Icon(CupertinoIcons.trash),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.sm + 4),
                       Expanded(
                         child: FilledButton.icon(
                           onPressed: onLoad,
@@ -177,7 +159,8 @@ class DraftDetailSheet extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: AppSpacing.md),
                           ),
                         ),
                       ),
@@ -192,40 +175,32 @@ class DraftDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(ThemeData theme, String title) {
-    return Text(
-      title,
-      style: theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: Colors.grey[700],
-      ),
-    );
-  }
-
-  Widget _buildDiscountTypeIndicator(ThemeData theme) {
+  Widget _buildDiscountTypeIndicator(ThemeData theme, Color hairline) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm + 4,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: Colors.green[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green[200]!),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.success),
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             CupertinoIcons.tag,
             size: 16,
-            color: Colors.green[700],
+            color: AppColors.successDark,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Flexible(
             child: Text(
               draft.discountType == DiscountType.percentage
                   ? 'Percentage Discounts Applied'
                   : 'Amount Discounts Applied',
-              style: TextStyle(
-                color: Colors.green[700],
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.successDark,
                 fontWeight: FontWeight.w500,
               ),
               overflow: TextOverflow.ellipsis,
@@ -237,42 +212,46 @@ class DraftDetailSheet extends StatelessWidget {
   }
 
   Widget _buildItemRow(ThemeData theme, SaleItemEntity item) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final mutedFill =
+        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
+
     final hasDiscount = item.hasDiscount;
-    final discountAmount = item.calculateDiscountAmount(
-      isPercentage: draft.isPercentageDiscount,
-    );
     final netAmount = item.calculateNetAmount(
       isPercentage: draft.isPercentageDiscount,
     );
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
+        color: mutedFill,
+        border: Border.all(color: hairline),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Quantity badge
+          // Quantity badge — outlined, no fill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: theme.colorScheme.primary),
             ),
             child: Text(
               '×${item.quantity}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          // Item details
+          const SizedBox(width: AppSpacing.sm + 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,9 +264,7 @@ class DraftDetailSheet extends StatelessWidget {
                 ),
                 Text(
                   '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} / ${item.unit}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
                 ),
                 if (hasDiscount)
                   Text(
@@ -295,14 +272,13 @@ class DraftDetailSheet extends StatelessWidget {
                         ? '${item.discountValue.toStringAsFixed(0)}% off'
                         : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} off',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.green[700],
+                      color: AppColors.successDark,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
               ],
             ),
           ),
-          // Amount
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -311,14 +287,14 @@ class DraftDetailSheet extends StatelessWidget {
                   '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     decoration: TextDecoration.lineThrough,
-                    color: Colors.grey,
+                    color: muted,
                   ),
                 ),
               Text(
                 '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: hasDiscount ? Colors.green[700] : null,
+                  fontWeight: FontWeight.w600,
+                  color: hasDiscount ? AppColors.successDark : null,
                 ),
               ),
             ],
@@ -329,40 +305,38 @@ class DraftDetailSheet extends StatelessWidget {
   }
 
   Widget _buildSummaryCard(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          _buildSummaryRow(
-            theme,
-            'Subtotal',
-            '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
-          ),
-          if (draft.hasDiscount) ...[
-            const SizedBox(height: 8),
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          children: [
             _buildSummaryRow(
               theme,
-              'Discount',
-              '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
-              valueColor: Colors.green,
+              'Subtotal',
+              '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
+            ),
+            if (draft.hasDiscount) ...[
+              const SizedBox(height: AppSpacing.sm),
+              _buildSummaryRow(
+                theme,
+                'Discount',
+                '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
+                valueColor: AppColors.successDark,
+              ),
+            ],
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Divider(height: 1),
+            ),
+            _buildSummaryRow(
+              theme,
+              'Total',
+              '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+              isTotal: true,
             ),
           ],
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(),
-          ),
-          _buildSummaryRow(
-            theme,
-            'Total',
-            '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
-            isTotal: true,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -381,14 +355,14 @@ class DraftDetailSheet extends StatelessWidget {
           label,
           style: isTotal
               ? theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)
+                  ?.copyWith(fontWeight: FontWeight.w600)
               : theme.textTheme.bodyMedium,
         ),
         Text(
           value,
           style: isTotal
               ? theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,
                 )
               : theme.textTheme.bodyMedium?.copyWith(
@@ -403,44 +377,43 @@ class DraftDetailSheet extends StatelessWidget {
   Widget _buildInfoCard(ThemeData theme) {
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildInfoRow(
-            theme,
-            CupertinoIcons.person,
-            'Created by',
-            draft.createdByName,
-          ),
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            theme,
-            CupertinoIcons.calendar,
-            'Created',
-            dateFormat.format(draft.createdAt),
-          ),
-          if (draft.updatedAt != null) ...[
-            const SizedBox(height: 12),
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          children: [
             _buildInfoRow(
               theme,
-              CupertinoIcons.arrow_2_circlepath,
-              'Last updated',
-              dateFormat.format(draft.updatedAt!),
+              CupertinoIcons.person,
+              'Created by',
+              draft.createdByName,
+            ),
+            const SizedBox(height: AppSpacing.sm + 4),
+            _buildInfoRow(
+              theme,
+              CupertinoIcons.calendar,
+              'Created',
+              dateFormat.format(draft.createdAt),
+            ),
+            if (draft.updatedAt != null) ...[
+              const SizedBox(height: AppSpacing.sm + 4),
+              _buildInfoRow(
+                theme,
+                CupertinoIcons.arrow_2_circlepath,
+                'Last updated',
+                dateFormat.format(draft.updatedAt!),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.sm + 4),
+            _buildInfoRow(
+              theme,
+              CupertinoIcons.cube_box,
+              'Items',
+              '${draft.totalItemCount} (${draft.uniqueProductCount} products)',
             ),
           ],
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            theme,
-            CupertinoIcons.cube_box,
-            'Items',
-            '${draft.totalItemCount} (${draft.uniqueProductCount} products)',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -451,16 +424,15 @@ class DraftDetailSheet extends StatelessWidget {
     String label,
     String value,
   ) {
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
-        const SizedBox(width: 12),
+        Icon(icon, size: 18, color: muted),
+        const SizedBox(width: AppSpacing.sm + 4),
         Expanded(
           child: Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ),
         Text(
@@ -474,37 +446,54 @@ class DraftDetailSheet extends StatelessWidget {
   }
 
   Widget _buildNotesCard(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.amber[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(CupertinoIcons.square_list,
-                  size: 16, color: Colors.amber[700]),
-              const SizedBox(width: 8),
-              Text(
-                'Notes',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.amber[700],
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  CupertinoIcons.square_list,
+                  size: 16,
+                  color: muted,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            draft.notes!,
-            style: theme.textTheme.bodyMedium,
-          ),
-        ],
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'Notes',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: muted,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(draft.notes!, style: theme.textTheme.bodyMedium),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      title.toUpperCase(),
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
       ),
     );
   }
