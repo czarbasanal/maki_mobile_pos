@@ -93,6 +93,8 @@ class CurrentReceivingState {
   final String? supplierName;
   final List<ReceivingItemEntity> items;
   final String? notes;
+  final ReceivingStatus status;
+  final DateTime? completedAt;
   final bool isProcessing;
   final String? errorMessage;
 
@@ -103,6 +105,8 @@ class CurrentReceivingState {
     this.supplierName,
     this.items = const [],
     this.notes,
+    this.status = ReceivingStatus.draft,
+    this.completedAt,
     this.isProcessing = false,
     this.errorMessage,
   });
@@ -117,6 +121,11 @@ class CurrentReceivingState {
 
   bool get isValid => items.isNotEmpty;
 
+  /// True when the receiving is finalized — completed receivings are
+  /// immutable in the form (stock has already been adjusted, variations
+  /// created, price history recorded). The screen renders read-only.
+  bool get isReadOnly => status == ReceivingStatus.completed;
+
   CurrentReceivingState copyWith({
     String? id,
     String? referenceNumber,
@@ -124,12 +133,15 @@ class CurrentReceivingState {
     String? supplierName,
     List<ReceivingItemEntity>? items,
     String? notes,
+    ReceivingStatus? status,
+    DateTime? completedAt,
     bool? isProcessing,
     String? errorMessage,
     bool clearId = false,
     bool clearSupplierId = false,
     bool clearSupplierName = false,
     bool clearNotes = false,
+    bool clearCompletedAt = false,
     bool clearError = false,
   }) {
     return CurrentReceivingState(
@@ -140,6 +152,9 @@ class CurrentReceivingState {
           clearSupplierName ? null : (supplierName ?? this.supplierName),
       items: items ?? this.items,
       notes: clearNotes ? null : (notes ?? this.notes),
+      status: status ?? this.status,
+      completedAt:
+          clearCompletedAt ? null : (completedAt ?? this.completedAt),
       isProcessing: isProcessing ?? this.isProcessing,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
@@ -176,6 +191,8 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
         supplierName: receiving.supplierName,
         items: receiving.items,
         notes: receiving.notes,
+        status: receiving.status,
+        completedAt: receiving.completedAt,
       );
     }
   }
