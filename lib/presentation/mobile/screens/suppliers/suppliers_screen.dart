@@ -105,10 +105,16 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
           onRetry: () => ref.invalidate(suppliersProvider),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(RoutePaths.supplierAdd),
-        icon: const Icon(CupertinoIcons.add),
-        label: const Text('Add Supplier'),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => context.push(RoutePaths.supplierAdd),
+            icon: const Icon(CupertinoIcons.add),
+            label: const Text('Add Supplier'),
+          ),
+        ),
       ),
     );
   }

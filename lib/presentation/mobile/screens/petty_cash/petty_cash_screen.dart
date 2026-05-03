@@ -77,12 +77,18 @@ class PettyCashScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: PermissionGate(
+      bottomNavigationBar: PermissionGate(
         permission: Permission.managePettyCash,
-        child: FloatingActionButton.extended(
-          onPressed: () => context.go(RoutePaths.pettyCashNew),
-          icon: const Icon(CupertinoIcons.add),
-          label: const Text('New entry'),
+        child: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.go(RoutePaths.pettyCashNew),
+              icon: const Icon(CupertinoIcons.add),
+              label: const Text('New entry'),
+            ),
+          ),
         ),
       ),
     );

@@ -103,10 +103,16 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navigateToCreateUser(context),
-        icon: const Icon(CupertinoIcons.person_add),
-        label: const Text('Add User'),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => _navigateToCreateUser(context),
+            icon: const Icon(CupertinoIcons.person_add),
+            label: const Text('Add User'),
+          ),
+        ),
       ),
     );
   }
