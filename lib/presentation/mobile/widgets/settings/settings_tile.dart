@@ -1,6 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Reusable settings row tile.
+///
+/// Outlined icon + title + optional subtitle. Icons sit naturally on the
+/// row (no tinted background box) so the tile reads as a quiet line of
+/// text. The per-row [iconColor] still carries the categorical hint.
 class SettingsTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -24,16 +30,14 @@ class SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
     return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: iconColor, size: 24),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
       ),
+      leading: Icon(icon, color: iconColor, size: 22),
       title: Text(
         title,
         style: theme.textTheme.bodyLarge?.copyWith(
@@ -41,16 +45,21 @@ class SettingsTile extends StatelessWidget {
         ),
       ),
       subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+          ? Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                subtitle!,
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
             )
           : null,
       trailing: trailing ??
           (showArrow
-              ? const Icon(Icons.chevron_right, color: Colors.grey)
+              ? Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 16,
+                  color: muted,
+                )
               : null),
       onTap: onTap,
     );

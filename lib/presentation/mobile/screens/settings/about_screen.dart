@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// Screen displaying app information.
@@ -33,254 +35,249 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.settings),
         ),
         title: const Text('About'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
         children: [
-          // App logo and name
+          // Hero — outlined glyph, no tinted box
           Center(
             child: Column(
               children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(
-                    Icons.point_of_sale,
-                    size: 50,
-                    color: theme.colorScheme.primary,
-                  ),
+                Icon(
+                  CupertinoIcons.cart,
+                  size: 64,
+                  color: theme.colorScheme.primary,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   AppConstants.appName,
                   style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Version ${_packageInfo?.version ?? AppConstants.appVersion}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: muted),
                 ),
                 if (_packageInfo != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     'Build ${_packageInfo!.buildNumber}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[500],
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ],
               ],
             ),
           ),
-
-          const SizedBox(height: 32),
-
-          // Description
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'About This App',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'A comprehensive mobile Point of Sale system designed for '
-                    'Philippine businesses. Features include inventory management, '
-                    'sales tracking, supplier management, and detailed reporting.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
+          const SizedBox(height: AppSpacing.xl),
+          _AboutCard(
+            title: 'About This App',
+            child: Text(
+              'A comprehensive mobile Point of Sale system designed for '
+              'Philippine businesses. Features include inventory management, '
+              'sales tracking, supplier management, and detailed reporting.',
+              style: theme.textTheme.bodyMedium,
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Features
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Key Features',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildFeatureItem(
-                    Icons.point_of_sale,
-                    'Point of Sale',
-                    'Fast checkout with barcode scanning',
-                  ),
-                  _buildFeatureItem(
-                    Icons.inventory_2,
-                    'Inventory Management',
-                    'Track stock levels and variations',
-                  ),
-                  _buildFeatureItem(
-                    Icons.business,
-                    'Supplier Management',
-                    'Manage vendors and receiving',
-                  ),
-                  _buildFeatureItem(
-                    Icons.analytics,
-                    'Reports & Analytics',
-                    'Sales, profit, and inventory reports',
-                  ),
-                  _buildFeatureItem(
-                    Icons.security,
-                    'Role-Based Access',
-                    'Secure multi-user system',
-                  ),
-                  _buildFeatureItem(
-                    Icons.code,
-                    'Cost Protection',
-                    'Hidden cost codes for security',
-                  ),
-                ],
-              ),
+          const SizedBox(height: AppSpacing.md),
+          _AboutCard(
+            title: 'Key Features',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _FeatureRow(
+                  icon: CupertinoIcons.cart,
+                  title: 'Point of Sale',
+                  subtitle: 'Fast checkout with barcode scanning',
+                ),
+                _FeatureRow(
+                  icon: CupertinoIcons.cube_box,
+                  title: 'Inventory Management',
+                  subtitle: 'Track stock levels and variations',
+                ),
+                _FeatureRow(
+                  icon: CupertinoIcons.briefcase,
+                  title: 'Supplier Management',
+                  subtitle: 'Manage vendors and receiving',
+                ),
+                _FeatureRow(
+                  icon: CupertinoIcons.chart_bar,
+                  title: 'Reports & Analytics',
+                  subtitle: 'Sales, profit, and inventory reports',
+                ),
+                _FeatureRow(
+                  icon: CupertinoIcons.shield,
+                  title: 'Role-Based Access',
+                  subtitle: 'Secure multi-user system',
+                ),
+                _FeatureRow(
+                  icon: CupertinoIcons.chevron_left_slash_chevron_right,
+                  title: 'Cost Protection',
+                  subtitle: 'Hidden cost codes for security',
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Technical info
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Technical Information',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildInfoRow('Platform', 'Flutter'),
-                  _buildInfoRow('Backend', 'Firebase'),
-                  _buildInfoRow('Currency', 'Philippine Peso (₱)'),
-                  _buildInfoRow('Barcode', 'Code 128'),
-                  if (_packageInfo != null) ...[
-                    _buildInfoRow('Package', _packageInfo!.packageName),
-                  ],
-                ],
-              ),
+          const SizedBox(height: AppSpacing.md),
+          _AboutCard(
+            title: 'Technical Information',
+            child: Column(
+              children: [
+                const _InfoRow(label: 'Platform', value: 'Flutter'),
+                const _InfoRow(label: 'Backend', value: 'Firebase'),
+                const _InfoRow(label: 'Currency', value: 'Philippine Peso (₱)'),
+                const _InfoRow(label: 'Barcode', value: 'Code 128'),
+                if (_packageInfo != null)
+                  _InfoRow(label: 'Package', value: _packageInfo!.packageName),
+              ],
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Support
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Support',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    leading: const Icon(Icons.email),
-                    title: const Text('Contact Support'),
-                    subtitle: const Text('support@example.com'),
-                    contentPadding: EdgeInsets.zero,
-                    onTap: () {
-                      // Open email
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.help),
-                    title: const Text('Help Center'),
-                    subtitle: const Text('View documentation'),
-                    contentPadding: EdgeInsets.zero,
-                    onTap: () {
-                      // Open help
-                    },
-                  ),
-                ],
-              ),
+          const SizedBox(height: AppSpacing.md),
+          _AboutCard(
+            title: 'Support',
+            padContent: false,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(CupertinoIcons.envelope),
+                  title: const Text('Contact Support'),
+                  subtitle: const Text('support@example.com'),
+                  onTap: () {
+                    // Open email
+                  },
+                ),
+                const Divider(height: 1, indent: AppSpacing.lg + 22),
+                ListTile(
+                  leading: const Icon(CupertinoIcons.question_circle),
+                  title: const Text('Help Center'),
+                  subtitle: const Text('View documentation'),
+                  onTap: () {
+                    // Open help
+                  },
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(height: 32),
-
-          // Copyright
+          const SizedBox(height: AppSpacing.xl),
           Center(
             child: Text(
               '© ${DateTime.now().year} All rights reserved',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[500],
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: muted),
             ),
           ),
-
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
         ],
       ),
     );
   }
+}
 
-  Widget _buildFeatureItem(IconData icon, String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
+/// Section card for the About screen — title above, themed Card body.
+class _AboutCard extends StatelessWidget {
+  const _AboutCard({
+    required this.title,
+    required this.child,
+    this.padContent = true,
+  });
+
+  final String title;
+  final Widget child;
+
+  /// When false, the card holds tappable rows that bring their own
+  /// padding (e.g. ListTile) — only the title is padded.
+  final bool padContent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(8),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              padContent ? AppSpacing.sm : AppSpacing.sm,
             ),
-            child: Icon(icon, size: 20, color: Colors.blue[700]),
+            child: Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          const SizedBox(width: 12),
+          if (padContent)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: child,
+            )
+          else
+            child,
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureRow extends StatelessWidget {
+  const _FeatureRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs + 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -290,20 +287,33 @@ class _AboutScreenState extends State<AboutScreen> {
       ),
     );
   }
+}
 
-  Widget _buildInfoRow(String label, String value) {
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs + 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.grey[600]),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
