@@ -3,9 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
-import 'package:maki_mobile_pos/presentation/providers/expense_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Screen for creating or editing an expense.
 class ExpenseFormScreen extends ConsumerStatefulWidget {
@@ -27,7 +30,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
   DateTime _selectedDate = DateTime.now();
   String _selectedCategory = 'General';
+  bool _isLoading = false;
   bool _isSaving = false;
+  bool _isDeleting = false;
 
   final _categories = [
     'General',
@@ -41,6 +46,42 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing) {
+      _loadExpense();
+    }
+  }
+
+  Future<void> _loadExpense() async {
+    setState(() => _isLoading = true);
+    try {
+      final expense =
+          await ref.read(expenseByIdProvider(widget.expenseId!).future);
+      if (expense == null) {
+        if (mounted) {
+          context.showErrorSnackBar('Expense not found');
+          context.goBackOr(RoutePaths.expenses);
+        }
+        return;
+      }
+      // The dropdown asserts the value is in `items`. If a legacy expense
+      // has a category outside the predefined list, surface it instead of
+      // crashing.
+      if (!_categories.contains(expense.category)) {
+        _categories.add(expense.category);
+      }
+      _descriptionController.text = expense.description;
+      _amountController.text = expense.amount.toString();
+      _notesController.text = expense.notes ?? '';
+      _selectedCategory = expense.category;
+      _selectedDate = expense.date;
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   void dispose() {
     _descriptionController.dispose();
     _amountController.dispose();
@@ -50,6 +91,11 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = ref.watch(currentUserProvider).value;
+    final userRole = currentUser?.role ?? UserRole.cashier;
+    final canDelete =
+        RolePermissions.hasPermission(userRole, Permission.deleteExpense);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Expense' : 'Add Expense'),
@@ -57,8 +103,20 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.expenses),
         ),
+        actions: [
+          if (widget.isEditing && canDelete)
+            IconButton(
+              icon: const Icon(CupertinoIcons.delete),
+              tooltip: 'Delete expense',
+              color: AppColors.error,
+              onPressed:
+                  (_isLoading || _isSaving || _isDeleting) ? null : _handleDelete,
+            ),
+        ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -83,8 +141,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 controller: _amountController,
                 decoration: const InputDecoration(
                   labelText: 'Amount *',
-                  prefixIcon: Icon(CupertinoIcons.money_dollar),
-                  prefixText: '₱ ',
+                  prefixIcon: Icon(AppIcons.peso),
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -242,6 +299,50 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _handleDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Expense'),
+        content: Text(
+          _descriptionController.text.trim().isEmpty
+              ? 'Delete this expense?'
+              : 'Delete "${_descriptionController.text.trim()}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+    try {
+      final ok = await ref
+          .read(expenseOperationsProvider.notifier)
+          .deleteExpense(widget.expenseId!);
+      if (!ok) throw _readOperationError();
+      if (mounted) {
+        context.showSuccessSnackBar('Expense deleted');
+        context.go(RoutePaths.expenses);
+      }
+    } catch (e) {
+      if (mounted) {
+        context.showErrorSnackBar('Failed to delete: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 

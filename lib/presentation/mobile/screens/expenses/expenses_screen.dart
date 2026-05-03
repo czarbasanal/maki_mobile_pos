@@ -64,7 +64,7 @@ class ExpensesScreen extends ConsumerWidget {
             itemCount: expenses.length,
             itemBuilder: (context, index) {
               final expense = expenses[index];
-              return Card(
+              final card = Card(
                 margin: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.xs,
@@ -94,9 +94,20 @@ class ExpensesScreen extends ConsumerWidget {
                           .push('${RoutePaths.expenses}/edit/${expense.id}')
                       : null,
                   onLongPress: canDelete
-                      ? () => _showDeleteConfirmation(context, ref, expense)
+                      ? () => _confirmAndDelete(context, ref, expense)
                       : null,
                 ),
+              );
+
+              if (!canDelete) return card;
+
+              return Dismissible(
+                key: ValueKey('expense-${expense.id}'),
+                direction: DismissDirection.endToStart,
+                background: _buildDismissBackground(),
+                confirmDismiss: (_) =>
+                    _confirmAndDelete(context, ref, expense),
+                child: card,
               );
             },
           );
@@ -117,39 +128,71 @@ class ExpensesScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmation(
-      BuildContext context, WidgetRef ref, ExpenseEntity expense) {
-    showDialog(
+  Widget _buildDismissBackground() {
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      alignment: Alignment.centerRight,
+      decoration: BoxDecoration(
+        color: AppColors.error,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(CupertinoIcons.delete, color: Colors.white),
+          SizedBox(width: AppSpacing.sm),
+          Text(
+            'Delete',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _confirmAndDelete(
+      BuildContext context, WidgetRef ref, ExpenseEntity expense) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Expense'),
         content: Text('Delete "${expense.description}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              try {
-                await ref
-                    .read(expenseOperationsProvider.notifier)
-                    .deleteExpense(expense.id);
-                if (context.mounted) {
-                  context.showSuccessSnackBar('Expense deleted');
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  context.showErrorSnackBar('Failed to delete: $e');
-                }
-              }
-            },
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
+    if (confirmed != true) return false;
+
+    try {
+      final ok = await ref
+          .read(expenseOperationsProvider.notifier)
+          .deleteExpense(expense.id);
+      if (!ok) throw Exception('Delete failed');
+      if (context.mounted) {
+        context.showSuccessSnackBar('Expense deleted');
+      }
+      return true;
+    } catch (e) {
+      if (context.mounted) {
+        context.showErrorSnackBar('Failed to delete: $e');
+      }
+      return false;
+    }
   }
 }
