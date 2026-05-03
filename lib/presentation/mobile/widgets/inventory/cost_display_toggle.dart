@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -20,7 +21,7 @@ class CostDisplayToggle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
       icon: Icon(
-        showCost ? Icons.visibility : Icons.visibility_off,
+        showCost ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
         color: showCost ? Colors.green : null,
       ),
       tooltip: showCost ? 'Hide costs' : 'Show costs',
@@ -88,7 +89,7 @@ class CostDisplay extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.lock,
+            CupertinoIcons.lock,
             size: (style?.fontSize ?? 14) * 0.9,
             color: Colors.amber[700],
           ),

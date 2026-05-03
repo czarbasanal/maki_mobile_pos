@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 
@@ -40,7 +41,7 @@ class AppScaffold extends StatelessWidget {
         centerTitle: false,
         leading: showBackButton
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(CupertinoIcons.back),
                 onPressed: () {
                   if (onBackPressed != null) {
                     onBackPressed!();

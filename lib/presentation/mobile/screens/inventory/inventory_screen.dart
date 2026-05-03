@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -36,7 +37,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Inventory'),
@@ -53,7 +54,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
           // Sort button
           PopupMenuButton<InventorySortOption>(
-            icon: const Icon(Icons.sort),
+            icon: const Icon(CupertinoIcons.arrow_up_arrow_down),
             tooltip: 'Sort by',
             onSelected: (option) {
               ref.read(inventoryStateProvider.notifier).setSortOption(option);
@@ -67,8 +68,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     if (isSelected)
                       Icon(
                         inventoryState.sortAscending
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
+                            ? CupertinoIcons.arrow_up
+                            : CupertinoIcons.arrow_down,
                         size: 16,
                       )
                     else
@@ -87,7 +88,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               const PopupMenuItem(
                 value: 'add',
                 child: ListTile(
-                  leading: Icon(Icons.add),
+                  leading: Icon(CupertinoIcons.add),
                   title: Text('Add Product'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -95,7 +96,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               const PopupMenuItem(
                 value: 'import',
                 child: ListTile(
-                  leading: Icon(Icons.upload_file),
+                  leading: Icon(CupertinoIcons.cloud_upload),
                   title: Text('Import CSV'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -103,7 +104,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               const PopupMenuItem(
                 value: 'export',
                 child: ListTile(
-                  leading: Icon(Icons.download),
+                  leading: Icon(CupertinoIcons.cloud_download),
                   title: Text('Export'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -132,7 +133,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _handleMenuAction('add'),
-        icon: const Icon(Icons.add),
+        icon: const Icon(CupertinoIcons.add),
         label: const Text('Add Product'),
       ),
     );
@@ -150,7 +151,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               child: _buildSummaryCard(
                 'Total',
                 '${summary.totalProducts}',
-                Icons.inventory_2,
+                CupertinoIcons.cube_box,
                 Colors.blue,
               ),
             ),
@@ -159,7 +160,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               child: _buildSummaryCard(
                 'In Stock',
                 '${summary.inStockCount}',
-                Icons.check_circle,
+                CupertinoIcons.checkmark_circle,
                 Colors.green,
                 onTap: () => _setStockFilter(StockFilter.inStock),
               ),
@@ -169,7 +170,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               child: _buildSummaryCard(
                 'Low',
                 '${summary.lowStockCount}',
-                Icons.warning,
+                CupertinoIcons.exclamationmark_triangle,
                 Colors.orange,
                 onTap: () => _setStockFilter(StockFilter.lowStock),
               ),
@@ -179,7 +180,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               child: _buildSummaryCard(
                 'Out',
                 '${summary.outOfStockCount}',
-                Icons.error,
+                CupertinoIcons.exclamationmark_circle,
                 Colors.red,
                 onTap: () => _setStockFilter(StockFilter.outOfStock),
               ),
@@ -247,10 +248,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Search by name, SKU, or barcode...',
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: const Icon(CupertinoIcons.search),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear),
+                      icon: const Icon(CupertinoIcons.xmark),
                       onPressed: () {
                         _searchController.clear();
                         ref
@@ -317,10 +318,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
         return PopupMenuButton<String?>(
           child: Chip(
-            avatar: const Icon(Icons.category, size: 16),
+            avatar: const Icon(CupertinoIcons.square_grid_2x2, size: 16),
             label: Text(inventoryState.categoryFilter ?? 'Category'),
             deleteIcon: inventoryState.categoryFilter != null
-                ? const Icon(Icons.close, size: 16)
+                ? const Icon(CupertinoIcons.xmark, size: 16)
                 : null,
             onDeleted: inventoryState.categoryFilter != null
                 ? () {
@@ -355,7 +356,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.filter_alt, size: 16, color: Colors.grey),
+          const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
           const SizedBox(width: 8),
           const Text('Filters active'),
           const Spacer(),
@@ -410,7 +411,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   Widget _buildEmptyState(InventoryState state) {
     final hasFilters = _hasActiveFilters(state);
     return EmptyStateView(
-      icon: hasFilters ? Icons.filter_alt_off : Icons.inventory_2_outlined,
+      icon: hasFilters ? Icons.filter_alt_off_outlined : CupertinoIcons.cube_box,
       title: hasFilters ? 'No products match filters' : 'No Products Yet',
       subtitle: hasFilters
           ? 'Try adjusting your search or filters'

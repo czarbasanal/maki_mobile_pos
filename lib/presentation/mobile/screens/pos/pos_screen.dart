@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -43,7 +44,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Point of Sale'),
@@ -53,7 +54,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           // Clear cart button
           if (cart.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(CupertinoIcons.trash),
               tooltip: 'Clear Cart',
               onPressed: _showClearCartDialog,
             ),
@@ -246,7 +247,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.shopping_cart_outlined,
+            CupertinoIcons.cart,
             size: 64,
             color: Colors.grey[400],
           ),
@@ -287,12 +288,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 ButtonSegment(
                   value: DiscountType.amount,
                   label: Text('Amount (₱)'),
-                  icon: Icon(Icons.attach_money),
+                  icon: Icon(CupertinoIcons.money_dollar),
                 ),
                 ButtonSegment(
                   value: DiscountType.percentage,
                   label: Text('Percent (%)'),
-                  icon: Icon(Icons.percent),
+                  icon: Icon(CupertinoIcons.percent),
                 ),
               ],
               selected: {cart.discountType},
@@ -318,7 +319,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: cart.canSaveAsDraft ? _showSaveDraftDialog : null,
-              icon: const Icon(Icons.save_outlined),
+              icon: const Icon(CupertinoIcons.tray_arrow_down),
               label: const Text('Save Draft'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -331,7 +332,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             flex: 2,
             child: FilledButton.icon(
               onPressed: cart.canCheckout ? _processCheckout : null,
-              icon: const Icon(Icons.check_circle_outline),
+              icon: const Icon(CupertinoIcons.checkmark_circle),
               label: Text(
                 'Checkout ${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
               ),
@@ -359,16 +360,16 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         icon: Badge(
           isLabelVisible: count > 0,
           label: Text('$count'),
-          child: const Icon(Icons.drafts_outlined),
+          child: const Icon(CupertinoIcons.envelope),
         ),
         onPressed: _navigateToDrafts,
       ),
       loading: () => IconButton(
-        icon: const Icon(Icons.drafts_outlined),
+        icon: const Icon(CupertinoIcons.envelope),
         onPressed: _navigateToDrafts,
       ),
       error: (_, __) => IconButton(
-        icon: const Icon(Icons.drafts_outlined),
+        icon: const Icon(CupertinoIcons.envelope),
         onPressed: _navigateToDrafts,
       ),
     );
@@ -638,7 +639,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         icon: const Icon(
-          Icons.check_circle,
+          CupertinoIcons.checkmark_circle,
           color: Colors.green,
           size: 64,
         ),

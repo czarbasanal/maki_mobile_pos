@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -28,12 +29,12 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
       appBar: AppBar(
         title: const Text('Profit Report'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_today),
+            icon: const Icon(CupertinoIcons.calendar),
             onPressed: _selectDateRange,
           ),
         ],
@@ -46,7 +47,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
             color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
             child: Row(
               children: [
-                const Icon(Icons.date_range, size: 20),
+                const Icon(CupertinoIcons.calendar, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   '${dateFormat.format(_dateRange.start)} - ${dateFormat.format(_dateRange.end)}',
@@ -72,7 +73,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
                   child: _buildSummaryCard(
                     'Total Revenue',
                     '${AppConstants.currencySymbol}0.00',
-                    Icons.payments,
+                    CupertinoIcons.money_dollar_circle,
                     Colors.blue,
                   ),
                 ),
@@ -96,7 +97,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
                   child: _buildSummaryCard(
                     'Gross Profit',
                     '${AppConstants.currencySymbol}0.00',
-                    Icons.trending_up,
+                    CupertinoIcons.arrow_up_right,
                     Colors.green,
                   ),
                 ),
@@ -105,7 +106,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
                   child: _buildSummaryCard(
                     'Profit Margin',
                     '0.0%',
-                    Icons.percent,
+                    CupertinoIcons.percent,
                     Colors.purple,
                   ),
                 ),
@@ -141,7 +142,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.trending_up, size: 64, color: Colors.grey[400]),
+                  Icon(CupertinoIcons.arrow_up_right, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No profit data available',

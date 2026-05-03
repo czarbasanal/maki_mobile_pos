@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -232,7 +233,7 @@ class UserInfoCard extends StatelessWidget {
             ),
             if (onTap != null)
               Icon(
-                Icons.chevron_right,
+                CupertinoIcons.chevron_right,
                 color: Colors.grey[400],
               ),
           ],

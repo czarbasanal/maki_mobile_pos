@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
@@ -19,7 +20,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'Total',
                 value: '${summary.totalProducts}',
-                icon: Icons.inventory_2,
+                icon: CupertinoIcons.cube_box,
                 iconColor: Colors.blue,
                 compact: true,
               ),
@@ -29,7 +30,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'In Stock',
                 value: '${summary.inStockCount}',
-                icon: Icons.check_circle,
+                icon: CupertinoIcons.checkmark_circle,
                 iconColor: Colors.green,
                 compact: true,
               ),
@@ -39,7 +40,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'Low',
                 value: '${summary.lowStockCount}',
-                icon: Icons.warning,
+                icon: CupertinoIcons.exclamationmark_triangle,
                 iconColor: Colors.orange,
                 compact: true,
                 highlighted: summary.lowStockCount > 0,
@@ -50,7 +51,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'Out',
                 value: '${summary.outOfStockCount}',
-                icon: Icons.error,
+                icon: CupertinoIcons.exclamationmark_circle,
                 iconColor: Colors.red,
                 compact: true,
                 highlighted: summary.outOfStockCount > 0,

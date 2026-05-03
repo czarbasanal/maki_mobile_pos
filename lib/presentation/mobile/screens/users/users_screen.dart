@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -32,7 +33,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(CupertinoIcons.back),
             onPressed: () => context.goBackOr(RoutePaths.dashboard),
           ),
           title: const Text('Users'),
@@ -46,14 +47,14 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('User Management'),
         actions: [
           // Filter by role
           PopupMenuButton<UserRole?>(
-            icon: const Icon(Icons.filter_list),
+            icon: const Icon(CupertinoIcons.line_horizontal_3_decrease),
             tooltip: 'Filter by role',
             onSelected: (role) {
               setState(() => _roleFilter = role);
@@ -72,7 +73,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           // Toggle inactive
           IconButton(
             icon: Icon(
-              _showInactive ? Icons.visibility : Icons.visibility_off,
+              _showInactive ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
             ),
             tooltip: _showInactive ? 'Hide inactive' : 'Show inactive',
             onPressed: () {
@@ -104,7 +105,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _navigateToCreateUser(context),
-        icon: const Icon(Icons.person_add),
+        icon: const Icon(CupertinoIcons.person_add),
         label: const Text('Add User'),
       ),
     );
@@ -128,7 +129,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 child: _buildSummaryCard(
                   'Total',
                   '${activeUsers.length}',
-                  Icons.people,
+                  CupertinoIcons.person_2,
                   Colors.blue,
                 ),
               ),
@@ -137,7 +138,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 child: _buildSummaryCard(
                   'Admins',
                   '$admins',
-                  Icons.admin_panel_settings,
+                  CupertinoIcons.shield_lefthalf_fill,
                   Colors.purple,
                   onTap: () => setState(() => _roleFilter = UserRole.admin),
                 ),
@@ -147,7 +148,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 child: _buildSummaryCard(
                   'Staff',
                   '$staff',
-                  Icons.badge,
+                  CupertinoIcons.tag,
                   Colors.green,
                   onTap: () => setState(() => _roleFilter = UserRole.staff),
                 ),
@@ -157,7 +158,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 child: _buildSummaryCard(
                   'Cashiers',
                   '$cashiers',
-                  Icons.point_of_sale,
+                  CupertinoIcons.cart,
                   Colors.orange,
                   onTap: () => setState(() => _roleFilter = UserRole.cashier),
                 ),
@@ -218,14 +219,14 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.filter_alt, size: 16, color: Colors.grey),
+          const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
           const SizedBox(width: 8),
           if (_roleFilter != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Chip(
                 label: Text(_roleFilter!.displayName),
-                deleteIcon: const Icon(Icons.close, size: 16),
+                deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
                 onDeleted: () => setState(() => _roleFilter = null),
                 visualDensity: VisualDensity.compact,
               ),
@@ -233,7 +234,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           if (_showInactive)
             Chip(
               label: const Text('Showing inactive'),
-              deleteIcon: const Icon(Icons.close, size: 16),
+              deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
               onDeleted: () => setState(() => _showInactive = false),
               visualDensity: VisualDensity.compact,
             ),
@@ -275,7 +276,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
     if (filteredUsers.isEmpty) {
       return const EmptyStateView(
-        icon: Icons.people_outline,
+        icon: CupertinoIcons.person_2,
         title: 'No users found',
       );
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:intl/intl.dart';
@@ -56,18 +57,18 @@ class ReceiptWidget extends StatelessWidget {
                 const Spacer(),
                 if (onShare != null)
                   IconButton(
-                    icon: const Icon(Icons.share),
+                    icon: const Icon(CupertinoIcons.share),
                     onPressed: onShare,
                     tooltip: 'Share',
                   ),
                 if (onPrint != null)
                   IconButton(
-                    icon: const Icon(Icons.print),
+                    icon: const Icon(CupertinoIcons.printer),
                     onPressed: onPrint,
                     tooltip: 'Print',
                   ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(CupertinoIcons.xmark),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -153,7 +154,7 @@ class ReceiptWidget extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: const Icon(
-            Icons.store,
+            Icons.store_outlined,
             color: Colors.white,
             size: 32,
           ),
@@ -437,7 +438,7 @@ class ReceiptWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           child: Icon(
-            Icons.qr_code,
+            CupertinoIcons.qrcode,
             size: 60,
             color: Colors.grey[400],
           ),

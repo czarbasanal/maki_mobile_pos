@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -156,7 +157,7 @@ class _CostCodeEditorState extends State<CostCodeEditor> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Icon(
-              Icons.arrow_forward,
+              CupertinoIcons.forward,
               color: theme.colorScheme.primary,
             ),
           ),
@@ -234,7 +235,7 @@ class _CostCodeEditorState extends State<CostCodeEditor> {
           ),
         ),
         const SizedBox(width: 12),
-        const Icon(Icons.arrow_forward, color: Colors.grey, size: 16),
+        const Icon(CupertinoIcons.forward, color: Colors.grey, size: 16),
         const SizedBox(width: 12),
         SizedBox(
           width: 80,

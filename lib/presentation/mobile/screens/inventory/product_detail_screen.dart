@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -28,7 +29,7 @@ class ProductDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.inventory),
         ),
         title: const Text('Product Details'),
@@ -48,7 +49,7 @@ class ProductDetailScreen extends ConsumerWidget {
               const PopupMenuItem(
                 value: 'edit',
                 child: ListTile(
-                  leading: Icon(Icons.edit),
+                  leading: Icon(CupertinoIcons.pencil),
                   title: Text('Edit Product'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -57,7 +58,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 const PopupMenuItem(
                   value: 'deactivate',
                   child: ListTile(
-                    leading: Icon(Icons.archive, color: Colors.orange),
+                    leading: Icon(CupertinoIcons.archivebox, color: Colors.orange),
                     title: Text('Deactivate'),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -80,7 +81,7 @@ class ProductDetailScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () =>
                   _showStockAdjustment(context, productAsync.value!),
-              icon: const Icon(Icons.edit),
+              icon: const Icon(CupertinoIcons.pencil),
               label: const Text('Adjust Stock'),
             )
           : null,
@@ -158,7 +159,7 @@ class ProductDetailScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.inventory_2,
+                    CupertinoIcons.cube_box,
                     size: 40,
                     color: theme.colorScheme.onPrimaryContainer,
                   ),
@@ -208,7 +209,7 @@ class ProductDetailScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Icon(Icons.qr_code, size: 20, color: Colors.grey),
+                  const Icon(CupertinoIcons.qrcode, size: 20, color: Colors.grey),
                   const SizedBox(width: 8),
                   Text(
                     'Barcode: ${product.barcode}',
@@ -233,15 +234,15 @@ class ProductDetailScreen extends ConsumerWidget {
     if (product.isOutOfStock) {
       statusColor = Colors.red;
       statusText = 'Out of Stock';
-      statusIcon = Icons.error;
+      statusIcon = CupertinoIcons.exclamationmark_circle;
     } else if (product.isLowStock) {
       statusColor = Colors.orange;
       statusText = 'Low Stock';
-      statusIcon = Icons.warning;
+      statusIcon = CupertinoIcons.exclamationmark_triangle;
     } else {
       statusColor = Colors.green;
       statusText = 'In Stock';
-      statusIcon = Icons.check_circle;
+      statusIcon = CupertinoIcons.checkmark_circle;
     }
 
     return Card(
@@ -252,7 +253,7 @@ class ProductDetailScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.inventory, color: theme.colorScheme.primary),
+                Icon(CupertinoIcons.cube_box, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 const Text(
                   'Stock Information',
@@ -367,7 +368,7 @@ class ProductDetailScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.attach_money, color: theme.colorScheme.primary),
+                Icon(CupertinoIcons.money_dollar, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 const Text(
                   'Pricing',
@@ -443,7 +444,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.lock,
+                              Icon(CupertinoIcons.lock,
                                   size: 16, color: Colors.amber[800]),
                               const SizedBox(width: 4),
                               Text(
@@ -538,7 +539,7 @@ class ProductDetailScreen extends ConsumerWidget {
           children: [
             const Row(
               children: [
-                Icon(Icons.info_outline),
+                Icon(CupertinoIcons.info_circle),
                 SizedBox(width: 8),
                 Text(
                   'Details',
@@ -595,7 +596,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 color: Colors.blue[100],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.business, color: Colors.blue[700]),
+              child: Icon(CupertinoIcons.briefcase, color: Colors.blue[700]),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -619,7 +620,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right),
+            const Icon(CupertinoIcons.chevron_right),
           ],
         ),
       ),
@@ -635,7 +636,7 @@ class ProductDetailScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.note, color: Colors.amber[700]),
+                Icon(CupertinoIcons.doc_text, color: Colors.amber[700]),
                 const SizedBox(width: 8),
                 const Text(
                   'Notes',

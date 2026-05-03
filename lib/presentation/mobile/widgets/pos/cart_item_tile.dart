@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -39,7 +40,7 @@ class CartItemTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: Colors.red,
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: const Icon(CupertinoIcons.trash, color: Colors.white),
       ),
       onDismissed: (_) => onRemove(),
       child: Card(
@@ -63,7 +64,7 @@ class CartItemTile extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: const Icon(CupertinoIcons.xmark, size: 20),
                     onPressed: onRemove,
                     visualDensity: VisualDensity.compact,
                     tooltip: 'Remove item',
@@ -145,7 +146,7 @@ class CartItemTile extends StatelessWidget {
         children: [
           // Decrement button
           IconButton(
-            icon: const Icon(Icons.remove),
+            icon: const Icon(CupertinoIcons.minus),
             onPressed: item.quantity > 1
                 ? () => onQuantityChanged(item.quantity - 1)
                 : null,
@@ -166,7 +167,7 @@ class CartItemTile extends StatelessWidget {
           ),
           // Increment button
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(CupertinoIcons.add),
             onPressed: () => onQuantityChanged(item.quantity + 1),
             visualDensity: VisualDensity.compact,
             iconSize: 20,
@@ -198,7 +199,7 @@ class CartItemTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              hasDiscount ? Icons.local_offer : Icons.local_offer_outlined,
+              hasDiscount ? CupertinoIcons.tag : CupertinoIcons.tag,
               size: 16,
               color: hasDiscount ? Colors.green : Colors.grey[600],
             ),

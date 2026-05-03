@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -77,7 +78,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         appBar: AppBar(
           title: Text(draft.name),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(CupertinoIcons.back),
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -89,7 +90,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           actions: [
             // Delete button
             IconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(CupertinoIcons.trash),
               onPressed: () => _confirmDelete(draft),
               tooltip: 'Delete Draft',
             ),
@@ -108,7 +109,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                   Row(
                     children: [
                       Icon(
-                        Icons.access_time,
+                        CupertinoIcons.clock,
                         size: 16,
                         color: Colors.grey[600],
                       ),
@@ -126,7 +127,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     Row(
                       children: [
                         Icon(
-                          Icons.edit,
+                          CupertinoIcons.pencil,
                           size: 16,
                           color: Colors.grey[600],
                         ),
@@ -177,7 +178,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey[400]),
+          Icon(CupertinoIcons.cart, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No items in this draft',
@@ -316,7 +317,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                   child: OutlinedButton.icon(
                     onPressed:
                         draft.items.isEmpty ? null : () => _editInPos(draft),
-                    icon: const Icon(Icons.edit),
+                    icon: const Icon(CupertinoIcons.pencil),
                     label: const Text('Edit in POS'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -331,7 +332,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     onPressed: draft.items.isEmpty
                         ? null
                         : () => _proceedToCheckout(draft),
-                    icon: const Icon(Icons.shopping_cart_checkout),
+                    icon: const Icon(CupertinoIcons.cart_badge_plus),
                     label: const Text('Checkout'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -51,18 +52,18 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Sales History'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: const Icon(CupertinoIcons.line_horizontal_3_decrease),
             tooltip: 'Filters',
             onPressed: _showFilterSheet,
           ),
           IconButton(
-            icon: const Icon(Icons.analytics_outlined),
+            icon: const Icon(CupertinoIcons.chart_bar),
             tooltip: 'Reports',
             onPressed: () => _navigateToReports(context),
           ),
@@ -98,14 +99,14 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.filter_alt, size: 16, color: Colors.grey),
+          const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
           const SizedBox(width: 8),
           if (_statusFilter != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Chip(
                 label: Text(_statusFilter!.displayName),
-                deleteIcon: const Icon(Icons.close, size: 16),
+                deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
                 onDeleted: () {
                   setState(() => _statusFilter = null);
                 },
@@ -115,7 +116,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           if (_cashierFilter != null)
             Chip(
               label: Text('Cashier: $_cashierFilter'),
-              deleteIcon: const Icon(Icons.close, size: 16),
+              deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
               onDeleted: () {
                 setState(() => _cashierFilter = null);
               },
@@ -145,7 +146,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       data: (sales) {
         if (sales.isEmpty) {
           return const EmptyStateView(
-            icon: Icons.receipt_long,
+            icon: CupertinoIcons.doc_text,
             title: 'No Sales Found',
             subtitle: 'Try adjusting your date range or filters',
           );
@@ -245,7 +246,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
-          isVoided ? Icons.cancel : Icons.receipt_long,
+          isVoided ? CupertinoIcons.xmark_circle : CupertinoIcons.doc_text,
           color: isVoided ? Colors.red : Colors.green,
           size: 24,
         ),
@@ -303,8 +304,8 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
             children: [
               Icon(
                 sale.paymentMethod == PaymentMethod.cash
-                    ? Icons.money
-                    : Icons.phone_android,
+                    ? CupertinoIcons.money_dollar
+                    : CupertinoIcons.device_phone_portrait,
                 size: 14,
                 color: Colors.grey[500],
               ),

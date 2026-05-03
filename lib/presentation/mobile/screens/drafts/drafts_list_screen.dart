@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -21,14 +22,14 @@ class DraftsListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.pos),
         ),
         title: const Text('Saved Drafts'),
         actions: [
           // Refresh button
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(CupertinoIcons.refresh),
             tooltip: 'Refresh',
             onPressed: () => ref.invalidate(activeDraftsProvider),
           ),
@@ -52,12 +53,12 @@ class DraftsListScreen extends ConsumerWidget {
   ) {
     if (drafts.isEmpty) {
       return EmptyStateView(
-        icon: Icons.drafts_outlined,
+        icon: CupertinoIcons.envelope,
         title: 'No Saved Drafts',
         subtitle: 'Drafts you save from the POS screen will appear here.',
         action: FilledButton.icon(
           onPressed: () => context.go(RoutePaths.pos),
-          icon: const Icon(Icons.point_of_sale),
+          icon: const Icon(CupertinoIcons.cart),
           label: const Text('Go to POS'),
         ),
       );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter/cupertino.dart';
 /// Card displaying a summary metric on the dashboard.
 class SummaryCard extends StatelessWidget {
   final String title;
@@ -64,7 +65,7 @@ class SummaryCard extends StatelessWidget {
                   const Spacer(),
                   if (onTap != null)
                     Icon(
-                      Icons.chevron_right,
+                      CupertinoIcons.chevron_right,
                       color: Colors.grey[400],
                       size: 20,
                     ),

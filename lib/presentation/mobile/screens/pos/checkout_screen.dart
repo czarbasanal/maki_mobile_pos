@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -30,7 +31,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       appBar: AppBar(
         title: const Text('Checkout'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: _isProcessing ? null : () => Navigator.pop(context),
         ),
       ),
@@ -236,14 +237,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           _buildDetailRow(
             theme,
-            Icons.payment,
+            CupertinoIcons.creditcard,
             'Payment Method',
             cart.paymentMethod == PaymentMethod.cash ? 'Cash' : 'GCash',
           ),
           const SizedBox(height: 12),
           _buildDetailRow(
             theme,
-            Icons.account_balance_wallet,
+            CupertinoIcons.money_dollar_circle,
             'Amount Received',
             '${AppConstants.currencySymbol}${cart.amountReceived.toStringAsFixed(2)}',
           ),
@@ -253,7 +254,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           _buildDetailRow(
             theme,
-            Icons.change_circle,
+            CupertinoIcons.arrow_2_circlepath,
             'Change',
             '${AppConstants.currencySymbol}${cart.change.toStringAsFixed(2)}',
             valueStyle: theme.textTheme.titleLarge?.copyWith(
@@ -339,7 +340,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+          Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red[700], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -386,7 +387,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.check_circle, size: 24),
+                      const Icon(CupertinoIcons.checkmark_circle, size: 24),
                       const SizedBox(width: 12),
                       Text(
                         'Confirm Payment • ${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',

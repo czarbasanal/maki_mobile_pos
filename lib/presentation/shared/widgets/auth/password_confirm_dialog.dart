@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
@@ -140,7 +141,7 @@ class _PasswordConfirmDialogState extends ConsumerState<PasswordConfirmDialog> {
                 errorText: _errorText,
                 suffixIcon: IconButton(
                   icon: Icon(
-                      _obscure ? Icons.visibility : Icons.visibility_off),
+                      _obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),

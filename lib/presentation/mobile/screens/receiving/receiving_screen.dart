@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -21,13 +22,13 @@ class ReceivingScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Receiving'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(CupertinoIcons.clock),
             tooltip: 'History',
             onPressed: () {
               // Navigate to full history
@@ -59,7 +60,7 @@ class ReceivingScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _startNewReceiving(context, ref),
-        icon: const Icon(Icons.add),
+        icon: const Icon(CupertinoIcons.add),
         label: const Text('New Receiving'),
       ),
     );
@@ -77,7 +78,7 @@ class ReceivingScreen extends ConsumerWidget {
               child: _buildCountCard(
                 'Drafts',
                 '${counts[ReceivingStatus.draft] ?? 0}',
-                Icons.edit_note,
+                CupertinoIcons.square_pencil,
                 Colors.orange,
               ),
             ),
@@ -86,7 +87,7 @@ class ReceivingScreen extends ConsumerWidget {
               child: _buildCountCard(
                 'Completed',
                 '${counts[ReceivingStatus.completed] ?? 0}',
-                Icons.check_circle,
+                CupertinoIcons.checkmark_circle,
                 Colors.green,
               ),
             ),
@@ -95,7 +96,7 @@ class ReceivingScreen extends ConsumerWidget {
               child: _buildCountCard(
                 'This Month',
                 '${(counts[ReceivingStatus.completed] ?? 0) + (counts[ReceivingStatus.draft] ?? 0)}',
-                Icons.calendar_today,
+                CupertinoIcons.calendar,
                 Colors.blue,
               ),
             ),
@@ -164,7 +165,7 @@ class ReceivingScreen extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.edit_note, color: Colors.orange[700]),
+                  Icon(CupertinoIcons.square_pencil, color: Colors.orange[700]),
                   const SizedBox(width: 8),
                   Text(
                     '${drafts.length} Draft${drafts.length > 1 ? 's' : ''} Pending',
@@ -221,7 +222,7 @@ class ReceivingScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
+            Icon(CupertinoIcons.cube_box, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No Receiving Records',
@@ -269,7 +270,7 @@ class ReceivingScreen extends ConsumerWidget {
             color: Colors.green[50],
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(Icons.inventory, color: Colors.green[700]),
+          child: Icon(CupertinoIcons.square_arrow_down, color: Colors.green[700]),
         ),
         title: Text(
           receiving.referenceNumber,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -36,7 +37,7 @@ class TopProductsCard extends ConsumerWidget {
             // Header
             Row(
               children: [
-                const Icon(Icons.star, color: Colors.amber),
+                const Icon(CupertinoIcons.star, color: Colors.amber),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -90,7 +91,7 @@ class TopProductsCard extends ConsumerWidget {
           padding: const EdgeInsets.all(32),
           child: Column(
             children: [
-              Icon(Icons.inventory_2_outlined,
+              Icon(CupertinoIcons.cube_box,
                   size: 48, color: Colors.grey[400]),
               const SizedBox(height: 8),
               Text(

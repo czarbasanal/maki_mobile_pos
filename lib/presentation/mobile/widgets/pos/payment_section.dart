@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -42,12 +43,12 @@ class PaymentSection extends StatelessWidget {
                     ButtonSegment(
                       value: PaymentMethod.cash,
                       label: Text('Cash'),
-                      icon: Icon(Icons.money),
+                      icon: Icon(CupertinoIcons.money_dollar),
                     ),
                     ButtonSegment(
                       value: PaymentMethod.gcash,
                       label: Text('GCash'),
-                      icon: Icon(Icons.phone_android),
+                      icon: Icon(CupertinoIcons.device_phone_portrait),
                     ),
                   ],
                   selected: {cart.paymentMethod},
@@ -75,7 +76,7 @@ class PaymentSection extends StatelessWidget {
                     prefixText: '${AppConstants.currencySymbol} ',
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.check_circle_outline),
+                      icon: const Icon(CupertinoIcons.checkmark_circle),
                       tooltip: 'Exact amount',
                       onPressed: () {
                         amountController.text =

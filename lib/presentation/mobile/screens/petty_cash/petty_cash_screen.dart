@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -25,7 +26,7 @@ class PettyCashScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Petty Cash'),
@@ -34,7 +35,7 @@ class PettyCashScreen extends ConsumerWidget {
             permission: Permission.performCutOff,
             child: IconButton(
               tooltip: 'End-of-day cut-off',
-              icon: const Icon(Icons.calculate_outlined),
+              icon: const Icon(CupertinoIcons.function),
               onPressed: () => _openCutOff(context, ref),
             ),
           ),
@@ -49,7 +50,7 @@ class PettyCashScreen extends ConsumerWidget {
               data: (records) {
                 if (records.isEmpty) {
                   return const EmptyStateView(
-                    icon: Icons.savings_outlined,
+                    icon: CupertinoIcons.money_dollar_circle,
                     title: 'No petty cash transactions yet',
                   );
                 }
@@ -79,7 +80,7 @@ class PettyCashScreen extends ConsumerWidget {
         permission: Permission.managePettyCash,
         child: FloatingActionButton.extended(
           onPressed: () => context.go(RoutePaths.pettyCashNew),
-          icon: const Icon(Icons.add),
+          icon: const Icon(CupertinoIcons.add),
           label: const Text('New entry'),
         ),
       ),
@@ -163,8 +164,8 @@ class _RecordTile extends StatelessWidget {
         backgroundColor: color.withAlpha(40),
         child: Icon(
           isCutOff
-              ? Icons.calculate_outlined
-              : (isOut ? Icons.arrow_downward : Icons.arrow_upward),
+              ? CupertinoIcons.function
+              : (isOut ? CupertinoIcons.arrow_down : CupertinoIcons.arrow_up),
           color: color,
         ),
       ),

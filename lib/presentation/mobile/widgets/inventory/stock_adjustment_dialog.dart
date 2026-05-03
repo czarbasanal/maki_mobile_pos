@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -94,7 +95,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                     color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.inventory),
+                  child: const Icon(CupertinoIcons.cube_box),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -137,7 +138,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                     '${widget.product.quantity}',
                     Colors.grey[700]!,
                   ),
-                  Icon(Icons.arrow_forward, color: Colors.grey[400]),
+                  Icon(CupertinoIcons.forward, color: Colors.grey[400]),
                   _buildStockColumn(
                     'New',
                     '$_newQuantity',
@@ -159,17 +160,17 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
               segments: const [
                 ButtonSegment(
                   value: AdjustmentType.add,
-                  icon: Icon(Icons.add),
+                  icon: Icon(CupertinoIcons.add),
                   label: Text('Add'),
                 ),
                 ButtonSegment(
                   value: AdjustmentType.remove,
-                  icon: Icon(Icons.remove),
+                  icon: Icon(CupertinoIcons.minus),
                   label: Text('Remove'),
                 ),
                 ButtonSegment(
                   value: AdjustmentType.set,
-                  icon: Icon(Icons.edit),
+                  icon: Icon(CupertinoIcons.pencil),
                   label: Text('Set To'),
                 ),
               ],
@@ -195,10 +196,10 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                 border: const OutlineInputBorder(),
                 prefixIcon: Icon(
                   _adjustmentType == AdjustmentType.add
-                      ? Icons.add_circle
+                      ? CupertinoIcons.plus_circle
                       : _adjustmentType == AdjustmentType.remove
-                          ? Icons.remove_circle
-                          : Icons.edit,
+                          ? CupertinoIcons.minus_circle
+                          : CupertinoIcons.pencil,
                 ),
                 suffixText: widget.product.unit,
                 errorText: _errorMessage,
@@ -226,7 +227,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                 labelText: 'Reason / Note (optional)',
                 hintText: 'e.g., Received shipment, Damaged items',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.note),
+                prefixIcon: Icon(CupertinoIcons.doc_text),
               ),
               maxLines: 2,
             ),
