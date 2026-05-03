@@ -157,25 +157,28 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
           ),
           const SizedBox(height: AppSpacing.sm + 4),
           // Discount type toggle — hosted in the modal now.
-          SegmentedButton<DiscountType>(
-            segments: const [
-              ButtonSegment(
-                value: DiscountType.amount,
-                label: Text('Amount'),
-                icon: Icon(AppIcons.peso),
-              ),
-              ButtonSegment(
-                value: DiscountType.percentage,
-                label: Text('Percent'),
-                icon: Icon(CupertinoIcons.percent),
-              ),
-            ],
-            selected: {_discountType},
-            onSelectionChanged: (selected) {
-              if (selected.isNotEmpty) {
-                _toggleType(selected.first);
-              }
-            },
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<DiscountType>(
+              segments: const [
+                ButtonSegment(
+                  value: DiscountType.amount,
+                  label: Text('Amount'),
+                  icon: Icon(AppIcons.peso),
+                ),
+                ButtonSegment(
+                  value: DiscountType.percentage,
+                  label: Text('Percent'),
+                  icon: Icon(CupertinoIcons.percent),
+                ),
+              ],
+              selected: {_discountType},
+              onSelectionChanged: (selected) {
+                if (selected.isNotEmpty) {
+                  _toggleType(selected.first);
+                }
+              },
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           // Discount input
