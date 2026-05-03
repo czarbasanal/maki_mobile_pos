@@ -38,42 +38,47 @@ extension NavigationExtensions on BuildContext {
     Duration duration = const Duration(seconds: 3),
   }) {
     final fg = textColor ?? accent;
-    ScaffoldMessenger.of(this)
+    final messenger = ScaffoldMessenger.of(this);
+    messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          backgroundColor: Colors.transparent,
+          // Translucent fill + solid 1.5pt border applied to the SnackBar
+          // itself (rather than nesting a Container inside .content) so
+          // Material's surfaceTint doesn't paint over us in M3.
+          backgroundColor: accent.withValues(alpha: 0.12),
           elevation: 0,
-          padding: EdgeInsets.zero,
           behavior: SnackBarBehavior.floating,
           duration: duration,
-          content: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm + 2,
-            ),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              border: Border.all(color: accent, width: 1.5),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, color: fg, size: 20),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-                Expanded(
-                  child: Text(
-                    message,
-                    style: TextStyle(
-                      color: fg,
-                      fontWeight: FontWeight.w500,
-                    ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            side: BorderSide(color: accent, width: 1.5),
+          ),
+          content: Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: fg, size: 20),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    color: fg,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
+              ),
+              IconButton(
+                icon: Icon(Icons.close, color: fg, size: 18),
+                tooltip: 'Dismiss',
+                onPressed: messenger.hideCurrentSnackBar,
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                constraints:
+                    const BoxConstraints.tightFor(width: 32, height: 32),
+              ),
+            ],
           ),
         ),
       );
