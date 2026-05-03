@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -36,245 +37,170 @@ class SalesSummaryCard extends ConsumerWidget {
     return summaryAsync.when(
       data: (summary) => _buildSummaryContent(context, summary, isAdmin),
       loading: () => _buildLoadingState(),
-      error: (error, _) => _buildErrorState(error),
+      error: (error, _) => _buildErrorState(context, error),
     );
   }
 
   Widget _buildSummaryContent(
       BuildContext context, SalesSummary summary, bool isAdmin) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                Icon(CupertinoIcons.chart_bar, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                const Text(
-                  'Sales Summary',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            _CardHeader(
+              icon: CupertinoIcons.chart_bar,
+              title: 'Sales Summary',
             ),
-
-            const SizedBox(height: 20),
-
-            // Main metrics row - visible to all roles
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricCard(
-                    context,
-                    'Total Sales',
-                    '${summary.totalSalesCount}',
-                    CupertinoIcons.doc_text,
-                    Colors.blue,
+            const SizedBox(height: AppSpacing.lg - 4),
+            // Main metrics — Total Sales / Voided
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'Total Sales',
+                      value: '${summary.totalSalesCount}',
+                      icon: CupertinoIcons.doc_text,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildMetricCard(
-                    context,
-                    'Voided',
-                    '${summary.voidedSalesCount}',
-                    CupertinoIcons.xmark_circle,
-                    Colors.red,
+                  const SizedBox(width: AppSpacing.sm + 4),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'Voided',
+                      value: '${summary.voidedSalesCount}',
+                      icon: CupertinoIcons.xmark_circle,
+                      accent: summary.voidedSalesCount > 0
+                          ? AppColors.error
+                          : null,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-
-            const SizedBox(height: 12),
-
-            // Revenue metrics - visible to all roles
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricCard(
-                    context,
-                    'Gross Sales',
-                    '${AppConstants.currencySymbol}${summary.grossAmount.toStringAsFixed(2)}',
-                    CupertinoIcons.money_dollar,
-                    Colors.green,
-                    subtitle: 'Before discounts',
+            const SizedBox(height: AppSpacing.sm + 4),
+            // Revenue metrics — Gross / Discounts
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'Gross Sales',
+                      value:
+                          '${AppConstants.currencySymbol}${summary.grossAmount.toStringAsFixed(2)}',
+                      icon: CupertinoIcons.money_dollar,
+                      subtitle: 'Before discounts',
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildMetricCard(
-                    context,
-                    'Discounts',
-                    '-${AppConstants.currencySymbol}${summary.totalDiscounts.toStringAsFixed(2)}',
-                    CupertinoIcons.tag,
-                    Colors.orange,
+                  const SizedBox(width: AppSpacing.sm + 4),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'Discounts',
+                      value:
+                          '-${AppConstants.currencySymbol}${summary.totalDiscounts.toStringAsFixed(2)}',
+                      icon: CupertinoIcons.tag,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-
-            // Net sales - visible to all roles
+            const SizedBox(height: AppSpacing.md),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.md),
+            // Net sales — outlined accent panel
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: theme.colorScheme.primary),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Net Sales',
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     '${AppConstants.currencySymbol}${summary.netAmount.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
                       color: theme.colorScheme.primary,
                     ),
                   ),
                 ],
               ),
             ),
-
             // ==================== ADMIN-ONLY SECTION ====================
-            // Average Daily Sales, Total Cost, and Gross Profit
-            // Hidden for staff and cashier
             if (isAdmin) ...[
-              const SizedBox(height: 12),
-
-              // Average sale amount badge
+              const SizedBox(height: AppSpacing.sm + 4),
+              // Avg sale — outlined hairline pill
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm + 4,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: hairline),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(CupertinoIcons.arrow_right,
-                        size: 16, color: Colors.purple),
+                    Icon(CupertinoIcons.arrow_right, size: 14, color: muted),
                     const SizedBox(width: 4),
                     Text(
                       'Avg: ${AppConstants.currencySymbol}${summary.averageSaleAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: Colors.purple,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: muted,
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Profit section - admin only
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      context,
-                      'Total Cost',
-                      '${AppConstants.currencySymbol}${summary.totalCost.toStringAsFixed(2)}',
-                      CupertinoIcons.cube_box,
-                      Colors.grey,
+              const SizedBox(height: AppSpacing.md),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _MetricCard(
+                        label: 'Total Cost',
+                        value:
+                            '${AppConstants.currencySymbol}${summary.totalCost.toStringAsFixed(2)}',
+                        icon: CupertinoIcons.cube_box,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildMetricCard(
-                      context,
-                      'Gross Profit',
-                      '${AppConstants.currencySymbol}${summary.totalProfit.toStringAsFixed(2)}',
-                      CupertinoIcons.arrow_up_right,
-                      Colors.green,
-                      subtitle:
-                          '${summary.profitMargin.toStringAsFixed(1)}% margin',
+                    const SizedBox(width: AppSpacing.sm + 4),
+                    Expanded(
+                      child: _MetricCard(
+                        label: 'Gross Profit',
+                        value:
+                            '${AppConstants.currencySymbol}${summary.totalProfit.toStringAsFixed(2)}',
+                        icon: CupertinoIcons.arrow_up_right,
+                        accent: AppColors.success,
+                        subtitle:
+                            '${summary.profitMargin.toStringAsFixed(1)}% margin',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMetricCard(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color, {
-    String? subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[500],
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -282,27 +208,132 @@ class SalesSummaryCard extends ConsumerWidget {
   Widget _buildLoadingState() {
     return const Card(
       child: Padding(
-        padding: EdgeInsets.all(32),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Center(child: CircularProgressIndicator()),
       ),
     );
   }
 
-  Widget _buildErrorState(Object error) {
+  Widget _buildErrorState(BuildContext context, Object error) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
-            const Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 32),
-            const SizedBox(height: 8),
+            const Icon(
+              CupertinoIcons.exclamationmark_circle,
+              color: AppColors.error,
+              size: 28,
+            ),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Failed to load summary',
-              style: TextStyle(color: Colors.grey[600]),
+              style: theme.textTheme.bodyMedium?.copyWith(color: muted),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Outlined metric card — neutral by default, semantic accent for status.
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.accent,
+    this.subtitle,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color? accent;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final borderColor = accent ?? hairline;
+    final textColor = accent ?? theme.colorScheme.onSurface;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: accent ?? muted),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: muted,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle!,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: muted,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  const _CardHeader({required this.icon, required this.title});
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, color: theme.colorScheme.primary, size: 22),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

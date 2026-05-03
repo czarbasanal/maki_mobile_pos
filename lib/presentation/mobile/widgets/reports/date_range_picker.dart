@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Date range presets.
 enum DateRangePreset {
@@ -37,18 +38,15 @@ class DateRangePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, y');
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border(bottom: BorderSide(color: hairline)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +58,7 @@ class DateRangePicker extends StatelessWidget {
               children: DateRangePreset.values.map((preset) {
                 final isSelected = selectedPreset == preset;
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
                   child: ChoiceChip(
                     label: Text(preset.label),
                     selected: isSelected,
@@ -76,18 +74,19 @@ class DateRangePicker extends StatelessWidget {
               }).toList(),
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          // Selected range display
+          const SizedBox(height: AppSpacing.sm + 4),
+          // Selected range display — outlined pill, no tint
           InkWell(
             onTap: () => _showCustomDatePicker(context),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm + 4,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: theme.colorScheme.primary),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -97,7 +96,7 @@ class DateRangePicker extends StatelessWidget {
                     size: 16,
                     color: theme.colorScheme.primary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     _isSameDay(startDate, endDate)
                         ? dateFormat.format(startDate)
@@ -110,6 +109,7 @@ class DateRangePicker extends StatelessWidget {
                   const SizedBox(width: 4),
                   Icon(
                     CupertinoIcons.chevron_down,
+                    size: 16,
                     color: theme.colorScheme.primary,
                   ),
                 ],

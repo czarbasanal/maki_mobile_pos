@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
@@ -95,15 +96,23 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   }
 
   Widget _buildActiveFilters(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Row(
         children: [
-          const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
-          const SizedBox(width: 8),
+          Icon(
+            CupertinoIcons.line_horizontal_3_decrease,
+            size: 16,
+            color: muted,
+          ),
+          const SizedBox(width: AppSpacing.sm),
           if (_statusFilter != null)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: Chip(
                 label: Text(_statusFilter!.displayName),
                 deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
@@ -179,10 +188,13 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
 
   Widget _buildDateGroup(DateTime date, List<SaleEntity> sales) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final dateFormat = DateFormat('EEEE, MMMM d, y');
     final isToday = _isToday(date);
 
-    // Calculate daily totals
     final completedSales = sales.where((s) => s.status == SaleStatus.completed);
     final dailyTotal = completedSales.fold(0.0, (sum, s) => sum + s.grandTotal);
     final dailyCount = completedSales.length;
@@ -190,10 +202,18 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date header
+        // Date header — flat with hairline borders
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: Colors.grey[100],
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + 4,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: hairline),
+              bottom: BorderSide(color: hairline),
+            ),
+          ),
           child: Row(
             children: [
               Expanded(
@@ -203,14 +223,12 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                     Text(
                       isToday ? 'Today' : dateFormat.format(date),
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       '$dailyCount sale${dailyCount != 1 ? 's' : ''}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
                   ],
                 ),
@@ -218,15 +236,13 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
               Text(
                 '${AppConstants.currencySymbol}${dailyTotal.toStringAsFixed(2)}',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,
                 ),
               ),
             ],
           ),
         ),
-
-        // Sales for this date
         ...sales.map((sale) => _buildSaleItem(sale)),
       ],
     );
@@ -234,22 +250,17 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
 
   Widget _buildSaleItem(SaleEntity sale) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     final timeFormat = DateFormat('h:mm a');
     final isVoided = sale.status == SaleStatus.voided;
 
     return ListTile(
       onTap: () => _navigateToSaleDetail(sale),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isVoided ? Colors.red[50] : Colors.green[50],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          isVoided ? CupertinoIcons.xmark_circle : CupertinoIcons.doc_text,
-          color: isVoided ? Colors.red : Colors.green,
-          size: 24,
-        ),
+      // Outlined leading glyph; no tinted background.
+      leading: Icon(
+        isVoided ? CupertinoIcons.xmark_circle : CupertinoIcons.doc_text,
+        color: isVoided ? AppColors.error : muted,
+        size: 24,
       ),
       title: Row(
         children: [
@@ -259,7 +270,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 decoration: isVoided ? TextDecoration.lineThrough : null,
-                color: isVoided ? Colors.grey : null,
+                color: isVoided ? muted : null,
               ),
             ),
           ),
@@ -267,15 +278,16 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.error),
               ),
               child: const Text(
                 'VOID',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.error,
                   fontSize: 10,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
                 ),
               ),
             ),
@@ -283,9 +295,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       ),
       subtitle: Text(
         '${timeFormat.format(sale.createdAt)} • ${sale.cashierName} • ${sale.totalItemCount} items',
-        style: TextStyle(
-          color: isVoided ? Colors.grey : Colors.grey[600],
-        ),
+        style: theme.textTheme.bodySmall?.copyWith(color: muted),
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -294,8 +304,8 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           Text(
             '${AppConstants.currencySymbol}${sale.grandTotal.toStringAsFixed(2)}',
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: isVoided ? Colors.grey : null,
+              fontWeight: FontWeight.w600,
+              color: isVoided ? muted : null,
               decoration: isVoided ? TextDecoration.lineThrough : null,
             ),
           ),
@@ -307,14 +317,12 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                     ? CupertinoIcons.money_dollar
                     : CupertinoIcons.device_phone_portrait,
                 size: 14,
-                color: Colors.grey[500],
+                color: muted,
               ),
               const SizedBox(width: 4),
               Text(
                 sale.paymentMethod.displayName,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[500],
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
             ],
           ),

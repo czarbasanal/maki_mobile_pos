@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
-import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 
@@ -73,21 +73,24 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
               // Date range picker — hidden for roles restricted to today.
               if (dailyOnly)
                 Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.sm + 4),
                   decoration: BoxDecoration(
-                    color: Colors.amber[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber.shade200),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.warning),
                   ),
-                  child: Row(
+                  child: const Row(
                     children: [
-                      Icon(Icons.lock_clock_outlined, color: Colors.amber[800]),
-                      const SizedBox(width: 8),
-                      const Expanded(
+                      Icon(
+                        Icons.lock_clock_outlined,
+                        color: AppColors.warningDark,
+                      ),
+                      SizedBox(width: AppSpacing.sm),
+                      Expanded(
                         child: Text(
                           "Showing today's sales only. "
                           'Contact an admin for historical reports.',
+                          style: TextStyle(color: AppColors.warningDark),
                         ),
                       ),
                     ],
@@ -147,20 +150,20 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
         final total = summary.netAmount;
         if (total == 0) return const SizedBox.shrink();
 
+        final theme = Theme.of(context);
         return Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Payment Methods',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 ...summary.byPaymentMethod.entries.map((entry) {
                   final percentage =
                       total > 0 ? (entry.value / total * 100) : 0;
@@ -168,7 +171,6 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
                     entry.key.displayName,
                     entry.value,
                     percentage.toDouble(),
-                    entry.key.color,
                   );
                 }),
               ],
@@ -190,36 +192,43 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
     String method,
     double amount,
     double percentage,
-    Color color,
   ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(method),
-              Text(
-                '₱${amount.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: percentage / 100,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 8,
+    return Builder(builder: (context) {
+      final theme = Theme.of(context);
+      final isDark = theme.brightness == Brightness.dark;
+      final hairline =
+          isDark ? AppColors.darkHairline : AppColors.lightHairline;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm + 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(method),
+                Text(
+                  '₱${amount.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: LinearProgressIndicator(
+                value: percentage / 100,
+                backgroundColor: hairline,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
+                ),
+                minHeight: 8,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   void _handlePresetChange(DateRangePreset preset) {
@@ -274,17 +283,5 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
       _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
       _selectedPreset = DateRangePreset.custom;
     });
-  }
-}
-
-/// Extension to add color to PaymentMethod.
-extension PaymentMethodColor on PaymentMethod {
-  Color get color {
-    switch (this) {
-      case PaymentMethod.cash:
-        return Colors.green;
-      case PaymentMethod.gcash:
-        return Colors.blue;
-    }
   }
 }
