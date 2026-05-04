@@ -89,6 +89,14 @@ final localProductSearchProvider =
   );
 });
 
+/// Provides price history for a product (newest first).
+final priceHistoryProvider =
+    FutureProvider.family<List<PriceHistoryEntry>, String>(
+        (ref, productId) async {
+  final repository = ref.watch(productRepositoryProvider);
+  return repository.getPriceHistory(productId: productId);
+});
+
 /// Provides products by supplier.
 final productsBySupplierProvider =
     FutureProvider.family<List<ProductEntity>, String>((ref, supplierId) async {

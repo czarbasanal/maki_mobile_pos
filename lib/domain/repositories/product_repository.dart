@@ -203,12 +203,14 @@ abstract class ProductRepository {
   /// [cost] - The new cost
   /// [changedBy] - The ID of the user making the change
   /// [reason] - Reason for the change
+  /// [note] - Optional free-text context (e.g. source receiving ID)
   Future<void> recordPriceChange({
     required String productId,
     required double price,
     required double cost,
     required String changedBy,
     String? reason,
+    String? note,
   });
 
   /// Gets price history for a product.
@@ -265,6 +267,7 @@ class PriceHistoryEntry {
   final DateTime changedAt;
   final String changedBy;
   final String? reason;
+  final String? note;
 
   const PriceHistoryEntry({
     required this.id,
@@ -273,5 +276,6 @@ class PriceHistoryEntry {
     required this.changedAt,
     required this.changedBy,
     this.reason,
+    this.note,
   });
 }

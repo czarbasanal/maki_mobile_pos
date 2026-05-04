@@ -553,7 +553,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                 child: FilledButton(
                   onPressed: state.isEmpty || state.isProcessing
                       ? null
-                      : _completeReceiving,
+                      : _confirmAndComplete,
                   child: state.isProcessing
                       ? const SizedBox(
                           height: 20,
@@ -623,6 +623,80 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
     }
   }
 
+  /// Resolves which lines have a unit cost that differs from the parent
+  /// product's current cost. Used by the completion confirmation dialog so
+  /// the user can see — before posting — which lines will spawn a SKU
+  /// variation.
+  Future<List<_PriceChangePreview>> _resolvePriceChanges() async {
+    final state = ref.read(currentReceivingProvider);
+    final changes = <_PriceChangePreview>[];
+    for (final item in state.items) {
+      if (item.productId == null) continue;
+      final product =
+          await ref.read(productByIdProvider(item.productId!).future);
+      if (product == null) continue;
+      if ((item.unitCost - product.cost).abs() > 0.01) {
+        changes.add(_PriceChangePreview(
+          item: item,
+          oldCost: product.cost,
+          newCost: item.unitCost,
+        ));
+      }
+    }
+    return changes;
+  }
+
+  Future<void> _confirmAndComplete() async {
+    final changes = await _resolvePriceChanges();
+    if (!mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final muted = theme.colorScheme.onSurfaceVariant;
+        return AlertDialog(
+          title: const Text('Complete Receiving?'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (changes.isEmpty)
+                  Text(
+                    'No price changes detected. Stock will be added to existing products.',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                  )
+                else ...[
+                  Text(
+                    '${changes.length} ${changes.length == 1 ? 'line has' : 'lines have'} a different cost than the current product. A new SKU variation will be created for each.',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                  ),
+                  const SizedBox(height: 12),
+                  for (final c in changes) _PriceChangeRow(change: c),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Post Receiving'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _completeReceiving();
+    }
+  }
+
   Future<void> _completeReceiving() async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
@@ -647,6 +721,65 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             ref.read(currentReceivingProvider.notifier).addItem(item);
           }
         },
+      ),
+    );
+  }
+}
+
+/// One pending price change surfaced in the completion confirmation.
+class _PriceChangePreview {
+  const _PriceChangePreview({
+    required this.item,
+    required this.oldCost,
+    required this.newCost,
+  });
+
+  final ReceivingItemEntity item;
+  final double oldCost;
+  final double newCost;
+}
+
+class _PriceChangeRow extends StatelessWidget {
+  const _PriceChangeRow({required this.change});
+  final _PriceChangePreview change;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final up = change.newCost > change.oldCost;
+    final color = up ? AppColors.errorDark : AppColors.successDark;
+    final symbol = AppConstants.currencySymbol;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            change.item.name,
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          Row(
+            children: [
+              Text(
+                '$symbol${change.oldCost.toStringAsFixed(2)}',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
+              const SizedBox(width: 6),
+              Icon(CupertinoIcons.arrow_right, size: 12, color: muted),
+              const SizedBox(width: 6),
+              Text(
+                '$symbol${change.newCost.toStringAsFixed(2)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
