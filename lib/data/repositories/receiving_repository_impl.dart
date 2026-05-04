@@ -219,13 +219,24 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
 
     // Check if cost is different
     if ((item.unitCost - product.cost).abs() > 0.01) {
-      // Cost is different - create a variation
-      final variation = await _productRepository.createVariation(
-        originalProduct: product,
-        newCost: item.unitCost,
-        newCostCode: item.costCode,
-        createdBy: updatedBy,
-      );
+      // Cost is different - create a variation. Surface a clear error if the
+      // variation can't be created (e.g. permissions, missing index) instead
+      // of letting it bubble as a generic completion failure.
+      final ProductEntity variation;
+      try {
+        variation = await _productRepository.createVariation(
+          originalProduct: product,
+          newCost: item.unitCost,
+          newCostCode: item.costCode,
+          createdBy: updatedBy,
+        );
+      } catch (e) {
+        throw DatabaseException(
+          message:
+              'Could not spawn variation for ${product.sku} at cost ${item.unitCost}: $e',
+          originalError: e,
+        );
+      }
 
       // Update stock on the new variation
       await _productRepository.updateStock(

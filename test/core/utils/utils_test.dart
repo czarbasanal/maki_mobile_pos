@@ -56,7 +56,11 @@ void main() {
 
     test('generateVariation creates correct variation', () {
       expect(SkuGenerator.generateVariation('ABC123', 1), 'ABC123-1');
-      expect(SkuGenerator.generateVariation('ABC123-1', 2), 'ABC123-2');
+      expect(SkuGenerator.generateVariation('ABC123', 2), 'ABC123-2');
+      // SKUs that embed numeric segments are preserved verbatim — `rs8-001`
+      // is the parent's full SKU, not `rs8` + variation suffix `001`.
+      expect(SkuGenerator.generateVariation('rs8-001', 1), 'rs8-001-1');
+      expect(SkuGenerator.generateVariation('rs8-001', 2), 'rs8-001-2');
     });
 
     test('getNextVariationNumber returns correct number', () {
