@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -139,7 +140,8 @@ class ReceivingScreen extends ConsumerWidget {
         ),
         title: Text(
           receiving.referenceNumber,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: AppTextStyles.productName,
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Column(
