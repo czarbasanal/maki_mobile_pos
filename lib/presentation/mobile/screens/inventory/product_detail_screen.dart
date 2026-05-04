@@ -520,12 +520,17 @@ class ProductDetailScreen extends ConsumerWidget {
               'Created',
               dateFormat.format(product.createdAt),
             ),
+            if (product.createdBy != null && product.createdBy!.isNotEmpty)
+              _UserDetailRow(label: 'Created by', userId: product.createdBy!),
             if (product.updatedAt != null)
               _buildDetailRow(
                 context,
                 'Last Updated',
                 dateFormat.format(product.updatedAt!),
               ),
+            if (product.updatedBy != null && product.updatedBy!.isNotEmpty)
+              _UserDetailRow(
+                  label: 'Updated by', userId: product.updatedBy!),
             if (product.isVariation)
               _buildDetailRow(context, 'Base SKU', product.baseSku ?? ''),
           ],
@@ -932,6 +937,47 @@ class _PriceLine extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Renders a label / user-display-name row on the product details card.
+/// The user document is fetched via [userByIdProvider]; we fall back to a
+/// dash while loading and to the raw UID if the user can't be resolved.
+class _UserDetailRow extends ConsumerWidget {
+  const _UserDetailRow({required this.label, required this.userId});
+
+  final String label;
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final userAsync = ref.watch(userByIdProvider(userId));
+    final value = userAsync.when(
+      data: (user) => user?.displayName ?? userId,
+      loading: () => '—',
+      error: (_, __) => userId,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
