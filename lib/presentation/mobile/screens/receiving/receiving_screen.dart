@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -30,7 +31,10 @@ class ReceivingScreen extends ConsumerWidget {
       body: Column(
         children: [
           // Summary cards
-          _buildSummaryCards(context, ref),
+          ReceivingSummaryCardsRow(
+            onTapDrafts: () => context.push(RoutePaths.receivingDrafts),
+            onTapCompleted: () => context.push(RoutePaths.receivingHistory),
+          ),
 
           // Recent receivings
           Expanded(
@@ -57,96 +61,6 @@ class ReceivingScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryCards(BuildContext context, WidgetRef ref) {
-    final countsAsync = ref.watch(receivingCountsProvider);
-    final mtdCount = ref.watch(monthToDateCompletedReceivingsProvider);
-
-    return countsAsync.when(
-      data: (counts) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildCountCard(
-                'Drafts',
-                '${counts[ReceivingStatus.draft] ?? 0}',
-                CupertinoIcons.square_pencil,
-                Colors.orange,
-                onTap: () => context.push(RoutePaths.receivingDrafts),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildCountCard(
-                'Completed',
-                '${counts[ReceivingStatus.completed] ?? 0}',
-                CupertinoIcons.checkmark_circle,
-                Colors.green,
-                onTap: () => context.push(RoutePaths.receivingHistory),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildCountCard(
-                'This Month',
-                '${mtdCount.valueOrNull ?? 0}',
-                CupertinoIcons.calendar,
-                Colors.blue,
-              ),
-            ),
-          ],
-        ),
-      ),
-      loading: () => const SizedBox(height: 100),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildCountCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color, {
-    VoidCallback? onTap,
-  }) {
-    final card = Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (onTap == null) return card;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: card,
     );
   }
 
