@@ -64,14 +64,20 @@ abstract class AppTheme {
         ),
       ),
 
-      // Elevated Button — flat fill, generous corners, no shadow.
+      // Elevated Button — flat fill, 48 px target height, no shadow.
+      // Vertical padding 12 + 16 px text leaves room within the 48 px
+      // floor enforced by minimumSize; shrinkWrap drops Material's
+      // default invisible 48-dp tap padding so the visual matches the
+      // tap rect.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.lightAccent,
           foregroundColor: AppColors.lightAccentText,
           elevation: 0,
           shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          minimumSize: const Size(0, 48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -79,11 +85,14 @@ abstract class AppTheme {
         ),
       ),
 
-      // Filled Button — same shape as Elevated; Material's default is a
-      // full pill, which clashes with the rest of the button language.
+      // Filled Button — same shape and 48 px height as Elevated;
+      // Material's default is a full pill which clashes with the rest
+      // of the button language.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          minimumSize: const Size(0, 48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -91,13 +100,15 @@ abstract class AppTheme {
         ),
       ),
 
-      // Outlined Button — light-grey hairline border instead of the
-      // accent slate; text still uses accent for readable contrast.
+      // Outlined Button — light-grey hairline border, accent text,
+      // 48 px height to match the rest of the button family.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.lightAccent,
           side: const BorderSide(color: AppColors.lightBorder, width: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          minimumSize: const Size(0, 48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -391,14 +402,17 @@ abstract class AppTheme {
         ),
       ),
 
-      // Elevated Button
+      // Elevated Button — 48 px height (see light-theme block for the
+      // padding + minimumSize + tapTargetSize rationale).
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkAccent,
           foregroundColor: AppColors.darkAccentText,
           elevation: 0,
           shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          minimumSize: const Size(0, 48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -406,11 +420,12 @@ abstract class AppTheme {
         ),
       ),
 
-      // Filled Button — same shape as Elevated; Material's default is a
-      // full pill, which clashes with the rest of the button language.
+      // Filled Button — 48 px height to match Elevated.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          minimumSize: const Size(0, 48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -418,12 +433,15 @@ abstract class AppTheme {
         ),
       ),
 
-      // Outlined Button — light-grey (dark variant) hairline border.
+      // Outlined Button — light-grey (dark variant) hairline border,
+      // 48 px height.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.darkAccent,
           side: const BorderSide(color: AppColors.darkBorder, width: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          minimumSize: const Size(0, 48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
