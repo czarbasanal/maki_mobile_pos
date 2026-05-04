@@ -49,10 +49,8 @@ class ProductListTile extends StatelessWidget {
                   children: [
                     Text(
                       product.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
+                      style: AppTextStyles.productName,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),

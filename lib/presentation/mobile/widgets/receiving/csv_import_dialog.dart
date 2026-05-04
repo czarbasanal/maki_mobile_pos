@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:uuid/uuid.dart';
 
@@ -138,7 +139,12 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
                     final item = _parsedItems![index];
                     return ListTile(
                       dense: true,
-                      title: Text(item.name),
+                      title: Text(
+                        item.name,
+                        style: AppTextStyles.productName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       subtitle: Text(item.sku),
                       trailing: Text('${item.quantity} ${item.unit}'),
                     );

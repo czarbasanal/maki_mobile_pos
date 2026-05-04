@@ -232,7 +232,8 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
                 ),
                 title: Text(
                   product.name,
-                  maxLines: 1,
+                  style: AppTextStyles.productName,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Text(

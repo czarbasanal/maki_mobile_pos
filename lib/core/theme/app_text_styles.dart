@@ -173,6 +173,19 @@ abstract class AppTextStyles {
     letterSpacing: 0.5,
   );
 
+  // ==================== PRODUCT-SPECIFIC STYLES ====================
+
+  /// Shared style for product names rendered in tile/list/grid surfaces
+  /// (inventory, receiving, drafts, top-selling, POS picker, search
+  /// results). Sized smaller than a section heading so long names take up
+  /// less vertical real estate, and intended to be paired with
+  /// `maxLines: 2, overflow: TextOverflow.ellipsis` at every call site.
+  static const TextStyle productName = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    height: 1.25,
+  );
+
   // ==================== UTILITY METHODS ====================
 
   /// Returns the style with a specific color applied.

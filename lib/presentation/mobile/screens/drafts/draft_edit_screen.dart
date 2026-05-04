@@ -229,9 +229,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                 children: [
                   Text(
                     item.name,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.productName,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
