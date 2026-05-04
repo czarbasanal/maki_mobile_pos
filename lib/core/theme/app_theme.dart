@@ -38,6 +38,11 @@ abstract class AppTheme {
         backgroundColor: AppColors.lightBackground,
         foregroundColor: AppColors.lightText,
         elevation: 0,
+        // M3 tints the AppBar with surfaceTintColor when content scrolls
+        // underneath. The visual jump from background to tinted-primary
+        // is jarring on a flat-design scaffold; pin the look to flat.
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         titleTextStyle: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
@@ -377,6 +382,11 @@ abstract class AppTheme {
         backgroundColor: AppColors.darkBackground,
         foregroundColor: AppColors.darkText,
         elevation: 0,
+        // M3 tints the AppBar with surfaceTintColor when content scrolls
+        // underneath. The visual jump from background to tinted-primary
+        // is jarring on a flat-design scaffold; pin the look to flat.
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         titleTextStyle: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
