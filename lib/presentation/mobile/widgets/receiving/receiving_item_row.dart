@@ -133,8 +133,8 @@ class ReceivingItemRow extends ConsumerWidget {
                   children: [
                     Text(
                       item.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                      maxLines: 1,
+                      style: AppTextStyles.productName,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),

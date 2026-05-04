@@ -129,9 +129,8 @@ class _Row extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                  maxLines: 1,
+                  style: AppTextStyles.productName,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(

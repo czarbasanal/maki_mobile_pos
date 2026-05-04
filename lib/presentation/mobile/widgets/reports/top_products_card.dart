@@ -169,8 +169,8 @@ class TopProductsCard extends ConsumerWidget {
                   children: [
                     Text(
                       product.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                      maxLines: 1,
+                      style: AppTextStyles.productName,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(

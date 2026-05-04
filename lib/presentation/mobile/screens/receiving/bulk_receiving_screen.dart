@@ -293,7 +293,12 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                       itemBuilder: (context, index) {
                         final product = options.elementAt(index);
                         return ListTile(
-                          title: Text(product.name),
+                          title: Text(
+                            product.name,
+                            style: AppTextStyles.productName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           subtitle: Text(
                               '${product.sku} • Stock: ${product.quantity}'),
                           trailing: _isAdmin
@@ -771,8 +776,9 @@ class _PriceChangeRow extends StatelessWidget {
         children: [
           Text(
             change.item.name,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: AppTextStyles.productName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           Row(
             children: [

@@ -167,8 +167,8 @@ class DraftListTile extends StatelessWidget {
                     Expanded(
                       child: Text(
                         item.name,
-                        style: theme.textTheme.bodySmall,
-                        maxLines: 1,
+                        style: AppTextStyles.productName,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

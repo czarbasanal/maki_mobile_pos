@@ -61,10 +61,8 @@ class CartItemTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
+                      style: AppTextStyles.productName,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

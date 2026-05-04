@@ -177,7 +177,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                   ),
                 ),
               ),
-              title: Text(product.name),
+              title: Text(
+                product.name,
+                style: AppTextStyles.productName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: Text(
                 '${product.sku} • ${AppConstants.currencySymbol}${product.price.toStringAsFixed(2)}',
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
