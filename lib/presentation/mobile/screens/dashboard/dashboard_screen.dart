@@ -227,7 +227,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
               // Sales summary section - all roles can see today's sales
               _buildSectionHeader('Today\'s Sales'),
               const SizedBox(height: 12),
-              SalesSummarySection(showProfit: _isAdmin),
+              SalesSummarySection(isAdmin: _isAdmin),
 
               const SizedBox(height: 24),
 
