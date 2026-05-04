@@ -231,13 +231,12 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
               const SizedBox(height: 24),
 
-              // Inventory summary - all roles can view inventory now
-              if (_canViewInventory) ...[
-                _buildSectionHeader('Inventory Status'),
-                const SizedBox(height: 12),
-                const InventoryStatusWidget(),
-                const SizedBox(height: 24),
-              ],
+              // Top Selling Items Today — replaced Inventory Status per
+              // the May 2026 roadmap. Visible to all roles.
+              _buildSectionHeader('Top Selling Items Today'),
+              const SizedBox(height: 12),
+              const TopSellingTodayWidget(),
+              const SizedBox(height: 24),
 
               // Recent sales header
               _buildSectionHeader(
