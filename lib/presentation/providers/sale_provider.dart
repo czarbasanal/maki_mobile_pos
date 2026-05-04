@@ -124,17 +124,17 @@ final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   return result.data!;
 });
 
-/// Sales summary for the current week-to-date (Monday → now). Drives the
+/// Sales summary for the current month-to-date (1st → now). Drives the
 /// dashboard's Avg Daily Sales card; the SalesSummary itself is reused for
-/// any other week-scoped totals.
-final weekToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
+/// any other month-scoped totals.
+final monthToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
-  final w = weekToDate(DateTime.now());
+  final m = monthToDate(DateTime.now());
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
-        startDate: w.start,
-        endDate: w.end,
+        startDate: m.start,
+        endDate: m.end,
       );
   if (!result.success) {
     throw AppExceptionWrapper(
@@ -144,14 +144,13 @@ final weekToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   return result.data!;
 });
 
-/// Average daily gross sales for the current week so far.
+/// Average daily gross sales for the current month so far.
 ///
-/// Derived from [weekToDateSummaryProvider] — gross amount divided by the
-/// number of days elapsed in the current Monday→Sunday week. Recomputes
-/// daily as the day count advances.
+/// Derived from [monthToDateSummaryProvider] — month-to-date gross amount
+/// divided by the day-of-month. Recomputes daily as the day count advances.
 final avgDailySalesProvider = Provider<AsyncValue<double>>((ref) {
-  final summaryAsync = ref.watch(weekToDateSummaryProvider);
-  final daysElapsed = weekToDate(DateTime.now()).daysElapsed;
+  final summaryAsync = ref.watch(monthToDateSummaryProvider);
+  final daysElapsed = monthToDate(DateTime.now()).daysElapsed;
   return summaryAsync.whenData(
     (summary) => avgDailyFromGross(summary.grossAmount, daysElapsed),
   );

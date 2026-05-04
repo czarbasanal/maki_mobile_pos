@@ -54,6 +54,45 @@ void main() {
     });
   });
 
+  group('monthToDate', () {
+    test('1st of the month — daysElapsed 1, start equals today midnight', () {
+      final now = DateTime(2026, 5, 1, 14, 30);
+      final m = monthToDate(now);
+      expect(m.daysElapsed, 1);
+      expect(m.start, DateTime(2026, 5, 1));
+      expect(m.end, now);
+    });
+
+    test('mid-month — daysElapsed equals day-of-month', () {
+      final now = DateTime(2026, 5, 15, 9, 0);
+      final m = monthToDate(now);
+      expect(m.daysElapsed, 15);
+      expect(m.start, DateTime(2026, 5, 1));
+    });
+
+    test('last day of a 31-day month — daysElapsed 31', () {
+      final now = DateTime(2026, 5, 31, 23, 59);
+      final m = monthToDate(now);
+      expect(m.daysElapsed, 31);
+      expect(m.start, DateTime(2026, 5, 1));
+    });
+
+    test('last day of February (non-leap) — daysElapsed 28', () {
+      final now = DateTime(2026, 2, 28, 12, 0);
+      final m = monthToDate(now);
+      expect(m.daysElapsed, 28);
+      expect(m.start, DateTime(2026, 2, 1));
+    });
+
+    test('start has hour/minute zeroed even when now has clock time', () {
+      final now = DateTime(2026, 5, 7, 23, 45, 12);
+      final m = monthToDate(now);
+      expect(m.start.hour, 0);
+      expect(m.start.minute, 0);
+      expect(m.start.second, 0);
+    });
+  });
+
   group('avgDailyFromGross', () {
     test('divides gross by days elapsed', () {
       expect(avgDailyFromGross(7000, 7), 1000);
