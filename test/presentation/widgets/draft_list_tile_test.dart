@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -93,7 +94,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.tap(find.byIcon(CupertinoIcons.trash));
       await tester.pump();
 
       expect(deleteTapped, true);

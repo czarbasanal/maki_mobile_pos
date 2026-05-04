@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/password_dialog.dart';
@@ -84,14 +85,14 @@ void main() {
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
-      // Initially password is obscured
-      expect(find.byIcon(Icons.visibility), findsOneWidget);
+      // Initially password is obscured.
+      expect(find.byIcon(CupertinoIcons.eye), findsOneWidget);
 
-      // Tap to show password
-      await tester.tap(find.byIcon(Icons.visibility));
+      // Tap to show password.
+      await tester.tap(find.byIcon(CupertinoIcons.eye));
       await tester.pump();
 
-      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.eye_slash), findsOneWidget);
     });
   });
 }

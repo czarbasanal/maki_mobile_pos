@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -54,7 +55,7 @@ void main() {
       );
 
       expect(find.text('NBF'), findsOneWidget);
-      expect(find.byIcon(Icons.lock), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.lock), findsOneWidget);
     });
 
     testWidgets('shows actual cost when showCost is true', (tester) async {
@@ -90,7 +91,11 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.warning), findsOneWidget);
+      // Low-stock products show the triangle indicator (per _stockStyle).
+      expect(
+        find.byIcon(CupertinoIcons.exclamationmark_triangle),
+        findsOneWidget,
+      );
     });
   });
 }
