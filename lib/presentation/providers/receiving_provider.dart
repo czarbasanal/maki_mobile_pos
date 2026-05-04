@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/receiving_month.dart';
 import 'package:maki_mobile_pos/data/repositories/receiving_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -72,15 +73,21 @@ final receivingCountsProvider =
 final monthToDateCompletedReceivingsProvider =
     Provider<AsyncValue<int>>((ref) {
   final all = ref.watch(recentReceivingsProvider);
-  return all.whenData((list) {
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month);
-    return list.where((r) {
-      if (r.status != ReceivingStatus.completed) return false;
-      final ts = r.completedAt ?? r.createdAt;
-      return !ts.isBefore(monthStart);
-    }).length;
-  });
+  return all.whenData(
+    (list) => monthToDateCompleted(list, DateTime.now()).length,
+  );
+});
+
+/// Month-to-date peso total received — sum of [totalCost] across the
+/// same set of completed receivings counted by
+/// [monthToDateCompletedReceivingsProvider]. Drives the receiving
+/// dashboard's "Total Received" card.
+final monthToDateReceivingTotalProvider =
+    Provider<AsyncValue<double>>((ref) {
+  final all = ref.watch(recentReceivingsProvider);
+  return all.whenData(
+    (list) => sumTotalCost(monthToDateCompleted(list, DateTime.now())),
+  );
 });
 
 // ==================== CURRENT RECEIVING STATE ====================
