@@ -184,46 +184,60 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
           ],
         ),
         body: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: _handleRefresh,
-            child: _buildDetailedView(),
+          child: Column(
+            children: [
+              // Pinned header — date strip + role-based QuickActions stay
+              // visible while the user scrolls the dashboard sections below.
+              _buildPinnedHeader(),
+              // Scrollable region — Today's Sales onward.
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  child: _buildScrollableSections(),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDetailedView() {
+  Widget _buildPinnedHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildDateHeader(),
+          const SizedBox(height: 16),
+          QuickActions(
+            onNewSale: () => context.go(RoutePaths.pos),
+            onReceiving: _canAccessReceiving
+                ? () => context.go(RoutePaths.receiving)
+                : null,
+            onInventory: _canViewInventory
+                ? () => context.go(RoutePaths.inventory)
+                : null,
+            onExpenses: _canViewExpenses
+                ? () => context.go(RoutePaths.expenses)
+                : null,
+            onReports: _canViewReports
+                ? () => context.go(RoutePaths.reports)
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScrollableSections() {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // Date display
-              _buildDateHeader(),
-
-              const SizedBox(height: 16),
-
-              // Quick actions - role-based
-              QuickActions(
-                onNewSale: () => context.go(RoutePaths.pos),
-                onReceiving: _canAccessReceiving
-                    ? () => context.go(RoutePaths.receiving)
-                    : null,
-                onInventory: _canViewInventory
-                    ? () => context.go(RoutePaths.inventory)
-                    : null,
-                onExpenses: _canViewExpenses
-                    ? () => context.go(RoutePaths.expenses)
-                    : null,
-                onReports: _canViewReports
-                    ? () => context.go(RoutePaths.reports)
-                    : null,
-              ),
-
-              const SizedBox(height: 24),
-
               // Sales summary section - all roles can see today's sales
               _buildSectionHeader('Today\'s Sales'),
               const SizedBox(height: 12),
