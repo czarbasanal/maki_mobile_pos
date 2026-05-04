@@ -29,7 +29,7 @@ SalesSummary _summary({
 
 Future<void> _pump(
   WidgetTester tester, {
-  required bool showProfit,
+  required bool isAdmin,
   required SalesSummary summary,
   required AsyncValue<double> avgDaily,
 }) {
@@ -41,7 +41,7 @@ Future<void> _pump(
       ],
       child: MaterialApp(
         home: Scaffold(
-          body: SalesSummarySection(showProfit: showProfit),
+          body: SalesSummarySection(isAdmin: isAdmin),
         ),
       ),
     ),
@@ -50,18 +50,18 @@ Future<void> _pump(
 
 void main() {
   group('SalesSummarySection', () {
-    testWidgets('non-admin sees Gross Sales and Avg Daily Sales only',
+    testWidgets('non-admin sees Gross Sales only — no admin-only metrics',
         (tester) async {
       await _pump(
         tester,
-        showProfit: false,
+        isAdmin: false,
         summary: _summary(gross: 5000),
         avgDaily: const AsyncValue.data(3000),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Gross Sales'), findsOneWidget);
-      expect(find.text('Avg Daily Sales'), findsOneWidget);
+      expect(find.text('Avg Daily Sales'), findsNothing);
       expect(find.text('Total COGS'), findsNothing);
       expect(find.text('Gross Profit'), findsNothing);
     });
@@ -69,7 +69,7 @@ void main() {
     testWidgets('admin sees all four cards', (tester) async {
       await _pump(
         tester,
-        showProfit: true,
+        isAdmin: true,
         summary: _summary(),
         avgDaily: const AsyncValue.data(1500),
       );
@@ -85,7 +85,7 @@ void main() {
         (tester) async {
       await _pump(
         tester,
-        showProfit: false,
+        isAdmin: false,
         summary: _summary(gross: 5000, net: 4500, discounts: 500),
         avgDaily: const AsyncValue.data(0),
       );
@@ -97,10 +97,11 @@ void main() {
       expect(find.textContaining('discount'), findsOneWidget);
     });
 
-    testWidgets('Avg Daily Sales shows dash while loading', (tester) async {
+    testWidgets('Avg Daily Sales shows dash while loading (admin)',
+        (tester) async {
       await _pump(
         tester,
-        showProfit: false,
+        isAdmin: true,
         summary: _summary(),
         avgDaily: const AsyncValue.loading(),
       );
@@ -114,7 +115,7 @@ void main() {
       // Use a sub-1000 value so the formatter doesn't apply the K suffix.
       await _pump(
         tester,
-        showProfit: true,
+        isAdmin: true,
         summary: _summary(cost: 234.56),
         avgDaily: const AsyncValue.data(0),
       );
@@ -141,7 +142,7 @@ void main() {
           ],
           child: const MaterialApp(
             home: Scaffold(
-              body: SalesSummarySection(showProfit: false),
+              body: SalesSummarySection(isAdmin: false),
             ),
           ),
         ),

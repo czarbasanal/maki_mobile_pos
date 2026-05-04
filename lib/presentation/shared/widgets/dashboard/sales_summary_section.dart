@@ -9,17 +9,19 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_ca
 /// Today's Sales card row for the mobile admin dashboard.
 ///
 /// Layout:
-///   Row 1 (all roles): Gross Sales | Avg Daily Sales (this week)
-///   Row 2 (admin only): Total COGS | Gross Profit
+///   Row 1 admin: Gross Sales | Avg Daily Sales (month-to-date)
+///   Row 1 staff/cashier: Gross Sales (full width — Avg Daily is admin-only)
+///   Row 2 admin only: Total COGS | Gross Profit
 ///
-/// Avg Daily Sales is sourced from a separate week-to-date provider, so a
+/// Avg Daily Sales is sourced from a separate month-to-date provider, so a
 /// dash is shown while it loads even if today's summary is already in.
 class SalesSummarySection extends ConsumerWidget {
-  /// When true, shows the second row (Total COGS + Gross Profit).
-  /// Cost data is admin-only.
-  final bool showProfit;
+  /// When true, shows the admin-only metrics: Avg Daily Sales (row 1) and
+  /// the second row (Total COGS + Gross Profit). Staff and cashier see a
+  /// single Gross Sales card.
+  final bool isAdmin;
 
-  const SalesSummarySection({super.key, required this.showProfit});
+  const SalesSummarySection({super.key, required this.isAdmin});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,38 +31,40 @@ class SalesSummarySection extends ConsumerWidget {
     return summaryAsync.when(
       data: (summary) {
         final avgDaily = avgDailyAsync.valueOrNull;
+        final grossCard = SummaryCard(
+          title: 'Gross Sales',
+          value:
+              '${AppConstants.currencySymbol}${_formatNumber(summary.grossAmount)}',
+          icon: AppIcons.peso,
+          subtitle: summary.totalDiscounts > 0
+              ? '${AppConstants.currencySymbol}${_formatNumber(summary.totalDiscounts)} discount'
+              : null,
+        );
+
         return Column(
           children: [
             IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: SummaryCard(
-                      title: 'Gross Sales',
-                      value:
-                          '${AppConstants.currencySymbol}${_formatNumber(summary.grossAmount)}',
-                      icon: AppIcons.peso,
-                      subtitle: summary.totalDiscounts > 0
-                          ? '${AppConstants.currencySymbol}${_formatNumber(summary.totalDiscounts)} discount'
-                          : null,
+                  Expanded(child: grossCard),
+                  if (isAdmin) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SummaryCard(
+                        title: 'Avg Daily Sales',
+                        value: avgDaily != null
+                            ? '${AppConstants.currencySymbol}${_formatNumber(avgDaily)}'
+                            : '—',
+                        icon: CupertinoIcons.chart_bar,
+                        subtitle: 'this month',
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SummaryCard(
-                      title: 'Avg Daily Sales',
-                      value: avgDaily != null
-                          ? '${AppConstants.currencySymbol}${_formatNumber(avgDaily)}'
-                          : '—',
-                      icon: CupertinoIcons.chart_bar,
-                      subtitle: 'this week',
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
-            if (showProfit) ...[
+            if (isAdmin) ...[
               const SizedBox(height: 12),
               IntrinsicHeight(
                 child: Row(
