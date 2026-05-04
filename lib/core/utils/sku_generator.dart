@@ -37,19 +37,21 @@ abstract class SkuGenerator {
 
   /// Generates a variation SKU from an existing SKU.
   ///
-  /// Used when receiving products with same SKU but different cost.
-  /// Appends a variation number to the original SKU.
+  /// Used when receiving products with same SKU but different cost. Appends a
+  /// variation number to the supplied base SKU verbatim — no string stripping,
+  /// because SKUs frequently embed numeric segments separated by hyphens (e.g.
+  /// `rs8-001`) that must NOT be treated as variation suffixes. Callers are
+  /// responsible for passing the parent's [baseSku] field, falling back to the
+  /// parent's [sku] when [baseSku] is null.
   ///
   /// Example:
   /// ```dart
-  /// SkuGenerator.generateVariation('ABC123', 1) // Returns "ABC123-1"
-  /// SkuGenerator.generateVariation('ABC123', 2) // Returns "ABC123-2"
-  /// SkuGenerator.generateVariation('ABC123-1', 2) // Returns "ABC123-2"
+  /// SkuGenerator.generateVariation('ABC123', 1)   // Returns "ABC123-1"
+  /// SkuGenerator.generateVariation('rs8-001', 1)  // Returns "rs8-001-1"
+  /// SkuGenerator.generateVariation('rs8-001', 2)  // Returns "rs8-001-2"
   /// ```
   static String generateVariation(String baseSku, int variationNumber) {
-    // Remove any existing variation number
-    final cleanSku = removeVariationSuffix(baseSku);
-    return '$cleanSku${AppConstants.skuVariationSeparator}$variationNumber';
+    return '$baseSku${AppConstants.skuVariationSeparator}$variationNumber';
   }
 
   /// Gets the next variation number for a given SKU.

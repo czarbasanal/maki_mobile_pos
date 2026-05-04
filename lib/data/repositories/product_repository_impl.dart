@@ -44,14 +44,20 @@ class ProductRepositoryImpl implements ProductRepository {
       final docRef =
           await _productsRef.add(productModel.toCreateMap(createdBy));
 
-      // Record initial price history
-      await recordPriceChange(
-        productId: docRef.id,
-        price: product.price,
-        cost: product.cost,
-        changedBy: createdBy,
-        reason: 'Initial price',
-      );
+      // Initial price history — best-effort. If the price_history subcollection
+      // write fails (rules / transient), the product itself has already been
+      // created and we'd rather return the new doc than abort and orphan it.
+      try {
+        await recordPriceChange(
+          productId: docRef.id,
+          price: product.price,
+          cost: product.cost,
+          changedBy: createdBy,
+          reason: 'Initial price',
+        );
+      } catch (_) {
+        // Swallowed by design.
+      }
 
       return product.copyWith(id: docRef.id);
     } on FirebaseException catch (e) {
@@ -466,22 +472,27 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<List<ProductEntity>> getSkuVariations(String baseSku) async {
+    // Returns the parent (if found) plus every variation that points back to
+    // it via the baseSku field. We explicitly avoid SKU prefix matching \u2014
+    // SKUs like `rs8-001` would otherwise be mis-parsed as `rs8` + variation
+    // suffix `001` and pollute the result set.
     try {
-      // Get original and all variations
-      final cleanBase = SkuGenerator.removeVariationSuffix(baseSku);
-
-      final snapshot = await _productsRef
+      final variationsFuture = _productsRef
           .where('isActive', isEqualTo: true)
-          .orderBy('sku')
-          .startAt([cleanBase]).endAt(['$cleanBase\uf8ff']).get();
+          .where('baseSku', isEqualTo: baseSku)
+          .get();
+      final parentFuture = _productsRef
+          .where('isActive', isEqualTo: true)
+          .where('sku', isEqualTo: baseSku)
+          .limit(1)
+          .get();
 
-      return snapshot.docs
-          .map((doc) => ProductModel.fromFirestore(doc).toEntity())
-          .where((p) =>
-              p.sku == cleanBase ||
-              p.baseSku == cleanBase ||
-              p.sku.startsWith('$cleanBase-'))
-          .toList();
+      final results = await Future.wait([variationsFuture, parentFuture]);
+
+      return [
+        ...results[0].docs,
+        ...results[1].docs,
+      ].map((doc) => ProductModel.fromFirestore(doc).toEntity()).toList();
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to get SKU variations: ${e.message}',
@@ -528,10 +539,18 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<int> getNextVariationNumber(String baseSku) async {
-    final cleanBase = SkuGenerator.removeVariationSuffix(baseSku);
-    final variations = await getSkuVariations(cleanBase);
-    final existingSkus = variations.map((p) => p.sku).toList();
-    return SkuGenerator.getNextVariationNumber(cleanBase, existingSkus);
+    // Derive from the structured `variationNumber` field rather than parsing
+    // SKU strings — embedded numeric segments (e.g. `rs8-001`) make string
+    // parsing unreliable.
+    final snapshot = await _productsRef
+        .where('baseSku', isEqualTo: baseSku)
+        .get();
+    var maxVariation = 0;
+    for (final doc in snapshot.docs) {
+      final n = (doc.data()['variationNumber'] as num?)?.toInt() ?? 0;
+      if (n > maxVariation) maxVariation = n;
+    }
+    return maxVariation + 1;
   }
 
   // ==================== PRICE HISTORY ====================
