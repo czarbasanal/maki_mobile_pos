@@ -7,6 +7,8 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
+    show PriceHistoryEntry;
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:intl/intl.dart';
@@ -116,6 +118,10 @@ class ProductDetailScreen extends ConsumerWidget {
           _buildStockCard(context, product),
           const SizedBox(height: AppSpacing.md),
           _buildPricingCard(context, product, inventoryState.showCost),
+          if (inventoryState.showCost) ...[
+            const SizedBox(height: AppSpacing.md),
+            _PriceHistoryCard(productId: product.id),
+          ],
           const SizedBox(height: AppSpacing.md),
           _buildDetailsCard(context, product, dateFormat),
           if (product.supplierName != null) ...[
@@ -690,6 +696,244 @@ class ProductDetailScreen extends ConsumerWidget {
     'In Stock',
     CupertinoIcons.checkmark_circle,
   );
+}
+
+/// Price history card — shows every recorded change to selling price or cost
+/// for this product, newest first. Reuses [priceHistoryProvider] which reads
+/// the `products/{id}/price_history` subcollection. Gated on the cost toggle
+/// upstream (admin-only).
+class _PriceHistoryCard extends ConsumerWidget {
+  const _PriceHistoryCard({required this.productId});
+  final String productId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(priceHistoryProvider(productId));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg - 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _CardHeader(
+              icon: CupertinoIcons.clock,
+              title: 'Price History',
+            ),
+            const SizedBox(height: AppSpacing.md),
+            historyAsync.when(
+              data: (entries) {
+                if (entries.isEmpty) {
+                  return _buildEmptyState(context);
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < entries.length; i++)
+                      _PriceHistoryRow(
+                        entry: entries[i],
+                        // entries are newest-first; the "previous" entry for
+                        // diffing is the next one in the list (older).
+                        previous:
+                            i + 1 < entries.length ? entries[i + 1] : null,
+                        isFirst: i == 0,
+                      ),
+                  ],
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Text(
+                  'Could not load price history',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Text(
+        'No price changes yet.',
+        style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+      ),
+    );
+  }
+}
+
+class _PriceHistoryRow extends ConsumerWidget {
+  const _PriceHistoryRow({
+    required this.entry,
+    required this.previous,
+    required this.isFirst,
+  });
+
+  final PriceHistoryEntry entry;
+  final PriceHistoryEntry? previous;
+  final bool isFirst;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final dateFormat = DateFormat('MMM d, y • h:mm a');
+
+    final priceDelta = previous == null ? 0.0 : entry.price - previous!.price;
+    final costDelta = previous == null ? 0.0 : entry.cost - previous!.cost;
+
+    final userAsync = ref.watch(userByIdProvider(entry.changedBy));
+    final who = userAsync.whenOrNull(
+          data: (u) => u?.displayName,
+        ) ??
+        '—';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm + 2),
+      decoration: isFirst
+          ? null
+          : BoxDecoration(
+              border: Border(top: BorderSide(color: hairline)),
+            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: _PriceLine(
+                  label: 'Price',
+                  value: entry.price,
+                  delta: priceDelta,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _PriceLine(
+                  label: 'Cost',
+                  value: entry.cost,
+                  delta: costDelta,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                dateFormat.format(entry.changedAt),
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
+              Text('•',
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted)),
+              Text(
+                who,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: muted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (entry.reason != null && entry.reason!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: hairline),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    entry.reason!,
+                    style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                  ),
+                ),
+            ],
+          ),
+          if (entry.note != null && entry.note!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              entry.note!,
+              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One labelled value with an old→new directional arrow when it changed.
+class _PriceLine extends StatelessWidget {
+  const _PriceLine({
+    required this.label,
+    required this.value,
+    required this.delta,
+  });
+
+  final String label;
+  final double value;
+  final double delta;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final changed = delta.abs() > 0.01;
+    final up = delta > 0;
+    final arrowColor =
+        !changed ? muted : (up ? AppColors.successDark : AppColors.errorDark);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$label ',
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
+        ),
+        Text(
+          '${AppConstants.currencySymbol}${value.toStringAsFixed(2)}',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (changed) ...[
+          const SizedBox(width: 4),
+          Icon(
+            up ? CupertinoIcons.arrow_up : CupertinoIcons.arrow_down,
+            size: 12,
+            color: arrowColor,
+          ),
+          Text(
+            '${AppConstants.currencySymbol}${delta.abs().toStringAsFixed(2)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: arrowColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _CardHeader extends StatelessWidget {

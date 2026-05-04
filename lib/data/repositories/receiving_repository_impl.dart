@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/data/models/price_history_model.dart';
 import 'package:maki_mobile_pos/data/models/receiving_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
@@ -172,7 +173,11 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
       final processedItems = <ReceivingItemEntity>[];
 
       for (final item in receiving.items) {
-        final processedItem = await _processReceivingItem(item, completedBy);
+        final processedItem = await _processReceivingItem(
+          item,
+          completedBy,
+          receivingId: receiving.id,
+        );
         processedItems.add(processedItem);
       }
 
@@ -203,8 +208,9 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
   /// - Recording price history
   Future<ReceivingItemEntity> _processReceivingItem(
     ReceivingItemEntity item,
-    String updatedBy,
-  ) async {
+    String updatedBy, {
+    required String receivingId,
+  }) async {
     if (item.productId == null) {
       // New product - would need to create it first
       // For now, return as-is (product creation is separate flow)
@@ -236,6 +242,22 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
               'Could not spawn variation for ${product.sku} at cost ${item.unitCost}: $e',
           originalError: e,
         );
+      }
+
+      // Tag the variation's price history with the receiving reason — the
+      // initial entry written by createProduct is generic, this one records
+      // *why* the variation exists. Best-effort.
+      try {
+        await _productRepository.recordPriceChange(
+          productId: variation.id,
+          price: variation.price,
+          cost: variation.cost,
+          changedBy: updatedBy,
+          reason: PriceChangeReason.receiving,
+          note: 'Spawned from ${product.sku} • receiving $receivingId',
+        );
+      } catch (_) {
+        // History is best-effort.
       }
 
       // Update stock on the new variation

@@ -352,6 +352,10 @@ class ProductRepositoryImpl implements ProductRepository {
     required String updatedBy,
   }) async {
     try {
+      // Capture prior cost/price before the update so we can detect a change
+      // and append a price_history entry below.
+      final prior = await getProductById(product.id);
+
       final productModel = ProductModel.fromEntity(product);
       await _productsRef
           .doc(product.id)
@@ -362,6 +366,30 @@ class ProductRepositoryImpl implements ProductRepository {
         throw const DatabaseException(
             message: 'Product not found after update');
       }
+
+      if (prior != null) {
+        final costChanged = (prior.cost - updated.cost).abs() > 0.01;
+        final priceChanged = (prior.price - updated.price).abs() > 0.01;
+        if (costChanged || priceChanged) {
+          final reason = (costChanged && priceChanged)
+              ? 'Price + cost update'
+              : (costChanged
+                  ? PriceChangeReason.costUpdate
+                  : PriceChangeReason.priceUpdate);
+          try {
+            await recordPriceChange(
+              productId: updated.id,
+              price: updated.price,
+              cost: updated.cost,
+              changedBy: updatedBy,
+              reason: reason,
+            );
+          } catch (_) {
+            // History is best-effort — don't fail the product update.
+          }
+        }
+      }
+
       return updated;
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -562,6 +590,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required double cost,
     required String changedBy,
     String? reason,
+    String? note,
   }) async {
     try {
       final historyRef = _productsRef
@@ -574,6 +603,7 @@ class ProductRepositoryImpl implements ProductRepository {
         'changedAt': FieldValue.serverTimestamp(),
         'changedBy': changedBy,
         'reason': reason,
+        'note': note,
       });
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -607,6 +637,7 @@ class ProductRepositoryImpl implements ProductRepository {
               (data['changedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
           changedBy: data['changedBy'] as String? ?? '',
           reason: data['reason'] as String?,
+          note: data['note'] as String?,
         );
       }).toList();
     } on FirebaseException catch (e) {

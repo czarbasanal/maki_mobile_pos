@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Row displaying a receiving line item.
-class ReceivingItemRow extends StatelessWidget {
+class ReceivingItemRow extends ConsumerWidget {
   final ReceivingItemEntity item;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onRemove;
@@ -31,8 +34,8 @@ class ReceivingItemRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final card = _buildCard(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final card = _buildCard(context, ref);
     if (readOnly) return card;
 
     return Dismissible(
@@ -49,8 +52,52 @@ class ReceivingItemRow extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(BuildContext context) {
+  Widget _buildCard(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+
+    // Diff badge — when the line's unit cost differs from the parent product's
+    // current cost, surface the delta inline. In edit mode it warns the user
+    // that completion will spawn a SKU variation. In read-only (history
+    // detail), it's only rendered for lines that already became a variation.
+    Widget? costDiffBadge;
+    final showDiffBadge = (!readOnly || item.isNewVariation);
+    if (showDiffBadge && item.productId != null) {
+      final productAsync = ref.watch(productByIdProvider(item.productId!));
+      final product = productAsync.asData?.value;
+      if (product != null) {
+        final delta = item.unitCost - product.cost;
+        if (delta.abs() > 0.01) {
+          final up = delta > 0;
+          final color = up ? AppColors.errorDark : AppColors.successDark;
+          costDiffBadge = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              border: Border.all(color: color),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  up ? CupertinoIcons.arrow_up : CupertinoIcons.arrow_down,
+                  size: 11,
+                  color: color,
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  '${AppConstants.currencySymbol}${delta.abs().toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    }
     return Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Padding(
@@ -103,12 +150,23 @@ class ReceivingItemRow extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '${AppConstants.currencySymbol}${item.unitCost.toStringAsFixed(2)} / ${item.unit}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.primary,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '${AppConstants.currencySymbol}${item.unitCost.toStringAsFixed(2)} / ${item.unit}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.primary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (costDiffBadge != null) ...[
+                          const SizedBox(width: 6),
+                          costDiffBadge,
+                        ],
+                      ],
                     ),
                   ],
                 ),
