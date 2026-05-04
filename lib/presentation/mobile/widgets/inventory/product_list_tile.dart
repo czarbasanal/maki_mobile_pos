@@ -9,20 +9,19 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 /// Stock state is the only colour-bearing element on the tile —
 /// success / warning / error tokens via [AppColors] communicate
 /// in / low / out of stock. Everything else (category, price, cost,
-/// margin, cost code, adjust button) sits in muted neutrals so the
-/// row scans by structure first and color second.
+/// margin, cost code) sits in muted neutrals so the row scans by
+/// structure first and color second. Stock adjustment lives on the
+/// product detail screen — tap the tile to reach it.
 class ProductListTile extends StatelessWidget {
   final ProductEntity product;
   final bool showCost;
   final VoidCallback onTap;
-  final VoidCallback onStockAdjust;
 
   const ProductListTile({
     super.key,
     required this.product,
     required this.showCost,
     required this.onTap,
-    required this.onStockAdjust,
   });
 
   @override
@@ -98,14 +97,7 @@ class ProductListTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  _StockBadge(product: product),
-                  const SizedBox(height: AppSpacing.sm),
-                  _AdjustButton(onTap: onStockAdjust),
-                ],
-              ),
+              _StockBadge(product: product),
             ],
           ),
         ),
@@ -302,42 +294,6 @@ class _StockBadge extends StatelessWidget {
             style: TextStyle(fontSize: 10, color: color),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AdjustButton extends StatelessWidget {
-  const _AdjustButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-    final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          border: Border.all(color: hairline),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(CupertinoIcons.pencil, size: 14, color: muted),
-            const SizedBox(width: 4),
-            Text(
-              'Adjust',
-              style: TextStyle(fontSize: 12, color: muted),
-            ),
-          ],
-        ),
       ),
     );
   }
