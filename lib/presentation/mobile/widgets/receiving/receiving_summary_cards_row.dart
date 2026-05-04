@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
@@ -28,6 +29,8 @@ class ReceivingSummaryCardsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final countsAsync = ref.watch(receivingCountsProvider);
     final mtdTotal = ref.watch(monthToDateReceivingTotalProvider);
+    final isAdmin =
+        ref.watch(currentUserProvider).valueOrNull?.role == UserRole.admin;
 
     // Surface a visible error chip rather than collapsing the row —
     // the previous SizedBox.shrink path silently hid all three cards
@@ -71,15 +74,17 @@ class ReceivingSummaryCardsRow extends ConsumerWidget {
               onTap: onTapCompleted,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _CountCard(
-              label: 'Total Received',
-              value: totalValue,
-              icon: CupertinoIcons.calendar,
-              color: Colors.blue,
+          if (isAdmin) ...[
+            const SizedBox(width: 12),
+            Expanded(
+              child: _CountCard(
+                label: 'Total Received',
+                value: totalValue,
+                icon: CupertinoIcons.calendar,
+                color: Colors.blue,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

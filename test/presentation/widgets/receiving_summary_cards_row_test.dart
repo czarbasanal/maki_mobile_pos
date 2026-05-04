@@ -3,10 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_summary_cards_row.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
+
+UserEntity _adminUser() => UserEntity(
+      id: 'admin-1',
+      email: 'admin@test',
+      displayName: 'Admin',
+      role: UserRole.admin,
+      isActive: true,
+      createdAt: DateTime(2025, 1, 1),
+    );
 
 ReceivingEntity _completed({
   required String id,
@@ -42,6 +53,9 @@ Future<void> _pump(
         recentReceivingsProvider.overrideWith(
           (ref) => recentStream ?? Stream.value(recent),
         ),
+        // The "Total Received" card is admin-only — give the test an
+        // admin user so all three cards render.
+        currentUserProvider.overrideWith((ref) => Stream.value(_adminUser())),
       ],
       child: const MaterialApp(
         home: Scaffold(body: ReceivingSummaryCardsRow()),
@@ -197,6 +211,8 @@ void main() {
             ),
             recentReceivingsProvider.overrideWith((ref) =>
                 Stream.value(<ReceivingEntity>[])),
+            currentUserProvider
+                .overrideWith((ref) => Stream.value(_adminUser())),
           ],
           child: MaterialApp(
             home: Scaffold(

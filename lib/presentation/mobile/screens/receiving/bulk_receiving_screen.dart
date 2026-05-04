@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -37,6 +38,9 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   final _quantityController = TextEditingController(text: '1');
   final _costController = TextEditingController();
   ProductEntity? _selectedProduct;
+
+  bool get _isAdmin =>
+      ref.watch(currentUserProvider).valueOrNull?.role == UserRole.admin;
 
   @override
   void initState() {
@@ -292,9 +296,11 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                           title: Text(product.name),
                           subtitle: Text(
                               '${product.sku} • Stock: ${product.quantity}'),
-                          trailing: Text(
-                            '${AppConstants.currencySymbol}${product.cost.toStringAsFixed(2)}',
-                          ),
+                          trailing: _isAdmin
+                              ? Text(
+                                  '${AppConstants.currencySymbol}${product.cost.toStringAsFixed(2)}',
+                                )
+                              : null,
                           onTap: () => onSelected(product),
                         );
                       },
@@ -328,23 +334,25 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: _costController,
-                    decoration: const InputDecoration(
-                      labelText: 'Unit Cost',
-                      prefixText: '₱ ',
-                      border: OutlineInputBorder(),
+                if (_isAdmin) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      controller: _costController,
+                      decoration: const InputDecoration(
+                        labelText: 'Unit Cost',
+                        prefixText: '₱ ',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,2}')),
+                      ],
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d{0,2}')),
-                    ],
                   ),
-                ),
+                ],
                 const SizedBox(width: 16),
                 FilledButton(
                   onPressed: _addItem,
@@ -352,8 +360,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                 ),
               ],
             ),
-            // Cost difference warning
-            if (_costController.text.isNotEmpty) ...[
+            // Cost difference warning — admin only.
+            if (_isAdmin && _costController.text.isNotEmpty) ...[
               const SizedBox(height: 8),
               _buildCostWarning(),
             ],
@@ -512,22 +520,23 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Total Cost',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    Text(
-                      '${AppConstants.currencySymbol}${state.totalCost.toStringAsFixed(2)}',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
+                if (_isAdmin)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        'Total Cost',
+                        style: TextStyle(fontSize: 12),
                       ),
-                    ),
-                  ],
-                ),
+                      Text(
+                        '${AppConstants.currencySymbol}${state.totalCost.toStringAsFixed(2)}',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
 
@@ -664,7 +673,9 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
               children: [
                 if (changes.isEmpty)
                   Text(
-                    'No price changes detected. Stock will be added to existing products.',
+                    _isAdmin
+                        ? 'No price changes detected. Stock will be added to existing products.'
+                        : 'Stock will be added to existing products.',
                     style: theme.textTheme.bodyMedium?.copyWith(color: muted),
                   )
                 else ...[
@@ -672,8 +683,10 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                     '${changes.length} ${changes.length == 1 ? 'line has' : 'lines have'} a different cost than the current product. A new SKU variation will be created for each.',
                     style: theme.textTheme.bodyMedium?.copyWith(color: muted),
                   ),
-                  const SizedBox(height: 12),
-                  for (final c in changes) _PriceChangeRow(change: c),
+                  if (_isAdmin) ...[
+                    const SizedBox(height: 12),
+                    for (final c in changes) _PriceChangeRow(change: c),
+                  ],
                 ],
               ],
             ),
