@@ -422,7 +422,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 product: product,
                 showCost: inventoryState.showCost,
                 onTap: () => _navigateToProductDetail(product),
-                onStockAdjust: () => _showStockAdjustment(product),
               );
             },
           ),
@@ -471,10 +470,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   void _navigateToProductDetail(ProductEntity product) {
     context.push('${RoutePaths.inventory}/${product.id}');
-  }
-
-  void _showStockAdjustment(ProductEntity product) {
-    StockAdjustmentDialog.show(context: context, product: product);
   }
 
   void _handleMenuAction(String action) {
