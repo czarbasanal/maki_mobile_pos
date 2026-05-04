@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -375,6 +376,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       ),
                       maxLines: 3,
                     ),
+                    // Audit metadata (edit mode only) — shows who/when this
+                    // product was created and last updated. Reads off the
+                    // already-loaded _existingProduct so no extra fetch.
+                    if (widget.isEditing && _existingProduct != null) ...[
+                      const SizedBox(height: 24),
+                      _AuditInfoCard(product: _existingProduct!),
+                    ],
+
                     const SizedBox(height: 32),
 
                     // Submit button
@@ -561,5 +570,97 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+}
+
+/// Audit-info block shown on the edit-product form. Lists who created and
+/// last updated the product, with timestamps. Resolves user IDs to display
+/// names via [userByIdProvider]; falls back to the raw UID if the user
+/// can't be fetched and to a dash when the field is missing.
+class _AuditInfoCard extends ConsumerWidget {
+  const _AuditInfoCard({required this.product});
+
+  final ProductEntity product;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final dateFormat = DateFormat('MMM d, y • h:mm a');
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        border: Border.all(color: hairline),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(CupertinoIcons.info_circle,
+                  size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Audit info',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm + 4),
+          _row(context, 'Created', dateFormat.format(product.createdAt)),
+          _userRow(ref, theme, muted, 'Created by', product.createdBy),
+          if (product.updatedAt != null)
+            _row(context, 'Last updated',
+                dateFormat.format(product.updatedAt!)),
+          _userRow(ref, theme, muted, 'Updated by', product.updatedBy),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs + 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: theme.textTheme.bodySmall?.copyWith(color: muted)),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _userRow(WidgetRef ref, ThemeData theme, Color muted, String label,
+      String? userId) {
+    if (userId == null || userId.isEmpty) {
+      return _row(
+          ref.context, label, '—');
+    }
+    final userAsync = ref.watch(userByIdProvider(userId));
+    final value = userAsync.when(
+      data: (user) => user?.displayName ?? userId,
+      loading: () => '—',
+      error: (_, __) => userId,
+    );
+    return _row(ref.context, label, value);
   }
 }
