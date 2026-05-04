@@ -6,11 +6,12 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/utils/receiving_filters.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
-/// Full list of completed receivings.
+/// Full list of completed receivings, grouped by month and year.
 class ReceivingHistoryScreen extends ConsumerWidget {
   const ReceivingHistoryScreen({super.key});
 
@@ -18,6 +19,7 @@ class ReceivingHistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final receivingsAsync = ref.watch(recentReceivingsProvider);
     final dateFormat = DateFormat('MMM d, y • h:mm a');
+    final monthHeaderFormat = DateFormat('MMMM y');
 
     return Scaffold(
       appBar: AppBar(
@@ -41,11 +43,31 @@ class ReceivingHistoryScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: completed.length,
-            itemBuilder: (context, index) => _ReceivingHistoryItem(
-                receiving: completed[index], dateFormat: dateFormat),
+          final groups = groupByMonthYear(completed);
+
+          // Build a flat slivers stream so the month-header sticks
+          // visually with its items: one SliverPadding(SliverToBoxAdapter)
+          // per header, followed by a SliverList per group's items.
+          return CustomScrollView(
+            slivers: [
+              const SliverPadding(padding: EdgeInsets.only(top: 8)),
+              for (final group in groups) ...[
+                SliverToBoxAdapter(
+                  child: _MonthHeader(
+                    label: monthHeaderFormat.format(group.monthStart),
+                    count: group.items.length,
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: group.items.length,
+                  itemBuilder: (context, i) => _ReceivingHistoryItem(
+                    receiving: group.items[i],
+                    dateFormat: dateFormat,
+                  ),
+                ),
+              ],
+              const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
+            ],
           );
         },
         loading: () => const LoadingView(),
@@ -53,6 +75,40 @@ class ReceivingHistoryScreen extends ConsumerWidget {
           message: 'Error: $error',
           onRetry: () => ref.invalidate(recentReceivingsProvider),
         ),
+      ),
+    );
+  }
+}
+
+class _MonthHeader extends StatelessWidget {
+  final String label;
+  final int count;
+
+  const _MonthHeader({required this.label, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Text(
+            '$count',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

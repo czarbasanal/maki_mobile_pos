@@ -27,17 +27,23 @@ class ReceivingSummaryCardsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countsAsync = ref.watch(receivingCountsProvider);
-    final mtdCount = ref.watch(monthToDateCompletedReceivingsProvider);
     final mtdTotal = ref.watch(monthToDateReceivingTotalProvider);
 
-    if (countsAsync.hasError) return const SizedBox.shrink();
+    // Surface a visible error chip rather than collapsing the row —
+    // the previous SizedBox.shrink path silently hid all three cards
+    // when the counts query failed.
+    if (countsAsync.hasError) {
+      return _ErrorRow(message: '${countsAsync.error}');
+    }
 
     final draftValue = countsAsync.isLoading
         ? null
         : '${countsAsync.value?[ReceivingStatus.draft] ?? 0}';
-    final completedValue = (countsAsync.isLoading || mtdCount.isLoading)
+    // Completed is the all-time count, not month-to-date — operators
+    // want the full lifetime tally on this card.
+    final completedValue = countsAsync.isLoading
         ? null
-        : '${mtdCount.valueOrNull ?? 0}';
+        : '${countsAsync.value?[ReceivingStatus.completed] ?? 0}';
     final totalValue = mtdTotal.isLoading
         ? null
         : _formatPesoCompact(mtdTotal.valueOrNull ?? 0);
@@ -160,6 +166,51 @@ class _CountCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: card,
+    );
+  }
+}
+
+/// Inline error chip for the summary row — replaces the previous
+/// SizedBox.shrink so a counts-provider failure stays visible.
+class _ErrorRow extends StatelessWidget {
+  final String message;
+
+  const _ErrorRow({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer
+              .withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colorScheme.error, width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.exclamationmark_triangle,
+              color: theme.colorScheme.error,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                "Couldn't load receiving stats: $message",
+                style: TextStyle(
+                  color: theme.colorScheme.error,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

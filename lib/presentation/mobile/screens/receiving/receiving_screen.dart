@@ -18,7 +18,9 @@ class ReceivingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final receivingsAsync = ref.watch(recentReceivingsProvider);
+    // The screen surfaces only this week's receivings; "View all"
+    // navigates to the full grouped history.
+    final weeklyAsync = ref.watch(currentWeekReceivingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -36,9 +38,15 @@ class ReceivingScreen extends ConsumerWidget {
             onTapCompleted: () => context.push(RoutePaths.receivingHistory),
           ),
 
-          // Recent receivings
+          // Section header — Recent Receivings (this week) + View all.
+          _SectionHeader(
+            title: 'Recent Receivings',
+            onViewAll: () => context.push(RoutePaths.receivingHistory),
+          ),
+
+          // This-week list
           Expanded(
-            child: receivingsAsync.when(
+            child: weeklyAsync.when(
               data: (receivings) =>
                   _buildReceivingsList(context, ref, receivings),
               loading: () => const LoadingView(),
@@ -77,7 +85,7 @@ class ReceivingScreen extends ConsumerWidget {
             Icon(CupertinoIcons.cube_box, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'No Receiving Records',
+              'Nothing yet this week',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -86,7 +94,7 @@ class ReceivingScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Start receiving stock to see records here',
+              'Tap "View all" to see earlier records',
               style: TextStyle(color: Colors.grey[500]),
             ),
           ],
@@ -198,10 +206,54 @@ class ReceivingScreen extends ConsumerWidget {
   }
 
   Future<void> _startNewReceiving(BuildContext context, WidgetRef ref) async {
-    await ref.read(currentReceivingProvider.notifier).initNewReceiving();
+    try {
+      await ref.read(currentReceivingProvider.notifier).initNewReceiving();
+    } catch (e) {
+      // Surface failures (e.g. Firestore can't generate the reference
+      // number) instead of swallowing them — without this the button
+      // looks broken because navigation never runs.
+      if (context.mounted) {
+        context.showErrorSnackBar('Could not start a new receiving: $e');
+      }
+      return;
+    }
 
     if (context.mounted) {
       context.push(RoutePaths.bulkReceiving);
     }
+  }
+}
+
+/// Inline section header with a "View all" trailing TextButton on the
+/// right. Kept private to this screen — if other screens need the same
+/// shape we can promote it later.
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onViewAll;
+
+  const _SectionHeader({required this.title, required this.onViewAll});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onViewAll,
+            child: const Text('View all'),
+          ),
+        ],
+      ),
+    );
   }
 }
