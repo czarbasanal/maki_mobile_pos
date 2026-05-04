@@ -55,32 +55,35 @@ void main() {
   });
 
   group('monthToDate', () {
-    test('1st of the month — daysElapsed 1, start equals today midnight', () {
+    test('1st of the month — daysElapsed 0 (today is in progress)', () {
       final now = DateTime(2026, 5, 1, 14, 30);
       final m = monthToDate(now);
-      expect(m.daysElapsed, 1);
+      // Today is excluded from the divisor; on the 1st no day has
+      // completed yet, so daysElapsed is 0. avgDailyFromGross guards
+      // against the divide-by-zero.
+      expect(m.daysElapsed, 0);
       expect(m.start, DateTime(2026, 5, 1));
       expect(m.end, now);
     });
 
-    test('mid-month — daysElapsed equals day-of-month', () {
+    test('mid-month — daysElapsed is day-of-month minus 1', () {
       final now = DateTime(2026, 5, 15, 9, 0);
       final m = monthToDate(now);
-      expect(m.daysElapsed, 15);
+      expect(m.daysElapsed, 14);
       expect(m.start, DateTime(2026, 5, 1));
     });
 
-    test('last day of a 31-day month — daysElapsed 31', () {
+    test('last day of a 31-day month — daysElapsed 30', () {
       final now = DateTime(2026, 5, 31, 23, 59);
       final m = monthToDate(now);
-      expect(m.daysElapsed, 31);
+      expect(m.daysElapsed, 30);
       expect(m.start, DateTime(2026, 5, 1));
     });
 
-    test('last day of February (non-leap) — daysElapsed 28', () {
+    test('last day of February (non-leap) — daysElapsed 27', () {
       final now = DateTime(2026, 2, 28, 12, 0);
       final m = monthToDate(now);
-      expect(m.daysElapsed, 28);
+      expect(m.daysElapsed, 27);
       expect(m.start, DateTime(2026, 2, 1));
     });
 

@@ -147,7 +147,9 @@ final monthToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
 /// Average daily gross sales for the current month so far.
 ///
 /// Derived from [monthToDateSummaryProvider] — month-to-date gross amount
-/// divided by the day-of-month. Recomputes daily as the day count advances.
+/// divided by the count of *completed* past days in the current month
+/// (today is excluded since it's still in progress). Returns 0 on the
+/// 1st of the month. Recomputes daily as the day count advances.
 final avgDailySalesProvider = Provider<AsyncValue<double>>((ref) {
   final summaryAsync = ref.watch(monthToDateSummaryProvider);
   final daysElapsed = monthToDate(DateTime.now()).daysElapsed;

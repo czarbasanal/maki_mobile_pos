@@ -34,13 +34,16 @@ WeekToDate weekToDate(DateTime now) {
   return WeekToDate(start: monday, end: now, daysElapsed: weekday);
 }
 
-/// A month-to-date range with the count of days elapsed within it.
+/// A month-to-date range with the count of *completed* past days within it.
 ///
 /// [start] is midnight of the 1st of the current month. [end] is the
 /// reference timestamp passed in (typically `DateTime.now()`).
-/// [daysElapsed] is the day-of-month (1 on the 1st through e.g. 31 on the
-/// 31st) — used as the divisor for per-day averages within the month so
-/// far. Mirrors [WeekToDate]'s convention of including today.
+/// [daysElapsed] is the count of fully-elapsed past days within the
+/// current month, excluding today since today is still in progress
+/// (e.g. 0 on the 1st, 14 on the 15th, 30 on the 31st). It serves as the
+/// divisor for per-day averages — including today would dilute the
+/// average with a partial-day figure. Differs intentionally from
+/// [WeekToDate]'s convention of counting today.
 class MonthToDate {
   final DateTime start;
   final DateTime end;
@@ -53,10 +56,12 @@ class MonthToDate {
   });
 }
 
-/// Computes the month-to-date range for [now].
+/// Computes the month-to-date range for [now]. [daysElapsed] excludes
+/// today (see [MonthToDate]); on the 1st of the month it is 0, and the
+/// `avgDailyFromGross` guard returns 0 to avoid divide-by-zero.
 MonthToDate monthToDate(DateTime now) {
   final start = DateTime(now.year, now.month, 1);
-  return MonthToDate(start: start, end: now, daysElapsed: now.day);
+  return MonthToDate(start: start, end: now, daysElapsed: now.day - 1);
 }
 
 /// Average daily value = total gross divided by elapsed days.
