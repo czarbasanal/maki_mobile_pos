@@ -25,15 +25,16 @@ extension NavigationExtensions on BuildContext {
 
   /// Shows a snackbar with the given message.
   ///
-  /// Default styling matches the app's airy/minimal language: translucent
-  /// fill, solid 1.5pt border in the accent color, and dark accent text.
-  /// Pass [accent] / [textColor] / [icon] to vary the semantic intent
-  /// (success / warning / error). The convenience wrappers below cover
-  /// the common cases; call this directly only for one-off styling.
+  /// Default styling matches the app's airy/minimal language: solid lightened
+  /// fill, 1.5pt border in the accent color, and dark accent text. Pass
+  /// [accent] / [textColor] / [background] / [icon] to vary the semantic
+  /// intent (success / warning / error). The convenience wrappers below
+  /// cover the common cases; call this directly only for one-off styling.
   void showSnackBar(
     String message, {
     Color accent = AppColors.lightAccent,
     Color? textColor,
+    Color? background,
     IconData? icon,
     Duration duration = const Duration(seconds: 3),
   }) {
@@ -43,10 +44,10 @@ extension NavigationExtensions on BuildContext {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          // Translucent fill + solid 1.5pt border applied to the SnackBar
+          // Solid lightened fill + 1.5pt border applied to the SnackBar
           // itself (rather than nesting a Container inside .content) so
           // Material's surfaceTint doesn't paint over us in M3.
-          backgroundColor: accent.withValues(alpha: 0.12),
+          backgroundColor: background ?? AppColors.lightSurfaceMuted,
           elevation: 0,
           behavior: SnackBarBehavior.floating,
           duration: duration,
@@ -84,32 +85,35 @@ extension NavigationExtensions on BuildContext {
       );
   }
 
-  /// Shows a success snackbar — green outline + translucent green fill.
+  /// Shows a success snackbar — green outline + solid light-green fill.
   void showSuccessSnackBar(String message) {
     showSnackBar(
       message,
       accent: AppColors.success,
       textColor: AppColors.successDark,
+      background: AppColors.successLight,
       icon: Icons.check_circle_outline,
     );
   }
 
-  /// Shows a warning snackbar — amber outline + translucent amber fill.
+  /// Shows a warning snackbar — amber outline + solid light-amber fill.
   void showWarningSnackBar(String message) {
     showSnackBar(
       message,
       accent: AppColors.warningDark,
       textColor: AppColors.warningDark,
+      background: AppColors.warningLight,
       icon: Icons.warning_amber_rounded,
     );
   }
 
-  /// Shows an error snackbar — red outline + translucent red fill.
+  /// Shows an error snackbar — red outline + solid light-red fill.
   void showErrorSnackBar(String message) {
     showSnackBar(
       message,
       accent: AppColors.error,
       textColor: AppColors.errorDark,
+      background: AppColors.errorLight,
       icon: Icons.error_outline,
     );
   }
