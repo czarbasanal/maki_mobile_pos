@@ -215,9 +215,28 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
   }
 
   /// Adds an item to the receiving.
+  ///
+  /// If a line already exists for the same product *and* the same unit
+  /// cost, the quantities merge instead of creating a duplicate row.
+  /// Different unit costs stay split because they create separate
+  /// product variations downstream during completion.
   void addItem(ReceivingItemEntity item) {
-    final items = [...state.items, item.copyWith(id: _uuid.v4())];
-    state = state.copyWith(items: items, clearError: true);
+    final existingIdx = state.items.indexWhere((existing) =>
+        existing.productId != null &&
+        existing.productId == item.productId &&
+        (existing.unitCost - item.unitCost).abs() < 0.0001);
+
+    final List<ReceivingItemEntity> next;
+    if (existingIdx >= 0) {
+      final existing = state.items[existingIdx];
+      next = [...state.items];
+      next[existingIdx] = existing.copyWith(
+        quantity: existing.quantity + item.quantity,
+      );
+    } else {
+      next = [...state.items, item.copyWith(id: _uuid.v4())];
+    }
+    state = state.copyWith(items: next, clearError: true);
   }
 
   /// Adds an item from a product.
