@@ -36,21 +36,9 @@ Future<void> _pump(
   return tester.pumpWidget(
     ProviderScope(
       overrides: [
-        receivingCountsProvider.overrideWith((ref) async {
-          // Fail fast for the loading-counts case using a never-completing
-          // future.
-          if (counts.isLoading) {
-            final c = Completer<Map<ReceivingStatus, int>>();
-            addTearDown(() {
-              if (!c.isCompleted) c.complete({});
-            });
-            return c.future;
-          }
-          if (counts.hasError) {
-            throw counts.error!;
-          }
-          return counts.value!;
-        }),
+        // receivingCountsProvider is a derived Provider<AsyncValue<...>> —
+        // override directly with the desired AsyncValue.
+        receivingCountsProvider.overrideWith((ref) => counts),
         recentReceivingsProvider.overrideWith(
           (ref) => recentStream ?? Stream.value(recent),
         ),
@@ -119,9 +107,11 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNWidgets(3));
     });
 
-    testWidgets('renders draft count and MTD completed count when loaded',
+    testWidgets('renders all-time draft + completed counts when loaded',
         (tester) async {
-      // Two completed receivings this month → MTD count = 2.
+      // Two completed receivings this month — these drive only the peso
+      // total. The Drafts and Completed cards take their values from the
+      // counts map (all-time totals), not from the recent list.
       final now = DateTime.now();
       final monthStart = DateTime(now.year, now.month, 2);
       final recent = [
@@ -139,11 +129,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Drafts uses the all-time draft count from getReceivingCounts.
+      // Drafts uses the all-time draft count from the counts map.
       expect(find.text('5'), findsOneWidget);
-      // Completed reflects the MTD-derived count, not the all-time 17.
-      expect(find.text('2'), findsOneWidget);
-      // Total Received = 200 + 300 = ₱500 (formatPesoCompact branch ≤999).
+      // Completed now uses the all-time completed count from the counts
+      // map (was MTD-derived previously).
+      expect(find.text('17'), findsOneWidget);
+      // Total Received still reflects the MTD peso sum: 200 + 300 = ₱500.
       expect(find.text('₱500'), findsOneWidget);
     });
 
@@ -167,7 +158,8 @@ void main() {
       expect(find.text('₱1.5K'), findsOneWidget);
     });
 
-    testWidgets('hides the row entirely when counts provider errors',
+    testWidgets(
+        'shows an inline error chip (not the cards) when counts errors',
         (tester) async {
       await _pump(
         tester,
@@ -176,9 +168,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // None of the count cards render in the error path...
       expect(find.text('Drafts'), findsNothing);
       expect(find.text('Completed'), findsNothing);
       expect(find.text('Total Received'), findsNothing);
+      // ...instead the user sees a visible error message with the cause
+      // surfaced — replaces the previous silent SizedBox.shrink.
+      expect(find.textContaining('boom'), findsOneWidget);
+      expect(
+        find.textContaining("Couldn't load receiving stats"),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Drafts and Completed cards are tappable when handlers wired',
@@ -189,10 +189,12 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            receivingCountsProvider.overrideWith((ref) async => {
-                  ReceivingStatus.draft: 1,
-                  ReceivingStatus.completed: 1,
-                }),
+            receivingCountsProvider.overrideWith(
+              (ref) => const AsyncValue.data({
+                ReceivingStatus.draft: 1,
+                ReceivingStatus.completed: 1,
+              }),
+            ),
             recentReceivingsProvider.overrideWith((ref) =>
                 Stream.value(<ReceivingEntity>[])),
           ],

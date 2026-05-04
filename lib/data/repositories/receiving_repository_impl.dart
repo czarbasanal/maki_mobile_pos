@@ -316,7 +316,11 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
     final dateStr =
         '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
 
-    // Get count for today
+    // Count today's receivings to derive the next sequence. Uses a
+    // regular .get().size rather than the .count() aggregation —
+    // aggregations on the receivings collection were failing without
+    // an explicit aggregation index, which silently broke the "New
+    // Receiving" entry path.
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
@@ -324,10 +328,9 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
         .where('createdAt',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .where('createdAt', isLessThan: Timestamp.fromDate(endOfDay))
-        .count()
         .get();
 
-    final sequence = (snapshot.count ?? 0) + 1;
+    final sequence = snapshot.size + 1;
     return 'RCV-$dateStr-${sequence.toString().padLeft(3, '0')}';
   }
 

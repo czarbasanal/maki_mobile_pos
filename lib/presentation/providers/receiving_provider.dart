@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
-import 'package:maki_mobile_pos/core/utils/receiving_month.dart';
+import 'package:maki_mobile_pos/core/utils/receiving_filters.dart';
 import 'package:maki_mobile_pos/data/repositories/receiving_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -58,35 +58,52 @@ final receivingByIdProvider =
 });
 
 /// Provides receiving counts by status.
-final receivingCountsProvider =
-    FutureProvider<Map<ReceivingStatus, int>>((ref) async {
-  final repository = ref.watch(receivingRepositoryProvider);
-  return repository.getReceivingCounts();
-});
-
-/// Month-to-date count of completed receivings.
 ///
-/// Derived client-side from [recentReceivingsProvider] so we don't need a
-/// (status == completed, completedAt >= start-of-month) composite index.
-/// The 50-record cap on the source stream is fine here — month-to-date
-/// counts above that are not realistic for this surface.
-final monthToDateCompletedReceivingsProvider =
-    Provider<AsyncValue<int>>((ref) {
+/// Derived client-side from [recentReceivingsProvider] — Firestore's
+/// `.count()` aggregations against the `receivings` collection were
+/// silently failing without an aggregation/single-field exemption
+/// index, which collapsed the receiving dashboard's stats row. The
+/// derived view matches the pattern used by [draftReceivingsProvider]
+/// and the MTD providers; it caps at the source stream's 50-record
+/// limit, which is fine for dashboard counts.
+final receivingCountsProvider =
+    Provider<AsyncValue<Map<ReceivingStatus, int>>>((ref) {
   final all = ref.watch(recentReceivingsProvider);
-  return all.whenData(
-    (list) => monthToDateCompleted(list, DateTime.now()).length,
-  );
+  return all.whenData((list) {
+    final counts = <ReceivingStatus, int>{
+      for (final s in ReceivingStatus.values) s: 0,
+    };
+    for (final r in list) {
+      counts[r.status] = (counts[r.status] ?? 0) + 1;
+    }
+    return counts;
+  });
 });
 
-/// Month-to-date peso total received — sum of [totalCost] across the
-/// same set of completed receivings counted by
-/// [monthToDateCompletedReceivingsProvider]. Drives the receiving
+/// Month-to-date peso total received — sum of [totalCost] across
+/// receivings completed in the current month. Drives the receiving
 /// dashboard's "Total Received" card.
+///
+/// Derived client-side from [recentReceivingsProvider] so we don't
+/// need a (status == completed, completedAt >= start-of-month)
+/// composite index.
 final monthToDateReceivingTotalProvider =
     Provider<AsyncValue<double>>((ref) {
   final all = ref.watch(recentReceivingsProvider);
   return all.whenData(
     (list) => sumTotalCost(monthToDateCompleted(list, DateTime.now())),
+  );
+});
+
+/// Receivings created in the current Monday→Sunday week, all statuses.
+/// Drives the receiving screen's "Recent Receivings" section. Derived
+/// from [recentReceivingsProvider] so the list updates live as new
+/// drafts and completions land.
+final currentWeekReceivingsProvider =
+    Provider<AsyncValue<List<ReceivingEntity>>>((ref) {
+  final all = ref.watch(recentReceivingsProvider);
+  return all.whenData(
+    (list) => receivingsInCurrentWeek(list, DateTime.now()),
   );
 });
 
