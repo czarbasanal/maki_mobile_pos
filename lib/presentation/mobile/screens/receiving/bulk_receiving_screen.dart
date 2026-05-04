@@ -29,7 +29,11 @@ class BulkReceivingScreen extends ConsumerStatefulWidget {
 }
 
 class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
+  // Owned by us so we can clear the field after a row is added.
+  // Autocomplete needs both a textEditingController and a focusNode
+  // when one of them is passed in.
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
   final _quantityController = TextEditingController(text: '1');
   final _costController = TextEditingController();
   ProductEntity? _selectedProduct;
@@ -55,6 +59,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _quantityController.dispose();
     _costController.dispose();
     super.dispose();
@@ -237,8 +242,11 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Product search
+          // Product search — supplying our own controller and focus
+          // node so _addItem can clear the field after a row is added.
           Autocomplete<ProductEntity>(
+            textEditingController: _searchController,
+            focusNode: _searchFocusNode,
             optionsBuilder: (textEditingValue) async {
               if (textEditingValue.text.isEmpty) return [];
               final products = await ref.read(
@@ -248,7 +256,6 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             },
             displayStringForOption: (product) => product.name,
             fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
-              _searchController.text = controller.text;
               return TextField(
                 controller: controller,
                 focusNode: focusNode,
@@ -405,25 +412,31 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
 
   Widget _buildItemsList(CurrentReceivingState state) {
     if (state.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_shopping_cart, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No items added yet',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
+      // SingleChildScrollView handles the overflow when the keyboard
+      // shrinks the Expanded slot — without it the icon + texts no
+      // longer fit and Flutter throws RenderFlex overflowed.
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add_shopping_cart, size: 64, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                'No items added yet',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Search and add products above',
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'Search and add products above',
+                style: TextStyle(color: Colors.grey[500]),
+              ),
+            ],
+          ),
         ),
       );
     }
