@@ -113,10 +113,10 @@ class _RecentSaleItem extends StatelessWidget {
             Flexible(
               child: Text(
                 sale.saleNumber,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.productName.copyWith(
                   decoration: isVoided ? TextDecoration.lineThrough : null,
                 ),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
