@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -52,50 +53,71 @@ class ReceivingItemRow extends ConsumerWidget {
     );
   }
 
+  /// Subtitle text for the line. Selling price is shown to everyone (when we
+  /// have the product loaded); cost is admin-only.
+  String _buildSubtitle({
+    required bool isAdmin,
+    required double? sellingPrice,
+  }) {
+    final symbol = AppConstants.currencySymbol;
+    final parts = <String>[];
+    if (isAdmin) {
+      parts.add('Cost $symbol${item.unitCost.toStringAsFixed(2)}');
+    }
+    if (sellingPrice != null) {
+      parts.add('Sells $symbol${sellingPrice.toStringAsFixed(2)}');
+    }
+    final pricing = parts.join(' • ');
+    return pricing.isEmpty ? item.unit : '$pricing • ${item.unit}';
+  }
+
   Widget _buildCard(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final isAdmin =
+        ref.watch(currentUserProvider).valueOrNull?.role == UserRole.admin;
 
-    // Diff badge — when the line's unit cost differs from the parent product's
-    // current cost, surface the delta inline. In edit mode it warns the user
-    // that completion will spawn a SKU variation. In read-only (history
-    // detail), it's only rendered for lines that already became a variation.
+    // Resolve the parent product once — used for both the cost-diff badge
+    // (admin only) and the selling-price display (everyone).
+    final product = item.productId == null
+        ? null
+        : ref.watch(productByIdProvider(item.productId!)).asData?.value;
+
+    // Diff badge — admin only. In edit mode it warns the user that completion
+    // will spawn a variation. In read-only (history detail), only rendered
+    // for lines that already became a variation.
     Widget? costDiffBadge;
-    final showDiffBadge = (!readOnly || item.isNewVariation);
-    if (showDiffBadge && item.productId != null) {
-      final productAsync = ref.watch(productByIdProvider(item.productId!));
-      final product = productAsync.asData?.value;
-      if (product != null) {
-        final delta = item.unitCost - product.cost;
-        if (delta.abs() > 0.01) {
-          final up = delta > 0;
-          final color = up ? AppColors.errorDark : AppColors.successDark;
-          costDiffBadge = Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              border: Border.all(color: color),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  up ? CupertinoIcons.arrow_up : CupertinoIcons.arrow_down,
-                  size: 11,
+    final showDiffBadge = isAdmin && (!readOnly || item.isNewVariation);
+    if (showDiffBadge && product != null) {
+      final delta = item.unitCost - product.cost;
+      if (delta.abs() > 0.01) {
+        final up = delta > 0;
+        final color = up ? AppColors.errorDark : AppColors.successDark;
+        costDiffBadge = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            border: Border.all(color: color),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                up ? CupertinoIcons.arrow_up : CupertinoIcons.arrow_down,
+                size: 11,
+                color: color,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                '${AppConstants.currencySymbol}${delta.abs().toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 10,
                   color: color,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 2),
-                Text(
-                  '${AppConstants.currencySymbol}${delta.abs().toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
+              ),
+            ],
+          ),
+        );
       }
     }
     return Card(
@@ -154,7 +176,10 @@ class ReceivingItemRow extends ConsumerWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            '${AppConstants.currencySymbol}${item.unitCost.toStringAsFixed(2)} / ${item.unit}',
+                            _buildSubtitle(
+                              isAdmin: isAdmin,
+                              sellingPrice: product?.price,
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               color: theme.colorScheme.primary,
@@ -226,18 +251,19 @@ class ReceivingItemRow extends ConsumerWidget {
                   ],
                 ),
 
-              // Total
+              // Total — peso amount admin-only; staff just sees the qty.
               SizedBox(
                 width: 80,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      '${AppConstants.currencySymbol}${item.totalCost.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                    if (isAdmin)
+                      Text(
+                        '${AppConstants.currencySymbol}${item.totalCost.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
                     Text(
                       '${item.quantity} ${item.unit}',
                       style: TextStyle(

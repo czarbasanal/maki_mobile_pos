@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
@@ -103,13 +104,15 @@ class ReceivingScreen extends ConsumerWidget {
     }
 
     final dateFormat = DateFormat('MMM d, y • h:mm a');
+    final isAdmin =
+        ref.watch(currentUserProvider).valueOrNull?.role == UserRole.admin;
 
     return ListView.builder(
       itemCount: receivings.length,
       padding: const EdgeInsets.only(bottom: 80),
       itemBuilder: (context, index) {
         final receiving = receivings[index];
-        return _buildReceivingItem(context, receiving, dateFormat);
+        return _buildReceivingItem(context, receiving, dateFormat, isAdmin);
       },
     );
   }
@@ -118,6 +121,7 @@ class ReceivingScreen extends ConsumerWidget {
     BuildContext context,
     ReceivingEntity receiving,
     DateFormat dateFormat,
+    bool isAdmin,
   ) {
     final theme = Theme.of(context);
     final (bg, fg, icon) = _statusVisuals(receiving.status);
@@ -177,13 +181,14 @@ class ReceivingScreen extends ConsumerWidget {
               '${receiving.totalQuantity} items',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            Text(
-              '${AppConstants.currencySymbol}${receiving.totalCost.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.primary,
+            if (isAdmin)
+              Text(
+                '${AppConstants.currencySymbol}${receiving.totalCost.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
           ],
         ),
         onTap: () =>

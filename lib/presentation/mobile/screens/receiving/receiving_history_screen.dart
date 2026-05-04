@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/utils/receiving_filters.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -20,6 +22,8 @@ class ReceivingHistoryScreen extends ConsumerWidget {
     final receivingsAsync = ref.watch(recentReceivingsProvider);
     final dateFormat = DateFormat('MMM d, y • h:mm a');
     final monthHeaderFormat = DateFormat('MMMM y');
+    final isAdmin =
+        ref.watch(currentUserProvider).valueOrNull?.role == UserRole.admin;
 
     return Scaffold(
       appBar: AppBar(
@@ -63,6 +67,7 @@ class ReceivingHistoryScreen extends ConsumerWidget {
                   itemBuilder: (context, i) => _ReceivingHistoryItem(
                     receiving: group.items[i],
                     dateFormat: dateFormat,
+                    isAdmin: isAdmin,
                   ),
                 ),
               ],
@@ -121,7 +126,10 @@ class _ReceivingHistoryItem extends StatelessWidget {
   const _ReceivingHistoryItem({
     required this.receiving,
     required this.dateFormat,
+    required this.isAdmin,
   });
+
+  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -164,13 +172,14 @@ class _ReceivingHistoryItem extends StatelessWidget {
               '${receiving.totalQuantity} items',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            Text(
-              '${AppConstants.currencySymbol}${receiving.totalCost.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.primary,
+            if (isAdmin)
+              Text(
+                '${AppConstants.currencySymbol}${receiving.totalCost.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
           ],
         ),
         onTap: () =>
