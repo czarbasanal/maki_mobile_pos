@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/core/utils/week_range.dart';
 import 'package:maki_mobile_pos/data/repositories/sale_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -154,6 +155,16 @@ final avgDailySalesProvider = Provider<AsyncValue<double>>((ref) {
   return summaryAsync.whenData(
     (summary) => avgDailyFromGross(summary.grossAmount, daysElapsed),
   );
+});
+
+/// Top-selling products for today, ranked by units sold (ties broken by
+/// total revenue). Derived from [todaysSalesProvider] so the leaderboard
+/// updates in real time as new sales come through, with no extra
+/// Firestore round-trip.
+final topSellingTodayProvider =
+    Provider<AsyncValue<List<TopSellingItem>>>((ref) {
+  final salesAsync = ref.watch(todaysSalesProvider);
+  return salesAsync.whenData(topSellingFromSales);
 });
 
 /// Provides sales summary for a date range.
