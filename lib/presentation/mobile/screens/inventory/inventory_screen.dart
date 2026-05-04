@@ -483,14 +483,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         context.push(RoutePaths.productAdd);
         break;
       case 'import':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('CSV import coming soon')),
-        );
+        context.showSnackBar('CSV import coming soon');
         break;
       case 'export':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Export coming soon')),
-        );
+        context.showSnackBar('Export coming soon');
         break;
     }
   }

@@ -565,12 +565,7 @@ class _CostCodeSettingsScreenState
             _editedMapping = null;
           });
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cost code mapping updated'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          context.showSuccessSnackBar('Cost code mapping updated');
         }
       }
     } catch (e) {
@@ -615,9 +610,7 @@ class _CostCodeSettingsScreenState
 
     // Check if already default
     if (_isSameMapping(currentMapping, defaultMapping)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Already using default mapping')),
-      );
+      context.showSnackBar('Already using default mapping');
       return;
     }
 
@@ -668,22 +661,12 @@ class _CostCodeSettingsScreenState
                 user: currentUser,
               );
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cost code mapping reset to default'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (!mounted) return;
+        context.showSuccessSnackBar('Cost code mapping reset to default');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        context.showErrorSnackBar('Error: $e');
       }
     }
   }

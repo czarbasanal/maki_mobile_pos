@@ -603,12 +603,7 @@ class SaleDetailScreen extends ConsumerWidget {
       context: context,
       sale: sale,
       onVoided: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sale voided successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        context.showSuccessSnackBar('Sale voided successfully');
         ref.invalidate(saleByIdProvider(saleId));
       },
     );

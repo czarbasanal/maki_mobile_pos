@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -129,12 +130,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to sign out: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        context.showErrorSnackBar('Failed to sign out: $e');
         setState(() => _isLoggingOut = false);
       }
     }

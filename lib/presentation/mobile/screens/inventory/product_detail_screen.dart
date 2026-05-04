@@ -619,9 +619,7 @@ class ProductDetailScreen extends ConsumerWidget {
   void _handleAction(BuildContext context, WidgetRef ref, String action) {
     switch (action) {
       case 'edit':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Edit product coming soon')),
-        );
+        context.showSnackBar('Edit product coming soon');
         break;
       case 'deactivate':
         _confirmDeactivate(context, ref);
@@ -656,12 +654,7 @@ class ProductDetailScreen extends ConsumerWidget {
                     );
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Product deactivated'),
-                      backgroundColor: AppColors.warningDark,
-                    ),
-                  );
+                  context.showWarningSnackBar('Product deactivated');
                 }
               }
             },

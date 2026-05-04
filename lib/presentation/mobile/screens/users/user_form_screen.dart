@@ -402,12 +402,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                 );
 
         if (updated != null && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          context.showSuccessSnackBar('User updated successfully');
           context.goBackOr(RoutePaths.users);
         }
       } else {
@@ -421,12 +416,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                 );
 
         if (created != null && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User created successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          context.showSuccessSnackBar('User created successfully');
           context.goBackOr(RoutePaths.users);
         }
       }
@@ -465,9 +455,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
             onPressed: () {
               Navigator.pop(context);
               // TODO: Implement password reset
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password reset email sent')),
-              );
+              context.showSuccessSnackBar('Password reset email sent');
             },
             child: const Text('Send Reset Email'),
           ),

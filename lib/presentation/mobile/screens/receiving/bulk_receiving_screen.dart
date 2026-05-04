@@ -566,9 +566,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
     final cost = double.tryParse(_costController.text) ?? 0;
 
     if (quantity <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid quantity')),
-      );
+      context.showWarningSnackBar('Please enter a valid quantity');
       return;
     }
 
@@ -608,12 +606,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             );
 
     if (result != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Draft saved'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      context.showSuccessSnackBar('Draft saved');
     }
   }
 
@@ -627,12 +620,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
         );
 
     if (result != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Stock received successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      context.showSuccessSnackBar('Stock received successfully!');
       context.goBackOr(RoutePaths.receiving);
     }
   }

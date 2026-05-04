@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/void_sale_usecase.dart';
@@ -371,11 +372,8 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
         ref.invalidate(saleByIdProvider(widget.sale.id));
 
         if (result.hasWarnings && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Warnings: ${result.warnings.join(", ")}'),
-              backgroundColor: AppColors.warningDark,
-            ),
+          context.showWarningSnackBar(
+            'Warnings: ${result.warnings.join(", ")}',
           );
         }
 

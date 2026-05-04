@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -376,12 +377,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading draft: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        context.showErrorSnackBar('Error loading draft: $e');
       }
     } finally {
       if (mounted) {
@@ -411,12 +407,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading draft: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        context.showErrorSnackBar('Error loading draft: $e');
       }
     } finally {
       if (mounted) {
@@ -466,22 +457,12 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           .deleteDraft(actor: actor, draftId: draft.id);
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Draft deleted'),
-            backgroundColor: AppColors.successDark,
-          ),
-        );
+        context.showSuccessSnackBar('Draft deleted');
         context.go(RoutePaths.drafts);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting draft: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        context.showErrorSnackBar('Error deleting draft: $e');
       }
     } finally {
       if (mounted) {

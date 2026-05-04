@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/petty_cash_provider.dart';
 
@@ -53,9 +54,7 @@ class _CutOffDialogState extends ConsumerState<CutOffDialog> {
     setState(() => _busy = false);
 
     if (record == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cut-off failed. Check permissions.')),
-      );
+      context.showErrorSnackBar('Cut-off failed. Check permissions.');
       return;
     }
     Navigator.of(context).pop(true);
