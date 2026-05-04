@@ -360,16 +360,11 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              user.isActive
-                  ? '${user.displayName} deactivated'
-                  : '${user.displayName} reactivated',
-            ),
-            backgroundColor: user.isActive ? Colors.orange : Colors.green,
-          ),
-        );
+        if (user.isActive) {
+          context.showWarningSnackBar('${user.displayName} deactivated');
+        } else {
+          context.showSuccessSnackBar('${user.displayName} reactivated');
+        }
       }
     }
   }

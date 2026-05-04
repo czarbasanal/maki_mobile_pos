@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/errors/errors.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/utils.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -60,24 +61,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email address first'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
+      context.showWarningSnackBar('Please enter your email address first');
       _emailFocusNode.requestFocus();
       return;
     }
 
     final emailError = Validators.email(email);
     if (emailError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(emailError),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      context.showErrorSnackBar(emailError);
       return;
     }
 
@@ -106,20 +97,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authActionsProvider).sendPasswordResetEmail(email);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent. Check your inbox.'),
-            backgroundColor: AppColors.success,
-          ),
+        context.showSuccessSnackBar(
+          'Password reset email sent. Check your inbox.',
         );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to send reset email. Please try again.'),
-            backgroundColor: AppColors.error,
-          ),
+        context.showErrorSnackBar(
+          'Failed to send reset email. Please try again.',
         );
       }
     } finally {

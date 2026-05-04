@@ -265,15 +265,11 @@ class DraftsListScreen extends ConsumerWidget {
         await draftOps.deleteDraft(actor: actor, draftId: draft.id);
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success ? 'Draft deleted' : 'Failed to delete draft',
-          ),
-          backgroundColor:
-              success ? AppColors.successDark : AppColors.error,
-        ),
-      );
+      if (success) {
+        context.showSuccessSnackBar('Draft deleted');
+      } else {
+        context.showErrorSnackBar('Failed to delete draft');
+      }
     }
   }
 }

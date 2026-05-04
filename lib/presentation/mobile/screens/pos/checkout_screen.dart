@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -430,15 +431,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           scrollController: scrollController,
           onPrint: () {
             // TODO: Implement actual printing
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Printing receipt...')),
-            );
+            context.showSnackBar('Printing receipt...');
           },
           onShare: () {
             // TODO: Implement sharing
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sharing receipt...')),
-            );
+            context.showSnackBar('Sharing receipt...');
           },
         ),
       ),

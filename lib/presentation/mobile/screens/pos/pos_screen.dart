@@ -367,12 +367,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       _addProductToCart(product);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Product not found: $barcode'),
-            backgroundColor: AppColors.warningDark,
-          ),
-        );
+        context.showWarningSnackBar('Product not found: $barcode');
       }
     }
   }
@@ -470,9 +465,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             onPressed: () {
               final name = nameController.text.trim();
               if (name.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a draft name')),
-                );
+                context.showWarningSnackBar('Please enter a draft name');
                 return;
               }
               Navigator.pop(context);
@@ -504,11 +497,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         : await draftOps.createDraft(actor: currentUser, draft: draft);
 
     if (result != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(cart.isFromDraft ? 'Draft updated' : 'Draft saved'),
-          backgroundColor: AppColors.successDark,
-        ),
+      context.showSuccessSnackBar(
+        cart.isFromDraft ? 'Draft updated' : 'Draft saved',
       );
       cartNotifier.reset();
     }
