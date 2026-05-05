@@ -125,12 +125,6 @@ final outOfStockProductsProvider =
   return repository.getOutOfStockProducts();
 });
 
-/// Provides all categories.
-final categoriesProvider = FutureProvider<List<String>>((ref) async {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.getCategories();
-});
-
 /// Provides product count.
 final productCountProvider = FutureProvider<int>((ref) async {
   final repository = ref.watch(productRepositoryProvider);
@@ -324,7 +318,6 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     _ref.invalidate(lowStockProductsProvider);
     _ref.invalidate(inventoryValueAtCostProvider);
     _ref.invalidate(inventoryValueAtPriceProvider);
-    _ref.invalidate(categoriesProvider);
   }
 }
 

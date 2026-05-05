@@ -254,9 +254,6 @@ abstract class ProductRepository {
 
   /// Gets total inventory value at price.
   Future<double> getTotalInventoryValueAtPrice();
-
-  /// Gets all unique categories.
-  Future<List<String>> getCategories();
 }
 
 /// Represents a price history entry.

@@ -732,29 +732,4 @@ class ProductRepositoryImpl implements ProductRepository {
         0.0, (sum, p) => sum + p.inventoryValueAtPrice);
   }
 
-  @override
-  Future<List<String>> getCategories() async {
-    try {
-      final snapshot = await _productsRef
-          .where('isActive', isEqualTo: true)
-          .where('category', isNull: false)
-          .get();
-
-      final categories = snapshot.docs
-          .map((doc) => doc.data()['category'] as String?)
-          .where((c) => c != null && c.isNotEmpty)
-          .cast<String>()
-          .toSet()
-          .toList();
-
-      categories.sort();
-      return categories;
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to get categories: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
 }

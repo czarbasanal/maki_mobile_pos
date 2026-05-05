@@ -315,13 +315,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Category
-                    TextFormField(
+                    // Category — admin-managed dropdown. If the product is
+                    // tied to a category that's been deactivated since last
+                    // edit, we surface it inline so the user can keep it or
+                    // pick a current active one.
+                    _CategoryDropdownField(
                       controller: _categoryController,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
-                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _categoryController.text = value ?? '';
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -662,5 +666,69 @@ class _AuditInfoCard extends ConsumerWidget {
       error: (_, __) => userId,
     );
     return _row(ref.context, label, value);
+  }
+}
+
+/// Dropdown bound to a [TextEditingController] holding the category name.
+///
+/// Items = active product categories ∪ {controller's current value if
+/// not in the active list}. Empty string is rendered as "(none)" and
+/// emitted as null upstream. The dropdown reads the controller text
+/// directly so the surrounding form's save logic — which still reads
+/// `_categoryController.text` — keeps working unchanged.
+class _CategoryDropdownField extends ConsumerWidget {
+  const _CategoryDropdownField({
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync =
+        ref.watch(activeCategoriesProvider(CategoryKind.product));
+
+    return categoriesAsync.when(
+      data: (categories) {
+        final current = controller.text.trim();
+        final activeNames = categories.map((c) => c.name).toList();
+        final isOrphan = current.isNotEmpty && !activeNames.contains(current);
+
+        return DropdownButtonFormField<String>(
+          value: current.isEmpty ? null : current,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Category',
+            prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
+          ),
+          items: [
+            const DropdownMenuItem(
+              value: null,
+              child: Text('(none)'),
+            ),
+            ...activeNames.map((name) => DropdownMenuItem(
+                  value: name,
+                  child: Text(name),
+                )),
+            if (isOrphan)
+              DropdownMenuItem(
+                value: current,
+                child: Text(
+                  '$current (inactive)',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+          ],
+          onChanged: onChanged,
+        );
+      },
+      loading: () => const LinearProgressIndicator(),
+      error: (_, __) => const Text('Could not load categories'),
+    );
   }
 }
