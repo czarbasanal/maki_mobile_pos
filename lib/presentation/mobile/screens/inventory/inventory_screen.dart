@@ -326,7 +326,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   Widget _buildCategoryFilterChip(InventoryState inventoryState) {
-    final categoriesAsync = ref.watch(categoriesProvider);
+    final categoriesAsync =
+        ref.watch(activeCategoriesProvider(CategoryKind.product));
 
     return categoriesAsync.when(
       data: (categories) {
@@ -353,8 +354,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               child: Text('All Categories'),
             ),
             ...categories.map((cat) => PopupMenuItem(
-                  value: cat,
-                  child: Text(cat),
+                  value: cat.name,
+                  child: Text(cat.name),
                 )),
           ],
           onSelected: (value) {
