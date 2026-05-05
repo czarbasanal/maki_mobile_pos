@@ -78,6 +78,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Configure cost encoding',
                   onTap: () => context.push(RoutePaths.costCodeSettings),
                 ),
+                SettingsTile(
+                  icon: CupertinoIcons.tag,
+                  title: 'Manage Categories',
+                  subtitle: 'Product and expense category lists',
+                  onTap: () => context.push(RoutePaths.categorySettings),
+                ),
               ],
             ),
           ],

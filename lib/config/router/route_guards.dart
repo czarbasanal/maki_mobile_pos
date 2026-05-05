@@ -48,6 +48,7 @@ abstract class RouteGuards {
     // Settings
     '/settings': Permission.viewSettings,
     '/settings/cost-codes': Permission.editCostCodeMapping,
+    '/settings/categories': Permission.manageCategories,
     // Logs
     '/logs': Permission.viewUserLogs,
     // Petty Cash

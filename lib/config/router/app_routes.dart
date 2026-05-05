@@ -32,6 +32,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/users/users_screen.d
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/user_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
 
@@ -347,6 +348,11 @@ List<RouteBase> featureRoutes(Surface surface) => [
             path: 'cost-codes',
             name: RouteNames.costCodeSettings,
             builder: (context, state) => const CostCodeSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'categories',
+            name: RouteNames.categorySettings,
+            builder: (context, state) => const CategorySettingsScreen(),
           ),
           GoRoute(
             path: 'about',
