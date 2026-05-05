@@ -185,12 +185,32 @@ service cloud.firestore {
     }
     
     // ==================== SETTINGS COLLECTION ====================
-    
+
     match /settings/{settingId} {
       // All valid users can read settings
       allow read: if isValidUser() && isActiveUser();
-      
+
       // Only admin can modify settings
+      allow write: if isAdmin() && isActiveUser();
+    }
+
+    // ==================== PRODUCT CATEGORIES COLLECTION ====================
+
+    match /product_categories/{categoryId} {
+      // All valid users can read categories (product form, inventory filter)
+      allow read: if isValidUser() && isActiveUser();
+
+      // Only admin can manage the category list
+      allow write: if isAdmin() && isActiveUser();
+    }
+
+    // ==================== EXPENSE CATEGORIES COLLECTION ====================
+
+    match /expense_categories/{categoryId} {
+      // All valid users can read categories (expense form)
+      allow read: if isValidUser() && isActiveUser();
+
+      // Only admin can manage the category list
       allow write: if isAdmin() && isActiveUser();
     }
   }

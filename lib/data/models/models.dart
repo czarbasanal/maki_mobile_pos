@@ -18,3 +18,4 @@ export 'price_history_model.dart';
 export 'petty_cash_model.dart';
 export 'receiving_model.dart';
 export 'activity_log_model.dart';
+export 'category_model.dart';
