@@ -193,25 +193,4 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     }
   }
 
-  @override
-  Future<List<String>> getCategories() async {
-    try {
-      final snapshot = await _expensesRef.get();
-      final categories = <String>{};
-      for (final doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final category = data['category'] as String?;
-        if (category != null && category.isNotEmpty) {
-          categories.add(category);
-        }
-      }
-      return categories.toList()..sort();
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to get categories: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
 }

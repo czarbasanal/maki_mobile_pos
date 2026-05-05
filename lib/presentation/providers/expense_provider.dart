@@ -88,12 +88,6 @@ final expensesByCategoryProvider =
   );
 });
 
-/// Provides all unique expense categories.
-final expenseCategoriesProvider = FutureProvider<List<String>>((ref) async {
-  final repository = ref.watch(expenseRepositoryProvider);
-  return repository.getCategories();
-});
-
 // ==================== EXPENSE OPERATIONS ====================
 
 /// Notifier for expense CRUD operations.

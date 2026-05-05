@@ -36,7 +36,4 @@ abstract class ExpenseRepository {
     required DateTime startDate,
     required DateTime endDate,
   });
-
-  /// Gets all unique expense categories.
-  Future<List<String>> getCategories();
 }
