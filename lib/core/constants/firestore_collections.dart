@@ -37,6 +37,12 @@ abstract class FirestoreCollections {
   /// Settings collection - app configuration
   static const String settings = 'settings';
 
+  /// Product categories collection - admin-managed product category list
+  static const String productCategories = 'product_categories';
+
+  /// Expense categories collection - admin-managed expense category list
+  static const String expenseCategories = 'expense_categories';
+
   // ==================== SETTINGS DOCUMENTS ====================
 
   /// Document ID for cost code mapping settings

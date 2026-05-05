@@ -61,6 +61,7 @@ enum Permission {
   viewSettings,
   editOwnProfile, // Edit own display name and password
   editCostCodeMapping,
+  manageCategories, // Manage product/expense category lists
 
   // Logs
   viewUserLogs,
@@ -185,6 +186,7 @@ abstract class RolePermissions {
     Permission.viewSettings,
     Permission.editOwnProfile,
     Permission.editCostCodeMapping,
+    Permission.manageCategories,
     // Logs
     Permission.viewUserLogs,
   };
