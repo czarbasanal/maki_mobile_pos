@@ -29,21 +29,10 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   final _notesController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
-  String _selectedCategory = 'General';
+  String? _selectedCategory;
   bool _isLoading = false;
   bool _isSaving = false;
   bool _isDeleting = false;
-
-  final _categories = [
-    'General',
-    'Utilities',
-    'Rent',
-    'Supplies',
-    'Transportation',
-    'Food',
-    'Maintenance',
-    'Other',
-  ];
 
   @override
   void initState() {
@@ -64,12 +53,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           context.goBackOr(RoutePaths.expenses);
         }
         return;
-      }
-      // The dropdown asserts the value is in `items`. If a legacy expense
-      // has a category outside the predefined list, surface it instead of
-      // crashing.
-      if (!_categories.contains(expense.category)) {
-        _categories.add(expense.category);
       }
       _descriptionController.text = expense.description;
       _amountController.text = expense.amount.toString();
@@ -156,20 +139,11 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Category
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Category *',
-                  prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
-                ),
-                items: _categories.map((cat) {
-                  return DropdownMenuItem(value: cat, child: Text(cat));
-                }).toList(),
+              // Category — admin-managed dropdown.
+              _ExpenseCategoryDropdown(
+                selected: _selectedCategory,
                 onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedCategory = value);
-                  }
+                  setState(() => _selectedCategory = value);
                 },
               ),
               const SizedBox(height: 16),
@@ -264,7 +238,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         final updated = existing.copyWith(
           description: _descriptionController.text.trim(),
           amount: amount,
-          category: _selectedCategory,
+          category: _selectedCategory!,
           date: _selectedDate,
           notes: notes.isEmpty ? null : notes,
           clearNotes: notes.isEmpty,
@@ -276,7 +250,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           id: '',
           description: _descriptionController.text.trim(),
           amount: amount,
-          category: _selectedCategory,
+          category: _selectedCategory!,
           date: _selectedDate,
           notes: notes.isEmpty ? null : notes,
           createdAt: now,
@@ -351,5 +325,80 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     return state.hasError
         ? state.error ?? 'Operation failed'
         : 'Operation failed';
+  }
+}
+
+/// Dropdown for expense category. Items = active expense categories ∪
+/// {[selected] if it's not in the active list — e.g. a legacy expense whose
+/// category was deactivated}. Renders an empty-state row when no categories
+/// are defined yet (admin must seed via Settings → Manage Categories).
+class _ExpenseCategoryDropdown extends ConsumerWidget {
+  const _ExpenseCategoryDropdown({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync =
+        ref.watch(activeCategoriesProvider(CategoryKind.expense));
+
+    return categoriesAsync.when(
+      data: (categories) {
+        final theme = Theme.of(context);
+        final activeNames = categories.map((c) => c.name).toList();
+        final isOrphan =
+            selected != null && !activeNames.contains(selected);
+
+        if (activeNames.isEmpty && !isOrphan) {
+          return InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Category *',
+              prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
+              errorText: 'No categories defined — ask admin to add some.',
+            ),
+            child: Text(
+              'No categories available',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+
+        return DropdownButtonFormField<String>(
+          initialValue: selected,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Category *',
+            prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
+          ),
+          items: [
+            ...activeNames.map(
+              (name) => DropdownMenuItem(value: name, child: Text(name)),
+            ),
+            if (isOrphan)
+              DropdownMenuItem(
+                value: selected,
+                child: Text(
+                  '$selected (inactive)',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+          ],
+          onChanged: onChanged,
+          validator: (value) =>
+              (value == null || value.isEmpty) ? 'Category is required' : null,
+        );
+      },
+      loading: () => const LinearProgressIndicator(),
+      error: (_, __) => const Text('Could not load categories'),
+    );
   }
 }
