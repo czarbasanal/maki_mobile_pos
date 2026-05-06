@@ -35,27 +35,34 @@ abstract class SkuGenerator {
     return '$prefix-$randomPart';
   }
 
-  /// Generates a SKU prefixed with a slugified+truncated [name] and a
-  /// short random suffix. The slug is truncated to
-  /// [AppConstants.skuNamePrefixLength] so long product names don't blow
-  /// up the total SKU length. Falls back to [generate] when [name]
-  /// produces an empty slug (no usable letters/digits).
+  /// Generates a SKU prefixed with a slugified, vowel-compacted, truncated
+  /// [name] and a short random suffix. The first character is preserved
+  /// even if it's a vowel — short names like "Ice" remain recognisable
+  /// as "IC" rather than "C". Subsequent vowels (A/E/I/O/U) are dropped
+  /// to keep the prefix dense, then the result is capped at
+  /// [AppConstants.skuNamePrefixLength]. Falls back to [generate] when
+  /// [name] produces an empty slug (no usable letters/digits).
   ///
   /// Example:
   /// ```dart
   /// SkuGenerator.generateForName('Milk Chocolate 500g Box')
-  ///   // "MILKCHOCOL-A3B7K9"  (slug truncated at 10 chars)
+  ///   // "MLKCHCLT50-A3B7K9"
   /// SkuGenerator.generateForName('Beverages')
-  ///   // "BEVERAGES-A3B7K9"
+  ///   // "BVRGS-A3B7K9"
+  /// SkuGenerator.generateForName('Ice')
+  ///   // "IC-A3B7K9"     (first letter kept)
   /// SkuGenerator.generateForName(null)
   ///   // "SKU-A3B7K9M2"
   /// ```
   static String generateForName(String? name) {
     final slug = slugifyForSku(name ?? '');
     if (slug.isEmpty) return generate();
-    final prefix = slug.length > AppConstants.skuNamePrefixLength
-        ? slug.substring(0, AppConstants.skuNamePrefixLength)
-        : slug;
+    final first = slug[0];
+    final rest = slug.substring(1).replaceAll(RegExp(r'[AEIOU]'), '');
+    final base = '$first$rest';
+    final prefix = base.length > AppConstants.skuNamePrefixLength
+        ? base.substring(0, AppConstants.skuNamePrefixLength)
+        : base;
     final randomPart =
         _generateRandomString(AppConstants.skuPrefixedRandomLength);
     return '$prefix-$randomPart';
