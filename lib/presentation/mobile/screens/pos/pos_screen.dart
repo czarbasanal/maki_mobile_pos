@@ -297,7 +297,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         children: [
           SizedBox(
             width: double.infinity,
-            height: 64,
+            height: 48,
             child: FilledButton.icon(
               // canSaveAsDraft = has items, not processing — same gate
               // we want for "proceed to checkout" since payment entry
@@ -311,7 +311,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           const SizedBox(height: AppSpacing.sm + 4),
           SizedBox(
             width: double.infinity,
-            height: 64,
+            height: 48,
             child: OutlinedButton.icon(
               onPressed: cart.canSaveAsDraft ? _showSaveDraftDialog : null,
               icon: const Icon(CupertinoIcons.tray_arrow_down),
