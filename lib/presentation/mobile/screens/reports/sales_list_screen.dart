@@ -25,8 +25,6 @@ class SalesListScreen extends ConsumerStatefulWidget {
 class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   late DateTime _startDate;
   late DateTime _endDate;
-  SaleStatus? _statusFilter;
-  String? _cashierFilter;
   DateRangePreset _selectedPreset = DateRangePreset.today;
 
   @override
@@ -39,7 +37,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final user = ref.watch(currentUserProvider).valueOrNull;
     final dailyOnly =
         user != null && RolePermissions.isDailyReportsOnly(user.role);
@@ -59,11 +56,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
         title: const Text('Sales History'),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.line_horizontal_3_decrease),
-            tooltip: 'Filters',
-            onPressed: _showFilterSheet,
-          ),
-          IconButton(
             icon: const Icon(CupertinoIcons.chart_bar),
             tooltip: 'Reports',
             onPressed: () => _navigateToReports(context),
@@ -82,59 +74,9 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
               onCustomRangeSelected: _handleCustomRange,
             ),
 
-          // Active filters display
-          if (_statusFilter != null || _cashierFilter != null)
-            _buildActiveFilters(theme),
-
           // Sales list
           Expanded(
             child: _buildSalesList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActiveFilters(ThemeData theme) {
-    final muted = theme.colorScheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            CupertinoIcons.line_horizontal_3_decrease,
-            size: 16,
-            color: muted,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          if (_statusFilter != null)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.sm),
-              child: Chip(
-                label: Text(_statusFilter!.displayName),
-                deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
-                onDeleted: () {
-                  setState(() => _statusFilter = null);
-                },
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-          if (_cashierFilter != null)
-            Chip(
-              label: Text('Cashier: $_cashierFilter'),
-              deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
-              onDeleted: () {
-                setState(() => _cashierFilter = null);
-              },
-              visualDensity: VisualDensity.compact,
-            ),
-          const Spacer(),
-          TextButton(
-            onPressed: _clearFilters,
-            child: const Text('Clear all'),
           ),
         ],
       ),
@@ -145,8 +87,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     final params = DateRangeParams(
       startDate: _startDate,
       endDate: _endDate,
-      status: _statusFilter,
-      cashierId: _cashierFilter,
     );
 
     final salesAsync = ref.watch(salesByDateRangeProvider(params));
@@ -383,30 +323,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     });
   }
 
-  void _showFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => _FilterSheet(
-        currentStatus: _statusFilter,
-        currentCashier: _cashierFilter,
-        onApply: (status, cashier) {
-          setState(() {
-            _statusFilter = status;
-            _cashierFilter = cashier;
-          });
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _clearFilters() {
-    setState(() {
-      _statusFilter = null;
-      _cashierFilter = null;
-    });
-  }
-
   void _navigateToSaleDetail(SaleEntity sale) {
     context.push('${RoutePaths.reports}/sale/${sale.id}');
   }
@@ -447,86 +363,3 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   }
 }
 
-/// Bottom sheet for additional filters.
-class _FilterSheet extends ConsumerWidget {
-  final SaleStatus? currentStatus;
-  final String? currentCashier;
-  final void Function(SaleStatus?, String?) onApply;
-
-  const _FilterSheet({
-    required this.currentStatus,
-    required this.currentCashier,
-    required this.onApply,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    SaleStatus? selectedStatus = currentStatus;
-    String? selectedCashier = currentCashier;
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Filters',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Status filter
-              const Text(
-                'Status',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: const Text('All'),
-                    selected: selectedStatus == null,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() => selectedStatus = null);
-                      }
-                    },
-                  ),
-                  ...SaleStatus.values.map((status) => ChoiceChip(
-                        label: Text(status.displayName),
-                        selected: selectedStatus == status,
-                        onSelected: (selected) {
-                          setState(() {
-                            selectedStatus = selected ? status : null;
-                          });
-                        },
-                      )),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Apply button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => onApply(selectedStatus, selectedCashier),
-                  child: const Text('Apply Filters'),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
