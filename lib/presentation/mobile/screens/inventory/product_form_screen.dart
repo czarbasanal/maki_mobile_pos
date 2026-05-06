@@ -707,11 +707,25 @@ class _AuditInfoCard extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.sm + 4),
           _row(context, 'Created', dateFormat.format(product.createdAt)),
-          _userRow(ref, theme, muted, 'Created by', product.createdBy),
+          _userRow(
+            ref,
+            theme,
+            muted,
+            'Created by',
+            product.createdBy,
+            denormalisedName: product.createdByName,
+          ),
           if (product.updatedAt != null)
             _row(context, 'Last updated',
                 dateFormat.format(product.updatedAt!)),
-          _userRow(ref, theme, muted, 'Updated by', product.updatedBy),
+          _userRow(
+            ref,
+            theme,
+            muted,
+            'Updated by',
+            product.updatedBy,
+            denormalisedName: product.updatedByName,
+          ),
         ],
       ),
     );
@@ -741,11 +755,23 @@ class _AuditInfoCard extends ConsumerWidget {
     );
   }
 
-  Widget _userRow(WidgetRef ref, ThemeData theme, Color muted, String label,
-      String? userId) {
+  Widget _userRow(
+    WidgetRef ref,
+    ThemeData theme,
+    Color muted,
+    String label,
+    String? userId, {
+    String? denormalisedName,
+  }) {
+    // Prefer the denormalised name persisted on the product doc — non-admin
+    // viewers can't read other users' docs (firestore.rules), so the
+    // userByIdProvider lookup falls back to the raw UID for them. The
+    // denormalised name is set at write time and visible to everyone.
+    if (denormalisedName != null && denormalisedName.isNotEmpty) {
+      return _row(ref.context, label, denormalisedName);
+    }
     if (userId == null || userId.isEmpty) {
-      return _row(
-          ref.context, label, '—');
+      return _row(ref.context, label, '—');
     }
     final userAsync = ref.watch(userByIdProvider(userId));
     final value = userAsync.when(

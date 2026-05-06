@@ -69,6 +69,7 @@ void main() {
     when(() => repo.updateProduct(
           product: any(named: 'product'),
           updatedBy: any(named: 'updatedBy'),
+          updatedByName: any(named: 'updatedByName'),
         )).thenAnswer((inv) async => inv.namedArguments[#product] as ProductEntity);
     when(() => logRepo.logActivity(any()))
         .thenAnswer((inv) async => inv.positionalArguments.first);
@@ -93,6 +94,7 @@ void main() {
       verify(() => repo.updateProduct(
             product: any(named: 'product'),
             updatedBy: 'u-admin',
+            updatedByName: 'admin user',
           )).called(1);
     });
 
@@ -127,6 +129,7 @@ void main() {
       verifyNever(() => repo.updateProduct(
             product: any(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
           ));
     });
 

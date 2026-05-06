@@ -157,6 +157,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
   Future<ReceivingEntity> completeReceiving({
     required String receivingId,
     required String completedBy,
+    String? completedByName,
   }) async {
     try {
       final receiving = await getReceivingById(receivingId);
@@ -176,6 +177,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
         final processedItem = await _processReceivingItem(
           item,
           completedBy,
+          completedByName: completedByName,
           receivingId: receiving.id,
         );
         processedItems.add(processedItem);
@@ -210,6 +212,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
     ReceivingItemEntity item,
     String updatedBy, {
     required String receivingId,
+    String? completedByName,
   }) async {
     if (item.productId == null) {
       // New product - would need to create it first
@@ -235,6 +238,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
           newCost: item.unitCost,
           newCostCode: item.costCode,
           createdBy: updatedBy,
+          createdByName: completedByName,
         );
       } catch (e) {
         throw DatabaseException(
@@ -265,6 +269,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
         productId: variation.id,
         quantityChange: item.quantity,
         updatedBy: updatedBy,
+        updatedByName: completedByName,
       );
 
       return item.copyWith(
@@ -278,6 +283,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
         productId: item.productId!,
         quantityChange: item.quantity,
         updatedBy: updatedBy,
+        updatedByName: completedByName,
       );
 
       return item;

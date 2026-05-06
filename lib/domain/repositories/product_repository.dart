@@ -11,12 +11,15 @@ abstract class ProductRepository {
   ///
   /// [product] - The product entity to create
   /// [createdBy] - The ID of the user creating the product
+  /// [createdByName] - Display name of the creator (denormalized so non-admin
+  /// viewers can read the audit info without `users/{uid}` access).
   ///
   /// Returns the created product with populated ID.
   /// Throws [DuplicateSkuException] if SKU already exists.
   Future<ProductEntity> createProduct({
     required ProductEntity product,
     required String createdBy,
+    String? createdByName,
   });
 
   // ==================== READ ====================
@@ -110,11 +113,13 @@ abstract class ProductRepository {
   ///
   /// [product] - The product with updated values
   /// [updatedBy] - The ID of the user making the update
+  /// [updatedByName] - Display name of the editor (denormalized for audit info).
   ///
   /// Returns the updated product.
   Future<ProductEntity> updateProduct({
     required ProductEntity product,
     required String updatedBy,
+    String? updatedByName,
   });
 
   /// Updates product stock quantity.
@@ -122,12 +127,14 @@ abstract class ProductRepository {
   /// [productId] - The product ID
   /// [quantityChange] - Amount to add (positive) or remove (negative)
   /// [updatedBy] - The ID of the user making the update
+  /// [updatedByName] - Display name of the editor (denormalized for audit info).
   ///
   /// Returns the updated product.
   Future<ProductEntity> updateStock({
     required String productId,
     required int quantityChange,
     required String updatedBy,
+    String? updatedByName,
   });
 
   /// Sets product stock to a specific quantity.
@@ -135,30 +142,36 @@ abstract class ProductRepository {
   /// [productId] - The product ID
   /// [newQuantity] - The new stock quantity
   /// [updatedBy] - The ID of the user making the update
+  /// [updatedByName] - Display name of the editor (denormalized for audit info).
   ///
   /// Returns the updated product.
   Future<ProductEntity> setStock({
     required String productId,
     required int newQuantity,
     required String updatedBy,
+    String? updatedByName,
   });
 
   /// Deactivates a product (soft delete).
   ///
   /// [productId] - The product ID
   /// [updatedBy] - The ID of the user making the update
+  /// [updatedByName] - Display name of the editor (denormalized for audit info).
   Future<void> deactivateProduct({
     required String productId,
     required String updatedBy,
+    String? updatedByName,
   });
 
   /// Reactivates a product.
   ///
   /// [productId] - The product ID
   /// [updatedBy] - The ID of the user making the update
+  /// [updatedByName] - Display name of the editor (denormalized for audit info).
   Future<void> reactivateProduct({
     required String productId,
     required String updatedBy,
+    String? updatedByName,
   });
 
   // ==================== SKU VARIATION ====================
@@ -185,6 +198,7 @@ abstract class ProductRepository {
     required double newCost,
     required String newCostCode,
     required String createdBy,
+    String? createdByName,
   });
 
   /// Gets the next variation number for a SKU.

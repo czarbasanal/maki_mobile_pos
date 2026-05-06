@@ -62,6 +62,7 @@ void main() {
     when(() => repo.createProduct(
           product: any(named: 'product'),
           createdBy: any(named: 'createdBy'),
+          createdByName: any(named: 'createdByName'),
         )).thenAnswer((inv) async =>
         (inv.namedArguments[#product] as ProductEntity).copyWith(id: 'p-1'));
     when(() => logRepo.logActivity(any()))

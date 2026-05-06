@@ -59,6 +59,7 @@ void main() {
     when(() => repo.deactivateProduct(
           productId: any(named: 'productId'),
           updatedBy: any(named: 'updatedBy'),
+          updatedByName: any(named: 'updatedByName'),
         )).thenAnswer((_) async {});
     when(() => logRepo.logActivity(any()))
         .thenAnswer((inv) async => inv.positionalArguments.first);
@@ -77,6 +78,7 @@ void main() {
       verify(() => repo.deactivateProduct(
             productId: 'p-1',
             updatedBy: 'u-admin',
+            updatedByName: 'admin user',
           )).called(1);
     });
 
@@ -90,6 +92,7 @@ void main() {
       verifyNever(() => repo.deactivateProduct(
             productId: any(named: 'productId'),
             updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
           ));
     });
 
@@ -112,6 +115,7 @@ void main() {
       verifyNever(() => repo.deactivateProduct(
             productId: any(named: 'productId'),
             updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
           ));
     });
 

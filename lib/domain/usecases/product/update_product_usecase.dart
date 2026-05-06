@@ -71,6 +71,7 @@ class UpdateProductUseCase {
       final updated = await _repository.updateProduct(
         product: product,
         updatedBy: actor.id,
+        updatedByName: actor.displayName,
       );
 
       await _logger.log(

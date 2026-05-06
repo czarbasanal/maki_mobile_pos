@@ -22,6 +22,7 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<ProductEntity> createProduct({
     required ProductEntity product,
     required String createdBy,
+    String? createdByName,
   }) async {
     try {
       // Check for duplicate SKU
@@ -41,8 +42,12 @@ class ProductRepositoryImpl implements ProductRepository {
       }
 
       final productModel = ProductModel.fromEntity(product);
-      final docRef =
-          await _productsRef.add(productModel.toCreateMap(createdBy));
+      final docRef = await _productsRef.add(
+        productModel.toCreateMap(
+          createdBy,
+          createdByDisplayName: createdByName,
+        ),
+      );
 
       // Initial price history — best-effort. If the price_history subcollection
       // write fails (rules / transient), the product itself has already been
@@ -350,6 +355,7 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<ProductEntity> updateProduct({
     required ProductEntity product,
     required String updatedBy,
+    String? updatedByName,
   }) async {
     try {
       // Capture prior cost/price before the update so we can detect a change
@@ -357,9 +363,12 @@ class ProductRepositoryImpl implements ProductRepository {
       final prior = await getProductById(product.id);
 
       final productModel = ProductModel.fromEntity(product);
-      await _productsRef
-          .doc(product.id)
-          .update(productModel.toUpdateMap(updatedBy));
+      await _productsRef.doc(product.id).update(
+            productModel.toUpdateMap(
+              updatedBy,
+              updatedByDisplayName: updatedByName,
+            ),
+          );
 
       final updated = await getProductById(product.id);
       if (updated == null) {
@@ -405,12 +414,14 @@ class ProductRepositoryImpl implements ProductRepository {
     required String productId,
     required int quantityChange,
     required String updatedBy,
+    String? updatedByName,
   }) async {
     try {
       await _productsRef.doc(productId).update({
         'quantity': FieldValue.increment(quantityChange),
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedBy': updatedBy,
+        if (updatedByName != null) 'updatedByName': updatedByName,
       });
 
       final updated = await getProductById(productId);
@@ -433,12 +444,14 @@ class ProductRepositoryImpl implements ProductRepository {
     required String productId,
     required int newQuantity,
     required String updatedBy,
+    String? updatedByName,
   }) async {
     try {
       await _productsRef.doc(productId).update({
         'quantity': newQuantity,
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedBy': updatedBy,
+        if (updatedByName != null) 'updatedByName': updatedByName,
       });
 
       final updated = await getProductById(productId);
@@ -460,12 +473,14 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> deactivateProduct({
     required String productId,
     required String updatedBy,
+    String? updatedByName,
   }) async {
     try {
       await _productsRef.doc(productId).update({
         'isActive': false,
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedBy': updatedBy,
+        if (updatedByName != null) 'updatedByName': updatedByName,
       });
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -480,12 +495,14 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> reactivateProduct({
     required String productId,
     required String updatedBy,
+    String? updatedByName,
   }) async {
     try {
       await _productsRef.doc(productId).update({
         'isActive': true,
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedBy': updatedBy,
+        if (updatedByName != null) 'updatedByName': updatedByName,
       });
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -536,6 +553,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required double newCost,
     required String newCostCode,
     required String createdBy,
+    String? createdByName,
   }) async {
     try {
       final baseSku = originalProduct.baseSku ?? originalProduct.sku;
@@ -555,7 +573,11 @@ class ProductRepositoryImpl implements ProductRepository {
         updatedAt: null,
       );
 
-      return createProduct(product: variation, createdBy: createdBy);
+      return createProduct(
+        product: variation,
+        createdBy: createdBy,
+        createdByName: createdByName,
+      );
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to create variation: ${e.message}',

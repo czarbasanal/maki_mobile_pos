@@ -73,6 +73,7 @@ void main() {
       when(() => repo.completeReceiving(
             receivingId: any(named: 'receivingId'),
             completedBy: any(named: 'completedBy'),
+            completedByName: any(named: 'completedByName'),
           )).thenAnswer((_) async => _receiving());
 
       final result = await useCase.execute(
@@ -85,6 +86,7 @@ void main() {
       verify(() => repo.completeReceiving(
             receivingId: 'rcv-1',
             completedBy: 'u-staff',
+            completedByName: 'staff user',
           )).called(1);
       verify(() => logRepo.logActivity(any())).called(1);
     });
@@ -93,6 +95,7 @@ void main() {
       when(() => repo.completeReceiving(
             receivingId: any(named: 'receivingId'),
             completedBy: any(named: 'completedBy'),
+            completedByName: any(named: 'completedByName'),
           )).thenAnswer((_) async => _receiving());
 
       final result = await useCase.execute(
@@ -104,6 +107,7 @@ void main() {
       verify(() => repo.completeReceiving(
             receivingId: 'rcv-1',
             completedBy: 'u-admin',
+            completedByName: 'admin user',
           )).called(1);
     });
 
@@ -118,6 +122,7 @@ void main() {
       verifyNever(() => repo.completeReceiving(
             receivingId: any(named: 'receivingId'),
             completedBy: any(named: 'completedBy'),
+            completedByName: any(named: 'completedByName'),
           ));
     });
 
@@ -132,6 +137,7 @@ void main() {
       verifyNever(() => repo.completeReceiving(
             receivingId: any(named: 'receivingId'),
             completedBy: any(named: 'completedBy'),
+            completedByName: any(named: 'completedByName'),
           ));
     });
 
@@ -139,6 +145,7 @@ void main() {
       when(() => repo.completeReceiving(
             receivingId: any(named: 'receivingId'),
             completedBy: any(named: 'completedBy'),
+            completedByName: any(named: 'completedByName'),
           )).thenThrow(Exception('Firestore unavailable'));
 
       final result = await useCase.execute(
