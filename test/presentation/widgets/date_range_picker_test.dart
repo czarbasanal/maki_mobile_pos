@@ -4,7 +4,8 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widg
 
 void main() {
   group('DateRangePicker', () {
-    testWidgets('displays preset options', (tester) async {
+    testWidgets('shows the selected preset and exposes the others on tap',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -19,13 +20,20 @@ void main() {
         ),
       );
 
+      // Selected preset shows in the closed dropdown.
       expect(find.text('Today'), findsOneWidget);
-      expect(find.text('Yesterday'), findsOneWidget);
-      expect(find.text('This Week'), findsOneWidget);
-      expect(find.text('This Month'), findsOneWidget);
+
+      // Open the dropdown — the other presets become reachable.
+      await tester
+          .tap(find.byType(DropdownButtonFormField<DateRangePreset>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Yesterday'), findsWidgets);
+      expect(find.text('This Week'), findsWidgets);
+      expect(find.text('This Month'), findsWidgets);
     });
 
-    testWidgets('calls onPresetChanged when preset is selected',
+    testWidgets('calls onPresetChanged when a preset is selected',
         (tester) async {
       DateRangePreset? selectedPreset;
 
@@ -43,8 +51,14 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Yesterday'));
-      await tester.pump();
+      await tester
+          .tap(find.byType(DropdownButtonFormField<DateRangePreset>));
+      await tester.pumpAndSettle();
+
+      // Multiple matches can exist (closed-state label + menu item) — pick
+      // the menu entry, which is the last one in the tree.
+      await tester.tap(find.text('Yesterday').last);
+      await tester.pumpAndSettle();
 
       expect(selectedPreset, DateRangePreset.yesterday);
     });
