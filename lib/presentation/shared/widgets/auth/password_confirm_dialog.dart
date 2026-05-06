@@ -121,10 +121,13 @@ class _PasswordConfirmDialogState extends ConsumerState<PasswordConfirmDialog> {
       title: Text(widget.purpose),
       content: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        // Scroll the field column so the soft keyboard never makes the
+        // dialog overflow when its max height shrinks.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Text(
               widget.message ??
                   'Confirm your password to continue with this action.',
@@ -150,6 +153,7 @@ class _PasswordConfirmDialogState extends ConsumerState<PasswordConfirmDialog> {
               onFieldSubmitted: (_) => _submit(),
             ),
           ],
+          ),
         ),
       ),
       actions: [
