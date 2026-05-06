@@ -408,26 +408,38 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Supplier - admin only can change supplier
                     if (canSelectSupplier)
                       suppliersAsync.when(
-                        data: (suppliers) => DropdownButtonFormField<String>(
-                          value: _selectedSupplierId,
-                          decoration: const InputDecoration(
-                            labelText: 'Supplier',
-                            prefixIcon: Icon(CupertinoIcons.briefcase),
-                              ),
-                          items: [
-                            const DropdownMenuItem(
+                        data: (suppliers) {
+                          final items = <DropdownMenuItem<String>>[
+                            const DropdownMenuItem<String>(
                               value: null,
                               child: Text('No supplier'),
                             ),
-                            ...suppliers.map((s) => DropdownMenuItem(
-                                  value: s.id,
-                                  child: Text(s.name),
-                                )),
-                          ],
-                          onChanged: (value) {
-                            setState(() => _selectedSupplierId = value);
-                          },
-                        ),
+                            ...suppliers.map(
+                              (s) => DropdownMenuItem<String>(
+                                value: s.id,
+                                child: Text(s.name),
+                              ),
+                            ),
+                          ];
+                          // Guard against a stale supplier id pointing at a
+                          // supplier that's been removed from the active list.
+                          final selected = _selectedSupplierId;
+                          final safe = items.any((i) => i.value == selected)
+                              ? selected
+                              : null;
+                          return DropdownButtonFormField<String>(
+                            initialValue: safe,
+                            key: ValueKey('supplier:$safe:${suppliers.length}'),
+                            decoration: const InputDecoration(
+                              labelText: 'Supplier',
+                              prefixIcon: Icon(CupertinoIcons.briefcase),
+                            ),
+                            items: items,
+                            onChanged: (value) {
+                              setState(() => _selectedSupplierId = value);
+                            },
+                          );
+                        },
                         loading: () => const LinearProgressIndicator(),
                         error: (_, __) =>
                             const Text('Could not load suppliers'),
@@ -780,38 +792,51 @@ class _AdminListDropdownField extends ConsumerWidget {
     return entriesAsync.when(
       data: (entries) {
         final current = controller.text.trim();
-        final activeNames = entries.map((c) => c.name).toList();
+        final activeNames =
+            entries.map((c) => c.name).toSet().toList(); // de-dupe
         final isOrphan = current.isNotEmpty && !activeNames.contains(current);
 
+        // Build the items list first so we can validate that `value` matches
+        // exactly one item — Flutter's Dropdown asserts this and crashes
+        // otherwise. If it doesn't match, fall back to null (no selection).
+        final items = <DropdownMenuItem<String>>[
+          if (includeNoneOption)
+            const DropdownMenuItem<String>(
+              value: null,
+              child: Text('(none)'),
+            ),
+          ...activeNames.map(
+            (name) => DropdownMenuItem<String>(
+              value: name,
+              child: Text(name),
+            ),
+          ),
+          if (isOrphan)
+            DropdownMenuItem<String>(
+              value: current,
+              child: Text(
+                '$current (inactive)',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ];
+
+        final candidate = current.isEmpty ? null : current;
+        final matches = items.where((i) => i.value == candidate).length;
+        final safeValue = matches == 1 ? candidate : null;
+
         return DropdownButtonFormField<String>(
-          value: current.isEmpty ? null : current,
+          initialValue: safeValue,
+          key: ValueKey('${kind.name}:$safeValue:${activeNames.length}'),
           isExpanded: true,
           decoration: InputDecoration(
             labelText: label,
             prefixIcon: Icon(icon),
           ),
-          items: [
-            if (includeNoneOption)
-              const DropdownMenuItem(
-                value: null,
-                child: Text('(none)'),
-              ),
-            ...activeNames.map((name) => DropdownMenuItem(
-                  value: name,
-                  child: Text(name),
-                )),
-            if (isOrphan)
-              DropdownMenuItem(
-                value: current,
-                child: Text(
-                  '$current (inactive)',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-          ],
+          items: items,
           onChanged: onChanged,
         );
       },
