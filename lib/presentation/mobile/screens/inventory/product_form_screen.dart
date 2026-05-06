@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -45,6 +46,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   String? _selectedSupplierId;
   bool _isLoading = false;
   bool _isSaving = false;
+  // SKU auto-generation: default ON for new products. Hidden / inert on edit
+  // since the existing SKU is locked once a product has sale/receiving refs.
+  bool _autoGenerateSku = true;
   ProductEntity? _existingProduct;
 
   @override
@@ -55,7 +59,21 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     if (widget.productId != null) {
       _loadProduct();
+    } else {
+      // Seed an initial auto-generated SKU so the field isn't blank on first
+      // paint. Regenerates on category pick (and on the explicit refresh).
+      _skuController.text = SkuGenerator.generateForCategory(null);
     }
+  }
+
+  /// Re-rolls the SKU using the current category. No-op when [_autoGenerateSku]
+  /// is off — manual mode is the user's text verbatim.
+  void _regenerateSku() {
+    if (!_autoGenerateSku) return;
+    setState(() {
+      _skuController.text =
+          SkuGenerator.generateForCategory(_categoryController.text);
+    });
   }
 
   Future<void> _loadProduct() async {
@@ -175,14 +193,46 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ),
 
-                    // SKU
+                    // SKU — Auto/Manual toggle is create-only; on edit the
+                    // SKU is read-only (sale + receiving variation refs).
+                    if (canEditSku)
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: const Text('Auto-generate SKU'),
+                        subtitle: Text(
+                          _autoGenerateSku
+                              ? 'Built from category + random suffix'
+                              : 'Type the SKU manually',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        value: _autoGenerateSku,
+                        onChanged: (v) {
+                          setState(() {
+                            _autoGenerateSku = v;
+                            if (v) {
+                              _skuController.text =
+                                  SkuGenerator.generateForCategory(
+                                _categoryController.text,
+                              );
+                            }
+                          });
+                        },
+                      ),
                     TextFormField(
                       controller: _skuController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'SKU *',
-                        prefixIcon: Icon(CupertinoIcons.qrcode),
+                        prefixIcon: const Icon(CupertinoIcons.qrcode),
+                        suffixIcon: (canEditSku && _autoGenerateSku)
+                            ? IconButton(
+                                tooltip: 'Regenerate',
+                                icon: const Icon(CupertinoIcons.arrow_2_circlepath),
+                                onPressed: _regenerateSku,
+                              )
+                            : null,
                       ),
-                      enabled: canEditSku,
+                      enabled: canEditSku && !_autoGenerateSku,
                       validator: (value) =>
                           value?.isEmpty == true ? 'SKU is required' : null,
                     ),
@@ -323,7 +373,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Category — admin-managed dropdown. If the product is
                     // tied to a category that's been deactivated since last
                     // edit, we surface it inline so the user can keep it or
-                    // pick a current active one.
+                    // pick a current active one. When auto-SKU is on, picking
+                    // a category reshapes the SKU prefix.
                     _AdminListDropdownField(
                       kind: CategoryKind.product,
                       controller: _categoryController,
@@ -333,6 +384,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       onChanged: (value) {
                         setState(() {
                           _categoryController.text = value ?? '';
+                          if (canEditSku && _autoGenerateSku) {
+                            _skuController.text =
+                                SkuGenerator.generateForCategory(value);
+                          }
                         });
                       },
                     ),
