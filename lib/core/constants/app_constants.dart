@@ -37,6 +37,9 @@ abstract class AppConstants {
   /// Length of random portion in auto-generated SKUs
   static const int skuRandomLength = 8;
 
+  /// Length of random portion in category-prefixed SKUs (e.g. BEVERAGES-A3B7K9)
+  static const int skuCategoryRandomLength = 6;
+
   /// Separator for SKU variations (e.g., ABC-1, ABC-2)
   static const String skuVariationSeparator = '-';
 

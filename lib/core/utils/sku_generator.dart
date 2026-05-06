@@ -35,6 +35,31 @@ abstract class SkuGenerator {
     return '$prefix-$randomPart';
   }
 
+  /// Generates a SKU prefixed with a slugified [categoryName] and a 6-char
+  /// random suffix. Falls back to [generate] when the category produces an
+  /// empty slug (no usable letters/digits).
+  ///
+  /// Example:
+  /// ```dart
+  /// SkuGenerator.generateForCategory('Beverages')      // "BEVERAGES-A3B7K9"
+  /// SkuGenerator.generateForCategory('Coffee & Tea')   // "COFFEETEA-M5HJX2"
+  /// SkuGenerator.generateForCategory(null)             // "SKU-A3B7K9M2"
+  /// ```
+  static String generateForCategory(String? categoryName) {
+    final prefix = slugifyForSku(categoryName ?? '');
+    if (prefix.isEmpty) return generate();
+    final randomPart =
+        _generateRandomString(AppConstants.skuCategoryRandomLength);
+    return '$prefix-$randomPart';
+  }
+
+  /// Uppercases a category/unit name and strips everything that isn't
+  /// alphanumeric — keeps the result Code128-safe and consistent across
+  /// category renames that only differ in spacing/punctuation.
+  static String slugifyForSku(String name) {
+    return name.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+  }
+
   /// Generates a variation SKU from an existing SKU.
   ///
   /// Used when receiving products with same SKU but different cost. Appends a
