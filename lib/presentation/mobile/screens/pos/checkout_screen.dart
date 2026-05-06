@@ -308,7 +308,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-          height: 64,
+          height: 48,
           child: FilledButton(
             onPressed: _isProcessing ? null : () => _processCheckout(cart),
             style: FilledButton.styleFrom(
