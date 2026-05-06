@@ -32,6 +32,7 @@ class CompleteReceivingUseCase {
       final completed = await _repository.completeReceiving(
         receivingId: receivingId,
         completedBy: actor.id,
+        completedByName: actor.displayName,
       );
 
       await _logger.logReceiving(

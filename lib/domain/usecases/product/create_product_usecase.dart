@@ -29,6 +29,7 @@ class CreateProductUseCase {
       final created = await _repository.createProduct(
         product: product,
         createdBy: actor.id,
+        createdByName: actor.displayName,
       );
 
       await _logger.log(

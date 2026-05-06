@@ -80,6 +80,7 @@ void main() {
             productId: any(named: 'productId'),
             quantityChange: any(named: 'quantityChange'),
             updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
           )).thenAnswer((_) async => ProductEntity(
             id: 'prod-1',
             sku: 'SKU-001',
@@ -111,6 +112,7 @@ void main() {
             productId: 'prod-1',
             quantityChange: 2,
             updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
           )).called(1);
     });
 

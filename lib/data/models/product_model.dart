@@ -20,6 +20,8 @@ class ProductModel {
   final DateTime? updatedAt;
   final String? createdBy;
   final String? updatedBy;
+  final String? createdByName;
+  final String? updatedByName;
   final List<String> searchKeywords;
   final String? baseSku;
   final int? variationNumber;
@@ -45,6 +47,8 @@ class ProductModel {
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
+    this.createdByName,
+    this.updatedByName,
     this.searchKeywords = const [],
     this.baseSku,
     this.variationNumber,
@@ -83,6 +87,8 @@ class ProductModel {
       updatedAt: _parseTimestamp(map['updatedAt']),
       createdBy: map['createdBy'] as String?,
       updatedBy: map['updatedBy'] as String?,
+      createdByName: map['createdByName'] as String?,
+      updatedByName: map['updatedByName'] as String?,
       searchKeywords: _parseStringList(map['searchKeywords']),
       baseSku: map['baseSku'] as String?,
       variationNumber: (map['variationNumber'] as num?)?.toInt(),
@@ -124,10 +130,15 @@ class ProductModel {
       map['updatedAt'] = FieldValue.serverTimestamp();
       map['createdBy'] = createdBy;
       map['updatedBy'] = createdBy;
+      // Mirror createdByName to updatedByName at create time so the audit
+      // info is internally consistent before any subsequent edit.
+      map['createdByName'] = createdByName;
+      map['updatedByName'] = createdByName;
     } else if (forUpdate) {
       map['updatedAt'] = FieldValue.serverTimestamp();
       map['updatedBy'] = updatedBy;
-      // Don't include createdAt and createdBy on updates
+      map['updatedByName'] = updatedByName;
+      // Don't include createdAt / createdBy / createdByName on updates
     } else {
       map['createdAt'] = Timestamp.fromDate(createdAt);
           if (updatedAt != null) {
@@ -135,23 +146,36 @@ class ProductModel {
       }
       map['createdBy'] = createdBy;
       map['updatedBy'] = updatedBy;
+      map['createdByName'] = createdByName;
+      map['updatedByName'] = updatedByName;
     }
 
     return map;
   }
 
-  /// Converts to a Map for creating a new product.
-  Map<String, dynamic> toCreateMap(String createdByUserId) {
+  /// Converts to a Map for creating a new product. [createdByDisplayName]
+  /// is denormalized onto the doc so non-admin viewers can see a human
+  /// name on the audit info.
+  Map<String, dynamic> toCreateMap(
+    String createdByUserId, {
+    String? createdByDisplayName,
+  }) {
     return copyWith(
       createdBy: createdByUserId,
+      createdByName: createdByDisplayName,
       searchKeywords: _generateSearchKeywords(),
     ).toMap(forCreate: true);
   }
 
-  /// Converts to a Map for updating a product.
-  Map<String, dynamic> toUpdateMap(String updatedByUserId) {
+  /// Converts to a Map for updating a product. [updatedByDisplayName] is
+  /// denormalized onto the doc to keep audit info readable for non-admins.
+  Map<String, dynamic> toUpdateMap(
+    String updatedByUserId, {
+    String? updatedByDisplayName,
+  }) {
     return copyWith(
       updatedBy: updatedByUserId,
+      updatedByName: updatedByDisplayName,
       searchKeywords: _generateSearchKeywords(),
     ).toMap(forUpdate: true);
   }
@@ -177,6 +201,8 @@ class ProductModel {
       updatedAt: updatedAt,
       createdBy: createdBy,
       updatedBy: updatedBy,
+      createdByName: createdByName,
+      updatedByName: updatedByName,
       searchKeywords: searchKeywords,
       baseSku: baseSku,
       variationNumber: variationNumber,
@@ -206,6 +232,8 @@ class ProductModel {
       updatedAt: entity.updatedAt,
       createdBy: entity.createdBy,
       updatedBy: entity.updatedBy,
+      createdByName: entity.createdByName,
+      updatedByName: entity.updatedByName,
       searchKeywords: entity.searchKeywords,
       baseSku: entity.baseSku,
       variationNumber: entity.variationNumber,
@@ -356,6 +384,8 @@ class ProductModel {
     DateTime? updatedAt,
     String? createdBy,
     String? updatedBy,
+    String? createdByName,
+    String? updatedByName,
     List<String>? searchKeywords,
     String? baseSku,
     int? variationNumber,
@@ -381,6 +411,8 @@ class ProductModel {
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
       updatedBy: updatedBy ?? this.updatedBy,
+      createdByName: createdByName ?? this.createdByName,
+      updatedByName: updatedByName ?? this.updatedByName,
       searchKeywords: searchKeywords ?? this.searchKeywords,
       baseSku: baseSku ?? this.baseSku,
       variationNumber: variationNumber ?? this.variationNumber,

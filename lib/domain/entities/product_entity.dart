@@ -51,11 +51,20 @@ class ProductEntity extends Equatable {
   /// When product was last updated
   final DateTime? updatedAt;
 
-  /// Who created this product
+  /// Who created this product (user ID)
   final String? createdBy;
 
-  /// Who last updated this product
+  /// Who last updated this product (user ID)
   final String? updatedBy;
+
+  /// Display name of the user who created this product (denormalized).
+  /// Mirrors the receiving/sales pattern so non-admin viewers can see a
+  /// human name on the audit info even though Firestore rules block them
+  /// from reading other users' docs directly.
+  final String? createdByName;
+
+  /// Display name of the user who last updated this product (denormalized).
+  final String? updatedByName;
 
   /// Search keywords for quick lookup
   final List<String> searchKeywords;
@@ -96,6 +105,8 @@ class ProductEntity extends Equatable {
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
+    this.createdByName,
+    this.updatedByName,
     this.searchKeywords = const [],
     this.baseSku,
     this.variationNumber,
@@ -200,6 +211,8 @@ class ProductEntity extends Equatable {
     DateTime? updatedAt,
     String? createdBy,
     String? updatedBy,
+    String? createdByName,
+    String? updatedByName,
     List<String>? searchKeywords,
     String? baseSku,
     int? variationNumber,
@@ -225,6 +238,8 @@ class ProductEntity extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
       updatedBy: updatedBy ?? this.updatedBy,
+      createdByName: createdByName ?? this.createdByName,
+      updatedByName: updatedByName ?? this.updatedByName,
       searchKeywords: searchKeywords ?? this.searchKeywords,
       baseSku: baseSku ?? this.baseSku,
       variationNumber: variationNumber ?? this.variationNumber,
@@ -253,6 +268,8 @@ class ProductEntity extends Equatable {
         updatedAt,
         createdBy,
         updatedBy,
+        createdByName,
+        updatedByName,
         searchKeywords,
         baseSku,
         variationNumber,

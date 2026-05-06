@@ -238,6 +238,7 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     required String productId,
     required int quantityChange,
     required String updatedBy,
+    String? updatedByName,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -245,6 +246,7 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
         productId: productId,
         quantityChange: quantityChange,
         updatedBy: updatedBy,
+        updatedByName: updatedByName,
       );
       state = const AsyncValue.data(null);
       _ref.invalidate(productByIdProvider(productId));
@@ -282,6 +284,7 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     required double newCost,
     required String newCostCode,
     required String createdBy,
+    String? createdByName,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -290,6 +293,7 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
         newCost: newCost,
         newCostCode: newCostCode,
         createdBy: createdBy,
+        createdByName: createdByName,
       );
       state = const AsyncValue.data(null);
       _invalidateProductProviders();

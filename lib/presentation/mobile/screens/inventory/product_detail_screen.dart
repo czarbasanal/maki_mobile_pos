@@ -521,7 +521,11 @@ class ProductDetailScreen extends ConsumerWidget {
               dateFormat.format(product.createdAt),
             ),
             if (product.createdBy != null && product.createdBy!.isNotEmpty)
-              _UserDetailRow(label: 'Created by', userId: product.createdBy!),
+              _UserDetailRow(
+                label: 'Created by',
+                userId: product.createdBy!,
+                denormalisedName: product.createdByName,
+              ),
             if (product.updatedAt != null)
               _buildDetailRow(
                 context,
@@ -530,7 +534,10 @@ class ProductDetailScreen extends ConsumerWidget {
               ),
             if (product.updatedBy != null && product.updatedBy!.isNotEmpty)
               _UserDetailRow(
-                  label: 'Updated by', userId: product.updatedBy!),
+                label: 'Updated by',
+                userId: product.updatedBy!,
+                denormalisedName: product.updatedByName,
+              ),
             if (product.isVariation)
               _buildDetailRow(context, 'Base SKU', product.baseSku ?? ''),
           ],
@@ -945,21 +952,35 @@ class _PriceLine extends StatelessWidget {
 /// The user document is fetched via [userByIdProvider]; we fall back to a
 /// dash while loading and to the raw UID if the user can't be resolved.
 class _UserDetailRow extends ConsumerWidget {
-  const _UserDetailRow({required this.label, required this.userId});
+  const _UserDetailRow({
+    required this.label,
+    required this.userId,
+    this.denormalisedName,
+  });
 
   final String label;
   final String userId;
+
+  /// Display name persisted on the product doc at write time. Preferred over
+  /// the [userByIdProvider] lookup because non-admin viewers can't read
+  /// other users' docs under firestore.rules.
+  final String? denormalisedName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
-    final userAsync = ref.watch(userByIdProvider(userId));
-    final value = userAsync.when(
-      data: (user) => user?.displayName ?? userId,
-      loading: () => '—',
-      error: (_, __) => userId,
-    );
+    final String value;
+    if (denormalisedName != null && denormalisedName!.isNotEmpty) {
+      value = denormalisedName!;
+    } else {
+      final userAsync = ref.watch(userByIdProvider(userId));
+      value = userAsync.when(
+        data: (user) => user?.displayName ?? userId,
+        loading: () => '—',
+        error: (_, __) => userId,
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),

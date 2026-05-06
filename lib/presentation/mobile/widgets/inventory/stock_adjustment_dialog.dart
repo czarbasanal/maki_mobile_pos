@@ -363,6 +363,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
               productId: widget.product.id,
               newQuantity: quantity,
               updatedBy: currentUser.id,
+              updatedByName: currentUser.displayName,
             );
       } else {
         // Use updateStock for add/remove
@@ -372,6 +373,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
           productId: widget.product.id,
           quantityChange: change,
           updatedBy: currentUser.id,
+          updatedByName: currentUser.displayName,
         );
       }
 

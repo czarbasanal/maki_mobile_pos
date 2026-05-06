@@ -83,6 +83,7 @@ class VoidSaleUseCase {
         final inventoryWarnings = await _restoreInventory(
           sale.items,
           voidedBy,
+          updatedByName: voidedByName,
         );
         warnings.addAll(inventoryWarnings);
       }
@@ -157,8 +158,9 @@ class VoidSaleUseCase {
   /// Restores inventory for voided sale items.
   Future<List<String>> _restoreInventory(
     List<SaleItemEntity> items,
-    String updatedBy,
-  ) async {
+    String updatedBy, {
+    String? updatedByName,
+  }) async {
     final warnings = <String>[];
 
     for (final item in items) {
@@ -167,6 +169,7 @@ class VoidSaleUseCase {
           productId: item.productId,
           quantityChange: item.quantity, // Positive to restore stock
           updatedBy: updatedBy,
+          updatedByName: updatedByName,
         );
       } catch (e) {
         warnings.add('Failed to restore stock for ${item.name}: $e');

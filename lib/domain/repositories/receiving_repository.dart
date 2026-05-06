@@ -48,6 +48,7 @@ abstract class ReceivingRepository {
   Future<ReceivingEntity> completeReceiving({
     required String receivingId,
     required String completedBy,
+    String? completedByName,
   });
 
   /// Cancels a receiving record.

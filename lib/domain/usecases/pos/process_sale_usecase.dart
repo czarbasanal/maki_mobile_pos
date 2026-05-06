@@ -62,8 +62,11 @@ class ProcessSaleUseCase {
 
       // 5. Update inventory
       if (updateInventory) {
-        final stockWarnings =
-            await _updateInventory(sale.items, createdSale.cashierId);
+        final stockWarnings = await _updateInventory(
+          sale.items,
+          createdSale.cashierId,
+          updatedByName: createdSale.cashierName,
+        );
         warnings.addAll(stockWarnings);
       }
 
@@ -149,8 +152,9 @@ class ProcessSaleUseCase {
   /// Returns a list of warnings for any items that failed to update.
   Future<List<String>> _updateInventory(
     List<SaleItemEntity> items,
-    String updatedBy,
-  ) async {
+    String updatedBy, {
+    String? updatedByName,
+  }) async {
     final warnings = <String>[];
     for (final item in items) {
       try {
@@ -158,6 +162,7 @@ class ProcessSaleUseCase {
           productId: item.productId,
           quantityChange: -item.quantity, // Negative to reduce stock
           updatedBy: updatedBy,
+          updatedByName: updatedByName,
         );
       } catch (e) {
         warnings.add('Stock update failed for ${item.sku}: $e');

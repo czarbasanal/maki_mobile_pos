@@ -34,6 +34,7 @@ class DeactivateProductUseCase {
       await _repository.deactivateProduct(
         productId: productId,
         updatedBy: actor.id,
+        updatedByName: actor.displayName,
       );
 
       await _logger.log(
