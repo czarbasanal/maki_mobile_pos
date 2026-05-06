@@ -147,13 +147,13 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
               const SizedBox(height: AppSpacing.lg),
               // Stacked actions — Receipt on top, Done at the bottom
               // (Done is the primary close action, so it anchors the
-              // dialog's bottom edge). Both pinned to the same 56px
+              // dialog's bottom edge). Both pinned to the same 48px
               // height and lg corner radius so the secondary
               // OutlinedButton.icon and the primary FilledButton
               // render identically.
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 48,
                 child: OutlinedButton.icon(
                   onPressed: widget.onPrintReceipt,
                   icon: const Icon(CupertinoIcons.doc_text),
@@ -164,7 +164,7 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
               const SizedBox(height: AppSpacing.sm + 4),
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 48,
                 child: FilledButton(
                   onPressed: widget.onDone,
                   style: FilledButton.styleFrom(
