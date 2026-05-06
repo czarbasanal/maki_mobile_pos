@@ -294,14 +294,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Unit
-                    TextFormField(
+                    // Unit — admin-managed dropdown. Required field; empty
+                    // submissions fall back to 'pcs' downstream so legacy
+                    // products created before units were seeded still save.
+                    _AdminListDropdownField(
+                      kind: CategoryKind.unit,
                       controller: _unitController,
-                      decoration: const InputDecoration(
-                        labelText: 'Unit',
-                        prefixIcon: Icon(Icons.straighten),
-                        hintText: 'e.g., pcs, kg, box',
-                      ),
+                      label: 'Unit',
+                      icon: Icons.straighten,
+                      onChanged: (value) {
+                        setState(() {
+                          _unitController.text = value ?? '';
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -319,8 +324,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // tied to a category that's been deactivated since last
                     // edit, we surface it inline so the user can keep it or
                     // pick a current active one.
-                    _CategoryDropdownField(
+                    _AdminListDropdownField(
+                      kind: CategoryKind.product,
                       controller: _categoryController,
+                      label: 'Category',
+                      icon: CupertinoIcons.square_grid_2x2,
+                      includeNoneOption: true,
                       onChanged: (value) {
                         setState(() {
                           _categoryController.text = value ?? '';
@@ -669,45 +678,57 @@ class _AuditInfoCard extends ConsumerWidget {
   }
 }
 
-/// Dropdown bound to a [TextEditingController] holding the category name.
+/// Dropdown bound to a [TextEditingController] holding an admin-managed
+/// list value (product category, unit, …).
 ///
-/// Items = active product categories ∪ {controller's current value if
-/// not in the active list}. Empty string is rendered as "(none)" and
-/// emitted as null upstream. The dropdown reads the controller text
-/// directly so the surrounding form's save logic — which still reads
-/// `_categoryController.text` — keeps working unchanged.
-class _CategoryDropdownField extends ConsumerWidget {
-  const _CategoryDropdownField({
+/// Items = active entries from [kind] ∪ {controller's current value if
+/// not in the active list, shown as "(inactive)"}. When [includeNoneOption]
+/// is true (e.g. category is optional), an empty selection emits null;
+/// when false (e.g. unit is required), there's no null option.
+///
+/// The widget reads the controller text directly so the surrounding form's
+/// save logic — which still reads `controller.text` — keeps working
+/// unchanged when we swap a free-text field for this dropdown.
+class _AdminListDropdownField extends ConsumerWidget {
+  const _AdminListDropdownField({
+    required this.kind,
     required this.controller,
     required this.onChanged,
+    required this.label,
+    required this.icon,
+    this.includeNoneOption = false,
   });
 
+  final CategoryKind kind;
   final TextEditingController controller;
   final ValueChanged<String?> onChanged;
+  final String label;
+  final IconData icon;
+  final bool includeNoneOption;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categoriesAsync =
-        ref.watch(activeCategoriesProvider(CategoryKind.product));
+    final entriesAsync = ref.watch(activeCategoriesProvider(kind));
 
-    return categoriesAsync.when(
-      data: (categories) {
+    return entriesAsync.when(
+      data: (entries) {
         final current = controller.text.trim();
-        final activeNames = categories.map((c) => c.name).toList();
+        final activeNames = entries.map((c) => c.name).toList();
         final isOrphan = current.isNotEmpty && !activeNames.contains(current);
 
         return DropdownButtonFormField<String>(
           value: current.isEmpty ? null : current,
           isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Category',
-            prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icon),
           ),
           items: [
-            const DropdownMenuItem(
-              value: null,
-              child: Text('(none)'),
-            ),
+            if (includeNoneOption)
+              const DropdownMenuItem(
+                value: null,
+                child: Text('(none)'),
+              ),
             ...activeNames.map((name) => DropdownMenuItem(
                   value: name,
                   child: Text(name),
@@ -728,7 +749,7 @@ class _CategoryDropdownField extends ConsumerWidget {
         );
       },
       loading: () => const LinearProgressIndicator(),
-      error: (_, __) => const Text('Could not load categories'),
+      error: (_, __) => Text('Could not load ${kind.pluralLabel}'),
     );
   }
 }
