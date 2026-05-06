@@ -80,8 +80,8 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 SettingsTile(
                   icon: CupertinoIcons.tag,
-                  title: 'Manage Categories',
-                  subtitle: 'Product and expense category lists',
+                  title: 'Manage Lists',
+                  subtitle: 'Product / expense categories and units',
                   onTap: () => context.push(RoutePaths.categorySettings),
                 ),
               ],

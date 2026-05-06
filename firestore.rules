@@ -213,5 +213,15 @@ service cloud.firestore {
       // Only admin can manage the category list
       allow write: if isAdmin() && isActiveUser();
     }
+
+    // ==================== UNITS COLLECTION ====================
+
+    match /units/{unitId} {
+      // All valid users can read units (product form, inventory display)
+      allow read: if isValidUser() && isActiveUser();
+
+      // Only admin can manage the unit list
+      allow write: if isAdmin() && isActiveUser();
+    }
   }
 }

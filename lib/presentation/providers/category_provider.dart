@@ -7,10 +7,14 @@ import 'package:maki_mobile_pos/domain/repositories/category_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
-/// Distinguishes the two category collections.
+/// Distinguishes the admin-managed name-list collections.
+///
+/// Each kind maps to a separate Firestore collection sharing the same shape
+/// — see [CategoryRepositoryImpl], which is parameterised on collection name.
 enum CategoryKind {
   product,
-  expense;
+  expense,
+  unit;
 
   String get collectionName {
     switch (this) {
@@ -18,6 +22,33 @@ enum CategoryKind {
         return FirestoreCollections.productCategories;
       case CategoryKind.expense:
         return FirestoreCollections.expenseCategories;
+      case CategoryKind.unit:
+        return FirestoreCollections.units;
+    }
+  }
+
+  /// Singular human-readable label for dialog titles and snackbars
+  /// (e.g. "New Product Category", "Unit created").
+  String get singularLabel {
+    switch (this) {
+      case CategoryKind.product:
+        return 'Product Category';
+      case CategoryKind.expense:
+        return 'Expense Category';
+      case CategoryKind.unit:
+        return 'Unit';
+    }
+  }
+
+  /// Plural human-readable label for list copy and empty states.
+  String get pluralLabel {
+    switch (this) {
+      case CategoryKind.product:
+        return 'product categories';
+      case CategoryKind.expense:
+        return 'expense categories';
+      case CategoryKind.unit:
+        return 'units';
     }
   }
 }

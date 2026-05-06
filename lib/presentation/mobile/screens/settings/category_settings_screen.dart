@@ -7,11 +7,13 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 
-/// Admin screen for managing product and expense category lists.
+/// Admin screen for managing the dropdown name-lists used elsewhere in the
+/// app: product categories, expense categories, and product units.
 ///
-/// One screen, two collections: a segmented control switches between
-/// product and expense categories. Categories are soft-deleted — inactive
-/// entries stay in the list (greyed) so admin can reactivate them.
+/// One screen, three collections: a segmented control switches between them.
+/// Entries are soft-deleted — inactive items stay in the list (greyed) so
+/// admin can reactivate them. Each tab supports a "Seed defaults" action
+/// when there's a known starter set worth migrating to.
 class CategorySettingsScreen extends ConsumerStatefulWidget {
   const CategorySettingsScreen({super.key});
 
@@ -27,6 +29,7 @@ class _CategorySettingsScreenState
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(allCategoriesProvider(_kind));
+    final defaults = _defaultsFor(_kind);
 
     return Scaffold(
       appBar: AppBar(
@@ -34,18 +37,18 @@ class _CategorySettingsScreenState
           icon: const Icon(CupertinoIcons.back),
           onPressed: () => context.goBackOr(RoutePaths.settings),
         ),
-        title: const Text('Manage Categories'),
+        title: const Text('Manage Lists'),
         actions: [
-          if (_kind == CategoryKind.expense)
+          if (defaults != null)
             PopupMenuButton<String>(
               tooltip: 'More',
               onSelected: (value) {
-                if (value == 'seed') _seedExpenseDefaults();
+                if (value == 'seed') _seedDefaults(_kind, defaults);
               },
-              itemBuilder: (context) => const [
+              itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'seed',
-                  child: Text('Seed default expense categories'),
+                  child: Text('Seed default ${_kind.pluralLabel}'),
                 ),
               ],
             ),
@@ -72,6 +75,11 @@ class _CategorySettingsScreenState
                   label: Text('Expense'),
                   icon: Icon(CupertinoIcons.money_dollar_circle),
                 ),
+                ButtonSegment(
+                  value: CategoryKind.unit,
+                  label: Text('Unit'),
+                  icon: Icon(Icons.straighten),
+                ),
               ],
               selected: {_kind},
               onSelectionChanged: (set) {
@@ -84,7 +92,7 @@ class _CategorySettingsScreenState
               data: (categories) => _buildList(context, categories),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
-                  Center(child: Text('Failed to load categories: $e')),
+                  Center(child: Text('Failed to load ${_kind.pluralLabel}: $e')),
             ),
           ),
         ],
@@ -95,6 +103,42 @@ class _CategorySettingsScreenState
         label: const Text('Add'),
       ),
     );
+  }
+
+  // Defaults are kind-specific. Returns null when there's nothing to seed —
+  // currently only product categories has no starter set (project never had
+  // a hardcoded list).
+  static const _expenseDefaults = [
+    'General',
+    'Utilities',
+    'Rent',
+    'Supplies',
+    'Transportation',
+    'Food',
+    'Maintenance',
+    'Other',
+  ];
+
+  static const _unitDefaults = [
+    'pcs',
+    'kg',
+    'g',
+    'box',
+    'l',
+    'ml',
+    'm',
+    'pack',
+  ];
+
+  List<String>? _defaultsFor(CategoryKind kind) {
+    switch (kind) {
+      case CategoryKind.product:
+        return null;
+      case CategoryKind.expense:
+        return _expenseDefaults;
+      case CategoryKind.unit:
+        return _unitDefaults;
+    }
   }
 
   Widget _buildList(BuildContext context, List<CategoryEntity> categories) {
@@ -152,31 +196,24 @@ class _CategorySettingsScreenState
     );
     if (!context.mounted || saved != true) return;
     context.showSuccessSnackBar(
-      existing == null ? 'Category created' : 'Category updated',
+      existing == null
+          ? '${_kind.singularLabel} created'
+          : '${_kind.singularLabel} updated',
     );
   }
 
-  /// Inserts the legacy hardcoded expense categories. Idempotent — anything
-  /// that already exists by name (active or inactive) is left alone. Used to
-  /// migrate existing expense documents which still reference these names.
-  Future<void> _seedExpenseDefaults() async {
-    const defaults = [
-      'General',
-      'Utilities',
-      'Rent',
-      'Supplies',
-      'Transportation',
-      'Food',
-      'Maintenance',
-      'Other',
-    ];
-
-    final ops = ref.read(categoryOperationsProvider(CategoryKind.expense).notifier);
-    final existing = ref.read(allCategoriesProvider(CategoryKind.expense)).valueOrNull;
+  /// Inserts a starter set for the given [kind]. Idempotent — anything that
+  /// already exists by name (active or inactive) is left alone. Used to
+  /// migrate existing documents that still reference legacy names.
+  Future<void> _seedDefaults(CategoryKind kind, List<String> defaults) async {
+    final ops = ref.read(categoryOperationsProvider(kind).notifier);
+    final existing = ref.read(allCategoriesProvider(kind)).valueOrNull;
     if (existing == null) {
       // Stream hasn't emitted yet — bail rather than risk duplicates.
       if (mounted) {
-        context.showErrorSnackBar('Categories are still loading; try again.');
+        context.showErrorSnackBar(
+          '${kind.pluralLabel.toCapitalizedFirst()} are still loading; try again.',
+        );
       }
       return;
     }
@@ -210,13 +247,18 @@ class _CategorySettingsScreenState
 
     if (!mounted) return;
     if (failed == 0) {
-      context.showSuccessSnackBar('Added $added default categories.');
+      context.showSuccessSnackBar('Added $added default ${kind.pluralLabel}.');
     } else {
       context.showErrorSnackBar(
         'Added $added, $failed failed. Check connection and retry.',
       );
     }
   }
+}
+
+extension on String {
+  String toCapitalizedFirst() =>
+      isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
 }
 
 class _CategoryRow extends StatelessWidget {
@@ -292,7 +334,6 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final label = kind == CategoryKind.product ? 'product' : 'expense';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -306,7 +347,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'No $label categories yet',
+              'No ${kind.pluralLabel} yet',
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -359,7 +400,9 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_isEdit ? 'Edit Category' : 'New Category'),
+      title: Text(
+        _isEdit ? 'Edit ${widget.kind.singularLabel}' : 'New ${widget.kind.singularLabel}',
+      ),
       content: Form(
         key: _formKey,
         child: Column(
@@ -460,7 +503,9 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
       setState(() => _isSaving = false);
       final err = ref.read(categoryOperationsProvider(widget.kind)).error;
       context.showErrorSnackBar(
-        err == null ? 'Failed to save category' : 'Failed: $err',
+        err == null
+            ? 'Failed to save ${widget.kind.singularLabel.toLowerCase()}'
+            : 'Failed: $err',
       );
     }
   }
