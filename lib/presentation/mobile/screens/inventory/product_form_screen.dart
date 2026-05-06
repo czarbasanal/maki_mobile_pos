@@ -43,6 +43,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _categoryController = TextEditingController();
   final _notesController = TextEditingController();
 
+  // Focus node on the product name field — when auto-SKU is on, the SKU
+  // re-rolls each time this loses focus so the prefix tracks the typed name
+  // without flickering on every keystroke.
+  final _nameFocusNode = FocusNode();
+
   String? _selectedSupplierId;
   bool _isLoading = false;
   bool _isSaving = false;
@@ -61,18 +66,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _loadProduct();
     } else {
       // Seed an initial auto-generated SKU so the field isn't blank on first
-      // paint. Regenerates on category pick (and on the explicit refresh).
-      _skuController.text = SkuGenerator.generateForCategory(null);
+      // paint. Re-rolls when the name field blurs and on the explicit refresh.
+      _skuController.text = SkuGenerator.generateForName(null);
+      _nameFocusNode.addListener(_onNameFocusChange);
     }
   }
 
-  /// Re-rolls the SKU using the current category. No-op when [_autoGenerateSku]
-  /// is off — manual mode is the user's text verbatim.
+  void _onNameFocusChange() {
+    if (_nameFocusNode.hasFocus) return;
+    if (!_autoGenerateSku) return;
+    setState(() {
+      _skuController.text =
+          SkuGenerator.generateForName(_nameController.text);
+    });
+  }
+
+  /// Re-rolls the SKU using the current product name. No-op when
+  /// [_autoGenerateSku] is off — manual mode is the user's text verbatim.
   void _regenerateSku() {
     if (!_autoGenerateSku) return;
     setState(() {
       _skuController.text =
-          SkuGenerator.generateForCategory(_categoryController.text);
+          SkuGenerator.generateForName(_nameController.text);
     });
   }
 
@@ -112,6 +127,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _barcodeController.dispose();
     _categoryController.dispose();
     _notesController.dispose();
+    _nameFocusNode.dispose();
     super.dispose();
   }
 
@@ -212,8 +228,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             _autoGenerateSku = v;
                             if (v) {
                               _skuController.text =
-                                  SkuGenerator.generateForCategory(
-                                _categoryController.text,
+                                  SkuGenerator.generateForName(
+                                _nameController.text,
                               );
                             }
                           });
@@ -241,6 +257,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Name
                     TextFormField(
                       controller: _nameController,
+                      focusNode: _nameFocusNode,
                       decoration: const InputDecoration(
                         labelText: 'Product Name *',
                         prefixIcon: Icon(CupertinoIcons.cube_box),
@@ -373,8 +390,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Category — admin-managed dropdown. If the product is
                     // tied to a category that's been deactivated since last
                     // edit, we surface it inline so the user can keep it or
-                    // pick a current active one. When auto-SKU is on, picking
-                    // a category reshapes the SKU prefix.
+                    // pick a current active one.
                     _AdminListDropdownField(
                       kind: CategoryKind.product,
                       controller: _categoryController,
@@ -384,10 +400,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       onChanged: (value) {
                         setState(() {
                           _categoryController.text = value ?? '';
-                          if (canEditSku && _autoGenerateSku) {
-                            _skuController.text =
-                                SkuGenerator.generateForCategory(value);
-                          }
                         });
                       },
                     ),
