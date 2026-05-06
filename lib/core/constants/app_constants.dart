@@ -37,8 +37,12 @@ abstract class AppConstants {
   /// Length of random portion in auto-generated SKUs
   static const int skuRandomLength = 8;
 
-  /// Length of random portion in category-prefixed SKUs (e.g. BEVERAGES-A3B7K9)
-  static const int skuCategoryRandomLength = 6;
+  /// Length of random portion in name-prefixed SKUs (e.g. MILKCHOCOL-A3B7K9)
+  static const int skuPrefixedRandomLength = 6;
+
+  /// Max length of the slugified product-name prefix on auto-generated SKUs.
+  /// Caps the total SKU length when product names are long.
+  static const int skuNamePrefixLength = 10;
 
   /// Separator for SKU variations (e.g., ABC-1, ABC-2)
   static const String skuVariationSeparator = '-';

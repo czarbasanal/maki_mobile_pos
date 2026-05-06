@@ -35,27 +35,35 @@ abstract class SkuGenerator {
     return '$prefix-$randomPart';
   }
 
-  /// Generates a SKU prefixed with a slugified [categoryName] and a 6-char
-  /// random suffix. Falls back to [generate] when the category produces an
-  /// empty slug (no usable letters/digits).
+  /// Generates a SKU prefixed with a slugified+truncated [name] and a
+  /// short random suffix. The slug is truncated to
+  /// [AppConstants.skuNamePrefixLength] so long product names don't blow
+  /// up the total SKU length. Falls back to [generate] when [name]
+  /// produces an empty slug (no usable letters/digits).
   ///
   /// Example:
   /// ```dart
-  /// SkuGenerator.generateForCategory('Beverages')      // "BEVERAGES-A3B7K9"
-  /// SkuGenerator.generateForCategory('Coffee & Tea')   // "COFFEETEA-M5HJX2"
-  /// SkuGenerator.generateForCategory(null)             // "SKU-A3B7K9M2"
+  /// SkuGenerator.generateForName('Milk Chocolate 500g Box')
+  ///   // "MILKCHOCOL-A3B7K9"  (slug truncated at 10 chars)
+  /// SkuGenerator.generateForName('Beverages')
+  ///   // "BEVERAGES-A3B7K9"
+  /// SkuGenerator.generateForName(null)
+  ///   // "SKU-A3B7K9M2"
   /// ```
-  static String generateForCategory(String? categoryName) {
-    final prefix = slugifyForSku(categoryName ?? '');
-    if (prefix.isEmpty) return generate();
+  static String generateForName(String? name) {
+    final slug = slugifyForSku(name ?? '');
+    if (slug.isEmpty) return generate();
+    final prefix = slug.length > AppConstants.skuNamePrefixLength
+        ? slug.substring(0, AppConstants.skuNamePrefixLength)
+        : slug;
     final randomPart =
-        _generateRandomString(AppConstants.skuCategoryRandomLength);
+        _generateRandomString(AppConstants.skuPrefixedRandomLength);
     return '$prefix-$randomPart';
   }
 
-  /// Uppercases a category/unit name and strips everything that isn't
-  /// alphanumeric — keeps the result Code128-safe and consistent across
-  /// category renames that only differ in spacing/punctuation.
+  /// Uppercases a name and strips everything that isn't alphanumeric — keeps
+  /// the result Code128-safe and consistent across renames that only differ
+  /// in spacing/punctuation.
   static String slugifyForSku(String name) {
     return name.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
   }
