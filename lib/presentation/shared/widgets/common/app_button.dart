@@ -48,7 +48,7 @@ class AppButton extends StatelessWidget {
     this.leadingIcon,
     this.trailingIcon,
     this.width,
-    this.height = 52,
+    this.height = 48,
     this.padding,
   });
 
