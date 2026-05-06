@@ -69,10 +69,13 @@ class _CutOffDialogState extends ConsumerState<CutOffDialog> {
       title: const Text('End-of-day cut-off'),
       content: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        // Scroll the field column so the soft keyboard never makes the
+        // dialog overflow when its max height shrinks.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             _kv(
               context,
               'System balance',
@@ -122,7 +125,8 @@ class _CutOffDialogState extends ConsumerState<CutOffDialog> {
               'as a cut-off entry.',
               style: theme.textTheme.bodySmall,
             ),
-          ],
+            ],
+          ),
         ),
       ),
       actions: [

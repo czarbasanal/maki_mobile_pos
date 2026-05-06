@@ -145,10 +145,13 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
 
     return AlertDialog(
       title: const Text('Apply Discount'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      // Wrap content in a scroll view so the soft keyboard never makes the
+      // Column overflow when the dialog's max height shrinks.
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Text(
             widget.itemName,
             style: theme.textTheme.titleMedium?.copyWith(
@@ -212,7 +215,8 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
             _buildQuickPercentButtons()
           else
             _buildQuickAmountButtons(),
-        ],
+          ],
+        ),
       ),
       actions: [
         if (widget.currentDiscount > 0)

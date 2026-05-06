@@ -286,13 +286,17 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
         final controller = TextEditingController();
         return AlertDialog(
           title: const Text('Enter Barcode/SKU'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Scan or type barcode...',
+          // Scroll the content so the soft keyboard never makes the
+          // dialog overflow when its max height shrinks.
+          content: SingleChildScrollView(
+            child: TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Scan or type barcode...',
+              ),
+              onSubmitted: (value) => Navigator.pop(context, value),
             ),
-            onSubmitted: (value) => Navigator.pop(context, value),
           ),
           actions: [
             TextButton(

@@ -153,10 +153,13 @@ class _PasswordDialogState extends State<PasswordDialog> {
           ),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      // Scroll the content column so the soft keyboard never makes the
+      // dialog overflow when its max height shrinks.
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           if (widget.subtitle != null) ...[
             Text(
               widget.subtitle!,
@@ -217,7 +220,8 @@ class _PasswordDialogState extends State<PasswordDialog> {
               ],
             ),
           ),
-        ],
+          ],
+        ),
       ),
       actions: [
         TextButton(
