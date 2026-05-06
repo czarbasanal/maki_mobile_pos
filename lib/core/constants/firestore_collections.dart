@@ -43,6 +43,9 @@ abstract class FirestoreCollections {
   /// Expense categories collection - admin-managed expense category list
   static const String expenseCategories = 'expense_categories';
 
+  /// Units collection - admin-managed product unit list (pcs, kg, box, ...)
+  static const String units = 'units';
+
   // ==================== SETTINGS DOCUMENTS ====================
 
   /// Document ID for cost code mapping settings
