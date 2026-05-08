@@ -42,25 +42,22 @@ class VoidSaleDialog extends ConsumerStatefulWidget {
 }
 
 class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
-  final _reasonController = TextEditingController();
+  final _detailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isProcessing = false;
   bool _restoreInventory = true;
   String? _errorMessage;
+  String? _selectedReason;
 
-  // Common void reasons for quick selection
-  static const List<String> _commonReasons = [
-    'Customer changed mind',
-    'Wrong items entered',
-    'Payment issue',
-    'Duplicate transaction',
-    'Price error',
-    'Other',
-  ];
+  // Free-text detail field is revealed only when this option is picked.
+  // Admin must keep this entry in the void-reasons list (seeded by default).
+  static const String _otherSentinel = 'Other';
+
+  bool get _isOtherSelected => _selectedReason == _otherSentinel;
 
   @override
   void dispose() {
-    _reasonController.dispose();
+    _detailController.dispose();
     super.dispose();
   }
 
@@ -98,38 +95,30 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
 
               const SizedBox(height: 20),
 
-              // Common reasons
-              Text(
-                'Select a reason:',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildReasonChips(),
+              // Reason dropdown (admin-managed list)
+              _buildReasonDropdown(theme),
 
-              const SizedBox(height: 16),
-
-              // Custom reason input
-              TextFormField(
-                controller: _reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Reason for voiding',
-                  hintText: 'Enter detailed reason...',
-                  prefixIcon: Icon(CupertinoIcons.square_pencil),
+              // Free-text detail only when "Other" is picked
+              if (_isOtherSelected) ...[
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _detailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reason details',
+                    hintText: 'Enter detailed reason...',
+                    prefixIcon: Icon(CupertinoIcons.square_pencil),
+                  ),
+                  maxLines: 2,
+                  maxLength: 200,
+                  validator: (value) {
+                    if (!_isOtherSelected) return null;
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return 'Please provide a reason';
+                    if (v.length < 5) return 'Reason must be at least 5 characters';
+                    return null;
+                  },
                 ),
-                maxLines: 2,
-                maxLength: 200,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please provide a reason';
-                  }
-                  if (value.trim().length < 5) {
-                    return 'Reason must be at least 5 characters';
-                  }
-                  return null;
-                },
-              ),
+              ],
 
               const SizedBox(height: 16),
 
@@ -270,24 +259,61 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
     );
   }
 
-  Widget _buildReasonChips() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _commonReasons.map((reason) {
-        final isSelected = _reasonController.text == reason;
-        return ChoiceChip(
-          label: Text(reason),
-          selected: isSelected,
-          onSelected: (selected) {
-            if (selected) {
-              setState(() {
-                _reasonController.text = reason == 'Other' ? '' : reason;
-              });
-            }
+  Widget _buildReasonDropdown(ThemeData theme) {
+    final reasonsAsync =
+        ref.watch(activeCategoriesProvider(CategoryKind.voidReason));
+    return reasonsAsync.when(
+      data: (reasons) {
+        final names = reasons.map((c) => c.name).toList();
+        // Guard against duplicate names (Firestore allows it; dropdowns don't).
+        final uniqueNames = <String>{...names}.toList();
+        if (uniqueNames.isEmpty) {
+          return Text(
+            'No void reasons configured. Ask an admin to seed defaults under Settings → Manage Lists → Void.',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: AppColors.error),
+          );
+        }
+        // Reset selection if a previously-picked reason was removed/deactivated.
+        final currentValue =
+            (_selectedReason != null && uniqueNames.contains(_selectedReason))
+                ? _selectedReason
+                : null;
+        return DropdownButtonFormField<String>(
+          initialValue: currentValue,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Reason',
+            prefixIcon: Icon(CupertinoIcons.tag),
+          ),
+          items: uniqueNames
+              .map(
+                (name) => DropdownMenuItem<String>(
+                  value: name,
+                  child: Text(name),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedReason = value;
+              if (value != _otherSentinel) {
+                _detailController.clear();
+              }
+            });
           },
+          validator: (value) =>
+              (value == null || value.isEmpty) ? 'Please pick a reason' : null,
         );
-      }).toList(),
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: LinearProgressIndicator(),
+      ),
+      error: (_, __) => Text(
+        'Could not load void reasons',
+        style: theme.textTheme.bodySmall?.copyWith(color: AppColors.error),
+      ),
     );
   }
 
@@ -356,10 +382,14 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
         authRepository: ref.read(authRepositoryProvider),
       );
 
+      final reason = _isOtherSelected
+          ? _detailController.text.trim()
+          : _selectedReason!;
+
       final result = await useCase.execute(
         saleId: widget.sale.id,
         password: password,
-        reason: _reasonController.text.trim(),
+        reason: reason,
         voidedBy: currentUser.id,
         voidedByName: currentUser.displayName,
         restoreInventory: _restoreInventory,

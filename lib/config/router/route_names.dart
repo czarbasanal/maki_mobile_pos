@@ -117,8 +117,11 @@ abstract class RouteNames {
   /// Cost code settings route
   static const String costCodeSettings = 'costCodeSettings';
 
-  /// Category management route — `/settings/categories`.
+  /// Category management hub — `/settings/categories`.
   static const String categorySettings = 'categorySettings';
+
+  /// Per-kind category editor — `/settings/categories/:kind`.
+  static const String categoryEditor = 'categoryEditor';
 
   /// About screen route — `/settings/about`.
   static const String about = 'about';
@@ -202,6 +205,7 @@ abstract class RoutePaths {
   static const String settings = '/settings';
   static const String costCodeSettings = '/settings/cost-codes';
   static const String categorySettings = '/settings/categories';
+  static const String categoryEditor = '/settings/categories/:kind';
   static const String about = '/settings/about';
 
   // ==================== LOGS PATHS ====================

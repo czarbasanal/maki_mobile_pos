@@ -46,6 +46,9 @@ abstract class FirestoreCollections {
   /// Units collection - admin-managed product unit list (pcs, kg, box, ...)
   static const String units = 'units';
 
+  /// Void reasons collection - admin-managed reasons shown in the void-sale dialog
+  static const String voidReasons = 'void_reasons';
+
   // ==================== SETTINGS DOCUMENTS ====================
 
   /// Document ID for cost code mapping settings

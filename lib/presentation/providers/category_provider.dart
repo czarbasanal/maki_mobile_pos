@@ -14,7 +14,8 @@ import 'package:maki_mobile_pos/services/firebase_service.dart';
 enum CategoryKind {
   product,
   expense,
-  unit;
+  unit,
+  voidReason;
 
   String get collectionName {
     switch (this) {
@@ -24,6 +25,8 @@ enum CategoryKind {
         return FirestoreCollections.expenseCategories;
       case CategoryKind.unit:
         return FirestoreCollections.units;
+      case CategoryKind.voidReason:
+        return FirestoreCollections.voidReasons;
     }
   }
 
@@ -37,6 +40,8 @@ enum CategoryKind {
         return 'Expense Category';
       case CategoryKind.unit:
         return 'Unit';
+      case CategoryKind.voidReason:
+        return 'Void Reason';
     }
   }
 
@@ -49,6 +54,8 @@ enum CategoryKind {
         return 'expense categories';
       case CategoryKind.unit:
         return 'units';
+      case CategoryKind.voidReason:
+        return 'void reasons';
     }
   }
 }

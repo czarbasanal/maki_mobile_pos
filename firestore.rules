@@ -223,5 +223,15 @@ service cloud.firestore {
       // Only admin can manage the unit list
       allow write: if isAdmin() && isActiveUser();
     }
+
+    // ==================== VOID REASONS COLLECTION ====================
+
+    match /void_reasons/{reasonId} {
+      // All valid users can read void reasons (void-sale dialog dropdown)
+      allow read: if isValidUser() && isActiveUser();
+
+      // Only admin can manage the void-reason list
+      allow write: if isAdmin() && isActiveUser();
+    }
   }
 }

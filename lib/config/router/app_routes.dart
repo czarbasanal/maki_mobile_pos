@@ -32,7 +32,9 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/users/users_screen.d
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/user_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
 
@@ -353,6 +355,20 @@ List<RouteBase> featureRoutes(Surface surface) => [
             path: 'categories',
             name: RouteNames.categorySettings,
             builder: (context, state) => const CategorySettingsScreen(),
+            routes: [
+              GoRoute(
+                path: ':kind',
+                name: RouteNames.categoryEditor,
+                builder: (context, state) {
+                  final raw = state.pathParameters['kind'];
+                  final kind = CategoryKind.values.firstWhere(
+                    (k) => k.name == raw,
+                    orElse: () => CategoryKind.product,
+                  );
+                  return CategoryEditorScreen(kind: kind);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: 'about',

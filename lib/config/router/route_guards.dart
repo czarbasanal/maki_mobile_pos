@@ -169,6 +169,12 @@ abstract class RouteGuards {
       return user.hasPermission(Permission.viewSettings);
     }
 
+    // Per-kind editors live under /settings/categories/<kind> — same gate as
+    // the hub.
+    if (path.startsWith('${RoutePaths.categorySettings}/')) {
+      return user.hasPermission(Permission.manageCategories);
+    }
+
     // Fail-safe: deny everything not explicitly allowlisted above. Any new
     // dynamic route must be added here, otherwise we'd leak access.
     return false;
