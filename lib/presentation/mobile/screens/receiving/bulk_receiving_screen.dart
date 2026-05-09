@@ -14,6 +14,7 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen for bulk stock receiving.
 class BulkReceivingScreen extends ConsumerStatefulWidget {
@@ -188,7 +189,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
           Expanded(
             child: suppliersAsync.when(
               data: (suppliers) {
-                return DropdownButtonFormField<String>(
+                return AppDropdown<String>(
                   initialValue: state.supplierId,
                   decoration: const InputDecoration(
                     labelText: 'Supplier (optional)',

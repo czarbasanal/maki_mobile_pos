@@ -7,7 +7,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/void_sale_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/shared/widgets/common/password_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Dialog for voiding a sale with reason and password verification.
 class VoidSaleDialog extends ConsumerStatefulWidget {
@@ -279,9 +279,8 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
             (_selectedReason != null && uniqueNames.contains(_selectedReason))
                 ? _selectedReason
                 : null;
-        return DropdownButtonFormField<String>(
+        return AppDropdown<String>(
           initialValue: currentValue,
-          isExpanded: true,
           decoration: const InputDecoration(
             labelText: 'Reason',
             prefixIcon: Icon(CupertinoIcons.tag),

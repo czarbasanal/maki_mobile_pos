@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen for creating or editing an expense.
 class ExpenseFormScreen extends ConsumerStatefulWidget {
@@ -369,9 +370,8 @@ class _ExpenseCategoryDropdown extends ConsumerWidget {
           );
         }
 
-        return DropdownButtonFormField<String>(
+        return AppDropdown<String>(
           initialValue: selected,
-          isExpanded: true,
           decoration: const InputDecoration(
             labelText: 'Category *',
             prefixIcon: Icon(CupertinoIcons.square_grid_2x2),

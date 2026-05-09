@@ -11,6 +11,7 @@ import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen for creating or editing a product.
 ///
@@ -427,7 +428,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           final safe = items.any((i) => i.value == selected)
                               ? selected
                               : null;
-                          return DropdownButtonFormField<String>(
+                          return AppDropdown<String>(
                             initialValue: safe,
                             key: ValueKey('supplier:$safe:${suppliers.length}'),
                             decoration: const InputDecoration(
@@ -854,10 +855,9 @@ class _AdminListDropdownField extends ConsumerWidget {
         final matches = items.where((i) => i.value == candidate).length;
         final safeValue = matches == 1 ? candidate : null;
 
-        return DropdownButtonFormField<String>(
+        return AppDropdown<String>(
           initialValue: safeValue,
           key: ValueKey('${kind.name}:$safeValue:${activeNames.length}'),
-          isExpanded: true,
           decoration: InputDecoration(
             labelText: label,
             prefixIcon: Icon(icon),

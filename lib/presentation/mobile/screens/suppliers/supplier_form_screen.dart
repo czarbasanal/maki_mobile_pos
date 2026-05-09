@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/utils/validators.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen for creating or editing a supplier.
 class SupplierFormScreen extends ConsumerStatefulWidget {
@@ -170,7 +171,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                     const SizedBox(height: 16),
 
                     // Transaction Type
-                    DropdownButtonFormField<TransactionType>(
+                    AppDropdown<TransactionType>(
                       initialValue: _transactionType,
                       decoration: const InputDecoration(
                         labelText: 'Payment Terms *',
