@@ -448,9 +448,8 @@ class _CategoryFilterDropdown extends ConsumerWidget {
             ),
         ];
 
-        return DropdownButtonFormField<String?>(
+        return AppDropdown<String?>(
           initialValue: selectedCategory,
-          isExpanded: true,
           decoration: const InputDecoration(
             labelText: 'Category',
             prefixIcon: Icon(CupertinoIcons.tag),

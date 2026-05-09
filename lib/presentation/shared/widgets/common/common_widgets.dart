@@ -7,6 +7,7 @@
 library;
 
 export 'app_button.dart';
+export 'app_dropdown.dart';
 export 'app_scaffold.dart';
 export 'app_text_field.dart';
 export 'loading_overlay.dart';
