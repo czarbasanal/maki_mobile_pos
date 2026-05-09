@@ -84,6 +84,9 @@ abstract class RouteNames {
   /// Edit expense route
   static const String expenseEdit = 'expenseEdit';
 
+  /// Expenses history route — `/expenses/history`.
+  static const String expenseHistory = 'expenseHistory';
+
   // ==================== REPORT ROUTES ====================
 
   /// Reports dashboard route
@@ -186,6 +189,7 @@ abstract class RoutePaths {
   static const String expenses = '/expenses';
   static const String expenseAdd = '/expenses/add';
   static const String expenseEdit = '/expenses/edit/:id';
+  static const String expenseHistory = '/expenses/history';
 
   // ==================== REPORT PATHS ====================
 

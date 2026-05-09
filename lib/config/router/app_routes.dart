@@ -22,6 +22,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/suppliers_
 import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/supplier_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expenses_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expense_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expense_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/petty_cash_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/petty_cash_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_list_screen.dart';
@@ -293,6 +294,13 @@ List<RouteBase> featureRoutes(Surface surface) => [
               final id = state.pathParameters['id']!;
               return ExpenseFormScreen(expenseId: id);
             },
+          ),
+          GoRoute(
+            path: 'history',
+            name: RouteNames.expenseHistory,
+            builder: (context, state) => ExpenseHistoryScreen(
+              initialCategory: state.uri.queryParameters['category'],
+            ),
           ),
         ],
       ),

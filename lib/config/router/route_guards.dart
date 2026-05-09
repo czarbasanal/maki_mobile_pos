@@ -38,6 +38,7 @@ abstract class RouteGuards {
     // Expenses
     '/expenses': Permission.viewExpenses,
     '/expenses/add': Permission.addExpense,
+    '/expenses/history': Permission.viewExpenses,
     // Reports
     '/reports': Permission.viewSalesReports,
     '/reports/sales': Permission.viewSalesReports,

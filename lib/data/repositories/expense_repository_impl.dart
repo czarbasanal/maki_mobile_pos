@@ -143,12 +143,17 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<double> getTotalExpenses({
     required DateTime startDate,
     required DateTime endDate,
+    String? category,
   }) async {
     try {
-      final snapshot = await _expensesRef
+      Query query = _expensesRef
           .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-          .get();
+          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+      if (category != null && category.isNotEmpty) {
+        query = query.where('category', isEqualTo: category);
+      }
+
+      final snapshot = await query.get();
 
       double total = 0;
       for (final doc in snapshot.docs) {
@@ -169,19 +174,24 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<Map<String, double>> getExpensesByCategory({
     required DateTime startDate,
     required DateTime endDate,
+    String? category,
   }) async {
     try {
-      final snapshot = await _expensesRef
+      Query query = _expensesRef
           .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-          .get();
+          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+      if (category != null && category.isNotEmpty) {
+        query = query.where('category', isEqualTo: category);
+      }
+
+      final snapshot = await query.get();
 
       final Map<String, double> categoryTotals = {};
       for (final doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        final category = data['category'] as String? ?? 'General';
+        final docCategory = data['category'] as String? ?? 'General';
         final amount = (data['amount'] as num?)?.toDouble() ?? 0;
-        categoryTotals[category] = (categoryTotals[category] ?? 0) + amount;
+        categoryTotals[docCategory] = (categoryTotals[docCategory] ?? 0) + amount;
       }
       return categoryTotals;
     } on FirebaseException catch (e) {

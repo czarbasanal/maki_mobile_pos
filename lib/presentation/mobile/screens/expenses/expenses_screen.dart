@@ -3,26 +3,47 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/extensions/datetime_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
 import 'package:intl/intl.dart';
 
-/// Expenses list screen.
+/// Expenses dashboard.
+///
+/// Mini totals row (Today / Week-to-date / Month-to-date) sits above the
+/// expense list. Filter dropdown and "View all" history link are added in
+/// later chunks; for now this is the totals + flat list.
 ///
 /// Role-based behavior:
 /// - Admin: Full CRUD on expenses.
 /// - Staff/Cashier: Can view and add expenses. Cannot edit or delete.
-class ExpensesScreen extends ConsumerWidget {
+class ExpensesScreen extends ConsumerStatefulWidget {
   const ExpensesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExpensesScreen> createState() => _ExpensesScreenState();
+}
+
+class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
+  static const int _recentLimit = 5;
+
+  static final _currencyFormat = NumberFormat.currency(
+    symbol: AppConstants.currencySymbol,
+    decimalDigits: 2,
+  );
+  static final _dateFormat = DateFormat('MMM d, y • h:mm a');
+
+  /// Selected category filter; `null` means "All" (no filter).
+  String? _selectedCategory;
+
+  @override
+  Widget build(BuildContext context) {
     final expensesAsync = ref.watch(expensesProvider);
     final currentUser = ref.watch(currentUserProvider).value;
     final userRole = currentUser?.role ?? UserRole.cashier;
@@ -42,83 +63,13 @@ class ExpensesScreen extends ConsumerWidget {
         title: const Text('Expenses'),
       ),
       body: expensesAsync.when(
-        data: (expenses) {
-          if (expenses.isEmpty) {
-            return const EmptyStateView(
-              icon: CupertinoIcons.doc_text,
-              title: 'No Expenses',
-              subtitle: 'Tap + to add an expense',
-            );
-          }
-
-          final currencyFormat = NumberFormat.currency(
-            symbol: AppConstants.currencySymbol,
-            decimalDigits: 2,
-          );
-          final dateFormat = DateFormat('MMM d, y • h:mm a');
-
-          final theme = Theme.of(context);
-          final muted = theme.colorScheme.onSurfaceVariant;
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            itemCount: expenses.length,
-            itemBuilder: (context, index) {
-              final expense = expenses[index];
-              final card = Card(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
-                ),
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.doc_plaintext,
-                    color: muted,
-                    size: 24,
-                  ),
-                  title: Text(
-                    expense.description,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    dateFormat.format(expense.createdAt),
-                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                  ),
-                  trailing: Text(
-                    currencyFormat.format(expense.amount),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  onTap: canEdit
-                      ? () => context
-                          .push('${RoutePaths.expenses}/edit/${expense.id}')
-                      : null,
-                  onLongPress: canDelete
-                      ? () => _confirmAndDelete(context, ref, expense)
-                      : null,
-                ),
-              );
-
-              if (!canDelete) return card;
-
-              return Dismissible(
-                key: ValueKey('expense-${expense.id}'),
-                direction: DismissDirection.endToStart,
-                background: _buildDismissBackground(),
-                confirmDismiss: (_) =>
-                    _confirmAndDelete(context, ref, expense),
-                child: card,
-              );
-            },
-          );
-        },
+        data: (expenses) => _buildBody(expenses, canEdit: canEdit, canDelete: canDelete),
         loading: () => const LoadingView(),
         error: (error, _) => ErrorStateView(
           message: 'Error: $error',
           onRetry: () => ref.invalidate(expensesProvider),
         ),
       ),
-      // Primary action — available to all roles with addExpense permission.
       bottomNavigationBar: canAdd
           ? SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -132,6 +83,153 @@ class ExpensesScreen extends ConsumerWidget {
               ),
             )
           : null,
+    );
+  }
+
+  Widget _buildBody(
+    List<ExpenseEntity> expenses, {
+    required bool canEdit,
+    required bool canDelete,
+  }) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    // Apply the active category filter to the displayed list. Totals refresh
+    // automatically because they are bound to ExpenseDateRangeParams that
+    // include the same category.
+    final filtered = _selectedCategory == null
+        ? expenses
+        : expenses.where((e) => e.category == _selectedCategory).toList();
+    final recent = filtered.take(_recentLimit).toList();
+
+    final headerItems = <Widget>[
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.sm,
+        ),
+        child: _CategoryFilterDropdown(
+          selectedCategory: _selectedCategory,
+          onChanged: (value) => setState(() => _selectedCategory = value),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          0,
+          AppSpacing.md,
+          AppSpacing.sm,
+        ),
+        child: _ExpenseTotalsRow(category: _selectedCategory),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.xs,
+        ),
+        child: _RecentSectionHeader(
+          onViewAll: () => _openHistory(context),
+        ),
+      ),
+    ];
+
+    if (recent.isEmpty) {
+      return ListView(
+        children: [
+          ...headerItems,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            child: EmptyStateView(
+              icon: CupertinoIcons.doc_text,
+              title: _selectedCategory == null ? 'No Expenses' : 'No matches',
+              subtitle: _selectedCategory == null
+                  ? 'Tap + to add an expense'
+                  : 'No expenses in "$_selectedCategory" yet.',
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      itemCount: recent.length + headerItems.length,
+      itemBuilder: (context, index) {
+        if (index < headerItems.length) {
+          return headerItems[index];
+        }
+        final expense = recent[index - headerItems.length];
+        return _buildExpenseCard(
+          expense,
+          theme: theme,
+          muted: muted,
+          canEdit: canEdit,
+          canDelete: canDelete,
+        );
+      },
+    );
+  }
+
+  void _openHistory(BuildContext context) {
+    final query = _selectedCategory == null
+        ? ''
+        : '?category=${Uri.encodeQueryComponent(_selectedCategory!)}';
+    context.push('${RoutePaths.expenseHistory}$query');
+  }
+
+  Widget _buildExpenseCard(
+    ExpenseEntity expense, {
+    required ThemeData theme,
+    required Color muted,
+    required bool canEdit,
+    required bool canDelete,
+  }) {
+    final card = Card(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      child: ListTile(
+        leading: Icon(
+          CupertinoIcons.doc_plaintext,
+          color: muted,
+          size: 24,
+        ),
+        title: Text(
+          expense.description,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          _dateFormat.format(expense.createdAt),
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
+        ),
+        trailing: Text(
+          _currencyFormat.format(expense.amount),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        onTap: canEdit
+            ? () => context.push('${RoutePaths.expenses}/edit/${expense.id}')
+            : null,
+        onLongPress: canDelete
+            ? () => _confirmAndDelete(context, ref, expense)
+            : null,
+      ),
+    );
+
+    if (!canDelete) return card;
+
+    return Dismissible(
+      key: ValueKey('expense-${expense.id}'),
+      direction: DismissDirection.endToStart,
+      background: _buildDismissBackground(),
+      confirmDismiss: (_) => _confirmAndDelete(context, ref, expense),
+      child: card,
     );
   }
 
@@ -201,5 +299,208 @@ class ExpensesScreen extends ConsumerWidget {
       }
       return false;
     }
+  }
+}
+
+/// Three-up summary row — Today / Week-to-date / Month-to-date totals.
+///
+/// Each card watches [totalExpensesProvider] with its own date range. The
+/// optional [category] threads through [ExpenseDateRangeParams.category].
+class _ExpenseTotalsRow extends ConsumerWidget {
+  const _ExpenseTotalsRow({this.category});
+
+  final String? category;
+
+  static final _currencyFormat = NumberFormat.currency(
+    symbol: AppConstants.currencySymbol,
+    decimalDigits: 2,
+  );
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    final endOfToday = now.endOfDay;
+
+    final todayParams = ExpenseDateRangeParams(
+      startDate: now.startOfDay,
+      endDate: endOfToday,
+      category: category,
+    );
+    final weekParams = ExpenseDateRangeParams(
+      startDate: now.startOfWeek,
+      endDate: endOfToday,
+      category: category,
+    );
+    final monthParams = ExpenseDateRangeParams(
+      startDate: now.startOfMonth,
+      endDate: endOfToday,
+      category: category,
+    );
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _TotalCard(
+              title: 'Today',
+              icon: CupertinoIcons.sun_max,
+              params: todayParams,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: _TotalCard(
+              title: 'This Week',
+              icon: CupertinoIcons.calendar,
+              params: weekParams,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: _TotalCard(
+              title: 'This Month',
+              icon: CupertinoIcons.chart_bar,
+              params: monthParams,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TotalCard extends ConsumerWidget {
+  const _TotalCard({
+    required this.title,
+    required this.icon,
+    required this.params,
+  });
+
+  final String title;
+  final IconData icon;
+  final ExpenseDateRangeParams params;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final totalAsync = ref.watch(totalExpensesProvider(params));
+    final value = totalAsync.when(
+      data: (total) => _ExpenseTotalsRow._currencyFormat.format(total),
+      loading: () => '…',
+      error: (_, __) => '—',
+    );
+    return SummaryCard(
+      title: title,
+      value: value,
+      icon: icon,
+      compact: true,
+    );
+  }
+}
+
+/// Category filter dropdown sourced from the admin-managed expense list.
+///
+/// `null` selection means "All". When the active selection is no longer in
+/// the active list (deactivated, deleted) it is shown inline as
+/// `<name> (inactive)` so existing records remain understandable.
+class _CategoryFilterDropdown extends ConsumerWidget {
+  const _CategoryFilterDropdown({
+    required this.selectedCategory,
+    required this.onChanged,
+  });
+
+  final String? selectedCategory;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync =
+        ref.watch(activeCategoriesProvider(CategoryKind.expense));
+
+    return categoriesAsync.when(
+      data: (entries) {
+        final activeNames = entries.map((e) => e.name).toSet().toList();
+        final isOrphan = selectedCategory != null &&
+            selectedCategory!.isNotEmpty &&
+            !activeNames.contains(selectedCategory);
+
+        final items = <DropdownMenuItem<String?>>[
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('All categories'),
+          ),
+          ...activeNames.map(
+            (name) => DropdownMenuItem<String?>(
+              value: name,
+              child: Text(name),
+            ),
+          ),
+          if (isOrphan)
+            DropdownMenuItem<String?>(
+              value: selectedCategory,
+              child: Text(
+                '$selectedCategory (inactive)',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ];
+
+        return DropdownButtonFormField<String?>(
+          initialValue: selectedCategory,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Category',
+            prefixIcon: Icon(CupertinoIcons.tag),
+          ),
+          items: items,
+          onChanged: onChanged,
+        );
+      },
+      loading: () => const LinearProgressIndicator(),
+      error: (_, __) => const Text('Could not load categories'),
+    );
+  }
+}
+
+/// Section header rendered above the recent list. Title on the left,
+/// `View all →` link on the right that opens the grouped month-year view.
+class _RecentSectionHeader extends StatelessWidget {
+  const _RecentSectionHeader({required this.onViewAll});
+
+  final VoidCallback onViewAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Recent',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        TextButton(
+          onPressed: onViewAll,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            minimumSize: const Size(0, 36),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('View all'),
+              SizedBox(width: 4),
+              Icon(CupertinoIcons.chevron_right, size: 14),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

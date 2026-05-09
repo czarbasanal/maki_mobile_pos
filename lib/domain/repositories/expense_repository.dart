@@ -25,15 +25,19 @@ abstract class ExpenseRepository {
   /// Deletes an expense.
   Future<void> deleteExpense(String expenseId);
 
-  /// Gets total expenses for a date range.
+  /// Gets total expenses for a date range, optionally scoped to one category.
   Future<double> getTotalExpenses({
     required DateTime startDate,
     required DateTime endDate,
+    String? category,
   });
 
-  /// Gets expenses grouped by category for a date range.
+  /// Gets expenses grouped by category for a date range. When [category] is
+  /// non-null, the result contains only that bucket (useful for category-
+  /// filtered views that still want the breakdown shape).
   Future<Map<String, double>> getExpensesByCategory({
     required DateTime startDate,
     required DateTime endDate,
+    String? category,
   });
 }

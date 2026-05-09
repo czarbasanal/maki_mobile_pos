@@ -67,17 +67,18 @@ final expensesByDateRangeProvider =
   );
 });
 
-/// Provides total expenses for a date range.
+/// Provides total expenses for a date range, optionally scoped to a category.
 final totalExpensesProvider =
     FutureProvider.family<double, ExpenseDateRangeParams>((ref, params) async {
   final repository = ref.watch(expenseRepositoryProvider);
   return repository.getTotalExpenses(
     startDate: params.startDate,
     endDate: params.endDate,
+    category: params.category,
   );
 });
 
-/// Provides expenses grouped by category.
+/// Provides expenses grouped by category for a date range.
 final expensesByCategoryProvider =
     FutureProvider.family<Map<String, double>, ExpenseDateRangeParams>(
         (ref, params) async {
@@ -85,6 +86,7 @@ final expensesByCategoryProvider =
   return repository.getExpensesByCategory(
     startDate: params.startDate,
     endDate: params.endDate,
+    category: params.category,
   );
 });
 
@@ -108,6 +110,13 @@ class ExpenseOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     return user;
   }
 
+  void _invalidateExpenseQueries() {
+    _ref.invalidate(expensesProvider);
+    _ref.invalidate(totalExpensesProvider);
+    _ref.invalidate(expensesByCategoryProvider);
+    _ref.invalidate(expensesByDateRangeProvider);
+  }
+
   /// Creates a new expense. Returns the created expense, or null on failure.
   Future<ExpenseEntity?> createExpense({
     required ExpenseEntity expense,
@@ -121,7 +130,7 @@ class ExpenseOperationsNotifier extends StateNotifier<AsyncValue<void>> {
 
       if (result.success) {
         state = const AsyncValue.data(null);
-        _ref.invalidate(expensesProvider);
+        _invalidateExpenseQueries();
         return result.data;
       }
       state = AsyncValue.error(
@@ -148,7 +157,7 @@ class ExpenseOperationsNotifier extends StateNotifier<AsyncValue<void>> {
 
       if (result.success) {
         state = const AsyncValue.data(null);
-        _ref.invalidate(expensesProvider);
+        _invalidateExpenseQueries();
         return result.data;
       }
       state = AsyncValue.error(
