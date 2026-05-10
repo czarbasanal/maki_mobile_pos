@@ -18,6 +18,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/bulk_receiving_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_drafts_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/batch_import_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/suppliers_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/supplier_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expenses_screen.dart';
@@ -255,6 +256,11 @@ List<RouteBase> featureRoutes(Surface surface) => [
             path: 'drafts',
             name: RouteNames.receivingDrafts,
             builder: (context, state) => const ReceivingDraftsScreen(),
+          ),
+          GoRoute(
+            path: 'import',
+            name: RouteNames.batchImport,
+            builder: (context, state) => const BatchImportScreen(),
           ),
         ],
       ),

@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/utils/receiving_filters.dart';
 import 'package:maki_mobile_pos/data/repositories/receiving_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/domain/usecases/receiving/batch_import_receiving_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/receiving/complete_receiving_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
@@ -23,6 +24,15 @@ final completeReceivingUseCaseProvider =
   return CompleteReceivingUseCase(
     repository: ref.watch(receivingRepositoryProvider),
     logger: ref.watch(activityLoggerProvider),
+  );
+});
+
+final batchImportReceivingUseCaseProvider =
+    Provider<BatchImportReceivingUseCase>((ref) {
+  return BatchImportReceivingUseCase(
+    receivingRepository: ref.watch(receivingRepositoryProvider),
+    createProductUseCase: ref.watch(createProductUseCaseProvider),
+    completeReceivingUseCase: ref.watch(completeReceivingUseCaseProvider),
   );
 });
 

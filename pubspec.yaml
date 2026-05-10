@@ -50,6 +50,7 @@ dependencies:
   fake_cloud_firestore: ^4.0.1
   mocktail: ^1.0.4
   file_picker: ^10.3.10
+  csv: ^6.0.0
   package_info_plus: ^9.0.0
   connectivity_plus: ^6.1.4
   data_table_2: ^2.6.0

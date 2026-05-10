@@ -31,6 +31,13 @@ class ReceivingScreen extends ConsumerWidget {
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Receiving'),
+        actions: [
+          IconButton(
+            tooltip: 'Batch import (CSV)',
+            icon: const Icon(CupertinoIcons.cloud_upload),
+            onPressed: () => context.push(RoutePaths.batchImport),
+          ),
+        ],
       ),
       body: Column(
         children: [

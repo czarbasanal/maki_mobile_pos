@@ -62,6 +62,9 @@ abstract class RouteNames {
   /// All draft receivings — `/receiving/drafts`.
   static const String receivingDrafts = 'receivingDrafts';
 
+  /// CSV batch-import — `/receiving/import`.
+  static const String batchImport = 'batchImport';
+
   // ==================== SUPPLIER ROUTES ====================
 
   /// Suppliers list route
@@ -180,6 +183,7 @@ abstract class RoutePaths {
   static const String bulkReceiving = '/receiving/bulk';
   static const String receivingHistory = '/receiving/history';
   static const String receivingDrafts = '/receiving/drafts';
+  static const String batchImport = '/receiving/import';
 
   // ==================== SUPPLIER PATHS ====================
 
