@@ -98,6 +98,9 @@ abstract class RouteNames {
   /// Profit report route
   static const String profitReport = 'profitReport';
 
+  /// Top selling drill-down route
+  static const String topSelling = 'topSelling';
+
   /// Sale detail route
   static const String saleDetail = 'saleDetail';
 
@@ -196,6 +199,7 @@ abstract class RoutePaths {
   static const String reports = '/reports';
   static const String salesReport = '/reports/sales';
   static const String profitReport = '/reports/profit';
+  static const String topSelling = '/reports/top-selling';
   static const String saleDetail = '/reports/sale/:id';
 
   // ==================== USER MANAGEMENT PATHS ====================

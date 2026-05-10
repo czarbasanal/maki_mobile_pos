@@ -28,6 +28,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/petty_cas
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_list_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/top_selling_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/sale_detail_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/users_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/user_form_screen.dart';
@@ -318,6 +319,11 @@ List<RouteBase> featureRoutes(Surface surface) => [
             path: 'profit',
             name: RouteNames.profitReport,
             builder: (context, state) => const ProfitReportScreen(),
+          ),
+          GoRoute(
+            path: 'top-selling',
+            name: RouteNames.topSelling,
+            builder: (context, state) => const TopSellingScreen(),
           ),
           GoRoute(
             path: 'sale/:id',

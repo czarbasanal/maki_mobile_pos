@@ -150,6 +150,18 @@ extension DateTimeExtensions on DateTime {
     return DateTime(year, month + 1, 0, 23, 59, 59, 999);
   }
 
+  /// Returns the start of the calendar quarter — Jan/Apr/Jul/Oct 1st at 00:00.
+  DateTime get startOfQuarter {
+    final firstMonth = ((month - 1) ~/ 3) * 3 + 1;
+    return DateTime(year, firstMonth, 1);
+  }
+
+  /// Returns the end of the calendar quarter — Mar/Jun/Sep/Dec 31st at 23:59:59.999.
+  DateTime get endOfQuarter {
+    final firstMonth = ((month - 1) ~/ 3) * 3 + 1;
+    return DateTime(year, firstMonth + 3, 0, 23, 59, 59, 999);
+  }
+
   /// Returns the start of the year.
   DateTime get startOfYear {
     return DateTime(year, 1, 1);

@@ -247,7 +247,15 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
               // Top Selling Items Today — replaced Inventory Status per
               // the May 2026 roadmap. Visible to all roles.
-              _buildSectionHeader('Top Selling Items Today'),
+              _buildSectionHeader(
+                'Top Selling Items Today',
+                trailing: _canViewReports
+                    ? TextButton(
+                        onPressed: () => context.push(RoutePaths.topSelling),
+                        child: const Text('View All'),
+                      )
+                    : null,
+              ),
               const SizedBox(height: 12),
               const TopSellingTodayWidget(),
               const SizedBox(height: 24),

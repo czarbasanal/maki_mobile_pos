@@ -266,6 +266,13 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
         start = lastMonth;
         end = DateTime(now.year, now.month, 0, 23, 59, 59);
         break;
+      case DateRangePreset.thisQuarter:
+        final firstMonth = ((now.month - 1) ~/ 3) * 3 + 1;
+        start = DateTime(now.year, firstMonth, 1);
+        break;
+      case DateRangePreset.thisYear:
+        start = DateTime(now.year, 1, 1);
+        break;
       case DateRangePreset.custom:
         return;
     }

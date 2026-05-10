@@ -11,6 +11,8 @@ enum DateRangePreset {
   lastWeek('Last Week'),
   thisMonth('This Month'),
   lastMonth('Last Month'),
+  thisQuarter('This Quarter'),
+  thisYear('This Year'),
   custom('Custom');
 
   final String label;
