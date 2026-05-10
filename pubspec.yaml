@@ -51,6 +51,10 @@ dependencies:
   mocktail: ^1.0.4
   file_picker: ^10.3.10
   csv: ^6.0.0
+  image_picker: ^1.2.0
+  image_cropper: ^12.2.1
+  flutter_image_compress: ^2.4.0
+  firebase_storage: ^13.1.5
   package_info_plus: ^9.0.0
   connectivity_plus: ^6.1.4
   data_table_2: ^2.6.0

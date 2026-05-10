@@ -41,7 +41,7 @@ class ProductListTile extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.sm + 4),
           child: Row(
             children: [
-              _StockIndicator(product: product),
+              _LeadingVisual(product: product),
               const SizedBox(width: AppSpacing.sm + 4),
               Expanded(
                 child: Column(
@@ -104,14 +104,42 @@ class ProductListTile extends StatelessWidget {
   }
 }
 
-class _StockIndicator extends StatelessWidget {
-  const _StockIndicator({required this.product});
+/// Tile leading visual: a 40x40 thumbnail when [ProductEntity.imageUrl] is
+/// set, otherwise the stock-status icon. Stock count + color are already
+/// communicated by the trailing [_StockBadge], so the leading slot is free
+/// to surface imagery when available.
+class _LeadingVisual extends StatelessWidget {
+  const _LeadingVisual({required this.product});
   final ProductEntity product;
+
+  static const double _size = 40;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final url = product.imageUrl;
+    if (url != null && url.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Image.network(
+          url,
+          width: _size,
+          height: _size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _stockFallback(theme),
+        ),
+      );
+    }
+    return _stockFallback(theme);
+  }
+
+  Widget _stockFallback(ThemeData theme) {
     final (color, icon) = _stockStyle(product);
-    return Icon(icon, color: color, size: 24);
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: Icon(icon, color: color, size: 24),
+    );
   }
 }
 

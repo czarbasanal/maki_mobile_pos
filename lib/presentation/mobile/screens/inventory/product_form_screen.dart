@@ -9,9 +9,13 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'dart:typed_data';
+
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_image_uploader.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/services/product_image_storage_service.dart';
 
 /// Screen for creating or editing a product.
 ///
@@ -56,6 +60,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // since the existing SKU is locked once a product has sale/receiving refs.
   bool _autoGenerateSku = true;
   ProductEntity? _existingProduct;
+
+  // Image-upload state. Bytes are held in-memory so the user can cancel
+  // the form without burning a Storage write; the actual upload happens
+  // in _handleSubmit on save.
+  Uint8List? _pendingImageBytes;
+  bool _imageMarkedForRemoval = false;
 
   @override
   void initState() {
@@ -209,6 +219,32 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           ],
                         ),
                       ),
+
+                    // Product image — admin-only edit; staff sees existing
+                    // image but cannot replace/remove. Bytes are held in
+                    // memory and uploaded on save.
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: ProductImageUploader(
+                        existingUrl: _imageMarkedForRemoval
+                            ? null
+                            : _existingProduct?.imageUrl,
+                        pendingBytes: _pendingImageBytes,
+                        enabled: userRole == UserRole.admin,
+                        onChanged: (bytes, {required removed}) {
+                          setState(() {
+                            if (removed) {
+                              _pendingImageBytes = null;
+                              _imageMarkedForRemoval = true;
+                            } else {
+                              _pendingImageBytes = bytes;
+                              _imageMarkedForRemoval = false;
+                            }
+                          });
+                        },
+                      ),
+                    ),
 
                     // SKU — Auto/Manual toggle is create-only; on edit the
                     // SKU is read-only (sale + receiving variation refs).
@@ -534,6 +570,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 ?.name;
           }
 
+          // Resolve the new imageUrl ahead of the single update call so
+          // we don't write twice. Order matters: upload first, then
+          // delete-existing only if upload succeeded.
+          String? newImageUrl;
+          var clearImage = false;
+          if (_pendingImageBytes != null) {
+            final storage =
+                ref.read(productImageStorageServiceProvider);
+            newImageUrl = await storage.upload(
+              productId: _existingProduct!.id,
+              bytes: _pendingImageBytes!,
+            );
+          } else if (_imageMarkedForRemoval) {
+            final storage =
+                ref.read(productImageStorageServiceProvider);
+            await storage.delete(productId: _existingProduct!.id);
+            clearImage = true;
+          }
+
           final product = _existingProduct!.copyWith(
             name: _nameController.text.trim(),
             costCode: costCode,
@@ -555,6 +610,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
+            imageUrl: newImageUrl,
+            clearImageUrl: clearImage,
           );
 
           final productOps = ref.read(productOperationsProvider.notifier);
@@ -640,11 +697,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         );
 
         final productOps = ref.read(productOperationsProvider.notifier);
-        final result = await productOps.createProduct(
+        final created = await productOps.createProduct(
           actor: currentUser,
           product: product,
         );
-        if (result == null) throw Exception('Failed to create product');
+        if (created == null) throw Exception('Failed to create product');
+
+        // If the user picked an image, upload it now (we needed the id
+        // first) and update the product with the resolved URL.
+        if (_pendingImageBytes != null) {
+          final storage = ref.read(productImageStorageServiceProvider);
+          final url = await storage.upload(
+            productId: created.id,
+            bytes: _pendingImageBytes!,
+          );
+          await productOps.updateProduct(
+            actor: currentUser,
+            product: created.copyWith(imageUrl: url),
+          );
+        }
       }
 
       if (mounted) {

@@ -219,6 +219,7 @@ class ProductEntity extends Equatable {
     String? barcode,
     String? category,
     String? imageUrl,
+    bool clearImageUrl = false,
     String? notes,
   }) {
     return ProductEntity(
@@ -245,7 +246,7 @@ class ProductEntity extends Equatable {
       variationNumber: variationNumber ?? this.variationNumber,
       barcode: barcode ?? this.barcode,
       category: category ?? this.category,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       notes: notes ?? this.notes,
     );
   }

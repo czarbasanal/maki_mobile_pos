@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/firebase_options.dart';
@@ -172,4 +173,9 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
 /// Provides the singleton [FirebaseAuth] instance.
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
   return FirebaseService.instance.auth;
+});
+
+/// Provides the singleton [FirebaseStorage] instance.
+final firebaseStorageProvider = Provider<FirebaseStorage>((ref) {
+  return FirebaseStorage.instance;
 });

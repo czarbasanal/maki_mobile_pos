@@ -113,6 +113,10 @@ class ProductDetailScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (product.imageUrl != null && product.imageUrl!.isNotEmpty) ...[
+            _ProductHeroImage(url: product.imageUrl!),
+            const SizedBox(height: AppSpacing.md),
+          ],
           _buildHeaderCard(context, product),
           const SizedBox(height: AppSpacing.md),
           _buildStockCard(context, product),
@@ -1022,6 +1026,50 @@ class _CardHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Square hero image at the top of the product detail screen. Uses the
+/// full content width so the product is the visual anchor of the page.
+class _ProductHeroImage extends StatelessWidget {
+  const _ProductHeroImage({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          loadingBuilder: (_, child, progress) {
+            if (progress == null) return child;
+            return Container(
+              color: theme.brightness == Brightness.dark
+                  ? AppColors.darkSurfaceMuted
+                  : AppColors.lightSurfaceMuted,
+              child: const Center(child: CircularProgressIndicator()),
+            );
+          },
+          errorBuilder: (_, __, ___) => Container(
+            color: theme.brightness == Brightness.dark
+                ? AppColors.darkSurfaceMuted
+                : AppColors.lightSurfaceMuted,
+            child: Center(
+              child: Icon(
+                CupertinoIcons.cube_box,
+                color: theme.colorScheme.onSurfaceVariant,
+                size: 48,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

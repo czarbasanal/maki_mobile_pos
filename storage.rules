@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Firebase Storage security rules.
+//
+// Authentication is required for all reads and writes; we don't expose
+// any product imagery to anonymous traffic. Write authorization mirrors
+// the inventory permission boundary at the application layer:
+//   - Admin (full editProduct)
+//   - Staff (editProductLimited)
+// We don't load Firestore docs from Storage rules — too costly and a
+// chicken-and-egg risk during user provisioning. Instead we trust that
+// only signed-in users from this Firebase project ever write here, and
+// the *application* (mobile/web client) gates the upload UI by role.
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Product imagery — `products/{productId}/main.jpg` (one image per
+    // product, overwritten on re-upload).
+    match /products/{productId}/{file=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Default-deny everything else.
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
