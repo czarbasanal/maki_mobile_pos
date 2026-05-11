@@ -76,9 +76,12 @@ final localProductSearchProvider =
           query.toLowerCase().split(' ').where((s) => s.isNotEmpty).toList();
 
       final results = products.where((product) {
-        final searchable =
-            '${product.name} ${product.sku} ${product.barcode ?? ''} ${product.category ?? ''}'
-                .toLowerCase();
+        final searchable = [
+          product.name,
+          product.sku,
+          ...product.barcodes,
+          if (product.category != null) product.category!,
+        ].join(' ').toLowerCase();
         return searchTerms.every((term) => searchable.contains(term));
       }).take(20).toList();
 

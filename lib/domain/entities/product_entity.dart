@@ -76,8 +76,14 @@ class ProductEntity extends Equatable {
   /// Variation number (null if not a variation)
   final int? variationNumber;
 
-  /// Optional barcode (if different from SKU)
-  final String? barcode;
+  /// Scan codes that resolve to this product, in addition to the SKU.
+  ///
+  /// Typically holds the original vendor/manufacturer barcode(s) when the
+  /// shop labels products with their own SKU but still wants the scanner
+  /// to find the product when the printed manufacturer barcode is scanned.
+  /// Empty when no extra codes are mapped. Each entry must be unique
+  /// across all products — duplicate checks live in the repository.
+  final List<String> barcodes;
 
   /// Optional product category
   final String? category;
@@ -110,7 +116,7 @@ class ProductEntity extends Equatable {
     this.searchKeywords = const [],
     this.baseSku,
     this.variationNumber,
-    this.barcode,
+    this.barcodes = const [],
     this.category,
     this.imageUrl,
     this.notes,
@@ -216,7 +222,7 @@ class ProductEntity extends Equatable {
     List<String>? searchKeywords,
     String? baseSku,
     int? variationNumber,
-    String? barcode,
+    List<String>? barcodes,
     String? category,
     String? imageUrl,
     bool clearImageUrl = false,
@@ -244,7 +250,7 @@ class ProductEntity extends Equatable {
       searchKeywords: searchKeywords ?? this.searchKeywords,
       baseSku: baseSku ?? this.baseSku,
       variationNumber: variationNumber ?? this.variationNumber,
-      barcode: barcode ?? this.barcode,
+      barcodes: barcodes ?? this.barcodes,
       category: category ?? this.category,
       imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       notes: notes ?? this.notes,
@@ -274,7 +280,7 @@ class ProductEntity extends Equatable {
         searchKeywords,
         baseSku,
         variationNumber,
-        barcode,
+        barcodes,
         category,
         imageUrl,
         notes,

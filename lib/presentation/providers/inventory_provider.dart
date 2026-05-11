@@ -129,7 +129,7 @@ final filteredProductsProvider =
         filtered = filtered.where((p) {
           return p.name.toLowerCase().contains(query) ||
               p.sku.toLowerCase().contains(query) ||
-              (p.barcode?.toLowerCase().contains(query) ?? false);
+              p.barcodes.any((b) => b.toLowerCase().contains(query));
         }).toList();
       }
 

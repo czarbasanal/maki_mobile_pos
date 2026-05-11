@@ -207,15 +207,20 @@ class ProductDetailScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            if (product.barcode != null && product.barcode!.isNotEmpty) ...[
+            if (product.barcodes.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.md),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(CupertinoIcons.qrcode, size: 18, color: muted),
                   const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Barcode: ${product.barcode}',
-                    style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                  Expanded(
+                    child: Text(
+                      product.barcodes.length == 1
+                          ? 'Barcode: ${product.barcodes.first}'
+                          : 'Barcodes: ${product.barcodes.join(", ")}',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                    ),
                   ),
                 ],
               ),

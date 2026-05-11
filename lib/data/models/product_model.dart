@@ -25,7 +25,10 @@ class ProductModel {
   final List<String> searchKeywords;
   final String? baseSku;
   final int? variationNumber;
-  final String? barcode;
+  /// Scan codes mapped to this product (vendor barcodes, etc.).
+  /// Read fallback: a legacy single-`barcode` field in Firestore is
+  /// surfaced here as a one-element list — see [fromMap].
+  final List<String> barcodes;
   final String? category;
   final String? imageUrl;
   final String? notes;
@@ -52,7 +55,7 @@ class ProductModel {
     this.searchKeywords = const [],
     this.baseSku,
     this.variationNumber,
-    this.barcode,
+    this.barcodes = const [],
     this.category,
     this.imageUrl,
     this.notes,
@@ -92,7 +95,7 @@ class ProductModel {
       searchKeywords: _parseStringList(map['searchKeywords']),
       baseSku: map['baseSku'] as String?,
       variationNumber: (map['variationNumber'] as num?)?.toInt(),
-      barcode: map['barcode'] as String?,
+      barcodes: _parseBarcodes(map),
       category: map['category'] as String?,
       imageUrl: map['imageUrl'] as String?,
       notes: map['notes'] as String?,
@@ -119,7 +122,7 @@ class ProductModel {
       'searchKeywords': searchKeywords,
       'baseSku': baseSku,
       'variationNumber': variationNumber,
-      'barcode': barcode,
+      'barcodes': barcodes,
       'category': category,
       'imageUrl': imageUrl,
       'notes': notes,
@@ -138,6 +141,11 @@ class ProductModel {
       map['updatedAt'] = FieldValue.serverTimestamp();
       map['updatedBy'] = updatedBy;
       map['updatedByName'] = updatedByName;
+      // Drop the legacy single-string `barcode` field as legacy docs get
+      // re-saved — [fromMap] falls back to it for untouched docs, but
+      // once a doc is updated the canonical form is `barcodes`. Only
+      // valid in update calls; create/set rejects FieldValue.delete().
+      map['barcode'] = FieldValue.delete();
       // Don't include createdAt / createdBy / createdByName on updates
     } else {
       map['createdAt'] = Timestamp.fromDate(createdAt);
@@ -206,7 +214,7 @@ class ProductModel {
       searchKeywords: searchKeywords,
       baseSku: baseSku,
       variationNumber: variationNumber,
-      barcode: barcode,
+      barcodes: barcodes,
       category: category,
       imageUrl: imageUrl,
       notes: notes,
@@ -237,7 +245,7 @@ class ProductModel {
       searchKeywords: entity.searchKeywords,
       baseSku: entity.baseSku,
       variationNumber: entity.variationNumber,
-      barcode: entity.barcode,
+      barcodes: entity.barcodes,
       category: entity.category,
       imageUrl: entity.imageUrl,
       notes: entity.notes,
@@ -275,7 +283,7 @@ class ProductModel {
     String unit = 'pcs',
     String? supplierId,
     String? supplierName,
-    String? barcode,
+    List<String> barcodes = const [],
     String? category,
     String? notes,
   }) {
@@ -293,7 +301,7 @@ class ProductModel {
       supplierName: supplierName,
       isActive: true,
       createdAt: DateTime.now(),
-      barcode: barcode,
+      barcodes: barcodes,
       category: category,
       notes: notes,
     );
@@ -335,9 +343,12 @@ class ProductModel {
     // Add name keywords
     keywords.addAll(name.toLowerCase().toSearchKeywords());
 
-    // Add barcode if present
-    if (barcode != null && barcode!.isNotEmpty) {
-      keywords.addAll(barcode!.toLowerCase().toSearchKeywords());
+    // Add each mapped barcode (vendor codes the user wants to scan) so
+    // the existing searchKeywords arrayContainsAny query finds the
+    // product when the printed manufacturer code is typed/scanned.
+    for (final code in barcodes) {
+      if (code.isEmpty) continue;
+      keywords.addAll(code.toLowerCase().toSearchKeywords());
     }
 
     // Add category if present
@@ -365,6 +376,21 @@ class ProductModel {
     return [];
   }
 
+  /// Reads the barcodes list, with a fallback for legacy docs that still
+  /// have a single-`barcode` String field instead of the `barcodes` array.
+  /// Once a legacy doc is re-saved it will be written with `barcodes`
+  /// only — see [toMap].
+  static List<String> _parseBarcodes(Map<String, dynamic> map) {
+    final list = _parseStringList(map['barcodes'])
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (list.isNotEmpty) return list;
+    final legacy = (map['barcode'] as String?)?.trim();
+    if (legacy != null && legacy.isNotEmpty) return [legacy];
+    return const [];
+  }
+
   // ==================== COPY WITH ====================
 
   ProductModel copyWith({
@@ -389,7 +415,7 @@ class ProductModel {
     List<String>? searchKeywords,
     String? baseSku,
     int? variationNumber,
-    String? barcode,
+    List<String>? barcodes,
     String? category,
     String? imageUrl,
     String? notes,
@@ -416,7 +442,7 @@ class ProductModel {
       searchKeywords: searchKeywords ?? this.searchKeywords,
       baseSku: baseSku ?? this.baseSku,
       variationNumber: variationNumber ?? this.variationNumber,
-      barcode: barcode ?? this.barcode,
+      barcodes: barcodes ?? this.barcodes,
       category: category ?? this.category,
       imageUrl: imageUrl ?? this.imageUrl,
       notes: notes ?? this.notes,

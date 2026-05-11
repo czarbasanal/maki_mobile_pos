@@ -44,7 +44,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _quantityController = TextEditingController();
   final _reorderLevelController = TextEditingController();
   final _unitController = TextEditingController();
-  final _barcodeController = TextEditingController();
+  // Pending text for a *new* barcode; the committed list lives in
+  // [_barcodes]. Empty after each add.
+  final _barcodeInputController = TextEditingController();
   final _categoryController = TextEditingController();
   final _notesController = TextEditingController();
 
@@ -54,6 +56,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _nameFocusNode = FocusNode();
 
   String? _selectedSupplierId;
+  // Mapped scan codes for this product. Edited via the chip input below;
+  // a fresh string typed into [_barcodeInputController] is committed via
+  // [_addBarcodeFromInput].
+  final List<String> _barcodes = [];
+  // Inline validation message rendered under the chip input.
+  String? _barcodeError;
   bool _isLoading = false;
   bool _isSaving = false;
   // SKU auto-generation: default ON for new products. Hidden / inert on edit
@@ -115,8 +123,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _costController.text = product.cost.toString();
         _quantityController.text = product.quantity.toString();
         _reorderLevelController.text = product.reorderLevel.toString();
-        _unitController.text = product.unit ?? 'pcs';
-        _barcodeController.text = product.barcode ?? '';
+        _unitController.text = product.unit;
+        _barcodes
+          ..clear()
+          ..addAll(product.barcodes);
         _categoryController.text = product.category ?? '';
         _notesController.text = product.notes ?? '';
         _selectedSupplierId = product.supplierId;
@@ -135,7 +145,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _quantityController.dispose();
     _reorderLevelController.dispose();
     _unitController.dispose();
-    _barcodeController.dispose();
+    _barcodeInputController.dispose();
     _categoryController.dispose();
     _notesController.dispose();
     _nameFocusNode.dispose();
@@ -425,14 +435,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Barcode
-                    TextFormField(
-                      controller: _barcodeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Barcode',
-                        prefixIcon: Icon(CupertinoIcons.barcode_viewfinder),
-                      ),
-                    ),
+                    // Barcodes — one or more vendor codes that should
+                    // resolve to this product when scanned. The custom
+                    // SKU above is still the primary identifier; entries
+                    // here are additional scan-only aliases.
+                    _buildBarcodesField(),
                     const SizedBox(height: 16),
 
                     // Category — admin-managed dropdown. If the product is
@@ -554,6 +561,79 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
+  /// Renders the existing barcodes as deletable chips plus a single
+  /// text field for adding a new code. Add fires on the suffix button
+  /// or on keyboard submit; duplicates within this product are
+  /// rejected inline (cross-product duplicates are caught by the
+  /// repository on save).
+  Widget _buildBarcodesField() {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Barcodes',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        if (_barcodes.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final code in _barcodes)
+                InputChip(
+                  label: Text(code),
+                  onDeleted: () {
+                    setState(() {
+                      _barcodes.remove(code);
+                      _barcodeError = null;
+                    });
+                  },
+                ),
+            ],
+          ),
+        ],
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _barcodeInputController,
+          decoration: InputDecoration(
+            labelText: 'Add barcode',
+            hintText: 'e.g. 4806504801108',
+            prefixIcon: const Icon(CupertinoIcons.barcode_viewfinder),
+            errorText: _barcodeError,
+            suffixIcon: IconButton(
+              tooltip: 'Add',
+              icon: const Icon(CupertinoIcons.add),
+              onPressed: _addBarcodeFromInput,
+            ),
+          ),
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _addBarcodeFromInput(),
+        ),
+      ],
+    );
+  }
+
+  void _addBarcodeFromInput() {
+    final raw = _barcodeInputController.text.trim();
+    if (raw.isEmpty) {
+      setState(() => _barcodeError = null);
+      return;
+    }
+    if (_barcodes.contains(raw)) {
+      setState(() => _barcodeError = 'Already added');
+      return;
+    }
+    setState(() {
+      _barcodes.add(raw);
+      _barcodeInputController.clear();
+      _barcodeError = null;
+    });
+  }
+
   Future<void> _confirmDelete() async {
     final product = _existingProduct;
     if (product == null) return;
@@ -603,6 +683,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Commit any pending text in the "Add barcode" input so the user
+    // doesn't silently lose a barcode they typed but didn't tap Add for.
+    final pendingBarcode = _barcodeInputController.text.trim();
+    if (pendingBarcode.isNotEmpty && !_barcodes.contains(pendingBarcode)) {
+      _barcodes.add(pendingBarcode);
+      _barcodeInputController.clear();
+    }
 
     setState(() => _isSaving = true);
 
@@ -659,9 +747,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 : _unitController.text.trim(),
             supplierId: _selectedSupplierId,
             supplierName: supplierName,
-            barcode: _barcodeController.text.trim().isEmpty
-                ? null
-                : _barcodeController.text.trim(),
+            barcodes: List<String>.from(_barcodes),
             category: _categoryController.text.trim().isEmpty
                 ? null
                 : _categoryController.text.trim(),
@@ -695,9 +781,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             // Preserve original supplier
             supplierId: _existingProduct!.supplierId,
             supplierName: _existingProduct!.supplierName,
-            barcode: _barcodeController.text.trim().isEmpty
-                ? null
-                : _barcodeController.text.trim(),
+            barcodes: List<String>.from(_barcodes),
             category: _categoryController.text.trim().isEmpty
                 ? null
                 : _categoryController.text.trim(),
@@ -743,9 +827,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           supplierName: supplierName,
           isActive: true,
           createdAt: DateTime.now(),
-          barcode: _barcodeController.text.trim().isEmpty
-              ? null
-              : _barcodeController.text.trim(),
+          barcodes: List<String>.from(_barcodes),
           category: _categoryController.text.trim().isEmpty
               ? null
               : _categoryController.text.trim(),

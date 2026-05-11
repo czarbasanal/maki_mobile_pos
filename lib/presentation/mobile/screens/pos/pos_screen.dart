@@ -365,8 +365,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
   void _handleBarcodeScanned(String barcode) async {
-    // Search for product by barcode/SKU
-    final product = await ref.read(productBySkuProvider(barcode).future);
+    // Look up by barcode first (covers vendor codes mapped on the product),
+    // then by SKU as a fall-back — see ProductRepositoryImpl.getProductByBarcode.
+    final product = await ref.read(productByBarcodeProvider(barcode).future);
 
     if (product != null) {
       _addProductToCart(product);

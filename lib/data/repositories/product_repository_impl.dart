@@ -30,15 +30,17 @@ class ProductRepositoryImpl implements ProductRepository {
         throw DuplicateSkuException(sku: product.sku);
       }
 
-      // Check for duplicate barcode if provided
-      if (product.barcode != null &&
-          product.barcode!.isNotEmpty &&
-          await barcodeExists(barcode: product.barcode!)) {
-        throw const DuplicateEntryException(
-          field: 'barcode',
-          value: 'barcode',
-          message: 'A product with this barcode already exists',
-        );
+      // Check for duplicate barcodes if any are mapped. Each entry must
+      // be globally unique so a scan only ever resolves to one product.
+      for (final code in product.barcodes) {
+        if (code.isEmpty) continue;
+        if (await barcodeExists(barcode: code)) {
+          throw DuplicateEntryException(
+            field: 'barcodes',
+            value: code,
+            message: 'A product with barcode "$code" already exists',
+          );
+        }
       }
 
       final productModel = ProductModel.fromEntity(product);
@@ -114,8 +116,22 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<ProductEntity?> getProductByBarcode(String barcode) async {
     try {
-      // First try barcode field
+      // Primary: array-contains on the new `barcodes` field.
       var snapshot = await _productsRef
+          .where('barcodes', arrayContains: barcode)
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return ProductModel.fromFirestore(snapshot.docs.first).toEntity();
+      }
+
+      // Legacy fallback: docs that haven't been re-saved since the
+      // schema migration still carry the singular `barcode` String.
+      // [ProductModel.fromMap] lifts that into the `barcodes` list at
+      // read time, but the Firestore query above won't match it.
+      snapshot = await _productsRef
           .where('barcode', isEqualTo: barcode)
           .where('isActive', isEqualTo: true)
           .limit(1)
@@ -125,7 +141,7 @@ class ProductRepositoryImpl implements ProductRepository {
         return ProductModel.fromFirestore(snapshot.docs.first).toEntity();
       }
 
-      // Fall back to SKU
+      // Last fall back: treat the scanned code as a SKU.
       return getProductBySku(barcode);
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -702,16 +718,28 @@ class ProductRepositoryImpl implements ProductRepository {
     String? excludeProductId,
   }) async {
     try {
-      final snapshot = await _productsRef
+      // Primary check against the new `barcodes` array.
+      final fromArray = await _productsRef
+          .where('barcodes', arrayContains: barcode)
+          .limit(2)
+          .get();
+
+      final hasArrayHit = excludeProductId == null
+          ? fromArray.docs.isNotEmpty
+          : fromArray.docs.any((doc) => doc.id != excludeProductId);
+      if (hasArrayHit) return true;
+
+      // Legacy fallback: docs that still carry the singular `barcode`
+      // String field. See [getProductByBarcode] for why this is needed.
+      final fromLegacy = await _productsRef
           .where('barcode', isEqualTo: barcode)
           .limit(2)
           .get();
 
       if (excludeProductId == null) {
-        return snapshot.docs.isNotEmpty;
+        return fromLegacy.docs.isNotEmpty;
       }
-
-      return snapshot.docs.any((doc) => doc.id != excludeProductId);
+      return fromLegacy.docs.any((doc) => doc.id != excludeProductId);
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to check barcode existence: ${e.message}',

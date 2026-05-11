@@ -102,6 +102,68 @@ void main() {
       expect(testProduct.searchKeywords, isNotEmpty);
       expect(testProduct.searchKeywords.contains('test'), true);
     });
+
+    test('searchKeywords indexes each mapped barcode as prefixes', () {
+      // toSearchKeywords caps tokens at length 10, so a long barcode
+      // contributes its prefixes — enough for partial-text search to
+      // surface the product when the user types the start of a code.
+      // (Exact-match scan lookup uses arrayContains on `barcodes`, not
+      // this keyword index — see ProductRepositoryImpl.getProductByBarcode.)
+      final product = ProductModel.create(
+        sku: 'TEST-002',
+        name: 'Multi-Barcode Product',
+        costCode: 'NBF',
+        cost: 125,
+        price: 200,
+        barcodes: const ['4806504801108', '012345'],
+      );
+
+      expect(product.searchKeywords.contains('48065'), true);
+      expect(product.searchKeywords.contains('012345'), true);
+    });
+
+    test('fromMap reads the new `barcodes` array', () {
+      final model = ProductModel.fromMap({
+        'sku': 'BC-001',
+        'name': 'P',
+        'barcodes': ['111', '222'],
+      }, 'doc-id');
+
+      expect(model.barcodes, ['111', '222']);
+    });
+
+    test('fromMap falls back to the legacy single `barcode` field', () {
+      // Pre-migration docs hold `barcode: String` instead of the array.
+      // [_parseBarcodes] lifts the legacy value into a one-element list
+      // so callers never see the old shape.
+      final model = ProductModel.fromMap({
+        'sku': 'BC-002',
+        'name': 'P',
+        'barcode': '4806504801108',
+      }, 'doc-id');
+
+      expect(model.barcodes, ['4806504801108']);
+    });
+
+    test('fromMap prefers `barcodes` over the legacy `barcode`', () {
+      final model = ProductModel.fromMap({
+        'sku': 'BC-003',
+        'name': 'P',
+        'barcode': 'legacy-value',
+        'barcodes': ['new-value-1', 'new-value-2'],
+      }, 'doc-id');
+
+      expect(model.barcodes, ['new-value-1', 'new-value-2']);
+    });
+
+    test('fromMap with neither field yields an empty list', () {
+      final model = ProductModel.fromMap({
+        'sku': 'BC-004',
+        'name': 'P',
+      }, 'doc-id');
+
+      expect(model.barcodes, isEmpty);
+    });
   });
 
   group('ProductEntity computed properties', () {
