@@ -403,6 +403,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   Widget _buildProductList(InventoryState inventoryState) {
     final productsAsync = ref.watch(filteredProductsProvider);
+    final isAdmin =
+        ref.watch(currentUserProvider).value?.role == UserRole.admin;
 
     return productsAsync.when(
       data: (products) {
@@ -423,6 +425,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 product: product,
                 showCost: inventoryState.showCost,
                 onTap: () => _navigateToProductDetail(product),
+                onLongPress:
+                    isAdmin ? () => _confirmAndDelete(context, product) : null,
               );
             },
           ),
@@ -471,6 +475,49 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   void _navigateToProductDetail(ProductEntity product) {
     context.push('${RoutePaths.inventory}/${product.id}');
+  }
+
+  Future<void> _confirmAndDelete(
+    BuildContext context,
+    ProductEntity product,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Product?'),
+        content: Text(
+          'Delete "${product.name}"? This product will be hidden from POS '
+          'and inventory lists. Past sales and receivings that reference '
+          'it remain intact.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null) return;
+
+    final ok = await ref
+        .read(productOperationsProvider.notifier)
+        .deactivateProduct(actor: currentUser, productId: product.id);
+
+    if (!context.mounted) return;
+    if (ok) {
+      context.showSuccessSnackBar('Product deleted');
+    } else {
+      context.showErrorSnackBar('Failed to delete product');
+    }
   }
 
   void _handleMenuAction(String action) {

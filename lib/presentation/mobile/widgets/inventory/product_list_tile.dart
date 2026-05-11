@@ -16,12 +16,14 @@ class ProductListTile extends StatelessWidget {
   final ProductEntity product;
   final bool showCost;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const ProductListTile({
     super.key,
     required this.product,
     required this.showCost,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -36,6 +38,7 @@ class ProductListTile extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.sm + 4),

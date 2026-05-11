@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -46,31 +47,21 @@ class ProductDetailScreen extends ConsumerWidget {
                     .toggleCostVisibility(show);
               },
             ),
-          PopupMenuButton<String>(
-            onSelected: (action) => _handleAction(context, ref, action),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'edit',
-                child: ListTile(
-                  leading: Icon(CupertinoIcons.pencil),
-                  title: Text('Edit Product'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              if (isAdmin)
-                const PopupMenuItem(
-                  value: 'deactivate',
-                  child: ListTile(
-                    leading: Icon(
-                      CupertinoIcons.archivebox,
-                      color: AppColors.warningDark,
-                    ),
-                    title: Text('Deactivate'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-            ],
+          IconButton(
+            tooltip: 'Edit',
+            icon: const Icon(CupertinoIcons.pencil),
+            onPressed: () =>
+                context.push('${RoutePaths.inventory}/edit/$productId'),
           ),
+          if (isAdmin)
+            IconButton(
+              tooltip: 'Delete',
+              icon: const Icon(
+                CupertinoIcons.trash,
+                color: AppColors.error,
+              ),
+              onPressed: () => _confirmDelete(context, ref),
+            ),
         ],
       ),
       body: productAsync.when(
@@ -638,25 +629,15 @@ class ProductDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _handleAction(BuildContext context, WidgetRef ref, String action) {
-    switch (action) {
-      case 'edit':
-        context.showSnackBar('Edit product coming soon');
-        break;
-      case 'deactivate':
-        _confirmDeactivate(context, ref);
-        break;
-    }
-  }
-
-  void _confirmDeactivate(BuildContext context, WidgetRef ref) {
+  void _confirmDelete(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Deactivate Product?'),
+        title: const Text('Delete Product?'),
         content: const Text(
           'This product will be hidden from POS and inventory lists. '
-          'You can reactivate it later.',
+          'Past sales and receivings that reference it remain intact, '
+          'and an admin can reactivate it later from the inventory filter.',
         ),
         actions: [
           TextButton(
@@ -676,14 +657,14 @@ class ProductDetailScreen extends ConsumerWidget {
                     );
                 if (context.mounted) {
                   Navigator.pop(context);
-                  context.showWarningSnackBar('Product deactivated');
+                  context.showWarningSnackBar('Product deleted');
                 }
               }
             },
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.warningDark,
+              backgroundColor: AppColors.error,
             ),
-            child: const Text('Deactivate'),
+            child: const Text('Delete'),
           ),
         ],
       ),
