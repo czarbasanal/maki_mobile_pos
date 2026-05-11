@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/cost_code_pill.dart';
 
 /// Displays a single item in the cart with quantity controls and discount.
 class CartItemTile extends StatelessWidget {
@@ -74,10 +75,23 @@ class CartItemTile extends StatelessWidget {
                   ),
                 ],
               ),
-              // SKU and unit price — muted secondary line
-              Text(
-                '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} / ${item.unit}',
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              // SKU + unit price (muted) + encoded cost-code pill so the
+              // cashier can sanity-check the line's cost at a glance
+              // without exposing the raw number.
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} / ${item.unit}',
+                      style:
+                          theme.textTheme.bodySmall?.copyWith(color: muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  CostCodePill(cost: item.unitCost, compact: true),
+                ],
               ),
               const SizedBox(height: AppSpacing.sm + 4),
               // Quantity controls + discount button + line total

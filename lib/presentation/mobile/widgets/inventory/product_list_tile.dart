@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/cost_code_pill.dart';
 
 /// List tile for displaying a product in the inventory.
 ///
@@ -93,7 +92,7 @@ class ProductListTile extends StatelessWidget {
                             margin: product.profitMargin,
                           ),
                         ] else
-                          _CostCodePill(cost: product.cost),
+                          CostCodePill(cost: product.cost, compact: true),
                       ],
                     ),
                   ],
@@ -256,45 +255,6 @@ class _MarginBadge extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: AppColors.successDark,
         ),
-      ),
-    );
-  }
-}
-
-class _CostCodePill extends ConsumerWidget {
-  const _CostCodePill({required this.cost});
-  final double cost;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Encode at display so a freshly-edited cost-code mapping is reflected
-    // here without rewriting every product's stored costCode field.
-    final code = ref.watch(encodeCostProvider(cost));
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.warning),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            CupertinoIcons.lock,
-            size: 12,
-            color: AppColors.warningDark,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            code,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'monospace',
-              color: AppColors.warningDark,
-            ),
-          ),
-        ],
       ),
     );
   }
