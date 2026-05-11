@@ -408,13 +408,23 @@ class ProductDetailScreen extends ConsumerWidget {
                                 color: AppColors.warningDark,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                product.costCode,
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.warningDark,
-                                ),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  // Re-encode at display so live cost-code
+                                  // mapping edits reflect here without a
+                                  // product write.
+                                  final code = ref.watch(
+                                    encodeCostProvider(product.cost),
+                                  );
+                                  return Text(
+                                    code,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.warningDark,
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),

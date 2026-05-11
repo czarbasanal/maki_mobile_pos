@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// List tile for displaying a product in the inventory.
 ///
@@ -91,7 +93,7 @@ class ProductListTile extends StatelessWidget {
                             margin: product.profitMargin,
                           ),
                         ] else
-                          _CostCodePill(code: product.costCode),
+                          _CostCodePill(cost: product.cost),
                       ],
                     ),
                   ],
@@ -259,12 +261,15 @@ class _MarginBadge extends StatelessWidget {
   }
 }
 
-class _CostCodePill extends StatelessWidget {
-  const _CostCodePill({required this.code});
-  final String code;
+class _CostCodePill extends ConsumerWidget {
+  const _CostCodePill({required this.cost});
+  final double cost;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Encode at display so a freshly-edited cost-code mapping is reflected
+    // here without rewriting every product's stored costCode field.
+    final code = ref.watch(encodeCostProvider(cost));
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
