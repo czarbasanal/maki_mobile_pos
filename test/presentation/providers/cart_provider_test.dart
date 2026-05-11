@@ -230,6 +230,37 @@ void main() {
       // rather than failing to update a draft that no longer exists.
       expect(state.sourceDraftId, isNull);
       expect(state.isFromDraft, false);
+      // The name IS retained so a follow-up "Save as Draft" can reuse
+      // the original title without prompting the user again.
+      expect(state.draftName, 'Test Draft');
+    });
+
+    test('reset should clear retained draft name', () {
+      final draft = DraftEntity(
+        id: 'draft-1',
+        name: 'Test Draft',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100,
+            unitCost: 60,
+            quantity: 1,
+          ),
+        ],
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John',
+        createdAt: DateTime.now(),
+      );
+      cartNotifier.loadFromDraft(draft);
+      expect(container.read(cartProvider).draftName, 'Test Draft');
+
+      cartNotifier.reset();
+
+      expect(container.read(cartProvider).draftName, isNull);
     });
 
     test('reset should clear all state', () {

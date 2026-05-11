@@ -439,19 +439,21 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
   void _showSaveDraftDialog() {
-    final nameController = TextEditingController();
     final cart = ref.read(cartProvider);
 
-    // Pre-fill with draft name if editing
-    if (cart.isFromDraft) {
-      final selectedDraft = ref.read(selectedDraftProvider);
-      nameController.text = selectedDraft?.name ?? '';
+    // Cart was loaded from a draft — reuse the original title and skip
+    // the prompt, since the user already named it the first time.
+    final retainedName = cart.draftName?.trim() ?? '';
+    if (retainedName.isNotEmpty) {
+      _saveDraft(retainedName);
+      return;
     }
 
+    final nameController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(cart.isFromDraft ? 'Update Draft' : 'Save as Draft'),
+        title: const Text('Save as Draft'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(

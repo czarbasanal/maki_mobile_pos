@@ -26,6 +26,14 @@ class CartState {
   /// If editing an existing draft, its ID
   final String? sourceDraftId;
 
+  /// Name of the draft this cart was loaded from, if any.
+  ///
+  /// Retained even though [sourceDraftId] is intentionally not — see
+  /// [CartNotifier.loadFromDraft]. Carrying just the name lets the
+  /// follow-up "Save as Draft" reuse the original title without
+  /// re-prompting, while still creating a new draft entry.
+  final String? draftName;
+
   /// Whether the cart is currently being processed
   final bool isProcessing;
 
@@ -39,6 +47,7 @@ class CartState {
     this.amountReceived = 0,
     this.notes,
     this.sourceDraftId,
+    this.draftName,
     this.isProcessing = false,
     this.errorMessage,
   });
@@ -118,10 +127,12 @@ class CartState {
     double? amountReceived,
     String? notes,
     String? sourceDraftId,
+    String? draftName,
     bool? isProcessing,
     String? errorMessage,
     bool clearNotes = false,
     bool clearSourceDraftId = false,
+    bool clearDraftName = false,
     bool clearErrorMessage = false,
   }) {
     return CartState(
@@ -132,6 +143,7 @@ class CartState {
       notes: clearNotes ? null : (notes ?? this.notes),
       sourceDraftId:
           clearSourceDraftId ? null : (sourceDraftId ?? this.sourceDraftId),
+      draftName: clearDraftName ? null : (draftName ?? this.draftName),
       isProcessing: isProcessing ?? this.isProcessing,
       errorMessage:
           clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
@@ -344,6 +356,9 @@ class CartNotifier extends StateNotifier<CartState> {
   /// draft right after — see [drafts_list_screen]. We deliberately don't
   /// retain `sourceDraftId` so a follow-up "Save as Draft" creates a new
   /// entry rather than trying to update a draft that's already been removed.
+  ///
+  /// The draft *name* is retained so the follow-up save can reuse the
+  /// original title without prompting the user again.
   void loadFromDraft(DraftEntity draft) {
     state = CartState(
       items: List<SaleItemEntity>.from(draft.items),
@@ -351,6 +366,7 @@ class CartNotifier extends StateNotifier<CartState> {
       paymentMethod: PaymentMethod.cash,
       amountReceived: 0,
       notes: draft.notes,
+      draftName: draft.name,
     );
   }
 
