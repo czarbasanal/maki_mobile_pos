@@ -179,6 +179,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     .toggleCostVisibility(show);
               },
             ),
+          if (widget.isEditing &&
+              _existingProduct != null &&
+              userRole == UserRole.admin)
+            IconButton(
+              tooltip: 'Delete',
+              icon: const Icon(
+                CupertinoIcons.trash,
+                color: AppColors.error,
+              ),
+              onPressed: _isSaving ? null : _confirmDelete,
+            ),
         ],
       ),
       body: _isLoading
@@ -541,6 +552,53 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
             ),
     );
+  }
+
+  Future<void> _confirmDelete() async {
+    final product = _existingProduct;
+    if (product == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Product?'),
+        content: Text(
+          'Delete "${product.name}"? This product will be hidden from POS '
+          'and inventory lists. Past sales and receivings that reference '
+          'it remain intact.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null) return;
+
+    setState(() => _isSaving = true);
+    final ok = await ref
+        .read(productOperationsProvider.notifier)
+        .deactivateProduct(actor: currentUser, productId: product.id);
+
+    if (!mounted) return;
+    if (ok) {
+      ref.invalidate(productsProvider);
+      context.showSuccessSnackBar('Product deleted');
+      context.goBackOr(RoutePaths.inventory);
+    } else {
+      setState(() => _isSaving = false);
+      context.showErrorSnackBar('Failed to delete product');
+    }
   }
 
   Future<void> _handleSubmit() async {
