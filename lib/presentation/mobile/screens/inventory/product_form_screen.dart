@@ -500,17 +500,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             const Text('Could not load suppliers'),
                       ),
 
-                    // Show supplier as read-only for staff
-                    if (!canSelectSupplier &&
-                        _existingProduct?.supplierName != null)
-                      TextFormField(
-                        initialValue: _existingProduct?.supplierName ?? 'None',
-                        decoration: const InputDecoration(
-                          labelText: 'Supplier',
-                          prefixIcon: Icon(CupertinoIcons.briefcase),
-                          ),
-                        enabled: false,
-                      ),
 
                     const SizedBox(height: 16),
 
