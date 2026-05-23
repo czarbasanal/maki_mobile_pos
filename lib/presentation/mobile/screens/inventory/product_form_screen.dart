@@ -722,12 +722,23 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           String? newImageUrl;
           var clearImage = false;
           if (_pendingImageBytes != null) {
-            final storage =
-                ref.read(productImageStorageServiceProvider);
-            newImageUrl = await storage.upload(
-              productId: _existingProduct!.id,
-              bytes: _pendingImageBytes!,
-            );
+            try {
+              final storage = ref.read(productImageStorageServiceProvider);
+              newImageUrl = await storage.upload(
+                productId: _existingProduct!.id,
+                bytes: _pendingImageBytes!,
+              );
+            } catch (_) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Image upload failed — product saved without image.',
+                    ),
+                  ),
+                );
+              }
+            }
           } else if (_imageMarkedForRemoval) {
             final storage =
                 ref.read(productImageStorageServiceProvider);
@@ -846,15 +857,27 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         // If the user picked an image, upload it now (we needed the id
         // first) and update the product with the resolved URL.
         if (_pendingImageBytes != null) {
-          final storage = ref.read(productImageStorageServiceProvider);
-          final url = await storage.upload(
-            productId: created.id,
-            bytes: _pendingImageBytes!,
-          );
-          await productOps.updateProduct(
-            actor: currentUser,
-            product: created.copyWith(imageUrl: url),
-          );
+          try {
+            final storage = ref.read(productImageStorageServiceProvider);
+            final url = await storage.upload(
+              productId: created.id,
+              bytes: _pendingImageBytes!,
+            );
+            await productOps.updateProduct(
+              actor: currentUser,
+              product: created.copyWith(imageUrl: url),
+            );
+          } catch (_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Image upload failed — product saved without image.',
+                  ),
+                ),
+              );
+            }
+          }
         }
       }
 
