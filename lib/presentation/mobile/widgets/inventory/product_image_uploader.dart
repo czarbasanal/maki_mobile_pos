@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
@@ -30,7 +31,7 @@ class ProductImageUploader extends StatelessWidget {
     required this.existingUrl,
     required this.pendingBytes,
     required this.onChanged,
-    this.cropMaxEdge = 480,
+    this.cropMaxEdge = 400,
     this.jpegQuality = 80,
     this.enabled = true,
   });
@@ -85,35 +86,67 @@ class ProductImageUploader extends StatelessWidget {
     final picked = await picker.pickImage(source: source);
     if (picked == null || !context.mounted) return;
 
-    // Square crop matching our 1:1 design choice. Both UI variants
-    // present a fixed-aspect crop window so the user can't escape it.
-    final cropped = await ImageCropper().cropImage(
-      sourcePath: picked.path,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Crop image',
-          lockAspectRatio: true,
-          aspectRatioPresets: [CropAspectRatioPreset.square],
-        ),
-        IOSUiSettings(
-          title: 'Crop image',
-          aspectRatioLockEnabled: true,
-          aspectRatioPresets: [CropAspectRatioPreset.square],
-        ),
-      ],
-    );
+    // Compress to a temp file before cropping so the native crop Activity
+    // loads a small file — prevents the silent OS kill caused by memory
+    // pressure when the original full-resolution image is large.
+    final tempPath =
+        '${Directory.systemTemp.path}/maki_pre_crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    XFile? smallFile;
+    try {
+      smallFile = await FlutterImageCompress.compressAndGetFile(
+        picked.path,
+        tempPath,
+        minWidth: cropMaxEdge,
+        minHeight: cropMaxEdge,
+        quality: jpegQuality,
+        format: CompressFormat.jpeg,
+      );
+    } catch (_) {
+      // Non-fatal: fall back to the original file if pre-compression fails.
+    }
+
+    final sourcePath = smallFile?.path ?? picked.path;
+
+    CroppedFile? cropped;
+    try {
+      cropped = await ImageCropper().cropImage(
+        sourcePath: sourcePath,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop image',
+            lockAspectRatio: true,
+            aspectRatioPresets: [CropAspectRatioPreset.square],
+          ),
+          IOSUiSettings(
+            title: 'Crop image',
+            aspectRatioLockEnabled: true,
+            aspectRatioPresets: [CropAspectRatioPreset.square],
+          ),
+        ],
+      );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not process image. Please try again.'),
+          ),
+        );
+      }
+    } finally {
+      // Clean up temp file regardless of crop outcome.
+      if (smallFile != null) {
+        try {
+          File(tempPath).deleteSync();
+        } catch (_) {}
+      }
+    }
+
     if (cropped == null) return;
 
-    final compressed = await FlutterImageCompress.compressWithFile(
-      cropped.path,
-      minWidth: cropMaxEdge,
-      minHeight: cropMaxEdge,
-      quality: jpegQuality,
-      format: CompressFormat.jpeg,
-    );
-    if (compressed == null) return;
-
-    onChanged(Uint8List.fromList(compressed), removed: false);
+    // The cropped file is already small (source was pre-compressed to
+    // cropMaxEdge). Read bytes directly — no second compression needed.
+    final bytes = await File(cropped.path).readAsBytes();
+    onChanged(Uint8List.fromList(bytes), removed: false);
   }
 
   @override
