@@ -166,6 +166,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final bool canEditSku =
         !widget.isEditing; // SKU never editable after creation
     final bool canSelectSupplier = userRole == UserRole.admin;
+    // Cashier can reach the edit form but may only change the product name.
+    final bool isNameOnly = userRole == UserRole.cashier;
     // Cost is hidden by default. Admin reveals it via the AppBar toggle
     // (password-confirmed). On create, the field is always shown because
     // the admin needs to enter a cost value.
@@ -231,6 +233,36 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             Expanded(
                               child: Text(
                                 'You can edit product details except price and cost fields.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: AppColors.infoDark),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // Role info banner for cashier
+                    if (isNameOnly && widget.isEditing)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                        padding: const EdgeInsets.all(AppSpacing.sm + 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: AppColors.info),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              CupertinoIcons.info_circle,
+                              color: AppColors.infoDark,
+                              size: 20,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                'You can only edit the product name.',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -389,6 +421,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Quantity
                     TextFormField(
                       controller: _quantityController,
+                      enabled: !isNameOnly,
                       decoration: const InputDecoration(
                         labelText: 'Initial Quantity *',
                         prefixIcon: Icon(CupertinoIcons.number),
@@ -410,6 +443,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Reorder Level
                     TextFormField(
                       controller: _reorderLevelController,
+                      enabled: !isNameOnly,
                       decoration: const InputDecoration(
                         labelText: 'Reorder Level',
                         prefixIcon: Icon(CupertinoIcons.exclamationmark_triangle),
@@ -422,16 +456,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Unit — admin-managed dropdown. Required field; empty
                     // submissions fall back to 'pcs' downstream so legacy
                     // products created before units were seeded still save.
-                    _AdminListDropdownField(
-                      kind: CategoryKind.unit,
-                      controller: _unitController,
-                      label: 'Unit',
-                      icon: Icons.straighten,
-                      onChanged: (value) {
-                        setState(() {
-                          _unitController.text = value ?? '';
-                        });
-                      },
+                    AbsorbPointer(
+                      absorbing: isNameOnly,
+                      child: Opacity(
+                        opacity: isNameOnly ? 0.38 : 1.0,
+                        child: _AdminListDropdownField(
+                          kind: CategoryKind.unit,
+                          controller: _unitController,
+                          label: 'Unit',
+                          icon: Icons.straighten,
+                          onChanged: (value) {
+                            setState(() {
+                              _unitController.text = value ?? '';
+                            });
+                          },
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -439,24 +479,30 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // resolve to this product when scanned. The custom
                     // SKU above is still the primary identifier; entries
                     // here are additional scan-only aliases.
-                    _buildBarcodesField(),
+                    _buildBarcodesField(enabled: !isNameOnly),
                     const SizedBox(height: 16),
 
                     // Category — admin-managed dropdown. If the product is
                     // tied to a category that's been deactivated since last
                     // edit, we surface it inline so the user can keep it or
                     // pick a current active one.
-                    _AdminListDropdownField(
-                      kind: CategoryKind.product,
-                      controller: _categoryController,
-                      label: 'Category',
-                      icon: CupertinoIcons.square_grid_2x2,
-                      includeNoneOption: true,
-                      onChanged: (value) {
-                        setState(() {
-                          _categoryController.text = value ?? '';
-                        });
-                      },
+                    AbsorbPointer(
+                      absorbing: isNameOnly,
+                      child: Opacity(
+                        opacity: isNameOnly ? 0.38 : 1.0,
+                        child: _AdminListDropdownField(
+                          kind: CategoryKind.product,
+                          controller: _categoryController,
+                          label: 'Category',
+                          icon: CupertinoIcons.square_grid_2x2,
+                          includeNoneOption: true,
+                          onChanged: (value) {
+                            setState(() {
+                              _categoryController.text = value ?? '';
+                            });
+                          },
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -506,6 +552,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // Notes
                     TextFormField(
                       controller: _notesController,
+                      enabled: !isNameOnly,
                       decoration: const InputDecoration(
                         labelText: 'Notes',
                         prefixIcon: Icon(CupertinoIcons.list_bullet),
@@ -555,7 +602,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   /// or on keyboard submit; duplicates within this product are
   /// rejected inline (cross-product duplicates are caught by the
   /// repository on save).
-  Widget _buildBarcodesField() {
+  Widget _buildBarcodesField({bool enabled = true}) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,33 +622,37 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               for (final code in _barcodes)
                 InputChip(
                   label: Text(code),
-                  onDeleted: () {
-                    setState(() {
-                      _barcodes.remove(code);
-                      _barcodeError = null;
-                    });
-                  },
+                  onDeleted: enabled
+                      ? () {
+                          setState(() {
+                            _barcodes.remove(code);
+                            _barcodeError = null;
+                          });
+                        }
+                      : null,
                 ),
             ],
           ),
         ],
-        const SizedBox(height: AppSpacing.sm),
-        TextField(
-          controller: _barcodeInputController,
-          decoration: InputDecoration(
-            labelText: 'Add barcode',
-            hintText: 'e.g. 4806504801108',
-            prefixIcon: const Icon(CupertinoIcons.barcode_viewfinder),
-            errorText: _barcodeError,
-            suffixIcon: IconButton(
-              tooltip: 'Add',
-              icon: const Icon(CupertinoIcons.add),
-              onPressed: _addBarcodeFromInput,
+        if (enabled) ...[
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            controller: _barcodeInputController,
+            decoration: InputDecoration(
+              labelText: 'Add barcode',
+              hintText: 'e.g. 4806504801108',
+              prefixIcon: const Icon(CupertinoIcons.barcode_viewfinder),
+              errorText: _barcodeError,
+              suffixIcon: IconButton(
+                tooltip: 'Add',
+                icon: const Icon(CupertinoIcons.add),
+                onPressed: _addBarcodeFromInput,
+              ),
             ),
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _addBarcodeFromInput(),
           ),
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _addBarcodeFromInput(),
-        ),
+        ],
       ],
     );
   }
@@ -790,6 +841,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 : _notesController.text.trim(),
           );
 
+          final productOps = ref.read(productOperationsProvider.notifier);
+          final result = await productOps.updateProduct(
+            actor: currentUser,
+            product: product,
+          );
+          if (result == null) throw Exception('Failed to update product');
+        } else if (userRole == UserRole.cashier) {
+          // Cashier: update name only. All other fields preserved from original.
+          final product = _existingProduct!.copyWith(
+            name: _nameController.text.trim(),
+            price: _existingProduct!.price,
+            cost: _existingProduct!.cost,
+            costCode: _existingProduct!.costCode,
+            quantity: _existingProduct!.quantity,
+            reorderLevel: _existingProduct!.reorderLevel,
+            unit: _existingProduct!.unit,
+            supplierId: _existingProduct!.supplierId,
+            supplierName: _existingProduct!.supplierName,
+            barcodes: List<String>.from(_existingProduct!.barcodes),
+            category: _existingProduct!.category,
+            notes: _existingProduct!.notes,
+          );
           final productOps = ref.read(productOperationsProvider.notifier);
           final result = await productOps.updateProduct(
             actor: currentUser,
