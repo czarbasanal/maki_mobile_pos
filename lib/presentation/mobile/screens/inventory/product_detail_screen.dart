@@ -69,7 +69,7 @@ class ProductDetailScreen extends ConsumerWidget {
           if (product == null) {
             return const Center(child: Text('Product not found'));
           }
-          return _buildProductDetails(context, ref, product, inventoryState);
+          return _buildProductDetails(context, ref, product, inventoryState, isAdmin);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('Error: $error')),
@@ -96,6 +96,7 @@ class ProductDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     ProductEntity product,
     InventoryState inventoryState,
+    bool isAdmin,
   ) {
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
@@ -119,7 +120,7 @@ class ProductDetailScreen extends ConsumerWidget {
           ],
           const SizedBox(height: AppSpacing.md),
           _buildDetailsCard(context, product, dateFormat),
-          if (product.supplierName != null) ...[
+          if (product.supplierName != null && isAdmin) ...[
             const SizedBox(height: AppSpacing.md),
             _buildSupplierCard(context, product),
           ],
