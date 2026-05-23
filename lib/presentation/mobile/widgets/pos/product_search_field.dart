@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/pos/barcode_scanner_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Search field for finding products by name, SKU, or barcode.
@@ -278,40 +279,16 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
   }
 
   void _openBarcodeScanner() async {
-    // TODO: Implement barcode scanning with a package like mobile_scanner
-    // For now, show a dialog to manually enter barcode
-    final barcode = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          title: const Text('Enter Barcode/SKU'),
-          // Scroll the content so the soft keyboard never makes the
-          // dialog overflow when its max height shrinks.
-          content: SingleChildScrollView(
-            child: TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Scan or type barcode...',
-              ),
-              onSubmitted: (value) => Navigator.pop(context, value),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
+    // Drop the keyboard before pushing the scanner — if the search field
+    // is focused, the soft keyboard would otherwise overlap the preview
+    // on its way out.
+    widget.focusNode.unfocus();
+
+    final barcode = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
     );
 
+    if (!mounted) return;
     if (barcode != null && barcode.isNotEmpty) {
       widget.onBarcodeScanned(barcode);
     }

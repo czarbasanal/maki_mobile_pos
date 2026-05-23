@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Camera is used for the in-app barcode scanner (POS search bar
+         scan icon). Declared as `required="false"` so the app still
+         installs on devices without a camera (tablets, emulators) — the
+         scanner screen surfaces a fallback message in that case. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application
         android:label="maki_mobile_pos"
         android:name="${applicationName}"
