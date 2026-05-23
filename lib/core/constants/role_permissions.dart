@@ -20,6 +20,7 @@ enum Permission {
   addProduct,
   editProduct, // Full edit including price (admin only)
   editProductLimited, // Edit without price field (staff only)
+  editProductNameOnly, // Edit product name only (cashier)
   deleteProduct,
 
   // Receiving Permissions
@@ -85,8 +86,9 @@ abstract class RolePermissions {
     Permission.viewDrafts,
     Permission.editDraft,
     Permission.deleteDraft,
-    // Inventory (view only, no cost, no edit)
+    // Inventory (view only, no cost, name edit only)
     Permission.viewInventory,
+    Permission.editProductNameOnly,
     // Reports (daily only)
     Permission.viewSalesReports,
     Permission.viewDailySalesOnly,
@@ -260,5 +262,12 @@ abstract class RolePermissions {
   /// Checks if a role can do full product edits (including price).
   static bool canEditProductFull(UserRole role) {
     return hasPermission(role, Permission.editProduct);
+  }
+
+  /// Checks if a role can edit only the product name (cashier).
+  static bool canEditProductNameOnly(UserRole role) {
+    return hasPermission(role, Permission.editProductNameOnly) &&
+        !hasPermission(role, Permission.editProductLimited) &&
+        !hasPermission(role, Permission.editProduct);
   }
 }
