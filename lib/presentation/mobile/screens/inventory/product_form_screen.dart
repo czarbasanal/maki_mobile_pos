@@ -262,7 +262,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: Text(
-                                'You can only edit the product name.',
+                                'You can edit the product name and image.',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -273,8 +273,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ),
 
-                    // Product image — admin-only edit; staff sees existing
-                    // image but cannot replace/remove. Bytes are held in
+                    // Product image — admin and cashier can pick/replace;
+                    // staff sees existing image read-only. Bytes are held in
                     // memory and uploaded on save.
                     Padding(
                       padding:
@@ -284,7 +284,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             ? null
                             : _existingProduct?.imageUrl,
                         pendingBytes: _pendingImageBytes,
-                        enabled: userRole == UserRole.admin,
+                        enabled: userRole == UserRole.admin || isNameOnly,
                         onChanged: (bytes, {required removed}) {
                           setState(() {
                             if (removed) {
@@ -848,7 +848,33 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           );
           if (result == null) throw Exception('Failed to update product');
         } else if (userRole == UserRole.cashier) {
-          // Cashier: update name only. All other fields preserved from original.
+          // Cashier: update name and image. All other fields preserved.
+          String? newImageUrl;
+          var clearImage = false;
+          if (_pendingImageBytes != null) {
+            try {
+              final storage = ref.read(productImageStorageServiceProvider);
+              newImageUrl = await storage.upload(
+                productId: _existingProduct!.id,
+                bytes: _pendingImageBytes!,
+              );
+            } catch (_) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Image upload failed — product saved without image.',
+                    ),
+                  ),
+                );
+              }
+            }
+          } else if (_imageMarkedForRemoval) {
+            final storage = ref.read(productImageStorageServiceProvider);
+            await storage.delete(productId: _existingProduct!.id);
+            clearImage = true;
+          }
+
           final product = _existingProduct!.copyWith(
             name: _nameController.text.trim(),
             price: _existingProduct!.price,
@@ -862,6 +888,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             barcodes: List<String>.from(_existingProduct!.barcodes),
             category: _existingProduct!.category,
             notes: _existingProduct!.notes,
+            imageUrl: newImageUrl,
+            clearImageUrl: clearImage,
           );
           final productOps = ref.read(productOperationsProvider.notifier);
           final result = await productOps.updateProduct(
