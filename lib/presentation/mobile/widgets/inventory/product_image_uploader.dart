@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:path_provider/path_provider.dart';
-
+import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -27,6 +25,10 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 /// - To "remove", parent calls `onChanged(null, removed: true)`. The
 ///   widget itself just toggles preview/empty; persistence is the
 ///   parent's job.
+///
+/// Cropping is done in a pure-Flutter widget (`crop_your_image`), not a
+/// native Activity — this avoids the OS killing the Flutter process
+/// under memory pressure during a separate native crop UI.
 class ProductImageUploader extends StatelessWidget {
   const ProductImageUploader({
     super.key,
@@ -58,9 +60,6 @@ class ProductImageUploader extends StatelessWidget {
   final bool enabled;
 
   Future<void> _pick(BuildContext context) async {
-    // Action sheet picks the *source* only; removal is handled by an
-    // explicit button in the main UI (avoids ambiguity between
-    // sheet-dismissed and remove-tapped).
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -81,78 +80,60 @@ class ProductImageUploader extends StatelessWidget {
         ),
       ),
     );
-
     if (!context.mounted || source == null) return;
 
+    // image_picker resizes client-side before returning the file. Cap at
+    // 1024px so the bytes we load into the Flutter crop widget stay
+    // reasonable in memory; the final compression to cropMaxEdge happens
+    // after the user confirms their crop.
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source);
+    final picked = await picker.pickImage(
+      source: source,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 90,
+    );
     if (picked == null || !context.mounted) return;
 
-    // Compress to a temp file before cropping so the native crop Activity
-    // loads a small file — prevents the silent OS kill caused by memory
-    // pressure when the original full-resolution image is large.
-    // Must use getTemporaryDirectory() (app's sandboxed cache dir) not
-    // Directory.systemTemp (/tmp) — image_cropper's FileProvider is only
-    // authorised to serve paths inside the app's own directories.
-    final cacheDir = await getTemporaryDirectory();
-    final tempPath =
-        '${cacheDir.path}/maki_pre_crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    XFile? smallFile;
+    Uint8List bytes;
     try {
-      smallFile = await FlutterImageCompress.compressAndGetFile(
-        picked.path,
-        tempPath,
+      bytes = await File(picked.path).readAsBytes();
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not read image. Please try again.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    final cropped = await Navigator.of(context).push<Uint8List?>(
+      MaterialPageRoute(
+        builder: (_) => _CropImageScreen(imageBytes: bytes),
+        fullscreenDialog: true,
+      ),
+    );
+    if (cropped == null) return;
+
+    // Final compression — the cropped output is a sub-region of a 1024px
+    // image so it may still be larger than our target preview size.
+    Uint8List? compressed;
+    try {
+      compressed = await FlutterImageCompress.compressWithList(
+        cropped,
         minWidth: cropMaxEdge,
         minHeight: cropMaxEdge,
         quality: jpegQuality,
         format: CompressFormat.jpeg,
       );
     } catch (_) {
-      // Non-fatal: fall back to the original file if pre-compression fails.
+      // Non-fatal: fall through to the uncompressed cropped bytes.
     }
 
-    final sourcePath = smallFile?.path ?? picked.path;
-
-    CroppedFile? cropped;
-    try {
-      cropped = await ImageCropper().cropImage(
-        sourcePath: sourcePath,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop image',
-            lockAspectRatio: true,
-            aspectRatioPresets: [CropAspectRatioPreset.square],
-          ),
-          IOSUiSettings(
-            title: 'Crop image',
-            aspectRatioLockEnabled: true,
-            aspectRatioPresets: [CropAspectRatioPreset.square],
-          ),
-        ],
-      );
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not process image. Please try again.'),
-          ),
-        );
-      }
-    } finally {
-      // Clean up temp file regardless of crop outcome.
-      if (smallFile != null) {
-        try {
-          File(tempPath).deleteSync();
-        } catch (_) {}
-      }
-    }
-
-    if (cropped == null) return;
-
-    // The cropped file is already small (source was pre-compressed to
-    // cropMaxEdge). Read bytes directly — no second compression needed.
-    final bytes = await File(cropped.path).readAsBytes();
-    onChanged(Uint8List.fromList(bytes), removed: false);
+    onChanged(compressed ?? cropped, removed: false);
   }
 
   @override
@@ -233,6 +214,80 @@ class ProductImageUploader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Full-screen modal that hosts the pure-Flutter [Crop] widget. The user
+/// adjusts a square crop region and taps Done; we pop with the cropped
+/// JPEG bytes (or null on cancel/error).
+class _CropImageScreen extends StatefulWidget {
+  const _CropImageScreen({required this.imageBytes});
+
+  final Uint8List imageBytes;
+
+  @override
+  State<_CropImageScreen> createState() => _CropImageScreenState();
+}
+
+class _CropImageScreenState extends State<_CropImageScreen> {
+  final _controller = CropController();
+  bool _cropping = false;
+
+  void _onCropped(CropResult result) {
+    if (!mounted) return;
+    switch (result) {
+      case CropSuccess(:final croppedImage):
+        Navigator.of(context).pop(croppedImage);
+      case CropFailure():
+        setState(() => _cropping = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not crop image. Please try again.'),
+          ),
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.xmark),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Crop image'),
+        actions: [
+          TextButton(
+            onPressed: _cropping
+                ? null
+                : () {
+                    setState(() => _cropping = true);
+                    _controller.crop();
+                  },
+            child: Text(
+              _cropping ? 'Cropping…' : 'Done',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Crop(
+        image: widget.imageBytes,
+        controller: _controller,
+        aspectRatio: 1.0,
+        onCropped: _onCropped,
+        baseColor: Colors.black,
+        maskColor: Colors.black.withValues(alpha: 0.6),
+        progressIndicator: const CircularProgressIndicator(),
+      ),
     );
   }
 }

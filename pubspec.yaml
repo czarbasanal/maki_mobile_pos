@@ -52,7 +52,6 @@ dependencies:
   file_picker: ^10.3.10
   csv: ^6.0.0
   image_picker: ^1.2.0
-  image_cropper: ^12.2.1
   flutter_image_compress: ^2.4.0
   firebase_storage: ^13.1.5
   package_info_plus: ^9.0.0
@@ -60,7 +59,7 @@ dependencies:
   data_table_2: ^2.6.0
   fl_chart: ^1.1.1
   mobile_scanner: ^7.1.2
-  path_provider: ^2.1.5
+  crop_your_image: ^2.0.0
 
 dev_dependencies:
   flutter_test:
