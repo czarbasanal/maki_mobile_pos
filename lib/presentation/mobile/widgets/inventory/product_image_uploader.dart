@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:path_provider/path_provider.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -89,8 +91,12 @@ class ProductImageUploader extends StatelessWidget {
     // Compress to a temp file before cropping so the native crop Activity
     // loads a small file — prevents the silent OS kill caused by memory
     // pressure when the original full-resolution image is large.
+    // Must use getTemporaryDirectory() (app's sandboxed cache dir) not
+    // Directory.systemTemp (/tmp) — image_cropper's FileProvider is only
+    // authorised to serve paths inside the app's own directories.
+    final cacheDir = await getTemporaryDirectory();
     final tempPath =
-        '${Directory.systemTemp.path}/maki_pre_crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        '${cacheDir.path}/maki_pre_crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
     XFile? smallFile;
     try {
       smallFile = await FlutterImageCompress.compressAndGetFile(
