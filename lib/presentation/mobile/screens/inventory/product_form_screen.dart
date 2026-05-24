@@ -1072,9 +1072,14 @@ class _AuditInfoCard extends ConsumerWidget {
     }
     final userAsync = ref.watch(userByIdProvider(userId));
     final value = userAsync.when(
-      data: (user) => user?.displayName ?? userId,
+      data: (user) {
+        final name = user?.displayName.trim();
+        return (name != null && name.isNotEmpty) ? name : '—';
+      },
       loading: () => '—',
-      error: (_, __) => userId,
+      // Firestore rules deny non-admin reads of other users' docs — show
+      // dash rather than a meaningless UID.
+      error: (_, __) => '—',
     );
     return _row(ref.context, label, value);
   }

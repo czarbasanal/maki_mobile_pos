@@ -140,7 +140,10 @@ class ProductModel {
     } else if (forUpdate) {
       map['updatedAt'] = FieldValue.serverTimestamp();
       map['updatedBy'] = updatedBy;
-      map['updatedByName'] = updatedByName;
+      // Only write when non-empty to avoid erasing a previously stored name.
+      if (updatedByName != null && updatedByName!.isNotEmpty) {
+        map['updatedByName'] = updatedByName;
+      }
       // Drop the legacy single-string `barcode` field as legacy docs get
       // re-saved — [fromMap] falls back to it for untouched docs, but
       // once a doc is updated the canonical form is `barcodes`. Only
