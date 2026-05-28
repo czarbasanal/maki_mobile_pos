@@ -163,3 +163,41 @@ class DailyClosingEntity extends Equatable {
         closedAt,
       ];
 }
+
+/// Difference between a saved closing's snapshot and the current sales figures.
+///
+/// A closing is an immutable point-in-time snapshot. If sales are recorded (or
+/// voided) after the day is closed, the snapshot no longer matches reality;
+/// this surfaces that drift so the closed view can warn the user.
+class PostCloseActivity extends Equatable {
+  /// Completed sales beyond the snapshot (negative if a sale was voided).
+  final int extraSales;
+
+  /// Current gross minus the snapshot gross.
+  final double grossDelta;
+
+  const PostCloseActivity({
+    required this.extraSales,
+    required this.grossDelta,
+  });
+
+  factory PostCloseActivity.between({
+    required DailyClosingEntity closing,
+    required int currentSalesCount,
+    required double currentGross,
+  }) {
+    return PostCloseActivity(
+      extraSales: currentSalesCount - closing.salesCount,
+      grossDelta: currentGross - closing.grossSales,
+    );
+  }
+
+  /// True when current figures differ from the snapshot (sub-cent noise ignored).
+  bool get hasChanged => extraSales != 0 || grossDelta.abs() > 0.005;
+
+  /// True when the drift is additional sales (vs a void/refund reducing totals).
+  bool get isAdditional => extraSales > 0 || grossDelta > 0.005;
+
+  @override
+  List<Object?> get props => [extraSales, grossDelta];
+}

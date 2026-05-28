@@ -296,24 +296,41 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
 }
 
 /// Read-only view of an already-saved closing.
-class _ClosedView extends StatelessWidget {
+///
+/// Watches today's live sales summary so it can warn when sales were recorded
+/// (or voided) after the day was closed — the snapshot is immutable, so those
+/// later sales aren't reflected in the figures or counted cash below.
+class _ClosedView extends ConsumerWidget {
   final DailyClosingEntity closing;
 
   const _ClosedView({required this.closing});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final variance = closing.variance;
     final varianceColor = variance == 0
         ? AppColors.successDark
         : (variance < 0 ? AppColors.error : AppColors.warningDark);
 
+    final liveSummary = ref.watch(todaysSalesSummaryProvider).valueOrNull;
+    final activity = liveSummary == null
+        ? null
+        : PostCloseActivity.between(
+            closing: closing,
+            currentSalesCount: liveSummary.totalSalesCount,
+            currentGross: liveSummary.grossAmount,
+          );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (activity != null && activity.hasChanged) ...[
+            _postCloseBanner(context, activity),
+            const SizedBox(height: 16),
+          ],
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
@@ -372,6 +389,45 @@ class _ClosedView extends StatelessWidget {
             const SizedBox(height: 16),
             Text('Notes: ${closing.notes}', style: theme.textTheme.bodyMedium),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _postCloseBanner(BuildContext context, PostCloseActivity activity) {
+    final theme = Theme.of(context);
+    final closedTime =
+        TimeOfDay.fromDateTime(closing.closedAt).format(context);
+    final amount =
+        '${AppConstants.currencySymbol}${activity.grossDelta.abs().toCurrencyWithoutSymbol()}';
+
+    final message = activity.isAdditional
+        ? '${activity.extraSales} sale${activity.extraSales == 1 ? '' : 's'} '
+            'totaling $amount were recorded after this day was closed at '
+            '$closedTime. The counted cash below reflects the count at close '
+            'and may now be understated.'
+        : 'Sales activity changed after this day was closed at $closedTime '
+            '(gross down $amount). The figures below may no longer match.';
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.warning),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(CupertinoIcons.exclamationmark_triangle,
+              color: AppColors.warningDark),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: AppColors.warningDark),
+            ),
+          ),
         ],
       ),
     );
