@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -75,6 +76,20 @@ class FirebaseService {
       // Initialize Firebase
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
+      );
+
+      // Activate App Check to silence "No AppCheckProvider installed" warnings
+      // from the Storage/Firestore SDKs. Debug provider in development;
+      // Play Integrity (Android) / Device Check (Apple) in production.
+      await FirebaseAppCheck.instance.activate(
+        providerAndroid: kDebugMode
+            ? const AndroidDebugProvider(
+                debugToken: '63EFD82C-BD0F-44BC-9737-0583608B81F8',
+              )
+            : const AndroidPlayIntegrityProvider(),
+        providerApple: kDebugMode
+            ? const AppleDebugProvider()
+            : const AppleDeviceCheckProvider(),
       );
 
       // Get instances
