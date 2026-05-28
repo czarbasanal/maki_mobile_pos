@@ -117,8 +117,10 @@ abstract class RolePermissions {
     // Inventory (edit without price, no cost visibility)
     Permission.viewInventory,
     Permission.editProductLimited,
+    // Staff add products by entering a cost CODE; the numeric cost is
+    // decoded in CreateProductUseCase and never shown in the staff UI.
+    Permission.addProduct,
     // Note: viewProductCost is NOT included
-    // Note: addProduct is NOT included (admin only)
     // Note: deleteProduct is NOT included (admin only)
     // Receiving (full access + history)
     Permission.accessReceiving,

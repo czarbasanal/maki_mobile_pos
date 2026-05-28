@@ -34,4 +34,27 @@ void main() {
       expect(RolePermissions.canEditProductNameOnly(UserRole.admin), isFalse);
     });
   });
+
+  group('RolePermissions — addProduct', () {
+    test('cashier does NOT have addProduct', () {
+      expect(
+        RolePermissions.hasPermission(UserRole.cashier, Permission.addProduct),
+        isFalse,
+      );
+    });
+
+    test('staff HAS addProduct', () {
+      expect(
+        RolePermissions.hasPermission(UserRole.staff, Permission.addProduct),
+        isTrue,
+      );
+    });
+
+    test('admin HAS addProduct', () {
+      expect(
+        RolePermissions.hasPermission(UserRole.admin, Permission.addProduct),
+        isTrue,
+      );
+    });
+  });
 }
