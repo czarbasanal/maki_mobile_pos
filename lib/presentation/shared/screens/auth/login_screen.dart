@@ -199,25 +199,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.lightBorder,
-              width: 1.2,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            'M',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-              height: 1,
-            ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.asset(
+            'assets/icon/200x200_maki_app_icon_black.png',
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
           ),
         ),
         const SizedBox(height: 20),
