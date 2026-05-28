@@ -18,3 +18,4 @@ export 'petty_cash_entity.dart';
 export 'receiving_entity.dart';
 export 'activity_log_entity.dart';
 export 'category_entity.dart';
+export 'void_request_entity.dart';
