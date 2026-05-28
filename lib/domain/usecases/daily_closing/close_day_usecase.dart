@@ -1,0 +1,125 @@
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
+import 'package:maki_mobile_pos/data/repositories/daily_closing_repository_impl.dart';
+import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
+import 'package:maki_mobile_pos/domain/repositories/daily_closing_repository.dart';
+import 'package:maki_mobile_pos/domain/repositories/expense_repository.dart';
+import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
+import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
+
+/// Closes a business day: recomputes the figures, captures the manual float +
+/// counted cash, persists the closing, and writes an activity log.
+///
+/// Permission: [Permission.closeDay]. Rejects with `already-closed` if a
+/// closing already exists for that day (one closing per day).
+class CloseDayUseCase {
+  final DailyClosingRepository _closingRepository;
+  final SaleRepository _saleRepository;
+  final ExpenseRepository _expenseRepository;
+  final ActivityLogger _logger;
+
+  CloseDayUseCase({
+    required DailyClosingRepository closingRepository,
+    required SaleRepository saleRepository,
+    required ExpenseRepository expenseRepository,
+    required ActivityLogger logger,
+  })  : _closingRepository = closingRepository,
+        _saleRepository = saleRepository,
+        _expenseRepository = expenseRepository,
+        _logger = logger;
+
+  Future<UseCaseResult<DailyClosingEntity>> execute({
+    required UserEntity actor,
+    required DateTime date,
+    required double openingFloat,
+    required double countedCash,
+    String? notes,
+  }) async {
+    try {
+      assertPermission(actor, Permission.closeDay);
+
+      final existing = await _closingRepository.getClosing(date);
+      if (existing != null) {
+        return const UseCaseResult.failure(
+          message: 'This day has already been closed.',
+          code: 'already-closed',
+        );
+      }
+
+      final dayStart = DateTime(date.year, date.month, date.day);
+      final dayEnd =
+          DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
+
+      final summary = await _saleRepository.getSalesSummary(
+        startDate: dayStart,
+        endDate: dayEnd,
+      );
+      final expenses = await _expenseRepository.getExpenses(
+        startDate: dayStart,
+        endDate: dayEnd,
+        limit: 1000,
+      );
+
+      final draft = DailyClosingDraft.fromData(
+        businessDate: dayStart,
+        summary: summary,
+        expenses: expenses,
+      );
+      final expectedCash = draft.expectedCashFor(openingFloat);
+      final variance = countedCash - expectedCash;
+      final id = DailyClosingRepositoryImpl.docIdFor(dayStart);
+
+      final entity = DailyClosingEntity(
+        id: id,
+        businessDate: dayStart,
+        grossSales: draft.grossSales,
+        netSales: draft.netSales,
+        totalDiscounts: draft.totalDiscounts,
+        cashSales: draft.cashSales,
+        nonCashSales: draft.nonCashSales,
+        totalExpenses: draft.totalExpenses,
+        cashExpenses: draft.cashExpenses,
+        openingFloat: openingFloat,
+        expectedCash: expectedCash,
+        countedCash: countedCash,
+        variance: variance,
+        salesCount: draft.salesCount,
+        voidedCount: draft.voidedCount,
+        notes: (notes == null || notes.trim().isEmpty) ? null : notes.trim(),
+        closedBy: actor.id,
+        closedByName: actor.displayName,
+        closedAt: DateTime.now(),
+      );
+
+      final saved = await _closingRepository.saveClosing(entity);
+
+      await _logger.log(
+        type: ActivityType.dayClosed,
+        action: 'Closed business day $id',
+        details:
+            'Expected ₱${expectedCash.toStringAsFixed(2)}, counted ₱${countedCash.toStringAsFixed(2)} (variance ${variance >= 0 ? '+' : ''}${variance.toStringAsFixed(2)})',
+        userId: actor.id,
+        userName: actor.displayName,
+        userRole: actor.role.value,
+        entityId: saved.id,
+        entityType: 'daily_closing',
+        metadata: {
+          'expectedCash': expectedCash,
+          'countedCash': countedCash,
+          'variance': variance,
+          'openingFloat': openingFloat,
+        },
+      );
+
+      return UseCaseResult.successData(saved);
+    } on AppException catch (e) {
+      return UseCaseResult.fromException(e);
+    } catch (e) {
+      return UseCaseResult.failure(message: 'Failed to close day: $e');
+    }
+  }
+}
