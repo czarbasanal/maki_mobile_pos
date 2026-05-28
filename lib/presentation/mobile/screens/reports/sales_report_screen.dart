@@ -180,7 +180,9 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                ...summary.byPaymentMethod.entries.map((entry) {
+                ...summary.byPaymentMethod.entries
+                    .where((entry) => entry.value > 0)
+                    .map((entry) {
                   final percentage =
                       total > 0 ? (entry.value / total * 100) : 0;
                   return _buildPaymentMethodRow(
