@@ -81,6 +81,20 @@ service cloud.firestore {
       allow update: if hasRole('staff') && isActiveUser() &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['price', 'cost', 'costCode']);
 
+      // Cashier can update name + imageUrl. Denylist is intentionally
+      // limited to **non-nullable** fields (sku, costCode, cost, price,
+      // quantity, isActive) so it doesn't trip on the client's
+      // toUpdateMap(), which writes every product field — including
+      // nullable ones as null. Older docs missing those nullable fields
+      // would otherwise count their addition as a "change" and fail the
+      // rule even when the cashier didn't touch them. Defense-in-depth
+      // for less-critical fields (category, notes, supplier, etc.) is
+      // enforced client-side by UpdateProductUseCase.
+      allow update: if hasRole('cashier') && isActiveUser() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'sku', 'costCode', 'cost', 'price', 'quantity', 'isActive'
+        ]);
+
       // Any valid user can update stock (quantity) during sale processing
       allow update: if isValidUser() && isActiveUser() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['quantity', 'updatedAt', 'updatedBy']);

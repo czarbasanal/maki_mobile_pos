@@ -11,14 +11,15 @@ import 'package:maki_mobile_pos/services/activity_logger.dart';
 /// Updates a product.
 ///
 /// Permission tier:
-/// - [Permission.editProduct]        — admin: full update including price,
+/// - [Permission.editProduct]         — admin: full update including price,
 ///   cost, costCode.
-/// - [Permission.editProductLimited] — staff: same fields **except**
-///   price, cost, costCode. Mirrors the firestore.rules staff branch
-///   (line 79-80 of firestore.rules).
+/// - [Permission.editProductLimited]  — staff: same fields **except**
+///   price, cost, costCode. Mirrors the firestore.rules staff branch.
+/// - [Permission.editProductNameOnly] — cashier: only name and imageUrl.
+///   Mirrors the firestore.rules cashier branch.
 ///
-/// Returns `restricted-fields` if a staff actor attempts to change one of
-/// the gated columns.
+/// Returns `restricted-fields` if an actor attempts to change a column
+/// outside their tier.
 class UpdateProductUseCase {
   static const _restrictedFields = ['price', 'cost', 'costCode'];
 
@@ -38,9 +39,11 @@ class UpdateProductUseCase {
     try {
       final hasFullEdit = actor.hasPermission(Permission.editProduct);
       final hasLimitedEdit = actor.hasPermission(Permission.editProductLimited);
-      if (!hasFullEdit && !hasLimitedEdit) {
+      final hasNameOnlyEdit =
+          actor.hasPermission(Permission.editProductNameOnly);
+      if (!hasFullEdit && !hasLimitedEdit && !hasNameOnlyEdit) {
         // Borrow editProduct as the "what was missing" hint — actor with
-        // neither permission gets the standard PermissionDeniedException.
+        // no edit permission gets the standard PermissionDeniedException.
         assertPermission(actor, Permission.editProduct);
       }
 
@@ -63,6 +66,33 @@ class UpdateProductUseCase {
           return UseCaseResult.failure(
             message:
                 'Staff cannot change ${changed.join(", ")}. Ask an admin to update those fields.',
+            code: 'restricted-fields',
+          );
+        }
+      }
+
+      // Cashier (name-only tier) may change only name and imageUrl.
+      if (!hasFullEdit && !hasLimitedEdit && hasNameOnlyEdit) {
+        final changed = <String>[];
+        if (product.sku != original.sku) changed.add('sku');
+        if (product.costCode != original.costCode) changed.add('costCode');
+        if (product.cost != original.cost) changed.add('cost');
+        if (product.price != original.price) changed.add('price');
+        if (product.quantity != original.quantity) changed.add('quantity');
+        if (product.reorderLevel != original.reorderLevel) {
+          changed.add('reorderLevel');
+        }
+        if (product.unit != original.unit) changed.add('unit');
+        if (product.supplierId != original.supplierId) changed.add('supplier');
+        if (!_listEquals(product.barcodes, original.barcodes)) {
+          changed.add('barcodes');
+        }
+        if (product.category != original.category) changed.add('category');
+        if (product.notes != original.notes) changed.add('notes');
+        if (changed.isNotEmpty) {
+          return UseCaseResult.failure(
+            message:
+                'Cashier can only change name and image. Ask staff or admin to update ${changed.join(", ")}.',
             code: 'restricted-fields',
           );
         }
@@ -96,4 +126,12 @@ class UpdateProductUseCase {
   /// Fields staff are forbidden from changing (exposed for tests + UI hints).
   static List<String> get restrictedFields =>
       List.unmodifiable(_restrictedFields);
+
+  static bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 }

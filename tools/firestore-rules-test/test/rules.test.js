@@ -237,9 +237,59 @@ describe("/products", () => {
     );
   });
 
-  it("cashier CANNOT change name (full update)", async () => {
+  it("cashier CAN update name + imageUrl (minimal write)", async () => {
+    await assertSucceeds(
+      as("cashier").collection("products").doc("p-1").update({
+        name: "Coke 500ml",
+        imageUrl: "https://storage.googleapis.com/x/y.jpg",
+        searchKeywords: ["coke", "500ml"],
+        updatedAt: new Date(),
+        updatedBy: USERS.cashier.uid,
+        updatedByName: "cashier user",
+      })
+    );
+  });
+
+  it("cashier CAN update name + imageUrl via full toUpdateMap-style write (regression: rules must tolerate nullable fields written as null when missing from existing doc)", async () => {
+    // Mirrors what ProductModel.toMap(forUpdate: true) actually sends —
+    // every product field on the document, with unchanged values for the
+    // preserved ones and explicit nulls for nullable fields that may not
+    // exist on the original doc. This matches the real cashier image flow.
+    await assertSucceeds(
+      as("cashier").collection("products").doc("p-1").update({
+        // Preserved fields (same values as seed doc):
+        sku: "SKU-001",
+        costCode: "ABF",
+        cost: 12,
+        price: 25,
+        quantity: 100,
+        reorderLevel: 0,
+        unit: "pcs",
+        supplierId: null,
+        supplierName: null,
+        isActive: true,
+        baseSku: null,
+        variationNumber: null,
+        barcodes: [],
+        category: null,
+        notes: null,
+        // Changed fields:
+        name: "Coke 500ml",
+        imageUrl: "https://storage.googleapis.com/x/y.jpg",
+        searchKeywords: ["coke", "500ml"],
+        updatedAt: new Date(),
+        updatedBy: USERS.cashier.uid,
+        updatedByName: "cashier user",
+      })
+    );
+  });
+
+  it("cashier CANNOT change price even if name is also in the update", async () => {
     await assertFails(
-      as("cashier").collection("products").doc("p-1").update({ name: "Hacked" })
+      as("cashier").collection("products").doc("p-1").update({
+        name: "Coke 500ml",
+        price: 1,
+      })
     );
   });
 
