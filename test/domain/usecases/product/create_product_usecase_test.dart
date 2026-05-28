@@ -2,11 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/user_role.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
-import 'package:maki_mobile_pos/domain/entities/cost_code_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/product_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
-import 'package:maki_mobile_pos/domain/repositories/cost_code_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/create_product_usecase.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
@@ -15,8 +13,6 @@ class _MockProductRepository extends Mock implements ProductRepository {}
 
 class _MockActivityLogRepository extends Mock
     implements ActivityLogRepository {}
-
-class _MockCostCodeRepository extends Mock implements CostCodeRepository {}
 
 class _FakeProduct extends Fake implements ProductEntity {}
 
@@ -31,13 +27,13 @@ UserEntity _user(UserRole role, {bool isActive = true}) => UserEntity(
       createdAt: DateTime(2025, 1, 1),
     );
 
-ProductEntity _product({String name = 'Coke', String costCode = 'NBF'}) =>
+ProductEntity _product({String name = 'Coke', double cost = 12}) =>
     ProductEntity(
       id: '',
       sku: 'SKU-001',
       name: name,
-      costCode: costCode,
-      cost: 0,
+      costCode: 'NBF',
+      cost: cost,
       price: 25,
       quantity: 100,
       reorderLevel: 10,
@@ -54,21 +50,16 @@ void main() {
 
   late _MockProductRepository repo;
   late _MockActivityLogRepository logRepo;
-  late _MockCostCodeRepository costCodeRepo;
   late CreateProductUseCase useCase;
 
   setUp(() {
     repo = _MockProductRepository();
     logRepo = _MockActivityLogRepository();
-    costCodeRepo = _MockCostCodeRepository();
     useCase = CreateProductUseCase(
       repository: repo,
       logger: ActivityLogger(logRepo),
-      costCodeRepository: costCodeRepo,
     );
 
-    when(() => costCodeRepo.getCostCodeMapping())
-        .thenAnswer((_) async => CostCodeEntity.defaultMapping());
     when(() => repo.createProduct(
           product: any(named: 'product'),
           createdBy: any(named: 'createdBy'),
@@ -83,7 +74,7 @@ void main() {
     test('admin creates successfully (cost used as-is)', () async {
       final result = await useCase.execute(
         actor: _user(UserRole.admin),
-        product: _product().copyWith(cost: 12),
+        product: _product(cost: 12),
       );
 
       expect(result.success, true);
@@ -92,30 +83,17 @@ void main() {
       verify(() => logRepo.logActivity(any())).called(1);
     });
 
-    test('staff creates successfully; cost decoded from cost code', () async {
-      // Default mapping: N=1, B=2, F=5 -> "NBF" decodes to 125.
+    test('staff creates successfully (cost supplied by caller)', () async {
+      // The form decodes the staff cost code to a number before calling the
+      // use case; the receiving importer supplies cost from its CSV. The use
+      // case persists the cost as given.
       final result = await useCase.execute(
         actor: _user(UserRole.staff),
-        product: _product(costCode: 'NBF'),
+        product: _product(cost: 125),
       );
 
       expect(result.success, true);
       expect(result.data?.cost, 125);
-    });
-
-    test('staff with invalid cost code fails, nothing written', () async {
-      final result = await useCase.execute(
-        actor: _user(UserRole.staff),
-        product: _product(costCode: '###'),
-      );
-
-      expect(result.success, false);
-      expect(result.errorCode, 'invalid-cost-code');
-      verifyNever(() => repo.createProduct(
-            product: any(named: 'product'),
-            createdBy: any(named: 'createdBy'),
-            createdByName: any(named: 'createdByName'),
-          ));
     });
 
     test('cashier denied (addProduct admin/staff only)', () async {

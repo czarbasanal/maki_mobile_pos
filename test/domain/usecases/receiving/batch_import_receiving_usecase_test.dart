@@ -149,7 +149,18 @@ void main() {
       verifyNever(() => receivingRepo.createReceiving(any()));
     });
 
-    test('staff with new-product row is denied (lacks addProduct)', () async {
+    test('staff with new-product row creates the product (has addProduct)',
+        () async {
+      // Stub createProduct to echo the candidate back with an id.
+      when(() => createProduct.execute(
+            actor: any(named: 'actor'),
+            product: any(named: 'product'),
+          )).thenAnswer((inv) async {
+        final candidate =
+            inv.namedArguments[const Symbol('product')] as ProductEntity;
+        return UseCaseResult.successData(candidate.copyWith(id: 'p-NEW'));
+      });
+
       final classified = classifyRows(
         rows: [_row(sku: 'NEW-1')],
         activeProducts: const [],
@@ -162,12 +173,12 @@ void main() {
         classified: classified,
         costCodeMapping: mapping,
       );
-      expect(result.success, isFalse);
-      verifyNever(() => createProduct.execute(
+      expect(result.success, isTrue);
+      verify(() => createProduct.execute(
             actor: any(named: 'actor'),
             product: any(named: 'product'),
-          ));
-      verifyNever(() => receivingRepo.createReceiving(any()));
+          )).called(1);
+      verify(() => receivingRepo.createReceiving(any())).called(1);
     });
 
     test('staff with all-existing rows succeeds — no createProduct calls',

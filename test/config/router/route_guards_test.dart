@@ -73,7 +73,7 @@ void main() {
       RoutePaths.inventory:
           const _Expected(cashier: true, staff: true, admin: true),
       RoutePaths.productAdd:
-          const _Expected(cashier: false, staff: false, admin: true),
+          const _Expected(cashier: false, staff: true, admin: true),
       RoutePaths.receiving:
           const _Expected(cashier: false, staff: true, admin: true),
       RoutePaths.bulkReceiving:

@@ -937,13 +937,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         }
       } else if (userRole == UserRole.staff) {
         // ==================== STAFF CREATE (cost via code) ====================
-        // cost is left 0 here; CreateProductUseCase decodes costCode -> cost.
+        // Staff enter a cost CODE; decode it to the real cost here. The
+        // numeric value is never shown in the UI. The form validator already
+        // rejected invalid codes, so decode is non-null in practice.
+        final code = _costCodeController.text.trim();
+        final decodedCost = ref.read(decodeCostProvider(code)) ?? 0.0;
         final product = ProductEntity(
           id: '',
           sku: _skuController.text.trim(),
           name: _nameController.text.trim(),
-          costCode: _costCodeController.text.trim(),
-          cost: 0,
+          costCode: code,
+          cost: decodedCost,
           price: double.tryParse(_priceController.text) ?? 0.0,
           quantity: int.tryParse(_quantityController.text) ?? 0,
           reorderLevel: int.tryParse(_reorderLevelController.text) ?? 10,
