@@ -31,6 +31,9 @@ abstract class FirestoreCollections {
   /// Petty cash collection - cash fund records
   static const String pettyCash = 'petty_cash';
 
+  /// Daily closings collection - end-of-day sales-drawer reconciliations
+  static const String dailyClosings = 'daily_closings';
+
   /// User activity logs collection
   static const String userLogs = 'user_logs';
 
