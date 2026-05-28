@@ -13,6 +13,7 @@ export 'sale_model.dart';
 export 'sale_item_model.dart';
 export 'draft_model.dart';
 export 'expense_model.dart';
+export 'daily_closing_model.dart';
 export 'cost_code_model.dart';
 export 'price_history_model.dart';
 export 'petty_cash_model.dart';
