@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -74,42 +75,83 @@ class VoidRequestsScreen extends ConsumerWidget {
   }
 
   void _showResolveSheet(
-      BuildContext context, WidgetRef ref, VoidRequestEntity r) {
+      BuildContext screenContext, WidgetRef ref, VoidRequestEntity r) {
     showModalBottomSheet(
-      context: context,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      context: screenContext,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (sheetContext, scrollController) => Column(
           children: [
-            Text('Void ${r.saleNumber}?',
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text('Requested by ${r.requestedByName}: ${r.reason}'),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _reject(context, ref, r);
-                    },
-                    child: const Text('Reject'),
-                  ),
+            // Void context: requester + reason
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Void ${r.saleNumber}?',
+                      style: Theme.of(screenContext).textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  Text('Requested by ${r.requestedByName}'),
+                  const SizedBox(height: 4),
+                  Text('Reason: ${r.reason}'),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Receipt-style breakdown of the items being voided
+            Expanded(
+              child: Consumer(
+                builder: (ctx, sheetRef, _) {
+                  final saleAsync = sheetRef.watch(saleByIdProvider(r.saleId));
+                  return saleAsync.when(
+                    loading: () => const LoadingView(),
+                    error: (e, _) => ErrorStateView(message: 'Error: $e'),
+                    data: (sale) => sale == null
+                        ? const EmptyStateView(
+                            icon: CupertinoIcons.doc_text,
+                            title: 'Sale not found',
+                          )
+                        : ReceiptWidget(
+                            sale: sale,
+                            scrollController: scrollController,
+                          ),
+                  );
+                },
+              ),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _reject(screenContext, ref, r);
+                        },
+                        child: const Text('Reject'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _approve(screenContext, ref, r);
+                        },
+                        child: const Text('Approve'),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _approve(context, ref, r);
-                    },
-                    child: const Text('Approve'),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
