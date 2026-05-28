@@ -31,6 +31,10 @@ class SaleEntity extends Equatable {
   /// Payment method used
   final PaymentMethod paymentMethod;
 
+  /// Money collected by method (sums to [grandTotal]). Empty for legacy sales
+  /// — use [effectiveTenders] to read a normalized breakdown.
+  final Map<PaymentMethod, double> tenders;
+
   /// Amount received from customer
   final double amountReceived;
 
@@ -78,6 +82,7 @@ class SaleEntity extends Equatable {
     required this.items,
     this.discountType = DiscountType.amount,
     required this.paymentMethod,
+    this.tenders = const {},
     required this.amountReceived,
     required this.changeGiven,
     this.status = SaleStatus.completed,
@@ -124,6 +129,23 @@ class SaleEntity extends Equatable {
   /// Grand total after all discounts
   double get grandTotal => subtotal - totalDiscount;
 
+  /// Tender breakdown, normalized: explicit [tenders] if present, otherwise
+  /// the whole [grandTotal] attributed to [paymentMethod] (legacy sales).
+  Map<PaymentMethod, double> get effectiveTenders =>
+      tenders.isNotEmpty ? tenders : {paymentMethod: grandTotal};
+
+  /// Cash actually collected into the drawer.
+  double get cashCollected => effectiveTenders[PaymentMethod.cash] ?? 0;
+
+  /// Salmon receivable (the balance Salmon covers the next day).
+  double get salmonBalance => effectiveTenders[PaymentMethod.salmon] ?? 0;
+
+  /// True when the tender breakdown reconciles to [grandTotal].
+  bool get isTenderValid {
+    final sum = effectiveTenders.values.fold<double>(0, (a, b) => a + b);
+    return (sum - grandTotal).abs() < 0.01;
+  }
+
   /// Total cost of all items sold
   double get totalCost {
     return items.fold(0.0, (sum, item) => sum + item.totalCost);
@@ -168,6 +190,7 @@ class SaleEntity extends Equatable {
     List<SaleItemEntity>? items,
     DiscountType? discountType,
     PaymentMethod? paymentMethod,
+    Map<PaymentMethod, double>? tenders,
     double? amountReceived,
     double? changeGiven,
     SaleStatus? status,
@@ -192,6 +215,7 @@ class SaleEntity extends Equatable {
       items: items ?? this.items,
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
+      tenders: tenders ?? this.tenders,
       amountReceived: amountReceived ?? this.amountReceived,
       changeGiven: changeGiven ?? this.changeGiven,
       status: status ?? this.status,
@@ -231,6 +255,7 @@ class SaleEntity extends Equatable {
         items,
         discountType,
         paymentMethod,
+        tenders,
         amountReceived,
         changeGiven,
         status,
