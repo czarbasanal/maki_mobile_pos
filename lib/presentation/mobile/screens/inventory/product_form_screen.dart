@@ -41,6 +41,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _costController = TextEditingController();
+  final _costCodeController = TextEditingController();
   final _quantityController = TextEditingController();
   final _reorderLevelController = TextEditingController();
   final _unitController = TextEditingController();
@@ -142,6 +143,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _nameController.dispose();
     _priceController.dispose();
     _costController.dispose();
+    _costCodeController.dispose();
     _quantityController.dispose();
     _reorderLevelController.dispose();
     _unitController.dispose();
@@ -160,7 +162,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final inventoryState = ref.watch(inventoryStateProvider);
 
     // Determine edit capabilities based on role
-    final bool canEditPrice = userRole == UserRole.admin;
+    final bool isCreating = !widget.isEditing;
+    // Staff may set the price only while creating (not when editing existing).
+    final bool canEditPrice = userRole == UserRole.admin ||
+        (userRole == UserRole.staff && isCreating);
     final bool canEditCost = userRole == UserRole.admin;
     final bool canViewCost = userRole == UserRole.admin;
     final bool canEditSku =
@@ -168,6 +173,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final bool canSelectSupplier = userRole == UserRole.admin;
     // Cashier can reach the edit form but may only change the product name.
     final bool isNameOnly = userRole == UserRole.cashier;
+    // Staff create products by entering a cost CODE; the numeric cost field
+    // stays admin-only and is decoded to cost in CreateProductUseCase.
+    final bool showCostCodeField = userRole == UserRole.staff && isCreating;
     // Cost is hidden by default. Admin reveals it via the AppBar toggle
     // (password-confirmed). On create, the field is always shown because
     // the admin needs to enter a cost value.
@@ -284,7 +292,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             ? null
                             : _existingProduct?.imageUrl,
                         pendingBytes: _pendingImageBytes,
-                        enabled: userRole == UserRole.admin || isNameOnly,
+                        enabled: userRole == UserRole.admin ||
+                            isNameOnly ||
+                            (userRole == UserRole.staff && isCreating),
                         onChanged: (bytes, {required removed}) {
                           setState(() {
                             if (removed) {
@@ -410,6 +420,33 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               final cost = double.tryParse(value);
                               if (cost == null || cost < 0) {
                                 return 'Enter a valid cost';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+
+                    // Cost Code — staff enter the product's letter code; the
+                    // app decodes it to the real cost in CreateProductUseCase.
+                    // The numeric cost is never shown to staff.
+                    if (showCostCodeField)
+                      Column(
+                        children: [
+                          TextFormField(
+                            controller: _costCodeController,
+                            textCapitalization: TextCapitalization.characters,
+                            decoration: const InputDecoration(
+                              labelText: 'Cost Code *',
+                              prefixIcon: Icon(CupertinoIcons.lock),
+                              helperText: 'Enter the product cost code',
+                            ),
+                            validator: (value) {
+                              final code = value?.trim() ?? '';
+                              if (code.isEmpty) return 'Cost code is required';
+                              if (!ref.read(isValidCodeProvider(code))) {
+                                return 'Invalid cost code';
                               }
                               return null;
                             },
@@ -897,6 +934,64 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             product: product,
           );
           if (result == null) throw Exception('Failed to update product');
+        }
+      } else if (userRole == UserRole.staff) {
+        // ==================== STAFF CREATE (cost via code) ====================
+        // cost is left 0 here; CreateProductUseCase decodes costCode -> cost.
+        final product = ProductEntity(
+          id: '',
+          sku: _skuController.text.trim(),
+          name: _nameController.text.trim(),
+          costCode: _costCodeController.text.trim(),
+          cost: 0,
+          price: double.tryParse(_priceController.text) ?? 0.0,
+          quantity: int.tryParse(_quantityController.text) ?? 0,
+          reorderLevel: int.tryParse(_reorderLevelController.text) ?? 10,
+          unit: _unitController.text.trim().isEmpty
+              ? 'pcs'
+              : _unitController.text.trim(),
+          supplierId: null,
+          supplierName: null,
+          isActive: true,
+          createdAt: DateTime.now(),
+          barcodes: List<String>.from(_barcodes),
+          category: _categoryController.text.trim().isEmpty
+              ? null
+              : _categoryController.text.trim(),
+          notes: _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
+        );
+
+        final productOps = ref.read(productOperationsProvider.notifier);
+        final created = await productOps.createProduct(
+          actor: currentUser,
+          product: product,
+        );
+        if (created == null) throw Exception('Failed to create product');
+
+        if (_pendingImageBytes != null) {
+          try {
+            final storage = ref.read(productImageStorageServiceProvider);
+            final url = await storage.upload(
+              productId: created.id,
+              bytes: _pendingImageBytes!,
+            );
+            await productOps.updateProduct(
+              actor: currentUser,
+              product: created.copyWith(imageUrl: url),
+            );
+          } catch (_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Image upload failed — product saved without image.',
+                  ),
+                ),
+              );
+            }
+          }
         }
       } else {
         // ==================== CREATE LOGIC (ADMIN ONLY) ====================
