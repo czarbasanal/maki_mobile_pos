@@ -164,11 +164,12 @@ class DailyClosingEntity extends Equatable {
       ];
 }
 
-/// Difference between a saved closing's snapshot and the current sales figures.
+/// Difference between a saved closing's snapshot and the current figures.
 ///
 /// A closing is an immutable point-in-time snapshot. If sales are recorded (or
 /// voided) after the day is closed, the snapshot no longer matches reality;
-/// this surfaces that drift so the closed view can warn the user.
+/// this surfaces that drift — including the **updated cash on hand** the drawer
+/// should physically hold once post-close cash sales/expenses are applied.
 class PostCloseActivity extends Equatable {
   /// Completed sales beyond the snapshot (negative if a sale was voided).
   final int extraSales;
@@ -176,28 +177,56 @@ class PostCloseActivity extends Equatable {
   /// Current gross minus the snapshot gross.
   final double grossDelta;
 
+  /// Cash sales recorded after close (negative if a cash sale was voided).
+  final double cashSalesDelta;
+
+  /// Cash expenses recorded after close.
+  final double cashExpensesDelta;
+
+  /// What the drawer should now hold: the counted cash at close plus the cash
+  /// collected after close, minus any cash expenses after close.
+  final double updatedCashOnHand;
+
   const PostCloseActivity({
     required this.extraSales,
     required this.grossDelta,
+    required this.cashSalesDelta,
+    required this.cashExpensesDelta,
+    required this.updatedCashOnHand,
   });
 
   factory PostCloseActivity.between({
     required DailyClosingEntity closing,
-    required int currentSalesCount,
-    required double currentGross,
+    required DailyClosingDraft current,
   }) {
+    final cashSalesDelta = current.cashSales - closing.cashSales;
+    final cashExpensesDelta = current.cashExpenses - closing.cashExpenses;
     return PostCloseActivity(
-      extraSales: currentSalesCount - closing.salesCount,
-      grossDelta: currentGross - closing.grossSales,
+      extraSales: current.salesCount - closing.salesCount,
+      grossDelta: current.grossSales - closing.grossSales,
+      cashSalesDelta: cashSalesDelta,
+      cashExpensesDelta: cashExpensesDelta,
+      updatedCashOnHand:
+          closing.countedCash + cashSalesDelta - cashExpensesDelta,
     );
   }
 
   /// True when current figures differ from the snapshot (sub-cent noise ignored).
-  bool get hasChanged => extraSales != 0 || grossDelta.abs() > 0.005;
+  bool get hasChanged =>
+      extraSales != 0 ||
+      grossDelta.abs() > 0.005 ||
+      cashSalesDelta.abs() > 0.005 ||
+      cashExpensesDelta.abs() > 0.005;
 
   /// True when the drift is additional sales (vs a void/refund reducing totals).
   bool get isAdditional => extraSales > 0 || grossDelta > 0.005;
 
   @override
-  List<Object?> get props => [extraSales, grossDelta];
+  List<Object?> get props => [
+        extraSales,
+        grossDelta,
+        cashSalesDelta,
+        cashExpensesDelta,
+        updatedCashOnHand,
+      ];
 }

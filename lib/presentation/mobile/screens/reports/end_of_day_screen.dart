@@ -68,7 +68,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (existing) => existing != null
-            ? _ClosedView(closing: existing)
+            ? _ClosedView(closing: existing, date: _today)
             : _buildReview(),
       ),
     );
@@ -302,8 +302,9 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
 /// later sales aren't reflected in the figures or counted cash below.
 class _ClosedView extends ConsumerWidget {
   final DailyClosingEntity closing;
+  final DateTime date;
 
-  const _ClosedView({required this.closing});
+  const _ClosedView({required this.closing, required this.date});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -313,14 +314,10 @@ class _ClosedView extends ConsumerWidget {
         ? AppColors.successDark
         : (variance < 0 ? AppColors.error : AppColors.warningDark);
 
-    final liveSummary = ref.watch(todaysSalesSummaryProvider).valueOrNull;
-    final activity = liveSummary == null
+    final liveDraft = ref.watch(dailyClosingDraftProvider(date)).valueOrNull;
+    final activity = liveDraft == null
         ? null
-        : PostCloseActivity.between(
-            closing: closing,
-            currentSalesCount: liveSummary.totalSalesCount,
-            currentGross: liveSummary.grossAmount,
-          );
+        : PostCloseActivity.between(closing: closing, current: liveDraft);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -385,6 +382,10 @@ class _ClosedView extends ConsumerWidget {
               ],
             ),
           ),
+          if (activity != null && activity.hasChanged) ...[
+            const SizedBox(height: 16),
+            _afterCloseSection(context, activity),
+          ],
           if (closing.notes != null) ...[
             const SizedBox(height: 16),
             Text('Notes: ${closing.notes}', style: theme.textTheme.bodyMedium),
@@ -404,10 +405,9 @@ class _ClosedView extends ConsumerWidget {
     final message = activity.isAdditional
         ? '${activity.extraSales} sale${activity.extraSales == 1 ? '' : 's'} '
             'totaling $amount were recorded after this day was closed at '
-            '$closedTime. The counted cash below reflects the count at close '
-            'and may now be understated.'
-        : 'Sales activity changed after this day was closed at $closedTime '
-            '(gross down $amount). The figures below may no longer match.';
+            '$closedTime. See "After close" below for the updated cash on hand.'
+        : 'Activity changed after this day was closed at $closedTime. '
+            'See "After close" below for the updated cash on hand.';
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -428,6 +428,65 @@ class _ClosedView extends ConsumerWidget {
                   ?.copyWith(color: AppColors.warningDark),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _afterCloseSection(BuildContext context, PostCloseActivity activity) {
+    final theme = Theme.of(context);
+    String signed(double v) =>
+        '${v >= 0 ? '+' : '-'}${AppConstants.currencySymbol}${v.abs().toCurrencyWithoutSymbol()}';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('After close',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: AppSpacing.md),
+            _kvText(
+              context,
+              'Sales after close',
+              '${activity.extraSales >= 0 ? '+' : ''}${activity.extraSales} '
+                  '· ${signed(activity.grossDelta)}',
+            ),
+            _kvText(context, 'Cash collected after close',
+                signed(activity.cashSalesDelta)),
+            if (activity.cashExpensesDelta.abs() > 0.005)
+              _kvText(context, 'Cash expenses after close',
+                  signed(-activity.cashExpensesDelta)),
+            const Divider(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Updated cash on hand',
+                    style: theme.textTheme.titleMedium),
+                Text(
+                  '${AppConstants.currencySymbol}${activity.updatedCashOnHand.toCurrencyWithoutSymbol()}',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _kvText(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: theme.textTheme.bodyMedium),
+          Text(value, style: theme.textTheme.bodyMedium),
         ],
       ),
     );

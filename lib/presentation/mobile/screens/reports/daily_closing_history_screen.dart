@@ -59,6 +59,7 @@ class _ClosingTile extends StatelessWidget {
         ? AppColors.successDark
         : (variance < 0 ? AppColors.error : AppColors.warningDark);
     final dateLabel = DateFormat('EEE, MMM d, y').format(closing.businessDate);
+    final closedAtLabel = DateFormat('MMM d, h:mm a').format(closing.closedAt);
     final cashOnHand = closing.countedCash;
 
     return Card(
@@ -68,9 +69,19 @@ class _ClosingTile extends StatelessWidget {
         title: Text(dateLabel,
             style: theme.textTheme.titleSmall
                 ?.copyWith(fontWeight: FontWeight.w600)),
-        subtitle: Text(
-          'Cash on hand: ${AppConstants.currencySymbol}${cashOnHand.toCurrencyWithoutSymbol()}',
-          style: theme.textTheme.bodySmall,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Cash on hand: ${AppConstants.currencySymbol}${cashOnHand.toCurrencyWithoutSymbol()}',
+              style: theme.textTheme.bodySmall,
+            ),
+            Text(
+              'Closed $closedAtLabel',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
         ),
         trailing: Text(
           '${variance >= 0 ? '+' : ''}${AppConstants.currencySymbol}${variance.toCurrencyWithoutSymbol()}',
@@ -88,8 +99,11 @@ class _ClosingTile extends StatelessWidget {
           _kv(context, 'Expected cash', closing.expectedCash),
           _kv(context, 'Counted cash', closing.countedCash),
           const SizedBox(height: 4),
-          Text('Closed by ${closing.closedByName}',
-              style: theme.textTheme.bodySmall),
+          Text(
+            'Closed by ${closing.closedByName} · '
+            '${DateFormat('MMM d, y · h:mm a').format(closing.closedAt)}',
+            style: theme.textTheme.bodySmall,
+          ),
           if (closing.notes != null)
             Text('Notes: ${closing.notes}', style: theme.textTheme.bodySmall),
         ],
