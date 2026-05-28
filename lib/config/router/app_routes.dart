@@ -31,6 +31,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/top_selling_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/sale_detail_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/sales/void_requests_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/users_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/user_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/settings_screen.dart';
@@ -340,6 +341,11 @@ List<RouteBase> featureRoutes(Surface surface) => [
             },
           ),
         ],
+      ),
+      GoRoute(
+        path: RoutePaths.voidRequests,
+        name: RouteNames.voidRequests,
+        builder: (context, state) => const VoidRequestsScreen(),
       ),
       GoRoute(
         path: RoutePaths.users,

@@ -45,6 +45,8 @@ abstract class RouteGuards {
     '/reports/sales': Permission.viewSalesReports,
     '/reports/profit': Permission.viewProfitReports,
     '/reports/top-selling': Permission.viewSalesReports,
+    // Void approval queue (admin)
+    '/void-requests': Permission.voidSale,
     // Users
     '/users': Permission.viewUsers,
     '/users/add': Permission.addUser,

@@ -107,6 +107,9 @@ abstract class RouteNames {
   /// Sale detail route
   static const String saleDetail = 'saleDetail';
 
+  /// Void requests (admin approval queue) route
+  static const String voidRequests = 'voidRequests';
+
   // ==================== USER MANAGEMENT ROUTES ====================
 
   /// Users list route
@@ -205,6 +208,7 @@ abstract class RoutePaths {
   static const String profitReport = '/reports/profit';
   static const String topSelling = '/reports/top-selling';
   static const String saleDetail = '/reports/sale/:id';
+  static const String voidRequests = '/void-requests';
 
   // ==================== USER MANAGEMENT PATHS ====================
 
