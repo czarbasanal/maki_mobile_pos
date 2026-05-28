@@ -16,6 +16,7 @@ class QuickActions extends StatelessWidget {
   final VoidCallback? onInventory;
   final VoidCallback? onExpenses;
   final VoidCallback? onReports;
+  final VoidCallback? onCloseDay;
 
   const QuickActions({
     super.key,
@@ -24,6 +25,7 @@ class QuickActions extends StatelessWidget {
     this.onInventory,
     this.onExpenses,
     this.onReports,
+    this.onCloseDay,
   });
 
   @override
@@ -61,6 +63,12 @@ class QuickActions extends StatelessWidget {
               icon: CupertinoIcons.chart_bar,
               label: 'Reports',
               onTap: onReports!,
+            ),
+          if (onCloseDay != null)
+            _QuickActionButton(
+              icon: CupertinoIcons.money_dollar_circle,
+              label: 'Close Day',
+              onTap: onCloseDay!,
             ),
         ],
       ),

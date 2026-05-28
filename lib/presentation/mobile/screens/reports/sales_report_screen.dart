@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -127,6 +128,21 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: _buildPaymentBreakdown(),
+              ),
+
+              // End-of-day closing entry
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Card(
+                  margin: EdgeInsets.zero,
+                  child: ListTile(
+                    leading: const Icon(CupertinoIcons.money_dollar_circle),
+                    title: const Text('End-of-Day Closing'),
+                    subtitle: const Text('Reconcile the cash drawer'),
+                    trailing: const Icon(CupertinoIcons.chevron_right),
+                    onTap: () => context.pushNamed(RouteNames.endOfDay),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 32),

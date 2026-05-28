@@ -95,6 +95,9 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
   bool get _canViewExpenses =>
       RolePermissions.hasPermission(_role, Permission.viewExpenses);
 
+  bool get _canCloseDay =>
+      RolePermissions.hasPermission(_role, Permission.closeDay);
+
   // ==================== ACTIONS ====================
 
   Future<void> _handleSignOut() async {
@@ -259,6 +262,9 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 : null,
             onReports: _canViewReports
                 ? () => context.go(RoutePaths.reports)
+                : null,
+            onCloseDay: _canCloseDay
+                ? () => context.push(RoutePaths.endOfDay)
                 : null,
           ),
         ],
