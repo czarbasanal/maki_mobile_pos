@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:intl/intl.dart';
 
 /// Widget displaying a printable receipt.
@@ -11,7 +13,7 @@ import 'package:intl/intl.dart';
 /// dividers); the receipt body itself stays paper-like — white
 /// background, dashed dividers, monochrome — because it represents
 /// a printable artifact and benefits from looking that way.
-class ReceiptWidget extends StatelessWidget {
+class ReceiptWidget extends ConsumerWidget {
   final SaleEntity sale;
   final ScrollController? scrollController;
   final VoidCallback? onPrint;
@@ -26,8 +28,10 @@ class ReceiptWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final costMapping = ref.watch(costCodeMappingProvider).valueOrNull ??
+        CostCodeEntity.defaultMapping();
     final isDark = theme.brightness == Brightness.dark;
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
@@ -107,7 +111,7 @@ class ReceiptWidget extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     _buildDottedDivider(),
                     const SizedBox(height: AppSpacing.md),
-                    _buildItemsSection(theme),
+                    _buildItemsSection(theme, costMapping),
                     const SizedBox(height: AppSpacing.md),
                     _buildDottedDivider(),
                     const SizedBox(height: AppSpacing.md),
@@ -198,7 +202,7 @@ class ReceiptWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildItemsSection(ThemeData theme) {
+  Widget _buildItemsSection(ThemeData theme, CostCodeEntity costMapping) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -268,7 +272,8 @@ class ReceiptWidget extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '@${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}',
+                            '@${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}'
+                            '  •  Code: ${costMapping.encode(item.unitCost)}',
                             style: const TextStyle(
                               fontSize: 10,
                               color: _ReceiptColors.label,

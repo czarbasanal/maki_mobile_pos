@@ -56,7 +56,9 @@ class SaleDetailScreen extends ConsumerWidget {
               title: 'Sale not found',
             );
           }
-          return _buildSaleDetails(context, ref, sale);
+          final costMapping = ref.watch(costCodeMappingProvider).valueOrNull ??
+              CostCodeEntity.defaultMapping();
+          return _buildSaleDetails(context, ref, sale, costMapping);
         },
         loading: () => const LoadingView(),
         error: (error, _) => ErrorStateView(
@@ -71,6 +73,7 @@ class SaleDetailScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     SaleEntity sale,
+    CostCodeEntity costMapping,
   ) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('EEEE, MMMM d, y • h:mm a');
@@ -92,7 +95,7 @@ class SaleDetailScreen extends ConsumerWidget {
           // Items section
           _buildSectionHeader(theme, 'Items'),
           const SizedBox(height: 8),
-          _buildItemsList(theme, sale),
+          _buildItemsList(theme, sale, costMapping),
 
           const SizedBox(height: 24),
 
@@ -253,7 +256,11 @@ class SaleDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildItemsList(ThemeData theme, SaleEntity sale) {
+  Widget _buildItemsList(
+    ThemeData theme,
+    SaleEntity sale,
+    CostCodeEntity costMapping,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[50],
@@ -310,6 +317,12 @@ class SaleDetailScreen extends ConsumerWidget {
                       ),
                       Text(
                         '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        'Code: ${costMapping.encode(item.unitCost)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.grey[600],
                         ),

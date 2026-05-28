@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -28,6 +29,11 @@ class TopProductsCard extends ConsumerWidget {
     );
 
     final topProductsAsync = ref.watch(topSellingProductsProvider(params));
+    final canViewProfit = ref
+            .watch(currentUserProvider)
+            .valueOrNull
+            ?.hasPermission(Permission.viewProfitReports) ??
+        false;
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
 
@@ -61,7 +67,8 @@ class TopProductsCard extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             topProductsAsync.when(
-              data: (products) => _buildProductsList(context, products),
+              data: (products) =>
+                  _buildProductsList(context, products, canViewProfit),
               loading: () => const Center(
                 child: Padding(
                   padding: EdgeInsets.all(AppSpacing.xl),
@@ -84,6 +91,7 @@ class TopProductsCard extends ConsumerWidget {
   Widget _buildProductsList(
     BuildContext context,
     List<ProductSalesData> products,
+    bool canViewProfit,
   ) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
@@ -112,7 +120,8 @@ class TopProductsCard extends ConsumerWidget {
       children: products.asMap().entries.map((entry) {
         final index = entry.key;
         final product = entry.value;
-        return _buildProductRow(context, index, product, maxQuantity);
+        return _buildProductRow(
+            context, index, product, maxQuantity, canViewProfit);
       }).toList(),
     );
   }
@@ -122,6 +131,7 @@ class TopProductsCard extends ConsumerWidget {
     int index,
     ProductSalesData product,
     int maxQuantity,
+    bool canViewProfit,
   ) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
@@ -212,26 +222,29 @@ class TopProductsCard extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm + 4),
-              // Profit — outlined success badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: AppColors.success),
-                ),
-                child: Text(
-                  '+${AppConstants.currencySymbol}${product.totalProfit.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.successDark,
+              // Profit — outlined success badge (admin-only; cost/profit data
+              // is gated from cashier & staff).
+              if (canViewProfit) ...[
+                const SizedBox(width: AppSpacing.sm + 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: AppColors.success),
+                  ),
+                  child: Text(
+                    '+${AppConstants.currencySymbol}${product.totalProfit.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.successDark,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ],
