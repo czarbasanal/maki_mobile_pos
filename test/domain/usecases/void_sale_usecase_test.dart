@@ -12,6 +12,15 @@ class MockProductRepository extends Mock implements ProductRepository {}
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
+UserEntity _user(UserRole role) => UserEntity(
+      id: 'u-${role.value}',
+      email: '${role.value}@test',
+      displayName: '${role.value} user',
+      role: role,
+      isActive: true,
+      createdAt: DateTime(2025, 1, 1),
+    );
+
 void main() {
   late VoidSaleUseCase useCase;
   late MockSaleRepository mockSaleRepo;
@@ -96,6 +105,7 @@ void main() {
           ));
 
       final result = await useCase.execute(
+        actor: _user(UserRole.admin),
         saleId: 'sale-1',
         password: 'admin123',
         reason: 'Customer refund request',
@@ -116,6 +126,20 @@ void main() {
           )).called(1);
     });
 
+    test('non-admin actor is denied', () async {
+      expect(
+        () => useCase.execute(
+          actor: _user(UserRole.cashier),
+          saleId: 'sale-1',
+          password: 'admin123',
+          reason: 'Customer refund request',
+          voidedBy: 'cashier-1',
+          voidedByName: 'Cashier User',
+        ),
+        throwsA(isA<VoidSaleException>()),
+      );
+    });
+
     test('should fail with invalid password', () async {
       final sale = createTestSale();
 
@@ -125,6 +149,7 @@ void main() {
 
       expect(
         () => useCase.execute(
+          actor: _user(UserRole.admin),
           saleId: 'sale-1',
           password: 'wrong',
           reason: 'Test reason',
@@ -144,6 +169,7 @@ void main() {
 
       expect(
         () => useCase.execute(
+          actor: _user(UserRole.admin),
           saleId: 'sale-1',
           password: 'admin123',
           reason: 'Test reason',
@@ -157,6 +183,7 @@ void main() {
     test('should fail with empty reason', () async {
       expect(
         () => useCase.execute(
+          actor: _user(UserRole.admin),
           saleId: 'sale-1',
           password: 'admin123',
           reason: '',

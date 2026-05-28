@@ -1,5 +1,7 @@
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 
@@ -36,6 +38,7 @@ class VoidSaleUseCase {
   /// Returns the voided sale.
   /// Throws [VoidSaleException] on failure.
   Future<VoidSaleResult> execute({
+    required UserEntity actor,
     required String saleId,
     required String password,
     required String reason,
@@ -46,6 +49,9 @@ class VoidSaleUseCase {
     final warnings = <String>[];
 
     try {
+      // 0. Permission gate (admin only)
+      assertPermission(actor, Permission.voidSale);
+
       // 1. Validate inputs
       _validateInputs(reason: reason, voidedBy: voidedBy);
 

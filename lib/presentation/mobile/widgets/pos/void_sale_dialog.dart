@@ -386,6 +386,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
           : _selectedReason!;
 
       final result = await useCase.execute(
+        actor: currentUser,
         saleId: widget.sale.id,
         password: password,
         reason: reason,
