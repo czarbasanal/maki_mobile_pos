@@ -93,6 +93,9 @@ class _ClosingTile extends StatelessWidget {
           _kv(context, 'Gross sales', closing.grossSales),
           _kv(context, 'Cash sales', closing.cashSales),
           _kv(context, 'Non-cash sales', closing.nonCashSales),
+          if (closing.gcashSales > 0)
+            _kv(context, '  GCash', closing.gcashSales),
+          if (closing.mayaSales > 0) _kv(context, '  Maya', closing.mayaSales),
           if (closing.salmonReceivable > 0)
             _kv(context, 'Salmon receivable', closing.salmonReceivable),
           _kv(context, 'Total expenses', closing.totalExpenses),

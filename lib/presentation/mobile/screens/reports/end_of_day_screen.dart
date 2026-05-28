@@ -95,6 +95,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                   _row('Gross sales', draft.grossSales),
                   _row('Cash sales', draft.cashSales),
                   _row('Non-cash sales', draft.nonCashSales),
+                  if (draft.gcashSales > 0) _row('  GCash', draft.gcashSales),
+                  if (draft.mayaSales > 0) _row('  Maya', draft.mayaSales),
                   _row('Discounts', draft.totalDiscounts),
                   _rowText('Sales count', '${draft.salesCount}'),
                   if (draft.salmonReceivable > 0)
@@ -357,6 +359,8 @@ class _ClosedView extends ConsumerWidget {
             'Gross sales': closing.grossSales,
             'Cash sales': closing.cashSales,
             'Non-cash sales': closing.nonCashSales,
+            if (closing.gcashSales > 0) '  GCash': closing.gcashSales,
+            if (closing.mayaSales > 0) '  Maya': closing.mayaSales,
             'Discounts': closing.totalDiscounts,
             if (closing.salmonReceivable > 0)
               'Salmon receivable': closing.salmonReceivable,
