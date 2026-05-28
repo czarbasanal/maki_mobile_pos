@@ -47,6 +47,10 @@ enum Permission {
   managePettyCash,
   performCutOff,
 
+  // End-of-Day Closing
+  viewEndOfDay,
+  closeDay,
+
   // Reports Permissions
   viewSalesReports,
   viewProfitReports, // Shows cost-based profit data
@@ -97,6 +101,9 @@ abstract class RolePermissions {
     // Expenses (add only)
     Permission.viewExpenses,
     Permission.addExpense,
+    // End-of-day closing
+    Permission.viewEndOfDay,
+    Permission.closeDay,
     // Settings (own profile only)
     Permission.viewSettings,
     Permission.editOwnProfile,
@@ -136,6 +143,9 @@ abstract class RolePermissions {
     // Expenses (add only)
     Permission.viewExpenses,
     Permission.addExpense,
+    // End-of-day closing
+    Permission.viewEndOfDay,
+    Permission.closeDay,
     // Settings (own profile only)
     Permission.viewSettings,
     Permission.editOwnProfile,
@@ -180,6 +190,9 @@ abstract class RolePermissions {
     // Cash Management
     Permission.managePettyCash,
     Permission.performCutOff,
+    // End-of-day closing
+    Permission.viewEndOfDay,
+    Permission.closeDay,
     // Reports (full access, no daily restriction)
     Permission.viewSalesReports,
     Permission.viewProfitReports,

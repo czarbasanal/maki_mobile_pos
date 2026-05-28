@@ -168,6 +168,9 @@ enum ActivityType {
   pettyCash('petty_cash', 'Petty Cash', '💵'),
   pettyCashCutOff('petty_cash_cutoff', 'Petty Cash Cut-off', '🧮'),
 
+  // End-of-Day
+  dayClosed('day_closed', 'Day Closed', '📒'),
+
   // General
   other('other', 'Other', '📝');
 
