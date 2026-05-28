@@ -49,6 +49,9 @@ abstract class FirestoreCollections {
   /// Void reasons collection - admin-managed reasons shown in the void-sale dialog
   static const String voidReasons = 'void_reasons';
 
+  /// Void requests collection - cashier/staff void requests awaiting admin approval
+  static const String voidRequests = 'void_requests';
+
   // ==================== SETTINGS DOCUMENTS ====================
 
   /// Document ID for cost code mapping settings

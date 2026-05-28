@@ -7,6 +7,7 @@ enum Permission {
   processSale,
   applyDiscount,
   voidSale,
+  requestVoidSale, // cashier/staff request a void; admin approves
 
   // Draft Permissions
   saveDraft,
@@ -80,6 +81,7 @@ abstract class RolePermissions {
     Permission.accessPos,
     Permission.processSale,
     Permission.applyDiscount,
+    Permission.requestVoidSale,
     // Note: voidSale is NOT included (admin only)
     // Drafts
     Permission.saveDraft,
@@ -108,6 +110,7 @@ abstract class RolePermissions {
     Permission.accessPos,
     Permission.processSale,
     Permission.applyDiscount,
+    Permission.requestVoidSale,
     // Note: voidSale is NOT included (admin only)
     // Drafts
     Permission.saveDraft,
