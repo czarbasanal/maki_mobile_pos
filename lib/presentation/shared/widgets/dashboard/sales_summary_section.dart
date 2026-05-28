@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
@@ -34,7 +35,7 @@ class SalesSummarySection extends ConsumerWidget {
         final grossCard = SummaryCard(
           title: 'Gross Sales',
           value:
-              '${AppConstants.currencySymbol}${_formatNumber(summary.grossAmount)}',
+              '${AppConstants.currencySymbol}${summary.grossAmount.toCurrencyWithoutSymbol()}',
           icon: AppIcons.peso,
           subtitle: summary.totalDiscounts > 0
               ? '${AppConstants.currencySymbol}${_formatNumber(summary.totalDiscounts)} discount'
