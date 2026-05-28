@@ -237,6 +237,20 @@ describe("/products", () => {
     );
   });
 
+  it("cashier can decrement quantity with updatedByName (real checkout sale path)", async () => {
+    // ProcessSaleUseCase passes the cashier's display name, so updateStock
+    // writes updatedByName alongside quantity. The stock-update rule must
+    // tolerate it — otherwise cashier sales complete but never deduct stock.
+    await assertSucceeds(
+      as("cashier").collection("products").doc("p-1").update({
+        quantity: 99,
+        updatedAt: new Date(),
+        updatedBy: USERS.cashier.uid,
+        updatedByName: "cashier user",
+      })
+    );
+  });
+
   it("cashier CAN update name + imageUrl (minimal write)", async () => {
     await assertSucceeds(
       as("cashier").collection("products").doc("p-1").update({
@@ -689,6 +703,23 @@ describe("/settings", () => {
     );
     await assertSucceeds(
       as("admin").collection("settings").doc("cost_codes").update({ mapping: { 0: "Z" } })
+    );
+  });
+
+  // sale_counters is the one settings doc that non-admins must write:
+  // generating a sale number at checkout increments a date-keyed sequence
+  // inside the createSale transaction. Without this carve-out, cashier and
+  // staff checkouts fail with permission-denied.
+  it("every active role can write the sale_counters doc", async () => {
+    const dateKey = "2026-05-28";
+    await assertSucceeds(
+      as("cashier").collection("settings").doc("sale_counters").set({ [dateKey]: 1 }, { merge: true })
+    );
+    await assertSucceeds(
+      as("staff").collection("settings").doc("sale_counters").set({ [dateKey]: 2 }, { merge: true })
+    );
+    await assertSucceeds(
+      as("admin").collection("settings").doc("sale_counters").set({ [dateKey]: 3 }, { merge: true })
     );
   });
 });

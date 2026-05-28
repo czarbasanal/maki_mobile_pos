@@ -95,9 +95,12 @@ service cloud.firestore {
           'sku', 'costCode', 'cost', 'price', 'quantity', 'isActive'
         ]);
 
-      // Any valid user can update stock (quantity) during sale processing
+      // Any valid user can update stock (quantity) during sale processing.
+      // updatedByName is included because ProcessSaleUseCase records the
+      // cashier's name on the stock write; without it, cashier sales would
+      // complete but silently fail to deduct inventory.
       allow update: if isValidUser() && isActiveUser() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['quantity', 'updatedAt', 'updatedBy']);
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['quantity', 'updatedAt', 'updatedBy', 'updatedByName']);
       
       // Price history subcollection
       match /price_history/{historyId} {
@@ -206,6 +209,13 @@ service cloud.firestore {
 
       // Only admin can modify settings
       allow write: if isAdmin() && isActiveUser();
+
+      // Exception: sale_counters holds the daily sale-number sequence.
+      // Generating a sale number at checkout increments it inside the
+      // createSale transaction, so cashier/staff must be able to write this
+      // one doc — otherwise non-admin checkouts fail with permission-denied.
+      allow write: if settingId == 'sale_counters' &&
+        isValidUser() && isActiveUser();
     }
 
     // ==================== PRODUCT CATEGORIES COLLECTION ====================
