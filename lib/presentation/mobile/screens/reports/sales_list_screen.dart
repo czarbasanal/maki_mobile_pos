@@ -366,6 +366,10 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
         return CupertinoIcons.creditcard;
       case PaymentMethod.gcash:
         return CupertinoIcons.device_phone_portrait;
+      case PaymentMethod.salmon:
+        return CupertinoIcons.calendar;
+      case PaymentMethod.mixed:
+        return CupertinoIcons.square_split_2x1;
     }
   }
 }

@@ -14,6 +14,7 @@ void main() {
       nonCashSales: 350,
       totalExpenses: 300,
       cashExpenses: 220,
+      salmonReceivable: 600,
       openingFloat: 2000,
       expectedCash: 2380, // 2000 + 600 - 220
       countedCash: 2375,

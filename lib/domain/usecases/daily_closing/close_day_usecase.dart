@@ -83,6 +83,7 @@ class CloseDayUseCase {
         nonCashSales: draft.nonCashSales,
         totalExpenses: draft.totalExpenses,
         cashExpenses: draft.cashExpenses,
+        salmonReceivable: draft.salmonReceivable,
         openingFloat: openingFloat,
         expectedCash: expectedCash,
         countedCash: countedCash,

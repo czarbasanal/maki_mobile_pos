@@ -57,6 +57,7 @@ DailyClosingEntity _existingClosing() => DailyClosingEntity(
       nonCashSales: 0,
       totalExpenses: 0,
       cashExpenses: 0,
+      salmonReceivable: 0,
       openingFloat: 0,
       expectedCash: 0,
       countedCash: 0,

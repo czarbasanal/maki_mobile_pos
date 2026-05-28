@@ -18,6 +18,7 @@ DailyClosingEntity _closing({
       nonCashSales: gross - cashSales,
       totalExpenses: cashExpenses,
       cashExpenses: cashExpenses,
+      salmonReceivable: 0,
       openingFloat: 2000,
       expectedCash: 2000 + cashSales - cashExpenses,
       countedCash: countedCash,
@@ -44,6 +45,7 @@ DailyClosingDraft _draft({
       nonCashSales: gross - cashSales,
       totalExpenses: cashExpenses,
       cashExpenses: cashExpenses,
+      salmonReceivable: 0,
       salesCount: salesCount,
       voidedCount: 0,
     );

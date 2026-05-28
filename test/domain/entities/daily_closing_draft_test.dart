@@ -78,6 +78,35 @@ void main() {
       expect(draft.totalExpenses, 0);
     });
 
+    test('salmon balance is a receivable, excluded from cash and non-cash', () {
+      const summary = SalesSummary(
+        totalSalesCount: 2,
+        voidedSalesCount: 0,
+        grossAmount: 2000,
+        totalDiscounts: 0,
+        netAmount: 2000,
+        totalCost: 0,
+        totalProfit: 2000,
+        byPaymentMethod: {
+          PaymentMethod.cash: 900, // 400 dp + 500 mixed cash
+          PaymentMethod.gcash: 500,
+          PaymentMethod.salmon: 600,
+        },
+      );
+
+      final draft = DailyClosingDraft.fromData(
+        businessDate: DateTime(2026, 5, 28),
+        summary: summary,
+        expenses: const [],
+      );
+
+      expect(draft.cashSales, 900);
+      expect(draft.nonCashSales, 500); // gcash only; salmon excluded
+      expect(draft.salmonReceivable, 600);
+      // Opening float 1000 + cash 900 - 0 expenses = 1900; salmon untouched.
+      expect(draft.expectedCashFor(1000), 1900);
+    });
+
     test('expectedCash applies the opening float', () {
       const summary = SalesSummary(
         totalSalesCount: 1,
