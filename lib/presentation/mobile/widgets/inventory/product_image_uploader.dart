@@ -35,7 +35,7 @@ class ProductImageUploader extends StatelessWidget {
     required this.existingUrl,
     required this.pendingBytes,
     required this.onChanged,
-    this.cropMaxEdge = 400,
+    this.cropMaxEdge = 200,
     this.jpegQuality = 80,
     this.enabled = true,
   });
