@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -33,6 +34,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final inventoryState = ref.watch(inventoryStateProvider);
     final currentUser = ref.watch(currentUserProvider).value;
     final isAdmin = currentUser?.role == UserRole.admin;
+    final canAddProduct =
+        currentUser?.hasPermission(Permission.addProduct) ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -85,14 +88,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           PopupMenuButton<String>(
             onSelected: _handleMenuAction,
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'add',
-                child: ListTile(
-                  leading: Icon(CupertinoIcons.add),
-                  title: Text('Add Product'),
-                  contentPadding: EdgeInsets.zero,
+              if (canAddProduct)
+                const PopupMenuItem(
+                  value: 'add',
+                  child: ListTile(
+                    leading: Icon(CupertinoIcons.add),
+                    title: Text('Add Product'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
               const PopupMenuItem(
                 value: 'import',
                 child: ListTile(
@@ -131,17 +135,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: () => _handleMenuAction('add'),
-            icon: const Icon(CupertinoIcons.add),
-            label: const Text('Add Product'),
-          ),
-        ),
-      ),
+      bottomNavigationBar: canAddProduct
+          ? SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => _handleMenuAction('add'),
+                  icon: const Icon(CupertinoIcons.add),
+                  label: const Text('Add Product'),
+                ),
+              ),
+            )
+          : null,
     );
   }
 
