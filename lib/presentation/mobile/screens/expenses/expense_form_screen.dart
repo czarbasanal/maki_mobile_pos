@@ -31,6 +31,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
   DateTime _selectedDate = DateTime.now();
   String? _selectedCategory;
+  PaymentMethod _paidVia = PaymentMethod.cash;
   bool _isLoading = false;
   bool _isSaving = false;
   bool _isDeleting = false;
@@ -59,6 +60,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       _amountController.text = expense.amount.toString();
       _notesController.text = expense.notes ?? '';
       _selectedCategory = expense.category;
+      _paidVia = expense.paidVia;
       _selectedDate = expense.date;
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -145,6 +147,27 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 selected: _selectedCategory,
                 onChanged: (value) {
                   setState(() => _selectedCategory = value);
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Paid via — which payment method funded this expense.
+              AppDropdown<PaymentMethod>(
+                initialValue: _paidVia,
+                decoration: const InputDecoration(
+                  labelText: 'Paid via *',
+                  prefixIcon: Icon(CupertinoIcons.creditcard),
+                ),
+                items: PaymentMethod.values
+                    .map(
+                      (m) => DropdownMenuItem(
+                        value: m,
+                        child: Text(m.displayName),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) setState(() => _paidVia = value);
                 },
               ),
               const SizedBox(height: 16),
@@ -241,6 +264,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           amount: amount,
           category: _selectedCategory!,
           date: _selectedDate,
+          paidVia: _paidVia,
           notes: notes.isEmpty ? null : notes,
           clearNotes: notes.isEmpty,
         );
@@ -253,6 +277,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           amount: amount,
           category: _selectedCategory!,
           date: _selectedDate,
+          paidVia: _paidVia,
           notes: notes.isEmpty ? null : notes,
           createdAt: now,
           createdBy: '',
