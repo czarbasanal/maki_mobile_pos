@@ -26,7 +26,7 @@ void main() async {
 
   // Route Firebase init through FirebaseService so the singleton's
   // _isInitialized flag flips. firestoreProvider / firebaseAuthProvider
-  // (used by suppliers, petty cash, expenses) read through this getter
+  // (used by suppliers, expenses) read through this getter
   // and throw "FirebaseService is not initialized" when the flag is unset
   // — which is what happened when init was done via Firebase.initializeApp
   // directly. As a bonus this also configures Firestore offline persistence

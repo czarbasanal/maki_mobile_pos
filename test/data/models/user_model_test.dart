@@ -34,7 +34,6 @@ void main() {
       expect(testUser.hasPermission(Permission.viewProductCost), false);
       expect(testUser.hasPermission(Permission.editProduct), false);
       expect(testUser.hasPermission(Permission.voidSale), false);
-      expect(testUser.hasPermission(Permission.managePettyCash), false);
     });
 
     test('inactive user should have no permissions', () {

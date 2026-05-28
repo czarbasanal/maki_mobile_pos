@@ -102,10 +102,6 @@ void main() {
           const _Expected(cashier: false, staff: false, admin: true),
       RoutePaths.userLogs:
           const _Expected(cashier: false, staff: false, admin: true),
-      RoutePaths.pettyCash:
-          const _Expected(cashier: false, staff: false, admin: true),
-      RoutePaths.pettyCashNew:
-          const _Expected(cashier: false, staff: false, admin: true),
     };
 
     matrix.forEach((path, expected) {
@@ -215,7 +211,6 @@ void main() {
       expect(paths, isNot(contains(RoutePaths.receiving)));
       expect(paths, isNot(contains(RoutePaths.suppliers)));
       expect(paths, isNot(contains(RoutePaths.users)));
-      expect(paths, isNot(contains(RoutePaths.pettyCash)));
       expect(paths, isNot(contains(RoutePaths.userLogs)));
     });
 
@@ -226,19 +221,16 @@ void main() {
       expect(paths, contains(RoutePaths.receiving));
       expect(paths, isNot(contains(RoutePaths.suppliers)));
       expect(paths, isNot(contains(RoutePaths.users)));
-      expect(paths, isNot(contains(RoutePaths.pettyCash)));
       expect(paths, isNot(contains(RoutePaths.userLogs)));
     });
 
-    test('admin sees the full menu including Suppliers, Users, Logs, Petty Cash',
-        () {
+    test('admin sees the full menu including Suppliers, Users, Logs', () {
       final paths = RouteGuards.getMenuItems(UserRole.admin)
           .map((e) => e.path)
           .toSet();
       expect(paths, contains(RoutePaths.suppliers));
       expect(paths, contains(RoutePaths.users));
       expect(paths, contains(RoutePaths.userLogs));
-      expect(paths, contains(RoutePaths.pettyCash));
     });
   });
 }

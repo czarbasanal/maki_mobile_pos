@@ -24,8 +24,6 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/supplier_f
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expenses_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expense_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expense_history_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/petty_cash_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/petty_cash/petty_cash_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_list_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
@@ -422,17 +420,5 @@ List<RouteBase> featureRoutes(Surface surface) => [
         path: RoutePaths.userLogs,
         name: RouteNames.userLogs,
         builder: (context, state) => const ActivityLogsScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.pettyCash,
-        name: RouteNames.pettyCash,
-        builder: (context, state) => const PettyCashScreen(),
-        routes: [
-          GoRoute(
-            path: 'new',
-            name: RouteNames.pettyCashNew,
-            builder: (context, state) => const PettyCashFormScreen(),
-          ),
-        ],
       ),
     ];

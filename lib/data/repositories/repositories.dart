@@ -15,5 +15,4 @@ export 'supplier_repository_impl.dart';
 export 'user_repository_impl.dart';
 export 'expense_repository_impl.dart';
 export 'daily_closing_repository_impl.dart';
-export 'petty_cash_repository_impl.dart';
 export 'void_request_repository_impl.dart';

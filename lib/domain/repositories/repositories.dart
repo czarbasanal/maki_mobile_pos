@@ -17,6 +17,5 @@ export 'receiving_repository.dart';
 export 'activity_log_repository.dart';
 export 'expense_repository.dart';
 export 'daily_closing_repository.dart';
-export 'petty_cash_repository.dart';
 export 'category_repository.dart';
 export 'void_request_repository.dart';

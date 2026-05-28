@@ -164,10 +164,6 @@ enum ActivityType {
   // Suppliers
   supplier('supplier', 'Supplier', '🚚'),
 
-  // Petty Cash
-  pettyCash('petty_cash', 'Petty Cash', '💵'),
-  pettyCashCutOff('petty_cash_cutoff', 'Petty Cash Cut-off', '🧮'),
-
   // End-of-Day
   dayClosed('day_closed', 'Day Closed', '📒'),
 

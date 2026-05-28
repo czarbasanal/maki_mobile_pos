@@ -34,7 +34,6 @@ Per-role allow/deny on every collection in `firestore.rules`:
 - `/drafts` — owner-or-admin update/delete; can't create-as-someone-else
 - `/receivings` — staff+admin create/update/read; admin-only delete
 - `/expenses` — anyone create; admin-only update + delete
-- `/petty_cash` — admin only
 - `/user_logs` — admin-only read; auth-only create; immutable (no update/delete)
 - `/settings` — anyone read; admin-only write
 

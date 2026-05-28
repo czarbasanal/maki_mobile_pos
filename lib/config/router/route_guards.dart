@@ -58,9 +58,6 @@ abstract class RouteGuards {
     '/settings/categories': Permission.manageCategories,
     // Logs
     '/logs': Permission.viewUserLogs,
-    // Petty Cash
-    '/petty-cash': Permission.managePettyCash,
-    '/petty-cash/new': Permission.managePettyCash,
   };
 
   /// Checks if a route is public (no auth required).
@@ -254,15 +251,6 @@ abstract class RouteGuards {
         title: 'Expenses',
         icon: Icons.receipt_long,
         path: '/expenses',
-      ));
-    }
-
-    // Petty Cash - admin only
-    if (RolePermissions.hasPermission(role, Permission.managePettyCash)) {
-      items.add(const MenuItem(
-        title: 'Petty Cash',
-        icon: Icons.savings,
-        path: '/petty-cash',
       ));
     }
 

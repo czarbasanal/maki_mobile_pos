@@ -184,13 +184,6 @@ service cloud.firestore {
       allow update, delete: if isAdmin() && isActiveUser();
     }
     
-    // ==================== PETTY CASH COLLECTION ====================
-    
-    match /petty_cash/{recordId} {
-      // Admin can manage petty cash
-      allow read, write: if isAdmin() && isActiveUser();
-    }
-
     // ==================== DAILY CLOSINGS COLLECTION ====================
 
     match /daily_closings/{closingId} {

@@ -43,10 +43,6 @@ enum Permission {
   editExpense,
   deleteExpense,
 
-  // Cash Management
-  managePettyCash,
-  performCutOff,
-
   // End-of-Day Closing
   viewEndOfDay,
   closeDay,
@@ -187,9 +183,6 @@ abstract class RolePermissions {
     Permission.addExpense,
     Permission.editExpense,
     Permission.deleteExpense,
-    // Cash Management
-    Permission.managePettyCash,
-    Permission.performCutOff,
     // End-of-day closing
     Permission.viewEndOfDay,
     Permission.closeDay,

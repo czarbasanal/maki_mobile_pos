@@ -31,7 +31,6 @@ const _navSections = <_NavSection>[
   ]),
   _NavSection('Money', [
     _NavItem(Icons.receipt_long, 'Expenses', RoutePaths.expenses),
-    _NavItem(Icons.savings, 'Petty Cash', RoutePaths.pettyCash),
     _NavItem(Icons.bar_chart, 'Reports', RoutePaths.reports),
   ]),
   _NavSection('Admin', [

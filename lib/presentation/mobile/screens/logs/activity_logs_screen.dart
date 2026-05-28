@@ -324,7 +324,7 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
 
   /// Reserve color for the audit-meaningful events: security
   /// (failed/verified password, role change) and financial (sale, void,
-  /// petty cash, cost-code change). Everything else stays neutral —
+  /// cost-code change). Everything else stays neutral —
   /// the emoji already gives the categorical hint.
   Color? _typeAccent(ActivityType type) {
     if (type.isSecurityRelated) return AppColors.error;

@@ -589,52 +589,6 @@ describe("/expenses", () => {
 });
 
 // ===================================================================
-// /petty_cash
-// ===================================================================
-describe("/petty_cash", () => {
-  beforeEach(async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await ctx.firestore().collection("petty_cash").doc("pc-1").set({
-        type: "cash_in", amount: 500, balance: 500,
-      });
-    });
-  });
-
-  it("cashier CANNOT read petty_cash", async () => {
-    await assertFails(as("cashier").collection("petty_cash").doc("pc-1").get());
-  });
-
-  it("staff CANNOT read petty_cash", async () => {
-    await assertFails(as("staff").collection("petty_cash").doc("pc-1").get());
-  });
-
-  it("admin can read + write petty_cash", async () => {
-    await assertSucceeds(as("admin").collection("petty_cash").doc("pc-1").get());
-    await assertSucceeds(
-      as("admin").collection("petty_cash").doc(newDocId("pc")).set({
-        type: "cash_out", amount: 100, balance: 400,
-      })
-    );
-  });
-
-  it("cashier CANNOT write petty_cash", async () => {
-    await assertFails(
-      as("cashier").collection("petty_cash").doc(newDocId("pc")).set({
-        type: "cash_in", amount: 1000,
-      })
-    );
-  });
-
-  it("staff CANNOT write petty_cash", async () => {
-    await assertFails(
-      as("staff").collection("petty_cash").doc(newDocId("pc")).set({
-        type: "cash_in", amount: 1000,
-      })
-    );
-  });
-});
-
-// ===================================================================
 // /user_logs (activity log)
 // ===================================================================
 describe("/user_logs", () => {
