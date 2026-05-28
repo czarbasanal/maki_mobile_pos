@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -33,6 +34,11 @@ class CostCodePill extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final code = ref.watch(encodeCostProvider(cost));
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final muted = theme.colorScheme.onSurfaceVariant;
     final iconSize = compact ? 12.0 : 16.0;
     final textSize = compact ? 12.0 : 13.0;
     final pad = compact
@@ -45,7 +51,7 @@ class CostCodePill extends ConsumerWidget {
     return Container(
       padding: pad,
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.warning),
+        border: Border.all(color: hairline),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -54,7 +60,7 @@ class CostCodePill extends ConsumerWidget {
           Icon(
             CupertinoIcons.lock,
             size: iconSize,
-            color: AppColors.warningDark,
+            color: muted,
           ),
           const SizedBox(width: 4),
           Text(
@@ -63,7 +69,7 @@ class CostCodePill extends ConsumerWidget {
               fontSize: textSize,
               fontWeight: FontWeight.w600,
               fontFamily: 'monospace',
-              color: AppColors.warningDark,
+              color: muted,
             ),
           ),
         ],
