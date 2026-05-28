@@ -109,10 +109,14 @@ class ProcessSaleUseCase {
       throw const EmptyCartException();
     }
 
-    if (sale.amountReceived < sale.grandTotal) {
+    // The tender breakdown must reconcile to the grand total. This covers
+    // single, mixed, and salmon (downpayment + receivable) sales — the amount
+    // collected today may be less than grandTotal for salmon.
+    if (!sale.isTenderValid) {
       throw InsufficientPaymentException(
         amountDue: sale.grandTotal,
-        amountReceived: sale.amountReceived,
+        amountReceived:
+            sale.effectiveTenders.values.fold<double>(0, (a, b) => a + b),
       );
     }
 
