@@ -20,6 +20,13 @@ class CartState {
   /// Amount received from customer
   final double amountReceived;
 
+  /// Secondary method for Mixed (the digital method) or Salmon (the
+  /// downpayment method). Null for single-tender sales.
+  final PaymentMethod? secondaryMethod;
+
+  /// For Mixed: the digital amount. For Salmon: the downpayment amount.
+  final double splitAmount;
+
   /// Optional notes for the sale
   final String? notes;
 
@@ -45,6 +52,8 @@ class CartState {
     this.discountType = DiscountType.amount,
     this.paymentMethod = PaymentMethod.cash,
     this.amountReceived = 0,
+    this.secondaryMethod,
+    this.splitAmount = 0,
     this.notes,
     this.sourceDraftId,
     this.draftName,
@@ -97,17 +106,64 @@ class CartState {
   /// Total profit
   double get totalProfit => grandTotal - totalCost;
 
-  /// Change to give customer
-  double get change {
-    if (amountReceived <= grandTotal) return 0;
-    return amountReceived - grandTotal;
+  /// Tender breakdown derived from the selected method + entered amounts.
+  Map<PaymentMethod, double> get tenders {
+    switch (paymentMethod) {
+      case PaymentMethod.mixed:
+        final digital = secondaryMethod ?? PaymentMethod.gcash;
+        return {
+          PaymentMethod.cash: grandTotal - splitAmount,
+          digital: splitAmount,
+        };
+      case PaymentMethod.salmon:
+        final dp = secondaryMethod ?? PaymentMethod.cash;
+        return {
+          dp: splitAmount,
+          PaymentMethod.salmon: grandTotal - splitAmount,
+        };
+      default:
+        return {paymentMethod: grandTotal};
+    }
   }
 
-  /// Whether payment is sufficient
-  bool get isPaymentSufficient => amountReceived >= grandTotal;
+  /// Amount actually collected today (excludes the Salmon receivable).
+  double get collectedToday {
+    if (paymentMethod == PaymentMethod.salmon) return splitAmount;
+    return grandTotal;
+  }
+
+  /// Change to give customer (only meaningful for single cash).
+  double get change {
+    if (paymentMethod == PaymentMethod.cash &&
+        secondaryMethod == null &&
+        amountReceived > grandTotal) {
+      return amountReceived - grandTotal;
+    }
+    return 0;
+  }
+
+  /// Whether the selected payment is valid for checkout.
+  bool get isPaymentValid {
+    if (isEmpty) return false;
+    switch (paymentMethod) {
+      case PaymentMethod.cash:
+        return amountReceived >= grandTotal;
+      case PaymentMethod.gcash:
+      case PaymentMethod.maya:
+        return true; // exact, collected in full
+      case PaymentMethod.mixed:
+        return secondaryMethod != null &&
+            splitAmount > 0 &&
+            splitAmount < grandTotal;
+      case PaymentMethod.salmon:
+        return secondaryMethod != null &&
+            splitAmount > 0 &&
+            splitAmount < grandTotal;
+    }
+  }
 
   /// Whether cart can be checked out
-  bool get canCheckout => isNotEmpty && isPaymentSufficient && !isProcessing;
+  bool get canCheckout => isNotEmpty && isPaymentValid && !isProcessing;
 
   /// Whether cart can be saved as draft
   bool get canSaveAsDraft => isNotEmpty && !isProcessing;
@@ -125,6 +181,9 @@ class CartState {
     DiscountType? discountType,
     PaymentMethod? paymentMethod,
     double? amountReceived,
+    PaymentMethod? secondaryMethod,
+    double? splitAmount,
+    bool clearSecondaryMethod = false,
     String? notes,
     String? sourceDraftId,
     String? draftName,
@@ -140,6 +199,10 @@ class CartState {
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       amountReceived: amountReceived ?? this.amountReceived,
+      secondaryMethod: clearSecondaryMethod
+          ? null
+          : (secondaryMethod ?? this.secondaryMethod),
+      splitAmount: splitAmount ?? this.splitAmount,
       notes: clearNotes ? null : (notes ?? this.notes),
       sourceDraftId:
           clearSourceDraftId ? null : (sourceDraftId ?? this.sourceDraftId),
@@ -319,9 +382,24 @@ class CartNotifier extends StateNotifier<CartState> {
 
   // ==================== PAYMENT OPERATIONS ====================
 
-  /// Sets the payment method.
+  /// Sets the payment method, resetting the split inputs.
   void setPaymentMethod(PaymentMethod method) {
-    state = state.copyWith(paymentMethod: method, clearErrorMessage: true);
+    state = state.copyWith(
+      paymentMethod: method,
+      clearSecondaryMethod: true,
+      splitAmount: 0,
+      clearErrorMessage: true,
+    );
+  }
+
+  /// Sets the secondary method (Mixed digital method or Salmon DP method).
+  void setSecondaryMethod(PaymentMethod method) {
+    state = state.copyWith(secondaryMethod: method, clearErrorMessage: true);
+  }
+
+  /// Sets the split amount (Mixed digital amount or Salmon downpayment).
+  void setSplitAmount(double amount) {
+    state = state.copyWith(splitAmount: amount, clearErrorMessage: true);
   }
 
   /// Sets the amount received.
@@ -400,7 +478,8 @@ class CartNotifier extends StateNotifier<CartState> {
       items: state.items,
       discountType: state.discountType,
       paymentMethod: state.paymentMethod,
-      amountReceived: state.amountReceived,
+      tenders: state.tenders,
+      amountReceived: state.collectedToday,
       changeGiven: state.change,
       cashierId: cashierId,
       cashierName: cashierName,
@@ -473,5 +552,5 @@ final cartChangeProvider = Provider<double>((ref) {
 
 /// Whether payment is sufficient.
 final isPaymentSufficientProvider = Provider<bool>((ref) {
-  return ref.watch(cartProvider).isPaymentSufficient;
+  return ref.watch(cartProvider).isPaymentValid;
 });
