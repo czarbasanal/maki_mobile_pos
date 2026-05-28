@@ -379,9 +379,41 @@ class SaleDetailScreen extends ConsumerWidget {
           _buildPaymentRow(theme, 'Received', sale.amountReceived),
           const SizedBox(height: 8),
           _buildPaymentRow(theme, 'Change', sale.changeGiven, isChange: true),
+          if (sale.effectiveTenders.length > 1) ...[
+            const Divider(height: 24),
+            ..._tenderRows(theme, sale),
+          ],
         ],
       ),
     );
+  }
+
+  List<Widget> _tenderRows(ThemeData theme, SaleEntity sale) {
+    String label(PaymentMethod m) {
+      if (sale.paymentMethod == PaymentMethod.salmon) {
+        return m == PaymentMethod.salmon
+            ? 'Salmon balance'
+            : 'Downpayment (${m.displayName})';
+      }
+      return m.displayName;
+    }
+
+    return sale.effectiveTenders.entries
+        .map((e) => Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(label(e.key), style: theme.textTheme.bodyMedium),
+                  Text(
+                    '${AppConstants.currencySymbol}${e.value.toStringAsFixed(2)}',
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ))
+        .toList();
   }
 
   Widget _buildPaymentRow(
