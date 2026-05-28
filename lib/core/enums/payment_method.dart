@@ -10,7 +10,15 @@ enum PaymentMethod {
   cash('cash', 'Cash'),
 
   /// GCash mobile payment (fees may apply)
-  gcash('gcash', 'GCash');
+  gcash('gcash', 'GCash'),
+
+  /// Salmon financing — customer pays a downpayment now; the balance is
+  /// covered by Salmon the next day (a receivable, not cash on hand).
+  salmon('salmon', 'Salmon'),
+
+  /// Mixed tender — cash plus one digital method on a single sale. This is a
+  /// sale-level label only; it never appears as a tender bucket.
+  mixed('mixed', 'Mixed');
 
   const PaymentMethod(this.value, this.displayName);
 
