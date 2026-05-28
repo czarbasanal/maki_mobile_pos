@@ -18,6 +18,7 @@ export 'receiving_provider.dart';
 export 'activity_log_provider.dart';
 export 'connectivity_provider.dart';
 export 'expense_provider.dart';
+export 'daily_closing_provider.dart';
 export 'petty_cash_provider.dart';
 export 'theme_mode_provider.dart';
 export 'user_provider.dart';
