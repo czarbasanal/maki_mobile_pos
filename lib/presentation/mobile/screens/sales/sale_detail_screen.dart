@@ -3,12 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/request_void_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/void_sale_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
@@ -124,8 +126,9 @@ class SaleDetailScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Void button (only for non-voided sales)
-          if (!isVoided) _buildVoidButton(context, ref, sale),
+          // Void action (only for non-voided sales) — admin voids directly,
+          // cashier/staff request approval; shows a pending state if one exists.
+          if (!isVoided) _buildVoidAction(context, ref, sale),
 
           const SizedBox(height: 32),
         ],
@@ -574,6 +577,61 @@ class SaleDetailScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Chooses the right void affordance for the current user and sale state.
+  Widget _buildVoidAction(BuildContext context, WidgetRef ref, SaleEntity sale) {
+    final user = ref.watch(currentUserProvider).value;
+    final pendingAsync = ref.watch(pendingVoidRequestForSaleProvider(sale.id));
+    final hasPending =
+        pendingAsync.maybeWhen(data: (l) => l.isNotEmpty, orElse: () => false);
+
+    if (hasPending) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.clock, size: 18),
+            SizedBox(width: 8),
+            Text('Void pending approval'),
+          ],
+        ),
+      );
+    }
+
+    final canVoidDirect = user?.hasPermission(Permission.voidSale) ?? false;
+    final canRequest = user?.hasPermission(Permission.requestVoidSale) ?? false;
+
+    if (canVoidDirect) {
+      return _buildVoidButton(context, ref, sale);
+    }
+    if (canRequest) {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () => RequestVoidDialog.show(
+            context: context,
+            sale: sale,
+            onRequested: () => context.showSuccessSnackBar(
+                'Void request sent — awaiting admin approval'),
+          ),
+          icon: const Icon(CupertinoIcons.xmark_circle),
+          label: const Text('Request Void'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.red,
+            side: const BorderSide(color: Colors.red),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildVoidButton(
