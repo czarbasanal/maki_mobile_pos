@@ -12,6 +12,8 @@ void main() {
       totalDiscounts: 50,
       cashSales: 600,
       nonCashSales: 350,
+      gcashSales: 350,
+      mayaSales: 0,
       totalExpenses: 300,
       cashExpenses: 220,
       salmonReceivable: 600,

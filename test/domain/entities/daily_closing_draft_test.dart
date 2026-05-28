@@ -107,6 +107,35 @@ void main() {
       expect(draft.expectedCashFor(1000), 1900);
     });
 
+    test('breaks non-cash into gcash + maya buckets', () {
+      const summary = SalesSummary(
+        totalSalesCount: 3,
+        voidedSalesCount: 0,
+        grossAmount: 5000,
+        totalDiscounts: 0,
+        netAmount: 5000,
+        totalCost: 0,
+        totalProfit: 5000,
+        byPaymentMethod: {
+          PaymentMethod.cash: 1000,
+          PaymentMethod.gcash: 3000,
+          PaymentMethod.maya: 1000,
+        },
+      );
+
+      final draft = DailyClosingDraft.fromData(
+        businessDate: DateTime(2026, 5, 28),
+        summary: summary,
+        expenses: const [],
+      );
+
+      expect(draft.gcashSales, 3000);
+      expect(draft.mayaSales, 1000);
+      expect(draft.nonCashSales, 4000);
+      // Invariant.
+      expect(draft.gcashSales + draft.mayaSales, draft.nonCashSales);
+    });
+
     test('expectedCash applies the opening float', () {
       const summary = SalesSummary(
         totalSalesCount: 1,

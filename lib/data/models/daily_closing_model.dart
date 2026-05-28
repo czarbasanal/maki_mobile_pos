@@ -10,6 +10,8 @@ class DailyClosingModel {
   final double totalDiscounts;
   final double cashSales;
   final double nonCashSales;
+  final double gcashSales;
+  final double mayaSales;
   final double totalExpenses;
   final double cashExpenses;
   final double salmonReceivable;
@@ -32,6 +34,8 @@ class DailyClosingModel {
     required this.totalDiscounts,
     required this.cashSales,
     required this.nonCashSales,
+    required this.gcashSales,
+    required this.mayaSales,
     required this.totalExpenses,
     required this.cashExpenses,
     required this.salmonReceivable,
@@ -64,6 +68,8 @@ class DailyClosingModel {
       totalDiscounts: d('totalDiscounts'),
       cashSales: d('cashSales'),
       nonCashSales: d('nonCashSales'),
+      gcashSales: d('gcashSales'),
+      mayaSales: d('mayaSales'),
       totalExpenses: d('totalExpenses'),
       cashExpenses: d('cashExpenses'),
       salmonReceivable: d('salmonReceivable'),
@@ -89,6 +95,8 @@ class DailyClosingModel {
       totalDiscounts: e.totalDiscounts,
       cashSales: e.cashSales,
       nonCashSales: e.nonCashSales,
+      gcashSales: e.gcashSales,
+      mayaSales: e.mayaSales,
       totalExpenses: e.totalExpenses,
       cashExpenses: e.cashExpenses,
       salmonReceivable: e.salmonReceivable,
@@ -113,6 +121,8 @@ class DailyClosingModel {
       'totalDiscounts': totalDiscounts,
       'cashSales': cashSales,
       'nonCashSales': nonCashSales,
+      'gcashSales': gcashSales,
+      'mayaSales': mayaSales,
       'totalExpenses': totalExpenses,
       'cashExpenses': cashExpenses,
       'salmonReceivable': salmonReceivable,
@@ -145,6 +155,8 @@ class DailyClosingModel {
       totalDiscounts: totalDiscounts,
       cashSales: cashSales,
       nonCashSales: nonCashSales,
+      gcashSales: gcashSales,
+      mayaSales: mayaSales,
       totalExpenses: totalExpenses,
       cashExpenses: cashExpenses,
       salmonReceivable: salmonReceivable,

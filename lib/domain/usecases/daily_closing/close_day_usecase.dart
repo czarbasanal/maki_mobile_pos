@@ -81,6 +81,8 @@ class CloseDayUseCase {
         totalDiscounts: draft.totalDiscounts,
         cashSales: draft.cashSales,
         nonCashSales: draft.nonCashSales,
+        gcashSales: draft.gcashSales,
+        mayaSales: draft.mayaSales,
         totalExpenses: draft.totalExpenses,
         cashExpenses: draft.cashExpenses,
         salmonReceivable: draft.salmonReceivable,

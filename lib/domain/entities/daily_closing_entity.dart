@@ -15,6 +15,8 @@ class DailyClosingDraft extends Equatable {
   final double totalDiscounts;
   final double cashSales;
   final double nonCashSales;
+  final double gcashSales;
+  final double mayaSales;
   final double totalExpenses;
   final double cashExpenses;
   final double salmonReceivable;
@@ -28,6 +30,8 @@ class DailyClosingDraft extends Equatable {
     required this.totalDiscounts,
     required this.cashSales,
     required this.nonCashSales,
+    required this.gcashSales,
+    required this.mayaSales,
     required this.totalExpenses,
     required this.cashExpenses,
     required this.salmonReceivable,
@@ -46,6 +50,8 @@ class DailyClosingDraft extends Equatable {
     required List<ExpenseEntity> expenses,
   }) {
     final cashSales = summary.byPaymentMethod[PaymentMethod.cash] ?? 0;
+    final gcashSales = summary.byPaymentMethod[PaymentMethod.gcash] ?? 0;
+    final mayaSales = summary.byPaymentMethod[PaymentMethod.maya] ?? 0;
     final salmonReceivable =
         summary.byPaymentMethod[PaymentMethod.salmon] ?? 0;
     double nonCashSales = 0;
@@ -70,6 +76,8 @@ class DailyClosingDraft extends Equatable {
       totalDiscounts: summary.totalDiscounts,
       cashSales: cashSales,
       nonCashSales: nonCashSales,
+      gcashSales: gcashSales,
+      mayaSales: mayaSales,
       totalExpenses: totalExpenses,
       cashExpenses: cashExpenses,
       salmonReceivable: salmonReceivable,
@@ -94,6 +102,8 @@ class DailyClosingDraft extends Equatable {
         totalDiscounts,
         cashSales,
         nonCashSales,
+        gcashSales,
+        mayaSales,
         totalExpenses,
         cashExpenses,
         salmonReceivable,
@@ -114,6 +124,8 @@ class DailyClosingEntity extends Equatable {
   final double totalDiscounts;
   final double cashSales;
   final double nonCashSales;
+  final double gcashSales;
+  final double mayaSales;
   final double totalExpenses;
   final double cashExpenses;
   final double salmonReceivable;
@@ -136,6 +148,8 @@ class DailyClosingEntity extends Equatable {
     required this.totalDiscounts,
     required this.cashSales,
     required this.nonCashSales,
+    required this.gcashSales,
+    required this.mayaSales,
     required this.totalExpenses,
     required this.cashExpenses,
     required this.salmonReceivable,
@@ -160,6 +174,8 @@ class DailyClosingEntity extends Equatable {
         totalDiscounts,
         cashSales,
         nonCashSales,
+        gcashSales,
+        mayaSales,
         totalExpenses,
         cashExpenses,
         salmonReceivable,
