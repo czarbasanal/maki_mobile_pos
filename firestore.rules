@@ -71,8 +71,11 @@ service cloud.firestore {
       // All valid users can read products (for POS and inventory view)
       allow read: if isValidUser() && isActiveUser();
       
-      // Only admin can create/delete products
-      allow create, delete: if isAdmin() && isActiveUser();
+      // Admin and staff can create products. Staff enter a cost CODE that the
+      // app decodes to cost, so there is no field-level cost constraint here.
+      // Cashier cannot create. Delete stays admin-only.
+      allow create: if (isAdmin() || hasRole('staff')) && isActiveUser();
+      allow delete: if isAdmin() && isActiveUser();
 
       // Admin can update any product field
       allow update: if isAdmin() && isActiveUser();

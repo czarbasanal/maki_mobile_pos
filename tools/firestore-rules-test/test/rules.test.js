@@ -28,6 +28,7 @@ const USERS = {
   staff: { uid: "staff-1", role: "staff", isActive: true },
   cashier: { uid: "cashier-1", role: "cashier", isActive: true },
   inactiveAdmin: { uid: "inactive-admin-1", role: "admin", isActive: false },
+  inactiveStaff: { uid: "inactive-staff-1", role: "staff", isActive: false },
 };
 
 let testEnv;
@@ -173,15 +174,23 @@ describe("/products", () => {
     await assertSucceeds(as("admin").collection("products").doc("p-1").get());
   });
 
-  it("only admin can create products", async () => {
+  it("admin and staff can create products; cashier cannot", async () => {
+    // Staff create products via cost-code entry (decoded app-side), so the
+    // rules allow staff create. Cashier still cannot.
     await assertFails(
       as("cashier").collection("products").doc("p-2").set({ sku: "X", price: 1, cost: 0.5, costCode: "A", quantity: 0, isActive: true })
     );
-    await assertFails(
-      as("staff").collection("products").doc("p-2").set({ sku: "X", price: 1, cost: 0.5, costCode: "A", quantity: 0, isActive: true })
+    await assertSucceeds(
+      as("staff").collection("products").doc("p-3").set({ sku: "Y", price: 1, cost: 125, costCode: "NBF", quantity: 0, isActive: true })
     );
     await assertSucceeds(
-      as("admin").collection("products").doc("p-2").set({ sku: "X", price: 1, cost: 0.5, costCode: "A", quantity: 0, isActive: true })
+      as("admin").collection("products").doc("p-4").set({ sku: "Z", price: 1, cost: 0.5, costCode: "A", quantity: 0, isActive: true })
+    );
+  });
+
+  it("inactive staff cannot create products", async () => {
+    await assertFails(
+      as("inactiveStaff").collection("products").doc("p-5").set({ sku: "W", price: 1, cost: 1, costCode: "N", quantity: 0, isActive: true })
     );
   });
 
