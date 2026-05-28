@@ -168,7 +168,7 @@ void main() {
       final state = container.read(cartProvider);
       expect(state.amountReceived, 150);
       expect(state.change, 50);
-      expect(state.isPaymentSufficient, true);
+      expect(state.isPaymentValid, true);
     });
 
     test('canCheckout should be true when conditions are met', () {

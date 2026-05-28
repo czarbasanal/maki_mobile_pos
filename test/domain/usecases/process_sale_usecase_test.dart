@@ -133,8 +133,10 @@ void main() {
       expect(result.errorMessage, contains('empty'));
     });
 
-    test('should fail when payment is insufficient', () async {
-      final sale = createTestSale(amountReceived: 100); // Less than 200 total
+    test('should fail when the tender breakdown does not reconcile', () async {
+      // Tenders sum to 100 but the grand total is 200.
+      final sale = createTestSale()
+          .copyWith(tenders: const {PaymentMethod.cash: 100});
 
       final result = await useCase.execute(sale: sale);
 
