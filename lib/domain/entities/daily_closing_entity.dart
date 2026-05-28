@@ -1,0 +1,165 @@
+import 'package:equatable/equatable.dart';
+import 'package:maki_mobile_pos/core/enums/payment_method.dart';
+import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
+import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
+
+/// Live, unsaved end-of-day figures computed from the day's sales + expenses.
+///
+/// The manual inputs (opening float, counted cash) are layered on top by the
+/// UI / [CloseDayUseCase]; [expectedCashFor] and [varianceFor] derive the
+/// reconciliation once a float / count is known.
+class DailyClosingDraft extends Equatable {
+  final DateTime businessDate;
+  final double grossSales;
+  final double netSales;
+  final double totalDiscounts;
+  final double cashSales;
+  final double nonCashSales;
+  final double totalExpenses;
+  final double cashExpenses;
+  final int salesCount;
+  final int voidedCount;
+
+  const DailyClosingDraft({
+    required this.businessDate,
+    required this.grossSales,
+    required this.netSales,
+    required this.totalDiscounts,
+    required this.cashSales,
+    required this.nonCashSales,
+    required this.totalExpenses,
+    required this.cashExpenses,
+    required this.salesCount,
+    required this.voidedCount,
+  });
+
+  /// Builds a draft from a [SalesSummary] and the day's [expenses].
+  ///
+  /// Cash sales come from the cash payment-method bucket (net cash received).
+  /// Non-cash sales are every other payment method summed. Cash expenses are
+  /// only those with `paidVia == cash`.
+  factory DailyClosingDraft.fromData({
+    required DateTime businessDate,
+    required SalesSummary summary,
+    required List<ExpenseEntity> expenses,
+  }) {
+    final cashSales = summary.byPaymentMethod[PaymentMethod.cash] ?? 0;
+    double nonCashSales = 0;
+    for (final entry in summary.byPaymentMethod.entries) {
+      if (entry.key != PaymentMethod.cash) nonCashSales += entry.value;
+    }
+
+    double totalExpenses = 0;
+    double cashExpenses = 0;
+    for (final e in expenses) {
+      totalExpenses += e.amount;
+      if (e.paidVia == PaymentMethod.cash) cashExpenses += e.amount;
+    }
+
+    return DailyClosingDraft(
+      businessDate: businessDate,
+      grossSales: summary.grossAmount,
+      netSales: summary.netAmount,
+      totalDiscounts: summary.totalDiscounts,
+      cashSales: cashSales,
+      nonCashSales: nonCashSales,
+      totalExpenses: totalExpenses,
+      cashExpenses: cashExpenses,
+      salesCount: summary.totalSalesCount,
+      voidedCount: summary.voidedSalesCount,
+    );
+  }
+
+  /// Expected drawer cash given an [openingFloat].
+  double expectedCashFor(double openingFloat) =>
+      openingFloat + cashSales - cashExpenses;
+
+  /// Variance given an [openingFloat] and a physical [countedCash].
+  double varianceFor(double openingFloat, double countedCash) =>
+      countedCash - expectedCashFor(openingFloat);
+
+  @override
+  List<Object?> get props => [
+        businessDate,
+        grossSales,
+        netSales,
+        totalDiscounts,
+        cashSales,
+        nonCashSales,
+        totalExpenses,
+        cashExpenses,
+        salesCount,
+        voidedCount,
+      ];
+}
+
+/// A persisted end-of-day closing for a single business day.
+///
+/// Document id is the business date as `YYYY-MM-DD`, which enforces one
+/// closing per day. Immutable once saved (audit record).
+class DailyClosingEntity extends Equatable {
+  final String id;
+  final DateTime businessDate;
+  final double grossSales;
+  final double netSales;
+  final double totalDiscounts;
+  final double cashSales;
+  final double nonCashSales;
+  final double totalExpenses;
+  final double cashExpenses;
+  final double openingFloat;
+  final double expectedCash;
+  final double countedCash;
+  final double variance;
+  final int salesCount;
+  final int voidedCount;
+  final String? notes;
+  final String closedBy;
+  final String closedByName;
+  final DateTime closedAt;
+
+  const DailyClosingEntity({
+    required this.id,
+    required this.businessDate,
+    required this.grossSales,
+    required this.netSales,
+    required this.totalDiscounts,
+    required this.cashSales,
+    required this.nonCashSales,
+    required this.totalExpenses,
+    required this.cashExpenses,
+    required this.openingFloat,
+    required this.expectedCash,
+    required this.countedCash,
+    required this.variance,
+    required this.salesCount,
+    required this.voidedCount,
+    this.notes,
+    required this.closedBy,
+    required this.closedByName,
+    required this.closedAt,
+  });
+
+  @override
+  List<Object?> get props => [
+        id,
+        businessDate,
+        grossSales,
+        netSales,
+        totalDiscounts,
+        cashSales,
+        nonCashSales,
+        totalExpenses,
+        cashExpenses,
+        openingFloat,
+        expectedCash,
+        countedCash,
+        variance,
+        salesCount,
+        voidedCount,
+        notes,
+        closedBy,
+        closedByName,
+        closedAt,
+      ];
+}
