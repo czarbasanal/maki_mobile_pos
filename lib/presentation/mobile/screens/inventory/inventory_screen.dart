@@ -1,12 +1,19 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/inventory_export.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
@@ -97,22 +104,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-              const PopupMenuItem(
-                value: 'import',
-                child: ListTile(
-                  leading: Icon(CupertinoIcons.cloud_upload),
-                  title: Text('Import CSV'),
-                  contentPadding: EdgeInsets.zero,
+              if (isAdmin)
+                const PopupMenuItem(
+                  value: 'export',
+                  child: ListTile(
+                    leading: Icon(CupertinoIcons.cloud_download),
+                    title: Text('Export CSV'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'export',
-                child: ListTile(
-                  leading: Icon(CupertinoIcons.cloud_download),
-                  title: Text('Export'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
             ],
           ),
         ],
@@ -531,12 +531,54 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       case 'add':
         context.push(RoutePaths.productAdd);
         break;
-      case 'import':
-        context.showSnackBar('CSV import coming soon');
-        break;
       case 'export':
-        context.showSnackBar('Export coming soon');
+        _handleExport();
         break;
+    }
+  }
+
+  Future<void> _handleExport() async {
+    try {
+      final products = await ref
+          .read(productRepositoryProvider)
+          .getAllProducts(includeInactive: true, limit: 100000);
+
+      if (!mounted) return;
+      if (products.isEmpty) {
+        context.showSnackBar('No products to export');
+        return;
+      }
+
+      final csv = buildInventoryCsv(products);
+      final bytes = Uint8List.fromList(utf8.encode(csv));
+      final fileName =
+          'inventory_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.csv';
+
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save inventory CSV',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        bytes: bytes,
+      );
+
+      if (!mounted) return;
+      if (path == null) {
+        context.showSnackBar('Export cancelled');
+        return;
+      }
+
+      // On mobile, saveFile(bytes:) already wrote the file (path may be a
+      // content URI). On desktop, saveFile only returns the chosen path, so
+      // write the bytes ourselves.
+      if (!Platform.isAndroid && !Platform.isIOS) {
+        await File(path).writeAsBytes(bytes);
+      }
+
+      if (!mounted) return;
+      context.showSuccessSnackBar('Inventory exported');
+    } catch (e) {
+      if (mounted) context.showErrorSnackBar('Export failed: $e');
     }
   }
 }
