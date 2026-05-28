@@ -25,6 +25,7 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   late final TextEditingController _amountReceivedController;
+  late final TextEditingController _splitController;
   bool _isProcessing = false;
   String? _errorMessage;
 
@@ -37,11 +38,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     _amountReceivedController = TextEditingController(
       text: initialAmount > 0 ? initialAmount.toStringAsFixed(2) : '',
     );
+    _splitController = TextEditingController();
   }
 
   @override
   void dispose() {
     _amountReceivedController.dispose();
+    _splitController.dispose();
     super.dispose();
   }
 
@@ -52,6 +55,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   void _handlePaymentMethodChanged(PaymentMethod method) {
     ref.read(cartProvider.notifier).setPaymentMethod(method);
+    _splitController.clear();
+  }
+
+  void _handleSecondaryMethodChanged(PaymentMethod method) {
+    ref.read(cartProvider.notifier).setSecondaryMethod(method);
+  }
+
+  void _handleSplitAmountChanged(String value) {
+    ref.read(cartProvider.notifier).setSplitAmount(double.tryParse(value) ?? 0);
   }
 
   @override
@@ -91,8 +103,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       child: PaymentSection(
                         cart: cart,
                         amountController: _amountReceivedController,
+                        splitController: _splitController,
                         onAmountChanged: _handleAmountChanged,
                         onPaymentMethodChanged: _handlePaymentMethodChanged,
+                        onSecondaryMethodChanged:
+                            _handleSecondaryMethodChanged,
+                        onSplitAmountChanged: _handleSplitAmountChanged,
                       ),
                     ),
                     if (_errorMessage != null) ...[
@@ -310,7 +326,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           width: double.infinity,
           height: 48,
           child: FilledButton(
-            onPressed: _isProcessing ? null : () => _processCheckout(cart),
+            onPressed: (_isProcessing || !cart.canCheckout)
+                ? null
+                : () => _processCheckout(cart),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.success,
               shape: RoundedRectangleBorder(
