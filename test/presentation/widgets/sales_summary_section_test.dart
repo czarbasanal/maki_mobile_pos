@@ -91,8 +91,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 5000 → ₱5.0K via the K-suffix formatter.
-      expect(find.text('₱5.0K'), findsOneWidget);
+      // 5000 → ₱5,000.00 — the Gross Sales card shows the exact amount
+      // (not the K-suffix abbreviation used by the other cards).
+      expect(find.text('₱5,000.00'), findsOneWidget);
       // The discount subtitle should be present.
       expect(find.textContaining('discount'), findsOneWidget);
     });
