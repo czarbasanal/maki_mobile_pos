@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -380,6 +381,20 @@ class ReceiptWidget extends ConsumerWidget {
       ),
       child: Column(
         children: [
+          if (sale.effectiveTenders.length > 1) ...[
+            ...sale.effectiveTenders.entries.map((e) {
+              final isSalmon = e.key == PaymentMethod.salmon;
+              final label = sale.paymentMethod == PaymentMethod.salmon
+                  ? (isSalmon
+                      ? 'Salmon balance'
+                      : 'Downpayment (${e.key.displayName})')
+                  : e.key.displayName;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: _buildPaymentRow(label, e.value),
+              );
+            }),
+          ],
           _buildPaymentRow('Amount Tendered', sale.amountReceived),
           const SizedBox(height: 4),
           _buildPaymentRow('Change', sale.changeGiven, isChange: true),
