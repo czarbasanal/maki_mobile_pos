@@ -30,6 +30,8 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_list_s
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/top_selling_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/sale_detail_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/void_requests_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/users_screen.dart';
@@ -339,6 +341,19 @@ List<RouteBase> featureRoutes(Surface surface) => [
               final id = state.pathParameters['id']!;
               return SaleDetailScreen(saleId: id);
             },
+          ),
+          GoRoute(
+            path: 'end-of-day',
+            name: RouteNames.endOfDay,
+            builder: (context, state) => const EndOfDayScreen(),
+            routes: [
+              GoRoute(
+                path: 'history',
+                name: RouteNames.endOfDayHistory,
+                builder: (context, state) =>
+                    const DailyClosingHistoryScreen(),
+              ),
+            ],
           ),
         ],
       ),

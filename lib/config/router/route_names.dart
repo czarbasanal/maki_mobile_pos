@@ -107,6 +107,12 @@ abstract class RouteNames {
   /// Sale detail route
   static const String saleDetail = 'saleDetail';
 
+  /// End-of-day closing route
+  static const String endOfDay = 'endOfDay';
+
+  /// End-of-day closing history route
+  static const String endOfDayHistory = 'endOfDayHistory';
+
   /// Void requests (admin approval queue) route
   static const String voidRequests = 'voidRequests';
 
@@ -208,6 +214,8 @@ abstract class RoutePaths {
   static const String profitReport = '/reports/profit';
   static const String topSelling = '/reports/top-selling';
   static const String saleDetail = '/reports/sale/:id';
+  static const String endOfDay = '/reports/end-of-day';
+  static const String endOfDayHistory = '/reports/end-of-day/history';
   static const String voidRequests = '/void-requests';
 
   // ==================== USER MANAGEMENT PATHS ====================
