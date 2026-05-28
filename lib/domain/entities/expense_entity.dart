@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:maki_mobile_pos/core/enums/payment_method.dart';
 
 /// Represents a business expense in the POS system.
 ///
@@ -13,6 +14,10 @@ class ExpenseEntity extends Equatable {
 
   /// Amount in PHP
   final double amount;
+
+  /// How the expense was paid. Defaults to cash. Only cash-paid expenses
+  /// reduce drawer cash on hand in the end-of-day closing.
+  final PaymentMethod paidVia;
 
   /// Category of the expense
   final String category;
@@ -45,6 +50,7 @@ class ExpenseEntity extends Equatable {
     required this.id,
     required this.description,
     required this.amount,
+    this.paidVia = PaymentMethod.cash,
     required this.category,
     required this.date,
     this.notes,
@@ -60,6 +66,7 @@ class ExpenseEntity extends Equatable {
     String? id,
     String? description,
     double? amount,
+    PaymentMethod? paidVia,
     String? category,
     DateTime? date,
     String? notes,
@@ -76,6 +83,7 @@ class ExpenseEntity extends Equatable {
       id: id ?? this.id,
       description: description ?? this.description,
       amount: amount ?? this.amount,
+      paidVia: paidVia ?? this.paidVia,
       category: category ?? this.category,
       date: date ?? this.date,
       notes: clearNotes ? null : (notes ?? this.notes),
@@ -94,6 +102,7 @@ class ExpenseEntity extends Equatable {
         id,
         description,
         amount,
+        paidVia,
         category,
         date,
         notes,

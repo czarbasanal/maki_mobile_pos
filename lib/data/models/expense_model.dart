@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:maki_mobile_pos/core/enums/payment_method.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 /// Firestore data model for expenses.
@@ -8,6 +9,7 @@ class ExpenseModel {
   final String id;
   final String description;
   final double amount;
+  final PaymentMethod paidVia;
   final String category;
   final DateTime date;
   final String? notes;
@@ -22,6 +24,7 @@ class ExpenseModel {
     required this.id,
     required this.description,
     required this.amount,
+    this.paidVia = PaymentMethod.cash,
     required this.category,
     required this.date,
     this.notes,
@@ -45,6 +48,7 @@ class ExpenseModel {
       id: id,
       description: map['description'] as String? ?? '',
       amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
+      paidVia: PaymentMethod.fromString(map['paidVia'] as String?),
       category: map['category'] as String? ?? 'General',
       date: (map['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
       notes: map['notes'] as String?,
@@ -63,6 +67,7 @@ class ExpenseModel {
       id: entity.id,
       description: entity.description,
       amount: entity.amount,
+      paidVia: entity.paidVia,
       category: entity.category,
       date: entity.date,
       notes: entity.notes,
@@ -80,6 +85,7 @@ class ExpenseModel {
     return {
       'description': description,
       'amount': amount,
+      'paidVia': paidVia.value,
       'category': category,
       'date': Timestamp.fromDate(date),
       'notes': notes,
@@ -97,6 +103,7 @@ class ExpenseModel {
     return {
       'description': description,
       'amount': amount,
+      'paidVia': paidVia.value,
       'category': category,
       'date': Timestamp.fromDate(date),
       'notes': notes,
@@ -112,6 +119,7 @@ class ExpenseModel {
     return {
       'description': description,
       'amount': amount,
+      'paidVia': paidVia.value,
       'category': category,
       'date': Timestamp.fromDate(date),
       'notes': notes,
@@ -127,6 +135,7 @@ class ExpenseModel {
       id: id,
       description: description,
       amount: amount,
+      paidVia: paidVia,
       category: category,
       date: date,
       notes: notes,
