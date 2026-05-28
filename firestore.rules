@@ -190,7 +190,20 @@ service cloud.firestore {
       // Admin can manage petty cash
       allow read, write: if isAdmin() && isActiveUser();
     }
-    
+
+    // ==================== DAILY CLOSINGS COLLECTION ====================
+
+    match /daily_closings/{closingId} {
+      // Any active valid user (cashier/staff/admin) can read closings.
+      allow read: if isValidUser() && isActiveUser();
+
+      // Active valid users can create a closing (cashier closes, admin too).
+      allow create: if isValidUser() && isActiveUser();
+
+      // Closings are immutable once saved (audit record).
+      allow update, delete: if false;
+    }
+
     // ==================== USER LOGS COLLECTION ====================
     
     match /user_logs/{logId} {
