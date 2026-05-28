@@ -97,6 +97,9 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                   _row('Non-cash sales', draft.nonCashSales),
                   _row('Discounts', draft.totalDiscounts),
                   _rowText('Sales count', '${draft.salesCount}'),
+                  if (draft.salmonReceivable > 0)
+                    _row('Salmon receivable (next day)',
+                        draft.salmonReceivable),
                 ]),
                 const SizedBox(height: 16),
                 _section('Expenses', [
@@ -355,6 +358,8 @@ class _ClosedView extends ConsumerWidget {
             'Cash sales': closing.cashSales,
             'Non-cash sales': closing.nonCashSales,
             'Discounts': closing.totalDiscounts,
+            if (closing.salmonReceivable > 0)
+              'Salmon receivable': closing.salmonReceivable,
           }),
           const SizedBox(height: 16),
           _card(context, 'Expenses', {
