@@ -470,7 +470,13 @@ class SaleRepositoryImpl implements SaleRepository {
     double totalCost = 0;
     final byPaymentMethod = <PaymentMethod, double>{};
 
-    for (final method in PaymentMethod.values) {
+    // Seed only real tender buckets (never `mixed`, which is a label).
+    for (final method in const [
+      PaymentMethod.cash,
+      PaymentMethod.gcash,
+      PaymentMethod.maya,
+      PaymentMethod.salmon,
+    ]) {
       byPaymentMethod[method] = 0;
     }
 
@@ -479,8 +485,9 @@ class SaleRepositoryImpl implements SaleRepository {
       totalDiscounts += sale.totalDiscount;
       netAmount += sale.grandTotal;
       totalCost += sale.totalCost;
-      byPaymentMethod[sale.paymentMethod] =
-          (byPaymentMethod[sale.paymentMethod] ?? 0) + sale.grandTotal;
+      sale.effectiveTenders.forEach((method, amount) {
+        byPaymentMethod[method] = (byPaymentMethod[method] ?? 0) + amount;
+      });
     }
 
     return SalesSummary(

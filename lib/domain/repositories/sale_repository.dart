@@ -269,6 +269,9 @@ class SalesSummary {
   double get profitMargin =>
       netAmount > 0 ? (totalProfit / netAmount) * 100 : 0;
 
+  /// Total Salmon receivable (balance Salmon covers the next day). Not cash.
+  double get salmonReceivable => byPaymentMethod[PaymentMethod.salmon] ?? 0;
+
   const SalesSummary({
     required this.totalSalesCount,
     required this.voidedSalesCount,
