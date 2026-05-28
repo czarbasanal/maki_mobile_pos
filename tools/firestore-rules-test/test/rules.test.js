@@ -734,6 +734,70 @@ describe("/settings", () => {
 });
 
 // ===================================================================
+// /void_requests
+// ===================================================================
+describe("/void_requests", () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("void_requests").doc("vr-1").set({
+        saleId: "s-1", saleNumber: "SALE-0042", saleGrandTotal: 100,
+        requestedBy: USERS.cashier.uid, requestedByName: "cashier user",
+        requestedByRole: "cashier", reason: "wrong item", status: "pending",
+        read: false, createdAt: new Date(),
+      });
+    });
+  });
+
+  const newReq = (uid) => ({
+    saleId: "s-9", saleNumber: "SALE-0099", saleGrandTotal: 50,
+    requestedBy: uid, requestedByName: "x", requestedByRole: "cashier",
+    reason: "test reason", status: "pending", read: false, createdAt: new Date(),
+  });
+
+  it("cashier/staff can create their own pending request", async () => {
+    await assertSucceeds(
+      as("cashier").collection("void_requests").doc("c-1").set(newReq(USERS.cashier.uid)));
+    await assertSucceeds(
+      as("staff").collection("void_requests").doc("s-1b").set(newReq(USERS.staff.uid)));
+  });
+
+  it("cannot create a request as someone else", async () => {
+    await assertFails(
+      as("cashier").collection("void_requests").doc("c-2").set(newReq(USERS.staff.uid)));
+  });
+
+  it("cannot create a non-pending request", async () => {
+    const r = newReq(USERS.cashier.uid);
+    r.status = "approved";
+    await assertFails(
+      as("cashier").collection("void_requests").doc("c-3").set(r));
+  });
+
+  it("inactive user cannot create", async () => {
+    await assertFails(
+      as("inactiveStaff").collection("void_requests").doc("c-4").set(newReq(USERS.inactiveStaff.uid)));
+  });
+
+  it("active valid users can read", async () => {
+    await assertSucceeds(as("cashier").collection("void_requests").doc("vr-1").get());
+    await assertSucceeds(as("admin").collection("void_requests").doc("vr-1").get());
+  });
+
+  it("only admin can update (approve/reject/mark-read)", async () => {
+    await assertFails(
+      as("cashier").collection("void_requests").doc("vr-1").update({ read: true }));
+    await assertFails(
+      as("staff").collection("void_requests").doc("vr-1").update({ status: "approved" }));
+    await assertSucceeds(
+      as("admin").collection("void_requests").doc("vr-1").update({ status: "approved", read: true }));
+  });
+
+  it("no one can delete", async () => {
+    await assertFails(as("admin").collection("void_requests").doc("vr-1").delete());
+  });
+});
+
+// ===================================================================
 // Cross-cutting: unauthenticated + inactive
 // ===================================================================
 describe("cross-cutting", () => {

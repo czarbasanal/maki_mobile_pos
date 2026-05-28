@@ -260,5 +260,23 @@ service cloud.firestore {
       // Only admin can manage the void-reason list
       allow write: if isAdmin() && isActiveUser();
     }
+
+    // ==================== VOID REQUESTS COLLECTION ====================
+
+    match /void_requests/{requestId} {
+      // Any active valid user can read (pending indicator + admin queue).
+      allow read: if isValidUser() && isActiveUser();
+
+      // Requester creates their own pending request.
+      allow create: if isValidUser() && isActiveUser() &&
+        request.resource.data.requestedBy == request.auth.uid &&
+        request.resource.data.status == 'pending';
+
+      // Only admin resolves (approve/reject) or marks read.
+      allow update: if isAdmin() && isActiveUser();
+
+      // Audit trail — no deletes.
+      allow delete: if false;
+    }
   }
 }
