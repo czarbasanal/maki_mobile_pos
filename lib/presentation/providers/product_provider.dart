@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/domain/usecases/product/create_product_usecase.d
 import 'package:maki_mobile_pos/domain/usecases/product/deactivate_product_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/update_product_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/cost_code_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
@@ -152,6 +153,7 @@ final createProductUseCaseProvider = Provider<CreateProductUseCase>((ref) {
   return CreateProductUseCase(
     repository: ref.watch(productRepositoryProvider),
     logger: ref.watch(activityLoggerProvider),
+    costCodeRepository: ref.watch(costCodeRepositoryProvider),
   );
 });
 
