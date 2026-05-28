@@ -16,6 +16,7 @@ class SaleModel {
   final List<SaleItemModel> items;
   final DiscountType discountType;
   final PaymentMethod paymentMethod;
+  final Map<PaymentMethod, double> tenders;
   final double amountReceived;
   final double changeGiven;
   final SaleStatus status;
@@ -36,6 +37,7 @@ class SaleModel {
     required this.items,
     this.discountType = DiscountType.amount,
     required this.paymentMethod,
+    this.tenders = const {},
     required this.amountReceived,
     required this.changeGiven,
     this.status = SaleStatus.completed,
@@ -66,6 +68,7 @@ class SaleModel {
       items: items ?? [],
       discountType: DiscountType.fromString(map['discountType'] as String?),
       paymentMethod: PaymentMethod.fromString(map['paymentMethod'] as String?),
+      tenders: _parseTenders(map['tenders']),
       amountReceived: (map['amountReceived'] as num?)?.toDouble() ?? 0.0,
       changeGiven: (map['changeGiven'] as num?)?.toDouble() ?? 0.0,
       status: SaleStatus.fromString(map['status'] as String?),
@@ -111,6 +114,12 @@ class SaleModel {
       'voidedByName': voidedByName,
       'voidReason': voidReason,
     };
+
+    if (tenders.isNotEmpty) {
+      map['tenders'] = {
+        for (final e in tenders.entries) e.key.value: e.value,
+      };
+    }
 
     // Handle timestamps
     if (forCreate) {
@@ -166,6 +175,7 @@ class SaleModel {
       items: items.map((item) => item.toEntity()).toList(),
       discountType: discountType,
       paymentMethod: paymentMethod,
+      tenders: tenders,
       amountReceived: amountReceived,
       changeGiven: changeGiven,
       status: status,
@@ -191,6 +201,7 @@ class SaleModel {
           entity.items.map((item) => SaleItemModel.fromEntity(item)).toList(),
       discountType: entity.discountType,
       paymentMethod: entity.paymentMethod,
+      tenders: entity.tenders,
       amountReceived: entity.amountReceived,
       changeGiven: entity.changeGiven,
       status: entity.status,
@@ -230,6 +241,7 @@ class SaleModel {
     required List<SaleItemModel> items,
     DiscountType discountType = DiscountType.amount,
     required PaymentMethod paymentMethod,
+    Map<PaymentMethod, double> tenders = const {},
     required double amountReceived,
     required double changeGiven,
     required String cashierId,
@@ -243,6 +255,7 @@ class SaleModel {
       items: items,
       discountType: discountType,
       paymentMethod: paymentMethod,
+      tenders: tenders,
       amountReceived: amountReceived,
       changeGiven: changeGiven,
       status: SaleStatus.completed,
@@ -298,6 +311,7 @@ class SaleModel {
     List<SaleItemModel>? items,
     DiscountType? discountType,
     PaymentMethod? paymentMethod,
+    Map<PaymentMethod, double>? tenders,
     double? amountReceived,
     double? changeGiven,
     SaleStatus? status,
@@ -318,6 +332,7 @@ class SaleModel {
       items: items ?? this.items,
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
+      tenders: tenders ?? this.tenders,
       amountReceived: amountReceived ?? this.amountReceived,
       changeGiven: changeGiven ?? this.changeGiven,
       status: status ?? this.status,
@@ -335,6 +350,19 @@ class SaleModel {
   }
 
   // ==================== HELPER METHODS ====================
+
+  /// Parses a Firestore `tenders` map ({ '<method>': amount }) into a typed
+  /// map. Returns an empty map when absent (legacy sales).
+  static Map<PaymentMethod, double> _parseTenders(dynamic value) {
+    if (value is! Map) return const {};
+    final result = <PaymentMethod, double>{};
+    value.forEach((key, amount) {
+      if (key is String && amount is num) {
+        result[PaymentMethod.fromString(key)] = amount.toDouble();
+      }
+    });
+    return result;
+  }
 
   /// Parses a Firestore timestamp or ISO string to DateTime.
   static DateTime? _parseTimestamp(dynamic value) {
