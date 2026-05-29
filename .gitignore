@@ -9,7 +9,6 @@
 .buildlog/
 .history
 .svn/
-.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -25,7 +24,6 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -47,6 +45,4 @@ app.*.map.json
 
 # Firebase config (client keys — keep out of version control)
 lib/firebase_options.dart
-ios/Runner/GoogleService-Info.plist
-macos/Runner/GoogleService-Info.plist
 android/app/google-services.json
