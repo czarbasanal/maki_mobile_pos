@@ -39,8 +39,35 @@ final closeDayUseCaseProvider = Provider<CloseDayUseCase>((ref) {
 // ==================== QUERIES ====================
 
 /// Live, unsaved closing figures for [date]. Drives the review screen.
+///
+/// For **today** the figures are sourced from the same live providers the rest
+/// of the app uses — [todaysSalesSummaryProvider] (sales) and
+/// [expensesByDateRangeProvider] (expenses) — so the End-of-Day numbers always
+/// match the dashboard and refresh on the same triggers (checkout / void /
+/// expense edits). For a past date (not reached by the current UI) it falls
+/// back to the one-shot use case.
 final dailyClosingDraftProvider =
     FutureProvider.family<DailyClosingDraft, DateTime>((ref, date) async {
+  final dayStart = DateTime(date.year, date.month, date.day);
+  final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
+  final now = DateTime.now();
+  final isToday = dayStart == DateTime(now.year, now.month, now.day);
+
+  if (isToday) {
+    final summary = await ref.watch(todaysSalesSummaryProvider.future);
+    final expenses = await ref.watch(
+      expensesByDateRangeProvider(
+        ExpenseDateRangeParams(startDate: dayStart, endDate: dayEnd),
+      ).future,
+    );
+    return DailyClosingDraft.fromData(
+      businessDate: dayStart,
+      summary: summary,
+      expenses: expenses,
+    );
+  }
+
+  // Past day — compute once via the use case (enforces viewEndOfDay).
   final actor = ref.watch(currentUserProvider).valueOrNull;
   if (actor == null) {
     throw const UnauthenticatedException();
