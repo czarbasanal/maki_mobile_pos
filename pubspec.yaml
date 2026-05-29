@@ -76,10 +76,11 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: "ic_launcher"
-  image_path: "assets/icon/200x200_maki_app_icon_black.png"
+  image_path: "assets/icon/maki_app_icon_padded.png"
   min_sdk_android: 21
   adaptive_icon_background: "#121C1D"
   adaptive_icon_foreground: "assets/icon/200x200_maki_app_icon_transparent.png"
+  adaptive_icon_foreground_inset: 20
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
