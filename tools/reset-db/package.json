@@ -1,0 +1,19 @@
+{
+  "name": "maki-reset-db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Guarded Firestore reset — wipes transactional collections, keeps users + config.",
+  "scripts": {
+    "reset": "node reset.js",
+    "reset:dry": "node reset.js --dry-run",
+    "test:config": "mocha test/config.test.js --timeout 5000",
+    "test": "firebase emulators:exec --only firestore --project demo-maki-pos 'mocha --timeout 20000'"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.6.0",
+    "mocha": "^11.0.1"
+  }
+}
