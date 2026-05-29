@@ -15,6 +15,8 @@ class DailyClosingModel {
   final double totalExpenses;
   final double cashExpenses;
   final double salmonReceivable;
+  final double plateNoDp;
+  final double plateNoDelivery;
   final double openingFloat;
   final double expectedCash;
   final double countedCash;
@@ -39,6 +41,8 @@ class DailyClosingModel {
     required this.totalExpenses,
     required this.cashExpenses,
     required this.salmonReceivable,
+    this.plateNoDp = 0,
+    this.plateNoDelivery = 0,
     required this.openingFloat,
     required this.expectedCash,
     required this.countedCash,
@@ -73,6 +77,8 @@ class DailyClosingModel {
       totalExpenses: d('totalExpenses'),
       cashExpenses: d('cashExpenses'),
       salmonReceivable: d('salmonReceivable'),
+      plateNoDp: d('plateNoDp'),
+      plateNoDelivery: d('plateNoDelivery'),
       openingFloat: d('openingFloat'),
       expectedCash: d('expectedCash'),
       countedCash: d('countedCash'),
@@ -100,6 +106,8 @@ class DailyClosingModel {
       totalExpenses: e.totalExpenses,
       cashExpenses: e.cashExpenses,
       salmonReceivable: e.salmonReceivable,
+      plateNoDp: e.plateNoDp,
+      plateNoDelivery: e.plateNoDelivery,
       openingFloat: e.openingFloat,
       expectedCash: e.expectedCash,
       countedCash: e.countedCash,
@@ -126,6 +134,8 @@ class DailyClosingModel {
       'totalExpenses': totalExpenses,
       'cashExpenses': cashExpenses,
       'salmonReceivable': salmonReceivable,
+      'plateNoDp': plateNoDp,
+      'plateNoDelivery': plateNoDelivery,
       'openingFloat': openingFloat,
       'expectedCash': expectedCash,
       'countedCash': countedCash,
@@ -160,6 +170,8 @@ class DailyClosingModel {
       totalExpenses: totalExpenses,
       cashExpenses: cashExpenses,
       salmonReceivable: salmonReceivable,
+      plateNoDp: plateNoDp,
+      plateNoDelivery: plateNoDelivery,
       openingFloat: openingFloat,
       expectedCash: expectedCash,
       countedCash: countedCash,

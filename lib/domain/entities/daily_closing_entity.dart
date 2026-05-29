@@ -87,8 +87,16 @@ class DailyClosingDraft extends Equatable {
   }
 
   /// Expected drawer cash given an [openingFloat].
-  double expectedCashFor(double openingFloat) =>
-      openingFloat + cashSales - cashExpenses;
+  ///
+  /// Plate-number orders are settled in cash: the downpayment ([plateNoDp]) is
+  /// collected into the drawer, while the delivery fee ([plateNoDelivery]) is
+  /// paid out of it.
+  double expectedCashFor(
+    double openingFloat, {
+    double plateNoDp = 0,
+    double plateNoDelivery = 0,
+  }) =>
+      openingFloat + cashSales - cashExpenses + plateNoDp - plateNoDelivery;
 
   /// Variance given an [openingFloat] and a physical [countedCash].
   double varianceFor(double openingFloat, double countedCash) =>
@@ -129,6 +137,8 @@ class DailyClosingEntity extends Equatable {
   final double totalExpenses;
   final double cashExpenses;
   final double salmonReceivable;
+  final double plateNoDp;
+  final double plateNoDelivery;
   final double openingFloat;
   final double expectedCash;
   final double countedCash;
@@ -153,6 +163,8 @@ class DailyClosingEntity extends Equatable {
     required this.totalExpenses,
     required this.cashExpenses,
     required this.salmonReceivable,
+    this.plateNoDp = 0,
+    this.plateNoDelivery = 0,
     required this.openingFloat,
     required this.expectedCash,
     required this.countedCash,
@@ -179,6 +191,8 @@ class DailyClosingEntity extends Equatable {
         totalExpenses,
         cashExpenses,
         salmonReceivable,
+        plateNoDp,
+        plateNoDelivery,
         openingFloat,
         expectedCash,
         countedCash,

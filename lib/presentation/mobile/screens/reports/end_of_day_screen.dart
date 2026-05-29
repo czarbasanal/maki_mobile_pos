@@ -26,6 +26,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   final _formKey = GlobalKey<FormState>();
   final _floatController = TextEditingController();
   final _countedController = TextEditingController();
+  final _plateDpController = TextEditingController();
+  final _plateDeliveryController = TextEditingController();
   final _notesController = TextEditingController();
   bool _busy = false;
 
@@ -38,12 +40,17 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   void dispose() {
     _floatController.dispose();
     _countedController.dispose();
+    _plateDpController.dispose();
+    _plateDeliveryController.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
   double get _float => double.tryParse(_floatController.text) ?? 0;
   double? get _counted => double.tryParse(_countedController.text);
+  double get _plateDp => double.tryParse(_plateDpController.text) ?? 0;
+  double get _plateDelivery =>
+      double.tryParse(_plateDeliveryController.text) ?? 0;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +87,11 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (draft) {
-        final expected = draft.expectedCashFor(_float);
+        final expected = draft.expectedCashFor(
+          _float,
+          plateNoDp: _plateDp,
+          plateNoDelivery: _plateDelivery,
+        );
         final counted = _counted;
         final variance = counted == null ? null : counted - expected;
 
@@ -107,6 +118,32 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                 _section('Expenses', [
                   _row('Total expenses', draft.totalExpenses),
                   _row('Cash expenses', draft.cashExpenses),
+                ]),
+                const SizedBox(height: 16),
+                _section('Plate No Orders', [
+                  TextFormField(
+                    controller: _plateDpController,
+                    enabled: !_busy,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Plate No DP',
+                      prefixText: '₱ ',
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _plateDeliveryController,
+                    enabled: !_busy,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Plate No Delivery',
+                      prefixText: '₱ ',
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
                 ]),
                 const SizedBox(height: 16),
                 _section('Cash reconciliation', [
@@ -163,6 +200,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                   child: FilledButton(
                     onPressed: _busy ? null : _submit,
                     style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: _busy
@@ -213,6 +252,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
               date: _today,
               openingFloat: _float,
               countedCash: _counted ?? 0,
+              plateNoDp: _plateDp,
+              plateNoDelivery: _plateDelivery,
               notes: notes.isEmpty ? null : notes,
             );
     if (!mounted) return;
@@ -370,6 +411,13 @@ class _ClosedView extends ConsumerWidget {
             'Total expenses': closing.totalExpenses,
             'Cash expenses': closing.cashExpenses,
           }),
+          if (closing.plateNoDp > 0 || closing.plateNoDelivery > 0) ...[
+            const SizedBox(height: 16),
+            _card(context, 'Plate No Orders', {
+              'Plate No DP': closing.plateNoDp,
+              'Plate No Delivery': closing.plateNoDelivery,
+            }),
+          ],
           const SizedBox(height: 16),
           _card(context, 'Cash reconciliation', {
             'Opening float': closing.openingFloat,

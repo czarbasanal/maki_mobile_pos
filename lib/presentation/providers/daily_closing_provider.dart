@@ -120,6 +120,8 @@ class DailyClosingOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     required DateTime date,
     required double openingFloat,
     required double countedCash,
+    double plateNoDp = 0,
+    double plateNoDelivery = 0,
     String? notes,
   }) async {
     state = const AsyncValue.loading();
@@ -130,6 +132,8 @@ class DailyClosingOperationsNotifier extends StateNotifier<AsyncValue<void>> {
             date: date,
             openingFloat: openingFloat,
             countedCash: countedCash,
+            plateNoDp: plateNoDp,
+            plateNoDelivery: plateNoDelivery,
             notes: notes,
           );
       if (result.success) {

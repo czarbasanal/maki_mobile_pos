@@ -149,6 +149,31 @@ void main() {
     verify(() => logRepo.logActivity(any())).called(1);
   });
 
+  test('plate-no DP adds and delivery subtracts from expected cash', () async {
+    final captured = <DailyClosingEntity>[];
+    when(() => closings.saveClosing(any())).thenAnswer((inv) async {
+      final c = inv.positionalArguments.first as DailyClosingEntity;
+      captured.add(c);
+      return c;
+    });
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      date: DateTime(2026, 5, 28),
+      openingFloat: 2000,
+      countedCash: 0,
+      plateNoDp: 300,
+      plateNoDelivery: 50,
+    );
+
+    expect(result.success, true);
+    final saved = captured.single;
+    expect(saved.plateNoDp, 300);
+    expect(saved.plateNoDelivery, 50);
+    // 2000 float + 700 cash - 100 cash exp + 300 dp - 50 delivery = 2850
+    expect(saved.expectedCash, 2850);
+  });
+
   test('rejects when the day is already closed', () async {
     when(() => closings.getClosing(any()))
         .thenAnswer((_) async => _existingClosing());

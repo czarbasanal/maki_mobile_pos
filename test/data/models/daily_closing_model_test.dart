@@ -17,8 +17,10 @@ void main() {
       totalExpenses: 300,
       cashExpenses: 220,
       salmonReceivable: 600,
+      plateNoDp: 300,
+      plateNoDelivery: 50,
       openingFloat: 2000,
-      expectedCash: 2380, // 2000 + 600 - 220
+      expectedCash: 2630, // 2000 + 600 - 220 + 300 - 50
       countedCash: 2375,
       variance: -5,
       salesCount: 5,
@@ -39,9 +41,11 @@ void main() {
       expect(back.nonCashSales, 350);
       expect(back.cashExpenses, 220);
       expect(back.openingFloat, 2000);
-      expect(back.expectedCash, 2380);
+      expect(back.expectedCash, 2630);
       expect(back.countedCash, 2375);
       expect(back.variance, -5);
+      expect(back.plateNoDp, 300);
+      expect(back.plateNoDelivery, 50);
       expect(back.notes, 'short by 5');
       expect(back.closedByName, 'Cashier One');
     });
@@ -51,6 +55,8 @@ void main() {
       expect(model.grossSales, 0);
       expect(model.variance, 0);
       expect(model.salesCount, 0);
+      expect(model.plateNoDp, 0);
+      expect(model.plateNoDelivery, 0);
       expect(model.notes, isNull);
     });
   });

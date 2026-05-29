@@ -68,6 +68,7 @@ class QuickActions extends StatelessWidget {
             _QuickActionButton(
               icon: CupertinoIcons.money_dollar_circle,
               label: 'Close Day',
+              isDestructive: true,
               onTap: onCloseDay!,
             ),
         ],
@@ -85,6 +86,7 @@ class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isPrimary;
+  final bool isDestructive;
   final VoidCallback onTap;
 
   const _QuickActionButton({
@@ -92,6 +94,7 @@ class _QuickActionButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.isPrimary = false,
+    this.isDestructive = false,
   });
 
   @override
@@ -101,11 +104,22 @@ class _QuickActionButton extends StatelessWidget {
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
-    final fg = isPrimary
-        ? theme.colorScheme.onPrimary
-        : theme.colorScheme.onSurface;
-    final bg = isPrimary ? theme.colorScheme.primary : Colors.transparent;
-    final border = isPrimary ? theme.colorScheme.primary : hairline;
+    final Color fg;
+    final Color bg;
+    final Color border;
+    if (isDestructive) {
+      fg = AppColors.error;
+      bg = Colors.transparent;
+      border = AppColors.error;
+    } else if (isPrimary) {
+      fg = theme.colorScheme.onPrimary;
+      bg = theme.colorScheme.primary;
+      border = theme.colorScheme.primary;
+    } else {
+      fg = theme.colorScheme.onSurface;
+      bg = Colors.transparent;
+      border = hairline;
+    }
 
     return Padding(
       padding: const EdgeInsets.only(right: AppSpacing.sm + 4),

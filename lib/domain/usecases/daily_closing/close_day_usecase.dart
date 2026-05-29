@@ -37,6 +37,8 @@ class CloseDayUseCase {
     required DateTime date,
     required double openingFloat,
     required double countedCash,
+    double plateNoDp = 0,
+    double plateNoDelivery = 0,
     String? notes,
   }) async {
     try {
@@ -69,7 +71,11 @@ class CloseDayUseCase {
         summary: summary,
         expenses: expenses,
       );
-      final expectedCash = draft.expectedCashFor(openingFloat);
+      final expectedCash = draft.expectedCashFor(
+        openingFloat,
+        plateNoDp: plateNoDp,
+        plateNoDelivery: plateNoDelivery,
+      );
       final variance = countedCash - expectedCash;
       final id = DailyClosingRepositoryImpl.docIdFor(dayStart);
 
@@ -86,6 +92,8 @@ class CloseDayUseCase {
         totalExpenses: draft.totalExpenses,
         cashExpenses: draft.cashExpenses,
         salmonReceivable: draft.salmonReceivable,
+        plateNoDp: plateNoDp,
+        plateNoDelivery: plateNoDelivery,
         openingFloat: openingFloat,
         expectedCash: expectedCash,
         countedCash: countedCash,

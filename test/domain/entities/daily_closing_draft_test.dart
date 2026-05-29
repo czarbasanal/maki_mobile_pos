@@ -156,5 +156,31 @@ void main() {
       // 2000 float + 600 cash sales - 100 cash expenses = 2500
       expect(draft.expectedCashFor(2000), 2500);
     });
+
+    test('plate-no DP adds to and delivery subtracts from expected cash', () {
+      const summary = SalesSummary(
+        totalSalesCount: 1,
+        voidedSalesCount: 0,
+        grossAmount: 600,
+        totalDiscounts: 0,
+        netAmount: 600,
+        totalCost: 0,
+        totalProfit: 600,
+        byPaymentMethod: {PaymentMethod.cash: 600},
+      );
+      final draft = DailyClosingDraft.fromData(
+        businessDate: DateTime(2026, 5, 28),
+        summary: summary,
+        expenses: [_exp(100, PaymentMethod.cash)],
+      );
+
+      // 2000 float + 600 cash - 100 cash exp + 300 dp - 50 delivery = 2750
+      expect(
+        draft.expectedCashFor(2000, plateNoDp: 300, plateNoDelivery: 50),
+        2750,
+      );
+      // Defaults leave the base reconciliation unchanged.
+      expect(draft.expectedCashFor(2000), 2500);
+    });
   });
 }
