@@ -12,14 +12,14 @@ const WIPE_COLLECTIONS = [
   'daily_closings',
   'void_requests',
   'user_logs',
+  'products', // includes the `price_history` subcollection (recursiveDelete)
+  'suppliers',
 ];
 
 /** Documented for clarity + guard tests. Never referenced for deletion. */
 const KEEP_COLLECTIONS = [
   'users',
   'settings',
-  'products', // includes the `price_history` subcollection
-  'suppliers',
   'product_categories',
   'expense_categories',
   'units',

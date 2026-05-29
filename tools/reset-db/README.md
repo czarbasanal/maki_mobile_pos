@@ -7,10 +7,11 @@ Resets the MAKI Firestore database to a clean operational state.
 ## What it does
 
 **Wipes** (and their subcollections): `sales` (+`items`), `drafts`, `receivings`,
-`expenses`, `daily_closings`, `void_requests`, `user_logs`.
+`expenses`, `daily_closings`, `void_requests`, `user_logs`, `products` (+`price_history`),
+`suppliers`.
 
-**Keeps** (never touched): `users`, `settings`, `products` (+`price_history`),
-`suppliers`, `product_categories`, `expense_categories`, `units`, `void_reasons`.
+**Keeps** (never touched): `users`, `settings`, `product_categories`,
+`expense_categories`, `units`, `void_reasons`.
 
 ## Setup
 

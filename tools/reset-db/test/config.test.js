@@ -6,7 +6,7 @@ const {
 } = require('../lib/config');
 
 describe('reset-db config', () => {
-  it('WIPE_COLLECTIONS is exactly the transactional set', () => {
+  it('WIPE_COLLECTIONS is exactly the expected set (incl. catalog)', () => {
     assert.deepStrictEqual(WIPE_COLLECTIONS, [
       'sales',
       'drafts',
@@ -15,6 +15,8 @@ describe('reset-db config', () => {
       'daily_closings',
       'void_requests',
       'user_logs',
+      'products',
+      'suppliers',
     ]);
   });
 
@@ -23,8 +25,15 @@ describe('reset-db config', () => {
     assert.deepStrictEqual(overlap, []);
   });
 
-  it('never wipes users, settings, or products', () => {
-    for (const safe of ['users', 'settings', 'products']) {
+  it('never wipes users or settings, but keeps the managed lists', () => {
+    for (const safe of [
+      'users',
+      'settings',
+      'product_categories',
+      'expense_categories',
+      'units',
+      'void_reasons',
+    ]) {
       assert.ok(!WIPE_COLLECTIONS.includes(safe), `${safe} must not be wiped`);
       assert.ok(KEEP_COLLECTIONS.includes(safe), `${safe} must be kept`);
     }
