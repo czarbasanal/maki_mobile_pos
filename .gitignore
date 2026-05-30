@@ -46,3 +46,10 @@ app.*.map.json
 # Firebase config (client keys — keep out of version control)
 lib/firebase_options.dart
 android/app/google-services.json
+
+# Dropped platforms (commit 11a7338 — target Android + web only). Ignored so a
+# stray `flutter create .` can't re-add them or clutter `git status`.
+/ios/
+/macos/
+/linux/
+/windows/
