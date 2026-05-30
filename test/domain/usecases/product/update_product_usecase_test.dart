@@ -178,17 +178,106 @@ void main() {
       expect(result.errorMessage, contains('costCode'));
     });
 
-    test('cashier denied (no edit permission at all)', () async {
+    test('cashier CAN change name (name-only tier)', () async {
       final original = _product();
       when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
 
       final result = await useCase.execute(
         actor: _user(UserRole.cashier),
-        product: original.copyWith(name: 'Hacked'),
+        product: original.copyWith(name: 'Renamed by cashier'),
+      );
+
+      expect(result.success, true);
+    });
+
+    test('cashier CANNOT change sku', () async {
+      final original = _product();
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.cashier),
+        product: original.copyWith(sku: 'CASH-NEW'),
       );
 
       expect(result.success, false);
-      expect(result.errorCode, 'permission-denied');
+      expect(result.errorCode, 'restricted-fields');
+      expect(result.errorMessage, contains('sku'));
+      verifyNever(() => repo.updateProduct(
+            product: any(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          ));
+    });
+
+    test('staff CANNOT change sku', () async {
+      final original = _product();
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.staff),
+        product: original.copyWith(sku: 'STAFF-NEW'),
+      );
+
+      expect(result.success, false);
+      expect(result.errorCode, 'restricted-fields');
+      expect(result.errorMessage, contains('sku'));
+    });
+
+    test('admin can change sku; old sku preserved as barcode alias', () async {
+      final original = _product(); // sku: SKU-001
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
+      when(() => repo.skuExists(sku: 'SKU-NEW', excludeProductId: 'p-1'))
+          .thenAnswer((_) async => false);
+      when(() => repo.getSkuVariations('SKU-001'))
+          .thenAnswer((_) async => <ProductEntity>[]);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        product: original.copyWith(sku: 'SKU-NEW'),
+      );
+
+      expect(result.success, true);
+      final captured = verify(() => repo.updateProduct(
+            product: captureAny(named: 'product'),
+            updatedBy: 'u-admin',
+            updatedByName: 'admin user',
+          )).captured;
+      final saved = captured.single as ProductEntity;
+      expect(saved.sku, 'SKU-NEW');
+      expect(saved.barcodes, contains('SKU-001'));
+    });
+
+    test('admin SKU change rejected when new SKU already exists', () async {
+      final original = _product();
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
+      when(() => repo.skuExists(sku: 'DUPE', excludeProductId: 'p-1'))
+          .thenAnswer((_) async => true);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        product: original.copyWith(sku: 'DUPE'),
+      );
+
+      expect(result.success, false);
+      expect(result.errorCode, 'duplicate-sku');
+      verifyNever(() => repo.updateProduct(
+            product: any(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          ));
+    });
+
+    test('admin SKU change rejected when new SKU format is invalid', () async {
+      final original = _product();
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        product: original.copyWith(sku: 'bad sku!'),
+      );
+
+      expect(result.success, false);
+      expect(result.errorCode, 'invalid-sku');
     });
 
     test('returns not-found for missing product', () async {

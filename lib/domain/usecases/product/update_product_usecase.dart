@@ -1,6 +1,7 @@
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/product_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
@@ -55,10 +56,13 @@ class UpdateProductUseCase {
         );
       }
 
+      final skuChanged = product.sku != original.sku;
+
       // If only the limited permission is held, reject any change to the
-      // restricted columns.
+      // restricted columns. SKU is admin-only, so it belongs here too.
       if (!hasFullEdit && hasLimitedEdit) {
         final changed = <String>[];
+        if (skuChanged) changed.add('sku');
         if (product.price != original.price) changed.add('price');
         if (product.cost != original.cost) changed.add('cost');
         if (product.costCode != original.costCode) changed.add('costCode');
@@ -74,7 +78,7 @@ class UpdateProductUseCase {
       // Cashier (name-only tier) may change only name and imageUrl.
       if (!hasFullEdit && !hasLimitedEdit && hasNameOnlyEdit) {
         final changed = <String>[];
-        if (product.sku != original.sku) changed.add('sku');
+        if (skuChanged) changed.add('sku');
         if (product.costCode != original.costCode) changed.add('costCode');
         if (product.cost != original.cost) changed.add('cost');
         if (product.price != original.price) changed.add('price');
@@ -98,21 +102,64 @@ class UpdateProductUseCase {
         }
       }
 
+      // Admin SKU change: validate format + uniqueness, keep the old SKU
+      // scannable (append to barcodes), and count the variation children the
+      // repository will re-point to the new SKU (for the audit log).
+      var productToSave = product;
+      var relinkedVariations = 0;
+      if (hasFullEdit && skuChanged) {
+        if (!SkuGenerator.isValidSku(product.sku)) {
+          return const UseCaseResult.failure(
+            message:
+                'SKU may contain only letters, numbers, and hyphens (max 50 characters).',
+            code: 'invalid-sku',
+          );
+        }
+        final duplicate = await _repository.skuExists(
+          sku: product.sku,
+          excludeProductId: product.id,
+        );
+        if (duplicate) {
+          return UseCaseResult.failure(
+            message: 'Another product already uses SKU "${product.sku}".',
+            code: 'duplicate-sku',
+          );
+        }
+        final barcodes = List<String>.of(product.barcodes);
+        if (!barcodes.contains(original.sku)) barcodes.add(original.sku);
+        productToSave = product.copyWith(barcodes: barcodes);
+
+        final group = await _repository.getSkuVariations(original.sku);
+        relinkedVariations =
+            group.where((p) => p.baseSku == original.sku).length;
+      }
+
       final updated = await _repository.updateProduct(
-        product: product,
+        product: productToSave,
         updatedBy: actor.id,
         updatedByName: actor.displayName,
       );
 
       await _logger.log(
         type: ActivityType.inventory,
-        action: 'Updated product: ${updated.name}',
-        details: 'SKU ${updated.sku}',
+        action: skuChanged
+            ? 'Changed SKU: ${original.sku} → ${updated.sku}'
+            : 'Updated product: ${updated.name}',
+        details: skuChanged
+            ? '${updated.name}${relinkedVariations > 0 ? ' · relinked $relinkedVariations variation(s)' : ''}'
+            : 'SKU ${updated.sku}',
         userId: actor.id,
         userName: actor.displayName,
         userRole: actor.role.value,
         entityId: updated.id,
         entityType: 'product',
+        metadata: skuChanged
+            ? {
+                'oldSku': original.sku,
+                'newSku': updated.sku,
+                'relinkedVariations': relinkedVariations,
+              }
+            : null,
       );
 
       return UseCaseResult.successData(updated);
