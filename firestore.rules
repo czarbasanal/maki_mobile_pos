@@ -80,9 +80,11 @@ service cloud.firestore {
       // Admin can update any product field
       allow update: if isAdmin() && isActiveUser();
 
-      // Staff can update product fields EXCEPT price, cost, and costCode
+      // Staff can update product fields EXCEPT sku, price, cost, and costCode
+      // (SKU edits are admin-only). Unchanged values never appear in
+      // affectedKeys(), so a staff edit that leaves sku alone still passes.
       allow update: if hasRole('staff') && isActiveUser() &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['price', 'cost', 'costCode']);
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['sku', 'price', 'cost', 'costCode']);
 
       // Cashier can update name + imageUrl. Denylist is intentionally
       // limited to **non-nullable** fields (sku, costCode, cost, price,

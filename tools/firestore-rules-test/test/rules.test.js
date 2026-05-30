@@ -226,6 +226,18 @@ describe("/products", () => {
     );
   });
 
+  it("staff CANNOT change sku", async () => {
+    await assertFails(
+      as("staff").collection("products").doc("p-1").update({ sku: "NEW-SKU" })
+    );
+  });
+
+  it("admin CAN change sku", async () => {
+    await assertSucceeds(
+      as("admin").collection("products").doc("p-1").update({ sku: "NEW-SKU" })
+    );
+  });
+
   it("staff CAN update name + reorder level + supplier", async () => {
     await assertSucceeds(
       as("staff").collection("products").doc("p-1").update({
