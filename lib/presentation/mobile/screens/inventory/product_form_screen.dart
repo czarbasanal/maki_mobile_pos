@@ -168,8 +168,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         (userRole == UserRole.staff && isCreating);
     final bool canEditCost = userRole == UserRole.admin;
     final bool canViewCost = userRole == UserRole.admin;
-    final bool canEditSku =
-        !widget.isEditing; // SKU never editable after creation
+    // Admin may edit the SKU of an existing product; anyone who can create may
+    // set it at create time. Staff/cashier keep the SKU locked once a product
+    // exists.
+    final bool canEditSku = isCreating || userRole == UserRole.admin;
+    // The Auto/Manual generator is a create-time convenience only; on edit the
+    // admin types the SKU directly.
+    final bool skuFieldEnabled = isCreating
+        ? (canEditSku && !_autoGenerateSku)
+        : (userRole == UserRole.admin);
     final bool canSelectSupplier = userRole == UserRole.admin;
     // Cashier can reach the edit form but may only change the product name.
     final bool isNameOnly = userRole == UserRole.cashier;
@@ -309,9 +316,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       ),
                     ),
 
-                    // SKU — Auto/Manual toggle is create-only; on edit the
-                    // SKU is read-only (sale + receiving variation refs).
-                    if (canEditSku)
+                    // SKU — Auto/Manual generator is create-only. On edit the
+                    // field is editable for admins (history-safe; old code is
+                    // kept scannable) and read-only for everyone else.
+                    if (isCreating)
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         dense: true,
@@ -340,17 +348,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       decoration: InputDecoration(
                         labelText: 'SKU *',
                         prefixIcon: const Icon(CupertinoIcons.qrcode),
-                        suffixIcon: (canEditSku && _autoGenerateSku)
+                        helperText: (!isCreating && userRole == UserRole.admin)
+                            ? 'Changing the SKU keeps past sales & receiving '
+                                'history intact and keeps the old code scannable.'
+                            : null,
+                        suffixIcon: (isCreating && _autoGenerateSku)
                             ? IconButton(
                                 tooltip: 'Regenerate',
-                                icon: const Icon(CupertinoIcons.arrow_2_circlepath),
+                                icon: const Icon(
+                                    CupertinoIcons.arrow_2_circlepath),
                                 onPressed: _regenerateSku,
                               )
                             : null,
                       ),
-                      enabled: canEditSku && !_autoGenerateSku,
-                      validator: (value) =>
-                          value?.isEmpty == true ? 'SKU is required' : null,
+                      enabled: skuFieldEnabled,
+                      validator: (value) {
+                        final v = value?.trim() ?? '';
+                        if (v.isEmpty) return 'SKU is required';
+                        if (!SkuGenerator.isValidSku(v)) {
+                          return 'Use only letters, numbers, and hyphens (max 50)';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -711,6 +730,51 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     });
   }
 
+  /// Confirms a consequential SKU change before saving. Returns true when the
+  /// admin chooses to proceed.
+  Future<bool?> _confirmSkuChange({
+    required String oldSku,
+    required String newSku,
+    required int variationCount,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Change SKU?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$oldSku  →  $newSku',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              '• Past sales and receiving records keep their original SKU.',
+            ),
+            const Text('• The old SKU stays scannable (added to barcodes).'),
+            if (variationCount > 0)
+              Text(
+                '• $variationCount linked variation(s) will be re-pointed to '
+                'the new SKU.',
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Change SKU'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _confirmDelete() async {
     final product = _existingProduct;
     if (product == null) return;
@@ -781,6 +845,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         // ==================== UPDATE LOGIC ====================
         if (userRole == UserRole.admin) {
           // Admin: full update including price and cost
+
+          // A SKU change is consequential — confirm it (and surface how many
+          // variation links will be re-pointed) before saving.
+          final newSku = _skuController.text.trim();
+          final skuChanged = newSku != _existingProduct!.sku;
+          if (skuChanged) {
+            final childCount = await ref
+                .read(productVariationChildrenCountProvider(
+                        _existingProduct!.sku)
+                    .future)
+                .catchError((_) => 0);
+            if (!mounted) return;
+            final confirmed = await _confirmSkuChange(
+              oldSku: _existingProduct!.sku,
+              newSku: newSku,
+              variationCount: childCount,
+            );
+            // Returning here triggers the `finally` block, which resets the
+            // saving spinner.
+            if (confirmed != true) return;
+          }
+
           final costValue = double.tryParse(_costController.text) ?? 0.0;
           final costCode = ref.read(encodeCostProvider(costValue));
 
@@ -824,6 +910,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           }
 
           final product = _existingProduct!.copyWith(
+            sku: newSku,
             name: _nameController.text.trim(),
             costCode: costCode,
             cost: costValue,
