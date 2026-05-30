@@ -9,9 +9,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -350,8 +348,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                         prefixText: '₱ ',
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
                             RegExp(r'^\d*\.?\d{0,2}')),
@@ -403,7 +401,9 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
       child: Row(
         children: [
           Icon(
-            isIncrease ? CupertinoIcons.arrow_up_right : CupertinoIcons.arrow_down_right,
+            isIncrease
+                ? CupertinoIcons.arrow_up_right
+                : CupertinoIcons.arrow_down_right,
             color: isIncrease ? Colors.orange[700] : Colors.blue[700],
             size: 20,
           ),

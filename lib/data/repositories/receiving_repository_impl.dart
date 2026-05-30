@@ -4,7 +4,6 @@ import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/models/price_history_model.dart';
 import 'package:maki_mobile_pos/data/models/receiving_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/receiving_repository.dart';
 

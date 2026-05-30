@@ -10,7 +10,6 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -170,8 +169,7 @@ class ReceivingScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(10),
@@ -209,11 +207,17 @@ class ReceivingScreen extends ConsumerWidget {
   (Color, Color, IconData) _statusVisuals(ReceivingStatus status) {
     switch (status) {
       case ReceivingStatus.completed:
-        return (Colors.green[50]!, Colors.green[700]!,
-            CupertinoIcons.checkmark_circle);
+        return (
+          Colors.green[50]!,
+          Colors.green[700]!,
+          CupertinoIcons.checkmark_circle
+        );
       case ReceivingStatus.draft:
-        return (Colors.orange[50]!, Colors.orange[700]!,
-            CupertinoIcons.square_pencil);
+        return (
+          Colors.orange[50]!,
+          Colors.orange[700]!,
+          CupertinoIcons.square_pencil
+        );
       case ReceivingStatus.cancelled:
         return (Colors.grey[200]!, Colors.grey[700]!, CupertinoIcons.xmark);
     }
