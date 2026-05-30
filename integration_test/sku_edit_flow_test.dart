@@ -88,6 +88,13 @@ void main() {
         (inv) async => inv.namedArguments[#product] as ProductEntity);
     when(() => logRepo.logActivity(any()))
         .thenAnswer((inv) async => inv.positionalArguments.first);
+    // After a save the form invalidates the product list providers, which
+    // re-subscribe to these streams — stub them so the (unstubbed-by-default)
+    // mock doesn't throw during the post-save refresh.
+    when(() => repo.watchProducts())
+        .thenAnswer((_) => Stream.value(<ProductEntity>[]));
+    when(() => repo.watchLowStockProducts())
+        .thenAnswer((_) => Stream.value(<ProductEntity>[]));
   });
 
   testWidgets('admin edits a SKU end-to-end: confirm dialog then save',
@@ -140,7 +147,16 @@ void main() {
     // Change the SKU and submit.
     await tester.enterText(skuField, 'SKU-NEW');
     await tester.pump();
-    await tester.ensureVisible(find.text('Update Product'));
+    // Dismiss the keyboard and scroll the submit button fully into view so the
+    // tap lands reliably across device sizes — on a real device `ensureVisible`
+    // can leave the button at the screen edge / under the keyboard.
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Update Product'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Update Product'));
     await tester.pump();
@@ -170,8 +186,8 @@ void main() {
     // Old SKU kept as a scan alias.
     expect(saved.barcodes, contains('SKU-001'));
 
-    // Flush the success snackbar's timer so the test ends cleanly.
-    await tester.pumpAndSettle(const Duration(seconds: 5));
+    // Settle the post-save navigation + snackbar animation.
+    await tester.pumpAndSettle();
     expect(find.text('inventory'), findsOneWidget);
   });
 }
