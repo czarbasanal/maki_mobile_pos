@@ -53,6 +53,16 @@ final productByBarcodeProvider =
   return repository.getProductByBarcode(barcode);
 });
 
+/// Number of variation children linked to [parentSku] (docs whose `baseSku`
+/// equals [parentSku]). Used to warn an admin before a SKU change re-points
+/// them to the new SKU.
+final productVariationChildrenCountProvider =
+    FutureProvider.family<int, String>((ref, parentSku) async {
+  final repository = ref.watch(productRepositoryProvider);
+  final group = await repository.getSkuVariations(parentSku);
+  return group.where((p) => p.baseSku == parentSku).length;
+});
+
 /// Provides product search results (Firestore query).
 final productSearchProvider =
     FutureProvider.family<List<ProductEntity>, String>((ref, query) async {
