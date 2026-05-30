@@ -1,18 +1,14 @@
-import 'package:uuid/uuid.dart';
-
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
 import 'package:maki_mobile_pos/core/utils/batch_import.dart';
-import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/cost_code_entity.dart';
-import 'package:maki_mobile_pos/domain/entities/product_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/receiving_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
-import 'package:maki_mobile_pos/domain/usecases/product/create_product_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/receiving/complete_receiving_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/receiving/receiving_import_resolver.dart';
 
 /// Orchestrates the receiving batch-import flow.
 ///
@@ -35,19 +31,16 @@ import 'package:maki_mobile_pos/domain/usecases/receiving/complete_receiving_use
 ///    history, and writes the audit log.
 class BatchImportReceivingUseCase {
   final ReceivingRepository _receivingRepository;
-  final CreateProductUseCase _createProductUseCase;
+  final ReceivingImportResolver _resolver;
   final CompleteReceivingUseCase _completeReceivingUseCase;
-  final Uuid _uuid;
 
   BatchImportReceivingUseCase({
     required ReceivingRepository receivingRepository,
-    required CreateProductUseCase createProductUseCase,
+    required ReceivingImportResolver resolver,
     required CompleteReceivingUseCase completeReceivingUseCase,
-    Uuid? uuid,
   })  : _receivingRepository = receivingRepository,
-        _createProductUseCase = createProductUseCase,
-        _completeReceivingUseCase = completeReceivingUseCase,
-        _uuid = uuid ?? const Uuid();
+        _resolver = resolver,
+        _completeReceivingUseCase = completeReceivingUseCase;
 
   /// Runs the import. Failure modes:
   /// - `Permission.bulkReceive`/`receiveStock` missing → permission error.
@@ -70,86 +63,22 @@ class BatchImportReceivingUseCase {
       assertPermission(actor, Permission.bulkReceive);
       assertPermission(actor, Permission.receiveStock);
 
-      final hasNewProducts = classified.whereType<NewProductRow>().isNotEmpty;
-      if (hasNewProducts) {
-        assertPermission(actor, Permission.addProduct);
-      }
-
       if (classified.isEmpty) {
         return UseCaseResult.failure(
           message: 'No rows to import.',
         );
       }
 
-      // Step 2: materialize new products. Track by row number so step 3
-      // can join them back without relying on identity.
-      final createdByRow = <int, ProductEntity>{};
-      for (final c in classified) {
-        if (c is! NewProductRow) continue;
-        final row = c.row;
-        final sku = row.autoGenerateSku
-            ? SkuGenerator.generateForName(row.name)
-            : row.sku;
-
-        final candidate = ProductEntity(
-          id: '',
-          sku: sku,
-          name: row.name,
-          costCode: costCodeMapping.encode(row.cost),
-          cost: row.cost,
-          price: row.price,
-          quantity: 0,
-          reorderLevel: row.reorderLevel,
-          unit: row.unit,
-          supplierId: supplierId,
-          supplierName: supplierName,
-          isActive: true,
-          createdAt: DateTime.now(),
-          category: row.category,
-        );
-
-        final result = await _createProductUseCase.execute(
-          actor: actor,
-          product: candidate,
-        );
-        if (!result.success || result.data == null) {
-          return UseCaseResult.failure(
-            message:
-                'Could not create product for row ${row.rowNumber} (${row.name}): '
-                '${result.errorMessage ?? "unknown error"}',
-          );
-        }
-        createdByRow[row.rowNumber] = result.data!;
-      }
-
-      // Step 3: build receiving items.
-      final items = <ReceivingItemEntity>[];
-      for (final c in classified) {
-        final row = c.row;
-        final ProductEntity targetProduct;
-        if (c is ExistingMatchRow) {
-          targetProduct = c.existing;
-        } else if (c is CostMismatchRow) {
-          targetProduct = c.existing;
-        } else if (c is NewProductRow) {
-          targetProduct = createdByRow[row.rowNumber]!;
-        } else {
-          // Defensive — classification base class is open in case more
-          // subclasses are added; an unknown subclass should fail loudly.
-          throw StateError('Unknown ClassifiedRow subtype: ${c.runtimeType}');
-        }
-
-        items.add(ReceivingItemEntity(
-          id: _uuid.v4(),
-          productId: targetProduct.id,
-          sku: targetProduct.sku,
-          name: targetProduct.name,
-          quantity: row.quantity,
-          unit: row.unit.isEmpty ? targetProduct.unit : row.unit,
-          unitCost: row.cost,
-          costCode: costCodeMapping.encode(row.cost),
-        ));
-      }
+      // Steps 2–3: create new products + build items (shared resolver, which
+      // also asserts addProduct when new-product rows are present).
+      final resolved = await _resolver.resolve(
+        actor: actor,
+        classified: classified,
+        costCodeMapping: costCodeMapping,
+        supplierId: supplierId,
+        supplierName: supplierName,
+      );
+      final items = resolved.items;
 
       // Step 4: persist draft.
       final referenceNumber =

@@ -12,6 +12,7 @@ import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/create_product_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/receiving/batch_import_receiving_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/receiving/complete_receiving_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/receiving/receiving_import_resolver.dart';
 
 class _MockReceivingRepository extends Mock implements ReceivingRepository {}
 
@@ -107,7 +108,7 @@ void main() {
     mapping = CostCodeEntity.defaultMapping();
     useCase = BatchImportReceivingUseCase(
       receivingRepository: receivingRepo,
-      createProductUseCase: createProduct,
+      resolver: ReceivingImportResolver(createProductUseCase: createProduct),
       completeReceivingUseCase: completeReceiving,
     );
 
