@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_list_tile.dart';
+import 'package:maki_mobile_pos/presentation/providers/cost_code_provider.dart';
 
 void main() {
   final testProduct = ProductEntity(
@@ -23,12 +25,14 @@ void main() {
   group('ProductListTile', () {
     testWidgets('displays product information', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProductListTile(
-              product: testProduct,
-              showCost: false,
-              onTap: () {},
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProductListTile(
+                product: testProduct,
+                showCost: false,
+                onTap: () {},
+              ),
             ),
           ),
         ),
@@ -40,30 +44,43 @@ void main() {
     });
 
     testWidgets('shows cost code when showCost is false', (tester) async {
+      // CostCodePill encodes the live cost via the active mapping (it does
+      // not echo the stored costCode string), so seed the mapping to get a
+      // deterministic code instead of the loading placeholder.
+      final mapping = CostCodeEntity.defaultMapping();
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProductListTile(
-              product: testProduct,
-              showCost: false,
-              onTap: () {},
+        ProviderScope(
+          overrides: [
+            costCodeMappingProvider.overrideWith((ref) => mapping),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProductListTile(
+                product: testProduct,
+                showCost: false,
+                onTap: () {},
+              ),
             ),
           ),
         ),
       );
+      await tester.pump();
 
-      expect(find.text('NBF'), findsOneWidget);
       expect(find.byIcon(CupertinoIcons.lock), findsOneWidget);
+      // cost 60 -> "ZS" under the default mapping (6->Z, 0->S).
+      expect(find.text(mapping.encode(testProduct.cost)), findsOneWidget);
     });
 
     testWidgets('shows actual cost when showCost is true', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProductListTile(
-              product: testProduct,
-              showCost: true,
-              onTap: () {},
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProductListTile(
+                product: testProduct,
+                showCost: true,
+                onTap: () {},
+              ),
             ),
           ),
         ),
@@ -76,12 +93,14 @@ void main() {
       final lowStockProduct = testProduct.copyWith(quantity: 5);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProductListTile(
-              product: lowStockProduct,
-              showCost: false,
-              onTap: () {},
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProductListTile(
+                product: lowStockProduct,
+                showCost: false,
+                onTap: () {},
+              ),
             ),
           ),
         ),

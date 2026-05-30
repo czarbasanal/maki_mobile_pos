@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -21,14 +22,16 @@ void main() {
   group('CartItemTile', () {
     testWidgets('displays item information correctly', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CartItemTile(
-              item: testItem,
-              discountType: DiscountType.amount,
-              onQuantityChanged: (_) {},
-              onDiscountTap: () {},
-              onRemove: () {},
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: CartItemTile(
+                item: testItem,
+                discountType: DiscountType.amount,
+                onQuantityChanged: (_) {},
+                onDiscountTap: () {},
+                onRemove: () {},
+              ),
             ),
           ),
         ),
@@ -44,14 +47,16 @@ void main() {
       int? newQuantity;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CartItemTile(
-              item: testItem,
-              discountType: DiscountType.amount,
-              onQuantityChanged: (qty) => newQuantity = qty,
-              onDiscountTap: () {},
-              onRemove: () {},
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: CartItemTile(
+                item: testItem,
+                discountType: DiscountType.amount,
+                onQuantityChanged: (qty) => newQuantity = qty,
+                onDiscountTap: () {},
+                onRemove: () {},
+              ),
             ),
           ),
         ),
@@ -67,14 +72,16 @@ void main() {
       bool removed = false;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CartItemTile(
-              item: testItem,
-              discountType: DiscountType.amount,
-              onQuantityChanged: (_) {},
-              onDiscountTap: () {},
-              onRemove: () => removed = true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: CartItemTile(
+                item: testItem,
+                discountType: DiscountType.amount,
+                onQuantityChanged: (_) {},
+                onDiscountTap: () {},
+                onRemove: () => removed = true,
+              ),
             ),
           ),
         ),
@@ -88,14 +95,16 @@ void main() {
 
     testWidgets('shows discount badge when discount applied', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CartItemTile(
-              item: testItem,
-              discountType: DiscountType.amount,
-              onQuantityChanged: (_) {},
-              onDiscountTap: () {},
-              onRemove: () {},
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: CartItemTile(
+                item: testItem,
+                discountType: DiscountType.amount,
+                onQuantityChanged: (_) {},
+                onDiscountTap: () {},
+                onRemove: () {},
+              ),
             ),
           ),
         ),
