@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/batch_import.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/import_preview.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -197,11 +198,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
   }
 
   Widget _buildPreview() {
-    final classified = _classified ?? const [];
-    final parseErrors = _parseResult?.errors ?? const [];
-    final existing =
-        classified.whereType<ExistingMatchRow>().length;
-    final mismatch = classified.whereType<CostMismatchRow>().length;
+    final classified = _classified ?? const <ClassifiedRow>[];
     final newProducts = classified.whereType<NewProductRow>().length;
     final hasNewProducts = newProducts > 0;
 
@@ -216,27 +213,20 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
-              _SummaryChips(
-                existing: existing,
-                mismatch: mismatch,
-                newProducts: newProducts,
-                errors: parseErrors.length,
-              ),
               if (blockedByPermission) ...[
-                const SizedBox(height: AppSpacing.sm),
                 _Banner(
                   color: AppColors.error,
                   icon: CupertinoIcons.exclamationmark_circle,
                   text:
                       'This file contains $newProducts new product(s). Auto-creating products requires admin permission.',
                 ),
-              ],
-              if (parseErrors.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
-                _ErrorList(errors: parseErrors),
               ],
-              const SizedBox(height: AppSpacing.md),
-              for (final c in classified) _ClassifiedRowTile(c: c),
+              ImportPreview(
+                parseResult:
+                    _parseResult ?? const ParseResult(rows: [], errors: []),
+                classified: classified,
+              ),
             ],
           ),
         ),
@@ -424,70 +414,6 @@ class _SupplierFilter extends ConsumerWidget {
   }
 }
 
-class _SummaryChips extends StatelessWidget {
-  const _SummaryChips({
-    required this.existing,
-    required this.mismatch,
-    required this.newProducts,
-    required this.errors,
-  });
-
-  final int existing;
-  final int mismatch;
-  final int newProducts;
-  final int errors;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      children: [
-        _Chip(label: 'Match', count: existing, color: AppColors.success),
-        _Chip(
-          label: 'Cost variation',
-          count: mismatch,
-          color: AppColors.warningDark,
-        ),
-        _Chip(label: 'New product', count: newProducts, color: AppColors.info),
-        if (errors > 0)
-          _Chip(label: 'Errors', count: errors, color: AppColors.error),
-      ],
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.count, required this.color});
-
-  final String label;
-  final int count;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: color.withAlpha(0x22),
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        '$label · $count',
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
 class _Banner extends StatelessWidget {
   const _Banner({
     required this.color,
@@ -518,119 +444,6 @@ class _Banner extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ErrorList extends StatelessWidget {
-  const _ErrorList({required this.errors});
-
-  final List<ParseError> errors;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm + 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.error),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Skipped rows:',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.error,
-            ),
-          ),
-          const SizedBox(height: 4),
-          for (final e in errors)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                '$e',
-                style: const TextStyle(color: AppColors.error, fontSize: 12),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ClassifiedRowTile extends StatelessWidget {
-  const _ClassifiedRowTile({required this.c});
-
-  final ClassifiedRow c;
-
-  ({String label, Color color}) _badge() {
-    if (c is ExistingMatchRow) {
-      return (label: 'Match', color: AppColors.success);
-    }
-    if (c is CostMismatchRow) {
-      return (label: 'Variation', color: AppColors.warningDark);
-    }
-    return (label: 'New', color: AppColors.info);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-    final badge = _badge();
-    final row = c.row;
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: theme.dividerColor),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm + 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    row.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    '${row.sku} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
-                    style:
-                        theme.textTheme.bodySmall?.copyWith(color: muted),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: badge.color.withAlpha(0x22),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Text(
-                badge.label,
-                style: TextStyle(
-                  color: badge.color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 11,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
