@@ -379,12 +379,32 @@ class ProductRepositoryImpl implements ProductRepository {
       final prior = await getProductById(product.id);
 
       final productModel = ProductModel.fromEntity(product);
-      await _productsRef.doc(product.id).update(
-            productModel.toUpdateMap(
-              updatedBy,
-              updatedByDisplayName: updatedByName,
-            ),
-          );
+      final updateMap = productModel.toUpdateMap(
+        updatedBy,
+        updatedByDisplayName: updatedByName,
+      );
+
+      final skuChanged = prior != null && prior.sku != product.sku;
+      if (skuChanged) {
+        // Re-point variation children (baseSku == old SKU) to the new SKU in
+        // the same atomic batch as the product update, so the variation group
+        // never observes a dangling parent link.
+        final batch = _firestore.batch();
+        batch.update(_productsRef.doc(product.id), updateMap);
+        final children =
+            await _productsRef.where('baseSku', isEqualTo: prior.sku).get();
+        for (final child in children.docs) {
+          batch.update(child.reference, {
+            'baseSku': product.sku,
+            'updatedAt': FieldValue.serverTimestamp(),
+            'updatedBy': updatedBy,
+            if (updatedByName != null) 'updatedByName': updatedByName,
+          });
+        }
+        await batch.commit();
+      } else {
+        await _productsRef.doc(product.id).update(updateMap);
+      }
 
       final updated = await getProductById(product.id);
       if (updated == null) {
