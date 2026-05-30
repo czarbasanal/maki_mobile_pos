@@ -344,6 +344,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         },
                       ),
                     TextFormField(
+                      key: const Key('product-sku-field'),
                       controller: _skuController,
                       decoration: InputDecoration(
                         labelText: 'SKU *',
