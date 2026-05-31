@@ -193,5 +193,71 @@ void main() {
         throwsA(isA<VoidSaleException>()),
       );
     });
+
+    test('labor lines are not restocked on void (only items restore stock)',
+        () async {
+      final sale = createTestSale().copyWith(
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Brake bleed', fee: 300),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan Dela Cruz',
+      );
+      final voidedSale = sale.void_(
+        voidedById: 'admin-1',
+        voidedByUserName: 'Admin User',
+        reason: 'Customer refund request',
+      );
+
+      when(() => mockSaleRepo.getSaleById(any()))
+          .thenAnswer((_) async => sale);
+      when(() => mockAuthRepo.verifyPassword(any()))
+          .thenAnswer((_) async => true);
+      when(() => mockSaleRepo.voidSale(
+            saleId: any(named: 'saleId'),
+            voidedBy: any(named: 'voidedBy'),
+            voidedByName: any(named: 'voidedByName'),
+            reason: any(named: 'reason'),
+          )).thenAnswer((_) async => voidedSale);
+      when(() => mockProductRepo.updateStock(
+            productId: any(named: 'productId'),
+            quantityChange: any(named: 'quantityChange'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).thenAnswer((_) async => ProductEntity(
+            id: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            costCode: 'NBF',
+            cost: 60,
+            price: 100,
+            quantity: 102,
+            reorderLevel: 10,
+            unit: 'pcs',
+            isActive: true,
+            createdAt: DateTime.now(),
+          ));
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        saleId: 'sale-1',
+        password: 'admin123',
+        reason: 'Customer refund request',
+        voidedBy: 'admin-1',
+        voidedByName: 'Admin User',
+      );
+
+      expect(result.success, true);
+
+      // The single part (qty 2) must be restored exactly once (positive).
+      // Labor has no productId — it must never trigger a restock.
+      verify(() => mockProductRepo.updateStock(
+            productId: 'prod-1',
+            quantityChange: 2,
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).called(1);
+      verifyNoMoreInteractions(mockProductRepo);
+    });
   });
 }
