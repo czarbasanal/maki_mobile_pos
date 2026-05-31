@@ -182,5 +182,35 @@ void main() {
       // Defaults leave the base reconciliation unchanged.
       expect(draft.expectedCashFor(2000), 2500);
     });
+
+    test('carries labor revenue as its own line; cash stays labor-inclusive',
+        () {
+      const summary = SalesSummary(
+        totalSalesCount: 2,
+        voidedSalesCount: 0,
+        grossAmount: 1000, // parts gross (parts-only)
+        totalDiscounts: 0,
+        netAmount: 1000, // parts net (parts-only)
+        totalCost: 600,
+        totalProfit: 400,
+        byPaymentMethod: {PaymentMethod.cash: 1450}, // parts 1000 + labor 450
+        laborRevenue: 450,
+        laborProfit: 450,
+      );
+
+      final draft = DailyClosingDraft.fromData(
+        businessDate: DateTime(2026, 5, 28),
+        summary: summary,
+        expenses: const [],
+      );
+
+      // Parts-only top-line on the closing snapshot.
+      expect(draft.grossSales, 1000);
+      expect(draft.netSales, 1000);
+      // Labor surfaced as its own line.
+      expect(draft.laborRevenue, 450);
+      // Expected cash is labor-inclusive: 0 float + 1450 cash - 0 expenses.
+      expect(draft.expectedCashFor(0), 1450);
+    });
   });
 }

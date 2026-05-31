@@ -20,6 +20,13 @@ class DailyClosingDraft extends Equatable {
   final double totalExpenses;
   final double cashExpenses;
   final double salmonReceivable;
+
+  /// Labor (service) revenue for the day. A separate track from merchandise:
+  /// [grossSales]/[netSales] stay PARTS-ONLY. Labor cash is already folded into
+  /// [cashSales]/[expectedCashFor] (the drawer physically holds it), so this
+  /// field is a reporting line, not a reconciliation input.
+  final double laborRevenue;
+
   final int salesCount;
   final int voidedCount;
 
@@ -35,6 +42,7 @@ class DailyClosingDraft extends Equatable {
     required this.totalExpenses,
     required this.cashExpenses,
     required this.salmonReceivable,
+    this.laborRevenue = 0,
     required this.salesCount,
     required this.voidedCount,
   });
@@ -81,6 +89,7 @@ class DailyClosingDraft extends Equatable {
       totalExpenses: totalExpenses,
       cashExpenses: cashExpenses,
       salmonReceivable: salmonReceivable,
+      laborRevenue: summary.laborRevenue,
       salesCount: summary.totalSalesCount,
       voidedCount: summary.voidedSalesCount,
     );
@@ -115,6 +124,7 @@ class DailyClosingDraft extends Equatable {
         totalExpenses,
         cashExpenses,
         salmonReceivable,
+        laborRevenue,
         salesCount,
         voidedCount,
       ];
