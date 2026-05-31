@@ -49,6 +49,9 @@ abstract class FirestoreCollections {
   /// Void reasons collection - admin-managed reasons shown in the void-sale dialog
   static const String voidReasons = 'void_reasons';
 
+  /// Mechanics collection - admin-managed mechanic list for service drafts
+  static const String mechanics = 'mechanics';
+
   /// Void requests collection - cashier/staff void requests awaiting admin approval
   static const String voidRequests = 'void_requests';
 
