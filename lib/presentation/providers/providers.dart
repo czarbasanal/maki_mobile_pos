@@ -22,4 +22,5 @@ export 'daily_closing_provider.dart';
 export 'theme_mode_provider.dart';
 export 'user_provider.dart';
 export 'category_provider.dart';
+export 'mechanic_provider.dart';
 export 'void_request_provider.dart';
