@@ -147,6 +147,7 @@ class DailyClosingEntity extends Equatable {
   final double totalExpenses;
   final double cashExpenses;
   final double salmonReceivable;
+  final double laborRevenue;
   final double plateNoDp;
   final double plateNoDelivery;
   final double openingFloat;
@@ -173,6 +174,7 @@ class DailyClosingEntity extends Equatable {
     required this.totalExpenses,
     required this.cashExpenses,
     required this.salmonReceivable,
+    this.laborRevenue = 0,
     this.plateNoDp = 0,
     this.plateNoDelivery = 0,
     required this.openingFloat,
@@ -201,6 +203,7 @@ class DailyClosingEntity extends Equatable {
         totalExpenses,
         cashExpenses,
         salmonReceivable,
+        laborRevenue,
         plateNoDp,
         plateNoDelivery,
         openingFloat,
