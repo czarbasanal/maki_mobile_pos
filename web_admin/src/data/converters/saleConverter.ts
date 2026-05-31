@@ -7,10 +7,12 @@ import type {
   FirestoreDataConverter,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import type { Sale } from '@/domain/entities';
+import type { LaborLine, Sale } from '@/domain/entities';
 import {
+  type PaymentMethod,
   discountTypeFromString,
   paymentMethodFromString,
+  realTenderMethods,
   saleStatusFromString,
 } from '@/domain/enums';
 import { requireDate, toDate } from './timestamps';
@@ -31,6 +33,10 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       voidedBy: sale.voidedBy,
       voidedByName: sale.voidedByName,
       voidReason: sale.voidReason,
+      laborLines: sale.laborLines,
+      mechanicId: sale.mechanicId,
+      mechanicName: sale.mechanicName,
+      tenders: sale.tenders,
     };
   },
   fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Sale {
@@ -39,6 +45,10 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       id: snapshot.id,
       saleNumber: d.saleNumber ?? '',
       items: [], // loaded separately from the items subcollection
+      laborLines: parseLaborLines(d.laborLines),
+      mechanicId: d.mechanicId ?? null,
+      mechanicName: d.mechanicName ?? null,
+      tenders: parseTenders(d.tenders),
       discountType: discountTypeFromString(d.discountType),
       paymentMethod: paymentMethodFromString(d.paymentMethod),
       amountReceived: Number(d.amountReceived ?? 0),
@@ -57,3 +67,26 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
     };
   },
 };
+
+function parseLaborLines(value: unknown): LaborLine[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((raw, i) => {
+    const m = (raw ?? {}) as Record<string, unknown>;
+    return {
+      id: typeof m.id === 'string' ? m.id : `labor-${i}`,
+      description: typeof m.description === 'string' ? m.description : '',
+      fee: Number(m.fee ?? 0),
+    };
+  });
+}
+
+function parseTenders(value: unknown): Partial<Record<PaymentMethod, number>> {
+  if (value == null || typeof value !== 'object') return {};
+  const out: Partial<Record<PaymentMethod, number>> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if ((realTenderMethods as string[]).includes(key)) {
+      out[key as PaymentMethod] = Number(raw ?? 0);
+    }
+  }
+  return out;
+}
