@@ -117,5 +117,66 @@ void main() {
       expect(find.text('Test Product 1'), findsOneWidget);
       expect(find.text('Test Product 2'), findsOneWidget);
     });
+
+    testWidgets('shows Service job badge when draft has labor lines',
+        (tester) async {
+      final serviceDraft = DraftEntity(
+        id: 'draft-2',
+        name: 'Plate XYZ-789',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Brake Pad',
+            unitPrice: 100.0,
+            unitCost: 60.0,
+            quantity: 1,
+          ),
+        ],
+        laborLines: const [
+          LaborLineEntity(id: 'l1', description: 'Engine tune-up', fee: 450.0),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan Dela Cruz',
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+        createdAt: DateTime(2025, 2, 5, 10, 30),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DraftListTile(
+              draft: serviceDraft,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Service job'), findsOneWidget);
+    });
+
+    testWidgets('hides Service job badge when draft has no labor lines',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DraftListTile(
+              draft: testDraft,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Service job'), findsNothing);
+    });
   });
 }
