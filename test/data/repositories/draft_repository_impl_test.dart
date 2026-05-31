@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -123,6 +124,128 @@ void main() {
       final count = await repository.getActiveDraftCount();
 
       expect(count, 2);
+    });
+
+    // ==================== LABOR + MECHANIC ROUND-TRIP ====================
+
+    DraftEntity createServiceDraft() {
+      return DraftEntity(
+        id: '',
+        name: 'Service Job',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100.0,
+            unitCost: 60.0,
+            quantity: 2,
+          ),
+        ],
+        laborLines: const [
+          LaborLineEntity(
+            id: 'labor-1',
+            description: 'Engine tune-up',
+            fee: 450.0,
+          ),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan Dela Cruz',
+        discountType: DiscountType.amount,
+        createdBy: 'cashier-1',
+        createdByName: 'John Doe',
+        createdAt: DateTime.now(),
+      );
+    }
+
+    test('createDraft persists labor + mechanic inline on the draft doc',
+        () async {
+      final created = await repository.createDraft(createServiceDraft());
+
+      final doc =
+          await fakeFirestore.collection('drafts').doc(created.id).get();
+      final data = doc.data()!;
+      expect((data['laborLines'] as List).length, 1);
+      expect(data['mechanicId'], 'mech-1');
+      expect(data['mechanicName'], 'Juan Dela Cruz');
+    });
+
+    test('getDraftById round-trips labor + mechanic', () async {
+      final created = await repository.createDraft(createServiceDraft());
+
+      final retrieved = await repository.getDraftById(created.id);
+
+      expect(retrieved, isNotNull);
+      expect(retrieved!.laborLines.length, 1);
+      expect(retrieved.laborLines.first.description, 'Engine tune-up');
+      expect(retrieved.laborLines.first.fee, 450.0);
+      expect(retrieved.mechanicId, 'mech-1');
+      expect(retrieved.mechanicName, 'Juan Dela Cruz');
+      // grandTotal = 200 parts + 450 labor
+      expect(retrieved.grandTotal, 650.0);
+    });
+
+    test('updateDraft persists changed labor + mechanic', () async {
+      final created = await repository.createDraft(createServiceDraft());
+
+      final updated = await repository.updateDraft(
+        draft: created.copyWith(
+          laborLines: const [
+            LaborLineEntity(
+              id: 'labor-1',
+              description: 'Engine tune-up',
+              fee: 450.0,
+            ),
+            LaborLineEntity(
+              id: 'labor-2',
+              description: 'Brake bleed',
+              fee: 200.0,
+            ),
+          ],
+          mechanicId: 'mech-2',
+          mechanicName: 'Pedro Santos',
+        ),
+        updatedBy: 'cashier-1',
+      );
+
+      expect(updated.laborLines.length, 2);
+      expect(updated.laborSubtotal, 650.0);
+      expect(updated.mechanicId, 'mech-2');
+      expect(updated.mechanicName, 'Pedro Santos');
+      // 200 parts + 650 labor
+      expect(updated.grandTotal, 850.0);
+    });
+
+    test('legacy draft doc without laborLines loads as []', () async {
+      final ref = await fakeFirestore.collection('drafts').add({
+        'name': 'Legacy Draft',
+        'items': const [
+          {
+            'id': 'item-1',
+            'productId': 'prod-1',
+            'sku': 'SKU-001',
+            'name': 'Test Product',
+            'unitPrice': 100.0,
+            'unitCost': 60.0,
+            'quantity': 2,
+            'discountValue': 0.0,
+            'unit': 'pcs',
+          },
+        ],
+        'discountType': 'amount',
+        'createdBy': 'cashier-1',
+        'createdByName': 'John Doe',
+        'isConverted': false,
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+      });
+
+      final retrieved = await repository.getDraftById(ref.id);
+
+      expect(retrieved, isNotNull);
+      expect(retrieved!.laborLines, isEmpty);
+      expect(retrieved.mechanicId, isNull);
+      expect(retrieved.mechanicName, isNull);
     });
   });
 }
