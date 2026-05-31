@@ -178,5 +178,53 @@ void main() {
 
       expect(find.text('Service job'), findsNothing);
     });
+
+    testWidgets('displays labor-inclusive grandTotal in header total',
+        (tester) async {
+      // parts: 500 × 2 = 1000; labor: 450 → grandTotal = 1450
+      final laborDraft = DraftEntity(
+        id: 'draft-labor',
+        name: 'Labor Job',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Oil Filter',
+            unitPrice: 500.0,
+            unitCost: 300.0,
+            quantity: 2,
+          ),
+        ],
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Brake bleed', fee: 450),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan',
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'Jane Doe',
+        createdAt: DateTime(2026, 5, 31, 9, 0),
+      );
+
+      // Sanity check: entity math is correct before pumping the widget
+      expect(laborDraft.grandTotal, 1450.0);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DraftListTile(
+              draft: laborDraft,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      // The tile renders draft.grandTotal.toStringAsFixed(2) prefixed with ₱
+      expect(find.text('₱1450.00'), findsOneWidget);
+    });
   });
 }
