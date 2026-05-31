@@ -60,6 +60,15 @@ class WebDashboardScreen extends ConsumerWidget {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: SummaryCard(
+                      title: 'Service revenue',
+                      value: money.format(summary.laborRevenue),
+                      icon: Icons.build,
+                      iconColor: AppColors.info,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: SummaryCard(
                       title: 'Avg order',
                       value: money.format(summary.averageSaleAmount),
                       icon: Icons.show_chart,
