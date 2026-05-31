@@ -724,7 +724,7 @@ Update the four `SummaryCard` value props to use the new locals:
           />
 ```
 
-- [ ] **Step 2: Verify it typechecks + builds** — `cd web_admin && npx tsc -b --noEmit`. Expected: no errors (the removed imports are gone; `summarizeSales` resolves). Then `npx vitest run` — all existing tests still pass.
+- [ ] **Step 2: Verify it typechecks** — `cd web_admin && npx tsc --noEmit -p tsconfig.json`. Expected: no errors (the removed imports are gone; `summarizeSales` resolves). NOTE: do NOT use `npm run typecheck` / `tsc -b --noEmit` — that pre-existing script is broken (TS6310: the composite `tsconfig.node.json` reference cannot disable emit under `-b --noEmit`). Single-project `tsc --noEmit -p tsconfig.json` is the working app-source typecheck. Run the logic tests with the node env for speed: `npx vitest run src/domain src/data/converters --environment=node`.
 
 - [ ] **Step 3: Commit** — `git add web_admin/src/presentation/features/dashboard/DashboardPage.tsx && git commit -m "feat(web-admin): dashboard uses summarizeSales (labor-inclusive revenue, correct profit)"`
 
@@ -841,9 +841,9 @@ git commit -m "refactor(web): remove Flutter web layer; app is mobile-only (web 
 
 - [ ] **Step 1: React app green** —
 ```bash
-cd web_admin && npm run typecheck && npm run test && npm run build
+cd web_admin && npx tsc --noEmit -p tsconfig.json && npx vitest run --environment=node && npm run build
 ```
-Expected: typecheck clean, all vitest suites pass, build emits `web_admin/dist`.
+Expected: typecheck clean, all vitest suites pass, build emits `web_admin/dist`. (Use `tsc --noEmit -p tsconfig.json`, not the broken `npm run typecheck`; `npm run build` uses `tsc -b` without `--noEmit`, which works.)
 
 - [ ] **Step 2: Flutter app green** —
 ```bash
