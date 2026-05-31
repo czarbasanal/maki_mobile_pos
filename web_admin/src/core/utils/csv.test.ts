@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DiscountType, PaymentMethod, SaleStatus } from '../../domain/enums';
 import { type Sale } from '../../domain/entities';
-import { salesToCsv } from './csv';
+import { parseCsv, salesToCsv } from './csv';
 
 function sale(overrides: Partial<Sale> = {}): Sale {
   return {
@@ -66,5 +66,44 @@ describe('salesToCsv', () => {
 
   it('handles empty input (header only)', () => {
     expect(salesToCsv([]).trim().split('\n')).toHaveLength(1);
+  });
+});
+
+describe('parseCsv', () => {
+  it('parses simple rows', () => {
+    expect(parseCsv('a,b,c\n1,2,3')).toEqual([
+      ['a', 'b', 'c'],
+      ['1', '2', '3'],
+    ]);
+  });
+
+  it('keeps commas inside quoted fields', () => {
+    expect(parseCsv('name,note\n"Smith, J",ok')).toEqual([
+      ['name', 'note'],
+      ['Smith, J', 'ok'],
+    ]);
+  });
+
+  it('keeps newlines inside quoted fields', () => {
+    expect(parseCsv('a\n"x\ny"')).toEqual([['a'], ['x\ny']]);
+  });
+
+  it('unescapes doubled quotes', () => {
+    expect(parseCsv('a\n"He said ""hi"""')).toEqual([['a'], ['He said "hi"']]);
+  });
+
+  it('handles CRLF and a trailing newline', () => {
+    expect(parseCsv('a,b\r\n1,2\r\n')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
+  });
+
+  it('strips a leading BOM', () => {
+    expect(parseCsv('﻿a\n1')).toEqual([['a'], ['1']]);
+  });
+
+  it('returns [] for empty input', () => {
+    expect(parseCsv('')).toEqual([]);
   });
 });
