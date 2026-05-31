@@ -38,6 +38,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/settings/settings_sc
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/mechanic_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
@@ -408,6 +409,11 @@ List<RouteBase> featureRoutes(Surface surface) => [
                 },
               ),
             ],
+          ),
+          GoRoute(
+            path: 'mechanics',
+            name: RouteNames.mechanics,
+            builder: (context, state) => const MechanicEditorScreen(),
           ),
           GoRoute(
             path: 'about',
