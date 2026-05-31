@@ -51,7 +51,7 @@ CSV file ─▶ parseCsv(text): string[][]
 ## Field mapping
 
 The `Product` entity has 23 fields. Only the 8 CSV columns are user-supplied; the rest are generated
-or system-set. **A row is importable only if `name` and `price` are valid; everything else defaults.**
+or system-set. **A row is importable only if `name`, `price`, and `code` are valid; everything else defaults.**
 
 ### From the CSV
 
@@ -59,8 +59,8 @@ or system-set. **A row is importable only if `name` and `price` are valid; every
 |---|---|---|---|
 | `name` | `name` | **Required** | non-empty; row is an error if blank |
 | `price` | `price` | **Required** | parsed number ≥ 0 (commas stripped: `1,250` → 1250) |
-| `costCode` | `code` | Optional | stored verbatim (encoded letters) |
-| `cost` | *derived from* `code` | derived | `decodeCostCode(cipher, code)` where `cipher` is the active `CostCode`; blank `code` → 0 + **warning**; present but undecodable → **error** |
+| `costCode` | `code` | **Required** | stored verbatim (encoded letters) |
+| `cost` | *derived from* `code` | derived | `decodeCostCode(cipher, code)` where `cipher` is the active `CostCode`; blank or undecodable `code` → **error** (row not importable) |
 | `category` | `category` | Optional | `null` if blank |
 | `quantity` | `qty` / `quantity` | Optional | parsed number ≥ 0, default `0` |
 | `reorderLevel` | `reorder_level` / `reorderLevel` | Optional | parsed number ≥ 0, default `0` |
@@ -69,8 +69,9 @@ or system-set. **A row is importable only if `name` and `price` are valid; every
 | `supplierId` | *derived from* `supplier` | derived | match supplier by name (case-insensitive) → id; no match → `null` (name kept, flagged) |
 
 Header matching is **case-insensitive** and accepts the aliases shown (`qty`/`quantity`,
-`reorder_level`/`reorderLevel`). Required CSV columns are `name` and `price`; if either header is
-absent the whole file is rejected with a clear message. Unknown extra columns are ignored.
+`reorder_level`/`reorderLevel`). Required CSV columns are `name`, `price`, and `code`; if any of
+those headers is absent the whole file is rejected with a clear message. Unknown extra columns are
+ignored.
 
 ### Generated / system-set (never from the CSV)
 
@@ -137,11 +138,11 @@ and reconciling it is broader than this spec.
 ## Error handling
 
 - Malformed CSV (`parseCsv` throws) → inline error message, nothing classified.
-- Missing required column (`name` or `price`) → file rejected with the missing-column list.
+- Missing required column (`name`, `price`, or `code`) → file rejected with the missing-column list.
 - Empty file / header-only → "No rows found" message.
-- Per-row validation (blank name, unparseable price/qty, undecodable cost) → row flagged **error**,
-  locked to Skip, reason shown; it is never written.
-- Blank `code`, unmatched supplier, ambiguous name match → **warning** (still importable).
+- Per-row validation (blank name, unparseable price/qty, blank or undecodable cost `code`) → row
+  flagged **error**, locked to Skip, reason shown; it is never written.
+- Unmatched supplier, ambiguous name match → **warning** (still importable).
 - Partial write failure → `bulkImport` reports failed rows by number; successful rows remain written
   (no rollback). The result summary surfaces failures.
 
@@ -155,7 +156,7 @@ Unit-tested (node env, fast — and note that tested modules must use **relative
 - `generateSku`: slug + vowel-drop + length cap + injected-random suffix; empty-name fallback.
 - `generateSearchKeywords`: prefix tokens, dedupe, multi-word, lowercase.
 - `parseImportRows`: header aliasing, missing required column, required-field errors, number parsing
-  (commas), cost decode (valid / blank-warning / undecodable-error), unit/qty/reorder defaults.
+  (commas), cost decode (valid / blank-error / undecodable-error), unit/qty/reorder defaults.
 - `classifyRows`: new vs existing (name|category), ambiguous match, supplier match / no-match,
   default actions, error→skip; `toCreateInput`/`toUpdateInput` field selection.
 
@@ -172,5 +173,5 @@ existing `products` create/update rules already permit admin writes). One intern
 ## Open questions
 
 None — input method (CSV upload), cost-code decode, per-row insert/update/skip preview, supplier
-match-by-name-keep-name, and `name`+`price` as the only required columns were all confirmed during
+match-by-name-keep-name, and `name`+`price`+`code` as the required columns were all confirmed during
 brainstorming.
