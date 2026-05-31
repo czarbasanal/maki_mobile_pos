@@ -51,5 +51,7 @@ void main() {
     expect(find.textContaining('Mechanic: Juan Dela Cruz'), findsOneWidget);
     // Grand total is labor-inclusive: 100 + 450 = 550.
     expect(find.textContaining('₱550.00'), findsWidgets);
+    // When labor is present, the parts subtotal row is labelled 'Parts subtotal'.
+    expect(find.text('Parts subtotal'), findsOneWidget);
   });
 }

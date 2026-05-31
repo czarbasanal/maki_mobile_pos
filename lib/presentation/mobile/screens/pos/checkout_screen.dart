@@ -273,8 +273,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           children: [
             _buildSummaryRow(
               theme,
-              'Subtotal',
-              '${AppConstants.currencySymbol}${cart.subtotal.toStringAsFixed(2)}',
+              cart.laborLines.isEmpty ? 'Subtotal' : 'Parts subtotal',
+              '${AppConstants.currencySymbol}${cart.partsSubtotal.toStringAsFixed(2)}',
             ),
             if (cart.hasDiscount) ...[
               const SizedBox(height: AppSpacing.sm),
