@@ -11,6 +11,7 @@ export 'product_entity.dart';
 export 'supplier_entity.dart';
 export 'sale_entity.dart';
 export 'sale_item_entity.dart';
+export 'labor_line_entity.dart';
 export 'draft_entity.dart';
 export 'expense_entity.dart';
 export 'daily_closing_entity.dart';
