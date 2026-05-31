@@ -19,4 +19,5 @@ export 'price_history_model.dart';
 export 'receiving_model.dart';
 export 'activity_log_model.dart';
 export 'category_model.dart';
+export 'mechanic_model.dart';
 export 'void_request_model.dart';
