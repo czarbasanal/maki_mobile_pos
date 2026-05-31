@@ -42,7 +42,7 @@ final mobileRouterProvider = Provider<GoRouter>((ref) {
     errorBuilder: buildRouterErrorScreen,
     routes: [
       ...authRoutes(),
-      ...featureRoutes(Surface.mobile),
+      ...featureRoutes(),
     ],
   );
 });

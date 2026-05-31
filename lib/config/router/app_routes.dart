@@ -43,18 +43,6 @@ import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
 
-// Web feature screens (incrementally added; web falls back to mobile screens
-// for routes that have not yet been redesigned for desktop).
-import 'package:maki_mobile_pos/presentation/web/screens/dashboard/web_dashboard_screen.dart';
-
-/// Which UI surface a route is being mounted into.
-///
-/// `featureRoutes(Surface.web)` returns web-redesigned screens where they
-/// exist (currently: dashboard) and falls back to the mobile screen for
-/// everything else. Mobile passes [Surface.mobile] and always gets the
-/// mobile screens.
-enum Surface { mobile, web }
-
 class _AccessDeniedScreen extends StatelessWidget {
   const _AccessDeniedScreen();
 
@@ -167,14 +155,11 @@ List<RouteBase> authRoutes() => [
 /// Feature routes (everything post-login). The web router wraps these in a
 /// ShellRoute that paints the sidebar + top bar; the mobile router mounts
 /// them flat.
-List<RouteBase> featureRoutes(Surface surface) => [
+List<RouteBase> featureRoutes() => [
       GoRoute(
         path: RoutePaths.dashboard,
         name: RouteNames.dashboard,
-        builder: (context, state) => switch (surface) {
-          Surface.web => const WebDashboardScreen(),
-          Surface.mobile => const DashboardScreen(),
-        },
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: RoutePaths.pos,
