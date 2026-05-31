@@ -2,6 +2,7 @@ export * from './User';
 export * from './Product';
 export * from './SaleItem';
 export * from './Sale';
+export * from './LaborLine';
 export * from './Draft';
 export * from './Supplier';
 export * from './Expense';

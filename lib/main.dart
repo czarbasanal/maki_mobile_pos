@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/app_mobile.dart';
-import 'package:maki_mobile_pos/app_web.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
 void main() async {
@@ -43,7 +42,7 @@ void main() async {
     ProviderScope(
       child: initError != null
           ? _StartupErrorApp(error: initError)
-          : (kIsWeb ? const MAKIPOSWebApp() : const MAKIPOSMobileApp()),
+          : const MAKIPOSMobileApp(),
     ),
   );
 }

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
 export default defineConfig({
-  base: '/admin/',
+  base: '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -11,7 +11,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../build/web/admin',
+    outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
   },

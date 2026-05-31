@@ -9,12 +9,7 @@ import {
   ReceiptPercentIcon,
 } from '@heroicons/react/24/outline';
 import { useTodaysSales } from '@/presentation/hooks/useTodaysSales';
-import {
-  saleGrandTotal,
-  saleIsVoided,
-  saleTotalProfit,
-  type Sale,
-} from '@/domain/entities';
+import { summarizeSales } from '@/domain/sales/summarizeSales';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { SummaryCard } from './SummaryCard';
@@ -22,35 +17,13 @@ import { RecentSales } from './RecentSales';
 import { InventoryStatus } from './InventoryStatus';
 import { formatMoney } from '@/core/utils/money';
 
-interface SalesSummary {
-  count: number;
-  revenue: number;
-  profit: number;
-  averageOrder: number;
-}
-
-function summarize(sales: Sale[]): SalesSummary {
-  // Voided sales don't count toward revenue/profit/avg, but they're shown
-  // in the recent sales list with the "VOID" pill — same as Flutter.
-  const completed = sales.filter((s) => !saleIsVoided(s));
-  let revenue = 0;
-  let profit = 0;
-  for (const s of completed) {
-    revenue += saleGrandTotal(s);
-    profit += saleTotalProfit(s);
-  }
-  const count = completed.length;
-  return {
-    count,
-    revenue,
-    profit,
-    averageOrder: count === 0 ? 0 : revenue / count,
-  };
-}
-
 export function DashboardPage() {
   const { data: sales, isLoading, error } = useTodaysSales();
-  const summary = useMemo(() => summarize(sales ?? []), [sales]);
+  const summary = useMemo(() => summarizeSales(sales ?? []), [sales]);
+  const revenue = summary.netAmount + summary.laborRevenue;
+  const profit = summary.totalProfit;
+  const count = summary.totalSalesCount;
+  const averageOrder = count === 0 ? 0 : revenue / count;
 
   useEffect(() => {
     document.title = 'Dashboard · MAKI POS Admin';
@@ -77,26 +50,26 @@ export function DashboardPage() {
         <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2 lg:grid-cols-4">
           <SummaryCard
             title="Sales today"
-            value={String(summary.count)}
+            value={String(count)}
             icon={ReceiptPercentIcon}
             tone="blue"
           />
           <SummaryCard
             title="Revenue"
-            value={formatMoney(summary.revenue)}
+            value={formatMoney(revenue)}
             icon={BanknotesIcon}
             tone="yellow"
             emphasized
           />
           <SummaryCard
             title="Gross profit"
-            value={formatMoney(summary.profit)}
+            value={formatMoney(profit)}
             icon={ArrowTrendingUpIcon}
             tone="green"
           />
           <SummaryCard
             title="Avg order"
-            value={formatMoney(summary.averageOrder)}
+            value={formatMoney(averageOrder)}
             icon={ChartBarIcon}
             tone="violet"
           />
