@@ -577,6 +577,11 @@ class SaleRepositoryImpl implements SaleRepository {
   // ==================== HELPER METHODS ====================
 
   /// Loads sales documents with their items.
+  ///
+  /// Items come from the `sales/{id}/items` subcollection. Labor lines are
+  /// stored INLINE on the sale doc and are parsed by [SaleModel.fromMap]
+  /// directly off `doc.data()` — they are NOT passed via the `items:` param,
+  /// so no extra subcollection read is needed for labor.
   Future<List<SaleEntity>> _loadSalesWithItems(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) async {
