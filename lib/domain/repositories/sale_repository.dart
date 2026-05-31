@@ -258,6 +258,14 @@ class SalesSummary {
   /// Total profit
   final double totalProfit;
 
+  /// Total labor (service) revenue for the period. Separate track from
+  /// merchandise: NOT included in [netAmount]/[grossAmount]/[totalProfit],
+  /// which stay PARTS-ONLY. Labor cash IS included in [byPaymentMethod].
+  final double laborRevenue;
+
+  /// Total labor profit. Labor has zero cost, so this equals [laborRevenue].
+  final double laborProfit;
+
   /// Breakdown by payment method
   final Map<PaymentMethod, double> byPaymentMethod;
 
@@ -281,6 +289,8 @@ class SalesSummary {
     required this.totalCost,
     required this.totalProfit,
     required this.byPaymentMethod,
+    this.laborRevenue = 0,
+    this.laborProfit = 0,
   });
 
   /// Creates an empty summary.
@@ -294,6 +304,8 @@ class SalesSummary {
       totalCost: 0,
       totalProfit: 0,
       byPaymentMethod: {},
+      laborRevenue: 0,
+      laborProfit: 0,
     );
   }
 }
