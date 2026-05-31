@@ -83,6 +83,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Product / expense categories and units',
                   onTap: () => context.push(RoutePaths.categorySettings),
                 ),
+                SettingsTile(
+                  icon: CupertinoIcons.wrench,
+                  title: 'Mechanics',
+                  subtitle: 'Used to assign a mechanic to a service draft',
+                  onTap: () => context.push(RoutePaths.mechanics),
+                ),
               ],
             ),
           ],
