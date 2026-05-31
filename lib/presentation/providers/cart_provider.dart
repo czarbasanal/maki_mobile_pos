@@ -532,6 +532,9 @@ class CartNotifier extends StateNotifier<CartState> {
       amountReceived: 0,
       notes: draft.notes,
       draftName: draft.name,
+      laborLines: List<LaborLineEntity>.from(draft.laborLines),
+      mechanicId: draft.mechanicId,
+      mechanicName: draft.mechanicName,
     );
   }
 
@@ -550,6 +553,9 @@ class CartNotifier extends StateNotifier<CartState> {
       createdByName: createdByName,
       createdAt: DateTime.now(),
       notes: state.notes,
+      laborLines: state.laborLines,
+      mechanicId: state.mechanicId,
+      mechanicName: state.mechanicName,
     );
   }
 
@@ -573,6 +579,9 @@ class CartNotifier extends StateNotifier<CartState> {
       createdAt: DateTime.now(),
       draftId: state.sourceDraftId,
       notes: state.notes,
+      laborLines: state.laborLines,
+      mechanicId: state.mechanicId,
+      mechanicName: state.mechanicName,
     );
   }
 

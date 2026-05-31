@@ -420,6 +420,80 @@ void main() {
       expect(state.mechanicId, isNull);
       expect(state.mechanicName, isNull);
     });
+
+    test('loadFromDraft copies laborLines and mechanic into the cart', () {
+      final draft = DraftEntity(
+        id: 'draft-1',
+        name: 'Service job',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100,
+            unitCost: 60,
+            quantity: 1,
+          ),
+        ],
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan',
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John',
+        createdAt: DateTime.now(),
+      );
+
+      cartNotifier.loadFromDraft(draft);
+
+      final state = container.read(cartProvider);
+      expect(state.laborLines.length, 1);
+      expect(state.laborLines.first.description, 'Tune-up');
+      expect(state.laborLines.first.fee, 300);
+      expect(state.mechanicId, 'mech-1');
+      expect(state.mechanicName, 'Juan');
+    });
+
+    test('toDraft carries laborLines and mechanic', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addLaborLine(description: 'Brake bleed', fee: 150);
+      cartNotifier.setMechanic('mech-2', 'Pedro');
+
+      final draft = cartNotifier.toDraft(
+        name: 'My Draft',
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+      );
+
+      expect(draft.laborLines.length, 1);
+      expect(draft.laborLines.first.description, 'Brake bleed');
+      expect(draft.laborLines.first.fee, 150);
+      expect(draft.mechanicId, 'mech-2');
+      expect(draft.mechanicName, 'Pedro');
+      expect(draft.grandTotal, 250); // parts 100 + labor 150
+    });
+
+    test('toSale carries laborLines and mechanic', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addLaborLine(description: 'Tune-up', fee: 200);
+      cartNotifier.setMechanic('mech-3', 'Maria');
+      cartNotifier.setAmountReceived(300);
+
+      final sale = cartNotifier.toSale(
+        saleNumber: 'SALE-001',
+        cashierId: 'cashier-1',
+        cashierName: 'John Doe',
+      );
+
+      expect(sale.laborLines.length, 1);
+      expect(sale.laborLines.first.fee, 200);
+      expect(sale.mechanicId, 'mech-3');
+      expect(sale.mechanicName, 'Maria');
+      expect(sale.grandTotal, 300); // parts 100 + labor 200
+    });
   });
 
   group('Derived Providers', () {
