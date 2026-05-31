@@ -1,11 +1,12 @@
-// /admin/ — read-only dashboard. Vercel-airy: page header on white, four
-// summary tiles in a grid, recent sales + inventory side-by-side.
+// Read-only dashboard. Vercel-airy: page header on white, five summary tiles
+// in a grid, recent sales + inventory side-by-side.
 
 import { useEffect, useMemo } from 'react';
 import {
   ArrowTrendingUpIcon,
   BanknotesIcon,
   ChartBarIcon,
+  CubeIcon,
   ReceiptPercentIcon,
 } from '@heroicons/react/24/outline';
 import { useTodaysSales } from '@/presentation/hooks/useTodaysSales';
@@ -55,11 +56,17 @@ export function DashboardPage() {
             tone="blue"
           />
           <SummaryCard
-            title="Revenue"
-            value={formatMoney(revenue)}
+            title="Gross Sales"
+            value={formatMoney(summary.grossAmount)}
             icon={BanknotesIcon}
             tone="yellow"
             emphasized
+          />
+          <SummaryCard
+            title="Total COGS"
+            value={formatMoney(summary.totalCost)}
+            icon={CubeIcon}
+            tone="orange"
           />
           <SummaryCard
             title="Gross profit"
