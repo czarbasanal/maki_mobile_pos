@@ -88,7 +88,8 @@ void main() {
     });
 
     test('totalProfit calculates correctly', () {
-      // grandTotal - totalCost = 335 - 210 = 125
+      // No labor: totalProfit == partsProfit == partsRevenue - totalCost
+      // = (350 - 15) - 210 = 125
       expect(sale.totalProfit, 125.0);
     });
 
@@ -120,6 +121,81 @@ void main() {
 
       final fromDraft = sale.copyWith(draftId: 'draft-1');
       expect(fromDraft.isFromDraft, true);
+    });
+
+    test('parts getters with no labor', () {
+      expect(sale.partsSubtotal, 350.0);
+      expect(sale.laborSubtotal, 0.0);
+      expect(sale.partsRevenue, 335.0); // 350 - 15
+      expect(sale.laborRevenue, 0.0);
+      expect(sale.grandTotal, 335.0);
+      expect(sale.partsProfit, 125.0); // 335 - 210
+      expect(sale.laborProfit, 0.0);
+      expect(sale.totalProfit, 125.0);
+    });
+
+    test('labor raises revenue/profit/grandTotal but not parts/discount/cost', () {
+      final withLabor = sale.copyWith(
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
+          LaborLineEntity(id: 'lab-2', description: 'Bleed', fee: 150.0),
+        ],
+      );
+
+      // Parts-only figures are untouched by labor.
+      expect(withLabor.partsSubtotal, 350.0);
+      expect(withLabor.totalDiscount, 15.0);
+      expect(withLabor.totalCost, 210.0);
+      expect(withLabor.partsRevenue, 335.0);
+      expect(withLabor.partsProfit, 125.0);
+
+      // Labor track.
+      expect(withLabor.laborSubtotal, 450.0);
+      expect(withLabor.laborRevenue, 450.0);
+      expect(withLabor.laborProfit, 450.0);
+
+      // Combined.
+      expect(withLabor.grandTotal, 785.0); // 335 + 450
+      expect(withLabor.totalProfit, 575.0); // 125 + 450
+    });
+
+    test('labor fields default to empty/null and copyWith clears mechanic', () {
+      expect(sale.laborLines, isEmpty);
+      expect(sale.mechanicId, isNull);
+      expect(sale.mechanicName, isNull);
+
+      final assigned =
+          sale.copyWith(mechanicId: 'mech-1', mechanicName: 'Juan Dela Cruz');
+      expect(assigned.mechanicId, 'mech-1');
+      expect(assigned.mechanicName, 'Juan Dela Cruz');
+
+      final cleared = assigned.copyWith(clearMechanic: true);
+      expect(cleared.mechanicId, isNull);
+      expect(cleared.mechanicName, isNull);
+    });
+
+    test('effectiveTenders falls back to labor-inclusive grandTotal', () {
+      // Legacy fallback attributes the whole (labor-inclusive) grandTotal.
+      final withLabor = sale.copyWith(
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
+        ],
+      );
+      // grandTotal = 335 + 300 = 635
+      expect(withLabor.effectiveTenders, {PaymentMethod.cash: 635.0});
+    });
+
+    test('props include laborLines and mechanic fields', () {
+      final a = sale.copyWith(mechanicId: 'mech-1', mechanicName: 'Juan');
+      final b = sale.copyWith(mechanicId: 'mech-2', mechanicName: 'Pedro');
+      expect(a == b, false);
+
+      final withLabor = sale.copyWith(
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
+        ],
+      );
+      expect(withLabor == sale, false);
     });
   });
 }

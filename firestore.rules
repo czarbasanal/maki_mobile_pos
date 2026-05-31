@@ -269,6 +269,19 @@ service cloud.firestore {
       allow write: if isAdmin() && isActiveUser();
     }
 
+    // ==================== MECHANICS COLLECTION ====================
+
+    match /mechanics/{mechanicId} {
+      // All valid users can read mechanics — the cashier-facing mechanic
+      // picker on service drafts/sales streams active mechanics, so read is
+      // intentionally NOT admin-only (mirrors void_reasons / categories).
+      allow read: if isValidUser() && isActiveUser();
+
+      // Only admin can manage the mechanic list (Settings → Mechanics editor,
+      // gated by the manageCategories permission at the route layer).
+      allow write: if isAdmin() && isActiveUser();
+    }
+
     // ==================== VOID REQUESTS COLLECTION ====================
 
     match /void_requests/{requestId} {

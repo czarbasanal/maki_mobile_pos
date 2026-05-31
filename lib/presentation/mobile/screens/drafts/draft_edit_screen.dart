@@ -11,6 +11,8 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
+import 'package:uuid/uuid.dart';
 
 /// Screen for editing/viewing a draft and converting to checkout.
 class DraftEditScreen extends ConsumerStatefulWidget {
@@ -28,6 +30,55 @@ class DraftEditScreen extends ConsumerStatefulWidget {
 class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   bool _isLoading = false;
   bool _isDeleting = false;
+
+  /// Local working copy so labor/mechanic edits render instantly; each edit is
+  /// persisted through the FULL updateDraft path (NOT updateDraftItems, which
+  /// writes only `items` and would drop labor).
+  DraftEntity? _working;
+
+  DraftEntity _sync(DraftEntity fromProvider) {
+    final current = _working;
+    if (current == null || current.id != fromProvider.id) {
+      _working = fromProvider;
+    }
+    return _working!;
+  }
+
+  Future<void> _persistLabor(DraftEntity next) async {
+    setState(() => _working = next);
+    final actor = ref.read(currentUserProvider).valueOrNull;
+    if (actor == null) return;
+    await ref
+        .read(draftOperationsProvider.notifier)
+        .updateDraft(actor: actor, draft: next);
+  }
+
+  void _onMechanicChanged(String? id, String? name) {
+    final base = _working;
+    if (base == null) return;
+    final next = (id == null)
+        ? base.copyWith(clearMechanic: true, updatedAt: DateTime.now())
+        : base.copyWith(
+            mechanicId: id, mechanicName: name, updatedAt: DateTime.now());
+    _persistLabor(next);
+  }
+
+  Future<void> _addOrEditLabor(DraftEntity draft,
+      [LaborLineEntity? existing]) async {
+    final result = await showDialog<LaborLineEntity>(
+      context: context,
+      builder: (_) => _LaborLineDialog(line: existing),
+    );
+    if (result == null) return;
+    final next = existing == null
+        ? draft.addLaborLine(result)
+        : draft.updateLaborLine(result);
+    await _persistLabor(next);
+  }
+
+  Future<void> _removeLabor(DraftEntity draft, String lineId) async {
+    await _persistLabor(draft.removeLaborLine(lineId));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +114,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           );
         }
 
-        return _buildDraftContent(draft);
+        return _buildDraftContent(_sync(draft));
       },
     );
   }
@@ -162,6 +213,9 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     ),
             ),
 
+            // Labor & Service (mechanic + labor lines) — editable anytime.
+            _buildLaborSection(draft),
+
             // Summary and actions
             _buildSummarySection(draft),
           ],
@@ -257,6 +311,95 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     );
   }
 
+  Widget _buildLaborSection(DraftEntity draft) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: hairline)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(CupertinoIcons.wrench, size: 16, color: muted),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Labor & Service',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: muted,
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => _addOrEditLabor(draft),
+                icon: const Icon(CupertinoIcons.add, size: 16),
+                label: const Text('Add Labor'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          MechanicPicker(
+            selectedMechanicId: draft.mechanicId,
+            onChanged: (m) => _onMechanicChanged(m?.id, m?.name),
+          ),
+          ...draft.laborLines.map((line) => _buildLaborLineRow(draft, line)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLaborLineRow(DraftEntity draft, LaborLineEntity line) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Row(
+        children: [
+          Icon(CupertinoIcons.wrench, size: 14, color: muted),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: InkWell(
+              onTap: () => _addOrEditLabor(draft, line),
+              child: Text(
+                line.description,
+                style: theme.textTheme.bodyMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          Text(
+            '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w500),
+          ),
+          IconButton(
+            icon: const Icon(CupertinoIcons.xmark, size: 16),
+            visualDensity: VisualDensity.compact,
+            color: muted,
+            onPressed: () => _removeLabor(draft, line.id),
+            tooltip: 'Remove labor line',
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummarySection(DraftEntity draft) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -282,6 +425,15 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                 'Discount',
                 '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
                 valueColor: AppColors.successDark,
+              ),
+            ],
+            if (draft.laborLines.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              _buildSummaryRow(
+                draft.laborLines.length == 1
+                    ? 'Labor (1 service)'
+                    : 'Labor (${draft.laborLines.length} services)',
+                '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
               ),
             ],
             const Divider(height: AppSpacing.md),
@@ -467,5 +619,103 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         setState(() => _isDeleting = false);
       }
     }
+  }
+}
+
+/// Add/edit a single free-form labor line (description + fee). Fee must be > 0.
+class _LaborLineDialog extends StatefulWidget {
+  const _LaborLineDialog({this.line});
+
+  final LaborLineEntity? line;
+
+  @override
+  State<_LaborLineDialog> createState() => _LaborLineDialogState();
+}
+
+class _LaborLineDialogState extends State<_LaborLineDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _descCtrl;
+  late final TextEditingController _feeCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _descCtrl = TextEditingController(text: widget.line?.description ?? '');
+    _feeCtrl = TextEditingController(
+      text: (widget.line?.fee ?? 0) > 0
+          ? widget.line!.fee.toStringAsFixed(2)
+          : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    _feeCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final fee = double.parse(_feeCtrl.text.trim());
+    final existing = widget.line;
+    final line = LaborLineEntity(
+      id: existing?.id ?? const Uuid().v4(),
+      description: _descCtrl.text.trim(),
+      fee: fee,
+    );
+    Navigator.pop(context, line);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.line == null ? 'Add Labor' : 'Edit Labor'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _descCtrl,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                hintText: 'e.g. Engine tune-up',
+              ),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Description is required'
+                  : null,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextFormField(
+              controller: _feeCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Fee',
+                prefixText: AppConstants.currencySymbol,
+              ),
+              validator: (v) {
+                final parsed = double.tryParse((v ?? '').trim());
+                if (parsed == null) return 'Enter a valid amount';
+                if (parsed <= 0) return 'Fee must be greater than 0';
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(widget.line == null ? 'Add' : 'Save'),
+        ),
+      ],
+    );
   }
 }

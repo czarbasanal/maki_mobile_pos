@@ -143,5 +143,74 @@ void main() {
       expect(result.success, false);
       expect(result.errorMessage, contains('Payment'));
     });
+
+    test('labor lines do not deduct inventory (only items are stocked)',
+        () async {
+      // grandTotal = parts(200) + labor(450) = 650; tenders must reconcile.
+      final sale = createTestSale(amountReceived: 650).copyWith(
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Engine tune-up', fee: 450),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan Dela Cruz',
+        tenders: const {PaymentMethod.cash: 650},
+      );
+
+      when(() => mockSaleRepo.generateSaleNumber(any()))
+          .thenAnswer((_) async => 'SALE-002');
+      when(() => mockSaleRepo.createSale(any()))
+          .thenAnswer((inv) async =>
+              (inv.positionalArguments.first as SaleEntity)
+                  .copyWith(id: 'sale-200', saleNumber: 'SALE-002'));
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => ProductEntity(
+                id: 'prod-1',
+                sku: 'SKU-001',
+                name: 'Test Product',
+                costCode: 'NBF',
+                cost: 60,
+                price: 100,
+                quantity: 100,
+                reorderLevel: 10,
+                unit: 'pcs',
+                isActive: true,
+                createdAt: DateTime.now(),
+              ));
+      when(() => mockProductRepo.updateStock(
+            productId: any(named: 'productId'),
+            quantityChange: any(named: 'quantityChange'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).thenAnswer((_) async => ProductEntity(
+            id: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            costCode: 'NBF',
+            cost: 60,
+            price: 100,
+            quantity: 98,
+            reorderLevel: 10,
+            unit: 'pcs',
+            isActive: true,
+            createdAt: DateTime.now(),
+          ));
+
+      final result = await useCase.execute(sale: sale);
+
+      expect(result.success, true, reason: result.errorMessage);
+      expect(result.sale!.laborSubtotal, 450);
+      expect(result.sale!.grandTotal, 650);
+
+      // The single part (qty 2) must be decremented exactly once.
+      // Labor has no productId — it must never touch updateStock.
+      verify(() => mockProductRepo.updateStock(
+            productId: 'prod-1',
+            quantityChange: -2,
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).called(1);
+      // Note: getProductById is also called (inventory availability check),
+      // so verifyNoMoreInteractions is intentionally omitted here.
+    });
   });
 }

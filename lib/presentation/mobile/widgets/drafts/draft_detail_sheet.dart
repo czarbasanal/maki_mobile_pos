@@ -325,6 +325,27 @@ class DraftDetailSheet extends StatelessWidget {
                 valueColor: AppColors.successDark,
               ),
             ],
+            if (draft.laborLines.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Divider(height: 1),
+              ),
+              ...draft.laborLines.map(
+                (line) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                  child: _buildSummaryRow(
+                    theme,
+                    line.description,
+                    '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                  ),
+                ),
+              ),
+              _buildSummaryRow(
+                theme,
+                'Labor',
+                '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
+              ),
+            ],
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Divider(height: 1),
@@ -389,6 +410,16 @@ class DraftDetailSheet extends StatelessWidget {
               'Created by',
               draft.createdByName,
             ),
+            if (draft.mechanicName != null &&
+                draft.mechanicName!.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm + 4),
+              _buildInfoRow(
+                theme,
+                CupertinoIcons.wrench,
+                'Mechanic',
+                draft.mechanicName!,
+              ),
+            ],
             const SizedBox(height: AppSpacing.sm + 4),
             _buildInfoRow(
               theme,

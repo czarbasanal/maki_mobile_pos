@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -122,7 +123,7 @@ void main() {
     test('getSalesSummary should calculate totals correctly', () async {
       final today = DateTime.now();
 
-      // Create multiple sales
+      // Create multiple sales (parts-only; labor track must be zero).
       await repository.createSale(createTestSale().copyWith(createdAt: today));
       await repository.createSale(createTestSale().copyWith(createdAt: today));
 
@@ -132,7 +133,110 @@ void main() {
       );
 
       expect(summary.totalSalesCount, 2);
-      expect(summary.netAmount, greaterThan(0));
+      expect(summary.netAmount, 400); // 2 × (100 × 2), no discount
+      expect(summary.grossAmount, 400);
+      expect(summary.totalCost, 240); // 2 × (60 × 2)
+      expect(summary.totalProfit, 160);
+      expect(summary.laborRevenue, 0);
+      expect(summary.laborProfit, 0);
+    });
+
+    // ==================== LABOR + MECHANIC ROUND-TRIP TESTS ====================
+
+    SaleEntity createServiceSale() {
+      return SaleEntity(
+        id: '',
+        saleNumber: '',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100.0,
+            unitCost: 60.0,
+            quantity: 2,
+          ),
+        ],
+        laborLines: const [
+          LaborLineEntity(
+            id: 'labor-1',
+            description: 'Engine tune-up',
+            fee: 450.0,
+          ),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan Dela Cruz',
+        discountType: DiscountType.amount,
+        paymentMethod: PaymentMethod.cash,
+        amountReceived: 650.0,
+        changeGiven: 0.0,
+        cashierId: 'cashier-1',
+        cashierName: 'John Doe',
+        createdAt: DateTime.now(),
+      );
+    }
+
+    test('createSale persists labor + mechanic inline on the sale doc',
+        () async {
+      final created = await repository.createSale(createServiceSale());
+
+      // Read the raw doc: labor must be inline; items must NOT be on the doc.
+      final doc = await fakeFirestore.collection('sales').doc(created.id).get();
+      final data = doc.data()!;
+      expect(data['laborLines'], isA<List<dynamic>>());
+      expect((data['laborLines'] as List).length, 1);
+      expect(data['mechanicId'], 'mech-1');
+      expect(data['mechanicName'], 'Juan Dela Cruz');
+      expect(data.containsKey('items'), isFalse);
+    });
+
+    test('getSaleById loads inline labor + mechanic with items', () async {
+      final created = await repository.createSale(createServiceSale());
+
+      final retrieved = await repository.getSaleById(created.id);
+
+      expect(retrieved, isNotNull);
+      expect(retrieved!.items.length, 1);
+      expect(retrieved.laborLines.length, 1);
+      expect(retrieved.laborLines.first.description, 'Engine tune-up');
+      expect(retrieved.laborLines.first.fee, 450.0);
+      expect(retrieved.mechanicId, 'mech-1');
+      expect(retrieved.mechanicName, 'Juan Dela Cruz');
+      // grandTotal = 200 parts + 450 labor
+      expect(retrieved.grandTotal, 650.0);
+    });
+
+    test('getRecentSales loads inline labor for each sale', () async {
+      await repository.createSale(createServiceSale());
+
+      final sales = await repository.getRecentSales();
+
+      expect(sales, isNotEmpty);
+      expect(sales.first.laborLines.length, 1);
+      expect(sales.first.mechanicName, 'Juan Dela Cruz');
+    });
+
+    test('legacy sale doc without laborLines loads as []', () async {
+      // Write a doc directly with no labor/mechanic fields.
+      final ref = await fakeFirestore.collection('sales').add({
+        'saleNumber': 'SALE-LEGACY-001',
+        'discountType': 'amount',
+        'paymentMethod': 'cash',
+        'amountReceived': 200.0,
+        'changeGiven': 0.0,
+        'status': 'completed',
+        'cashierId': 'cashier-1',
+        'cashierName': 'John Doe',
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+      });
+
+      final retrieved = await repository.getSaleById(ref.id);
+
+      expect(retrieved, isNotNull);
+      expect(retrieved!.laborLines, isEmpty);
+      expect(retrieved.mechanicId, isNull);
+      expect(retrieved.mechanicName, isNull);
     });
   });
 }

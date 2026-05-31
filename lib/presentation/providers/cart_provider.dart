@@ -41,6 +41,15 @@ class CartState {
   /// re-prompting, while still creating a new draft entry.
   final String? draftName;
 
+  /// Labor/service lines on this ticket. Full price, never discounted.
+  final List<LaborLineEntity> laborLines;
+
+  /// Assigned mechanic id (null until a mechanic is picked).
+  final String? mechanicId;
+
+  /// Assigned mechanic name snapshot (denormalized, like cashierName).
+  final String? mechanicName;
+
   /// Whether the cart is currently being processed
   final bool isProcessing;
 
@@ -57,6 +66,9 @@ class CartState {
     this.notes,
     this.sourceDraftId,
     this.draftName,
+    this.laborLines = const [],
+    this.mechanicId,
+    this.mechanicName,
     this.isProcessing = false,
     this.errorMessage,
   });
@@ -95,16 +107,34 @@ class CartState {
     );
   }
 
-  /// Grand total after discounts
-  double get grandTotal => subtotal - totalDiscount;
+  /// Parts gross subtotal (items only, before discount). Alias of [subtotal].
+  double get partsSubtotal => subtotal;
+
+  /// Net merchandise revenue (parts after discount).
+  double get partsRevenue => partsSubtotal - totalDiscount;
+
+  /// Labor subtotal (sum of labor fees; never discounted).
+  double get laborSubtotal => laborLines.fold(0.0, (s, l) => s + l.fee);
+
+  /// Labor revenue (pure margin — zero cost).
+  double get laborRevenue => laborSubtotal;
+
+  /// Grand total after discounts, including labor.
+  double get grandTotal => partsRevenue + laborRevenue;
 
   /// Total cost of all items
   double get totalCost {
     return items.fold(0.0, (sum, item) => sum + item.totalCost);
   }
 
-  /// Total profit
-  double get totalProfit => grandTotal - totalCost;
+  /// Merchandise profit (parts revenue minus parts cost).
+  double get partsProfit => partsRevenue - totalCost;
+
+  /// Labor profit (equals labor revenue; zero cost).
+  double get laborProfit => laborRevenue;
+
+  /// True per-transaction profit (parts + labor).
+  double get totalProfit => partsProfit + laborProfit;
 
   /// Tender breakdown derived from the selected method + entered amounts.
   Map<PaymentMethod, double> get tenders {
@@ -162,11 +192,34 @@ class CartState {
     }
   }
 
+  /// Whether the labor section is internally consistent:
+  /// - if any labor line exists, a mechanic must be assigned, and
+  /// - every labor fee must be greater than zero.
+  /// Empty labor (the normal merchandise sale) is always valid.
+  bool get laborValid {
+    if (laborLines.isEmpty) return true;
+    if (mechanicId == null || mechanicId!.isEmpty) return false;
+    return laborLines.every((l) => l.fee > 0);
+  }
+
+  /// Human-readable reason labor is invalid, or null when [laborValid].
+  String? get laborValidationError {
+    if (laborLines.isEmpty) return null;
+    if (mechanicId == null || mechanicId!.isEmpty) {
+      return 'Assign a mechanic before saving labor.';
+    }
+    if (laborLines.any((l) => l.fee <= 0)) {
+      return 'Each labor fee must be greater than ₱0.';
+    }
+    return null;
+  }
+
   /// Whether cart can be checked out
-  bool get canCheckout => isNotEmpty && isPaymentValid && !isProcessing;
+  bool get canCheckout =>
+      isNotEmpty && isPaymentValid && laborValid && !isProcessing;
 
   /// Whether cart can be saved as draft
-  bool get canSaveAsDraft => isNotEmpty && !isProcessing;
+  bool get canSaveAsDraft => isNotEmpty && laborValid && !isProcessing;
 
   /// Whether any item has a discount
   bool get hasDiscount => totalDiscount > 0;
@@ -187,11 +240,15 @@ class CartState {
     String? notes,
     String? sourceDraftId,
     String? draftName,
+    List<LaborLineEntity>? laborLines,
+    String? mechanicId,
+    String? mechanicName,
     bool? isProcessing,
     String? errorMessage,
     bool clearNotes = false,
     bool clearSourceDraftId = false,
     bool clearDraftName = false,
+    bool clearMechanic = false,
     bool clearErrorMessage = false,
   }) {
     return CartState(
@@ -207,6 +264,9 @@ class CartState {
       sourceDraftId:
           clearSourceDraftId ? null : (sourceDraftId ?? this.sourceDraftId),
       draftName: clearDraftName ? null : (draftName ?? this.draftName),
+      laborLines: laborLines ?? this.laborLines,
+      mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
+      mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
       isProcessing: isProcessing ?? this.isProcessing,
       errorMessage:
           clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
@@ -380,6 +440,56 @@ class CartNotifier extends StateNotifier<CartState> {
     state = state.copyWith(items: resetItems, clearErrorMessage: true);
   }
 
+  // ==================== LABOR & MECHANIC OPERATIONS ====================
+
+  /// Adds a labor/service line with a generated id.
+  void addLaborLine({required String description, required double fee}) {
+    final line = LaborLineEntity(
+      id: _uuid.v4(),
+      description: description,
+      fee: fee,
+    );
+    state = state.copyWith(
+      laborLines: [...state.laborLines, line],
+      clearErrorMessage: true,
+    );
+  }
+
+  /// Updates a labor line by id. Only the provided fields change.
+  void updateLaborLine(String id, {String? description, double? fee}) {
+    final index = state.laborLines.indexWhere((l) => l.id == id);
+    if (index < 0) return;
+
+    final updatedLines = List<LaborLineEntity>.from(state.laborLines);
+    updatedLines[index] = state.laborLines[index].copyWith(
+      description: description,
+      fee: fee,
+    );
+    state = state.copyWith(laborLines: updatedLines, clearErrorMessage: true);
+  }
+
+  /// Removes a labor line by id.
+  void removeLaborLine(String id) {
+    state = state.copyWith(
+      laborLines: state.laborLines.where((l) => l.id != id).toList(),
+      clearErrorMessage: true,
+    );
+  }
+
+  /// Assigns the mechanic for this ticket (snapshots the name).
+  void setMechanic(String id, String name) {
+    state = state.copyWith(
+      mechanicId: id,
+      mechanicName: name,
+      clearErrorMessage: true,
+    );
+  }
+
+  /// Clears the assigned mechanic.
+  void clearMechanic() {
+    state = state.copyWith(clearMechanic: true, clearErrorMessage: true);
+  }
+
   // ==================== PAYMENT OPERATIONS ====================
 
   /// Sets the payment method, resetting the split inputs.
@@ -445,6 +555,9 @@ class CartNotifier extends StateNotifier<CartState> {
       amountReceived: 0,
       notes: draft.notes,
       draftName: draft.name,
+      laborLines: List<LaborLineEntity>.from(draft.laborLines),
+      mechanicId: draft.mechanicId,
+      mechanicName: draft.mechanicName,
     );
   }
 
@@ -463,6 +576,9 @@ class CartNotifier extends StateNotifier<CartState> {
       createdByName: createdByName,
       createdAt: DateTime.now(),
       notes: state.notes,
+      laborLines: state.laborLines,
+      mechanicId: state.mechanicId,
+      mechanicName: state.mechanicName,
     );
   }
 
@@ -486,6 +602,9 @@ class CartNotifier extends StateNotifier<CartState> {
       createdAt: DateTime.now(),
       draftId: state.sourceDraftId,
       notes: state.notes,
+      laborLines: state.laborLines,
+      mechanicId: state.mechanicId,
+      mechanicName: state.mechanicName,
     );
   }
 

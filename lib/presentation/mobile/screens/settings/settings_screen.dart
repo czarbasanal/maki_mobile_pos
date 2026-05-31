@@ -9,7 +9,6 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_wdigets.dart';
 
 /// Main settings screen with all configuration options.
@@ -83,6 +82,12 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Manage Lists',
                   subtitle: 'Product / expense categories and units',
                   onTap: () => context.push(RoutePaths.categorySettings),
+                ),
+                SettingsTile(
+                  icon: CupertinoIcons.wrench,
+                  title: 'Mechanics',
+                  subtitle: 'Used to assign a mechanic to a service draft',
+                  onTap: () => context.push(RoutePaths.mechanics),
                 ),
               ],
             ),

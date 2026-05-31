@@ -179,6 +179,10 @@ class ReceiptWidget extends ConsumerWidget {
           const SizedBox(height: 4),
           _buildInfoRow('Payment', sale.paymentMethod.displayName),
         ],
+        if (sale.mechanicName != null && sale.mechanicName!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          _buildInfoRow('Mechanic', sale.mechanicName!),
+        ],
       ],
     );
   }
@@ -325,6 +329,45 @@ class ReceiptWidget extends ConsumerWidget {
             ),
           );
         }),
+        if (sale.laborLines.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'LABOR / SERVICE',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              color: _ReceiptColors.label,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ...sale.laborLines.map((line) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      line.description.isEmpty ? 'Service' : line.description,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.black),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
       ],
     );
   }
@@ -336,6 +379,10 @@ class ReceiptWidget extends ConsumerWidget {
         if (sale.hasDiscount) ...[
           const SizedBox(height: 4),
           _buildTotalRow('Discount', -sale.totalDiscount, isDiscount: true),
+        ],
+        if (sale.laborLines.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          _buildTotalRow('Labor', sale.laborSubtotal),
         ],
         const SizedBox(height: AppSpacing.sm),
         _buildTotalRow('TOTAL', sale.grandTotal, isGrandTotal: true),

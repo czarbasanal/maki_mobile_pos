@@ -32,6 +32,14 @@ flutter test integration_test/ -d <device-id>        # pick a device
   fast and reliable while still exercising the real widget tree, navigation,
   and gestures on a device.
 
+- **`service_draft_labor_flow_test.dart`** — drives the POS service-draft path
+  with in-memory state + a FakeFirebaseFirestore-backed `SaleRepositoryImpl`:
+  add a part, add labor lines, assign a mechanic, save as a draft, reload it
+  into a fresh cart, and check out. Asserts labor + mechanic round-trip through
+  the draft and persist inline on the sale, and that the **real parts-only
+  `getSalesSummary` is unchanged** while `laborRevenue`/`laborProfit` track labor
+  separately (reconciliation identity `Σ byPaymentMethod == net(parts) + laborRevenue`).
+
 ## Growing this into full-app e2e
 
 `sku_edit_flow_test.dart` mounts a single screen inside a minimal `GoRouter`.

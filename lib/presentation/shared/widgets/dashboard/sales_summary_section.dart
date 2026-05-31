@@ -93,6 +93,17 @@ class SalesSummarySection extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (summary.laborRevenue > 0) ...[
+                const SizedBox(height: 12),
+                SummaryCard(
+                  title: 'Service / Labor',
+                  value:
+                      '${AppConstants.currencySymbol}${_formatNumber(summary.laborRevenue)}',
+                  icon: CupertinoIcons.wrench,
+                  subtitle:
+                      '${AppConstants.currencySymbol}${_formatNumber(summary.laborProfit)} profit',
+                ),
+              ],
             ],
           ],
         );

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/domain/entities/labor_line_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/sale_item_entity.dart';
 
 /// Represents a completed sale transaction.
@@ -23,6 +24,16 @@ class SaleEntity extends Equatable {
 
   /// Line items in this sale
   final List<SaleItemEntity> items;
+
+  /// Free-form labor/service lines (full price, never discounted).
+  /// Stored INLINE on the sale doc (not in the items subcollection).
+  final List<LaborLineEntity> laborLines;
+
+  /// Mechanic assigned to this job (one per ticket); null when none.
+  final String? mechanicId;
+
+  /// Mechanic display name (snapshot, like cashierName).
+  final String? mechanicName;
 
   /// Type of discount applied (applies to ALL items)
   /// This ensures consistency - you cannot mix amount and percentage discounts
@@ -80,6 +91,9 @@ class SaleEntity extends Equatable {
     required this.id,
     required this.saleNumber,
     required this.items,
+    this.laborLines = const [],
+    this.mechanicId,
+    this.mechanicName,
     this.discountType = DiscountType.amount,
     required this.paymentMethod,
     this.tenders = const {},
@@ -126,8 +140,20 @@ class SaleEntity extends Equatable {
     );
   }
 
-  /// Grand total after all discounts
-  double get grandTotal => subtotal - totalDiscount;
+  /// Parts gross before discount (items only). Alias of [subtotal].
+  double get partsSubtotal => subtotal;
+
+  /// Sum of all labor fees (full price, never discounted).
+  double get laborSubtotal => laborLines.fold(0.0, (s, l) => s + l.fee);
+
+  /// Net merchandise revenue (parts gross minus item discounts).
+  double get partsRevenue => partsSubtotal - totalDiscount;
+
+  /// Labor revenue (pure margin — zero cost).
+  double get laborRevenue => laborSubtotal;
+
+  /// Grand total after discounts, including labor.
+  double get grandTotal => partsRevenue + laborRevenue;
 
   /// Tender breakdown, normalized: explicit [tenders] if present, otherwise
   /// the whole [grandTotal] attributed to [paymentMethod] (legacy sales).
@@ -151,8 +177,14 @@ class SaleEntity extends Equatable {
     return items.fold(0.0, (sum, item) => sum + item.totalCost);
   }
 
-  /// Total profit from this sale
-  double get totalProfit => grandTotal - totalCost;
+  /// Merchandise profit (parts revenue minus parts cost).
+  double get partsProfit => partsRevenue - totalCost;
+
+  /// Labor profit (labor has zero cost).
+  double get laborProfit => laborRevenue;
+
+  /// Total profit from this sale (parts + labor).
+  double get totalProfit => partsProfit + laborProfit;
 
   /// Profit margin percentage
   double get profitMargin {
@@ -188,6 +220,9 @@ class SaleEntity extends Equatable {
     String? id,
     String? saleNumber,
     List<SaleItemEntity>? items,
+    List<LaborLineEntity>? laborLines,
+    String? mechanicId,
+    String? mechanicName,
     DiscountType? discountType,
     PaymentMethod? paymentMethod,
     Map<PaymentMethod, double>? tenders,
@@ -208,11 +243,15 @@ class SaleEntity extends Equatable {
     bool clearDraftId = false,
     bool clearNotes = false,
     bool clearVoidInfo = false,
+    bool clearMechanic = false,
   }) {
     return SaleEntity(
       id: id ?? this.id,
       saleNumber: saleNumber ?? this.saleNumber,
       items: items ?? this.items,
+      laborLines: laborLines ?? this.laborLines,
+      mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
+      mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       tenders: tenders ?? this.tenders,
@@ -253,6 +292,9 @@ class SaleEntity extends Equatable {
         id,
         saleNumber,
         items,
+        laborLines,
+        mechanicId,
+        mechanicName,
         discountType,
         paymentMethod,
         tenders,

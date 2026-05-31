@@ -468,6 +468,7 @@ class SaleRepositoryImpl implements SaleRepository {
     double totalDiscounts = 0;
     double netAmount = 0;
     double totalCost = 0;
+    double laborRevenue = 0;
     final byPaymentMethod = <PaymentMethod, double>{};
 
     // Seed only real tender buckets (never `mixed`, which is a label).
@@ -481,10 +482,13 @@ class SaleRepositoryImpl implements SaleRepository {
     }
 
     for (final sale in completedSales) {
-      grossAmount += sale.subtotal;
+      // Top-line is PARTS-ONLY: grossAmount/netAmount exclude labor fees.
+      // Cash buckets remain labor-inclusive (drawer physically holds labor cash).
+      grossAmount += sale.partsSubtotal;
       totalDiscounts += sale.totalDiscount;
-      netAmount += sale.grandTotal;
+      netAmount += sale.partsRevenue;
       totalCost += sale.totalCost;
+      laborRevenue += sale.laborRevenue;
       sale.effectiveTenders.forEach((method, amount) {
         byPaymentMethod[method] = (byPaymentMethod[method] ?? 0) + amount;
       });
@@ -499,6 +503,8 @@ class SaleRepositoryImpl implements SaleRepository {
       totalCost: totalCost,
       totalProfit: netAmount - totalCost,
       byPaymentMethod: byPaymentMethod,
+      laborRevenue: laborRevenue,
+      laborProfit: laborRevenue, // labor has zero cost
     );
   }
 
@@ -577,6 +583,11 @@ class SaleRepositoryImpl implements SaleRepository {
   // ==================== HELPER METHODS ====================
 
   /// Loads sales documents with their items.
+  ///
+  /// Items come from the `sales/{id}/items` subcollection. Labor lines are
+  /// stored INLINE on the sale doc and are parsed by [SaleModel.fromMap]
+  /// directly off `doc.data()` — they are NOT passed via the `items:` param,
+  /// so no extra subcollection read is needed for labor.
   Future<List<SaleEntity>> _loadSalesWithItems(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) async {

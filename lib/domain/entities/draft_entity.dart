@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/domain/entities/labor_line_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/sale_item_entity.dart';
 
 /// Represents a saved incomplete sale (draft).
@@ -24,6 +25,15 @@ class DraftEntity extends Equatable {
 
   /// Line items in this draft
   final List<SaleItemEntity> items;
+
+  /// Free-form labor/service lines (full price, never discounted)
+  final List<LaborLineEntity> laborLines;
+
+  /// Mechanic assigned to this job (one per ticket); null until assigned
+  final String? mechanicId;
+
+  /// Mechanic display name (snapshot, like createdByName)
+  final String? mechanicName;
 
   /// Type of discount applied (applies to ALL items)
   final DiscountType discountType;
@@ -60,6 +70,9 @@ class DraftEntity extends Equatable {
     required this.id,
     required this.name,
     required this.items,
+    this.laborLines = const [],
+    this.mechanicId,
+    this.mechanicName,
     this.discountType = DiscountType.amount,
     required this.createdBy,
     required this.createdByName,
@@ -100,8 +113,31 @@ class DraftEntity extends Equatable {
     );
   }
 
-  /// Grand total after all discounts
-  double get grandTotal => subtotal - totalDiscount;
+  // ==================== MONEY MATH ====================
+
+  /// Parts gross before discount (items only). Alias of [subtotal].
+  double get partsSubtotal => subtotal;
+
+  /// Sum of all labor fees (full price, never discounted).
+  double get laborSubtotal => laborLines.fold(0.0, (s, l) => s + l.fee);
+
+  /// Net merchandise revenue (parts gross minus item discounts).
+  double get partsRevenue => partsSubtotal - totalDiscount;
+
+  /// Labor revenue (pure margin — zero cost).
+  double get laborRevenue => laborSubtotal;
+
+  /// Grand total after discounts, including labor.
+  double get grandTotal => partsRevenue + laborRevenue;
+
+  /// Merchandise profit (parts revenue minus parts cost).
+  double get partsProfit => partsRevenue - totalCost;
+
+  /// Labor profit (labor has zero cost).
+  double get laborProfit => laborRevenue;
+
+  /// True per-transaction profit (parts + labor).
+  double get totalProfit => partsProfit + laborProfit;
 
   /// Total cost of all items
   double get totalCost {
@@ -211,12 +247,43 @@ class DraftEntity extends Equatable {
     return copyWith(items: [], updatedAt: DateTime.now());
   }
 
+  // ==================== LABOR MANAGEMENT ====================
+
+  /// Adds a labor line to the draft (returns new instance)
+  DraftEntity addLaborLine(LaborLineEntity line) {
+    return copyWith(
+      laborLines: [...laborLines, line],
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Updates a labor line by id (returns new instance; no-op if not found)
+  DraftEntity updateLaborLine(LaborLineEntity line) {
+    final index = laborLines.indexWhere((l) => l.id == line.id);
+    if (index < 0) return this;
+
+    final updated = List<LaborLineEntity>.from(laborLines);
+    updated[index] = line;
+    return copyWith(laborLines: updated, updatedAt: DateTime.now());
+  }
+
+  /// Removes a labor line by id (returns new instance)
+  DraftEntity removeLaborLine(String lineId) {
+    return copyWith(
+      laborLines: laborLines.where((l) => l.id != lineId).toList(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
   // ==================== COPY WITH ====================
 
   DraftEntity copyWith({
     String? id,
     String? name,
     List<SaleItemEntity>? items,
+    List<LaborLineEntity>? laborLines,
+    String? mechanicId,
+    String? mechanicName,
     DiscountType? discountType,
     String? createdBy,
     String? createdByName,
@@ -230,11 +297,15 @@ class DraftEntity extends Equatable {
     // Clear flags
     bool clearNotes = false,
     bool clearConversionInfo = false,
+    bool clearMechanic = false,
   }) {
     return DraftEntity(
       id: id ?? this.id,
       name: name ?? this.name,
       items: items ?? this.items,
+      laborLines: laborLines ?? this.laborLines,
+      mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
+      mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
       discountType: discountType ?? this.discountType,
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,
@@ -266,6 +337,9 @@ class DraftEntity extends Equatable {
         id,
         name,
         items,
+        laborLines,
+        mechanicId,
+        mechanicName,
         discountType,
         createdBy,
         createdByName,

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/data/models/labor_line_model.dart';
 import 'package:maki_mobile_pos/data/models/sale_item_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -13,6 +14,9 @@ class DraftModel {
   final String id;
   final String name;
   final List<SaleItemModel> items;
+  final List<LaborLineModel> laborLines;
+  final String? mechanicId;
+  final String? mechanicName;
   final DiscountType discountType;
   final String createdBy;
   final String createdByName;
@@ -28,6 +32,9 @@ class DraftModel {
     required this.id,
     required this.name,
     required this.items,
+    this.laborLines = const [],
+    this.mechanicId,
+    this.mechanicName,
     this.discountType = DiscountType.amount,
     required this.createdBy,
     required this.createdByName,
@@ -54,10 +61,22 @@ class DraftModel {
       itemsList.add(SaleItemModel.fromMap(itemMap, itemId));
     }
 
+    // Parse labor lines array (inline, like items). Legacy docs -> [].
+    final laborList = <LaborLineModel>[];
+    final laborData = map['laborLines'] as List<dynamic>? ?? [];
+    for (int i = 0; i < laborData.length; i++) {
+      final laborMap = laborData[i] as Map<String, dynamic>;
+      final laborId = laborMap['id'] as String? ?? 'labor-$i';
+      laborList.add(LaborLineModel.fromMap(laborMap, laborId));
+    }
+
     return DraftModel(
       id: documentId,
       name: map['name'] as String? ?? 'Unnamed Draft',
       items: itemsList,
+      laborLines: laborList,
+      mechanicId: map['mechanicId'] as String?,
+      mechanicName: map['mechanicName'] as String?,
       discountType: DiscountType.fromString(map['discountType'] as String?),
       createdBy: map['createdBy'] as String? ?? '',
       createdByName: map['createdByName'] as String? ?? '',
@@ -84,6 +103,10 @@ class DraftModel {
     final map = <String, dynamic>{
       'name': name,
       'items': items.map((item) => item.toMap(includeId: true)).toList(),
+      'laborLines':
+          laborLines.map((l) => l.toMap(includeId: true)).toList(),
+      'mechanicId': mechanicId,
+      'mechanicName': mechanicName,
       'discountType': discountType.value,
       'createdBy': createdBy,
       'createdByName': createdByName,
@@ -148,6 +171,9 @@ class DraftModel {
       id: id,
       name: name,
       items: items.map((item) => item.toEntity()).toList(),
+      laborLines: laborLines.map((l) => l.toEntity()).toList(),
+      mechanicId: mechanicId,
+      mechanicName: mechanicName,
       discountType: discountType,
       createdBy: createdBy,
       createdByName: createdByName,
@@ -168,6 +194,11 @@ class DraftModel {
       name: entity.name,
       items:
           entity.items.map((item) => SaleItemModel.fromEntity(item)).toList(),
+      laborLines: entity.laborLines
+          .map((l) => LaborLineModel.fromEntity(l))
+          .toList(),
+      mechanicId: entity.mechanicId,
+      mechanicName: entity.mechanicName,
       discountType: entity.discountType,
       createdBy: entity.createdBy,
       createdByName: entity.createdByName,
@@ -199,6 +230,9 @@ class DraftModel {
   factory DraftModel.create({
     required String name,
     required List<SaleItemModel> items,
+    List<LaborLineModel> laborLines = const [],
+    String? mechanicId,
+    String? mechanicName,
     DiscountType discountType = DiscountType.amount,
     required String createdBy,
     required String createdByName,
@@ -208,6 +242,9 @@ class DraftModel {
       id: '', // Will be set by Firestore
       name: name,
       items: items,
+      laborLines: laborLines,
+      mechanicId: mechanicId,
+      mechanicName: mechanicName,
       discountType: discountType,
       createdBy: createdBy,
       createdByName: createdByName,
@@ -238,8 +275,11 @@ class DraftModel {
     });
   }
 
-  /// Grand total after discounts
-  double get grandTotal => subtotal - totalDiscount;
+  /// Labor subtotal (sum of labor fees; never discounted)
+  double get laborSubtotal => laborLines.fold(0.0, (s, l) => s + l.fee);
+
+  /// Grand total: net parts (after discount) + labor
+  double get grandTotal => (subtotal - totalDiscount) + laborSubtotal;
 
   /// Total item count
   int get totalItemCount => items.fold(0, (sum, item) => sum + item.quantity);
@@ -250,6 +290,9 @@ class DraftModel {
     String? id,
     String? name,
     List<SaleItemModel>? items,
+    List<LaborLineModel>? laborLines,
+    String? mechanicId,
+    String? mechanicName,
     DiscountType? discountType,
     String? createdBy,
     String? createdByName,
@@ -260,11 +303,16 @@ class DraftModel {
     String? convertedToSaleId,
     DateTime? convertedAt,
     String? notes,
+    bool clearMechanic = false,
   }) {
     return DraftModel(
       id: id ?? this.id,
       name: name ?? this.name,
       items: items ?? this.items,
+      laborLines: laborLines ?? this.laborLines,
+      mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
+      mechanicName:
+          clearMechanic ? null : (mechanicName ?? this.mechanicName),
       discountType: discountType ?? this.discountType,
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,

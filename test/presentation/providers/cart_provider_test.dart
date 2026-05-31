@@ -311,6 +311,189 @@ void main() {
       expect(draft.items.length, 1);
       expect(draft.notes, 'Test draft');
     });
+
+    test('CartState defaults: empty laborLines, null mechanic', () {
+      final state = container.read(cartProvider);
+      expect(state.laborLines, isEmpty);
+      expect(state.mechanicId, isNull);
+      expect(state.mechanicName, isNull);
+      expect(state.laborSubtotal, 0);
+    });
+
+    test('grandTotal includes labor; parts/labor split is correct', () {
+      final product = createTestProduct(price: 100);
+      cartNotifier.addProduct(product, quantity: 2);
+      final itemId = container.read(cartProvider).items.first.id;
+      cartNotifier.applyItemDiscount(itemId, 20);
+
+      cartNotifier.addLaborLine(description: 'Tune-up', fee: 300);
+      cartNotifier.addLaborLine(description: 'Brake bleed', fee: 150);
+
+      final state = container.read(cartProvider);
+      expect(state.partsSubtotal, 200);
+      expect(state.totalDiscount, 20);
+      expect(state.partsRevenue, 180);
+      expect(state.laborSubtotal, 450);
+      expect(state.laborRevenue, 450);
+      expect(state.grandTotal, 630);
+    });
+
+    test('profit split: parts profit excludes labor cost; labor is pure margin',
+        () {
+      cartNotifier.addProduct(createTestProduct(price: 100, cost: 60),
+          quantity: 2);
+      cartNotifier.addLaborLine(description: 'Labor', fee: 500);
+
+      final state = container.read(cartProvider);
+      expect(state.totalCost, 120); // items only
+      expect(state.partsProfit, 80); // 200 - 120
+      expect(state.laborProfit, 500); // zero cost
+      expect(state.totalProfit, 580); // 80 + 500
+    });
+
+    test('cartGrandTotalProvider reflects labor', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addLaborLine(description: 'Labor', fee: 250);
+      expect(container.read(cartGrandTotalProvider), 350);
+    });
+
+    test('addLaborLine appends a line with a generated id and fee', () {
+      cartNotifier.addLaborLine(description: 'Tune-up', fee: 300);
+      final state = container.read(cartProvider);
+      expect(state.laborLines.length, 1);
+      expect(state.laborLines.first.id, isNotEmpty);
+      expect(state.laborLines.first.description, 'Tune-up');
+      expect(state.laborLines.first.fee, 300);
+    });
+
+    test('addLaborLine adds multiple distinct lines', () {
+      cartNotifier.addLaborLine(description: 'A', fee: 100);
+      cartNotifier.addLaborLine(description: 'B', fee: 200);
+      final state = container.read(cartProvider);
+      expect(state.laborLines.length, 2);
+      expect(state.laborLines[0].id, isNot(state.laborLines[1].id));
+      expect(state.laborSubtotal, 300);
+    });
+
+    test('updateLaborLine edits description and fee by id', () {
+      cartNotifier.addLaborLine(description: 'Old', fee: 100);
+      final id = container.read(cartProvider).laborLines.first.id;
+      cartNotifier.updateLaborLine(id, description: 'New', fee: 250);
+      final line = container.read(cartProvider).laborLines.first;
+      expect(line.description, 'New');
+      expect(line.fee, 250);
+    });
+
+    test('updateLaborLine with only fee keeps description', () {
+      cartNotifier.addLaborLine(description: 'Keep', fee: 100);
+      final id = container.read(cartProvider).laborLines.first.id;
+      cartNotifier.updateLaborLine(id, fee: 400);
+      final line = container.read(cartProvider).laborLines.first;
+      expect(line.description, 'Keep');
+      expect(line.fee, 400);
+    });
+
+    test('updateLaborLine with unknown id is a no-op', () {
+      cartNotifier.addLaborLine(description: 'A', fee: 100);
+      cartNotifier.updateLaborLine('nope', fee: 999);
+      expect(container.read(cartProvider).laborLines.first.fee, 100);
+    });
+
+    test('removeLaborLine removes by id', () {
+      cartNotifier.addLaborLine(description: 'A', fee: 100);
+      cartNotifier.addLaborLine(description: 'B', fee: 200);
+      final firstId = container.read(cartProvider).laborLines.first.id;
+      cartNotifier.removeLaborLine(firstId);
+      final state = container.read(cartProvider);
+      expect(state.laborLines.length, 1);
+      expect(state.laborLines.first.description, 'B');
+    });
+
+    test('setMechanic assigns id and name; clearMechanic nulls both', () {
+      cartNotifier.setMechanic('mech-1', 'Juan Dela Cruz');
+      var state = container.read(cartProvider);
+      expect(state.mechanicId, 'mech-1');
+      expect(state.mechanicName, 'Juan Dela Cruz');
+
+      cartNotifier.clearMechanic();
+      state = container.read(cartProvider);
+      expect(state.mechanicId, isNull);
+      expect(state.mechanicName, isNull);
+    });
+
+    test('loadFromDraft copies laborLines and mechanic into the cart', () {
+      final draft = DraftEntity(
+        id: 'draft-1',
+        name: 'Service job',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100,
+            unitCost: 60,
+            quantity: 1,
+          ),
+        ],
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan',
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John',
+        createdAt: DateTime.now(),
+      );
+
+      cartNotifier.loadFromDraft(draft);
+
+      final state = container.read(cartProvider);
+      expect(state.laborLines.length, 1);
+      expect(state.laborLines.first.description, 'Tune-up');
+      expect(state.laborLines.first.fee, 300);
+      expect(state.mechanicId, 'mech-1');
+      expect(state.mechanicName, 'Juan');
+    });
+
+    test('toDraft carries laborLines and mechanic', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addLaborLine(description: 'Brake bleed', fee: 150);
+      cartNotifier.setMechanic('mech-2', 'Pedro');
+
+      final draft = cartNotifier.toDraft(
+        name: 'My Draft',
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+      );
+
+      expect(draft.laborLines.length, 1);
+      expect(draft.laborLines.first.description, 'Brake bleed');
+      expect(draft.laborLines.first.fee, 150);
+      expect(draft.mechanicId, 'mech-2');
+      expect(draft.mechanicName, 'Pedro');
+      expect(draft.grandTotal, 250); // parts 100 + labor 150
+    });
+
+    test('toSale carries laborLines and mechanic', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addLaborLine(description: 'Tune-up', fee: 200);
+      cartNotifier.setMechanic('mech-3', 'Maria');
+      cartNotifier.setAmountReceived(300);
+
+      final sale = cartNotifier.toSale(
+        saleNumber: 'SALE-001',
+        cashierId: 'cashier-1',
+        cashierName: 'John Doe',
+      );
+
+      expect(sale.laborLines.length, 1);
+      expect(sale.laborLines.first.fee, 200);
+      expect(sale.mechanicId, 'mech-3');
+      expect(sale.mechanicName, 'Maria');
+      expect(sale.grandTotal, 300); // parts 100 + labor 200
+    });
   });
 
   group('Derived Providers', () {
