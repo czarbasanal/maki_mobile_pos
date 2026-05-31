@@ -192,11 +192,34 @@ class CartState {
     }
   }
 
+  /// Whether the labor section is internally consistent:
+  /// - if any labor line exists, a mechanic must be assigned, and
+  /// - every labor fee must be greater than zero.
+  /// Empty labor (the normal merchandise sale) is always valid.
+  bool get laborValid {
+    if (laborLines.isEmpty) return true;
+    if (mechanicId == null || mechanicId!.isEmpty) return false;
+    return laborLines.every((l) => l.fee > 0);
+  }
+
+  /// Human-readable reason labor is invalid, or null when [laborValid].
+  String? get laborValidationError {
+    if (laborLines.isEmpty) return null;
+    if (mechanicId == null || mechanicId!.isEmpty) {
+      return 'Assign a mechanic before saving labor.';
+    }
+    if (laborLines.any((l) => l.fee <= 0)) {
+      return 'Each labor fee must be greater than ₱0.';
+    }
+    return null;
+  }
+
   /// Whether cart can be checked out
-  bool get canCheckout => isNotEmpty && isPaymentValid && !isProcessing;
+  bool get canCheckout =>
+      isNotEmpty && isPaymentValid && laborValid && !isProcessing;
 
   /// Whether cart can be saved as draft
-  bool get canSaveAsDraft => isNotEmpty && !isProcessing;
+  bool get canSaveAsDraft => isNotEmpty && laborValid && !isProcessing;
 
   /// Whether any item has a discount
   bool get hasDiscount => totalDiscount > 0;
