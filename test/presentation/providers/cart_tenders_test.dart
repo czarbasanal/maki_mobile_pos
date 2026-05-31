@@ -58,4 +58,26 @@ void main() {
     cart.setSplitAmount(1000); // no balance -> invalid as salmon
     expect(cart.state.isPaymentValid, false);
   });
+
+  test('labor raises grandTotal so cash tender + change track the total', () {
+    cart.addLaborLine(description: 'Tune-up', fee: 500); // grandTotal -> 1500
+    cart.setPaymentMethod(PaymentMethod.cash);
+    cart.setAmountReceived(2000);
+
+    expect(cart.state.grandTotal, 1500);
+    expect(cart.state.tenders, {PaymentMethod.cash: 1500});
+    expect(cart.state.change, 500);
+    expect(cart.state.isPaymentValid, true);
+  });
+
+  test('mixed split is taken over the labor-inclusive grandTotal', () {
+    cart.addLaborLine(description: 'Labor', fee: 500); // grandTotal -> 1500
+    cart.setPaymentMethod(PaymentMethod.mixed);
+    cart.setSecondaryMethod(PaymentMethod.gcash);
+    cart.setSplitAmount(600);
+
+    expect(cart.state.tenders,
+        {PaymentMethod.cash: 900, PaymentMethod.gcash: 600});
+    expect(cart.state.isPaymentValid, true);
+  });
 }
