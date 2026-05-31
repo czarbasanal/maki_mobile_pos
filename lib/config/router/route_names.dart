@@ -141,6 +141,9 @@ abstract class RouteNames {
   /// Per-kind category editor — `/settings/categories/:kind`.
   static const String categoryEditor = 'categoryEditor';
 
+  /// Mechanics admin editor — `/settings/mechanics`.
+  static const String mechanics = 'mechanics';
+
   /// About screen route — `/settings/about`.
   static const String about = 'about';
 
@@ -223,6 +226,7 @@ abstract class RoutePaths {
   static const String costCodeSettings = '/settings/cost-codes';
   static const String categorySettings = '/settings/categories';
   static const String categoryEditor = '/settings/categories/:kind';
+  static const String mechanics = '/settings/mechanics';
   static const String about = '/settings/about';
 
   // ==================== LOGS PATHS ====================
