@@ -123,7 +123,7 @@ void main() {
     test('getSalesSummary should calculate totals correctly', () async {
       final today = DateTime.now();
 
-      // Create multiple sales
+      // Create multiple sales (parts-only; labor track must be zero).
       await repository.createSale(createTestSale().copyWith(createdAt: today));
       await repository.createSale(createTestSale().copyWith(createdAt: today));
 
@@ -133,7 +133,12 @@ void main() {
       );
 
       expect(summary.totalSalesCount, 2);
-      expect(summary.netAmount, greaterThan(0));
+      expect(summary.netAmount, 400); // 2 × (100 × 2), no discount
+      expect(summary.grossAmount, 400);
+      expect(summary.totalCost, 240); // 2 × (60 × 2)
+      expect(summary.totalProfit, 160);
+      expect(summary.laborRevenue, 0);
+      expect(summary.laborProfit, 0);
     });
 
     // ==================== LABOR + MECHANIC ROUND-TRIP TESTS ====================
