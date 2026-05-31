@@ -2,6 +2,7 @@
 // `sales/{id}/items` subcollection and are loaded separately.
 
 import { DiscountType, type PaymentMethod, SaleStatus } from '../enums';
+import type { LaborLine } from './LaborLine';
 import {
   saleItemDiscountAmount,
   saleItemGross,
@@ -14,6 +15,10 @@ export interface Sale {
   id: string;
   saleNumber: string;
   items: SaleItem[];
+  laborLines: LaborLine[];
+  mechanicId: string | null;
+  mechanicName: string | null;
+  tenders: Partial<Record<PaymentMethod, number>>;
   discountType: DiscountType;
   paymentMethod: PaymentMethod;
   amountReceived: number;
@@ -54,8 +59,46 @@ export function saleTotalDiscount(sale: Sale): number {
   );
 }
 
+// ==================== LABOR-AWARE MONEY MATH ====================
+// Mirrors the Dart contract: grandTotal = partsRevenue + laborRevenue, where
+// labor is full price (never discounted) and zero cost.
+
+export function salePartsSubtotal(sale: Sale): number {
+  return saleSubtotal(sale);
+}
+
+export function salePartsRevenue(sale: Sale): number {
+  return salePartsSubtotal(sale) - saleTotalDiscount(sale);
+}
+
+export function saleLaborSubtotal(sale: Sale): number {
+  return sale.laborLines.reduce((sum, line) => sum + line.fee, 0);
+}
+
+export function saleLaborRevenue(sale: Sale): number {
+  return saleLaborSubtotal(sale);
+}
+
 export function saleGrandTotal(sale: Sale): number {
-  return saleSubtotal(sale) - saleTotalDiscount(sale);
+  return salePartsRevenue(sale) + saleLaborRevenue(sale);
+}
+
+export function salePartsProfit(sale: Sale): number {
+  return salePartsRevenue(sale) - saleTotalCost(sale);
+}
+
+export function saleLaborProfit(sale: Sale): number {
+  return saleLaborRevenue(sale);
+}
+
+/// Normalized payment breakdown. When the sale carries an explicit `tenders`
+/// map (e.g. a mixed split), use it; otherwise attribute the whole
+/// labor-inclusive grandTotal to the single payment method.
+export function saleEffectiveTenders(
+  sale: Sale,
+): Partial<Record<PaymentMethod, number>> {
+  if (Object.keys(sale.tenders).length > 0) return sale.tenders;
+  return { [sale.paymentMethod]: saleGrandTotal(sale) };
 }
 
 export function saleTotalCost(sale: Sale): number {
@@ -68,7 +111,7 @@ export function saleNetAmount(sale: Sale): number {
 }
 
 export function saleTotalProfit(sale: Sale): number {
-  return saleGrandTotal(sale) - saleTotalCost(sale);
+  return salePartsProfit(sale) + saleLaborProfit(sale);
 }
 
 export function saleIsVoided(sale: Sale): boolean {
