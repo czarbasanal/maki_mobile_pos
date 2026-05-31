@@ -138,7 +138,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ...cart.items.asMap().entries.map((entry) {
             final index = entry.key;
             final item = entry.value;
-            final isLast = index == cart.items.length - 1;
+            final isLast =
+                index == cart.items.length - 1 && cart.laborLines.isEmpty;
             final netAmount = item.calculateNetAmount(
               isPercentage: cart.isPercentageDiscount,
             );
@@ -210,6 +211,54 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             );
           }),
+          ...cart.laborLines.asMap().entries.map((entry) {
+            final index = entry.key;
+            final line = entry.value;
+            final isLast = index == cart.laborLines.length - 1;
+            return Container(
+              padding: const EdgeInsets.all(AppSpacing.sm + 4),
+              decoration: BoxDecoration(
+                border: isLast
+                    ? null
+                    : Border(bottom: BorderSide(color: hairline)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: Border.all(color: theme.colorScheme.primary),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.wrench,
+                      size: 14,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm + 4),
+                  Expanded(
+                    child: Text(
+                      line.description.isEmpty ? 'Service' : line.description,
+                      style: AppTextStyles.productName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -235,6 +284,28 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 '-${AppConstants.currencySymbol}${cart.totalDiscount.toStringAsFixed(2)}',
                 valueColor: AppColors.successDark,
               ),
+            ],
+            if (cart.laborLines.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              _buildSummaryRow(
+                theme,
+                'Labor (${cart.laborLines.length} '
+                    'service${cart.laborLines.length == 1 ? '' : 's'})',
+                '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
+              ),
+              if (cart.mechanicName != null &&
+                  cart.mechanicName!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Mechanic: ${cart.mechanicName}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ],
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.sm + 4),
