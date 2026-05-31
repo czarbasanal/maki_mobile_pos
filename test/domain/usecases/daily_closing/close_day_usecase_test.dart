@@ -202,4 +202,56 @@ void main() {
     expect(result.errorCode, 'permission-denied');
     verifyNever(() => closings.saveClosing(any()));
   });
+
+  test('closing carries labor revenue; netSales stays parts-only; labor cash in expectedCash',
+      () async {
+    // Summary: parts net 1000, labor 450, all paid cash (1450 total cash in drawer)
+    const laborSummary = SalesSummary(
+      totalSalesCount: 1,
+      voidedSalesCount: 0,
+      grossAmount: 1000,
+      totalDiscounts: 0,
+      netAmount: 1000, // parts-only
+      totalCost: 0,
+      totalProfit: 1000,
+      byPaymentMethod: {PaymentMethod.cash: 1450}, // parts + labor cash
+      laborRevenue: 450,
+    );
+
+    when(() => sales.getSalesSummary(
+        startDate: any(named: 'startDate'),
+        endDate: any(named: 'endDate'))).thenAnswer((_) async => laborSummary);
+    // No expenses for this test
+    when(() => expenses.getExpenses(
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          category: any(named: 'category'),
+          limit: any(named: 'limit'),
+        )).thenAnswer((_) async => []);
+
+    final captured = <DailyClosingEntity>[];
+    when(() => closings.saveClosing(any())).thenAnswer((inv) async {
+      final c = inv.positionalArguments.first as DailyClosingEntity;
+      captured.add(c);
+      return c;
+    });
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      date: DateTime(2026, 5, 28),
+      openingFloat: 2000,
+      countedCash: 3450, // 2000 float + 1450 cash (parts+labor)
+    );
+
+    expect(result.success, true);
+    final saved = captured.single;
+
+    // Labor revenue is persisted as its own reporting track
+    expect(saved.laborRevenue, 450);
+    // netSales stays PARTS-ONLY (labor is NOT folded in)
+    expect(saved.netSales, 1000);
+    // expectedCash includes labor cash (float + cashSales - cashExpenses = 2000 + 1450 - 0)
+    expect(saved.expectedCash, 3450);
+    expect(saved.variance, 0);
+  });
 }
