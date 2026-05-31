@@ -268,87 +268,150 @@ class SaleDetailScreen extends ConsumerWidget {
         border: Border.all(color: Colors.grey[200]!),
       ),
       child: Column(
-        children: sale.items.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-          final isLast = index == sale.items.length - 1;
-          final netAmount = item.calculateNetAmount(
-            isPercentage: sale.isPercentageDiscount,
-          );
+        children: [
+          ...sale.items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            final isLast = index == sale.items.length - 1 &&
+                sale.laborLines.isEmpty;
+            final netAmount = item.calculateNetAmount(
+              isPercentage: sale.isPercentageDiscount,
+            );
 
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: isLast
-                  ? null
-                  : Border(bottom: BorderSide(color: Colors.grey[200]!)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '×${item.quantity}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: isLast
+                    ? null
+                    : Border(bottom: BorderSide(color: Colors.grey[200]!)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '×${item.quantity}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.name,
-                        style: AppTextStyles.productName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        'Code: ${costMapping.encode(item.unitCost)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      if (item.hasDiscount)
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          sale.isPercentageDiscount
-                              ? '${item.discountValue.toStringAsFixed(0)}% discount'
-                              : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} discount',
+                          item.name,
+                          style: AppTextStyles.productName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.green[700],
+                            color: Colors.grey[600],
                           ),
                         ),
-                    ],
+                        Text(
+                          'Code: ${costMapping.encode(item.unitCost)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        if (item.hasDiscount)
+                          Text(
+                            sale.isPercentageDiscount
+                                ? '${item.discountValue.toStringAsFixed(0)}% discount'
+                                : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} discount',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.green[700],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+                ],
+              ),
+            );
+          }),
+          ...sale.laborLines.asMap().entries.map((entry) {
+            final index = entry.key;
+            final line = entry.value;
+            final isLast = index == sale.laborLines.length - 1;
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: isLast
+                    ? null
+                    : Border(bottom: BorderSide(color: Colors.grey[200]!)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.wrench,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          line.description,
+                          style: AppTextStyles.productName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Labor',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
@@ -371,6 +434,16 @@ class SaleDetailScreen extends ConsumerWidget {
               'Discount',
               sale.totalDiscount,
               isDiscount: true,
+            ),
+          ],
+          if (sale.laborLines.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildPaymentRow(
+              theme,
+              sale.laborLines.length == 1
+                  ? 'Labor (1 service)'
+                  : 'Labor (${sale.laborLines.length} services)',
+              sale.laborSubtotal,
             ),
           ],
           const Divider(height: 24),
@@ -471,6 +544,15 @@ class SaleDetailScreen extends ConsumerWidget {
             'Cashier',
             sale.cashierName,
           ),
+          if (sale.mechanicName != null && sale.mechanicName!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              theme,
+              CupertinoIcons.wrench,
+              'Mechanic',
+              sale.mechanicName!,
+            ),
+          ],
           const SizedBox(height: 12),
           _buildDetailRow(
             theme,
