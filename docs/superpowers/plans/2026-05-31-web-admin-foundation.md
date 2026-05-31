@@ -779,11 +779,11 @@ export default defineConfig({
 - Delete: `lib/presentation/web/` (whole folder), `lib/app_web.dart`, `lib/config/router/web_router.dart`, `web/` (Flutter web platform folder)
 - Modify: any file that imports the deleted symbols (discovered in Step 1)
 
-- [ ] **Step 1: Find every reference to the web layer** — from repo root:
+- [ ] **Step 1: Find every reference to the web layer** — from repo root, search BOTH `lib` AND `test` (a test can import a deleted screen and break compilation of the whole suite):
 ```bash
-grep -rn "app_web\|MAKIPOSWebApp\|web_router\|webRouterProvider\|presentation/web" lib | grep -v "presentation/web/"
+grep -rn "app_web\|MAKIPOSWebApp\|web_router\|webRouterProvider\|presentation/web\|WebDashboardScreen\|Surface\.web\|featureRoutes(Surface" lib test | grep -v "presentation/web/"
 ```
-Expected hits: `lib/main.dart` (imports `app_web.dart`, uses `MAKIPOSWebApp`), and possibly a router barrel (e.g. `lib/config/router/router.dart`) exporting `web_router.dart`. Note each file to fix.
+Expected hits: `lib/main.dart` (imports `app_web.dart`, uses `MAKIPOSWebApp`); a router barrel (`lib/config/router/router.dart`) exporting `web_router.dart`; `lib/config/router/app_routes.dart` (imports `web_dashboard_screen.dart` + the `enum Surface { mobile, web }` + a `featureRoutes(Surface)` switch — collapse it to the mobile screen and drop `Surface`, then update the `featureRoutes(Surface.mobile)` call in `mobile_router.dart`); and **`test/presentation/widgets/web_dashboard_labor_test.dart`** (a Flutter widget test for the deleted `WebDashboardScreen` — delete it). Fix or delete each.
 
 - [ ] **Step 2: Edit `lib/main.dart`** — remove the `app_web.dart` import (line 6) and collapse the `kIsWeb` app branch. Replace the `runApp(...)` call so it always uses the mobile app:
 ```dart
