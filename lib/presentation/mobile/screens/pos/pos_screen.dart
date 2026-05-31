@@ -12,6 +12,8 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 
 /// Main POS screen for processing sales.
@@ -244,6 +246,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
                       const Divider(height: 1),
 
+                      // Labor & Service — collapsible; empty for normal sales.
+                      _buildLaborSection(cart),
+
+                      const Divider(height: 1),
+
                       // Cart Summary — payment is now collected on the
                       // dedicated Checkout screen, not inline.
                       CartSummary(cart: cart),
@@ -276,6 +283,170 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           Text(
             'Search for products or scan barcode',
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Collapsible "Labor & Service" block: mechanic picker + editable
+  /// labor lines + an inline validity banner. Starts expanded when labor
+  /// already exists so the cashier sees it on a reloaded service draft.
+  Widget _buildLaborSection(CartState cart) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Theme(
+      data: theme.copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        initiallyExpanded: cart.laborLines.isNotEmpty,
+        leading: const Icon(CupertinoIcons.wrench),
+        title: const Text('Labor & Service'),
+        subtitle: cart.laborLines.isEmpty
+            ? Text(
+                'Optional — add mechanic labor',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              )
+            : Text(
+                '${cart.laborLines.length} service(s) • '
+                '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
+        childrenPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          0,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
+        children: [
+          MechanicPicker(
+            selectedMechanicId: cart.mechanicId,
+            onChanged: (m) {
+              final notifier = ref.read(cartProvider.notifier);
+              if (m == null) {
+                notifier.clearMechanic();
+              } else {
+                notifier.setMechanic(m.id, m.name);
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ...cart.laborLines.map(
+            (line) => LaborLineTile(
+              line: line,
+              onEdited: (description, fee) => ref
+                  .read(cartProvider.notifier)
+                  .updateLaborLine(line.id, description: description, fee: fee),
+              onRemove: () =>
+                  ref.read(cartProvider.notifier).removeLaborLine(line.id),
+            ),
+          ),
+          if (cart.laborValidationError != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _buildLaborError(cart.laborValidationError!),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _showAddLaborDialog,
+              icon: const Icon(CupertinoIcons.add),
+              label: const Text('Add labor line'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLaborError(String message) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.error),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            CupertinoIcons.exclamationmark_circle,
+            color: AppColors.error,
+            size: 18,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: AppColors.error, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddLaborDialog() {
+    final descController = TextEditingController();
+    final feeController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Labor / Service'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: descController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  hintText: 'e.g., Engine tune-up',
+                ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextFormField(
+                controller: feeController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Fee',
+                  prefixText: '${AppConstants.currencySymbol} ',
+                ),
+                validator: (v) {
+                  final parsed = double.tryParse(v?.trim() ?? '');
+                  if (parsed == null || parsed <= 0) {
+                    return 'Fee must be greater than 0';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              ref.read(cartProvider.notifier).addLaborLine(
+                    description: descController.text.trim(),
+                    fee: double.parse(feeController.text.trim()),
+                  );
+              Navigator.pop(context);
+            },
+            child: const Text('Add'),
           ),
         ],
       ),
