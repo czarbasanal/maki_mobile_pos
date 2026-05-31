@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/data/models/labor_line_model.dart';
 import 'package:maki_mobile_pos/data/models/sale_item_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -14,6 +15,9 @@ class SaleModel {
   final String id;
   final String saleNumber;
   final List<SaleItemModel> items;
+  final List<LaborLineModel> laborLines;
+  final String? mechanicId;
+  final String? mechanicName;
   final DiscountType discountType;
   final PaymentMethod paymentMethod;
   final Map<PaymentMethod, double> tenders;
@@ -35,6 +39,9 @@ class SaleModel {
     required this.id,
     required this.saleNumber,
     required this.items,
+    this.laborLines = const [],
+    this.mechanicId,
+    this.mechanicName,
     this.discountType = DiscountType.amount,
     required this.paymentMethod,
     this.tenders = const {},
@@ -62,10 +69,23 @@ class SaleModel {
     String documentId, {
     List<SaleItemModel>? items,
   }) {
+    // Labor lines are stored INLINE on the sale doc (unlike items, which live
+    // in the subcollection). Parse them directly off the map. Legacy -> [].
+    final laborList = <LaborLineModel>[];
+    final laborData = map['laborLines'] as List<dynamic>? ?? [];
+    for (int i = 0; i < laborData.length; i++) {
+      final laborMap = laborData[i] as Map<String, dynamic>;
+      final laborId = laborMap['id'] as String? ?? 'labor-$i';
+      laborList.add(LaborLineModel.fromMap(laborMap, laborId));
+    }
+
     return SaleModel(
       id: documentId,
       saleNumber: map['saleNumber'] as String? ?? '',
       items: items ?? [],
+      laborLines: laborList,
+      mechanicId: map['mechanicId'] as String?,
+      mechanicName: map['mechanicName'] as String?,
       discountType: DiscountType.fromString(map['discountType'] as String?),
       paymentMethod: PaymentMethod.fromString(map['paymentMethod'] as String?),
       tenders: _parseTenders(map['tenders']),
@@ -101,6 +121,10 @@ class SaleModel {
   }) {
     final map = <String, dynamic>{
       'saleNumber': saleNumber,
+      'laborLines':
+          laborLines.map((l) => l.toMap(includeId: true)).toList(),
+      'mechanicId': mechanicId,
+      'mechanicName': mechanicName,
       'discountType': discountType.value,
       'paymentMethod': paymentMethod.value,
       'amountReceived': amountReceived,
@@ -173,6 +197,9 @@ class SaleModel {
       id: id,
       saleNumber: saleNumber,
       items: items.map((item) => item.toEntity()).toList(),
+      laborLines: laborLines.map((l) => l.toEntity()).toList(),
+      mechanicId: mechanicId,
+      mechanicName: mechanicName,
       discountType: discountType,
       paymentMethod: paymentMethod,
       tenders: tenders,
@@ -199,6 +226,11 @@ class SaleModel {
       saleNumber: entity.saleNumber,
       items:
           entity.items.map((item) => SaleItemModel.fromEntity(item)).toList(),
+      laborLines: entity.laborLines
+          .map((l) => LaborLineModel.fromEntity(l))
+          .toList(),
+      mechanicId: entity.mechanicId,
+      mechanicName: entity.mechanicName,
       discountType: entity.discountType,
       paymentMethod: entity.paymentMethod,
       tenders: entity.tenders,
@@ -239,6 +271,9 @@ class SaleModel {
   factory SaleModel.create({
     required String saleNumber,
     required List<SaleItemModel> items,
+    List<LaborLineModel> laborLines = const [],
+    String? mechanicId,
+    String? mechanicName,
     DiscountType discountType = DiscountType.amount,
     required PaymentMethod paymentMethod,
     Map<PaymentMethod, double> tenders = const {},
@@ -253,6 +288,9 @@ class SaleModel {
       id: '', // Will be set by Firestore
       saleNumber: saleNumber,
       items: items,
+      laborLines: laborLines,
+      mechanicId: mechanicId,
+      mechanicName: mechanicName,
       discountType: discountType,
       paymentMethod: paymentMethod,
       tenders: tenders,
@@ -300,8 +338,11 @@ class SaleModel {
     });
   }
 
-  /// Grand total after discounts
-  double get grandTotal => subtotal - totalDiscount;
+  /// Labor subtotal (sum of labor fees; never discounted)
+  double get laborSubtotal => laborLines.fold(0.0, (s, l) => s + l.fee);
+
+  /// Grand total: net parts (after discount) + labor
+  double get grandTotal => (subtotal - totalDiscount) + laborSubtotal;
 
   // ==================== COPY WITH ====================
 
@@ -309,6 +350,10 @@ class SaleModel {
     String? id,
     String? saleNumber,
     List<SaleItemModel>? items,
+    List<LaborLineModel>? laborLines,
+    String? mechanicId,
+    String? mechanicName,
+    bool clearMechanic = false,
     DiscountType? discountType,
     PaymentMethod? paymentMethod,
     Map<PaymentMethod, double>? tenders,
@@ -330,6 +375,10 @@ class SaleModel {
       id: id ?? this.id,
       saleNumber: saleNumber ?? this.saleNumber,
       items: items ?? this.items,
+      laborLines: laborLines ?? this.laborLines,
+      mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
+      mechanicName:
+          clearMechanic ? null : (mechanicName ?? this.mechanicName),
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       tenders: tenders ?? this.tenders,
