@@ -39,6 +39,14 @@ class CartSummary extends StatelessWidget {
               valueColor: AppColors.successDark,
             ),
           ],
+          if (cart.laborLines.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _buildSummaryRow(
+              context,
+              'Labor',
+              '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm),
           const Divider(height: 1),
           const SizedBox(height: AppSpacing.sm),
