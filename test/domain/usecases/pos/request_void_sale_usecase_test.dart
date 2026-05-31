@@ -105,4 +105,34 @@ void main() {
     expect(result.errorCode, 'void-already-pending');
     verifyNever(() => repo.createRequest(any()));
   });
+
+  test('void-request snapshot captures labor-inclusive grandTotal', () async {
+    final saleWithLabor = _sale().copyWith(
+      laborLines: const [
+        LaborLineEntity(
+          id: 'lab-1',
+          description: 'Brake bleed',
+          fee: 450,
+        ),
+      ],
+      mechanicId: 'mech-1',
+      mechanicName: 'Juan',
+    );
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      sale: saleWithLabor,
+      reason: 'wrong item rung up',
+    );
+
+    expect(result.success, isTrue);
+
+    final captured =
+        verify(() => repo.createRequest(captureAny())).captured.single
+            as VoidRequestEntity;
+
+    // saleWithLabor.grandTotal = partsRevenue(100) + laborRevenue(450) = 550
+    expect(captured.saleGrandTotal, saleWithLabor.grandTotal);
+    expect(captured.saleGrandTotal, 550.0);
+  });
 }
