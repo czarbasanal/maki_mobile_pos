@@ -2,6 +2,7 @@
 // the dashboard inventory-status counts). Write paths land in phase 7.
 
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -9,7 +10,10 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
+  updateDoc,
   where,
+  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -17,6 +21,13 @@ import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import type { Product } from '@/domain/entities';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { productConverter } from '@/data/converters/productConverter';
+import { generateSearchKeywords } from '@/domain/products/searchKeywords';
+import type {
+  ProductCreateInput,
+  ProductImportOp,
+  ProductImportResult,
+  ProductUpdateInput,
+} from '@/domain/repositories/ProductRepository';
 
 export class FirestoreProductRepository implements ProductRepository {
   constructor(private readonly db: Firestore) {}
@@ -89,11 +100,110 @@ export class FirestoreProductRepository implements ProductRepository {
   }
 
   // Write methods land in phase 7.
-  async create(): Promise<Product> {
-    throw new Error('ProductRepository.create not implemented yet (phase 7)');
+  async create(input: ProductCreateInput, actorId: string): Promise<Product> {
+    const ref = await addDoc(
+      collection(this.db, FirestoreCollections.products),
+      this.createData(input, actorId),
+    );
+    const created = await this.getById(ref.id);
+    if (!created) throw new Error('Failed to load the created product');
+    return created;
   }
-  async update(): Promise<void> {
-    throw new Error('ProductRepository.update not implemented yet (phase 7)');
+
+  async update(id: string, input: ProductUpdateInput, actorId: string): Promise<void> {
+    await updateDoc(
+      doc(this.db, FirestoreCollections.products, id),
+      this.updateData(input, actorId),
+    );
+  }
+
+  async bulkImport(ops: ProductImportOp[], actorId: string): Promise<ProductImportResult> {
+    const result: ProductImportResult = { inserted: 0, updated: 0, failed: [] };
+    const productsCol = collection(this.db, FirestoreCollections.products);
+    for (let start = 0; start < ops.length; start += 500) {
+      const chunk = ops.slice(start, start + 500);
+      const batch = writeBatch(this.db);
+      for (const op of chunk) {
+        if (op.kind === 'insert') {
+          batch.set(doc(productsCol), this.createData(op.input, actorId));
+        } else {
+          batch.update(
+            doc(this.db, FirestoreCollections.products, op.id),
+            this.updateData(op.input, actorId),
+          );
+        }
+      }
+      try {
+        await batch.commit();
+        for (const op of chunk) {
+          if (op.kind === 'insert') result.inserted += 1;
+          else result.updated += 1;
+        }
+      } catch (e) {
+        for (const op of chunk) {
+          result.failed.push({ row: op.row, message: (e as Error).message });
+        }
+      }
+    }
+    return result;
+  }
+
+  private createData(input: ProductCreateInput, actorId: string) {
+    const searchKeywords =
+      input.searchKeywords ??
+      generateSearchKeywords([input.sku, input.name, input.category]);
+    return {
+      sku: input.sku,
+      name: input.name,
+      costCode: input.costCode,
+      cost: input.cost,
+      price: input.price,
+      quantity: input.quantity,
+      reorderLevel: input.reorderLevel,
+      unit: input.unit,
+      supplierId: input.supplierId,
+      supplierName: input.supplierName,
+      isActive: input.isActive,
+      createdBy: actorId,
+      updatedBy: actorId,
+      createdByName: input.createdByName,
+      // Mirror createdByName onto updatedByName at create, like Flutter.
+      updatedByName: input.createdByName,
+      searchKeywords,
+      baseSku: input.baseSku,
+      variationNumber: input.variationNumber,
+      barcode: input.barcode,
+      category: input.category,
+      imageUrl: input.imageUrl,
+      notes: input.notes,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+  }
+
+  private updateData(input: ProductUpdateInput, actorId: string) {
+    const data: Record<string, unknown> = {
+      updatedBy: actorId,
+      updatedAt: serverTimestamp(),
+    };
+    const valueFields = [
+      'sku', 'name', 'costCode', 'cost', 'price', 'quantity', 'reorderLevel',
+      'unit', 'supplierId', 'supplierName', 'isActive', 'baseSku',
+      'variationNumber', 'barcode', 'category', 'imageUrl', 'notes', 'updatedByName',
+    ] as const;
+    for (const key of valueFields) {
+      if (input[key] !== undefined) data[key] = input[key];
+    }
+    // Keywords only need rebuilding if the name changes (import never does this;
+    // a future inventory edit might).
+    if (input.name !== undefined) {
+      data.searchKeywords = generateSearchKeywords([
+        input.sku ?? input.name,
+        input.name,
+        input.category ?? null,
+      ]);
+    }
+    return data;
   }
   async adjustStock(): Promise<void> {
     throw new Error('ProductRepository.adjustStock not implemented yet (phase 7)');
