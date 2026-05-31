@@ -16,6 +16,8 @@ export interface Product {
   updatedAt: Date | null;
   createdBy: string | null;
   updatedBy: string | null;
+  createdByName: string | null;
+  updatedByName: string | null;
   searchKeywords: string[];
   baseSku: string | null;
   variationNumber: number | null;
