@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit as fbLimit,
   onSnapshot,
   orderBy,
   query,
@@ -67,6 +68,7 @@ export class FirestoreSaleRepository implements SaleRepository {
     if (filters.cashierId) constraints.push(where('cashierId', '==', filters.cashierId));
     if (filters.status) constraints.push(where('status', '==', filters.status));
     constraints.push(orderBy('createdAt', 'desc'));
+    if (filters.limit) constraints.push(fbLimit(filters.limit));
 
     const snap = await getDocs(query(this.salesCol(), ...constraints));
     return this.loadSalesWithItems(snap.docs.map((d) => d.data()));

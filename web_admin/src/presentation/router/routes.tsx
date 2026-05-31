@@ -15,6 +15,10 @@ import { CostCodeSettingsPage } from '@/presentation/features/settings/CostCodeS
 import { UsersListPage } from '@/presentation/features/users/UsersListPage';
 import { UserFormPage } from '@/presentation/features/users/UserFormPage';
 import { ActivityLogsPage } from '@/presentation/features/logs/ActivityLogsPage';
+import { ReportsHubPage } from '@/presentation/features/reports/ReportsHubPage';
+import { SalesReportPage } from '@/presentation/features/reports/SalesReportPage';
+import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPage';
+import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -56,10 +60,10 @@ export const router = createBrowserRouter(
         { path: RoutePaths.expenseEdit, element: placeholder('Edit expense', 'phase 9') },
         { path: RoutePaths.pettyCash, element: placeholder('Petty cash', 'phase 9') },
         { path: RoutePaths.pettyCashNew, element: placeholder('Petty cash entry', 'phase 9') },
-        { path: RoutePaths.reports, element: placeholder('Reports', 'phase 12') },
-        { path: RoutePaths.salesReport, element: placeholder('Sales report', 'phase 12') },
-        { path: RoutePaths.profitReport, element: placeholder('Profit report', 'phase 12') },
-        { path: RoutePaths.saleDetail, element: placeholder('Sale detail', 'phase 12') },
+        { path: RoutePaths.reports, element: <ReportsHubPage /> },
+        { path: RoutePaths.salesReport, element: <SalesReportPage /> },
+        { path: RoutePaths.profitReport, element: <ProfitReportPage /> },
+        { path: RoutePaths.saleDetail, element: <SaleDetailPage /> },
         { path: RoutePaths.users, element: <UsersListPage /> },
         { path: RoutePaths.userAdd, element: <UserFormPage /> },
         { path: RoutePaths.userEdit, element: <UserFormPage /> },
