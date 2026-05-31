@@ -198,6 +198,33 @@ class SalesSummaryCard extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: AppSpacing.sm + 4),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _MetricCard(
+                        label: 'Service Revenue',
+                        value:
+                            '${AppConstants.currencySymbol}${summary.laborRevenue.toStringAsFixed(2)}',
+                        icon: CupertinoIcons.wrench,
+                        subtitle: 'Labor (no COGS)',
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm + 4),
+                    Expanded(
+                      child: _MetricCard(
+                        label: 'Service Profit',
+                        value:
+                            '${AppConstants.currencySymbol}${summary.laborProfit.toStringAsFixed(2)}',
+                        icon: CupertinoIcons.arrow_up_right,
+                        accent: AppColors.success,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ],
         ),
