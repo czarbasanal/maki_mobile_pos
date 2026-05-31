@@ -11,6 +11,16 @@ export interface ProductCreateInput
 
 export interface ProductUpdateInput extends Partial<Omit<Product, 'id' | 'createdAt'>> {}
 
+export type ProductImportOp =
+  | { kind: 'insert'; row: number; input: ProductCreateInput }
+  | { kind: 'update'; row: number; id: string; input: ProductUpdateInput };
+
+export interface ProductImportResult {
+  inserted: number;
+  updated: number;
+  failed: { row: number; message: string }[];
+}
+
 export interface PriceHistoryEntry {
   price: number;
   cost: number;
@@ -31,6 +41,7 @@ export interface ProductRepository {
   listLowStock(): Promise<Product[]>;
   create(input: ProductCreateInput, actorId: string): Promise<Product>;
   update(id: string, input: ProductUpdateInput, actorId: string): Promise<void>;
+  bulkImport(ops: ProductImportOp[], actorId: string): Promise<ProductImportResult>;
   adjustStock(id: string, delta: number, actorId: string): Promise<void>;
   setStock(id: string, quantity: number, actorId: string): Promise<void>;
   deactivate(id: string, actorId: string): Promise<void>;
