@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -74,6 +74,7 @@ export function InventoryFormPage() {
   const { data: costCodeMapping } = useCostCode();
 
   const [autoSku, setAutoSku] = useState(true);
+  const [loadNotice, setLoadNotice] = useState<string | null>(null);
   const [skuDialog, setSkuDialog] = useState<{ open: boolean; count: number; values: FormValues | null }>(
     { open: false, count: 0, values: null },
   );
@@ -160,6 +161,7 @@ export function InventoryFormPage() {
   };
 
   const doSave = async (values: FormValues) => {
+    setLoadNotice(null);
     const costNum = Number(values.cost);
     const priceNum = Number(values.price);
     const supplier = resolveSupplier(values.supplierId ?? '');
@@ -167,7 +169,7 @@ export function InventoryFormPage() {
     if (isEditing && target) {
       const costChanged = Math.abs(costNum - target.cost) > 0.01;
       if (costChanged && !costCodeMapping) {
-        setError('cost', { type: 'pending', message: 'Cost-code mapping still loading — try again in a moment.' });
+        setLoadNotice('Cost-code mapping is still loading — try again in a moment.');
         return;
       }
       const costCode = costChanged ? encodeCostCode(costCodeMapping!, costNum) : target.costCode;
@@ -197,13 +199,14 @@ export function InventoryFormPage() {
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Save failed';
         if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
+        else if (msg.toLowerCase().includes('barcode already exists')) setError('barcode', { type: 'duplicate', message: msg });
       }
       return;
     }
 
     // Add mode — costCode must be derived, which needs the mapping.
     if (!costCodeMapping) {
-      setError('cost', { type: 'pending', message: 'Cost-code mapping still loading — try again in a moment.' });
+      setLoadNotice('Cost-code mapping is still loading — try again in a moment.');
       return;
     }
     try {
@@ -226,6 +229,7 @@ export function InventoryFormPage() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Save failed';
       if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
+      else if (msg.toLowerCase().includes('barcode already exists')) setError('barcode', { type: 'duplicate', message: msg });
     }
   };
 
@@ -236,6 +240,17 @@ export function InventoryFormPage() {
       return;
     }
     await doSave(values);
+  };
+
+  // In add mode with auto-SKU on, the SKU is filled by the Name field's blur.
+  // A keyboard-Enter submit fires before that blur, so populate it here too —
+  // before handleSubmit runs the resolver — so a valid name never yields a
+  // spurious "SKU is required".
+  const onFormSubmit = (e: FormEvent<HTMLFormElement>) => {
+    if (skuLocked && !getValues('sku').trim()) {
+      setValue('sku', generateSku(getValues('name')));
+    }
+    void handleSubmit(onSubmit)(e);
   };
 
   return (
@@ -257,8 +272,13 @@ export function InventoryFormPage() {
           {mutationError}
         </p>
       ) : null}
+      {loadNotice ? (
+        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+          {loadNotice}
+        </p>
+      ) : null}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-tk-lg" noValidate>
+      <form onSubmit={onFormSubmit} className="space-y-tk-lg" noValidate>
         <Section title="Identity">
           <Field label="Name" error={errors.name?.message}
             input={
@@ -273,7 +293,15 @@ export function InventoryFormPage() {
 
           {!isEditing ? (
             <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">
-              <input type="checkbox" checked={autoSku} onChange={(e) => setAutoSku(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={autoSku}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setAutoSku(on);
+                  if (on) regenerateSku();
+                }}
+              />
               Auto-generate SKU from name
             </label>
           ) : null}

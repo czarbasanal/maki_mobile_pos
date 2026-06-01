@@ -129,6 +129,9 @@ export function useCreateProduct() {
       if (await repo.skuExists(input.sku)) {
         throw new Error('A product with this SKU already exists');
       }
+      if (input.barcode && (await repo.barcodeExists(input.barcode))) {
+        throw new Error('A product with this barcode already exists');
+      }
       const actorName = actor.displayName.trim() || null;
       const created = await repo.create(
         {
