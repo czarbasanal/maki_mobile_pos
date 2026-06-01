@@ -18,7 +18,6 @@ const commonRoutes: ReadonlySet<string> = new Set([
 const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permission>([
   [RoutePaths.inventory, Permission.viewInventory],
   [RoutePaths.productAdd, Permission.addProduct],
-  [RoutePaths.productImport, Permission.importCsv],
   [RoutePaths.receiving, Permission.accessReceiving],
   [RoutePaths.bulkReceiving, Permission.bulkReceive],
   [RoutePaths.suppliers, Permission.viewSuppliers],
