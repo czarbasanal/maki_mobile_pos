@@ -105,32 +105,42 @@ Prefer a denormalised actor name when available; otherwise resolve by UID (the
 
 ## 6. Gating
 
-The inline card is gated entirely behind `inventoryState.showCost` →
-**admin-only, both metrics visible**. The dedicated view **inherits the same admin
-gate** in v1:
+Price history is cost-sensitive → **admin-only, both metrics visible** in v1.
 
-- **Mobile:** reached only from the inline card, which only renders when
-  `showCost` is true. Route additionally guarded so a deep link can't bypass it.
+- **Mobile:** the entry point (a tile on `ProductFormScreen`, see §7.1) renders
+  only when `canViewCost` (admin) **and** the cost toggle `inventoryState.showCost`
+  is on — the same reveal as the cost field. The route is **additionally guarded**
+  via the existing **`Permission.viewProductCost`** (admin-only, already defined)
+  so a deep link can't bypass the UI gate.
 - **Web:** the host page + view are admin-gated (`ProtectedRoute`, admin-only),
   consistent with the existing web admin gating.
 
 A staff-facing **price-only** view is a reasonable future follow-up but is
 explicitly out of v1.
 
+### 6.1 Correction discovered during planning
+The roadmap §7 "Price History card on inventory item detail" lives in
+`ProductDetailScreen`, which is **dead code** — the live `/inventory/:id` route
+renders `ProductFormScreen`, and `ProductDetailScreen` is referenced nowhere in
+`lib/` (only re-exported by a barrel). So the inline card is **not reachable by
+users today**. Phase 1 therefore (a) puts the entry point on the live
+`ProductFormScreen`, and (b) deletes the orphaned `ProductDetailScreen` and its
+barrel export as cleanup.
+
 ## 7. Decomposition & sequencing
 
 One design doc, **two implementation phases** (each its own plan → implement):
 
 ### Phase 1 — Mobile (build first)
-Lowest risk: data path and host card already exist.
+Lowest risk: the data path (`priceHistoryProvider` / `getPriceHistory`) exists.
 
 - New `PriceHistoryScreen(productId)` full-screen widget.
-- New nested route off product detail, e.g. `/inventory/product/:id/price-history`
-  (exact base confirmed during planning to match `app_routes.dart`), guarded so
-  it requires the same admin/cost visibility as the card.
-- Entry point: a **"View all →"** trailing link added to the existing
-  `_PriceHistoryCard` header (mirrors the Recent Transactions / Top Selling
-  pattern). The inline card stays as the at-a-glance preview.
+- New nested route `/inventory/:id/price-history` (child of the existing
+  `:id` route in `app_routes.dart`), guarded in `route_guards.dart` via
+  `Permission.viewProductCost`.
+- Entry point: a single admin/`showCost`-gated **"View price history →"** tile on
+  the live `ProductFormScreen`, inserted after the audit-info card. (The dead
+  `ProductDetailScreen` + its barrel export are deleted — see §6.1.)
 - Reuses `priceHistoryProvider(productId)`.
 - **Pure, widget-free helpers** extracted to `lib/core/utils/price_history_view.dart`
   (or similar): `deriveSource(reason, note)`, `filterByMetric(entries, metric)`
