@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EyeIcon, EyeSlashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { getStockStatus, StockStatus } from '@/domain/entities';
 import { filterProducts, type ProductFilter } from '@/domain/products/filterProducts';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
@@ -75,11 +76,20 @@ export function InventoryListPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Inventory</h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Products, stock levels, and pricing.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-tk-md">
+        <div>
+          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Inventory</h1>
+          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
+            Products, stock levels, and pricing.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate(RoutePaths.productAdd)}
+          className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
+        >
+          <PlusIcon className="h-3.5 w-3.5" /> Add product
+        </button>
       </header>
 
       <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-3">

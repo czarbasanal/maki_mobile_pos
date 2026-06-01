@@ -1,4 +1,136 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+# Web Inventory Slice 3 — Create new product — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (inline) or superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax.
+
+**Goal:** Let an admin create a product at `/inventory/add` by generalizing `InventoryFormPage` to add + edit mode, with SKU auto-generate, costCode derivation, and an initial "Created" price-history entry.
+
+**Architecture:** One dual-mode form (mirrors `SupplierFormPage`): add mode renders immediately, shows an initial-quantity field + an Auto-generate-SKU toggle, and saves via a new `useCreateProduct` hook (skuExists check → `create()` → best-effort `recordPriceChange('Initial price')`). Edit mode is unchanged from Slice 2a/2b. **Admin-only** (shell enforces; `/inventory/add` already guarded by `addProduct`).
+
+**Tech Stack:** React, TypeScript, React Router v6, TanStack Query v5, react-hook-form + zod, Firebase Firestore, Vitest. Spec: `docs/superpowers/specs/2026-06-01-web-admin-inventory-create-design.md`. Run from `web_admin/`.
+
+**Toolchain:** typecheck `npx tsc --noEmit -p tsconfig.json`; tests `--environment=node`.
+
+---
+
+## Context verified
+
+- `ProductCreateInput = Omit<Product,'id'|'createdAt'|'updatedAt'|'searchKeywords'>` (searchKeywords optional). `create(input, actorId)` → `createData` stamps createdBy/updatedBy=actorId, createdByName/updatedByName=input.createdByName, generates searchKeywords. **costCode is required** (no default).
+- Mobile base (non-variation) products store **`baseSku = null`** (`product_repository_impl.dart:595` uses `baseSku ?? sku`; variations query checks both `baseSku==x` and `sku==x`). So web create sets `baseSku=null, variationNumber=null`.
+- `generateSku(name, rand=Math.random): string` (`@/domain/products/sku`), unit-tested. `encodeCostCode(cc, cost)` + `useCostCode()` (subscription `{data: CostCode|null}`). `recordPriceChange(id,{price,cost,changedBy,reason})`. `skuExists(sku, excludeId?)`.
+- `derivePriceHistorySource` maps `'Initial price'` → "Created".
+- `RoutePaths.productAdd = '/inventory/add'` → placeholder in `routes.tsx`; guard `[productAdd, addProduct]` exact (admin passes).
+- `InventoryFormPage.tsx` (current) is edit-only; `useProduct(undefined)` is disabled (returns data undefined, isLoading false) — safe for add mode.
+- `SuppliersListPage` "Add supplier" button pattern: `<button onClick={() => navigate(RoutePaths.supplierAdd)} className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark">`.
+
+## File Structure
+
+**Modify:** `useProductMutations.ts` (add `useCreateProduct` + `CreateProductInput`), `InventoryFormPage.tsx` (generalize to add+edit), `routes.tsx` (wire add route), `InventoryListPage.tsx` ("Add product" button).
+
+---
+
+## Task 1: `useCreateProduct` hook
+
+**Files:**
+- Modify: `web_admin/src/presentation/hooks/useProductMutations.ts`
+
+- [ ] **Step 1: Add the input type import + hook**
+
+In `useProductMutations.ts`, change the type import to also bring in `ProductCreateInput` and `Product`:
+
+```ts
+import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
+import type { Product } from '@/domain/entities';
+```
+
+(The existing import is `import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';` — replace it with the line above, and add the `Product` import.)
+
+Then append the hook at the end of the file:
+
+```ts
+/** Fields the create form supplies; the hook assembles the rest of ProductCreateInput. */
+export interface CreateProductInput {
+  sku: string;
+  name: string;
+  costCode: string;
+  cost: number;
+  price: number;
+  quantity: number;
+  reorderLevel: number;
+  unit: string;
+  supplierId: string | null;
+  supplierName: string | null;
+  barcode: string | null;
+  category: string | null;
+  notes: string | null;
+}
+
+export function useCreateProduct() {
+  const repo = useProductRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<Product, Error, CreateProductInput>({
+    mutationFn: async (input) => {
+      if (!actor) throw new Error('Not signed in');
+      if (await repo.skuExists(input.sku)) {
+        throw new Error('A product with this SKU already exists');
+      }
+      const actorName = actor.displayName.trim() || null;
+      const created = await repo.create(
+        {
+          ...input,
+          isActive: true,
+          createdBy: actor.id,
+          updatedBy: actor.id,
+          createdByName: actorName,
+          updatedByName: actorName,
+          baseSku: null,
+          variationNumber: null,
+          imageUrl: null,
+        } as ProductCreateInput,
+        actor.id,
+      );
+      try {
+        await repo.recordPriceChange(created.id, {
+          price: input.price,
+          cost: input.cost,
+          changedBy: actor.id,
+          reason: 'Initial price',
+        });
+      } catch {
+        // best-effort; never fail the create on a history write
+      }
+      qc.invalidateQueries({ queryKey: ['product', created.id] });
+      return created;
+    },
+  });
+}
+```
+
+- [ ] **Step 2: Typecheck**
+
+Run: `cd web_admin && npx tsc --noEmit -p tsconfig.json`
+Expected: clean.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add web_admin/src/presentation/hooks/useProductMutations.ts
+git commit -m "feat(web-admin): useCreateProduct (skuExists check + create + initial price history)"
+```
+
+---
+
+## Task 2: Generalize InventoryFormPage to add + edit
+
+**Files:**
+- Modify (full rewrite): `web_admin/src/presentation/features/inventory/InventoryFormPage.tsx`
+
+- [ ] **Step 1: Replace the whole file**
+
+Overwrite `web_admin/src/presentation/features/inventory/InventoryFormPage.tsx` with:
+
+```tsx
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -74,7 +206,6 @@ export function InventoryFormPage() {
   const { data: costCodeMapping } = useCostCode();
 
   const [autoSku, setAutoSku] = useState(true);
-  const [loadNotice, setLoadNotice] = useState<string | null>(null);
   const [skuDialog, setSkuDialog] = useState<{ open: boolean; count: number; values: FormValues | null }>(
     { open: false, count: 0, values: null },
   );
@@ -161,7 +292,6 @@ export function InventoryFormPage() {
   };
 
   const doSave = async (values: FormValues) => {
-    setLoadNotice(null);
     const costNum = Number(values.cost);
     const priceNum = Number(values.price);
     const supplier = resolveSupplier(values.supplierId ?? '');
@@ -169,7 +299,7 @@ export function InventoryFormPage() {
     if (isEditing && target) {
       const costChanged = Math.abs(costNum - target.cost) > 0.01;
       if (costChanged && !costCodeMapping) {
-        setLoadNotice('Cost-code mapping is still loading — try again in a moment.');
+        setError('cost', { type: 'pending', message: 'Cost-code mapping still loading — try again in a moment.' });
         return;
       }
       const costCode = costChanged ? encodeCostCode(costCodeMapping!, costNum) : target.costCode;
@@ -199,14 +329,13 @@ export function InventoryFormPage() {
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Save failed';
         if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
-        else if (msg.toLowerCase().includes('barcode already exists')) setError('barcode', { type: 'duplicate', message: msg });
       }
       return;
     }
 
     // Add mode — costCode must be derived, which needs the mapping.
     if (!costCodeMapping) {
-      setLoadNotice('Cost-code mapping is still loading — try again in a moment.');
+      setError('cost', { type: 'pending', message: 'Cost-code mapping still loading — try again in a moment.' });
       return;
     }
     try {
@@ -229,7 +358,6 @@ export function InventoryFormPage() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Save failed';
       if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
-      else if (msg.toLowerCase().includes('barcode already exists')) setError('barcode', { type: 'duplicate', message: msg });
     }
   };
 
@@ -240,17 +368,6 @@ export function InventoryFormPage() {
       return;
     }
     await doSave(values);
-  };
-
-  // In add mode with auto-SKU on, the SKU is filled by the Name field's blur.
-  // A keyboard-Enter submit fires before that blur, so populate it here too —
-  // before handleSubmit runs the resolver — so a valid name never yields a
-  // spurious "SKU is required".
-  const onFormSubmit = (e: FormEvent<HTMLFormElement>) => {
-    if (skuLocked && !getValues('sku').trim()) {
-      setValue('sku', generateSku(getValues('name')));
-    }
-    void handleSubmit(onSubmit)(e);
   };
 
   return (
@@ -272,13 +389,8 @@ export function InventoryFormPage() {
           {mutationError}
         </p>
       ) : null}
-      {loadNotice ? (
-        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
-          {loadNotice}
-        </p>
-      ) : null}
 
-      <form onSubmit={onFormSubmit} className="space-y-tk-lg" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-tk-lg" noValidate>
         <Section title="Identity">
           <Field label="Name" error={errors.name?.message}
             input={
@@ -293,15 +405,7 @@ export function InventoryFormPage() {
 
           {!isEditing ? (
             <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">
-              <input
-                type="checkbox"
-                checked={autoSku}
-                onChange={(e) => {
-                  const on = e.target.checked;
-                  setAutoSku(on);
-                  if (on) regenerateSku();
-                }}
-              />
+              <input type="checkbox" checked={autoSku} onChange={(e) => setAutoSku(e.target.checked)} />
               Auto-generate SKU from name
             </label>
           ) : null}
@@ -467,3 +571,126 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
     </section>
   );
 }
+```
+
+- [ ] **Step 2: Typecheck + build**
+
+Run: `cd web_admin && npx tsc --noEmit -p tsconfig.json && npm run build`
+Expected: tsc clean; build succeeds.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add web_admin/src/presentation/features/inventory/InventoryFormPage.tsx
+git commit -m "feat(web-admin): generalize InventoryFormPage to add + edit (create new product)"
+```
+
+---
+
+## Task 3: Wire `/inventory/add` route + "Add product" button
+
+**Files:**
+- Modify: `web_admin/src/presentation/router/routes.tsx`
+- Modify: `web_admin/src/presentation/features/inventory/InventoryListPage.tsx`
+
+- [ ] **Step 1: Wire the add route**
+
+In `routes.tsx`, replace:
+
+```tsx
+        { path: RoutePaths.productAdd, element: placeholder('New product', 'phase 7') },
+```
+
+with:
+
+```tsx
+        { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
+```
+
+(`InventoryFormPage` is already imported from Slice 2a.)
+
+- [ ] **Step 2: Add the "Add product" button to the list header**
+
+In `InventoryListPage.tsx`, the header is currently:
+
+```tsx
+      <header>
+        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Inventory</h1>
+        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
+          Products, stock levels, and pricing.
+        </p>
+      </header>
+```
+
+Replace it with a header that adds a right-aligned "Add product" button:
+
+```tsx
+      <header className="flex flex-wrap items-end justify-between gap-tk-md">
+        <div>
+          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Inventory</h1>
+          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
+            Products, stock levels, and pricing.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate(RoutePaths.productAdd)}
+          className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
+        >
+          <PlusIcon className="h-3.5 w-3.5" /> Add product
+        </button>
+      </header>
+```
+
+Add `PlusIcon` and `RoutePaths` to the imports:
+- Change the heroicons import to: `import { EyeIcon, EyeSlashIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';`
+- Add (if not already present): `import { RoutePaths } from '@/presentation/router/routePaths';`
+  (Verify whether `RoutePaths` is already imported — the list page currently navigates via the string `/inventory/${p.id}`; if `RoutePaths` is not imported, add it.)
+
+- [ ] **Step 3: Typecheck + build**
+
+Run: `cd web_admin && npx tsc --noEmit -p tsconfig.json && npm run build`
+Expected: tsc clean; build succeeds.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add web_admin/src/presentation/router/routes.tsx web_admin/src/presentation/features/inventory/InventoryListPage.tsx
+git commit -m "feat(web-admin): wire /inventory/add + Add product button"
+```
+
+---
+
+## Task 4: Final gates
+
+- [ ] **Step 1: Typecheck**
+
+Run: `cd web_admin && npx tsc --noEmit -p tsconfig.json`
+Expected: clean.
+
+- [ ] **Step 2: Unit tests**
+
+Run: `cd web_admin && npx vitest run --environment=node`
+Expected: all suites pass (no new failures; count unchanged from 87 — no new pure helpers).
+
+- [ ] **Step 3: Build**
+
+Run: `cd web_admin && npm run build`
+Expected: succeeds.
+
+- [ ] **Step 4: Manual smoke (optional)**
+
+As an admin: Inventory → Add product → type a name (SKU auto-fills on blur; toggle off to
+type manually; Regenerate re-rolls) → set cost/price/initial quantity/reorder/unit/category/
+supplier/barcode/notes → Create. The product appears in the list; its detail shows the
+values; its Price History shows a "Created" entry. A duplicate SKU errors inline; editing an
+existing product is unchanged.
+
+---
+
+## Self-Review notes (author)
+
+- **Spec coverage:** §3 generalization (add/edit branch, quantity add-only, auto-sku toggle) → T2; §4 costCode derivation + mapping guard → T2 (add branch); §5 useCreateProduct + initial price-history → T1; §6 route + Add button → T3; §10 baseSku=null/variationNumber=null → T1.
+- **Type consistency:** `CreateProductInput` (form fields) ⊂ assembled `ProductCreateInput`; `priceHistoryReason`, `encodeCostCode(cc,cost)`, `generateSku(name)`, `skuExists(sku)` used as defined. Edit-mode behavior (SKU confirm/relink, costCode re-encode, price-history) is byte-identical to Slice 2a + the 2a/2b review fixes (carried through the rewrite).
+- **Admin-only:** no per-role gating. quantity is add-only (edit omits it from the patch, unchanged). costCode is always derived on create; on edit only when cost changed (both mapping-guarded).
+- **Carried-forward 2a/2b fixes preserved in the rewrite:** blank-number `reqNumber`, costCode/supplierName load-race guards, stale-SKU-banner `update.reset()` on SKU edit.

@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProductRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
+import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
+import type { Product } from '@/domain/entities';
 
 export interface UpdateProductInput {
   id: string;
@@ -97,6 +98,67 @@ export function useReactivateProduct() {
       if (!actor) throw new Error('Not signed in');
       await repo.reactivate(id, actor.id, (actor.displayName.trim() || null));
       qc.invalidateQueries({ queryKey: ['product', id] });
+    },
+  });
+}
+
+/** Fields the create form supplies; the hook assembles the rest of ProductCreateInput. */
+export interface CreateProductInput {
+  sku: string;
+  name: string;
+  costCode: string;
+  cost: number;
+  price: number;
+  quantity: number;
+  reorderLevel: number;
+  unit: string;
+  supplierId: string | null;
+  supplierName: string | null;
+  barcode: string | null;
+  category: string | null;
+  notes: string | null;
+}
+
+export function useCreateProduct() {
+  const repo = useProductRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<Product, Error, CreateProductInput>({
+    mutationFn: async (input) => {
+      if (!actor) throw new Error('Not signed in');
+      if (await repo.skuExists(input.sku)) {
+        throw new Error('A product with this SKU already exists');
+      }
+      if (input.barcode && (await repo.barcodeExists(input.barcode))) {
+        throw new Error('A product with this barcode already exists');
+      }
+      const actorName = actor.displayName.trim() || null;
+      const created = await repo.create(
+        {
+          ...input,
+          isActive: true,
+          createdBy: actor.id,
+          updatedBy: actor.id,
+          createdByName: actorName,
+          updatedByName: actorName,
+          baseSku: null,
+          variationNumber: null,
+          imageUrl: null,
+        } as ProductCreateInput,
+        actor.id,
+      );
+      try {
+        await repo.recordPriceChange(created.id, {
+          price: input.price,
+          cost: input.cost,
+          changedBy: actor.id,
+          reason: 'Initial price',
+        });
+      } catch {
+        // best-effort; never fail the create on a history write
+      }
+      qc.invalidateQueries({ queryKey: ['product', created.id] });
+      return created;
     },
   });
 }
