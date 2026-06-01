@@ -21,6 +21,8 @@ import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPa
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
+import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
+import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -55,9 +57,9 @@ export const router = createBrowserRouter(
         { path: RoutePaths.receiving, element: placeholder('Receiving', 'phase 8') },
         { path: RoutePaths.bulkReceiving, element: <BulkReceivingPage /> },
         { path: RoutePaths.bulkReceivingDetail, element: placeholder('Bulk receiving', 'phase 8') },
-        { path: RoutePaths.suppliers, element: placeholder('Suppliers', 'phase 6') },
-        { path: RoutePaths.supplierAdd, element: placeholder('New supplier', 'phase 6') },
-        { path: RoutePaths.supplierEdit, element: placeholder('Edit supplier', 'phase 6') },
+        { path: RoutePaths.suppliers, element: <SuppliersListPage /> },
+        { path: RoutePaths.supplierAdd, element: <SupplierFormPage /> },
+        { path: RoutePaths.supplierEdit, element: <SupplierFormPage /> },
         { path: RoutePaths.expenses, element: placeholder('Expenses', 'phase 9') },
         { path: RoutePaths.expenseAdd, element: placeholder('New expense', 'phase 9') },
         { path: RoutePaths.expenseEdit, element: placeholder('Edit expense', 'phase 9') },
