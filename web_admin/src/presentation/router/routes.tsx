@@ -55,7 +55,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.drafts, element: placeholder('Drafts', 'phase 10') },
         { path: RoutePaths.draftEdit, element: placeholder('Edit Draft', 'phase 10') },
         { path: RoutePaths.inventory, element: <InventoryListPage /> },
-        { path: RoutePaths.productAdd, element: placeholder('New product', 'phase 7') },
+        { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
         { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
         { path: RoutePaths.productDetail, element: <InventoryDetailPage /> },
         { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
