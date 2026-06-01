@@ -299,5 +299,21 @@ service cloud.firestore {
       // Audit trail — no deletes.
       allow delete: if false;
     }
+
+    // SKU-uniqueness guard: one claim doc per in-use SKU
+    // (key = normalizeSku(sku) = sku.trim().toUpperCase()). Reserved atomically in a
+    // transaction by the product create / SKU-rename paths (slices B/C). Slice A only
+    // declares the rules + backfills claims; no client enforces it yet.
+    match /product_skus/{sku} {
+      // The claim transaction's tx.get must succeed for any creator; no secrets here.
+      allow read:   if isValidUser() && isActiveUser();
+      // MIRROR the products create rule (admin OR staff) — admin-only here would
+      // half-commit every staff product create (product written, claim denied).
+      allow create: if (isAdmin() || hasRole('staff')) && isActiveUser();
+      // Only an admin rename (frees old) or a hard delete frees a claim.
+      allow delete: if isAdmin() && isActiveUser();
+      // Claims are create/delete only — block update so a claim can't be repointed.
+      allow update: if false;
+    }
   }
 }
