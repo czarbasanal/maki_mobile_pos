@@ -9,6 +9,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, type ComponentType, type SVGProps } from 'react';
 import {
   ArrowRightStartOnRectangleIcon,
+  ArrowUpTrayIcon,
   BanknotesIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
@@ -55,6 +56,7 @@ const sections: NavSection[] = [
     items: [
       { label: 'Inventory', path: RoutePaths.inventory, icon: CubeIcon },
       { label: 'Receiving', path: RoutePaths.receiving, icon: TruckIcon },
+      { label: 'Bulk Receiving', path: RoutePaths.bulkReceiving, icon: ArrowUpTrayIcon },
       { label: 'Suppliers', path: RoutePaths.suppliers, icon: BuildingStorefrontIcon },
     ],
   },
