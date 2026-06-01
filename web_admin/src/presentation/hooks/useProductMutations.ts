@@ -48,3 +48,55 @@ export function useUpdateProduct() {
     },
   });
 }
+
+export function useAdjustStock() {
+  const repo = useProductRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<void, Error, { id: string; delta: number }>({
+    mutationFn: async ({ id, delta }) => {
+      if (!actor) throw new Error('Not signed in');
+      await repo.adjustStock(id, delta, actor.id, actor.displayName);
+      qc.invalidateQueries({ queryKey: ['product', id] });
+    },
+  });
+}
+
+export function useSetStock() {
+  const repo = useProductRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<void, Error, { id: string; quantity: number }>({
+    mutationFn: async ({ id, quantity }) => {
+      if (!actor) throw new Error('Not signed in');
+      await repo.setStock(id, quantity, actor.id, actor.displayName);
+      qc.invalidateQueries({ queryKey: ['product', id] });
+    },
+  });
+}
+
+export function useDeactivateProduct() {
+  const repo = useProductRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: async (id) => {
+      if (!actor) throw new Error('Not signed in');
+      await repo.deactivate(id, actor.id, actor.displayName);
+      qc.invalidateQueries({ queryKey: ['product', id] });
+    },
+  });
+}
+
+export function useReactivateProduct() {
+  const repo = useProductRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: async (id) => {
+      if (!actor) throw new Error('Not signed in');
+      await repo.reactivate(id, actor.id, actor.displayName);
+      qc.invalidateQueries({ queryKey: ['product', id] });
+    },
+  });
+}
