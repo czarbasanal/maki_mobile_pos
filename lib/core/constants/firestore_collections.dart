@@ -55,6 +55,11 @@ abstract class FirestoreCollections {
   /// Void requests collection - cashier/staff void requests awaiting admin approval
   static const String voidRequests = 'void_requests';
 
+  /// Product SKU-uniqueness claim collection. One doc per in-use SKU, keyed by
+  /// SkuGenerator.normalizeSku(sku); reserved atomically on product create /
+  /// SKU rename. See docs/superpowers/specs/2026-06-01-sku-guard-*.
+  static const String productSkus = 'product_skus';
+
   // ==================== SETTINGS DOCUMENTS ====================
 
   /// Document ID for cost code mapping settings

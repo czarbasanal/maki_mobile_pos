@@ -16,6 +16,9 @@ class ProductRepositoryImpl implements ProductRepository {
   CollectionReference<Map<String, dynamic>> get _productsRef =>
       _firestore.collection(FirestoreCollections.products);
 
+  CollectionReference<Map<String, dynamic>> get _skusRef =>
+      _firestore.collection(FirestoreCollections.productSkus);
+
   // ==================== CREATE ====================
 
   @override
@@ -25,13 +28,7 @@ class ProductRepositoryImpl implements ProductRepository {
     String? createdByName,
   }) async {
     try {
-      // Check for duplicate SKU
-      if (await skuExists(sku: product.sku)) {
-        throw DuplicateSkuException(sku: product.sku);
-      }
-
-      // Check for duplicate barcodes if any are mapped. Each entry must
-      // be globally unique so a scan only ever resolves to one product.
+      // Barcode advisory check (barcodes are not claim-guarded — out of scope).
       for (final code in product.barcodes) {
         if (code.isEmpty) continue;
         if (await barcodeExists(barcode: code)) {
@@ -44,16 +41,32 @@ class ProductRepositoryImpl implements ProductRepository {
       }
 
       final productModel = ProductModel.fromEntity(product);
-      final docRef = await _productsRef.add(
-        productModel.toCreateMap(
-          createdBy,
-          createdByDisplayName: createdByName,
-        ),
-      );
+      final docRef = _productsRef.doc(); // pre-allocate id for the transaction
+      final claimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
 
-      // Initial price history — best-effort. If the price_history subcollection
-      // write fails (rules / transient), the product itself has already been
-      // created and we'd rather return the new doc than abort and orphan it.
+      // Atomically reserve the SKU claim and write the product together. The
+      // tx.get gate + Firestore's auto-retry on contention closes the TOCTOU
+      // the old skuExists()-then-add() left open.
+      await _firestore.runTransaction((tx) async {
+        final claim = await tx.get(claimRef);
+        if (claim.exists) {
+          throw DuplicateSkuException(sku: product.sku);
+        }
+        tx.set(
+          docRef,
+          productModel.toCreateMap(createdBy,
+              createdByDisplayName: createdByName),
+        );
+        tx.set(claimRef, {
+          'sku': product.sku,
+          'productId': docRef.id,
+          'claimedBy': createdBy,
+          'claimedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+      // Initial price history — best-effort (unchanged). A failure here must not
+      // abort or roll back the already-committed product+claim.
       try {
         await recordPriceChange(
           productId: docRef.id,

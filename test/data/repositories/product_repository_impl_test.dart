@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/product_repository_impl.dart';
+import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 void main() {
   late FakeFirebaseFirestore firestore;
@@ -31,6 +33,31 @@ void main() {
       ...data,
     });
     return ref.id;
+  }
+
+  // Builds a ProductEntity with sensible defaults for create-path tests.
+  ProductEntity buildProduct({
+    String id = '',
+    required String sku,
+    String name = 'Test',
+    String? baseSku,
+    int? variationNumber,
+  }) {
+    return ProductEntity(
+      id: id,
+      sku: sku,
+      name: name,
+      costCode: '',
+      cost: 1.0,
+      price: 2.0,
+      quantity: 0,
+      reorderLevel: 10,
+      unit: 'pcs',
+      isActive: true,
+      createdAt: DateTime(2025, 1, 1),
+      baseSku: baseSku,
+      variationNumber: variationNumber,
+    );
   }
 
   group('ProductRepositoryImpl.updateProduct SKU cascade', () {
@@ -102,6 +129,39 @@ void main() {
       );
 
       expect(updated.sku, 'SOLO-2');
+    });
+  });
+
+  group('ProductRepositoryImpl.createProduct SKU claim', () {
+    test('writes the product and a normalized SKU claim', () async {
+      final created = await repository.createProduct(
+        product: buildProduct(sku: 'abc-1'),
+        createdBy: 'admin-1',
+        createdByName: 'Admin',
+      );
+
+      expect((await repository.getProductById(created.id))!.sku, 'abc-1');
+
+      final claim =
+          await firestore.collection('product_skus').doc('ABC-1').get();
+      expect(claim.exists, true);
+      expect(claim.data()!['productId'], created.id);
+      expect(claim.data()!['sku'], 'abc-1');
+    });
+
+    test('rejects a duplicate SKU case-insensitively', () async {
+      await repository.createProduct(
+        product: buildProduct(sku: 'ABC-1'),
+        createdBy: 'admin-1',
+      );
+
+      expect(
+        () => repository.createProduct(
+          product: buildProduct(sku: 'abc-1'),
+          createdBy: 'admin-1',
+        ),
+        throwsA(isA<DuplicateSkuException>()),
+      );
     });
   });
 }
