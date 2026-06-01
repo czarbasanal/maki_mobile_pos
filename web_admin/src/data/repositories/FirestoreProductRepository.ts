@@ -97,8 +97,12 @@ export class FirestoreProductRepository implements ProductRepository {
   }
 
   async skuExists(sku: string, excludeId?: string): Promise<boolean> {
-    const snap = await getDocs(query(this.col(), where('sku', '==', sku), limit(2)));
-    return snap.docs.some((d) => d.id !== excludeId);
+    const snap = await getDoc(
+      doc(this.db, FirestoreCollections.productSkus, normalizeSku(sku)),
+    );
+    if (!snap.exists()) return false;
+    if (excludeId === undefined) return true;
+    return (snap.data() as { productId?: string }).productId !== excludeId;
   }
 
   async countSkuVariations(baseSku: string): Promise<number> {
