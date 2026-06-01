@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeftIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { Link, generatePath, useParams } from 'react-router-dom';
+import { ArrowLeftIcon, ClockIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { useProduct } from '@/presentation/hooks/useProduct';
 import { getStockStatus, StockStatus } from '@/domain/entities';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
@@ -56,11 +56,19 @@ export function InventoryDetailPage() {
             <p className="mt-tk-xs text-bodySmall text-light-text-hint">{product.sku}</p>
           </div>
         </div>
-        {!product.isActive ? (
-          <span className="rounded-full bg-light-subtle px-tk-sm py-[2px] text-[11px] font-medium text-light-text-secondary">
-            Inactive
-          </span>
-        ) : null}
+        <div className="flex items-center gap-tk-sm">
+          {!product.isActive ? (
+            <span className="rounded-full bg-light-subtle px-tk-sm py-[2px] text-[11px] font-medium text-light-text-secondary">
+              Inactive
+            </span>
+          ) : null}
+          <Link
+            to={generatePath(RoutePaths.productEdit, { id: product.id })}
+            className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+          >
+            <PencilSquareIcon className="h-4 w-4" /> Edit
+          </Link>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-tk-lg sm:grid-cols-2">
