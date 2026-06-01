@@ -399,22 +399,41 @@ class ProductRepositoryImpl implements ProductRepository {
 
       final skuChanged = prior != null && prior.sku != product.sku;
       if (skuChanged) {
-        // Re-point variation children (baseSku == old SKU) to the new SKU in
-        // the same atomic batch as the product update, so the variation group
-        // never observes a dangling parent link.
-        final batch = _firestore.batch();
-        batch.update(_productsRef.doc(product.id), updateMap);
+        // Variation children (baseSku == old) must be read OUTSIDE the
+        // transaction — Firestore transactions cannot run queries.
         final children =
             await _productsRef.where('baseSku', isEqualTo: prior.sku).get();
-        for (final child in children.docs) {
-          batch.update(child.reference, {
-            'baseSku': product.sku,
-            'updatedAt': FieldValue.serverTimestamp(),
-            'updatedBy': updatedBy,
-            if (updatedByName != null) 'updatedByName': updatedByName,
+        final oldClaimRef = _skusRef.doc(SkuGenerator.normalizeSku(prior.sku));
+        final newClaimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+
+        // Move the parent's SKU claim (delete old, create new), update the
+        // parent, and re-point every child's baseSku — all atomically, so the
+        // variation group never observes a dangling parent link.
+        await _firestore.runTransaction((tx) async {
+          final newClaim = await tx.get(newClaimRef);
+          if (newClaim.exists &&
+              newClaim.data()?['productId'] != product.id) {
+            throw DuplicateSkuException(sku: product.sku);
+          }
+          tx.update(_productsRef.doc(product.id), updateMap);
+          for (final child in children.docs) {
+            tx.update(child.reference, {
+              'baseSku': product.sku,
+              'updatedAt': FieldValue.serverTimestamp(),
+              'updatedBy': updatedBy,
+              if (updatedByName != null) 'updatedByName': updatedByName,
+            });
+          }
+          // delete-then-set is safe even if old == new (case-only rename):
+          // same ref → the set wins, re-keying the claim's sku field.
+          tx.delete(oldClaimRef);
+          tx.set(newClaimRef, {
+            'sku': product.sku,
+            'productId': product.id,
+            'claimedBy': updatedBy,
+            'claimedAt': FieldValue.serverTimestamp(),
           });
-        }
-        await batch.commit();
+        });
       } else {
         await _productsRef.doc(product.id).update(updateMap);
       }

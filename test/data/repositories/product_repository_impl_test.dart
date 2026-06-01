@@ -196,4 +196,66 @@ void main() {
       );
     });
   });
+
+  group('ProductRepositoryImpl.updateProduct SKU claim move', () {
+    test('moves the claim from old to new on rename', () async {
+      final id = await seedProduct({'sku': 'OLD', 'name': 'P'});
+      await firestore.collection('product_skus').doc('OLD').set({
+        'sku': 'OLD',
+        'productId': id,
+        'claimedBy': 'x',
+      });
+
+      final p = await repository.getProductById(id);
+      await repository.updateProduct(
+        product: p!.copyWith(sku: 'NEW'),
+        updatedBy: 'admin-1',
+        updatedByName: 'Admin',
+      );
+
+      expect(
+        (await firestore.collection('product_skus').doc('OLD').get()).exists,
+        false,
+      );
+      final newClaim =
+          await firestore.collection('product_skus').doc('NEW').get();
+      expect(newClaim.exists, true);
+      expect(newClaim.data()!['productId'], id);
+    });
+
+    test('rename onto an existing SKU throws and changes nothing', () async {
+      final id = await seedProduct({'sku': 'OLD', 'name': 'P'});
+      await firestore.collection('product_skus').doc('OLD').set({
+        'sku': 'OLD',
+        'productId': id,
+        'claimedBy': 'x',
+      });
+      final takenId = await seedProduct({'sku': 'TAKEN', 'name': 'Other'});
+      await firestore.collection('product_skus').doc('TAKEN').set({
+        'sku': 'TAKEN',
+        'productId': takenId,
+        'claimedBy': 'x',
+      });
+
+      final p = await repository.getProductById(id);
+      expect(
+        () => repository.updateProduct(
+          product: p!.copyWith(sku: 'TAKEN'),
+          updatedBy: 'admin-1',
+        ),
+        throwsA(isA<DuplicateSkuException>()),
+      );
+
+      expect((await repository.getProductById(id))!.sku, 'OLD');
+      expect(
+        (await firestore.collection('product_skus').doc('OLD').get()).exists,
+        true,
+      );
+      expect(
+        (await firestore.collection('product_skus').doc('TAKEN').get())
+            .data()!['productId'],
+        takenId,
+      );
+    });
+  });
 }
