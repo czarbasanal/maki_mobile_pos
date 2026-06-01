@@ -10,3 +10,4 @@ export * from './Receiving';
 export * from './PettyCash';
 export * from './ActivityLog';
 export * from './CostCode';
+export * from './Category';

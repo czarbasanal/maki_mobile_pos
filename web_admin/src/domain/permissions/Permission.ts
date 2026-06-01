@@ -55,6 +55,7 @@ export const Permission = {
   viewSettings: 'viewSettings',
   editOwnProfile: 'editOwnProfile',
   editCostCodeMapping: 'editCostCodeMapping',
+  manageCategories: 'manageCategories',
   // Logs
   viewUserLogs: 'viewUserLogs',
 } as const;
@@ -140,6 +141,7 @@ const admin: ReadonlySet<Permission> = new Set<Permission>([
   Permission.viewSettings,
   Permission.editOwnProfile,
   Permission.editCostCodeMapping,
+  Permission.manageCategories,
   Permission.viewUserLogs,
 ]);
 

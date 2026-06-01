@@ -23,6 +23,7 @@ import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivi
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
 import { InventoryDetailPage } from '@/presentation/features/inventory/InventoryDetailPage';
+import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
 import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
@@ -78,6 +79,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.userLogs, element: <ActivityLogsPage /> },
         { path: RoutePaths.settings, element: <SettingsPage /> },
         { path: RoutePaths.costCodeSettings, element: <CostCodeSettingsPage /> },
+        { path: RoutePaths.manageLists, element: <ManageListsPage /> },
         { path: RoutePaths.about, element: <AboutPage /> },
       ],
     },
