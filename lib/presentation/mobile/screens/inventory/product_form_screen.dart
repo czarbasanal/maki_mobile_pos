@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -622,6 +623,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     if (widget.isEditing && _existingProduct != null) ...[
                       const SizedBox(height: 24),
                       _AuditInfoCard(product: _existingProduct!),
+                    ],
+                    if (canViewCost &&
+                        widget.isEditing &&
+                        inventoryState.showCost) ...[
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '/inventory/${widget.productId}/price-history',
+                        ),
+                        icon: const Icon(CupertinoIcons.clock),
+                        label: const Text('View price history'),
+                      ),
                     ],
 
                     const SizedBox(height: 32),
