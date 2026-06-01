@@ -20,6 +20,7 @@ import { SalesReportPage } from '@/presentation/features/reports/SalesReportPage
 import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
+import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -50,6 +51,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.inventory, element: placeholder('Inventory', 'phase 7') },
         { path: RoutePaths.productAdd, element: placeholder('New product', 'phase 7') },
         { path: RoutePaths.productEdit, element: placeholder('Edit product', 'phase 7') },
+        { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
         { path: RoutePaths.receiving, element: placeholder('Receiving', 'phase 8') },
         { path: RoutePaths.bulkReceiving, element: <BulkReceivingPage /> },
         { path: RoutePaths.bulkReceivingDetail, element: placeholder('Bulk receiving', 'phase 8') },

@@ -57,6 +57,7 @@ const sections: NavSection[] = [
       { label: 'Inventory', path: RoutePaths.inventory, icon: CubeIcon },
       { label: 'Receiving', path: RoutePaths.receiving, icon: TruckIcon },
       { label: 'Bulk Receiving', path: RoutePaths.bulkReceiving, icon: ArrowUpTrayIcon },
+      { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
       { label: 'Suppliers', path: RoutePaths.suppliers, icon: BuildingStorefrontIcon },
     ],
   },
