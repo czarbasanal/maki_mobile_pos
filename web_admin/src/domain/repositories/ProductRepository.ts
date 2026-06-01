@@ -39,6 +39,15 @@ export interface ProductRepository {
   deactivate(id: string, actorId: string): Promise<void>;
   recordPriceChange(productId: string, entry: Omit<PriceHistoryEntry, 'changedAt'>): Promise<void>;
   listPriceHistory(productId: string): Promise<PriceHistoryEntry[]>;
-  skuExists(sku: string): Promise<boolean>;
+  skuExists(sku: string, excludeId?: string): Promise<boolean>;
+  countSkuVariations(baseSku: string): Promise<number>;
+  updateProductWithSku(
+    id: string,
+    input: ProductUpdateInput,
+    oldSku: string,
+    newSku: string,
+    actorId: string,
+    actorName: string | null,
+  ): Promise<void>;
   barcodeExists(barcode: string): Promise<boolean>;
 }

@@ -14,6 +14,7 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -91,8 +92,43 @@ export class FirestoreProductRepository implements ProductRepository {
     return snap.docs.map((d) => d.data()).filter((p) => p.quantity <= p.reorderLevel);
   }
 
-  async skuExists(sku: string): Promise<boolean> {
-    return (await this.getBySku(sku)) != null;
+  async skuExists(sku: string, excludeId?: string): Promise<boolean> {
+    const snap = await getDocs(query(this.col(), where('sku', '==', sku), limit(2)));
+    return snap.docs.some((d) => d.id !== excludeId);
+  }
+
+  async countSkuVariations(baseSku: string): Promise<number> {
+    const snap = await getDocs(query(this.col(), where('baseSku', '==', baseSku)));
+    return snap.size;
+  }
+
+  async updateProductWithSku(
+    id: string,
+    input: ProductUpdateInput,
+    oldSku: string,
+    newSku: string,
+    actorId: string,
+    actorName: string | null,
+  ): Promise<void> {
+    const batch = writeBatch(this.db);
+    // Product doc: reuse updateData so searchKeywords rebuild + whitelist apply.
+    batch.update(
+      doc(this.db, FirestoreCollections.products, id),
+      this.updateData({ ...input, sku: newSku }, actorId),
+    );
+    // Re-point every variation child (baseSku == oldSku) to the new SKU.
+    const children = await getDocs(
+      query(collection(this.db, FirestoreCollections.products), where('baseSku', '==', oldSku)),
+    );
+    for (const child of children.docs) {
+      batch.update(child.ref, {
+        baseSku: newSku,
+        updatedBy: actorId,
+        updatedByName: actorName,
+        updatedAt: serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
 
   async barcodeExists(barcode: string): Promise<boolean> {
