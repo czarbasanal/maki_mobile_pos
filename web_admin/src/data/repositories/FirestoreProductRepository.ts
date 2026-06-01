@@ -16,7 +16,6 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -118,25 +117,55 @@ export class FirestoreProductRepository implements ProductRepository {
     actorId: string,
     actorName: string | null,
   ): Promise<void> {
-    const batch = writeBatch(this.db);
-    // Product doc: reuse updateData so searchKeywords rebuild + whitelist apply.
-    batch.update(
-      doc(this.db, FirestoreCollections.products, id),
-      this.updateData({ ...input, sku: newSku }, actorId),
-    );
-    // Re-point every variation child (baseSku == oldSku) to the new SKU.
+    // Variation children must be read OUTSIDE the transaction (Firestore
+    // transactions can't run queries) — same as the previous writeBatch.
     const children = await getDocs(
       query(collection(this.db, FirestoreCollections.products), where('baseSku', '==', oldSku)),
     );
-    for (const child of children.docs) {
-      batch.update(child.ref, {
-        baseSku: newSku,
-        updatedBy: actorId,
-        updatedByName: actorName,
-        updatedAt: serverTimestamp(),
+    const oldClaimRef = doc(
+      this.db,
+      FirestoreCollections.productSkus,
+      normalizeSku(oldSku),
+    );
+    const newClaimRef = doc(
+      this.db,
+      FirestoreCollections.productSkus,
+      normalizeSku(newSku),
+    );
+    // Move the parent's claim (delete old, set new), update the parent, and
+    // re-point every child's baseSku — atomically, so the variation group never
+    // observes a dangling parent link.
+    await runTransaction(this.db, async (tx) => {
+      const newClaim = await tx.get(newClaimRef);
+      if (
+        newClaim.exists() &&
+        (newClaim.data() as { productId?: string }).productId !== id
+      ) {
+        throw new DuplicateSkuError();
+      }
+      // Product doc: reuse updateData so searchKeywords rebuild + whitelist apply.
+      tx.update(
+        doc(this.db, FirestoreCollections.products, id),
+        this.updateData({ ...input, sku: newSku }, actorId),
+      );
+      for (const child of children.docs) {
+        tx.update(child.ref, {
+          baseSku: newSku,
+          updatedBy: actorId,
+          updatedByName: actorName,
+          updatedAt: serverTimestamp(),
+        });
+      }
+      // delete-then-set is safe even when old == new (case-only rename): same
+      // ref → the set wins, re-keying the claim's sku field.
+      tx.delete(oldClaimRef);
+      tx.set(newClaimRef, {
+        sku: newSku,
+        productId: id,
+        claimedBy: actorId,
+        claimedAt: serverTimestamp(),
       });
-    }
-    await batch.commit();
+    });
   }
 
   async barcodeExists(barcode: string): Promise<boolean> {
