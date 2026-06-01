@@ -34,9 +34,10 @@ export interface ProductRepository {
   listLowStock(): Promise<Product[]>;
   create(input: ProductCreateInput, actorId: string): Promise<Product>;
   update(id: string, input: ProductUpdateInput, actorId: string): Promise<void>;
-  adjustStock(id: string, delta: number, actorId: string): Promise<void>;
-  setStock(id: string, quantity: number, actorId: string): Promise<void>;
-  deactivate(id: string, actorId: string): Promise<void>;
+  adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void>;
+  setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;
+  deactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
+  reactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
   recordPriceChange(productId: string, entry: Omit<PriceHistoryEntry, 'changedAt'>): Promise<void>;
   listPriceHistory(productId: string): Promise<PriceHistoryEntry[]>;
   skuExists(sku: string, excludeId?: string): Promise<boolean>;
