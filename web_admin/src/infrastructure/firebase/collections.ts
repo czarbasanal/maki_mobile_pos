@@ -4,6 +4,10 @@
 export const FirestoreCollections = {
   users: 'users',
   products: 'products',
+  productCategories: 'product_categories',
+  expenseCategories: 'expense_categories',
+  units: 'units',
+  voidReasons: 'void_reasons',
   suppliers: 'suppliers',
   sales: 'sales',
   drafts: 'drafts',
