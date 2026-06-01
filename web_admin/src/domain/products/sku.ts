@@ -31,3 +31,21 @@ export function generateSku(name: string, rand: () => number = Math.random): str
     base.length > SKU_NAME_PREFIX_LENGTH ? base.slice(0, SKU_NAME_PREFIX_LENGTH) : base;
   return `${prefix}-${randomString(SKU_PREFIXED_RANDOM_LENGTH, rand)}`;
 }
+
+/**
+ * Canonical key for product_skus claims. MUST stay byte-identical to
+ * scripts/backfill-product-skus.mjs and mobile SkuGenerator.normalizeSku
+ * (`trim().toUpperCase()`), or the guard and the backfilled claims key
+ * differently and uniqueness silently breaks.
+ */
+export function normalizeSku(sku: string): string {
+  return sku.trim().toUpperCase();
+}
+
+/**
+ * Code128-safe SKU and a valid Firestore doc-id subset (non-empty, <= 50 chars,
+ * letters/digits/hyphens only). Used to reject SKUs that can't key a claim doc.
+ */
+export function isValidSku(sku: string): boolean {
+  return sku.length > 0 && sku.length <= 50 && /^[A-Za-z0-9-]+$/.test(sku);
+}
