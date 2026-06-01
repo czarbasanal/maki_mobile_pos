@@ -164,4 +164,36 @@ void main() {
       );
     });
   });
+
+  group('ProductRepositoryImpl.skuExists (claim-backed)', () {
+    test('true when a claim exists (case-insensitive), false otherwise',
+        () async {
+      await firestore.collection('product_skus').doc('ABC-1').set({
+        'sku': 'abc-1',
+        'productId': 'p1',
+        'claimedBy': 'x',
+      });
+
+      expect(await repository.skuExists(sku: 'abc-1'), true);
+      expect(await repository.skuExists(sku: '  ABC-1 '), true);
+      expect(await repository.skuExists(sku: 'ZZZ'), false);
+    });
+
+    test('excludeProductId lets the owning product reuse its own SKU', () async {
+      await firestore.collection('product_skus').doc('ABC-1').set({
+        'sku': 'abc-1',
+        'productId': 'p1',
+        'claimedBy': 'x',
+      });
+
+      expect(
+        await repository.skuExists(sku: 'abc-1', excludeProductId: 'p1'),
+        false,
+      );
+      expect(
+        await repository.skuExists(sku: 'abc-1', excludeProductId: 'p2'),
+        true,
+      );
+    });
+  });
 }

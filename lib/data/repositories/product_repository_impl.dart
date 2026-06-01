@@ -728,14 +728,10 @@ class ProductRepositoryImpl implements ProductRepository {
     String? excludeProductId,
   }) async {
     try {
-      final snapshot =
-          await _productsRef.where('sku', isEqualTo: sku).limit(2).get();
-
-      if (excludeProductId == null) {
-        return snapshot.docs.isNotEmpty;
-      }
-
-      return snapshot.docs.any((doc) => doc.id != excludeProductId);
+      final snap = await _skusRef.doc(SkuGenerator.normalizeSku(sku)).get();
+      if (!snap.exists) return false;
+      if (excludeProductId == null) return true;
+      return snap.data()?['productId'] != excludeProductId;
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to check SKU existence: ${e.message}',
