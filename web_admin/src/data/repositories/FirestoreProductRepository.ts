@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -20,6 +21,7 @@ import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import type { Product } from '@/domain/entities';
 import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/collections';
 import { productConverter } from '@/data/converters/productConverter';
+import { toDate } from '@/data/converters/timestamps';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import type {
   PriceHistoryEntry,
@@ -196,7 +198,24 @@ export class FirestoreProductRepository implements ProductRepository {
       },
     );
   }
-  async listPriceHistory(): Promise<never[]> {
-    throw new Error('ProductRepository.listPriceHistory not implemented yet (phase 7)');
+  async listPriceHistory(productId: string): Promise<PriceHistoryEntry[]> {
+    const snap = await getDocs(
+      query(
+        collection(this.db, FirestoreCollections.products, productId, Subcollections.priceHistory),
+        orderBy('changedAt', 'desc'),
+        limit(50),
+      ),
+    );
+    return snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        price: (data.price as number) ?? 0,
+        cost: (data.cost as number) ?? 0,
+        changedAt: toDate(data.changedAt) ?? new Date(0),
+        changedBy: (data.changedBy as string) ?? '',
+        reason: (data.reason as string | null) ?? null,
+        note: (data.note as string | null) ?? null,
+      };
+    });
   }
 }

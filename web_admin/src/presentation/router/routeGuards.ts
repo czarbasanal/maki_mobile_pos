@@ -18,6 +18,9 @@ const commonRoutes: ReadonlySet<string> = new Set([
 const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permission>([
   [RoutePaths.inventory, Permission.viewInventory],
   [RoutePaths.productAdd, Permission.addProduct],
+  // Price history exposes cost → admin-only. Exact match wins over the generic
+  // /^\/inventory\/[^/]+$/ dynamic rule below (which would grant viewInventory).
+  [RoutePaths.priceHistory, Permission.viewProductCost],
   [RoutePaths.receiving, Permission.accessReceiving],
   [RoutePaths.bulkReceiving, Permission.bulkReceive],
   [RoutePaths.suppliers, Permission.viewSuppliers],
