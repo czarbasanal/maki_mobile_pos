@@ -67,6 +67,17 @@ void main() {
       final existing = ['ABC123', 'ABC123-1', 'ABC123-2'];
       expect(SkuGenerator.getNextVariationNumber('ABC123', existing), 3);
     });
+
+    test('normalizeSku trims and uppercases', () {
+      expect(SkuGenerator.normalizeSku('  abc-1 '), 'ABC-1');
+      expect(SkuGenerator.normalizeSku('ABC-1'), 'ABC-1');
+      expect(SkuGenerator.normalizeSku('aBc-1'), 'ABC-1');
+    });
+
+    test('normalizeSku is idempotent', () {
+      final once = SkuGenerator.normalizeSku('  abc-1 ');
+      expect(SkuGenerator.normalizeSku(once), once);
+    });
   });
 
   group('Validators', () {

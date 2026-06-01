@@ -75,6 +75,12 @@ abstract class SkuGenerator {
     return name.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
   }
 
+  /// Canonical key for SKU-uniqueness claims (`product_skus/{normalizeSku(sku)}`).
+  /// MUST stay byte-identical to scripts/backfill-product-skus.mjs
+  /// (`String(s).trim().toUpperCase()`), or the mobile guard and the backfilled
+  /// claims will key differently and uniqueness will silently break.
+  static String normalizeSku(String sku) => sku.trim().toUpperCase();
+
   /// Generates a variation SKU from an existing SKU.
   ///
   /// Used when receiving products with same SKU but different cost. Appends a
