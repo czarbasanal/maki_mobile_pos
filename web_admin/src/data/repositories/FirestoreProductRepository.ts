@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   limit,
   onSnapshot,
   orderBy,
@@ -210,14 +211,37 @@ export class FirestoreProductRepository implements ProductRepository {
     }
     return data;
   }
-  async adjustStock(): Promise<void> {
-    throw new Error('ProductRepository.adjustStock not implemented yet (phase 7)');
+  async adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void> {
+    await updateDoc(doc(this.db, FirestoreCollections.products, id), {
+      quantity: increment(delta),
+      updatedBy: actorId,
+      updatedByName: actorName,
+      updatedAt: serverTimestamp(),
+    });
   }
-  async setStock(): Promise<void> {
-    throw new Error('ProductRepository.setStock not implemented yet (phase 7)');
+  async setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void> {
+    await updateDoc(doc(this.db, FirestoreCollections.products, id), {
+      quantity,
+      updatedBy: actorId,
+      updatedByName: actorName,
+      updatedAt: serverTimestamp(),
+    });
   }
-  async deactivate(): Promise<void> {
-    throw new Error('ProductRepository.deactivate not implemented yet (phase 7)');
+  async deactivate(id: string, actorId: string, actorName: string | null): Promise<void> {
+    await updateDoc(doc(this.db, FirestoreCollections.products, id), {
+      isActive: false,
+      updatedBy: actorId,
+      updatedByName: actorName,
+      updatedAt: serverTimestamp(),
+    });
+  }
+  async reactivate(id: string, actorId: string, actorName: string | null): Promise<void> {
+    await updateDoc(doc(this.db, FirestoreCollections.products, id), {
+      isActive: true,
+      updatedBy: actorId,
+      updatedByName: actorName,
+      updatedAt: serverTimestamp(),
+    });
   }
   async recordPriceChange(
     productId: string,

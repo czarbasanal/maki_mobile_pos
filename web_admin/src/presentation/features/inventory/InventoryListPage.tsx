@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { getStockStatus, StockStatus } from '@/domain/entities';
 import { filterProducts, type ProductFilter } from '@/domain/products/filterProducts';
@@ -31,8 +31,12 @@ export function InventoryListPage() {
   const [search, setSearch] = useState('');
   const [stock, setStock] = useState<ProductFilter['stock']>('all');
   const [category, setCategory] = useState<ProductFilter['category']>('all');
+  const [showInactive, setShowInactive] = useState(false);
 
-  const active = useMemo(() => (products ?? []).filter((p) => p.isActive), [products]);
+  const active = useMemo(
+    () => (showInactive ? (products ?? []) : (products ?? []).filter((p) => p.isActive)),
+    [products, showInactive],
+  );
 
   const counts = useMemo(() => {
     let inStock = 0;
@@ -57,6 +61,13 @@ export function InventoryListPage() {
     () => filterProducts(active, { search, stock, category }),
     [active, search, stock, category],
   );
+
+  // If the selected category drops out of the option set (e.g. it only existed
+  // among inactive products and "Show inactive" was turned off), reset to All so
+  // the controlled <select> stays consistent and the table isn't mysteriously empty.
+  useEffect(() => {
+    if (category !== 'all' && !categories.includes(category)) setCategory('all');
+  }, [categories, category]);
 
   if (error) return <ErrorView title="Could not load inventory" message={error.message} />;
 
@@ -100,6 +111,14 @@ export function InventoryListPage() {
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={() => setShowInactive((v) => !v)}
+          className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+        >
+          {showInactive ? <EyeSlashIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
+          {showInactive ? 'Hide inactive' : 'Show inactive'}
+        </button>
       </div>
 
       {isLoading || !products ? (
@@ -129,9 +148,12 @@ export function InventoryListPage() {
                   <tr
                     key={p.id}
                     onClick={() => navigate(`/inventory/${p.id}`)}
-                    className="cursor-pointer hover:bg-light-subtle"
+                    className={cn('cursor-pointer hover:bg-light-subtle', !p.isActive && 'opacity-50')}
                   >
-                    <Td className="font-medium text-light-text">{p.name}</Td>
+                    <Td className="font-medium text-light-text">
+                      {p.name}
+                      {!p.isActive ? <span className="ml-tk-xs text-light-text-hint">(inactive)</span> : null}
+                    </Td>
                     <Td className="text-light-text-secondary">{p.sku}</Td>
                     <Td className="text-light-text-secondary">{p.category ?? '—'}</Td>
                     <Td>
