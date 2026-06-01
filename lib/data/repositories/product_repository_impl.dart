@@ -28,6 +28,20 @@ class ProductRepositoryImpl implements ProductRepository {
     String? createdByName,
   }) async {
     try {
+      // The SKU becomes a product_skus claim doc-id (key = normalizeSku(sku)).
+      // Firestore doc-ids forbid '/' and empty strings, so an invalid SKU would
+      // crash the claim transaction with an opaque path error. Reject it up
+      // front with a clear message — the form validates too, but programmatic
+      // callers (batch import) may not. isValidSku enforces non-empty +
+      // [A-Za-z0-9-] only, a strict subset of valid doc-ids.
+      if (!SkuGenerator.isValidSku(SkuGenerator.normalizeSku(product.sku))) {
+        throw ValidationException(
+          message:
+              'Invalid SKU "${product.sku}" — use letters, numbers, and hyphens only.',
+          code: 'invalid-sku',
+        );
+      }
+
       // Barcode advisory check (barcodes are not claim-guarded — out of scope).
       for (final code in product.barcodes) {
         if (code.isEmpty) continue;

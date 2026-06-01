@@ -163,6 +163,26 @@ void main() {
         throwsA(isA<DuplicateSkuException>()),
       );
     });
+
+    test('rejects a SKU that cannot form a valid claim doc-id', () async {
+      // '/' is a Firestore path separator; '' / whitespace are invalid doc-ids.
+      // Real Firestore would throw an opaque path error from _skusRef.doc(...);
+      // the guard turns it into a clear ValidationException before the tx.
+      expect(
+        () => repository.createProduct(
+          product: buildProduct(sku: 'PRD/001'),
+          createdBy: 'admin-1',
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+      expect(
+        () => repository.createProduct(
+          product: buildProduct(sku: '   '),
+          createdBy: 'admin-1',
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
   });
 
   group('ProductRepositoryImpl.skuExists (claim-backed)', () {
