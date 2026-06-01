@@ -13,19 +13,17 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import type { Product } from '@/domain/entities';
-import { FirestoreCollections } from '@/infrastructure/firebase/collections';
+import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/collections';
 import { productConverter } from '@/data/converters/productConverter';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import type {
+  PriceHistoryEntry,
   ProductCreateInput,
-  ProductImportOp,
-  ProductImportResult,
   ProductUpdateInput,
 } from '@/domain/repositories/ProductRepository';
 
@@ -117,37 +115,6 @@ export class FirestoreProductRepository implements ProductRepository {
     );
   }
 
-  async bulkImport(ops: ProductImportOp[], actorId: string): Promise<ProductImportResult> {
-    const result: ProductImportResult = { inserted: 0, updated: 0, failed: [] };
-    const productsCol = collection(this.db, FirestoreCollections.products);
-    for (let start = 0; start < ops.length; start += 500) {
-      const chunk = ops.slice(start, start + 500);
-      const batch = writeBatch(this.db);
-      for (const op of chunk) {
-        if (op.kind === 'insert') {
-          batch.set(doc(productsCol), this.createData(op.input, actorId));
-        } else {
-          batch.update(
-            doc(this.db, FirestoreCollections.products, op.id),
-            this.updateData(op.input, actorId),
-          );
-        }
-      }
-      try {
-        await batch.commit();
-        for (const op of chunk) {
-          if (op.kind === 'insert') result.inserted += 1;
-          else result.updated += 1;
-        }
-      } catch (e) {
-        for (const op of chunk) {
-          result.failed.push({ row: op.row, message: (e as Error).message });
-        }
-      }
-    }
-    return result;
-  }
-
   private createData(input: ProductCreateInput, actorId: string) {
     const searchKeywords =
       input.searchKeywords ??
@@ -214,8 +181,20 @@ export class FirestoreProductRepository implements ProductRepository {
   async deactivate(): Promise<void> {
     throw new Error('ProductRepository.deactivate not implemented yet (phase 7)');
   }
-  async recordPriceChange(): Promise<void> {
-    throw new Error('ProductRepository.recordPriceChange not implemented yet (phase 7)');
+  async recordPriceChange(
+    productId: string,
+    entry: Omit<PriceHistoryEntry, 'changedAt'>,
+  ): Promise<void> {
+    await addDoc(
+      collection(this.db, FirestoreCollections.products, productId, Subcollections.priceHistory),
+      {
+        price: entry.price,
+        cost: entry.cost,
+        changedAt: serverTimestamp(),
+        changedBy: entry.changedBy,
+        reason: entry.reason,
+      },
+    );
   }
   async listPriceHistory(): Promise<never[]> {
     throw new Error('ProductRepository.listPriceHistory not implemented yet (phase 7)');

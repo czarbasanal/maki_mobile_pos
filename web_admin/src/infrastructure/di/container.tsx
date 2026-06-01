@@ -12,6 +12,7 @@ import { FirestoreCostCodeRepository } from '@/data/repositories/FirestoreCostCo
 import { FirestoreUserRepository } from '@/data/repositories/FirestoreUserRepository';
 import { FirestoreActivityLogRepository } from '@/data/repositories/FirestoreActivityLogRepository';
 import { FirestoreSupplierRepository } from '@/data/repositories/FirestoreSupplierRepository';
+import { FirestoreReceivingRepository } from '@/data/repositories/FirestoreReceivingRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -19,6 +20,7 @@ import type { CostCodeRepository } from '@/domain/repositories/CostCodeRepositor
 import type { UserRepository } from '@/domain/repositories/UserRepository';
 import type { ActivityLogRepository } from '@/domain/repositories/ActivityLogRepository';
 import type { SupplierRepository } from '@/domain/repositories/SupplierRepository';
+import type { ReceivingRepository } from '@/domain/repositories/ReceivingRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -28,8 +30,9 @@ export interface Container {
   userRepo: UserRepository;
   activityLogRepo: ActivityLogRepository;
   supplierRepo: SupplierRepository;
+  receivingRepo: ReceivingRepository;
   // Other repositories slot in here as their phases land:
-  // expenseRepo, receivingRepo, ...
+  // expenseRepo, ...
 }
 
 function buildDefaultContainer(): Container {
@@ -41,6 +44,7 @@ function buildDefaultContainer(): Container {
     userRepo: new FirestoreUserRepository(db),
     activityLogRepo: new FirestoreActivityLogRepository(db),
     supplierRepo: new FirestoreSupplierRepository(db),
+    receivingRepo: new FirestoreReceivingRepository(db, new FirestoreProductRepository(db)),
   };
 }
 
@@ -92,4 +96,8 @@ export function useActivityLogRepo(): ActivityLogRepository {
 
 export function useSupplierRepo(): SupplierRepository {
   return useContainer().supplierRepo;
+}
+
+export function useReceivingRepo(): ReceivingRepository {
+  return useContainer().receivingRepo;
 }

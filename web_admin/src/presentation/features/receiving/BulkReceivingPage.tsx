@@ -1,42 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
-import { useProductImport } from './useProductImport';
-import { ImportPreviewTable } from './ImportPreviewTable';
+import { useBulkReceiving } from './useBulkReceiving';
+import { ReceivingPreviewTable } from './ReceivingPreviewTable';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 
-export function ProductImportPage() {
+export function BulkReceivingPage() {
   const {
-    isLoadingRefs,
-    loadError,
-    state,
-    parseError,
-    summary,
-    result,
-    isImporting,
-    parseFile,
-    setAction,
-    runImport,
-    reset,
-  } = useProductImport();
+    isLoadingRefs, loadError, suppliers, supplierId, setSupplierId, state, parseError,
+    summary, result, isReceiving, parseFile, reset, runReceive,
+  } = useBulkReceiving();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Import products · MAKI POS Admin';
+    document.title = 'Bulk receiving · MAKI POS Admin';
   }, []);
-
-  const actionable = summary.insert + summary.update;
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
       <header>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          Import products
-        </h1>
+        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Bulk receiving</h1>
         <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Upload a CSV (name, category, code, price, qty, unit, reorder_level, supplier). SKU is
-          generated; cost is decoded from the code.
+          Upload a CSV (sku, name, category, unit, cost, price, quantity, reorder_level). Existing SKUs
+          get stock added; a different cost spawns a variation; new SKUs (or "GENERATE") are created.
         </p>
       </header>
 
@@ -45,6 +32,16 @@ export function ProductImportPage() {
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-tk-md">
+            <select
+              className="rounded-md border border-light-border bg-light-card px-tk-md py-[8px] text-bodySmall text-light-text outline-none focus:border-light-text"
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+            >
+              <option value="">No supplier</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
             <button
               type="button"
               disabled={isLoadingRefs}
@@ -72,59 +69,49 @@ export function ProductImportPage() {
             />
           </div>
 
-          {parseError ? <ErrorView title="Import error" message={parseError} /> : null}
-
-          {state?.headerError ? (
-            <ErrorView title="Wrong columns" message={state.headerError} />
-          ) : null}
+          {parseError ? <ErrorView title="Receiving error" message={parseError} /> : null}
+          {state?.headerError ? <ErrorView title="Wrong columns" message={state.headerError} /> : null}
 
           {result ? (
             <div className="rounded-md border border-light-hairline bg-light-card p-tk-lg text-bodySmall">
-              <p className="font-semibold text-light-text">Import complete</p>
+              <p className="font-semibold text-light-text">Received — {result.referenceNumber}</p>
               <p className="mt-tk-xs text-light-text-secondary">
-                Inserted {result.inserted} · Updated {result.updated} · Failed {result.failed.length}
+                {result.received} line items · {result.newProducts} new · {result.variations} variations ·
+                {' '}{result.failed.length} failed
               </p>
               {result.failed.length > 0 ? (
                 <ul className="mt-tk-sm list-disc pl-tk-lg text-error-dark">
-                  {result.failed.map((f) => (
-                    <li key={f.row}>Row {f.row}: {f.message}</li>
-                  ))}
+                  {result.failed.map((f) => <li key={f.row}>Row {f.row}: {f.message}</li>)}
                 </ul>
               ) : null}
               <button
                 type="button"
-                onClick={() => {
-                  reset();
-                  setFileName(null);
-                }}
+                onClick={() => { reset(); setFileName(null); }}
                 className="mt-tk-md rounded-md border border-light-border px-tk-md py-[6px] text-light-text hover:bg-light-subtle"
               >
-                Import another file
+                Receive another file
               </button>
             </div>
           ) : state && !state.headerError ? (
             <>
               <div className="flex flex-wrap items-center justify-between gap-tk-md">
                 <p className="text-bodySmall text-light-text-secondary">
-                  {summary.total} rows · {summary.insert} insert · {summary.update} update ·{' '}
-                  {summary.skip} skip
+                  {summary.total} rows · {summary.new} new · {summary.match} match · {summary.mismatch} variation
                   {summary.errors > 0 ? ` · ${summary.errors} error` : ''}
                 </p>
                 <button
                   type="button"
-                  disabled={actionable === 0 || isImporting}
-                  onClick={() => void runImport()}
+                  disabled={summary.actionable === 0 || isReceiving}
+                  onClick={() => void runReceive()}
                   className="rounded-md bg-light-text px-tk-lg py-[8px] text-bodySmall font-semibold text-light-card hover:opacity-90 disabled:opacity-50"
                 >
-                  {isImporting ? 'Importing…' : `Import ${actionable} product${actionable === 1 ? '' : 's'}`}
+                  {isReceiving ? 'Receiving…' : `Receive ${summary.actionable} item${summary.actionable === 1 ? '' : 's'}`}
                 </button>
               </div>
-              <ImportPreviewTable rows={state.rows} actions={state.actions} onAction={setAction} />
+              <ReceivingPreviewTable rows={state.rows} />
             </>
           ) : isLoadingRefs ? (
-            <div className="h-24">
-              <LoadingView label="Loading products & suppliers…" />
-            </div>
+            <div className="h-24"><LoadingView label="Loading products & suppliers…" /></div>
           ) : null}
         </>
       )}

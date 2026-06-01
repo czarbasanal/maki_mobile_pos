@@ -19,7 +19,7 @@ import { ReportsHubPage } from '@/presentation/features/reports/ReportsHubPage';
 import { SalesReportPage } from '@/presentation/features/reports/SalesReportPage';
 import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
-import { ProductImportPage } from '@/presentation/features/import/ProductImportPage';
+import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -48,11 +48,10 @@ export const router = createBrowserRouter(
         { path: RoutePaths.drafts, element: placeholder('Drafts', 'phase 10') },
         { path: RoutePaths.draftEdit, element: placeholder('Edit Draft', 'phase 10') },
         { path: RoutePaths.inventory, element: placeholder('Inventory', 'phase 7') },
-        { path: RoutePaths.productImport, element: <ProductImportPage /> },
         { path: RoutePaths.productAdd, element: placeholder('New product', 'phase 7') },
         { path: RoutePaths.productEdit, element: placeholder('Edit product', 'phase 7') },
         { path: RoutePaths.receiving, element: placeholder('Receiving', 'phase 8') },
-        { path: RoutePaths.bulkReceiving, element: placeholder('Bulk receiving', 'phase 8') },
+        { path: RoutePaths.bulkReceiving, element: <BulkReceivingPage /> },
         { path: RoutePaths.bulkReceivingDetail, element: placeholder('Bulk receiving', 'phase 8') },
         { path: RoutePaths.suppliers, element: placeholder('Suppliers', 'phase 6') },
         { path: RoutePaths.supplierAdd, element: placeholder('New supplier', 'phase 6') },
