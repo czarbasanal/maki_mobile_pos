@@ -18,7 +18,7 @@ const METRICS: { value: PriceMetric; label: string }[] = [
 ];
 
 function formatDate(d: Date): string {
-  return d.toLocaleString('en-US', {
+  return d.toLocaleString('en-PH', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

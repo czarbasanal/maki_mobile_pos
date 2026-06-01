@@ -67,6 +67,7 @@ describe('derivePriceHistorySource', () => {
     expect(derivePriceHistorySource('Initial price', null)).toBe('Created');
     expect(derivePriceHistorySource('Price update', null)).toBe('Manual edit');
     expect(derivePriceHistorySource('Cost update', null)).toBe('Manual edit');
+    expect(derivePriceHistorySource('Price + cost update', null)).toBe('Manual edit');
   });
   it('receiving appends the RCV id from note when present', () => {
     expect(derivePriceHistorySource('Stock receiving', 'RCV-20260201-003')).toBe(

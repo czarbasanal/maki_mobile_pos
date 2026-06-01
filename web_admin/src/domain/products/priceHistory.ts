@@ -12,7 +12,9 @@ export interface PriceHistoryRow {
   hasPrior: boolean;
 }
 
-const EPS = 0.005;
+// One centavo. Matches the ▲/▼ display threshold in PriceHistoryView's `Delta`,
+// so a kept row always shows its arrow.
+const EPS = 0.01;
 
 /**
  * Builds display rows from `entriesNewestFirst` (as `listPriceHistory` returns),
@@ -58,6 +60,7 @@ export function derivePriceHistorySource(
       return 'Created';
     case 'Price update':
     case 'Cost update':
+    case 'Price + cost update':
       return 'Manual edit';
     case 'Stock receiving': {
       const rcv = note ? /RCV-\d{8}-\d+/.exec(note)?.[0] ?? null : null;

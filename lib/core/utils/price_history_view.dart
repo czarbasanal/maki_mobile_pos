@@ -21,8 +21,10 @@ class PriceHistoryRow {
   final bool hasPrior;
 }
 
-/// Smallest change treated as a real move (guards against float noise).
-const double _eps = 0.005;
+/// Smallest change treated as a real move — one centavo. Matches the ▲/▼
+/// display threshold in the screen's `_MetricLine`, so a kept row always shows
+/// its arrow.
+const double _eps = 0.01;
 
 /// Builds display rows from [entriesNewestFirst] (as returned by
 /// `getPriceHistory`), filtered to [metric].
@@ -83,6 +85,7 @@ String derivePriceHistorySource(String? reason, String? note) {
       return 'Created';
     case 'Price update':
     case 'Cost update':
+    case 'Price + cost update':
       return 'Manual edit';
     case 'Stock receiving':
       final rcv = _receivingId(note);
