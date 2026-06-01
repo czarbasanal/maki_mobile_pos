@@ -73,6 +73,8 @@ void main() {
       expect(derivePriceHistorySource('Initial price', null), 'Created');
       expect(derivePriceHistorySource('Price update', null), 'Manual edit');
       expect(derivePriceHistorySource('Cost update', null), 'Manual edit');
+      expect(
+          derivePriceHistorySource('Price + cost update', null), 'Manual edit');
     });
     test('receiving appends the RCV id from note when present', () {
       expect(derivePriceHistorySource('Stock receiving', 'RCV-20260201-003'),
