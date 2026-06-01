@@ -21,6 +21,8 @@ import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPa
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
+import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
+import { InventoryDetailPage } from '@/presentation/features/inventory/InventoryDetailPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
 import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
@@ -50,9 +52,10 @@ export const router = createBrowserRouter(
         { path: RoutePaths.checkout, element: placeholder('Checkout', 'phase 11') },
         { path: RoutePaths.drafts, element: placeholder('Drafts', 'phase 10') },
         { path: RoutePaths.draftEdit, element: placeholder('Edit Draft', 'phase 10') },
-        { path: RoutePaths.inventory, element: placeholder('Inventory', 'phase 7') },
+        { path: RoutePaths.inventory, element: <InventoryListPage /> },
         { path: RoutePaths.productAdd, element: placeholder('New product', 'phase 7') },
         { path: RoutePaths.productEdit, element: placeholder('Edit product', 'phase 7') },
+        { path: RoutePaths.productDetail, element: <InventoryDetailPage /> },
         { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
         { path: RoutePaths.receiving, element: placeholder('Receiving', 'phase 8') },
         { path: RoutePaths.bulkReceiving, element: <BulkReceivingPage /> },
