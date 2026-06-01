@@ -14,6 +14,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/drafts_list_s
 import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/draft_edit_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/inventory_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/product_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/price_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/bulk_receiving_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_history_screen.dart';
@@ -213,6 +214,16 @@ List<RouteBase> featureRoutes() => [
               final id = state.pathParameters['id']!;
               return ProductFormScreen(productId: id);
             },
+            routes: [
+              GoRoute(
+                path: 'price-history',
+                name: RouteNames.productPriceHistory,
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return PriceHistoryScreen(productId: id);
+                },
+              ),
+            ],
           ),
         ],
       ),

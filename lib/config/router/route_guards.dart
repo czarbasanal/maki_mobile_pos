@@ -138,6 +138,13 @@ abstract class RouteGuards {
           user.hasPermission(Permission.editProductLimited);
     }
 
+    // Price-history view lives under /inventory/<id>/price-history — it exposes
+    // cost, so it is admin-only via viewProductCost (defense in depth; the UI
+    // tile is also gated). Must precede the generic /inventory/<id> branch.
+    if (RegExp(r'^/inventory/[^/]+/price-history$').hasMatch(path)) {
+      return user.hasPermission(Permission.viewProductCost);
+    }
+
     // Inventory detail routes (view) - anyone with viewInventory
     if (RegExp(r'^/inventory/[^/]+$').hasMatch(path)) {
       return user.hasPermission(Permission.viewInventory);

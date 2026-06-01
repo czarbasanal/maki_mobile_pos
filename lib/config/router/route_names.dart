@@ -45,6 +45,9 @@ abstract class RouteNames {
   /// Product detail route
   static const String productDetail = 'productDetail';
 
+  /// Product price-history view route
+  static const String productPriceHistory = 'productPriceHistory';
+
   // ==================== RECEIVING ROUTES ====================
 
   /// Receiving screen route
