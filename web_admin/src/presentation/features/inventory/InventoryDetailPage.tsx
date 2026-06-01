@@ -1,10 +1,20 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, generatePath, useParams } from 'react-router-dom';
-import { ArrowLeftIcon, ClockIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import {
+  AdjustmentsHorizontalIcon,
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  ClockIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
 import { useProduct } from '@/presentation/hooks/useProduct';
+import { useDeactivateProduct, useReactivateProduct } from '@/presentation/hooks/useProductMutations';
 import { getStockStatus, StockStatus } from '@/domain/entities';
-import { LoadingView } from '@/presentation/components/common/LoadingView';
+import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
+import { Dialog } from '@/presentation/components/common/Dialog';
+import { AdjustStockDialog } from './AdjustStockDialog';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { formatMoney } from '@/core/utils/money';
@@ -23,6 +33,10 @@ function fmtDate(d: Date | null): string {
 export function InventoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading, error } = useProduct(id);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deactivate = useDeactivateProduct();
+  const reactivate = useReactivateProduct();
 
   useEffect(() => {
     document.title = product ? `${product.name} · Inventory` : 'Inventory';
@@ -56,18 +70,43 @@ export function InventoryDetailPage() {
             <p className="mt-tk-xs text-bodySmall text-light-text-hint">{product.sku}</p>
           </div>
         </div>
-        <div className="flex items-center gap-tk-sm">
+        <div className="flex flex-wrap items-center gap-tk-sm">
           {!product.isActive ? (
             <span className="rounded-full bg-light-subtle px-tk-sm py-[2px] text-[11px] font-medium text-light-text-secondary">
               Inactive
             </span>
           ) : null}
+          <button
+            type="button"
+            onClick={() => setAdjustOpen(true)}
+            className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+          >
+            <AdjustmentsHorizontalIcon className="h-4 w-4" /> Adjust stock
+          </button>
           <Link
             to={generatePath(RoutePaths.productEdit, { id: product.id })}
             className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
           >
             <PencilSquareIcon className="h-4 w-4" /> Edit
           </Link>
+          {product.isActive ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex items-center gap-tk-xs rounded-md border border-error-light px-tk-md py-tk-sm text-bodySmall text-error-dark hover:bg-error-light/40"
+            >
+              <TrashIcon className="h-4 w-4" /> Delete
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={reactivate.isPending}
+              onClick={() => reactivate.mutate(product.id)}
+              className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
+            >
+              <ArrowPathIcon className="h-4 w-4" /> Reactivate
+            </button>
+          )}
         </div>
       </header>
 
@@ -104,6 +143,40 @@ export function InventoryDetailPage() {
         <ClockIcon className="h-4 w-4" />
         View price history
       </Link>
+
+      <AdjustStockDialog product={product} open={adjustOpen} onClose={() => setAdjustOpen(false)} />
+
+      <Dialog
+        open={confirmDelete}
+        onClose={() => { if (!deactivate.isPending) setConfirmDelete(false); }}
+        title="Delete Product?"
+        dismissable={!deactivate.isPending}
+      >
+        <div className="space-y-tk-md">
+          <p className="text-bodySmall text-light-text-secondary">
+            Delete “{product.name}”? This product will be hidden from POS and inventory lists.
+            Past sales and receivings that reference it remain intact.
+          </p>
+          <div className="flex justify-end gap-tk-sm pt-tk-sm">
+            <button
+              type="button"
+              disabled={deactivate.isPending}
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deactivate.isPending}
+              onClick={async () => { await deactivate.mutateAsync(product.id); setConfirmDelete(false); }}
+              className="inline-flex items-center gap-tk-xs rounded-md bg-error-dark px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:opacity-90 disabled:opacity-60"
+            >
+              {deactivate.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }
