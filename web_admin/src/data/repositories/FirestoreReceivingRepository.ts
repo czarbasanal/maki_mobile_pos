@@ -16,13 +16,14 @@ import type {
   ReceivingRepository,
   ReceivingResult,
 } from '@/domain/repositories/ReceivingRepository';
-import type { Receiving } from '@/domain/entities';
+import type { Receiving, Product } from '@/domain/entities';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { encodeCostCode } from '@/domain/entities';
 import { generateSku } from '@/domain/products/sku';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import { nextVariationNumber, variationSku } from '@/domain/receiving/variations';
+import { DuplicateSkuError } from '@/data/errors';
 
 interface BuiltItem {
   productId: string;
@@ -66,19 +67,38 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
           });
         } else if (c.status === 'mismatch' && c.existing) {
           const base = c.existing.baseSku ?? c.existing.sku;
-          const n = nextVariationNumber(base, knownSkus);
-          const sku = variationSku(base, n);
-          knownSkus.push(sku);
           const costCode = encodeCostCode(cipher, r.cost);
-          const created = await this.products.create(
-            this.productInput({
-              sku, name: c.existing.name, cost: r.cost, costCode, price: c.existing.price,
-              quantity: r.quantity, reorderLevel: c.existing.reorderLevel, unit: c.existing.unit,
-              category: c.existing.category, supplierId: c.existing.supplierId,
-              supplierName: c.existing.supplierName, baseSku: base, variationNumber: n, actor,
-            }),
-            actor.id,
-          );
+          // The claim guard makes a colliding variation create throw
+          // DuplicateSkuError. Bump the number and retry so concurrent
+          // receiving self-heals instead of failing the whole batch.
+          let n = nextVariationNumber(base, knownSkus);
+          let created: Product | undefined;
+          let sku = '';
+          for (let attempt = 0; attempt < 5; attempt += 1) {
+            sku = variationSku(base, n);
+            try {
+              created = await this.products.create(
+                this.productInput({
+                  sku, name: c.existing.name, cost: r.cost, costCode, price: c.existing.price,
+                  quantity: r.quantity, reorderLevel: c.existing.reorderLevel, unit: c.existing.unit,
+                  category: c.existing.category, supplierId: c.existing.supplierId,
+                  supplierName: c.existing.supplierName, baseSku: base, variationNumber: n, actor,
+                }),
+                actor.id,
+              );
+              break;
+            } catch (e) {
+              if (e instanceof DuplicateSkuError) {
+                n += 1;
+                continue;
+              }
+              throw e;
+            }
+          }
+          if (!created) {
+            throw new Error(`Could not allocate a unique variation SKU for "${base}"`);
+          }
+          knownSkus.push(sku);
           await this.products.recordPriceChange(created.id, {
             price: c.existing.price, cost: r.cost, changedBy: actor.id, reason: 'receiving',
           });
