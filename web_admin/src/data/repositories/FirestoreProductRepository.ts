@@ -12,6 +12,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   updateDoc,
   where,
@@ -25,6 +26,8 @@ import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/
 import { productConverter } from '@/data/converters/productConverter';
 import { toDate } from '@/data/converters/timestamps';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
+import { normalizeSku, isValidSku } from '@/domain/products/sku';
+import { DuplicateSkuError } from '@/data/errors';
 import type {
   PriceHistoryEntry,
   ProductCreateInput,
@@ -138,10 +141,31 @@ export class FirestoreProductRepository implements ProductRepository {
 
   // Write methods land in phase 7.
   async create(input: ProductCreateInput, actorId: string): Promise<Product> {
-    const ref = await addDoc(
-      collection(this.db, FirestoreCollections.products),
-      this.createData(input, actorId),
+    // The SKU becomes a product_skus claim doc-id (normalizeSku(sku)); reject
+    // SKUs that can't form a valid doc-id ('/', empty) before the transaction
+    // so it fails with a clear message rather than an opaque Firestore error.
+    if (!isValidSku(normalizeSku(input.sku))) {
+      throw new Error(
+        `Invalid SKU "${input.sku}" — use letters, numbers, and hyphens only.`,
+      );
+    }
+    const ref = doc(collection(this.db, FirestoreCollections.products));
+    const claimRef = doc(
+      this.db,
+      FirestoreCollections.productSkus,
+      normalizeSku(input.sku),
     );
+    await runTransaction(this.db, async (tx) => {
+      const claim = await tx.get(claimRef);
+      if (claim.exists()) throw new DuplicateSkuError();
+      tx.set(ref, this.createData(input, actorId));
+      tx.set(claimRef, {
+        sku: input.sku,
+        productId: ref.id,
+        claimedBy: actorId,
+        claimedAt: serverTimestamp(),
+      });
+    });
     const created = await this.getById(ref.id);
     if (!created) throw new Error('Failed to load the created product');
     return created;

@@ -16,6 +16,8 @@ export const FirestoreCollections = {
   pettyCash: 'petty_cash',
   userLogs: 'user_logs',
   settings: 'settings',
+  // SKU-uniqueness claim collection (Slice A). Keyed by normalizeSku(sku).
+  productSkus: 'product_skus',
 } as const;
 
 export const SettingsDocs = {
