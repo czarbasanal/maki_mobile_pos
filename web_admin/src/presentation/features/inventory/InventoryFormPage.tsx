@@ -20,6 +20,17 @@ import { Dialog } from '@/presentation/components/common/Dialog';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 
+// Required numeric: a blank input must error, not silently coerce to 0
+// (Number('') === 0). Map blank -> NaN so z.number rejects it.
+const reqNumber = (msg: string, int = false) =>
+  z.preprocess(
+    (v) => (typeof v === 'string' ? (v.trim() === '' ? NaN : Number(v)) : v),
+    (int
+      ? z.number({ invalid_type_error: msg }).int('Whole number')
+      : z.number({ invalid_type_error: msg })
+    ).min(0, 'Must be ≥ 0'),
+  );
+
 const schema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   sku: z
@@ -29,9 +40,9 @@ const schema = z.object({
     .max(50, 'Max 50 characters')
     .regex(/^[A-Za-z0-9-]+$/, 'Use only letters, numbers, and hyphens'),
   barcode: z.string().trim().optional().or(z.literal('')),
-  cost: z.coerce.number().min(0, 'Must be ≥ 0'),
-  price: z.coerce.number().min(0, 'Must be ≥ 0'),
-  reorderLevel: z.coerce.number().int('Whole number').min(0, 'Must be ≥ 0'),
+  cost: reqNumber('Cost is required'),
+  price: reqNumber('Price is required'),
+  reorderLevel: reqNumber('Reorder level is required', true),
   unit: z.string().trim().min(1, 'Unit is required'),
   category: z.string().optional().or(z.literal('')),
   supplierId: z.string().optional().or(z.literal('')),
@@ -127,10 +138,29 @@ export function InventoryFormPage() {
     const priceNum = Number(values.price);
     const reason = priceHistoryReason(target.cost, target.price, costNum, priceNum);
     const costChanged = Math.abs(costNum - target.cost) > 0.01;
-    // Re-encode costCode from the new cost so mobile's cost-code display stays correct.
-    const costCode =
-      costChanged && costCodeMapping ? encodeCostCode(costCodeMapping, costNum) : target.costCode;
-    const supplier = (suppliers ?? []).find((s) => s.id === values.supplierId);
+    // Don't write a stale costCode: a cost change must re-encode, which needs the
+    // (live-loaded) mapping. Refuse rather than persist an inconsistent code.
+    if (costChanged && !costCodeMapping) {
+      setError('cost', {
+        type: 'pending',
+        message: 'Cost-code mapping still loading — try again in a moment.',
+      });
+      return;
+    }
+    const costCode = costChanged ? encodeCostCode(costCodeMapping!, costNum) : target.costCode;
+
+    // Preserve the existing supplierName when the list hasn't loaded but the id is
+    // unchanged, so we never write an id with a null name.
+    const supplierIdOut = values.supplierId || null;
+    const resolved = (suppliers ?? []).find((s) => s.id === supplierIdOut);
+    const supplierNameOut =
+      supplierIdOut === null
+        ? null
+        : resolved
+          ? resolved.name
+          : supplierIdOut === target.supplierId
+            ? target.supplierName
+            : null;
 
     const patch: ProductUpdateInput = {
       name: values.name.trim(),
@@ -141,8 +171,8 @@ export function InventoryFormPage() {
       price: priceNum,
       reorderLevel: Number(values.reorderLevel),
       unit: values.unit.trim() || 'pcs',
-      supplierId: values.supplierId || null,
-      supplierName: supplier?.name ?? null,
+      supplierId: supplierIdOut,
+      supplierName: supplierNameOut,
       barcode: blank(values.barcode),
       notes: blank(values.notes),
     };
@@ -197,7 +227,13 @@ export function InventoryFormPage() {
           <Field label="Name" error={errors.name?.message}
             input={<input type="text" className={inputCls(!!errors.name)} {...register('name')} />} />
           <Field label="SKU" error={errors.sku?.message}
-            input={<input type="text" className={inputCls(!!errors.sku)} {...register('sku')} />} />
+            input={
+              <input
+                type="text"
+                className={inputCls(!!errors.sku)}
+                {...register('sku', { onChange: () => { if (update.error) update.reset(); } })}
+              />
+            } />
           <p className="text-[12px] text-light-text-hint">
             Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.
           </p>
