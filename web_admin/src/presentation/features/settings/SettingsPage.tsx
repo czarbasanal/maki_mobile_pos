@@ -9,6 +9,7 @@ import {
   CodeBracketSquareIcon,
   InformationCircleIcon,
   KeyIcon,
+  QueueListIcon,
   UserIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
@@ -103,6 +104,13 @@ export function SettingsPage() {
           tone="orange"
           title="Cost code settings"
           subtitle="Configure cost encoding"
+        />
+        <Row
+          to={RoutePaths.manageLists}
+          icon={QueueListIcon}
+          tone="blue"
+          title="Manage lists"
+          subtitle="Categories, units, and other dropdown values"
         />
       </Section>
 

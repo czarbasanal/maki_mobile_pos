@@ -34,6 +34,7 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.userAdd, Permission.addUser],
   [RoutePaths.settings, Permission.viewSettings],
   [RoutePaths.costCodeSettings, Permission.editCostCodeMapping],
+  [RoutePaths.manageLists, Permission.manageCategories],
   [RoutePaths.userLogs, Permission.viewUserLogs],
   [RoutePaths.pettyCash, Permission.managePettyCash],
   [RoutePaths.pettyCashNew, Permission.managePettyCash],
