@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import type { Product } from '@/domain/entities';
 import { PriceHistoryView } from './PriceHistoryView';
@@ -11,6 +12,20 @@ export function PriceHistoryPage() {
   const { data: products, isLoading } = useProducts();
   const [queryText, setQueryText] = useState('');
   const [selected, setSelected] = useState<Product | null>(null);
+
+  const [searchParams] = useSearchParams();
+  const productIdParam = searchParams.get('product');
+
+  // Deep-link: when arriving via /inventory/price-history?product=<id>, pre-select
+  // that product once the list has loaded. Manual search still works afterwards.
+  useEffect(() => {
+    if (!productIdParam || selected || !products) return;
+    const match = products.find((p) => p.id === productIdParam);
+    if (match) {
+      setSelected(match);
+      setQueryText(match.name);
+    }
+  }, [productIdParam, products, selected]);
 
   const q = queryText.trim().toLowerCase();
   const matches =
