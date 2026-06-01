@@ -3,15 +3,16 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useProduct } from '@/presentation/hooks/useProduct';
-import { useUpdateProduct } from '@/presentation/hooks/useProductMutations';
+import { useCreateProduct, useUpdateProduct } from '@/presentation/hooks/useProductMutations';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { useSuppliers } from '@/presentation/hooks/useSuppliers';
 import { useCostCode } from '@/presentation/hooks/useCostCode';
 import { useProductRepo } from '@/infrastructure/di/container';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
+import { generateSku } from '@/domain/products/sku';
 import { encodeCostCode } from '@/domain/entities';
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
@@ -42,6 +43,7 @@ const schema = z.object({
   barcode: z.string().trim().optional().or(z.literal('')),
   cost: reqNumber('Cost is required'),
   price: reqNumber('Price is required'),
+  quantity: reqNumber('Quantity is required', true),
   reorderLevel: reqNumber('Reorder level is required', true),
   unit: z.string().trim().min(1, 'Unit is required'),
   category: z.string().optional().or(z.literal('')),
@@ -52,8 +54,6 @@ type FormValues = z.infer<typeof schema>;
 
 const blank = (s: string | undefined) => (s && s.trim() ? s.trim() : null);
 
-/** Build a <select> option list of names that always includes `current`, even
- *  if it is no longer in the active list (so an orphaned value isn't dropped). */
 function withCurrent(names: string[], current: string | null): string[] {
   if (current && !names.includes(current)) return [current, ...names];
   return names;
@@ -61,16 +61,19 @@ function withCurrent(names: string[], current: string | null): string[] {
 
 export function InventoryFormPage() {
   const { id } = useParams<{ id: string }>();
+  const isEditing = !!id;
   const navigate = useNavigate();
   const repo = useProductRepo();
 
   const { data: target, isLoading, error } = useProduct(id);
   const update = useUpdateProduct();
+  const create = useCreateProduct();
   const { data: productCats } = useActiveCategories(CategoryKind.product);
   const { data: units } = useActiveCategories(CategoryKind.unit);
   const { data: suppliers } = useSuppliers();
   const { data: costCodeMapping } = useCostCode();
 
+  const [autoSku, setAutoSku] = useState(true);
   const [skuDialog, setSkuDialog] = useState<{ open: boolean; count: number; values: FormValues | null }>(
     { open: false, count: 0, values: null },
   );
@@ -80,18 +83,24 @@ export function InventoryFormPage() {
     handleSubmit,
     reset,
     setError,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: '', sku: '', barcode: '', cost: 0, price: 0, reorderLevel: 0,
+      name: '', sku: '', barcode: '', cost: 0, price: 0, quantity: 0, reorderLevel: 0,
       unit: 'pcs', category: '', supplierId: '', notes: '',
     },
   });
 
   useEffect(() => {
-    document.title = target ? `Edit ${target.name} · Inventory` : 'Edit product';
-  }, [target]);
+    document.title = isEditing
+      ? target
+        ? `Edit ${target.name} · Inventory`
+        : 'Edit product'
+      : 'New product · Inventory';
+  }, [isEditing, target]);
 
   useEffect(() => {
     if (!target) return;
@@ -101,6 +110,7 @@ export function InventoryFormPage() {
       barcode: target.barcode ?? '',
       cost: target.cost,
       price: target.price,
+      quantity: target.quantity,
       reorderLevel: target.reorderLevel,
       unit: target.unit,
       category: target.category ?? '',
@@ -117,7 +127,6 @@ export function InventoryFormPage() {
     () => withCurrent((units ?? []).map((u) => u.name), target?.unit ?? null),
     [units, target?.unit],
   );
-  // Active suppliers + the currently-saved one even if now inactive.
   const supplierOptions = useMemo(() => {
     const active = (suppliers ?? []).filter((s) => s.isActive);
     if (target?.supplierId && !active.some((s) => s.id === target.supplierId)) {
@@ -127,74 +136,101 @@ export function InventoryFormPage() {
     return active;
   }, [suppliers, target?.supplierId]);
 
-  if (error) return <ErrorView title="Could not load product" message={error.message} />;
-  if (isLoading || !target) return <LoadingView label="Loading product…" />;
+  if (isEditing && error) {
+    return <ErrorView title="Could not load product" message={error.message} />;
+  }
+  if (isEditing && (isLoading || !target)) {
+    return <LoadingView label="Loading product…" />;
+  }
 
-  const submitting = isSubmitting || update.isPending;
-  const mutationError = update.error?.message ?? null;
+  const submitting = isSubmitting || update.isPending || create.isPending;
+  const mutationError = update.error?.message ?? create.error?.message ?? null;
+  const skuLocked = !isEditing && autoSku;
+
+  const regenerateSku = () =>
+    setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
+
+  const resolveSupplier = (supplierId: string) => {
+    const idOut = supplierId || null;
+    const found = (suppliers ?? []).find((s) => s.id === idOut);
+    if (idOut === null) return { id: null, name: null };
+    if (found) return { id: idOut, name: found.name };
+    if (isEditing && idOut === target?.supplierId) return { id: idOut, name: target?.supplierName ?? null };
+    return { id: idOut, name: null };
+  };
 
   const doSave = async (values: FormValues) => {
     const costNum = Number(values.cost);
     const priceNum = Number(values.price);
-    const reason = priceHistoryReason(target.cost, target.price, costNum, priceNum);
-    const costChanged = Math.abs(costNum - target.cost) > 0.01;
-    // Don't write a stale costCode: a cost change must re-encode, which needs the
-    // (live-loaded) mapping. Refuse rather than persist an inconsistent code.
-    if (costChanged && !costCodeMapping) {
-      setError('cost', {
-        type: 'pending',
-        message: 'Cost-code mapping still loading — try again in a moment.',
-      });
+    const supplier = resolveSupplier(values.supplierId ?? '');
+
+    if (isEditing && target) {
+      const costChanged = Math.abs(costNum - target.cost) > 0.01;
+      if (costChanged && !costCodeMapping) {
+        setError('cost', { type: 'pending', message: 'Cost-code mapping still loading — try again in a moment.' });
+        return;
+      }
+      const costCode = costChanged ? encodeCostCode(costCodeMapping!, costNum) : target.costCode;
+      const reason = priceHistoryReason(target.cost, target.price, costNum, priceNum);
+      const patch: ProductUpdateInput = {
+        name: values.name.trim(),
+        sku: values.sku.trim(),
+        category: blank(values.category),
+        cost: costNum,
+        costCode,
+        price: priceNum,
+        reorderLevel: Number(values.reorderLevel),
+        unit: values.unit.trim() || 'pcs',
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        barcode: blank(values.barcode),
+        notes: blank(values.notes),
+      };
+      try {
+        await update.mutateAsync({
+          id: target.id,
+          oldSku: target.sku,
+          patch,
+          priceChange: reason ? { price: priceNum, cost: costNum, reason } : null,
+        });
+        navigate(RoutePaths.inventory);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Save failed';
+        if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
+      }
       return;
     }
-    const costCode = costChanged ? encodeCostCode(costCodeMapping!, costNum) : target.costCode;
 
-    // Preserve the existing supplierName when the list hasn't loaded but the id is
-    // unchanged, so we never write an id with a null name.
-    const supplierIdOut = values.supplierId || null;
-    const resolved = (suppliers ?? []).find((s) => s.id === supplierIdOut);
-    const supplierNameOut =
-      supplierIdOut === null
-        ? null
-        : resolved
-          ? resolved.name
-          : supplierIdOut === target.supplierId
-            ? target.supplierName
-            : null;
-
-    const patch: ProductUpdateInput = {
-      name: values.name.trim(),
-      sku: values.sku.trim(),
-      category: blank(values.category),
-      cost: costNum,
-      costCode,
-      price: priceNum,
-      reorderLevel: Number(values.reorderLevel),
-      unit: values.unit.trim() || 'pcs',
-      supplierId: supplierIdOut,
-      supplierName: supplierNameOut,
-      barcode: blank(values.barcode),
-      notes: blank(values.notes),
-    };
-
+    // Add mode — costCode must be derived, which needs the mapping.
+    if (!costCodeMapping) {
+      setError('cost', { type: 'pending', message: 'Cost-code mapping still loading — try again in a moment.' });
+      return;
+    }
     try {
-      await update.mutateAsync({
-        id: target.id,
-        oldSku: target.sku,
-        patch,
-        priceChange: reason ? { price: priceNum, cost: costNum, reason } : null,
+      await create.mutateAsync({
+        sku: values.sku.trim(),
+        name: values.name.trim(),
+        costCode: encodeCostCode(costCodeMapping, costNum),
+        cost: costNum,
+        price: priceNum,
+        quantity: Number(values.quantity),
+        reorderLevel: Number(values.reorderLevel),
+        unit: values.unit.trim() || 'pcs',
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        barcode: blank(values.barcode),
+        category: blank(values.category),
+        notes: blank(values.notes),
       });
       navigate(RoutePaths.inventory);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Save failed';
-      if (msg.toLowerCase().includes('sku already exists')) {
-        setError('sku', { type: 'duplicate', message: msg });
-      }
+      if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
     }
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (values.sku.trim() !== target.sku) {
+    if (isEditing && target && values.sku.trim() !== target.sku) {
       const count = await repo.countSkuVariations(target.sku);
       setSkuDialog({ open: true, count, values });
       return;
@@ -212,7 +248,7 @@ export function InventoryFormPage() {
           <ArrowLeftIcon className="h-3.5 w-3.5" /> Inventory
         </Link>
         <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          Edit product
+          {isEditing ? 'Edit product' : 'New product'}
         </h1>
       </header>
 
@@ -225,18 +261,54 @@ export function InventoryFormPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-tk-lg" noValidate>
         <Section title="Identity">
           <Field label="Name" error={errors.name?.message}
-            input={<input type="text" className={inputCls(!!errors.name)} {...register('name')} />} />
-          <Field label="SKU" error={errors.sku?.message}
             input={
               <input
                 type="text"
-                className={inputCls(!!errors.sku)}
-                {...register('sku', { onChange: () => { if (update.error) update.reset(); } })}
+                className={inputCls(!!errors.name)}
+                {...register('name', {
+                  onBlur: () => { if (skuLocked) regenerateSku(); },
+                })}
               />
             } />
-          <p className="text-[12px] text-light-text-hint">
-            Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.
-          </p>
+
+          {!isEditing ? (
+            <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">
+              <input type="checkbox" checked={autoSku} onChange={(e) => setAutoSku(e.target.checked)} />
+              Auto-generate SKU from name
+            </label>
+          ) : null}
+
+          <Field label="SKU" error={errors.sku?.message}
+            input={
+              <div className="flex items-center gap-tk-sm">
+                <input
+                  type="text"
+                  readOnly={skuLocked}
+                  className={cn(inputCls(!!errors.sku), skuLocked && 'bg-light-subtle text-light-text-secondary')}
+                  {...register('sku', {
+                    onChange: () => {
+                      if (update.error) update.reset();
+                      if (create.error) create.reset();
+                    },
+                  })}
+                />
+                {skuLocked ? (
+                  <button
+                    type="button"
+                    onClick={regenerateSku}
+                    className="inline-flex shrink-0 items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-[10px] text-bodySmall text-light-text hover:bg-light-subtle"
+                  >
+                    <ArrowPathIcon className="h-3.5 w-3.5" /> Regenerate
+                  </button>
+                ) : null}
+              </div>
+            } />
+          {isEditing ? (
+            <p className="text-[12px] text-light-text-hint">
+              Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.
+            </p>
+          ) : null}
+
           <Field label="Barcode" error={errors.barcode?.message}
             input={<input type="text" className={inputCls(!!errors.barcode)} {...register('barcode')} />} />
         </Section>
@@ -252,6 +324,10 @@ export function InventoryFormPage() {
 
         <Section title="Stock & classification">
           <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
+            {!isEditing ? (
+              <Field label="Initial quantity" error={errors.quantity?.message}
+                input={<input type="number" className={inputCls(!!errors.quantity)} {...register('quantity')} />} />
+            ) : null}
             <Field label="Reorder level" error={errors.reorderLevel?.message}
               input={<input type="number" className={inputCls(!!errors.reorderLevel)} {...register('reorderLevel')} />} />
             <Field label="Unit" error={errors.unit?.message}
@@ -292,7 +368,7 @@ export function InventoryFormPage() {
           <button type="submit" disabled={submitting}
             className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60">
             {submitting ? <Spinner className="h-3.5 w-3.5" /> : null}
-            {submitting ? 'Saving…' : 'Save changes'}
+            {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create product'}
           </button>
         </div>
       </form>
@@ -305,7 +381,7 @@ export function InventoryFormPage() {
       >
         <div className="space-y-tk-md">
           <p className="text-bodySmall text-light-text">
-            <span className="font-mono">{target.sku}</span>
+            <span className="font-mono">{target?.sku}</span>
             <span className="px-tk-sm text-light-text-hint">→</span>
             <span className="font-mono">{skuDialog.values?.sku}</span>
           </p>
