@@ -8,7 +8,6 @@ import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_summary_cards_row.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 
 UserEntity _adminUser() => UserEntity(
       id: 'admin-1',
@@ -84,8 +83,7 @@ void main() {
 
     testWidgets(
         'spinners on Drafts + Completed cards while counts are loading; '
-        'Total resolves independently from the recent stream',
-        (tester) async {
+        'Total resolves independently from the recent stream', (tester) async {
       // Counts provider is the source for Drafts + (with the MTD count)
       // Completed; the recent stream resolves fast → Total Received's
       // peso provider settles immediately while the other two spin.
@@ -99,8 +97,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNWidgets(2));
     });
 
-    testWidgets(
-        'spinner on every card while both providers are loading',
+    testWidgets('spinner on every card while both providers are loading',
         (tester) async {
       // A never-completing recent stream keeps the peso-total provider
       // in the loading state, mirroring a cold-start before any data
@@ -172,8 +169,7 @@ void main() {
       expect(find.text('₱1.5K'), findsOneWidget);
     });
 
-    testWidgets(
-        'shows an inline error chip (not the cards) when counts errors',
+    testWidgets('shows an inline error chip (not the cards) when counts errors',
         (tester) async {
       await _pump(
         tester,
@@ -209,8 +205,8 @@ void main() {
                 ReceivingStatus.completed: 1,
               }),
             ),
-            recentReceivingsProvider.overrideWith((ref) =>
-                Stream.value(<ReceivingEntity>[])),
+            recentReceivingsProvider
+                .overrideWith((ref) => Stream.value(<ReceivingEntity>[])),
             currentUserProvider
                 .overrideWith((ref) => Stream.value(_adminUser())),
           ],

@@ -7,7 +7,6 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/utils/validators.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
 
 /// Screen for creating or editing a user.
 class UserFormScreen extends ConsumerStatefulWidget {
@@ -222,7 +221,8 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red[700]),
+                      Icon(CupertinoIcons.exclamationmark_circle,
+                          color: Colors.red[700]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -333,7 +333,8 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                     ),
                   ),
                   if (isSelected)
-                    Icon(CupertinoIcons.checkmark_circle, color: _getRoleColor(role)),
+                    Icon(CupertinoIcons.checkmark_circle,
+                        color: _getRoleColor(role)),
                 ],
               ),
             ),

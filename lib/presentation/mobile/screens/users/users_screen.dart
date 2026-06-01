@@ -7,7 +7,6 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/users/user_list_tile.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -225,7 +224,8 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 16, color: Colors.grey),
+          const Icon(CupertinoIcons.line_horizontal_3_decrease,
+              size: 16, color: Colors.grey),
           const SizedBox(width: 8),
           if (_roleFilter != null)
             Padding(
