@@ -5,8 +5,9 @@ import {
   sparklineSeries,
   derivePriceHistorySource,
 } from '@/domain/products/priceHistory';
+import { useQuery } from '@tanstack/react-query';
 import { usePriceHistory } from '@/presentation/hooks/usePriceHistory';
-import { useUsers } from '@/presentation/hooks/useUsers';
+import { useUserRepo } from '@/infrastructure/di/container';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { Sparkline } from './Sparkline';
@@ -45,11 +46,24 @@ function Delta({ value, delta }: { value: number; delta: number }) {
 export function PriceHistoryView({ productId }: { productId: string }) {
   const [metric, setMetric] = useState<PriceMetric>(PriceMetric.all);
   const { data, isLoading, error } = usePriceHistory(productId);
-  const usersState = useUsers();
+
+  // One-shot directory read (not a live subscription) to resolve actor names;
+  // includeInactive so a change made by a since-deactivated user still resolves.
+  const userRepo = useUserRepo();
+  const { data: users } = useQuery({
+    queryKey: ['users', 'directory'],
+    queryFn: () => userRepo.list({ includeInactive: true }),
+    staleTime: 5 * 60_000,
+  });
+
+  const entries = data ?? [];
   const namesById = useMemo(
-    () => new Map((usersState.data ?? []).map((u) => [u.id, u.displayName])),
-    [usersState.data],
+    () => new Map((users ?? []).map((u) => [u.id, u.displayName])),
+    [users],
   );
+  const rows = useMemo(() => buildPriceHistoryRows(entries, metric), [entries, metric]);
+  const priceSeries = useMemo(() => sparklineSeries(entries, false), [entries]);
+  const costSeries = useMemo(() => sparklineSeries(entries, true), [entries]);
 
   if (isLoading) {
     return <p className="text-bodySmall text-light-text-secondary">Loading…</p>;
@@ -57,13 +71,10 @@ export function PriceHistoryView({ productId }: { productId: string }) {
   if (error) {
     return <p className="text-bodySmall text-light-text-secondary">Could not load price history.</p>;
   }
-
-  const entries = data ?? [];
   if (entries.length === 0) {
     return <p className="text-bodySmall text-light-text-secondary">No price changes yet.</p>;
   }
 
-  const rows = buildPriceHistoryRows(entries, metric);
   const showPrice = metric !== PriceMetric.cost;
   const showCost = metric !== PriceMetric.price;
   const canChart = entries.length >= 2;
@@ -95,7 +106,7 @@ export function PriceHistoryView({ productId }: { productId: string }) {
               <div className="pb-tk-xs text-[11px] uppercase tracking-wider text-light-text-hint">
                 Price
               </div>
-              <Sparkline values={sparklineSeries(entries, false)} />
+              <Sparkline values={priceSeries} />
             </div>
           ) : null}
           {showCost ? (
@@ -103,7 +114,7 @@ export function PriceHistoryView({ productId }: { productId: string }) {
               <div className="pb-tk-xs text-[11px] uppercase tracking-wider text-light-text-hint">
                 Cost
               </div>
-              <Sparkline values={sparklineSeries(entries, true)} />
+              <Sparkline values={costSeries} />
             </div>
           ) : null}
         </div>

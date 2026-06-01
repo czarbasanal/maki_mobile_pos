@@ -11,6 +11,10 @@ import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
     show PriceHistoryEntry;
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
+/// Shared row-date formatter — built once and reused across rows rather than
+/// reconstructed per row per build.
+final DateFormat _kHistoryDateFormat = DateFormat('MMM d, y • h:mm a');
+
 /// Full-screen, admin-only price-history view for a single product. Combined
 /// cost + selling-price, with an All / Price / Cost filter, a sparkline trend,
 /// and a detailed table. Reuses [priceHistoryProvider] (newest-first, limit 50).
@@ -210,7 +214,6 @@ class _HistoryRow extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    final dateFormat = DateFormat('MMM d, y • h:mm a');
 
     final entry = row.entry;
     final showPrice = metric != PriceMetric.cost;
@@ -255,7 +258,7 @@ class _HistoryRow extends ConsumerWidget {
             runSpacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(dateFormat.format(entry.changedAt),
+              Text(_kHistoryDateFormat.format(entry.changedAt),
                   style: theme.textTheme.bodySmall?.copyWith(color: muted)),
               Text('•',
                   style: theme.textTheme.bodySmall?.copyWith(color: muted)),
