@@ -18,10 +18,11 @@ import {
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import type { Product } from '@/domain/entities';
-import { FirestoreCollections } from '@/infrastructure/firebase/collections';
+import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/collections';
 import { productConverter } from '@/data/converters/productConverter';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import type {
+  PriceHistoryEntry,
   ProductCreateInput,
   ProductUpdateInput,
 } from '@/domain/repositories/ProductRepository';
@@ -180,8 +181,20 @@ export class FirestoreProductRepository implements ProductRepository {
   async deactivate(): Promise<void> {
     throw new Error('ProductRepository.deactivate not implemented yet (phase 7)');
   }
-  async recordPriceChange(): Promise<void> {
-    throw new Error('ProductRepository.recordPriceChange not implemented yet (phase 7)');
+  async recordPriceChange(
+    productId: string,
+    entry: Omit<PriceHistoryEntry, 'changedAt'>,
+  ): Promise<void> {
+    await addDoc(
+      collection(this.db, FirestoreCollections.products, productId, Subcollections.priceHistory),
+      {
+        price: entry.price,
+        cost: entry.cost,
+        changedAt: serverTimestamp(),
+        changedBy: entry.changedBy,
+        reason: entry.reason,
+      },
+    );
   }
   async listPriceHistory(): Promise<never[]> {
     throw new Error('ProductRepository.listPriceHistory not implemented yet (phase 7)');
