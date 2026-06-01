@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Spinner } from '@/presentation/components/common/LoadingView';
 import { useAdjustStock, useSetStock } from '@/presentation/hooks/useProductMutations';
-import { resolveStockChange, type StockMode } from '@/domain/products/resolveStockChange';
+import {
+  parseStockQty,
+  resolveStockChange,
+  validateStockAdjustment,
+  type StockMode,
+} from '@/domain/products/resolveStockChange';
 import type { Product } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
 
@@ -27,27 +32,25 @@ export function AdjustStockDialog({
   const setStock = useSetStock();
   const busy = adjust.isPending || setStock.isPending;
 
-  const qty = Number(qtyText);
-  const numericOk = qtyText.trim() !== '' && Number.isInteger(qty) && qty >= 0;
-
-  let err: string | null = null;
-  if (qtyText.trim() !== '') {
-    if (!Number.isInteger(qty) || qty < 0) err = 'Enter a whole number ≥ 0';
-    else if ((mode === 'add' || mode === 'remove') && qty <= 0) err = 'Quantity must be greater than 0';
-    else if (mode === 'remove' && qty > product.quantity) err = 'Cannot remove more than current stock';
-  }
-
-  const showPreview = numericOk && !err;
-  const newQty = showPreview ? resolveStockChange(mode, product.quantity, qty) : product.quantity;
+  const parsed = parseStockQty(qtyText);
+  const err = qtyText.trim() === '' ? null : validateStockAdjustment(mode, product.quantity, parsed);
+  const showPreview = parsed !== null && !err;
+  const newQty = showPreview ? resolveStockChange(mode, product.quantity, parsed) : product.quantity;
   const previewColor =
     newQty <= 0 ? 'text-error-dark' : newQty <= product.reorderLevel ? 'text-warning-dark' : 'text-success-dark';
   const canApply = showPreview && !busy;
+  const mutationError = adjust.error?.message ?? setStock.error?.message ?? null;
 
   const apply = async () => {
-    if (mode === 'set') await setStock.mutateAsync({ id: product.id, quantity: qty });
-    else await adjust.mutateAsync({ id: product.id, delta: mode === 'add' ? qty : -qty });
-    setQtyText('');
-    onClose();
+    if (parsed === null || err) return;
+    try {
+      if (mode === 'set') await setStock.mutateAsync({ id: product.id, quantity: parsed });
+      else await adjust.mutateAsync({ id: product.id, delta: mode === 'add' ? parsed : -parsed });
+      setQtyText('');
+      onClose();
+    } catch {
+      // surfaced via mutationError below; keep the dialog open on failure
+    }
   };
 
   return (
@@ -101,6 +104,12 @@ export function AdjustStockDialog({
           </span>{' '}
           {product.unit}
         </p>
+
+        {mutationError ? (
+          <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+            {mutationError}
+          </p>
+        ) : null}
 
         <div className="flex justify-end gap-tk-sm pt-tk-sm">
           <button

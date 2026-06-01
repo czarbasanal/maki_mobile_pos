@@ -110,6 +110,10 @@ export function InventoryDetailPage() {
         </div>
       </header>
 
+      {reactivate.error ? (
+        <p className="text-bodySmall text-error-dark">{reactivate.error.message}</p>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-tk-lg sm:grid-cols-2">
         <Card title="Stock">
           <Field label="Quantity" value={`${product.quantity} ${product.unit}`} />
@@ -144,7 +148,12 @@ export function InventoryDetailPage() {
         View price history
       </Link>
 
-      <AdjustStockDialog product={product} open={adjustOpen} onClose={() => setAdjustOpen(false)} />
+      <AdjustStockDialog
+        key={adjustOpen ? product.id : 'closed'}
+        product={product}
+        open={adjustOpen}
+        onClose={() => setAdjustOpen(false)}
+      />
 
       <Dialog
         open={confirmDelete}
@@ -157,6 +166,9 @@ export function InventoryDetailPage() {
             Delete “{product.name}”? This product will be hidden from POS and inventory lists.
             Past sales and receivings that reference it remain intact.
           </p>
+          {deactivate.error ? (
+            <p className="text-bodySmall text-error-dark">{deactivate.error.message}</p>
+          ) : null}
           <div className="flex justify-end gap-tk-sm pt-tk-sm">
             <button
               type="button"

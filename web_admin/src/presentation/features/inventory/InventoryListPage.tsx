@@ -62,6 +62,13 @@ export function InventoryListPage() {
     [active, search, stock, category],
   );
 
+  // If the selected category drops out of the option set (e.g. it only existed
+  // among inactive products and "Show inactive" was turned off), reset to All so
+  // the controlled <select> stays consistent and the table isn't mysteriously empty.
+  useEffect(() => {
+    if (category !== 'all' && !categories.includes(category)) setCategory('all');
+  }, [categories, category]);
+
   if (error) return <ErrorView title="Could not load inventory" message={error.message} />;
 
   const toggleStock = (s: StockStatus) => setStock((cur) => (cur === s ? 'all' : s));

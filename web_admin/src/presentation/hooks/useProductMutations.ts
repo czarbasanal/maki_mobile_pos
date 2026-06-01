@@ -18,7 +18,7 @@ export function useUpdateProduct() {
   return useMutation<void, Error, UpdateProductInput>({
     mutationFn: async ({ id, oldSku, patch, priceChange }) => {
       if (!actor) throw new Error('Not signed in');
-      const fullPatch: ProductUpdateInput = { ...patch, updatedByName: actor.displayName };
+      const fullPatch: ProductUpdateInput = { ...patch, updatedByName: (actor.displayName.trim() || null) };
       const skuChanged = fullPatch.sku !== undefined && fullPatch.sku !== oldSku;
 
       if (skuChanged) {
@@ -26,7 +26,7 @@ export function useUpdateProduct() {
         if (await repo.skuExists(newSku, id)) {
           throw new Error('A product with this SKU already exists');
         }
-        await repo.updateProductWithSku(id, fullPatch, oldSku, newSku, actor.id, actor.displayName);
+        await repo.updateProductWithSku(id, fullPatch, oldSku, newSku, actor.id, (actor.displayName.trim() || null));
       } else {
         await repo.update(id, fullPatch, actor.id);
       }
@@ -56,7 +56,7 @@ export function useAdjustStock() {
   return useMutation<void, Error, { id: string; delta: number }>({
     mutationFn: async ({ id, delta }) => {
       if (!actor) throw new Error('Not signed in');
-      await repo.adjustStock(id, delta, actor.id, actor.displayName);
+      await repo.adjustStock(id, delta, actor.id, (actor.displayName.trim() || null));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -69,7 +69,7 @@ export function useSetStock() {
   return useMutation<void, Error, { id: string; quantity: number }>({
     mutationFn: async ({ id, quantity }) => {
       if (!actor) throw new Error('Not signed in');
-      await repo.setStock(id, quantity, actor.id, actor.displayName);
+      await repo.setStock(id, quantity, actor.id, (actor.displayName.trim() || null));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -82,7 +82,7 @@ export function useDeactivateProduct() {
   return useMutation<void, Error, string>({
     mutationFn: async (id) => {
       if (!actor) throw new Error('Not signed in');
-      await repo.deactivate(id, actor.id, actor.displayName);
+      await repo.deactivate(id, actor.id, (actor.displayName.trim() || null));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -95,7 +95,7 @@ export function useReactivateProduct() {
   return useMutation<void, Error, string>({
     mutationFn: async (id) => {
       if (!actor) throw new Error('Not signed in');
-      await repo.reactivate(id, actor.id, actor.displayName);
+      await repo.reactivate(id, actor.id, (actor.displayName.trim() || null));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
