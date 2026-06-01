@@ -40,12 +40,12 @@ describe('buildPriceHistoryRows', () => {
 
   it('price filter keeps origin + entries where price moved', () => {
     const rows = buildPriceHistoryRows(entries, PriceMetric.price);
-    expect(rows.map((r) => (r.entry as { id: string }).id)).toEqual(['e3', 'e1']);
+    expect(rows.map((r) => (r.entry as unknown as { id: string }).id)).toEqual(['e3', 'e1']);
   });
 
   it('cost filter keeps origin + entries where cost moved', () => {
     const rows = buildPriceHistoryRows(entries, PriceMetric.cost);
-    expect(rows.map((r) => (r.entry as { id: string }).id)).toEqual(['e2', 'e1']);
+    expect(rows.map((r) => (r.entry as unknown as { id: string }).id)).toEqual(['e2', 'e1']);
   });
 
   it('empty input yields no rows', () => {

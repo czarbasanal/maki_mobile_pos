@@ -17,6 +17,9 @@ export interface PriceHistoryEntry {
   changedAt: Date;
   changedBy: string;
   reason: string | null;
+  /** Free-text context; receiving entries carry the `RCV-…` id. Optional —
+   *  web `recordPriceChange` doesn't write it, but mobile-written docs have it. */
+  note?: string | null;
 }
 
 export interface ProductRepository {
