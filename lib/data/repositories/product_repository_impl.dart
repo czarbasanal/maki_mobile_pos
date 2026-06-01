@@ -625,26 +625,38 @@ class ProductRepositoryImpl implements ProductRepository {
   }) async {
     try {
       final baseSku = originalProduct.baseSku ?? originalProduct.sku;
-      final variationNum = await getNextVariationNumber(baseSku);
-      final newSku = SkuGenerator.generateVariation(baseSku, variationNum);
+      const maxAttempts = 5;
+      for (var attempt = 0; attempt < maxAttempts; attempt++) {
+        final variationNum = await getNextVariationNumber(baseSku);
+        final newSku = SkuGenerator.generateVariation(baseSku, variationNum);
 
-      final variation = originalProduct.copyWith(
-        id: '',
-        sku: newSku,
-        cost: newCost,
-        costCode: newCostCode,
-        quantity: 0,
-        baseSku: baseSku,
-        variationNumber: variationNum,
-        createdBy: createdBy,
-        updatedBy: null,
-        updatedAt: null,
-      );
+        final variation = originalProduct.copyWith(
+          id: '',
+          sku: newSku,
+          cost: newCost,
+          costCode: newCostCode,
+          quantity: 0,
+          baseSku: baseSku,
+          variationNumber: variationNum,
+          createdBy: createdBy,
+          updatedBy: null,
+          updatedAt: null,
+        );
 
-      return createProduct(
-        product: variation,
-        createdBy: createdBy,
-        createdByName: createdByName,
+        try {
+          return await createProduct(
+            product: variation,
+            createdBy: createdBy,
+            createdByName: createdByName,
+          );
+        } on DuplicateSkuException {
+          // A concurrent writer claimed this variation number; once their
+          // product commits, getNextVariationNumber advances. Recompute & retry.
+        }
+      }
+      throw DatabaseException(
+        message:
+            'Could not allocate a unique variation SKU for "$baseSku" after $maxAttempts attempts',
       );
     } on FirebaseException catch (e) {
       throw DatabaseException(

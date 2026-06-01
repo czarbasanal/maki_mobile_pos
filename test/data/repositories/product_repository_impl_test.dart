@@ -258,4 +258,59 @@ void main() {
       );
     });
   });
+
+  group('ProductRepositoryImpl.createVariation retry-on-collision', () {
+    test('allocates the next free number past existing variations', () async {
+      final parentId = await seedProduct({'sku': 'BASE', 'name': 'Parent'});
+      // Existing variation #1 (product + claim) → next free number is 2.
+      await seedProduct({
+        'sku': 'BASE-1',
+        'name': 'V1',
+        'baseSku': 'BASE',
+        'variationNumber': 1,
+      });
+      await firestore.collection('product_skus').doc('BASE-1').set({
+        'sku': 'BASE-1',
+        'productId': 'v1',
+        'claimedBy': 'x',
+      });
+
+      final parent = await repository.getProductById(parentId);
+      final v = await repository.createVariation(
+        originalProduct: parent!,
+        newCost: 5,
+        newCostCode: 'X',
+        createdBy: 'admin-1',
+      );
+
+      expect(v.sku, 'BASE-2');
+      expect(v.variationNumber, 2);
+      expect(
+        (await firestore.collection('product_skus').doc('BASE-2').get()).exists,
+        true,
+      );
+    });
+
+    test('throws DatabaseException after exhausting retries', () async {
+      final parentId = await seedProduct({'sku': 'BASE', 'name': 'Parent'});
+      // Orphan claim on BASE-1 with NO product → getNextVariationNumber keeps
+      // returning 1, so every attempt collides and retries are exhausted.
+      await firestore.collection('product_skus').doc('BASE-1').set({
+        'sku': 'BASE-1',
+        'productId': 'ghost',
+        'claimedBy': 'x',
+      });
+
+      final parent = await repository.getProductById(parentId);
+      expect(
+        () => repository.createVariation(
+          originalProduct: parent!,
+          newCost: 5,
+          newCostCode: 'X',
+          createdBy: 'admin-1',
+        ),
+        throwsA(isA<DatabaseException>()),
+      );
+    });
+  });
 }
