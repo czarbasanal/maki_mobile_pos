@@ -1,8 +1,11 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   increment,
+  onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
   Timestamp,
@@ -24,6 +27,8 @@ import { generateSku } from '@/domain/products/sku';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import { nextVariationNumber, variationSku } from '@/domain/receiving/variations';
 import { DuplicateSkuError } from '@/data/errors';
+import { receivingConverter } from '@/data/converters/receivingConverter';
+import type { DateRange } from '@/domain/reports/dateRange';
 
 interface BuiltItem {
   productId: string;
@@ -166,21 +171,49 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     return { referenceNumber, received: items.length, newProducts, variations, failed };
   }
 
-  // Receiving-history methods land in phase 8 (the receiving list/detail views).
-  async getById(): Promise<Receiving | null> {
-    throw new Error('ReceivingRepository.getById not implemented yet (phase 8)');
+  // --- Read side: history list + detail ---
+
+  private receivingsCol() {
+    return collection(this.db, FirestoreCollections.receivings).withConverter(
+      receivingConverter,
+    );
   }
+
+  async getById(id: string): Promise<Receiving | null> {
+    const snap = await getDoc(
+      doc(this.db, FirestoreCollections.receivings, id).withConverter(receivingConverter),
+    );
+    return snap.exists() ? snap.data() : null;
+  }
+
+  watchAll(
+    range: DateRange,
+    onData: (records: Receiving[]) => void,
+    onError?: (err: Error) => void,
+  ): Unsubscribe {
+    // createdAt range filter + orderBy are on the SAME field, so this needs
+    // only the default single-field index (no composite index).
+    return onSnapshot(
+      query(
+        this.receivingsCol(),
+        where('createdAt', '>=', Timestamp.fromDate(range.start)),
+        where('createdAt', '<', Timestamp.fromDate(range.end)),
+        orderBy('createdAt', 'desc'),
+      ),
+      (snap) => onData(snap.docs.map((d) => d.data())),
+      onError,
+    );
+  }
+
+  // Manual entry (create/complete) and the unbounded list() are a later slice.
   async list(): Promise<Receiving[]> {
-    throw new Error('ReceivingRepository.list not implemented yet (phase 8)');
-  }
-  watchAll(): Unsubscribe {
-    throw new Error('ReceivingRepository.watchAll not implemented yet (phase 8)');
+    throw new Error('ReceivingRepository.list not implemented yet');
   }
   async create(): Promise<Receiving> {
-    throw new Error('ReceivingRepository.create not implemented yet (phase 8)');
+    throw new Error('ReceivingRepository.create not implemented yet');
   }
   async complete(): Promise<void> {
-    throw new Error('ReceivingRepository.complete not implemented yet (phase 8)');
+    throw new Error('ReceivingRepository.complete not implemented yet');
   }
 
   private productInput(p: {
