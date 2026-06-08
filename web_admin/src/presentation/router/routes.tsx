@@ -20,6 +20,7 @@ import { SalesReportPage } from '@/presentation/features/reports/SalesReportPage
 import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
+import { ReceivingListPage } from '@/presentation/features/receiving/ReceivingListPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
 import { InventoryDetailPage } from '@/presentation/features/inventory/InventoryDetailPage';
@@ -59,7 +60,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
         { path: RoutePaths.productDetail, element: <InventoryDetailPage /> },
         { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
-        { path: RoutePaths.receiving, element: placeholder('Receiving', 'phase 8') },
+        { path: RoutePaths.receiving, element: <ReceivingListPage /> },
         { path: RoutePaths.bulkReceiving, element: <BulkReceivingPage /> },
         { path: RoutePaths.bulkReceivingDetail, element: placeholder('Bulk receiving', 'phase 8') },
         { path: RoutePaths.suppliers, element: <SuppliersListPage /> },
