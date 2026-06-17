@@ -87,4 +87,49 @@ describe('receivingConverter.fromFirestore', () => {
     expect(r.createdAt).toBeInstanceOf(Date);
     expect(r.createdAt.getTime()).toBe(1749376800 * 1000);
   });
+
+  it('falls back to completedAt when createdAt is missing', () => {
+    const r = receivingConverter.fromFirestore(
+      snap('rcv-4', {
+        referenceNumber: 'RCV-20260608-004',
+        status: 'completed',
+        completedAt: new Date('2026-06-08T12:00:00Z'),
+        createdBy: 'u1',
+        createdByName: 'Czar',
+      }),
+      opts,
+    );
+    expect(r.createdAt).toEqual(new Date('2026-06-08T12:00:00Z'));
+  });
+
+  it('throws only when both createdAt and completedAt are missing', () => {
+    expect(() =>
+      receivingConverter.fromFirestore(
+        snap('rcv-5', {
+          referenceNumber: 'RCV-20260608-005',
+          status: 'completed',
+          createdBy: 'u1',
+          createdByName: 'Czar',
+        }),
+        opts,
+      ),
+    ).toThrow(/createdAt/);
+  });
+
+  it('defaults a missing or unknown status to draft (matches mobile)', () => {
+    const base = {
+      referenceNumber: 'RCV-20260608-006',
+      createdAt: new Date('2026-06-08T10:00:00Z'),
+      createdBy: 'u1',
+      createdByName: 'Czar',
+    };
+    const missing = receivingConverter.fromFirestore(snap('rcv-6', base), opts);
+    expect(missing.status).toBe('draft');
+
+    const unknown = receivingConverter.fromFirestore(
+      snap('rcv-7', { ...base, status: 'archived' }),
+      opts,
+    );
+    expect(unknown.status).toBe('draft');
+  });
 });

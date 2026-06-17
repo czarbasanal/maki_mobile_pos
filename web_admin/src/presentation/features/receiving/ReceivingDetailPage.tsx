@@ -80,8 +80,10 @@ export function ReceivingDetailPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-light-hairline">
-            {receiving.items.map((it) => (
-              <tr key={it.id}>
+            {receiving.items.map((it, index) => (
+              // Legacy/web-written items can have an empty id; fall back to the
+              // (stable, non-reordering) array index so keys stay unique.
+              <tr key={it.id || index}>
                 <td className="px-tk-md py-tk-sm">
                   <span className="font-medium text-light-text">{it.name}</span>
                   <span className="ml-tk-sm text-light-text-hint">{it.sku}</span>

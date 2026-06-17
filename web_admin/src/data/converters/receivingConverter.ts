@@ -11,9 +11,11 @@ import { requireDate, toDate } from './timestamps';
 const VALID_STATUS: ReceivingStatus[] = ['draft', 'completed', 'cancelled'];
 
 function parseStatus(value: unknown): ReceivingStatus {
+  // Mirror mobile's _parseStatus: an unknown/missing status falls back to the
+  // conservative 'draft' (never assert a receiving completed when we can't tell).
   return VALID_STATUS.includes(value as ReceivingStatus)
     ? (value as ReceivingStatus)
-    : 'completed';
+    : 'draft';
 }
 
 function parseItems(value: unknown): ReceivingItem[] {
@@ -36,6 +38,9 @@ function parseItems(value: unknown): ReceivingItem[] {
   });
 }
 
+// Reads use this converter; writes go through the repository inline (so they can
+// use serverTimestamp). toFirestore is required by the type but unused on the
+// write path — hence createdAt/completedAt are intentionally omitted here.
 export const receivingConverter: FirestoreDataConverter<Receiving> = {
   toFirestore(r) {
     return {
@@ -64,7 +69,9 @@ export const receivingConverter: FirestoreDataConverter<Receiving> = {
       totalQuantity: Number(d.totalQuantity ?? 0),
       status: parseStatus(d.status),
       notes: d.notes ?? null,
-      createdAt: requireDate(d.createdAt, 'createdAt'),
+      // Tolerate a malformed doc missing createdAt by falling back to
+      // completedAt; only throw if the doc has no timestamp at all.
+      createdAt: toDate(d.createdAt) ?? requireDate(d.completedAt, 'createdAt or completedAt'),
       completedAt: toDate(d.completedAt),
       createdBy: d.createdBy ?? '',
       createdByName: d.createdByName ?? '',

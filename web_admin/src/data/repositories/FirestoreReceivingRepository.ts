@@ -155,7 +155,9 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
       referenceNumber,
       supplierId: supplier?.id ?? null,
       supplierName: supplier?.name ?? null,
-      items: items.map((it) => ({ ...it, notes: null })),
+      // Stamp a stable per-item id (mirrors the mobile model, which writes one)
+      // so readers can key on it without collisions.
+      items: items.map((it) => ({ ...it, id: crypto.randomUUID(), notes: null })),
       totalCost,
       totalQuantity,
       status: 'completed',
@@ -197,7 +199,9 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
       query(
         this.receivingsCol(),
         where('createdAt', '>=', Timestamp.fromDate(range.start)),
-        where('createdAt', '<', Timestamp.fromDate(range.end)),
+        // `range.end` is an inclusive endOfDay() bound, so use '<=' to match the
+        // sales/activity-log repos (a '<' would drop the day's final instant).
+        where('createdAt', '<=', Timestamp.fromDate(range.end)),
         orderBy('createdAt', 'desc'),
       ),
       (snap) => onData(snap.docs.map((d) => d.data())),
