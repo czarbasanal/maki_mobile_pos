@@ -20,6 +20,9 @@ export interface ReceivingResult {
   failed: { row: number; message: string }[];
 }
 
+/** Editable fields of a receiving (manual entry / drafts). */
+export type ReceivingInput = Omit<Receiving, 'id' | 'createdAt' | 'completedAt' | 'completedBy'>;
+
 export interface ReceivingRepository {
   getById(id: string): Promise<Receiving | null>;
   list(start?: Date, end?: Date): Promise<Receiving[]>;
@@ -28,12 +31,21 @@ export interface ReceivingRepository {
     onData: (records: Receiving[]) => void,
     onError?: (err: Error) => void,
   ): Unsubscribe;
-  create(
-    input: Omit<Receiving, 'id' | 'createdAt' | 'completedAt' | 'completedBy'>,
-    actorId: string,
-    actorName: string,
-  ): Promise<Receiving>;
-  complete(id: string, actorId: string): Promise<void>;
+  /** Realtime list of all open (draft) receivings, any age. */
+  watchDrafts(onData: (records: Receiving[]) => void, onError?: (err: Error) => void): Unsubscribe;
+  /** Write a new receiving. A 'completed' status applies stock immediately;
+   *  a 'draft' just persists. Generates the reference number when blank. */
+  create(input: ReceivingInput, actorId: string): Promise<Receiving>;
+  /** Replace a draft's editable fields. Throws if already completed. */
+  update(id: string, input: ReceivingInput, actorId: string): Promise<void>;
+  /** Transition a draft to completed — applies stock/variations/price history.
+   *  Idempotent: a no-op if already completed. `cipher` encodes variation cost
+   *  codes for new/mismatch lines. */
+  complete(
+    id: string,
+    actor: { id: string; name: string | null },
+    cipher: CostCode,
+  ): Promise<void>;
   /** Bulk CSV receiving — creates a completed receiving + applies stock. */
   bulkReceive(input: BulkReceiveInput): Promise<ReceivingResult>;
 }

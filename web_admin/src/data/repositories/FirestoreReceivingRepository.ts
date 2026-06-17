@@ -8,7 +8,9 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   Timestamp,
+  updateDoc,
   where,
   writeBatch,
   type Firestore,
@@ -16,14 +18,16 @@ import {
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
 import type {
   BulkReceiveInput,
+  ReceivingInput,
   ReceivingRepository,
   ReceivingResult,
 } from '@/domain/repositories/ReceivingRepository';
-import type { Receiving } from '@/domain/entities';
+import type { CostCode, Receiving } from '@/domain/entities';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { applyReceivedItems } from '@/data/receiving/applyReceivedItems';
 import { classifiedToReceivable } from '@/domain/receiving/receivableItem';
+import { resolveDraftItems } from '@/data/receiving/resolveDraftItems';
 import { receivingConverter } from '@/data/converters/receivingConverter';
 import type { DateRange } from '@/domain/reports/dateRange';
 
@@ -120,15 +124,110 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     );
   }
 
-  // Manual entry (create/complete) and the unbounded list() are a later slice.
+  watchDrafts(
+    onData: (records: Receiving[]) => void,
+    onError?: (err: Error) => void,
+  ): Unsubscribe {
+    // Equality filter only (no orderBy) → default single-field index; sort
+    // newest-first client-side (drafts are few).
+    return onSnapshot(
+      query(this.receivingsCol(), where('status', '==', 'draft')),
+      (snap) => {
+        const drafts = snap.docs.map((d) => d.data());
+        drafts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        onData(drafts);
+      },
+      onError,
+    );
+  }
+
+  async create(input: ReceivingInput, actorId: string): Promise<Receiving> {
+    const ref = doc(collection(this.db, FirestoreCollections.receivings));
+    const referenceNumber = input.referenceNumber || (await this.generateReferenceNumber());
+    const items = input.items.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }));
+    const isCompleted = input.status === 'completed';
+    await setDoc(ref, {
+      referenceNumber,
+      supplierId: input.supplierId,
+      supplierName: input.supplierName,
+      items,
+      totalCost: input.totalCost,
+      totalQuantity: input.totalQuantity,
+      status: input.status,
+      notes: input.notes,
+      createdBy: actorId,
+      createdByName: input.createdByName,
+      completedBy: isCompleted ? actorId : null,
+      createdAt: serverTimestamp(),
+      completedAt: isCompleted ? serverTimestamp() : null,
+    });
+    const snap = await getDoc(ref.withConverter(receivingConverter));
+    return snap.data()!;
+  }
+
+  async update(id: string, input: ReceivingInput, actorId: string): Promise<void> {
+    const ref = doc(this.db, FirestoreCollections.receivings, id);
+    const snap = await getDoc(ref);
+    if (snap.exists() && snap.data().status === 'completed') {
+      throw new Error('Cannot edit a completed receiving');
+    }
+    const items = input.items.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }));
+    await updateDoc(ref, {
+      supplierId: input.supplierId,
+      supplierName: input.supplierName,
+      items,
+      totalCost: input.totalCost,
+      totalQuantity: input.totalQuantity,
+      notes: input.notes,
+      updatedBy: actorId,
+    });
+  }
+
+  async complete(
+    id: string,
+    actor: { id: string; name: string | null },
+    cipher: CostCode,
+  ): Promise<void> {
+    const ref = doc(this.db, FirestoreCollections.receivings, id);
+    const snap = await getDoc(ref.withConverter(receivingConverter));
+    const receiving = snap.exists() ? snap.data() : null;
+    if (!receiving) throw new Error('Receiving not found');
+    if (receiving.status === 'completed') return; // idempotent — never double-apply stock
+
+    const products = await this.products.list();
+    const receivables = resolveDraftItems(receiving.items, products);
+    const outcome = await applyReceivedItems(receivables, this.products, {
+      cipher,
+      actor,
+      supplier: receiving.supplierId
+        ? { id: receiving.supplierId, name: receiving.supplierName ?? '' }
+        : null,
+      knownSkus: products.map((p) => p.sku),
+    });
+
+    const batch = writeBatch(this.db);
+    for (const [productId, delta] of outcome.increments) {
+      batch.update(doc(this.db, FirestoreCollections.products, productId), {
+        quantity: increment(delta),
+        updatedBy: actor.id,
+        updatedByName: actor.name,
+        updatedAt: serverTimestamp(),
+      });
+    }
+    batch.update(ref, {
+      items: outcome.items,
+      totalQuantity: outcome.items.reduce((n, it) => n + it.quantity, 0),
+      totalCost: outcome.items.reduce((n, it) => n + it.unitCost * it.quantity, 0),
+      status: 'completed',
+      completedBy: actor.id,
+      completedAt: serverTimestamp(),
+    });
+    await batch.commit();
+  }
+
+  // The unbounded list() is unused on web (history uses watchAll); keep stubbed.
   async list(): Promise<Receiving[]> {
     throw new Error('ReceivingRepository.list not implemented yet');
-  }
-  async create(): Promise<Receiving> {
-    throw new Error('ReceivingRepository.create not implemented yet');
-  }
-  async complete(): Promise<void> {
-    throw new Error('ReceivingRepository.complete not implemented yet');
   }
 
   private async generateReferenceNumber(): Promise<string> {
