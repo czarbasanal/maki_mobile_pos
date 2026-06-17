@@ -17,6 +17,8 @@ export function useReceivingSummary(now: Date) {
     completedCount: completed.length,
     receivedTotal: completed.reduce((n, r) => n + r.totalCost, 0),
     draftCount: (drafts ?? []).length,
-    recent: (month ?? []).slice(0, 8),
+    // The dashboard "recent receivings" preview is the completed history; open
+    // drafts have their own card, so don't intermix them here.
+    recent: completed.slice(0, 8),
   };
 }

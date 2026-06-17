@@ -22,7 +22,7 @@ import type {
   ReceivingRepository,
   ReceivingResult,
 } from '@/domain/repositories/ReceivingRepository';
-import type { CostCode, Receiving } from '@/domain/entities';
+import type { CostCode, Receiving, ReceivingItem } from '@/domain/entities';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { applyReceivedItems } from '@/data/receiving/applyReceivedItems';
@@ -30,6 +30,17 @@ import { classifiedToReceivable } from '@/domain/receiving/receivableItem';
 import { resolveDraftItems } from '@/data/receiving/resolveDraftItems';
 import { receivingConverter } from '@/data/converters/receivingConverter';
 import type { DateRange } from '@/domain/reports/dateRange';
+
+/** Ensures every persisted item has an id and never a `undefined`
+ *  `pendingNewProduct` (Firestore rejects undefined — ignoreUndefinedProperties
+ *  is off), coercing the optional field to null like the converter does. */
+function normalizeItems(items: ReceivingItem[]): ReceivingItem[] {
+  return items.map((it) => ({
+    ...it,
+    id: it.id || crypto.randomUUID(),
+    pendingNewProduct: it.pendingNewProduct ?? null,
+  }));
+}
 
 export class FirestoreReceivingRepository implements ReceivingRepository {
   constructor(
@@ -142,10 +153,15 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
   }
 
   async create(input: ReceivingInput, actorId: string): Promise<Receiving> {
+    // Stock is applied only through complete() (which has the cost-code cipher),
+    // so create() persists drafts only — a 'completed' create would write a
+    // completed doc with no stock effects.
+    if (input.status === 'completed') {
+      throw new Error('create() writes drafts; call complete() to finalize and apply stock.');
+    }
     const ref = doc(collection(this.db, FirestoreCollections.receivings));
     const referenceNumber = input.referenceNumber || (await this.generateReferenceNumber());
-    const items = input.items.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }));
-    const isCompleted = input.status === 'completed';
+    const items = normalizeItems(input.items);
     await setDoc(ref, {
       referenceNumber,
       supplierId: input.supplierId,
@@ -157,9 +173,9 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
       notes: input.notes,
       createdBy: actorId,
       createdByName: input.createdByName,
-      completedBy: isCompleted ? actorId : null,
+      completedBy: null,
       createdAt: serverTimestamp(),
-      completedAt: isCompleted ? serverTimestamp() : null,
+      completedAt: null,
     });
     const snap = await getDoc(ref.withConverter(receivingConverter));
     return snap.data()!;
@@ -168,10 +184,11 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
   async update(id: string, input: ReceivingInput, actorId: string): Promise<void> {
     const ref = doc(this.db, FirestoreCollections.receivings, id);
     const snap = await getDoc(ref);
-    if (snap.exists() && snap.data().status === 'completed') {
+    if (!snap.exists()) throw new Error('Receiving not found');
+    if (snap.data().status === 'completed') {
       throw new Error('Cannot edit a completed receiving');
     }
-    const items = input.items.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }));
+    const items = normalizeItems(input.items);
     await updateDoc(ref, {
       supplierId: input.supplierId,
       supplierName: input.supplierName,
@@ -196,6 +213,14 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
 
     const products = await this.products.list();
     const receivables = resolveDraftItems(receiving.items, products);
+    // resolveDraftItems drops existing-product lines whose product is gone. Refuse
+    // to complete a partial receiving (it would be locked as completed, missing
+    // items) — make the user edit the draft instead.
+    if (receivables.length !== receiving.items.length) {
+      throw new Error(
+        'Some items reference products that no longer exist — edit the draft and try again.',
+      );
+    }
     const outcome = await applyReceivedItems(receivables, this.products, {
       cipher,
       actor,
@@ -204,6 +229,14 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
         : null,
       knownSkus: products.map((p) => p.sku),
     });
+    // Don't flip to completed if any line failed to process (would silently drop
+    // received stock and lock the doc). Surface the failure; the draft stays open.
+    if (outcome.failed.length > 0) {
+      throw new Error(
+        `Could not receive ${outcome.failed.length} item(s): ` +
+          outcome.failed.map((f) => f.message).join('; '),
+      );
+    }
 
     const batch = writeBatch(this.db);
     for (const [productId, delta] of outcome.increments) {
