@@ -5,7 +5,6 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 
 /// Three summary cards on the receiving screen — Drafts (open, any
 /// age), Completed (this month), Total Received (this month, peso).
@@ -94,7 +93,9 @@ class ReceivingSummaryCardsRow extends ConsumerWidget {
   /// readable even when month totals run into six figures.
   String _formatPesoCompact(double value) {
     final symbol = AppConstants.currencySymbol;
-    if (value >= 1000000) return '$symbol${(value / 1000000).toStringAsFixed(1)}M';
+    if (value >= 1000000) {
+      return '$symbol${(value / 1000000).toStringAsFixed(1)}M';
+    }
     if (value >= 1000) return '$symbol${(value / 1000).toStringAsFixed(1)}K';
     return '$symbol${value.toStringAsFixed(0)}';
   }
@@ -190,8 +191,7 @@ class _ErrorRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: theme.colorScheme.errorContainer
-              .withValues(alpha: 0.4),
+          color: theme.colorScheme.errorContainer.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: theme.colorScheme.error, width: 1),
         ),

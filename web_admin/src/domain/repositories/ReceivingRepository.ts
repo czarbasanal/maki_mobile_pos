@@ -1,6 +1,7 @@
 import type { CostCode, Receiving } from '../entities';
 import type { Unsubscribe } from './AuthRepository';
 import type { ClassifiedReceivingRow } from '../receiving/classifyReceivingRows';
+import type { DateRange } from '../reports/dateRange';
 
 export interface BulkReceiveInput {
   rows: ClassifiedReceivingRow[];
@@ -22,7 +23,11 @@ export interface ReceivingResult {
 export interface ReceivingRepository {
   getById(id: string): Promise<Receiving | null>;
   list(start?: Date, end?: Date): Promise<Receiving[]>;
-  watchAll(callback: (records: Receiving[]) => void): Unsubscribe;
+  watchAll(
+    range: DateRange,
+    onData: (records: Receiving[]) => void,
+    onError?: (err: Error) => void,
+  ): Unsubscribe;
   create(
     input: Omit<Receiving, 'id' | 'createdAt' | 'completedAt' | 'completedBy'>,
     actorId: string,
