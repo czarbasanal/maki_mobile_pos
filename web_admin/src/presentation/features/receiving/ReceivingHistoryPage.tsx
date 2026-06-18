@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
 import { useReceivings } from '@/presentation/hooks/useReceivings';
 import { formatMoney } from '@/core/utils/money';
@@ -13,44 +12,33 @@ import { ReceivingStatusBadge } from './ReceivingStatusBadge';
 
 const dtFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
 
-export function ReceivingListPage() {
+export function ReceivingHistoryPage() {
   const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
   const { data: receivings, isLoading, error } = useReceivings(range);
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'Receiving · MAKI POS Admin';
+    document.title = 'Receiving history · MAKI POS Admin';
   }, []);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
       <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
+        <div className="space-y-tk-xs">
+          <Link
+            to={RoutePaths.receiving}
+            className="text-bodySmall text-light-text-secondary hover:underline"
+          >
+            ← Back to receiving
+          </Link>
           <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            Receiving
+            Receiving history
           </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
+          <p className="text-bodySmall text-light-text-secondary">
             Stock received from suppliers in the selected range.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-tk-sm">
-          <DateRangePicker onChange={setRange} />
-          <button
-            type="button"
-            disabled
-            title="Coming soon"
-            className="inline-flex cursor-not-allowed items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text opacity-50"
-          >
-            + New Receiving
-          </button>
-          <Link
-            to={RoutePaths.bulkReceiving}
-            className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
-          >
-            <ArrowUpTrayIcon className="h-4 w-4" />
-            Bulk import
-          </Link>
-        </div>
+        <DateRangePicker onChange={setRange} />
       </header>
 
       {error ? (
@@ -62,7 +50,7 @@ export function ReceivingListPage() {
       ) : !receivings || receivings.length === 0 ? (
         <EmptyState
           title="No receivings in this range"
-          description="Try a wider date range, or use Bulk import to record received stock."
+          description="Try a wider date range, or record stock from the Receiving dashboard."
         />
       ) : (
         <section className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
@@ -81,7 +69,7 @@ export function ReceivingListPage() {
               {receivings.map((r) => (
                 <tr
                   key={r.id}
-                  onClick={() => navigate(`/receiving/bulk/${r.id}`)}
+                  onClick={() => navigate(`/receiving/${r.id}`)}
                   className="cursor-pointer hover:bg-light-subtle"
                 >
                   <td className="px-tk-md py-tk-sm font-medium text-light-text">

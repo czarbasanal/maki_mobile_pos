@@ -12,13 +12,15 @@ export function useReceivingSummary(now: Date) {
   const { data: drafts, isLoading: ld } = useDraftReceivings();
 
   const completed = (month ?? []).filter((r) => r.status === 'completed');
+  const draftList = drafts ?? [];
   return {
     isLoading: lm || ld,
     completedCount: completed.length,
     receivedTotal: completed.reduce((n, r) => n + r.totalCost, 0),
-    draftCount: (drafts ?? []).length,
+    draftCount: draftList.length,
+    drafts: draftList,
     // The dashboard "recent receivings" preview is the completed history; open
-    // drafts have their own card, so don't intermix them here.
+    // drafts are listed separately, so don't intermix them here.
     recent: completed.slice(0, 8),
   };
 }
