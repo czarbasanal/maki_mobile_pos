@@ -25,7 +25,8 @@ import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/
 import { productConverter } from '@/data/converters/productConverter';
 import { toDate } from '@/data/converters/timestamps';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
-import { normalizeSku, isValidSku } from '@/domain/products/sku';
+import { normalizeSku } from '@/domain/products/sku';
+import { buildProductWrites, newProductId } from '@/data/products/productWrites';
 import { DuplicateSkuError } from '@/data/errors';
 import type {
   PriceHistoryEntry,
@@ -174,32 +175,20 @@ export class FirestoreProductRepository implements ProductRepository {
 
   // Write methods land in phase 7.
   async create(input: ProductCreateInput, actorId: string): Promise<Product> {
-    // The SKU becomes a product_skus claim doc-id (normalizeSku(sku)); reject
-    // SKUs that can't form a valid doc-id ('/', empty) before the transaction
-    // so it fails with a clear message rather than an opaque Firestore error.
-    if (!isValidSku(normalizeSku(input.sku))) {
-      throw new Error(
-        `Invalid SKU "${input.sku}" — use letters, numbers, and hyphens only.`,
-      );
-    }
-    const ref = doc(collection(this.db, FirestoreCollections.products));
-    const claimRef = doc(
+    const productId = newProductId(this.db);
+    const { productRef, productData, claimRef, claimData } = buildProductWrites(
       this.db,
-      FirestoreCollections.productSkus,
-      normalizeSku(input.sku),
+      input,
+      actorId,
+      productId,
     );
     await runTransaction(this.db, async (tx) => {
       const claim = await tx.get(claimRef);
       if (claim.exists()) throw new DuplicateSkuError();
-      tx.set(ref, this.createData(input, actorId));
-      tx.set(claimRef, {
-        sku: input.sku,
-        productId: ref.id,
-        claimedBy: actorId,
-        claimedAt: serverTimestamp(),
-      });
+      tx.set(productRef, productData);
+      tx.set(claimRef, claimData);
     });
-    const created = await this.getById(ref.id);
+    const created = await this.getById(productId);
     if (!created) throw new Error('Failed to load the created product');
     return created;
   }
@@ -209,39 +198,6 @@ export class FirestoreProductRepository implements ProductRepository {
       doc(this.db, FirestoreCollections.products, id),
       this.updateData(input, actorId),
     );
-  }
-
-  private createData(input: ProductCreateInput, actorId: string) {
-    const searchKeywords =
-      input.searchKeywords ??
-      generateSearchKeywords([input.sku, input.name, input.category]);
-    return {
-      sku: input.sku,
-      name: input.name,
-      costCode: input.costCode,
-      cost: input.cost,
-      price: input.price,
-      quantity: input.quantity,
-      reorderLevel: input.reorderLevel,
-      unit: input.unit,
-      supplierId: input.supplierId,
-      supplierName: input.supplierName,
-      isActive: input.isActive,
-      createdBy: actorId,
-      updatedBy: actorId,
-      createdByName: input.createdByName,
-      // Mirror createdByName onto updatedByName at create, like Flutter.
-      updatedByName: input.createdByName,
-      searchKeywords,
-      baseSku: input.baseSku,
-      variationNumber: input.variationNumber,
-      barcode: input.barcode,
-      category: input.category,
-      imageUrl: input.imageUrl,
-      notes: input.notes,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
   }
 
   private updateData(input: ProductUpdateInput, actorId: string) {

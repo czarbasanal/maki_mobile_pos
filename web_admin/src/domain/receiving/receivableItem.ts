@@ -3,7 +3,7 @@ import type { ClassifiedReceivingRow } from './classifyReceivingRows';
 
 /** A line ready to be received, normalized so both the CSV path (classified
  *  rows) and a resumed draft (persisted items) map into the same shape that
- *  `applyReceivedItems` consumes. `ref` labels the source line for error
+ *  `planReceive` consumes. `ref` labels the source line for error
  *  reporting (the CSV row number, or a 0-based index for manual entry). */
 export type ReceivableItem = { ref: string | number } & (
   | { kind: 'match'; product: Product; quantity: number }

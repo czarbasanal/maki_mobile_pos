@@ -7,6 +7,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -28,6 +29,9 @@ import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { applyReceivedItems } from '@/data/receiving/applyReceivedItems';
 import { classifiedToReceivable } from '@/domain/receiving/receivableItem';
 import { resolveDraftItems } from '@/data/receiving/resolveDraftItems';
+import { planReceive } from '@/data/receiving/planReceive';
+import { executeReceivePlan } from '@/data/receiving/executeReceivePlan';
+import { newProductId } from '@/data/products/productWrites';
 import { receivingConverter } from '@/data/converters/receivingConverter';
 import type { DateRange } from '@/domain/reports/dateRange';
 
@@ -48,6 +52,12 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     private readonly products: ProductRepository,
   ) {}
 
+  // NOTE: bulkReceive is intentionally NOT a single transaction. A large CSV can
+  // create hundreds of products, and Firestore caps a transaction/batch at 500
+  // writes — an atomic version would fail on big imports. So it keeps per-product
+  // creation (each its own atomic create() with SKU-claim + collision-retry) plus
+  // a chunked stock/receiving batch, accepting that a mid-import crash can leave
+  // orphan products. complete() (small manual entries) IS fully atomic.
   async bulkReceive(input: BulkReceiveInput): Promise<ReceivingResult> {
     const { rows, supplier, cipher, actor } = input;
     const referenceNumber = await this.generateReferenceNumber();
@@ -221,41 +231,37 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
         'Some items reference products that no longer exist — edit the draft and try again.',
       );
     }
-    const outcome = await applyReceivedItems(receivables, this.products, {
-      cipher,
-      actor,
-      supplier: receiving.supplierId
-        ? { id: receiving.supplierId, name: receiving.supplierName ?? '' }
-        : null,
-      knownSkus: products.map((p) => p.sku),
-    });
-    // Don't flip to completed if any line failed to process (would silently drop
-    // received stock and lock the doc). Surface the failure; the draft stays open.
-    if (outcome.failed.length > 0) {
-      throw new Error(
-        `Could not receive ${outcome.failed.length} item(s): ` +
-          outcome.failed.map((f) => f.message).join('; '),
-      );
-    }
+    const plan = planReceive(
+      receivables,
+      {
+        cipher,
+        actor,
+        supplier: receiving.supplierId
+          ? { id: receiving.supplierId, name: receiving.supplierName ?? '' }
+          : null,
+        knownSkus: products.map((p) => p.sku),
+      },
+      () => newProductId(this.db),
+    );
+    const totalQuantity = plan.items.reduce((n, it) => n + it.quantity, 0);
+    const totalCost = plan.items.reduce((n, it) => n + it.unitCost * it.quantity, 0);
 
-    const batch = writeBatch(this.db);
-    for (const [productId, delta] of outcome.increments) {
-      batch.update(doc(this.db, FirestoreCollections.products, productId), {
-        quantity: increment(delta),
-        updatedBy: actor.id,
-        updatedByName: actor.name,
-        updatedAt: serverTimestamp(),
+    // One atomic transaction: create products (+ claims + price history),
+    // increment matched stock, and flip the draft to completed. Re-read the doc
+    // inside the tx so a concurrent completion can't double-apply stock.
+    await runTransaction(this.db, async (tx) => {
+      const fresh = await tx.get(ref);
+      if (fresh.exists() && fresh.data().status === 'completed') return;
+      await executeReceivePlan(tx, this.db, plan, actor);
+      tx.update(ref, {
+        items: plan.items,
+        totalQuantity,
+        totalCost,
+        status: 'completed',
+        completedBy: actor.id,
+        completedAt: serverTimestamp(),
       });
-    }
-    batch.update(ref, {
-      items: outcome.items,
-      totalQuantity: outcome.items.reduce((n, it) => n + it.quantity, 0),
-      totalCost: outcome.items.reduce((n, it) => n + it.unitCost * it.quantity, 0),
-      status: 'completed',
-      completedBy: actor.id,
-      completedAt: serverTimestamp(),
     });
-    await batch.commit();
   }
 
   // The unbounded list() is unused on web (history uses watchAll); keep stubbed.
