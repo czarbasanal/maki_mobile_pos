@@ -25,6 +25,7 @@ import { ReceivingHistoryPage } from '@/presentation/features/receiving/Receivin
 import { ReceivingDetailPage } from '@/presentation/features/receiving/ReceivingDetailPage';
 import { ReceivingEntryPage } from '@/presentation/features/receiving/ReceivingEntryPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
+import { ReorderSuggestionsPage } from '@/presentation/features/inventory/ReorderSuggestionsPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
 import { InventoryDetailPage } from '@/presentation/features/inventory/InventoryDetailPage';
 import { InventoryFormPage } from '@/presentation/features/inventory/InventoryFormPage';
@@ -63,6 +64,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
         { path: RoutePaths.productDetail, element: <InventoryDetailPage /> },
         { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
+        { path: RoutePaths.reorder, element: <ReorderSuggestionsPage /> },
         { path: RoutePaths.receiving, element: <ReceivingDashboardPage /> },
         { path: RoutePaths.receivingNew, element: <ReceivingEntryPage /> },
         { path: RoutePaths.receivingNewDraft, element: <ReceivingEntryPage /> },

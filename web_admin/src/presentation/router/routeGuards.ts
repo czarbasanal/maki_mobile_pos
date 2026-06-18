@@ -21,6 +21,7 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   // Price history exposes cost → admin-only. Exact match wins over the generic
   // /^\/inventory\/[^/]+$/ dynamic rule below (which would grant viewInventory).
   [RoutePaths.priceHistory, Permission.viewProductCost],
+  [RoutePaths.reorder, Permission.viewProductCost],
   [RoutePaths.receiving, Permission.accessReceiving],
   [RoutePaths.receivingNew, Permission.receiveStock],
   [RoutePaths.receivingHistory, Permission.viewReceivingHistory],

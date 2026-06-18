@@ -17,6 +17,7 @@ export const RoutePaths = {
   productAdd: '/inventory/add',
   productEdit: '/inventory/edit/:id',
   priceHistory: '/inventory/price-history',
+  reorder: '/inventory/reorder',
   productDetail: '/inventory/:id',
 
   receiving: '/receiving',
