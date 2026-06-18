@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DiscountType, PaymentMethod, SaleStatus } from '../../domain/enums';
 import { type Sale } from '../../domain/entities';
-import { parseCsv, salesToCsv } from './csv';
+import { parseCsv, salesToCsv, toCsv } from './csv';
 
 function sale(overrides: Partial<Sale> = {}): Sale {
   return {
@@ -105,5 +105,12 @@ describe('parseCsv', () => {
 
   it('returns [] for empty input', () => {
     expect(parseCsv('')).toEqual([]);
+  });
+});
+
+describe('toCsv', () => {
+  it('joins headers + rows and escapes commas, quotes, newlines', () => {
+    const out = toCsv(['name', 'qty'], [['Bangus, 1kg', 3], ['He said "hi"', 1]]);
+    expect(out).toBe('name,qty\n"Bangus, 1kg",3\n"He said ""hi""",1');
   });
 });
