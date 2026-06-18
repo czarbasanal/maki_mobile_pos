@@ -35,6 +35,17 @@ import { newProductId } from '@/data/products/productWrites';
 import { receivingConverter } from '@/data/converters/receivingConverter';
 import type { DateRange } from '@/domain/reports/dateRange';
 
+// Firestore caps a writeBatch at 500 writes and a doc at 1MB. bulkReceive
+// creates products individually (no batch limit there) but commits stock
+// increments + the receiving doc in one batch, and embeds all items on the doc —
+// so cap comfortably below both. The cap also bounds the orphan blast radius of
+// a mid-import crash.
+const MAX_BULK_RECEIVING_ITEMS = 400;
+// complete() commits in ONE transaction: up to 3 writes per new/variation item
+// (product + SKU claim + price history) + matched increments + the receiving
+// doc — keep it well under the 500-write transaction cap.
+const MAX_TRANSACTION_RECEIVING_ITEMS = 150;
+
 /** Ensures every persisted item has an id and never a `undefined`
  *  `pendingNewProduct` (Firestore rejects undefined — ignoreUndefinedProperties
  *  is off), coercing the optional field to null like the converter does. */
@@ -65,6 +76,12 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     const receivables = rows
       .map(classifiedToReceivable)
       .filter((r): r is NonNullable<typeof r> => r !== null);
+    if (receivables.length > MAX_BULK_RECEIVING_ITEMS) {
+      throw new Error(
+        `This import has ${receivables.length} items — the maximum per receiving is ` +
+          `${MAX_BULK_RECEIVING_ITEMS}. Split it into smaller files.`,
+      );
+    }
     const outcome = await applyReceivedItems(receivables, this.products, {
       cipher,
       actor,
@@ -229,6 +246,12 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     if (receivables.length !== receiving.items.length) {
       throw new Error(
         'Some items reference products that no longer exist — edit the draft and try again.',
+      );
+    }
+    if (receivables.length > MAX_TRANSACTION_RECEIVING_ITEMS) {
+      throw new Error(
+        `This receiving has ${receivables.length} items — the maximum is ` +
+          `${MAX_TRANSACTION_RECEIVING_ITEMS}. Receive in smaller batches.`,
       );
     }
     const plan = planReceive(
