@@ -54,8 +54,8 @@ const sections: NavSection[] = [
     label: 'Stock',
     items: [
       { label: 'Inventory', path: RoutePaths.inventory, icon: CubeIcon },
-      // Bulk Receiving is reached from inside the Receiving view (the "Bulk
-      // Receiving" action on /receiving), so it has no standalone nav entry.
+      // Receiving is the dashboard at /receiving; New Receiving and Import CSV
+      // (bulk) are actions inside it, so they have no standalone nav entries.
       { label: 'Receiving', path: RoutePaths.receiving, icon: TruckIcon },
       { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
       { label: 'Suppliers', path: RoutePaths.suppliers, icon: BuildingStorefrontIcon },
