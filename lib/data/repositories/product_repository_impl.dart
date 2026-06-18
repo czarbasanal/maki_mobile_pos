@@ -63,29 +63,27 @@ class ProductRepositoryImpl implements ProductRepository {
         );
       }
 
-      // Barcode advisory check (barcodes are not claim-guarded — out of scope).
-      for (final code in product.barcodes) {
-        if (code.isEmpty) continue;
-        if (await barcodeExists(barcode: code)) {
-          throw DuplicateEntryException(
-            field: 'barcodes',
-            value: code,
-            message: 'A product with barcode "$code" already exists',
-          );
-        }
-      }
+      // Claimable barcode keys (optional, trimmed, deduped, validated).
+      final barcodeKeys = _barcodeKeys(product.barcodes, validate: true);
 
       final productModel = ProductModel.fromEntity(product);
       final docRef = _productsRef.doc(); // pre-allocate id for the transaction
       final claimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+      final barcodeRefs = barcodeKeys.map(_barcodesRef.doc).toList();
 
-      // Atomically reserve the SKU claim and write the product together. The
-      // tx.get gate + Firestore's auto-retry on contention closes the TOCTOU
-      // the old skuExists()-then-add() left open.
+      // Atomically reserve the SKU + barcode claims and write the product
+      // together. Reads precede writes (Firestore transaction rule); the tx.get
+      // gates + auto-retry close the TOCTOU the old exists()-then-write left open.
       await _firestore.runTransaction((tx) async {
         final claim = await tx.get(claimRef);
+        final barcodeClaims = [for (final ref in barcodeRefs) await tx.get(ref)];
         if (claim.exists) {
           throw DuplicateSkuException(sku: product.sku);
+        }
+        for (var i = 0; i < barcodeClaims.length; i++) {
+          if (barcodeClaims[i].exists) {
+            throw DuplicateBarcodeException(barcode: barcodeRefs[i].id);
+          }
         }
         tx.set(
           docRef,
@@ -98,6 +96,14 @@ class ProductRepositoryImpl implements ProductRepository {
           'claimedBy': createdBy,
           'claimedAt': FieldValue.serverTimestamp(),
         });
+        for (final ref in barcodeRefs) {
+          tx.set(ref, {
+            'barcode': ref.id,
+            'productId': docRef.id,
+            'claimedBy': createdBy,
+            'claimedAt': FieldValue.serverTimestamp(),
+          });
+        }
       });
 
       // Initial price history — best-effort (unchanged). A failure here must not

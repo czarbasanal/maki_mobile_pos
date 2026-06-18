@@ -42,6 +42,7 @@ void main() {
     String name = 'Test',
     String? baseSku,
     int? variationNumber,
+    List<String> barcodes = const [],
   }) {
     return ProductEntity(
       id: id,
@@ -57,6 +58,7 @@ void main() {
       createdAt: DateTime(2025, 1, 1),
       baseSku: baseSku,
       variationNumber: variationNumber,
+      barcodes: barcodes,
     );
   }
 
@@ -179,6 +181,49 @@ void main() {
         () => repository.createProduct(
           product: buildProduct(sku: '   '),
           createdBy: 'admin-1',
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+  });
+
+  group('ProductRepositoryImpl.createProduct barcode claims', () {
+    test('claims every barcode and dedupes/trims', () async {
+      final created = await repository.createProduct(
+        product: buildProduct(sku: 'P1', barcodes: [' A1 ', 'A1', 'B2']),
+        createdBy: 'u1',
+      );
+      final a = await firestore.collection('product_barcodes').doc('A1').get();
+      final b = await firestore.collection('product_barcodes').doc('B2').get();
+      expect(a.exists, isTrue);
+      expect(a.data()?['productId'], created.id);
+      expect(b.exists, isTrue);
+    });
+
+    test('rejects a barcode already claimed by another product (atomic)',
+        () async {
+      await firestore.collection('product_barcodes').doc('A1').set({
+        'barcode': 'A1',
+        'productId': 'other',
+      });
+      await expectLater(
+        () => repository.createProduct(
+          product: buildProduct(sku: 'P2', barcodes: ['A1']),
+          createdBy: 'u1',
+        ),
+        throwsA(isA<DuplicateBarcodeException>()),
+      );
+      // Nothing committed — no product with sku P2.
+      final p2 =
+          await firestore.collection('products').where('sku', isEqualTo: 'P2').get();
+      expect(p2.docs, isEmpty);
+    });
+
+    test('rejects a barcode that cannot form a claim doc-id', () async {
+      await expectLater(
+        () => repository.createProduct(
+          product: buildProduct(sku: 'P3', barcodes: ['a/b']),
+          createdBy: 'u1',
         ),
         throwsA(isA<ValidationException>()),
       );
