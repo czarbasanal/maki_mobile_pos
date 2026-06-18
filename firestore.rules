@@ -315,5 +315,20 @@ service cloud.firestore {
       // Claims are create/delete only — block update so a claim can't be repointed.
       allow update: if false;
     }
+
+    // Barcode uniqueness claim (Slice A). One product_barcodes/{normalizeBarcode(code)}
+    // doc per in-use barcode; enforced in transactions by the product create / barcode
+    // edit paths (slices B/C). Slice A only declares the rules + backfills; no client
+    // enforces it yet. Policy MIRRORS product_skus.
+    match /product_barcodes/{barcode} {
+      allow read:   if isValidUser() && isActiveUser();
+      // Mirror the products create rule (admin OR staff) so a staff product create
+      // doesn't half-commit (product written, claim denied).
+      allow create: if (isAdmin() || hasRole('staff')) && isActiveUser();
+      // Only an admin rename (frees old) or a hard delete frees a claim.
+      allow delete: if isAdmin() && isActiveUser();
+      // Claims are create/delete only — block update so a claim can't be repointed.
+      allow update: if false;
+    }
   }
 }
