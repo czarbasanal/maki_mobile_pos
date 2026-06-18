@@ -46,6 +46,15 @@ export function salesToCsv(sales: Sale[]): string {
   return [SALE_HEADERS.join(','), ...rows].join('\n');
 }
 
+/** Builds a CSV string from headers + rows, escaping `" , \n` per RFC 4180. */
+export function toCsv(headers: string[], rows: (string | number)[][]): string {
+  const esc = (v: string | number) => {
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers, ...rows].map((row) => row.map(esc).join(',')).join('\n');
+}
+
 export function downloadCsv(filename: string, content: string): void {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

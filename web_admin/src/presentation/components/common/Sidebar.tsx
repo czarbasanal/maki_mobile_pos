@@ -13,6 +13,7 @@ import {
   BuildingStorefrontIcon,
   ChartBarIcon,
   ChevronUpIcon,
+  ClipboardDocumentListIcon,
   ClockIcon,
   Cog6ToothIcon,
   CubeIcon,
@@ -57,6 +58,7 @@ const sections: NavSection[] = [
       // Receiving is the dashboard at /receiving; New Receiving and Import CSV
       // (bulk) are actions inside it, so they have no standalone nav entries.
       { label: 'Receiving', path: RoutePaths.receiving, icon: TruckIcon },
+      { label: 'Reorder', path: RoutePaths.reorder, icon: ClipboardDocumentListIcon },
       { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
       { label: 'Suppliers', path: RoutePaths.suppliers, icon: BuildingStorefrontIcon },
     ],
