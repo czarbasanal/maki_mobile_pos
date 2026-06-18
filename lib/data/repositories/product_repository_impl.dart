@@ -715,6 +715,9 @@ class ProductRepositoryImpl implements ProductRepository {
           createdBy: createdBy,
           updatedBy: null,
           updatedAt: null,
+          // A cost-variation is an internal product; the manufacturer barcode
+          // stays with the base item, so the variation claims none.
+          barcodes: const [],
         );
 
         try {

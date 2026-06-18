@@ -459,4 +459,24 @@ void main() {
       );
     });
   });
+
+  group('ProductRepositoryImpl.createVariation barcodes', () {
+    test('variation carries no barcodes and claims none', () async {
+      final original = buildProduct(sku: 'BASE', barcodes: ['BC1']);
+      final variation = await repository.createVariation(
+        originalProduct: original,
+        newCost: 9.0,
+        newCostCode: 'ZZ',
+        createdBy: 'u1',
+      );
+      final stored =
+          await firestore.collection('products').doc(variation.id).get();
+      expect((stored.data()?['barcodes'] as List).isEmpty, isTrue);
+      // The variation never claimed the base's barcode.
+      expect(
+        (await firestore.collection('product_barcodes').doc('BC1').get()).exists,
+        isFalse,
+      );
+    });
+  });
 }
