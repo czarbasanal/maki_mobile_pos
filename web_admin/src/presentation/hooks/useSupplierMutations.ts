@@ -13,6 +13,7 @@ export interface SupplierCreateInput {
   email: string | null;
   transactionType: TransactionType;
   notes: string | null;
+  leadTimeDays: number | null;
 }
 
 export function useCreateSupplier() {
@@ -45,6 +46,7 @@ export interface SupplierUpdateInput {
   transactionType?: TransactionType;
   notes?: string | null;
   isActive?: boolean;
+  leadTimeDays?: number | null;
 }
 
 export function useUpdateSupplier() {

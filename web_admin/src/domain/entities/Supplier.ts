@@ -12,6 +12,9 @@ export interface Supplier {
   transactionType: TransactionType;
   isActive: boolean;
   notes: string | null;
+  /** Typical days from order to delivery; null = unknown. The reorder engine
+   *  falls back to a default when null. */
+  leadTimeDays: number | null;
   createdAt: Date;
   updatedAt: Date | null;
   createdBy: string | null;

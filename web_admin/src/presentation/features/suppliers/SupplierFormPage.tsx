@@ -39,6 +39,7 @@ const schema = z.object({
     TransactionType.notApplicable,
   ]),
   notes: z.string().trim().optional().or(z.literal('')),
+  leadTimeDays: z.string().trim().optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -81,6 +82,7 @@ export function SupplierFormPage() {
       address: '',
       transactionType: TransactionType.cash,
       notes: '',
+      leadTimeDays: '',
     },
   });
 
@@ -101,6 +103,7 @@ export function SupplierFormPage() {
       address: target.address ?? '',
       transactionType: target.transactionType,
       notes: target.notes ?? '',
+      leadTimeDays: target.leadTimeDays != null ? String(target.leadTimeDays) : '',
     });
   }, [target, reset]);
 
@@ -123,6 +126,7 @@ export function SupplierFormPage() {
       address: blank(values.address),
       transactionType: values.transactionType,
       notes: blank(values.notes),
+      leadTimeDays: values.leadTimeDays?.trim() ? Number(values.leadTimeDays) : null,
     };
     try {
       if (isEditing && target) {
@@ -241,6 +245,18 @@ export function SupplierFormPage() {
                   </option>
                 ))}
               </select>
+            }
+          />
+          <Field
+            label="Lead time (days)"
+            error={errors.leadTimeDays?.message}
+            input={
+              <input
+                type="number"
+                min={0}
+                className={inputCls(!!errors.leadTimeDays)}
+                {...register('leadTimeDays')}
+              />
             }
           />
         </Section>
