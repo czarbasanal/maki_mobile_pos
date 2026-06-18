@@ -217,6 +217,33 @@ void main() {
     });
   });
 
+  group('ProductRepositoryImpl.barcodeExists (claim-backed)', () {
+    test('true when a claim exists, false otherwise', () async {
+      await firestore.collection('product_barcodes').doc('ABC123').set({
+        'barcode': 'ABC123',
+        'productId': 'p1',
+      });
+      expect(await repository.barcodeExists(barcode: ' ABC123 '), isTrue); // trimmed
+      expect(await repository.barcodeExists(barcode: 'NOPE'), isFalse);
+    });
+
+    test('excludeProductId lets the owning product reuse its own barcode',
+        () async {
+      await firestore.collection('product_barcodes').doc('ABC123').set({
+        'barcode': 'ABC123',
+        'productId': 'p1',
+      });
+      expect(
+        await repository.barcodeExists(barcode: 'ABC123', excludeProductId: 'p1'),
+        isFalse,
+      );
+      expect(
+        await repository.barcodeExists(barcode: 'ABC123', excludeProductId: 'p2'),
+        isTrue,
+      );
+    });
+  });
+
   group('ProductRepositoryImpl.updateProduct SKU claim move', () {
     test('moves the claim from old to new on rename', () async {
       final id = await seedProduct({'sku': 'OLD', 'name': 'P'});

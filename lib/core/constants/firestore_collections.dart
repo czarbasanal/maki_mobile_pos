@@ -60,6 +60,11 @@ abstract class FirestoreCollections {
   /// SKU rename. See docs/superpowers/specs/2026-06-01-sku-guard-*.
   static const String productSkus = 'product_skus';
 
+  /// Product barcode-uniqueness claim collection. One doc per in-use barcode,
+  /// keyed by SkuGenerator.normalizeBarcode(code); reserved atomically on
+  /// product create / barcode edit. See docs/superpowers/specs/2026-06-18-barcode-guard-*.
+  static const String productBarcodes = 'product_barcodes';
+
   // ==================== SETTINGS DOCUMENTS ====================
 
   /// Document ID for cost code mapping settings

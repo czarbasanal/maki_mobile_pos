@@ -19,6 +19,27 @@ class ProductRepositoryImpl implements ProductRepository {
   CollectionReference<Map<String, dynamic>> get _skusRef =>
       _firestore.collection(FirestoreCollections.productSkus);
 
+  CollectionReference<Map<String, dynamic>> get _barcodesRef =>
+      _firestore.collection(FirestoreCollections.productBarcodes);
+
+  /// The set of claimable barcode keys for a product: trim → drop empty → dedupe.
+  /// When [validate], rejects a non-empty code that can't form a claim doc-id.
+  Set<String> _barcodeKeys(List<String> codes, {bool validate = false}) {
+    final keys = <String>{};
+    for (final code in codes) {
+      final key = SkuGenerator.normalizeBarcode(code);
+      if (key.isEmpty) continue;
+      if (validate && !SkuGenerator.isClaimableBarcode(key)) {
+        throw ValidationException(
+          message: 'Invalid barcode "$code" — cannot contain "/".',
+          code: 'invalid-barcode',
+        );
+      }
+      keys.add(key);
+    }
+    return keys;
+  }
+
   // ==================== CREATE ====================
 
   @override
@@ -792,28 +813,13 @@ class ProductRepositoryImpl implements ProductRepository {
     String? excludeProductId,
   }) async {
     try {
-      // Primary check against the new `barcodes` array.
-      final fromArray = await _productsRef
-          .where('barcodes', arrayContains: barcode)
-          .limit(2)
-          .get();
-
-      final hasArrayHit = excludeProductId == null
-          ? fromArray.docs.isNotEmpty
-          : fromArray.docs.any((doc) => doc.id != excludeProductId);
-      if (hasArrayHit) return true;
-
-      // Legacy fallback: docs that still carry the singular `barcode`
-      // String field. See [getProductByBarcode] for why this is needed.
-      final fromLegacy = await _productsRef
-          .where('barcode', isEqualTo: barcode)
-          .limit(2)
-          .get();
-
-      if (excludeProductId == null) {
-        return fromLegacy.docs.isNotEmpty;
-      }
-      return fromLegacy.docs.any((doc) => doc.id != excludeProductId);
+      // Claim-backed (Slice B): a barcode is taken iff its product_barcodes
+      // claim doc exists. Mirrors skuExists.
+      final snap =
+          await _barcodesRef.doc(SkuGenerator.normalizeBarcode(barcode)).get();
+      if (!snap.exists) return false;
+      if (excludeProductId == null) return true;
+      return snap.data()?['productId'] != excludeProductId;
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to check barcode existence: ${e.message}',

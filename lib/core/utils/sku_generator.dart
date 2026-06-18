@@ -81,6 +81,21 @@ abstract class SkuGenerator {
   /// claims will key differently and uniqueness will silently break.
   static String normalizeSku(String sku) => sku.trim().toUpperCase();
 
+  /// Canonical key for barcode-uniqueness claims
+  /// (`product_barcodes/{normalizeBarcode(code)}`). MUST stay byte-identical to
+  /// scripts/backfill-product-barcodes.mjs (`String(s).trim()`) and the web TS —
+  /// case-sensitive (barcodes are exact scanned tokens, NOT uppercased).
+  static String normalizeBarcode(String code) => code.trim();
+
+  /// Whether a (already-normalized, non-empty) barcode key can be a Firestore
+  /// doc-id, so it can be claimed. Empty keys mean "no barcode" (skip, not error).
+  static bool isClaimableBarcode(String key) {
+    if (key.isEmpty || key.length > 1500) return false;
+    if (key == '.' || key == '..') return false;
+    if (key.contains('/')) return false;
+    return !RegExp(r'^__.*__$').hasMatch(key);
+  }
+
   /// Generates a variation SKU from an existing SKU.
   ///
   /// Used when receiving products with same SKU but different cost. Appends a
