@@ -439,41 +439,74 @@ class ProductRepositoryImpl implements ProductRepository {
       );
 
       final skuChanged = prior != null && prior.sku != product.sku;
-      if (skuChanged) {
+      final priorKeys = _barcodeKeys(prior?.barcodes ?? const []);
+      final newKeys = _barcodeKeys(product.barcodes, validate: true);
+      final addedKeys = newKeys.difference(priorKeys);
+      final removedKeys = priorKeys.difference(newKeys);
+      final barcodesChanged = addedKeys.isNotEmpty || removedKeys.isNotEmpty;
+
+      if (skuChanged || barcodesChanged) {
         // Variation children (baseSku == old) must be read OUTSIDE the
         // transaction — Firestore transactions cannot run queries.
-        final children =
-            await _productsRef.where('baseSku', isEqualTo: prior.sku).get();
-        final oldClaimRef = _skusRef.doc(SkuGenerator.normalizeSku(prior.sku));
-        final newClaimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+        final children = skuChanged
+            ? await _productsRef.where('baseSku', isEqualTo: prior.sku).get()
+            : null;
+        final newSkuClaimRef =
+            _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+        final addedRefs = addedKeys.map(_barcodesRef.doc).toList();
 
-        // Move the parent's SKU claim (delete old, create new), update the
-        // parent, and re-point every child's baseSku — all atomically, so the
-        // variation group never observes a dangling parent link.
+        // Move the SKU claim (if renamed) + relink variation children, AND
+        // release removed / claim added barcodes — all atomically. Reads
+        // precede writes (Firestore transaction rule).
         await _firestore.runTransaction((tx) async {
-          final newClaim = await tx.get(newClaimRef);
-          if (newClaim.exists &&
-              newClaim.data()?['productId'] != product.id) {
+          // Reads.
+          final newSkuClaim =
+              skuChanged ? await tx.get(newSkuClaimRef) : null;
+          final addedClaims = [for (final ref in addedRefs) await tx.get(ref)];
+          // Conflict checks.
+          if (skuChanged &&
+              newSkuClaim!.exists &&
+              newSkuClaim.data()?['productId'] != product.id) {
             throw DuplicateSkuException(sku: product.sku);
           }
+          for (var i = 0; i < addedClaims.length; i++) {
+            final c = addedClaims[i];
+            if (c.exists && c.data()?['productId'] != product.id) {
+              throw DuplicateBarcodeException(barcode: addedRefs[i].id);
+            }
+          }
+          // Writes.
           tx.update(_productsRef.doc(product.id), updateMap);
-          for (final child in children.docs) {
-            tx.update(child.reference, {
-              'baseSku': product.sku,
-              'updatedAt': FieldValue.serverTimestamp(),
-              'updatedBy': updatedBy,
-              if (updatedByName != null) 'updatedByName': updatedByName,
+          if (skuChanged) {
+            for (final child in children!.docs) {
+              tx.update(child.reference, {
+                'baseSku': product.sku,
+                'updatedAt': FieldValue.serverTimestamp(),
+                'updatedBy': updatedBy,
+                if (updatedByName != null) 'updatedByName': updatedByName,
+              });
+            }
+            // delete-then-set is safe even if old == new (case-only rename):
+            // same ref → the set wins, re-keying the claim's sku field.
+            tx.delete(_skusRef.doc(SkuGenerator.normalizeSku(prior.sku)));
+            tx.set(newSkuClaimRef, {
+              'sku': product.sku,
+              'productId': product.id,
+              'claimedBy': updatedBy,
+              'claimedAt': FieldValue.serverTimestamp(),
             });
           }
-          // delete-then-set is safe even if old == new (case-only rename):
-          // same ref → the set wins, re-keying the claim's sku field.
-          tx.delete(oldClaimRef);
-          tx.set(newClaimRef, {
-            'sku': product.sku,
-            'productId': product.id,
-            'claimedBy': updatedBy,
-            'claimedAt': FieldValue.serverTimestamp(),
-          });
+          for (final key in removedKeys) {
+            tx.delete(_barcodesRef.doc(key));
+          }
+          for (final ref in addedRefs) {
+            tx.set(ref, {
+              'barcode': ref.id,
+              'productId': product.id,
+              'claimedBy': updatedBy,
+              'claimedAt': FieldValue.serverTimestamp(),
+            });
+          }
         });
       } else {
         await _productsRef.doc(product.id).update(updateMap);

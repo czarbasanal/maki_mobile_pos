@@ -351,6 +351,60 @@ void main() {
     });
   });
 
+  group('ProductRepositoryImpl.updateProduct barcode diff', () {
+    test('claims a newly added barcode', () async {
+      final p = await repository.createProduct(
+        product: buildProduct(sku: 'U1'),
+        createdBy: 'u1',
+      );
+      await repository.updateProduct(
+        product: buildProduct(id: p.id, sku: 'U1', barcodes: ['NEW1']),
+        updatedBy: 'u1',
+      );
+      final claim =
+          await firestore.collection('product_barcodes').doc('NEW1').get();
+      expect(claim.exists, isTrue);
+      expect(claim.data()?['productId'], p.id);
+    });
+
+    test('frees a removed barcode (reusable by another product)', () async {
+      final p = await repository.createProduct(
+        product: buildProduct(sku: 'U2', barcodes: ['OLD1']),
+        createdBy: 'u1',
+      );
+      await repository.updateProduct(
+        product: buildProduct(id: p.id, sku: 'U2', barcodes: const []),
+        updatedBy: 'u1',
+      );
+      expect(
+        (await firestore.collection('product_barcodes').doc('OLD1').get()).exists,
+        isFalse,
+      );
+    });
+
+    test('rejects adding a barcode owned by another product; nothing changes',
+        () async {
+      final a = await repository.createProduct(
+        product: buildProduct(sku: 'UA', barcodes: ['SHARED']),
+        createdBy: 'u1',
+      );
+      final b = await repository.createProduct(
+        product: buildProduct(sku: 'UB'),
+        createdBy: 'u1',
+      );
+      await expectLater(
+        () => repository.updateProduct(
+          product: buildProduct(id: b.id, sku: 'UB', barcodes: ['SHARED']),
+          updatedBy: 'u1',
+        ),
+        throwsA(isA<DuplicateBarcodeException>()),
+      );
+      final claim =
+          await firestore.collection('product_barcodes').doc('SHARED').get();
+      expect(claim.data()?['productId'], a.id);
+    });
+  });
+
   group('ProductRepositoryImpl.createVariation retry-on-collision', () {
     test('allocates the next free number past existing variations', () async {
       final parentId = await seedProduct({'sku': 'BASE', 'name': 'Parent'});
