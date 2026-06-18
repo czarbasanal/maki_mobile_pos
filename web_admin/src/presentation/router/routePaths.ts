@@ -20,6 +20,8 @@ export const RoutePaths = {
   productDetail: '/inventory/:id',
 
   receiving: '/receiving',
+  receivingNew: '/receiving/new',
+  receivingNewDraft: '/receiving/new/:id',
   bulkReceiving: '/receiving/bulk',
   bulkReceivingDetail: '/receiving/bulk/:id',
 
