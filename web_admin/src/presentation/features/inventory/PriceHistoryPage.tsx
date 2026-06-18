@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useProducts } from '@/presentation/hooks/useProducts';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Product } from '@/domain/entities';
 import { PriceHistoryView } from './PriceHistoryView';
 
@@ -37,11 +38,17 @@ export function PriceHistoryPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
+      <header className="space-y-tk-xs">
+        <Link
+          to={RoutePaths.inventory}
+          className="text-bodySmall text-light-text-secondary hover:underline"
+        >
+          ← Back to inventory
+        </Link>
         <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
           Price History
         </h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
+        <p className="text-bodySmall text-light-text-secondary">
           Search a product to see its cost &amp; selling-price changes over time.
         </p>
       </header>
@@ -84,6 +91,16 @@ export function PriceHistoryPage() {
 
       {selected ? (
         <section className="space-y-tk-md">
+          <button
+            type="button"
+            onClick={() => {
+              setSelected(null);
+              setQueryText('');
+            }}
+            className="text-bodySmall text-light-text-secondary hover:underline"
+          >
+            ← Back to search
+          </button>
           <div>
             <h2 className="text-bodyMedium font-semibold text-light-text">{selected.name}</h2>
             <p className="text-bodySmall text-light-text-hint">{selected.sku}</p>

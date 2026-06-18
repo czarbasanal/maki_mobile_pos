@@ -25,6 +25,9 @@ export type ReceivingInput = Omit<Receiving, 'id' | 'createdAt' | 'completedAt' 
 
 export interface ReceivingRepository {
   getById(id: string): Promise<Receiving | null>;
+  /** The next `RCV-YYYYMMDD-NNN` reference, for display while drafting a new
+   *  receiving (and reused by create()). */
+  nextReferenceNumber(): Promise<string>;
   list(start?: Date, end?: Date): Promise<Receiving[]>;
   watchAll(
     range: DateRange,

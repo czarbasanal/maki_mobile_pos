@@ -9,6 +9,7 @@ import {
   useUpdateReceiving,
 } from '@/presentation/hooks/useReceivingMutations';
 import { useAuthStore } from '@/presentation/stores/authStore';
+import { useReceivingRepo } from '@/infrastructure/di/container';
 import { filterProducts } from '@/domain/products/filterProducts';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Product, ReceivingItem } from '@/domain/entities';
@@ -32,6 +33,7 @@ export function useReceivingEntry() {
   const { id } = useParams();
   const navigate = useNavigate();
   const actor = useAuthStore((s) => s.user);
+  const repo = useReceivingRepo();
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: suppliers } = useSuppliers();
   const existing = useReceiving(id ?? '');
@@ -43,8 +45,21 @@ export function useReceivingEntry() {
   const [lines, setLines] = useState<ReceivingItem[]>([]);
   const [search, setSearch] = useState('');
   const [savedId, setSavedId] = useState<string | null>(id ?? null);
+  const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hydrated = useRef(false);
+
+  // New entry: reserve the next RCV-… reference up front, to show while drafting
+  // and to reuse on save (create() honors a provided referenceNumber).
+  useEffect(() => {
+    if (id || referenceNumber !== null) return;
+    let active = true;
+    repo
+      .nextReferenceNumber()
+      .then((ref) => { if (active) setReferenceNumber(ref); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [id, referenceNumber, repo]);
 
   // Hydrate once from a resumed draft.
   useEffect(() => {
@@ -53,6 +68,7 @@ export function useReceivingEntry() {
     setSupplierId(existing.data.supplierId ?? '');
     setLines(existing.data.items);
     setSavedId(existing.data.id);
+    setReferenceNumber(existing.data.referenceNumber);
   }, [id, existing.data]);
 
   const matches = useMemo(
@@ -125,7 +141,7 @@ export function useReceivingEntry() {
   function buildInput(): ReceivingInput {
     const supplier = suppliers?.find((s) => s.id === supplierId) ?? null;
     return {
-      referenceNumber: existing.data?.referenceNumber ?? '',
+      referenceNumber: referenceNumber ?? '',
       supplierId: supplier?.id ?? null,
       supplierName: supplier?.name ?? null,
       items: lines,
@@ -176,6 +192,7 @@ export function useReceivingEntry() {
 
   return {
     isResuming: !!id,
+    referenceNumber,
     isLoadingRefs: productsLoading || (!!id && existing.isLoading),
     suppliers: suppliers ?? [],
     supplierId,

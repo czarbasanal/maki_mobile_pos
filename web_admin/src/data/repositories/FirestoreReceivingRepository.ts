@@ -134,6 +134,11 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     );
   }
 
+  /** The next RCV-… reference for a new receiving (display + create()). */
+  async nextReferenceNumber(): Promise<string> {
+    return this.generateReferenceNumber();
+  }
+
   async getById(id: string): Promise<Receiving | null> {
     const snap = await getDoc(
       doc(this.db, FirestoreCollections.receivings, id).withConverter(receivingConverter),

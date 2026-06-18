@@ -63,9 +63,14 @@ export function ReceivingEntryPage() {
         >
           ← Back to receiving
         </Link>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          {entry.isResuming ? 'Resume receiving' : 'New receiving'}
-        </h1>
+        <div className="flex flex-wrap items-baseline gap-tk-sm">
+          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
+            {entry.isResuming ? 'Resume receiving' : 'New receiving'}
+          </h1>
+          <span className="font-mono text-bodySmall text-light-text-secondary">
+            {entry.referenceNumber ?? '…'}
+          </span>
+        </div>
       </header>
 
       {entry.error ? (
