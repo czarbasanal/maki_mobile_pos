@@ -78,7 +78,6 @@ export class FirestoreSupplierRepository implements SupplierRepository {
       transactionType: input.transactionType,
       isActive: true,
       notes: input.notes ?? null,
-      leadTimeDays: input.leadTimeDays ?? null,
       productCount: 0,
       totalInventoryValue: 0,
       searchKeywords: supplierSearchKeywords(
@@ -118,8 +117,7 @@ export class FirestoreSupplierRepository implements SupplierRepository {
       | 'email'
       | 'transactionType'
       | 'isActive'
-      | 'notes'
-      | 'leadTimeDays';
+      | 'notes';
     const fields: Updatable[] = [
       'name',
       'address',
@@ -130,7 +128,6 @@ export class FirestoreSupplierRepository implements SupplierRepository {
       'transactionType',
       'isActive',
       'notes',
-      'leadTimeDays',
     ];
     for (const f of fields) {
       const v = input[f];

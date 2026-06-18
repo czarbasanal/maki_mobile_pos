@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { endOfDay, startOfDay, subDays } from 'date-fns';
 import { useProducts } from './useProducts';
-import { useSuppliers } from './useSuppliers';
 import { useSaleRepo } from '@/infrastructure/di/container';
 import { unitsSoldByProduct } from '@/domain/reorder/unitsSoldByProduct';
 import {
@@ -16,7 +15,6 @@ const SALES_CAP = 2000;
 export function useReorderSuggestions(params: ReorderParams, now: Date) {
   const saleRepo = useSaleRepo();
   const { data: products, isLoading: lp } = useProducts();
-  const { data: suppliers, isLoading: ls } = useSuppliers();
 
   const range = useMemo(
     () => ({
@@ -32,14 +30,14 @@ export function useReorderSuggestions(params: ReorderParams, now: Date) {
   });
 
   const suggestions = useMemo<ReorderSuggestion[]>(() => {
-    if (!products || !suppliers || !salesQ.data) return [];
-    return computeReorderSuggestions(products, unitsSoldByProduct(salesQ.data), suppliers, params);
+    if (!products || !salesQ.data) return [];
+    return computeReorderSuggestions(products, unitsSoldByProduct(salesQ.data), params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, suppliers, salesQ.data, params.windowDays, params.coverDays, params.defaultLeadDays]);
+  }, [products, salesQ.data, params.windowDays, params.coverDays]);
 
   return {
     suggestions,
-    isLoading: lp || ls || salesQ.isLoading,
+    isLoading: lp || salesQ.isLoading,
     error: (salesQ.error as Error) ?? null,
     capped: (salesQ.data?.length ?? 0) >= SALES_CAP,
   };

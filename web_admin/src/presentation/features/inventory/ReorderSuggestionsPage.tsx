@@ -15,8 +15,7 @@ export function ReorderSuggestionsPage() {
   const [now] = useState(() => new Date());
   const [windowDays, setWindowDays] = useState(30);
   const [coverDays, setCoverDays] = useState(14);
-  const [defaultLeadDays, setDefaultLeadDays] = useState(7);
-  const params: ReorderParams = { windowDays, coverDays, defaultLeadDays };
+  const params: ReorderParams = { windowDays, coverDays };
   const { suggestions, isLoading, error } = useReorderSuggestions(params, now);
 
   // Editable qty overrides, keyed by product id; reset when recomputed.
@@ -88,10 +87,6 @@ export function ReorderSuggestionsPage() {
           <input type="number" min={0} value={coverDays}
             onChange={(e) => setCoverDays(Number(e.target.value) || 0)} className={ctl} />
         </Control>
-        <Control label="Default lead (days)">
-          <input type="number" min={0} value={defaultLeadDays}
-            onChange={(e) => setDefaultLeadDays(Number(e.target.value) || 0)} className={ctl} />
-        </Control>
         <button type="button" onClick={exportCsv} disabled={suggestions.length === 0}
           className="ml-auto inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-50">
           <ArrowDownTrayIcon className="h-4 w-4" /> Export CSV
@@ -120,7 +115,6 @@ export function ReorderSuggestionsPage() {
                     <th className="px-tk-md py-tk-sm text-left font-medium">Product</th>
                     <th className="px-tk-md py-tk-sm text-right font-medium">Current</th>
                     <th className="px-tk-md py-tk-sm text-right font-medium">Velocity/day</th>
-                    <th className="px-tk-md py-tk-sm text-right font-medium">Lead</th>
                     <th className="px-tk-md py-tk-sm text-right font-medium">Order qty</th>
                   </tr>
                 </thead>
@@ -133,7 +127,6 @@ export function ReorderSuggestionsPage() {
                       </td>
                       <td className="px-tk-md py-tk-sm text-right tabular-nums">{s.product.quantity}</td>
                       <td className="px-tk-md py-tk-sm text-right tabular-nums">{s.velocityPerDay.toFixed(2)}</td>
-                      <td className="px-tk-md py-tk-sm text-right tabular-nums">{s.leadDays}d</td>
                       <td className="px-tk-md py-tk-sm text-right">
                         <input type="number" min={0}
                           value={finalQty(s.product.id, s.suggestedQty)}
