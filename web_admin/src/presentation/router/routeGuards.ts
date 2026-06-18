@@ -22,6 +22,8 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   // /^\/inventory\/[^/]+$/ dynamic rule below (which would grant viewInventory).
   [RoutePaths.priceHistory, Permission.viewProductCost],
   [RoutePaths.receiving, Permission.accessReceiving],
+  [RoutePaths.receivingNew, Permission.receiveStock],
+  [RoutePaths.receivingHistory, Permission.viewReceivingHistory],
   [RoutePaths.bulkReceiving, Permission.bulkReceive],
   [RoutePaths.suppliers, Permission.viewSuppliers],
   [RoutePaths.supplierAdd, Permission.addSupplier],
@@ -85,8 +87,13 @@ function checkDynamicRoute(path: string, user: User): boolean {
   if (path.startsWith('/users/edit/')) {
     return hasPermission(user.role, Permission.editUser);
   }
-  if (path.startsWith('/receiving/bulk/')) {
-    return hasPermission(user.role, Permission.bulkReceive);
+  if (path.startsWith('/receiving/new/')) {
+    return hasPermission(user.role, Permission.receiveStock);
+  }
+  // /receiving/:id — the read-only receiving detail (static /receiving/new,
+  // /receiving/history, /receiving/bulk are matched as exact routes first).
+  if (path.startsWith('/receiving/')) {
+    return hasPermission(user.role, Permission.viewReceivingHistory);
   }
   if (path === RoutePaths.about) {
     return hasPermission(user.role, Permission.viewSettings);

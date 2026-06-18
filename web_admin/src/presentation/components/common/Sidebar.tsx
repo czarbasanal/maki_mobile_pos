@@ -9,7 +9,6 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, type ComponentType, type SVGProps } from 'react';
 import {
   ArrowRightStartOnRectangleIcon,
-  ArrowUpTrayIcon,
   BanknotesIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
@@ -55,8 +54,9 @@ const sections: NavSection[] = [
     label: 'Stock',
     items: [
       { label: 'Inventory', path: RoutePaths.inventory, icon: CubeIcon },
+      // Receiving is the dashboard at /receiving; New Receiving and Import CSV
+      // (bulk) are actions inside it, so they have no standalone nav entries.
       { label: 'Receiving', path: RoutePaths.receiving, icon: TruckIcon },
-      { label: 'Bulk Receiving', path: RoutePaths.bulkReceiving, icon: ArrowUpTrayIcon },
       { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
       { label: 'Suppliers', path: RoutePaths.suppliers, icon: BuildingStorefrontIcon },
     ],

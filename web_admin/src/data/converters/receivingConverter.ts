@@ -34,6 +34,21 @@ function parseItems(value: unknown): ReceivingItem[] {
       isNewVariation: Boolean(it.isNewVariation ?? false),
       newProductId: (it.newProductId as string | null) ?? null,
       notes: (it.notes as string | null) ?? null,
+      pendingNewProduct:
+        it.pendingNewProduct != null
+          ? {
+              category:
+                ((it.pendingNewProduct as Record<string, unknown>).category as string | null) ??
+                null,
+              price: Number((it.pendingNewProduct as Record<string, unknown>).price ?? 0),
+              reorderLevel: Number(
+                (it.pendingNewProduct as Record<string, unknown>).reorderLevel ?? 0,
+              ),
+              autoGenerateSku: Boolean(
+                (it.pendingNewProduct as Record<string, unknown>).autoGenerateSku ?? false,
+              ),
+            }
+          : null,
     };
   });
 }

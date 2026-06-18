@@ -20,8 +20,10 @@ import { SalesReportPage } from '@/presentation/features/reports/SalesReportPage
 import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
-import { ReceivingListPage } from '@/presentation/features/receiving/ReceivingListPage';
+import { ReceivingDashboardPage } from '@/presentation/features/receiving/ReceivingDashboardPage';
+import { ReceivingHistoryPage } from '@/presentation/features/receiving/ReceivingHistoryPage';
 import { ReceivingDetailPage } from '@/presentation/features/receiving/ReceivingDetailPage';
+import { ReceivingEntryPage } from '@/presentation/features/receiving/ReceivingEntryPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
 import { InventoryDetailPage } from '@/presentation/features/inventory/InventoryDetailPage';
@@ -61,9 +63,12 @@ export const router = createBrowserRouter(
         { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
         { path: RoutePaths.productDetail, element: <InventoryDetailPage /> },
         { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
-        { path: RoutePaths.receiving, element: <ReceivingListPage /> },
+        { path: RoutePaths.receiving, element: <ReceivingDashboardPage /> },
+        { path: RoutePaths.receivingNew, element: <ReceivingEntryPage /> },
+        { path: RoutePaths.receivingNewDraft, element: <ReceivingEntryPage /> },
+        { path: RoutePaths.receivingHistory, element: <ReceivingHistoryPage /> },
         { path: RoutePaths.bulkReceiving, element: <BulkReceivingPage /> },
-        { path: RoutePaths.bulkReceivingDetail, element: <ReceivingDetailPage /> },
+        { path: RoutePaths.receivingDetail, element: <ReceivingDetailPage /> },
         { path: RoutePaths.suppliers, element: <SuppliersListPage /> },
         { path: RoutePaths.supplierAdd, element: <SupplierFormPage /> },
         { path: RoutePaths.supplierEdit, element: <SupplierFormPage /> },

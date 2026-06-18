@@ -7,39 +7,54 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
+  setDoc,
   Timestamp,
+  updateDoc,
   where,
   writeBatch,
   type Firestore,
 } from 'firebase/firestore';
-import type { ProductRepository, ProductCreateInput } from '@/domain/repositories/ProductRepository';
+import type { ProductRepository } from '@/domain/repositories/ProductRepository';
 import type {
   BulkReceiveInput,
+  ReceivingInput,
   ReceivingRepository,
   ReceivingResult,
 } from '@/domain/repositories/ReceivingRepository';
-import type { Receiving, Product } from '@/domain/entities';
+import type { CostCode, Receiving, ReceivingItem } from '@/domain/entities';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
-import { encodeCostCode } from '@/domain/entities';
-import { generateSku } from '@/domain/products/sku';
-import { generateSearchKeywords } from '@/domain/products/searchKeywords';
-import { nextVariationNumber, variationSku } from '@/domain/receiving/variations';
-import { DuplicateSkuError } from '@/data/errors';
+import { applyReceivedItems } from '@/data/receiving/applyReceivedItems';
+import { classifiedToReceivable } from '@/domain/receiving/receivableItem';
+import { resolveDraftItems } from '@/data/receiving/resolveDraftItems';
+import { planReceive } from '@/data/receiving/planReceive';
+import { executeReceivePlan } from '@/data/receiving/executeReceivePlan';
+import { newProductId } from '@/data/products/productWrites';
 import { receivingConverter } from '@/data/converters/receivingConverter';
 import type { DateRange } from '@/domain/reports/dateRange';
 
-interface BuiltItem {
-  productId: string;
-  sku: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  unitCost: number;
-  costCode: string;
-  isNewVariation: boolean;
-  newProductId: string | null;
+// Firestore caps a writeBatch at 500 writes and a doc at 1MB. bulkReceive
+// creates products individually (no batch limit there) but commits stock
+// increments + the receiving doc in one batch, and embeds all items on the doc —
+// so cap comfortably below both. The cap also bounds the orphan blast radius of
+// a mid-import crash.
+const MAX_BULK_RECEIVING_ITEMS = 400;
+// complete() commits in ONE transaction: up to 3 writes per new/variation item
+// (product + SKU claim + price history) + matched increments + the receiving
+// doc — keep it well under the 500-write transaction cap.
+const MAX_TRANSACTION_RECEIVING_ITEMS = 150;
+
+/** Ensures every persisted item has an id and never a `undefined`
+ *  `pendingNewProduct` (Firestore rejects undefined — ignoreUndefinedProperties
+ *  is off), coercing the optional field to null like the converter does. */
+function normalizeItems(items: ReceivingItem[]): ReceivingItem[] {
+  return items.map((it) => ({
+    ...it,
+    id: it.id || crypto.randomUUID(),
+    pendingNewProduct: it.pendingNewProduct ?? null,
+  }));
 }
 
 export class FirestoreReceivingRepository implements ReceivingRepository {
@@ -48,100 +63,34 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     private readonly products: ProductRepository,
   ) {}
 
+  // NOTE: bulkReceive is intentionally NOT a single transaction. A large CSV can
+  // create hundreds of products, and Firestore caps a transaction/batch at 500
+  // writes — an atomic version would fail on big imports. So it keeps per-product
+  // creation (each its own atomic create() with SKU-claim + collision-retry) plus
+  // a chunked stock/receiving batch, accepting that a mid-import crash can leave
+  // orphan products. complete() (small manual entries) IS fully atomic.
   async bulkReceive(input: BulkReceiveInput): Promise<ReceivingResult> {
     const { rows, supplier, cipher, actor } = input;
     const referenceNumber = await this.generateReferenceNumber();
 
-    const items: BuiltItem[] = [];
-    const increments = new Map<string, number>(); // productId -> qty to add
-    const failed: ReceivingResult['failed'] = [];
-    const knownSkus = input.products.map((p) => p.sku);
-    let newProducts = 0;
-    let variations = 0;
-
-    for (const c of rows) {
-      if (c.status === 'error') continue;
-      const r = c.row;
-      try {
-        if (c.status === 'match' && c.existing) {
-          increments.set(c.existing.id, (increments.get(c.existing.id) ?? 0) + r.quantity);
-          items.push({
-            productId: c.existing.id, sku: c.existing.sku, name: c.existing.name,
-            quantity: r.quantity, unit: c.existing.unit, unitCost: c.existing.cost,
-            costCode: c.existing.costCode, isNewVariation: false, newProductId: null,
-          });
-        } else if (c.status === 'mismatch' && c.existing) {
-          const base = c.existing.baseSku ?? c.existing.sku;
-          const costCode = encodeCostCode(cipher, r.cost);
-          // The claim guard makes a colliding variation create throw
-          // DuplicateSkuError. Bump the number and retry so concurrent
-          // receiving self-heals instead of failing the whole batch.
-          let n = nextVariationNumber(base, knownSkus);
-          let created: Product | undefined;
-          let sku = '';
-          for (let attempt = 0; attempt < 5; attempt += 1) {
-            sku = variationSku(base, n);
-            try {
-              created = await this.products.create(
-                this.productInput({
-                  sku, name: c.existing.name, cost: r.cost, costCode, price: c.existing.price,
-                  quantity: r.quantity, reorderLevel: c.existing.reorderLevel, unit: c.existing.unit,
-                  category: c.existing.category, supplierId: c.existing.supplierId,
-                  supplierName: c.existing.supplierName, baseSku: base, variationNumber: n, actor,
-                }),
-                actor.id,
-              );
-              break;
-            } catch (e) {
-              if (e instanceof DuplicateSkuError) {
-                n += 1;
-                continue;
-              }
-              throw e;
-            }
-          }
-          if (!created) {
-            throw new Error(`Could not allocate a unique variation SKU for "${base}"`);
-          }
-          knownSkus.push(sku);
-          await this.products.recordPriceChange(created.id, {
-            price: c.existing.price, cost: r.cost, changedBy: actor.id, reason: 'receiving',
-          });
-          variations += 1;
-          items.push({
-            productId: c.existing.id, sku, name: c.existing.name, quantity: r.quantity,
-            unit: c.existing.unit, unitCost: r.cost, costCode, isNewVariation: true,
-            newProductId: created.id,
-          });
-        } else {
-          // new
-          const sku = r.autoGenerateSku ? generateSku(r.name) : r.sku;
-          const costCode = encodeCostCode(cipher, r.cost);
-          const created = await this.products.create(
-            this.productInput({
-              sku, name: r.name, cost: r.cost, costCode, price: r.price, quantity: r.quantity,
-              reorderLevel: r.reorderLevel, unit: r.unit, category: r.category,
-              supplierId: supplier?.id ?? null, supplierName: supplier?.name ?? null,
-              baseSku: null, variationNumber: null, actor,
-            }),
-            actor.id,
-          );
-          await this.products.recordPriceChange(created.id, {
-            price: r.price, cost: r.cost, changedBy: actor.id, reason: 'Initial price',
-          });
-          newProducts += 1;
-          items.push({
-            productId: created.id, sku: created.sku, name: r.name, quantity: r.quantity,
-            unit: r.unit, unitCost: r.cost, costCode, isNewVariation: false, newProductId: null,
-          });
-        }
-      } catch (e) {
-        failed.push({ row: r.rowNumber, message: (e as Error).message });
-      }
+    const receivables = rows
+      .map(classifiedToReceivable)
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+    if (receivables.length > MAX_BULK_RECEIVING_ITEMS) {
+      throw new Error(
+        `This import has ${receivables.length} items — the maximum per receiving is ` +
+          `${MAX_BULK_RECEIVING_ITEMS}. Split it into smaller files.`,
+      );
     }
+    const outcome = await applyReceivedItems(receivables, this.products, {
+      cipher,
+      actor,
+      supplier,
+      knownSkus: input.products.map((p) => p.sku),
+    });
 
     const batch = writeBatch(this.db);
-    for (const [productId, delta] of increments) {
+    for (const [productId, delta] of outcome.increments) {
       batch.update(doc(this.db, FirestoreCollections.products, productId), {
         quantity: increment(delta),
         updatedBy: actor.id,
@@ -149,15 +98,13 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
         updatedAt: serverTimestamp(),
       });
     }
-    const totalQuantity = items.reduce((n, it) => n + it.quantity, 0);
-    const totalCost = items.reduce((n, it) => n + it.unitCost * it.quantity, 0);
+    const totalQuantity = outcome.items.reduce((n, it) => n + it.quantity, 0);
+    const totalCost = outcome.items.reduce((n, it) => n + it.unitCost * it.quantity, 0);
     batch.set(doc(collection(this.db, FirestoreCollections.receivings)), {
       referenceNumber,
       supplierId: supplier?.id ?? null,
       supplierName: supplier?.name ?? null,
-      // Stamp a stable per-item id (mirrors the mobile model, which writes one)
-      // so readers can key on it without collisions.
-      items: items.map((it) => ({ ...it, id: crypto.randomUUID(), notes: null })),
+      items: outcome.items,
       totalCost,
       totalQuantity,
       status: 'completed',
@@ -170,7 +117,13 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     });
     await batch.commit();
 
-    return { referenceNumber, received: items.length, newProducts, variations, failed };
+    return {
+      referenceNumber,
+      received: outcome.items.length,
+      newProducts: outcome.newProducts,
+      variations: outcome.variations,
+      failed: outcome.failed.map((f) => ({ row: Number(f.ref), message: f.message })),
+    };
   }
 
   // --- Read side: history list + detail ---
@@ -179,6 +132,11 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     return collection(this.db, FirestoreCollections.receivings).withConverter(
       receivingConverter,
     );
+  }
+
+  /** The next RCV-… reference for a new receiving (display + create()). */
+  async nextReferenceNumber(): Promise<string> {
+    return this.generateReferenceNumber();
   }
 
   async getById(id: string): Promise<Receiving | null> {
@@ -209,33 +167,134 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     );
   }
 
-  // Manual entry (create/complete) and the unbounded list() are a later slice.
-  async list(): Promise<Receiving[]> {
-    throw new Error('ReceivingRepository.list not implemented yet');
-  }
-  async create(): Promise<Receiving> {
-    throw new Error('ReceivingRepository.create not implemented yet');
-  }
-  async complete(): Promise<void> {
-    throw new Error('ReceivingRepository.complete not implemented yet');
+  watchDrafts(
+    onData: (records: Receiving[]) => void,
+    onError?: (err: Error) => void,
+  ): Unsubscribe {
+    // Equality filter only (no orderBy) → default single-field index; sort
+    // newest-first client-side (drafts are few).
+    return onSnapshot(
+      query(this.receivingsCol(), where('status', '==', 'draft')),
+      (snap) => {
+        const drafts = snap.docs.map((d) => d.data());
+        drafts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        onData(drafts);
+      },
+      onError,
+    );
   }
 
-  private productInput(p: {
-    sku: string; name: string; cost: number; costCode: string; price: number; quantity: number;
-    reorderLevel: number; unit: string; category: string | null; supplierId: string | null;
-    supplierName: string | null; baseSku: string | null; variationNumber: number | null;
-    actor: { id: string; name: string };
-  }): ProductCreateInput {
-    return {
-      sku: p.sku, name: p.name, costCode: p.costCode, cost: p.cost, price: p.price,
-      quantity: p.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
-      supplierId: p.supplierId, supplierName: p.supplierName, isActive: true,
-      createdBy: p.actor.id, updatedBy: p.actor.id,
-      createdByName: p.actor.name, updatedByName: p.actor.name,
-      searchKeywords: generateSearchKeywords([p.sku, p.name, p.category]),
-      baseSku: p.baseSku, variationNumber: p.variationNumber, barcode: null,
-      category: p.category, imageUrl: null, notes: null,
-    };
+  async create(input: ReceivingInput, actorId: string): Promise<Receiving> {
+    // Stock is applied only through complete() (which has the cost-code cipher),
+    // so create() persists drafts only — a 'completed' create would write a
+    // completed doc with no stock effects.
+    if (input.status === 'completed') {
+      throw new Error('create() writes drafts; call complete() to finalize and apply stock.');
+    }
+    const ref = doc(collection(this.db, FirestoreCollections.receivings));
+    const referenceNumber = input.referenceNumber || (await this.generateReferenceNumber());
+    const items = normalizeItems(input.items);
+    await setDoc(ref, {
+      referenceNumber,
+      supplierId: input.supplierId,
+      supplierName: input.supplierName,
+      items,
+      totalCost: input.totalCost,
+      totalQuantity: input.totalQuantity,
+      status: input.status,
+      notes: input.notes,
+      createdBy: actorId,
+      createdByName: input.createdByName,
+      completedBy: null,
+      createdAt: serverTimestamp(),
+      completedAt: null,
+    });
+    const snap = await getDoc(ref.withConverter(receivingConverter));
+    return snap.data()!;
+  }
+
+  async update(id: string, input: ReceivingInput, actorId: string): Promise<void> {
+    const ref = doc(this.db, FirestoreCollections.receivings, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('Receiving not found');
+    if (snap.data().status === 'completed') {
+      throw new Error('Cannot edit a completed receiving');
+    }
+    const items = normalizeItems(input.items);
+    await updateDoc(ref, {
+      supplierId: input.supplierId,
+      supplierName: input.supplierName,
+      items,
+      totalCost: input.totalCost,
+      totalQuantity: input.totalQuantity,
+      notes: input.notes,
+      updatedBy: actorId,
+    });
+  }
+
+  async complete(
+    id: string,
+    actor: { id: string; name: string | null },
+    cipher: CostCode,
+  ): Promise<void> {
+    const ref = doc(this.db, FirestoreCollections.receivings, id);
+    const snap = await getDoc(ref.withConverter(receivingConverter));
+    const receiving = snap.exists() ? snap.data() : null;
+    if (!receiving) throw new Error('Receiving not found');
+    if (receiving.status === 'completed') return; // idempotent — never double-apply stock
+
+    const products = await this.products.list();
+    const receivables = resolveDraftItems(receiving.items, products);
+    // resolveDraftItems drops existing-product lines whose product is gone. Refuse
+    // to complete a partial receiving (it would be locked as completed, missing
+    // items) — make the user edit the draft instead.
+    if (receivables.length !== receiving.items.length) {
+      throw new Error(
+        'Some items reference products that no longer exist — edit the draft and try again.',
+      );
+    }
+    if (receivables.length > MAX_TRANSACTION_RECEIVING_ITEMS) {
+      throw new Error(
+        `This receiving has ${receivables.length} items — the maximum is ` +
+          `${MAX_TRANSACTION_RECEIVING_ITEMS}. Receive in smaller batches.`,
+      );
+    }
+    const plan = planReceive(
+      receivables,
+      {
+        cipher,
+        actor,
+        supplier: receiving.supplierId
+          ? { id: receiving.supplierId, name: receiving.supplierName ?? '' }
+          : null,
+        knownSkus: products.map((p) => p.sku),
+      },
+      () => newProductId(this.db),
+    );
+    const totalQuantity = plan.items.reduce((n, it) => n + it.quantity, 0);
+    const totalCost = plan.items.reduce((n, it) => n + it.unitCost * it.quantity, 0);
+
+    // One atomic transaction: create products (+ claims + price history),
+    // increment matched stock, and flip the draft to completed. Re-read the doc
+    // inside the tx so a concurrent completion can't double-apply stock.
+    await runTransaction(this.db, async (tx) => {
+      const fresh = await tx.get(ref);
+      if (fresh.exists() && fresh.data().status === 'completed') return;
+      await executeReceivePlan(tx, this.db, plan, actor);
+      tx.update(ref, {
+        items: plan.items,
+        totalQuantity,
+        totalCost,
+        status: 'completed',
+        completedBy: actor.id,
+        completedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  // The unbounded list() is unused on web (history uses watchAll); keep stubbed.
+  async list(): Promise<Receiving[]> {
+    throw new Error('ReceivingRepository.list not implemented yet');
   }
 
   private async generateReferenceNumber(): Promise<string> {

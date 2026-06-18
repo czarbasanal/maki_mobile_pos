@@ -41,7 +41,7 @@ describe('receivingConverter.fromFirestore', () => {
     expect(r.items[0]).toEqual({
       id: 'i1', productId: 'p1', sku: 'BANGUS-1KG', name: 'Bangus 1kg',
       quantity: 10, unit: 'kg', unitCost: 180, costCode: 'AB-CD',
-      isNewVariation: false, newProductId: null, notes: null,
+      isNewVariation: false, newProductId: null, notes: null, pendingNewProduct: null,
     });
     expect(r.totalCost).toBe(1800);
     expect(r.totalQuantity).toBe(10);
