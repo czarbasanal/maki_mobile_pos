@@ -19,6 +19,27 @@ class ProductRepositoryImpl implements ProductRepository {
   CollectionReference<Map<String, dynamic>> get _skusRef =>
       _firestore.collection(FirestoreCollections.productSkus);
 
+  CollectionReference<Map<String, dynamic>> get _barcodesRef =>
+      _firestore.collection(FirestoreCollections.productBarcodes);
+
+  /// The set of claimable barcode keys for a product: trim → drop empty → dedupe.
+  /// When [validate], rejects a non-empty code that can't form a claim doc-id.
+  Set<String> _barcodeKeys(List<String> codes, {bool validate = false}) {
+    final keys = <String>{};
+    for (final code in codes) {
+      final key = SkuGenerator.normalizeBarcode(code);
+      if (key.isEmpty) continue;
+      if (validate && !SkuGenerator.isClaimableBarcode(key)) {
+        throw ValidationException(
+          message: 'Invalid barcode "$code" — cannot contain "/".',
+          code: 'invalid-barcode',
+        );
+      }
+      keys.add(key);
+    }
+    return keys;
+  }
+
   // ==================== CREATE ====================
 
   @override
@@ -42,29 +63,27 @@ class ProductRepositoryImpl implements ProductRepository {
         );
       }
 
-      // Barcode advisory check (barcodes are not claim-guarded — out of scope).
-      for (final code in product.barcodes) {
-        if (code.isEmpty) continue;
-        if (await barcodeExists(barcode: code)) {
-          throw DuplicateEntryException(
-            field: 'barcodes',
-            value: code,
-            message: 'A product with barcode "$code" already exists',
-          );
-        }
-      }
+      // Claimable barcode keys (optional, trimmed, deduped, validated).
+      final barcodeKeys = _barcodeKeys(product.barcodes, validate: true);
 
       final productModel = ProductModel.fromEntity(product);
       final docRef = _productsRef.doc(); // pre-allocate id for the transaction
       final claimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+      final barcodeRefs = barcodeKeys.map(_barcodesRef.doc).toList();
 
-      // Atomically reserve the SKU claim and write the product together. The
-      // tx.get gate + Firestore's auto-retry on contention closes the TOCTOU
-      // the old skuExists()-then-add() left open.
+      // Atomically reserve the SKU + barcode claims and write the product
+      // together. Reads precede writes (Firestore transaction rule); the tx.get
+      // gates + auto-retry close the TOCTOU the old exists()-then-write left open.
       await _firestore.runTransaction((tx) async {
         final claim = await tx.get(claimRef);
+        final barcodeClaims = [for (final ref in barcodeRefs) await tx.get(ref)];
         if (claim.exists) {
           throw DuplicateSkuException(sku: product.sku);
+        }
+        for (var i = 0; i < barcodeClaims.length; i++) {
+          if (barcodeClaims[i].exists) {
+            throw DuplicateBarcodeException(barcode: barcodeRefs[i].id);
+          }
         }
         tx.set(
           docRef,
@@ -77,6 +96,14 @@ class ProductRepositoryImpl implements ProductRepository {
           'claimedBy': createdBy,
           'claimedAt': FieldValue.serverTimestamp(),
         });
+        for (final ref in barcodeRefs) {
+          tx.set(ref, {
+            'barcode': ref.id,
+            'productId': docRef.id,
+            'claimedBy': createdBy,
+            'claimedAt': FieldValue.serverTimestamp(),
+          });
+        }
       });
 
       // Initial price history — best-effort (unchanged). A failure here must not
@@ -412,41 +439,74 @@ class ProductRepositoryImpl implements ProductRepository {
       );
 
       final skuChanged = prior != null && prior.sku != product.sku;
-      if (skuChanged) {
+      final priorKeys = _barcodeKeys(prior?.barcodes ?? const []);
+      final newKeys = _barcodeKeys(product.barcodes, validate: true);
+      final addedKeys = newKeys.difference(priorKeys);
+      final removedKeys = priorKeys.difference(newKeys);
+      final barcodesChanged = addedKeys.isNotEmpty || removedKeys.isNotEmpty;
+
+      if (skuChanged || barcodesChanged) {
         // Variation children (baseSku == old) must be read OUTSIDE the
         // transaction — Firestore transactions cannot run queries.
-        final children =
-            await _productsRef.where('baseSku', isEqualTo: prior.sku).get();
-        final oldClaimRef = _skusRef.doc(SkuGenerator.normalizeSku(prior.sku));
-        final newClaimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+        final children = skuChanged
+            ? await _productsRef.where('baseSku', isEqualTo: prior.sku).get()
+            : null;
+        final newSkuClaimRef =
+            _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+        final addedRefs = addedKeys.map(_barcodesRef.doc).toList();
 
-        // Move the parent's SKU claim (delete old, create new), update the
-        // parent, and re-point every child's baseSku — all atomically, so the
-        // variation group never observes a dangling parent link.
+        // Move the SKU claim (if renamed) + relink variation children, AND
+        // release removed / claim added barcodes — all atomically. Reads
+        // precede writes (Firestore transaction rule).
         await _firestore.runTransaction((tx) async {
-          final newClaim = await tx.get(newClaimRef);
-          if (newClaim.exists &&
-              newClaim.data()?['productId'] != product.id) {
+          // Reads.
+          final newSkuClaim =
+              skuChanged ? await tx.get(newSkuClaimRef) : null;
+          final addedClaims = [for (final ref in addedRefs) await tx.get(ref)];
+          // Conflict checks.
+          if (skuChanged &&
+              newSkuClaim!.exists &&
+              newSkuClaim.data()?['productId'] != product.id) {
             throw DuplicateSkuException(sku: product.sku);
           }
+          for (var i = 0; i < addedClaims.length; i++) {
+            final c = addedClaims[i];
+            if (c.exists && c.data()?['productId'] != product.id) {
+              throw DuplicateBarcodeException(barcode: addedRefs[i].id);
+            }
+          }
+          // Writes.
           tx.update(_productsRef.doc(product.id), updateMap);
-          for (final child in children.docs) {
-            tx.update(child.reference, {
-              'baseSku': product.sku,
-              'updatedAt': FieldValue.serverTimestamp(),
-              'updatedBy': updatedBy,
-              if (updatedByName != null) 'updatedByName': updatedByName,
+          if (skuChanged) {
+            for (final child in children!.docs) {
+              tx.update(child.reference, {
+                'baseSku': product.sku,
+                'updatedAt': FieldValue.serverTimestamp(),
+                'updatedBy': updatedBy,
+                if (updatedByName != null) 'updatedByName': updatedByName,
+              });
+            }
+            // delete-then-set is safe even if old == new (case-only rename):
+            // same ref → the set wins, re-keying the claim's sku field.
+            tx.delete(_skusRef.doc(SkuGenerator.normalizeSku(prior.sku)));
+            tx.set(newSkuClaimRef, {
+              'sku': product.sku,
+              'productId': product.id,
+              'claimedBy': updatedBy,
+              'claimedAt': FieldValue.serverTimestamp(),
             });
           }
-          // delete-then-set is safe even if old == new (case-only rename):
-          // same ref → the set wins, re-keying the claim's sku field.
-          tx.delete(oldClaimRef);
-          tx.set(newClaimRef, {
-            'sku': product.sku,
-            'productId': product.id,
-            'claimedBy': updatedBy,
-            'claimedAt': FieldValue.serverTimestamp(),
-          });
+          for (final key in removedKeys) {
+            tx.delete(_barcodesRef.doc(key));
+          }
+          for (final ref in addedRefs) {
+            tx.set(ref, {
+              'barcode': ref.id,
+              'productId': product.id,
+              'claimedBy': updatedBy,
+              'claimedAt': FieldValue.serverTimestamp(),
+            });
+          }
         });
       } else {
         await _productsRef.doc(product.id).update(updateMap);
@@ -655,6 +715,9 @@ class ProductRepositoryImpl implements ProductRepository {
           createdBy: createdBy,
           updatedBy: null,
           updatedAt: null,
+          // A cost-variation is an internal product; the manufacturer barcode
+          // stays with the base item, so the variation claims none.
+          barcodes: const [],
         );
 
         try {
@@ -792,28 +855,13 @@ class ProductRepositoryImpl implements ProductRepository {
     String? excludeProductId,
   }) async {
     try {
-      // Primary check against the new `barcodes` array.
-      final fromArray = await _productsRef
-          .where('barcodes', arrayContains: barcode)
-          .limit(2)
-          .get();
-
-      final hasArrayHit = excludeProductId == null
-          ? fromArray.docs.isNotEmpty
-          : fromArray.docs.any((doc) => doc.id != excludeProductId);
-      if (hasArrayHit) return true;
-
-      // Legacy fallback: docs that still carry the singular `barcode`
-      // String field. See [getProductByBarcode] for why this is needed.
-      final fromLegacy = await _productsRef
-          .where('barcode', isEqualTo: barcode)
-          .limit(2)
-          .get();
-
-      if (excludeProductId == null) {
-        return fromLegacy.docs.isNotEmpty;
-      }
-      return fromLegacy.docs.any((doc) => doc.id != excludeProductId);
+      // Claim-backed (Slice B): a barcode is taken iff its product_barcodes
+      // claim doc exists. Mirrors skuExists.
+      final snap =
+          await _barcodesRef.doc(SkuGenerator.normalizeBarcode(barcode)).get();
+      if (!snap.exists) return false;
+      if (excludeProductId == null) return true;
+      return snap.data()?['productId'] != excludeProductId;
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to check barcode existence: ${e.message}',

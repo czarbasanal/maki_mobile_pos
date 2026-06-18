@@ -261,6 +261,15 @@ class DuplicateSkuException extends DuplicateEntryException {
   }) : super(field: 'sku', value: sku);
 }
 
+/// Exception thrown when a barcode is already claimed by another product.
+class DuplicateBarcodeException extends DuplicateEntryException {
+  const DuplicateBarcodeException({
+    required String barcode,
+    super.message = 'A product with this barcode already exists',
+    super.code = 'duplicate-barcode',
+  }) : super(field: 'barcodes', value: barcode);
+}
+
 /// Exception thrown when barcode scanning fails.
 class BarcodeScanException extends AppException {
   const BarcodeScanException({

@@ -42,6 +42,7 @@ void main() {
     String name = 'Test',
     String? baseSku,
     int? variationNumber,
+    List<String> barcodes = const [],
   }) {
     return ProductEntity(
       id: id,
@@ -57,6 +58,7 @@ void main() {
       createdAt: DateTime(2025, 1, 1),
       baseSku: baseSku,
       variationNumber: variationNumber,
+      barcodes: barcodes,
     );
   }
 
@@ -185,6 +187,49 @@ void main() {
     });
   });
 
+  group('ProductRepositoryImpl.createProduct barcode claims', () {
+    test('claims every barcode and dedupes/trims', () async {
+      final created = await repository.createProduct(
+        product: buildProduct(sku: 'P1', barcodes: [' A1 ', 'A1', 'B2']),
+        createdBy: 'u1',
+      );
+      final a = await firestore.collection('product_barcodes').doc('A1').get();
+      final b = await firestore.collection('product_barcodes').doc('B2').get();
+      expect(a.exists, isTrue);
+      expect(a.data()?['productId'], created.id);
+      expect(b.exists, isTrue);
+    });
+
+    test('rejects a barcode already claimed by another product (atomic)',
+        () async {
+      await firestore.collection('product_barcodes').doc('A1').set({
+        'barcode': 'A1',
+        'productId': 'other',
+      });
+      await expectLater(
+        () => repository.createProduct(
+          product: buildProduct(sku: 'P2', barcodes: ['A1']),
+          createdBy: 'u1',
+        ),
+        throwsA(isA<DuplicateBarcodeException>()),
+      );
+      // Nothing committed — no product with sku P2.
+      final p2 =
+          await firestore.collection('products').where('sku', isEqualTo: 'P2').get();
+      expect(p2.docs, isEmpty);
+    });
+
+    test('rejects a barcode that cannot form a claim doc-id', () async {
+      await expectLater(
+        () => repository.createProduct(
+          product: buildProduct(sku: 'P3', barcodes: ['a/b']),
+          createdBy: 'u1',
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+  });
+
   group('ProductRepositoryImpl.skuExists (claim-backed)', () {
     test('true when a claim exists (case-insensitive), false otherwise',
         () async {
@@ -213,6 +258,33 @@ void main() {
       expect(
         await repository.skuExists(sku: 'abc-1', excludeProductId: 'p2'),
         true,
+      );
+    });
+  });
+
+  group('ProductRepositoryImpl.barcodeExists (claim-backed)', () {
+    test('true when a claim exists, false otherwise', () async {
+      await firestore.collection('product_barcodes').doc('ABC123').set({
+        'barcode': 'ABC123',
+        'productId': 'p1',
+      });
+      expect(await repository.barcodeExists(barcode: ' ABC123 '), isTrue); // trimmed
+      expect(await repository.barcodeExists(barcode: 'NOPE'), isFalse);
+    });
+
+    test('excludeProductId lets the owning product reuse its own barcode',
+        () async {
+      await firestore.collection('product_barcodes').doc('ABC123').set({
+        'barcode': 'ABC123',
+        'productId': 'p1',
+      });
+      expect(
+        await repository.barcodeExists(barcode: 'ABC123', excludeProductId: 'p1'),
+        isFalse,
+      );
+      expect(
+        await repository.barcodeExists(barcode: 'ABC123', excludeProductId: 'p2'),
+        isTrue,
       );
     });
   });
@@ -279,6 +351,60 @@ void main() {
     });
   });
 
+  group('ProductRepositoryImpl.updateProduct barcode diff', () {
+    test('claims a newly added barcode', () async {
+      final p = await repository.createProduct(
+        product: buildProduct(sku: 'U1'),
+        createdBy: 'u1',
+      );
+      await repository.updateProduct(
+        product: buildProduct(id: p.id, sku: 'U1', barcodes: ['NEW1']),
+        updatedBy: 'u1',
+      );
+      final claim =
+          await firestore.collection('product_barcodes').doc('NEW1').get();
+      expect(claim.exists, isTrue);
+      expect(claim.data()?['productId'], p.id);
+    });
+
+    test('frees a removed barcode (reusable by another product)', () async {
+      final p = await repository.createProduct(
+        product: buildProduct(sku: 'U2', barcodes: ['OLD1']),
+        createdBy: 'u1',
+      );
+      await repository.updateProduct(
+        product: buildProduct(id: p.id, sku: 'U2', barcodes: const []),
+        updatedBy: 'u1',
+      );
+      expect(
+        (await firestore.collection('product_barcodes').doc('OLD1').get()).exists,
+        isFalse,
+      );
+    });
+
+    test('rejects adding a barcode owned by another product; nothing changes',
+        () async {
+      final a = await repository.createProduct(
+        product: buildProduct(sku: 'UA', barcodes: ['SHARED']),
+        createdBy: 'u1',
+      );
+      final b = await repository.createProduct(
+        product: buildProduct(sku: 'UB'),
+        createdBy: 'u1',
+      );
+      await expectLater(
+        () => repository.updateProduct(
+          product: buildProduct(id: b.id, sku: 'UB', barcodes: ['SHARED']),
+          updatedBy: 'u1',
+        ),
+        throwsA(isA<DuplicateBarcodeException>()),
+      );
+      final claim =
+          await firestore.collection('product_barcodes').doc('SHARED').get();
+      expect(claim.data()?['productId'], a.id);
+    });
+  });
+
   group('ProductRepositoryImpl.createVariation retry-on-collision', () {
     test('allocates the next free number past existing variations', () async {
       final parentId = await seedProduct({'sku': 'BASE', 'name': 'Parent'});
@@ -330,6 +456,26 @@ void main() {
           createdBy: 'admin-1',
         ),
         throwsA(isA<DatabaseException>()),
+      );
+    });
+  });
+
+  group('ProductRepositoryImpl.createVariation barcodes', () {
+    test('variation carries no barcodes and claims none', () async {
+      final original = buildProduct(sku: 'BASE', barcodes: ['BC1']);
+      final variation = await repository.createVariation(
+        originalProduct: original,
+        newCost: 9.0,
+        newCostCode: 'ZZ',
+        createdBy: 'u1',
+      );
+      final stored =
+          await firestore.collection('products').doc(variation.id).get();
+      expect((stored.data()?['barcodes'] as List).isEmpty, isTrue);
+      // The variation never claimed the base's barcode.
+      expect(
+        (await firestore.collection('product_barcodes').doc('BC1').get()).exists,
+        isFalse,
       );
     });
   });
