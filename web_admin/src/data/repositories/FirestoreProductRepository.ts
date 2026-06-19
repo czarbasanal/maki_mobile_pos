@@ -25,9 +25,9 @@ import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/
 import { productConverter } from '@/data/converters/productConverter';
 import { toDate } from '@/data/converters/timestamps';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
-import { normalizeSku, normalizeBarcode } from '@/domain/products/sku';
+import { normalizeSku, normalizeBarcode, isClaimableBarcode } from '@/domain/products/sku';
 import { buildProductWrites, newProductId } from '@/data/products/productWrites';
-import { DuplicateSkuError } from '@/data/errors';
+import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
 import type {
   PriceHistoryEntry,
   ProductCreateInput,
@@ -187,11 +187,29 @@ export class FirestoreProductRepository implements ProductRepository {
       actorId,
       productId,
     );
+    const barcodeKey = input.barcode ? normalizeBarcode(input.barcode) : '';
+    if (barcodeKey && !isClaimableBarcode(barcodeKey)) {
+      throw new Error(`Invalid barcode "${input.barcode}" — it can't contain "/".`);
+    }
+    const barcodeClaimRef = barcodeKey
+      ? doc(this.db, FirestoreCollections.productBarcodes, barcodeKey)
+      : null;
+
     await runTransaction(this.db, async (tx) => {
       const claim = await tx.get(claimRef);
+      const barcodeClaim = barcodeClaimRef ? await tx.get(barcodeClaimRef) : null;
       if (claim.exists()) throw new DuplicateSkuError();
+      if (barcodeClaim?.exists()) throw new DuplicateBarcodeError();
       tx.set(productRef, productData);
       tx.set(claimRef, claimData);
+      if (barcodeClaimRef) {
+        tx.set(barcodeClaimRef, {
+          barcode: barcodeKey,
+          productId,
+          claimedBy: actorId,
+          claimedAt: serverTimestamp(),
+        });
+      }
     });
     const created = await this.getById(productId);
     if (!created) throw new Error('Failed to load the created product');
