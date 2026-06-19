@@ -6,6 +6,7 @@ import type {
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import type { Product } from '@/domain/entities';
+import { parseBarcodes } from '@/domain/products/barcodes';
 import { requireDate, toDate } from './timestamps';
 
 export const productConverter: FirestoreDataConverter<Product> = {
@@ -29,7 +30,7 @@ export const productConverter: FirestoreDataConverter<Product> = {
       searchKeywords: product.searchKeywords,
       baseSku: product.baseSku,
       variationNumber: product.variationNumber,
-      barcode: product.barcode,
+      barcodes: product.barcodes,
       category: product.category,
       imageUrl: product.imageUrl,
       notes: product.notes,
@@ -59,7 +60,7 @@ export const productConverter: FirestoreDataConverter<Product> = {
       searchKeywords: Array.isArray(d.searchKeywords) ? (d.searchKeywords as string[]) : [],
       baseSku: d.baseSku ?? null,
       variationNumber: d.variationNumber == null ? null : Number(d.variationNumber),
-      barcode: d.barcode ?? null,
+      barcodes: parseBarcodes(d),
       category: d.category ?? null,
       imageUrl: d.imageUrl ?? null,
       notes: d.notes ?? null,

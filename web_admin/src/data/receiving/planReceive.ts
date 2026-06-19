@@ -45,7 +45,7 @@ function productInput(
     quantity: p.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
     supplierId: p.supplierId, supplierName: p.supplierName, isActive: true,
     createdBy: actor.id, updatedBy: actor.id, createdByName: actorName, updatedByName: actorName,
-    baseSku: p.baseSku, variationNumber: p.variationNumber, barcode: null,
+    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [],
     category: p.category, imageUrl: null, notes: null,
     // searchKeywords intentionally omitted — buildProductWrites generates them.
   };

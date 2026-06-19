@@ -63,7 +63,7 @@ export function buildProductWrites(
       searchKeywords,
       baseSku: input.baseSku,
       variationNumber: input.variationNumber,
-      barcode: input.barcode,
+      barcodes: input.barcodes,
       category: input.category,
       imageUrl: input.imageUrl,
       notes: input.notes,

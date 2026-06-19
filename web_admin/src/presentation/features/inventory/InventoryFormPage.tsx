@@ -108,7 +108,7 @@ export function InventoryFormPage() {
     reset({
       name: target.name,
       sku: target.sku,
-      barcode: target.barcode ?? '',
+      barcode: target.barcodes[0] ?? '',
       cost: target.cost,
       price: target.price,
       quantity: target.quantity,
@@ -185,14 +185,14 @@ export function InventoryFormPage() {
         unit: values.unit.trim() || 'pcs',
         supplierId: supplier.id,
         supplierName: supplier.name,
-        barcode: blank(values.barcode),
+        barcodes: blank(values.barcode) ? [blank(values.barcode) as string] : [],
         notes: blank(values.notes),
       };
       try {
         await update.mutateAsync({
           id: target.id,
           oldSku: target.sku,
-          oldBarcode: target.barcode,
+          oldBarcodes: target.barcodes,
           patch,
           priceChange: reason ? { price: priceNum, cost: costNum, reason } : null,
         });
@@ -222,7 +222,7 @@ export function InventoryFormPage() {
         unit: values.unit.trim() || 'pcs',
         supplierId: supplier.id,
         supplierName: supplier.name,
-        barcode: blank(values.barcode),
+        barcodes: blank(values.barcode) ? [blank(values.barcode) as string] : [],
         category: blank(values.category),
         notes: blank(values.notes),
       });

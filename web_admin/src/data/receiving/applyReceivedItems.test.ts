@@ -10,7 +10,7 @@ function product(over: Partial<Product> = {}): Product {
   return {
     id: 'p1', sku: 'BANGUS-1KG', name: 'Bangus 1kg', category: 'Fish', unit: 'kg',
     cost: 180, price: 220, quantity: 5, reorderLevel: 2, costCode: 'AB-CD',
-    barcode: null, supplierId: null, supplierName: null, baseSku: null,
+    barcodes: [], supplierId: null, supplierName: null, baseSku: null,
     variationNumber: null, isActive: true, imageUrl: null, notes: null,
     searchKeywords: [], createdAt: new Date(), updatedAt: null,
     createdBy: 'u1', updatedBy: 'u1', createdByName: 'Czar', updatedByName: 'Czar', ...over,

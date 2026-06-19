@@ -46,7 +46,7 @@ export interface ProductRepository {
     id: string,
     input: ProductUpdateInput,
     sku: { old: string; next: string; changed: boolean },
-    barcode: { old: string | null; next: string | null; changed: boolean },
+    barcode: { old: string[]; next: string[] },
     actorId: string,
     actorName: string | null,
   ): Promise<void>;

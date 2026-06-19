@@ -3,11 +3,12 @@ import { useProductRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import type { Product } from '@/domain/entities';
+import { diffBarcodeClaims } from '@/domain/products/barcodes';
 
 export interface UpdateProductInput {
   id: string;
   oldSku: string;
-  oldBarcode: string | null;
+  oldBarcodes: string[];
   patch: ProductUpdateInput;
   /** Set when cost and/or price changed; triggers a best-effort price_history write. */
   priceChange: { price: number; cost: number; reason: string } | null;
@@ -18,27 +19,30 @@ export function useUpdateProduct() {
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<void, Error, UpdateProductInput>({
-    mutationFn: async ({ id, oldSku, oldBarcode, patch, priceChange }) => {
+    mutationFn: async ({ id, oldSku, oldBarcodes, patch, priceChange }) => {
       if (!actor) throw new Error('Not signed in');
       const actorName = actor.displayName.trim() || null;
       const fullPatch: ProductUpdateInput = { ...patch, updatedByName: actorName };
       const newSku = (fullPatch.sku ?? oldSku) as string;
       const skuChanged = fullPatch.sku !== undefined && fullPatch.sku !== oldSku;
-      const newBarcode = (fullPatch.barcode ?? null) as string | null;
-      const barcodeChanged = newBarcode !== oldBarcode;
+      const newBarcodes = (fullPatch.barcodes ?? oldBarcodes) as string[];
+      const { added, removed } = diffBarcodeClaims(oldBarcodes, newBarcodes);
+      const barcodesChanged = added.length > 0 || removed.length > 0;
 
-      if (skuChanged || barcodeChanged) {
+      if (skuChanged || barcodesChanged) {
         if (skuChanged && (await repo.skuExists(newSku, id))) {
           throw new Error('A product with this SKU already exists');
         }
-        if (barcodeChanged && newBarcode && (await repo.barcodeExists(newBarcode, id))) {
-          throw new Error('A product with this barcode already exists');
+        for (const code of added) {
+          if (await repo.barcodeExists(code, id)) {
+            throw new Error('A product with this barcode already exists');
+          }
         }
         await repo.updateProductWithClaims(
           id,
           fullPatch,
           { old: oldSku, next: newSku, changed: skuChanged },
-          { old: oldBarcode, next: newBarcode, changed: barcodeChanged },
+          { old: oldBarcodes, next: newBarcodes },
           actor.id,
           actorName,
         );
@@ -128,7 +132,7 @@ export interface CreateProductInput {
   unit: string;
   supplierId: string | null;
   supplierName: string | null;
-  barcode: string | null;
+  barcodes: string[];
   category: string | null;
   notes: string | null;
 }
@@ -143,8 +147,10 @@ export function useCreateProduct() {
       if (await repo.skuExists(input.sku)) {
         throw new Error('A product with this SKU already exists');
       }
-      if (input.barcode && (await repo.barcodeExists(input.barcode))) {
-        throw new Error('A product with this barcode already exists');
+      for (const code of input.barcodes) {
+        if (await repo.barcodeExists(code)) {
+          throw new Error('A product with this barcode already exists');
+        }
       }
       const actorName = actor.displayName.trim() || null;
       const created = await repo.create(

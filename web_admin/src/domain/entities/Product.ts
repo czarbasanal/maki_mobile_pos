@@ -21,7 +21,7 @@ export interface Product {
   searchKeywords: string[];
   baseSku: string | null;
   variationNumber: number | null;
-  barcode: string | null;
+  barcodes: string[];
   category: string | null;
   imageUrl: string | null;
   notes: string | null;
