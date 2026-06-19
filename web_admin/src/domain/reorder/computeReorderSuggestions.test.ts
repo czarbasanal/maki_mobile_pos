@@ -8,7 +8,7 @@ function product(over: Partial<Product> = {}): Product {
     quantity: 0, reorderLevel: 2, unit: 'kg', supplierId: 'sup-1', supplierName: 'Acme',
     isActive: true, createdAt: new Date(), updatedAt: null, createdBy: null, updatedBy: null,
     createdByName: null, updatedByName: null, searchKeywords: [], baseSku: null,
-    variationNumber: null, barcode: null, category: null, imageUrl: null, notes: null, ...over,
+    variationNumber: null, barcodes: [], category: null, imageUrl: null, notes: null, ...over,
   };
 }
 const params: ReorderParams = { windowDays: 30, coverDays: 14 };

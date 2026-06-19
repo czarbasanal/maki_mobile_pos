@@ -129,7 +129,7 @@ export function InventoryDetailPage() {
           <Field label="Category" value={product.category ?? '—'} />
           <Field label="Unit" value={product.unit} />
           <Field label="Supplier" value={product.supplierName ?? '—'} />
-          <Field label="Barcode" value={product.barcode ?? '—'} />
+          <Field label="Barcodes" value={product.barcodes.length ? product.barcodes.join(', ') : '—'} />
           <Field label="Notes" value={product.notes ?? '—'} />
         </Card>
         <Card title="Audit">

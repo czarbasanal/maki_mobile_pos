@@ -16,7 +16,7 @@ function product(over: Partial<Product> = {}): Product {
     quantity: 3, reorderLevel: 0, unit: 'pcs', supplierId: null, supplierName: null,
     isActive: true, createdAt: new Date(), updatedAt: null, createdBy: null, updatedBy: null,
     createdByName: null, updatedByName: null, searchKeywords: [], baseSku: null,
-    variationNumber: null, barcode: null, category: 'Engine', imageUrl: null, notes: null,
+    variationNumber: null, barcodes: [], category: 'Engine', imageUrl: null, notes: null,
     ...over,
   };
 }
