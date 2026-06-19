@@ -131,7 +131,7 @@ export class FirestoreProductRepository implements ProductRepository {
 
     const newBarcodeKey = barcode.next ? normalizeBarcode(barcode.next) : '';
     if (barcode.changed && newBarcodeKey && !isClaimableBarcode(newBarcodeKey)) {
-      throw new Error(`Invalid barcode "${barcode.next}" — it can't contain "/".`);
+      throw new Error(`Invalid barcode "${barcode.next}" — it can't contain "/" or be "." or "..".`);
     }
     const oldBarcodeKey = barcode.old ? normalizeBarcode(barcode.old) : '';
 
@@ -226,7 +226,7 @@ export class FirestoreProductRepository implements ProductRepository {
     );
     const barcodeKey = input.barcode ? normalizeBarcode(input.barcode) : '';
     if (barcodeKey && !isClaimableBarcode(barcodeKey)) {
-      throw new Error(`Invalid barcode "${input.barcode}" — it can't contain "/".`);
+      throw new Error(`Invalid barcode "${input.barcode}" — it can't contain "/" or be "." or "..".`);
     }
     const barcodeClaimRef = barcodeKey
       ? doc(this.db, FirestoreCollections.productBarcodes, barcodeKey)
