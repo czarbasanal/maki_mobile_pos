@@ -59,7 +59,9 @@ export class FirestoreProductRepository implements ProductRepository {
     const code = normalizeBarcode(barcode);
     const byArray = await getDocs(query(this.col(), where('barcodes', 'array-contains', code)));
     if (!byArray.empty) return byArray.docs[0].data();
-    const byLegacy = await getDocs(query(this.col(), where('barcode', '==', code)));
+    // Legacy fallback: match the singular field on the raw argument (old docs
+    // stored it un-normalized), preserving the old exact-match behavior.
+    const byLegacy = await getDocs(query(this.col(), where('barcode', '==', barcode)));
     return byLegacy.empty ? null : byLegacy.docs[0].data();
   }
 
