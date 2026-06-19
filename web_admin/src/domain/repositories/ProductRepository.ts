@@ -42,13 +42,13 @@ export interface ProductRepository {
   listPriceHistory(productId: string): Promise<PriceHistoryEntry[]>;
   skuExists(sku: string, excludeId?: string): Promise<boolean>;
   countSkuVariations(baseSku: string): Promise<number>;
-  updateProductWithSku(
+  updateProductWithClaims(
     id: string,
     input: ProductUpdateInput,
-    oldSku: string,
-    newSku: string,
+    sku: { old: string; next: string; changed: boolean },
+    barcode: { old: string | null; next: string | null; changed: boolean },
     actorId: string,
     actorName: string | null,
   ): Promise<void>;
-  barcodeExists(barcode: string): Promise<boolean>;
+  barcodeExists(barcode: string, excludeProductId?: string): Promise<boolean>;
 }

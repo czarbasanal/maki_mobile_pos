@@ -7,6 +7,7 @@ import type { Product } from '@/domain/entities';
 export interface UpdateProductInput {
   id: string;
   oldSku: string;
+  oldBarcode: string | null;
   patch: ProductUpdateInput;
   /** Set when cost and/or price changed; triggers a best-effort price_history write. */
   priceChange: { price: number; cost: number; reason: string } | null;
@@ -17,17 +18,30 @@ export function useUpdateProduct() {
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<void, Error, UpdateProductInput>({
-    mutationFn: async ({ id, oldSku, patch, priceChange }) => {
+    mutationFn: async ({ id, oldSku, oldBarcode, patch, priceChange }) => {
       if (!actor) throw new Error('Not signed in');
-      const fullPatch: ProductUpdateInput = { ...patch, updatedByName: (actor.displayName.trim() || null) };
+      const actorName = actor.displayName.trim() || null;
+      const fullPatch: ProductUpdateInput = { ...patch, updatedByName: actorName };
+      const newSku = (fullPatch.sku ?? oldSku) as string;
       const skuChanged = fullPatch.sku !== undefined && fullPatch.sku !== oldSku;
+      const newBarcode = (fullPatch.barcode ?? null) as string | null;
+      const barcodeChanged = newBarcode !== oldBarcode;
 
-      if (skuChanged) {
-        const newSku = fullPatch.sku as string;
-        if (await repo.skuExists(newSku, id)) {
+      if (skuChanged || barcodeChanged) {
+        if (skuChanged && (await repo.skuExists(newSku, id))) {
           throw new Error('A product with this SKU already exists');
         }
-        await repo.updateProductWithSku(id, fullPatch, oldSku, newSku, actor.id, (actor.displayName.trim() || null));
+        if (barcodeChanged && newBarcode && (await repo.barcodeExists(newBarcode, id))) {
+          throw new Error('A product with this barcode already exists');
+        }
+        await repo.updateProductWithClaims(
+          id,
+          fullPatch,
+          { old: oldSku, next: newSku, changed: skuChanged },
+          { old: oldBarcode, next: newBarcode, changed: barcodeChanged },
+          actor.id,
+          actorName,
+        );
       } else {
         await repo.update(id, fullPatch, actor.id);
       }

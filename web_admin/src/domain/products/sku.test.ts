@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { generateSku, slugifyForSku, normalizeSku, isValidSku } from './sku';
+import {
+  generateSku,
+  slugifyForSku,
+  normalizeSku,
+  isValidSku,
+  normalizeBarcode,
+  isClaimableBarcode,
+} from './sku';
 
 // rand() => 0 makes the random suffix all 'A' (alphabet[0]).
 const zero = () => 0;
@@ -48,5 +55,32 @@ describe('isValidSku', () => {
     expect(isValidSku('PRD/001')).toBe(false);
     expect(isValidSku('A B')).toBe(false);
     expect(isValidSku('A'.repeat(51))).toBe(false);
+  });
+});
+
+describe('normalizeBarcode', () => {
+  it('trims and preserves case (NOT uppercased)', () => {
+    expect(normalizeBarcode(' Abc/12 ')).toBe('Abc/12');
+    expect(normalizeBarcode('4800123')).toBe('4800123');
+    expect(normalizeBarcode('abc')).toBe('abc');
+  });
+
+  it('is idempotent', () => {
+    const once = normalizeBarcode('  4800123 ');
+    expect(normalizeBarcode(once)).toBe(once);
+  });
+});
+
+describe('isClaimableBarcode', () => {
+  it('accepts a normal code', () => {
+    expect(isClaimableBarcode('4800123456789')).toBe(true);
+  });
+
+  it('rejects empty, slash, dot/dotdot, and dunder keys', () => {
+    expect(isClaimableBarcode('')).toBe(false);
+    expect(isClaimableBarcode('a/b')).toBe(false);
+    expect(isClaimableBarcode('.')).toBe(false);
+    expect(isClaimableBarcode('..')).toBe(false);
+    expect(isClaimableBarcode('__x__')).toBe(false);
   });
 });
