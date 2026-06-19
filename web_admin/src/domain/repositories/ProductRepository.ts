@@ -50,5 +50,5 @@ export interface ProductRepository {
     actorId: string,
     actorName: string | null,
   ): Promise<void>;
-  barcodeExists(barcode: string): Promise<boolean>;
+  barcodeExists(barcode: string, excludeProductId?: string): Promise<boolean>;
 }

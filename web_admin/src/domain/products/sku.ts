@@ -49,3 +49,24 @@ export function normalizeSku(sku: string): string {
 export function isValidSku(sku: string): boolean {
   return sku.length > 0 && sku.length <= 50 && /^[A-Za-z0-9-]+$/.test(sku);
 }
+
+/**
+ * Canonical key for barcode-uniqueness claims
+ * (`product_barcodes/{normalizeBarcode(code)}`). MUST stay byte-identical to
+ * scripts/backfill-product-barcodes.mjs (`String(s).trim()`) and the Dart
+ * SkuGenerator.normalizeBarcode — case-sensitive (barcodes are exact tokens).
+ */
+export function normalizeBarcode(code: string): string {
+  return code.trim();
+}
+
+/**
+ * Whether a (already-normalized, non-empty) barcode key can be a Firestore
+ * doc-id, so it can be claimed. Empty keys mean "no barcode" (skip, not error).
+ */
+export function isClaimableBarcode(key: string): boolean {
+  if (key.length === 0 || key.length > 1500) return false;
+  if (key === '.' || key === '..') return false;
+  if (key.includes('/')) return false;
+  return !/^__.*__$/.test(key);
+}

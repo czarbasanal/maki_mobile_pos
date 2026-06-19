@@ -18,6 +18,8 @@ export const FirestoreCollections = {
   settings: 'settings',
   // SKU-uniqueness claim collection (Slice A). Keyed by normalizeSku(sku).
   productSkus: 'product_skus',
+  // Barcode-uniqueness claim collection. Keyed by normalizeBarcode(code).
+  productBarcodes: 'product_barcodes',
 } as const;
 
 export const SettingsDocs = {

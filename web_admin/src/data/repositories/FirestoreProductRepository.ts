@@ -25,7 +25,7 @@ import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/
 import { productConverter } from '@/data/converters/productConverter';
 import { toDate } from '@/data/converters/timestamps';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
-import { normalizeSku } from '@/domain/products/sku';
+import { normalizeSku, normalizeBarcode } from '@/domain/products/sku';
 import { buildProductWrites, newProductId } from '@/data/products/productWrites';
 import { DuplicateSkuError } from '@/data/errors';
 import type {
@@ -169,8 +169,13 @@ export class FirestoreProductRepository implements ProductRepository {
     });
   }
 
-  async barcodeExists(barcode: string): Promise<boolean> {
-    return (await this.getByBarcode(barcode)) != null;
+  async barcodeExists(barcode: string, excludeProductId?: string): Promise<boolean> {
+    const snap = await getDoc(
+      doc(this.db, FirestoreCollections.productBarcodes, normalizeBarcode(barcode)),
+    );
+    if (!snap.exists()) return false;
+    if (excludeProductId === undefined) return true;
+    return (snap.data() as { productId?: string }).productId !== excludeProductId;
   }
 
   // Write methods land in phase 7.
