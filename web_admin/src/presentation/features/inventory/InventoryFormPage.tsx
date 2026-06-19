@@ -40,7 +40,6 @@ const schema = z.object({
     .min(1, 'SKU is required')
     .max(50, 'Max 50 characters')
     .regex(/^[A-Za-z0-9-]+$/, 'Use only letters, numbers, and hyphens'),
-  barcode: z.string().trim().optional().or(z.literal('')),
   cost: reqNumber('Cost is required'),
   price: reqNumber('Price is required'),
   quantity: reqNumber('Quantity is required', true),
@@ -75,6 +74,9 @@ export function InventoryFormPage() {
 
   const [autoSku, setAutoSku] = useState(true);
   const [loadNotice, setLoadNotice] = useState<string | null>(null);
+  const [barcodes, setBarcodes] = useState<string[]>([]);
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const [skuDialog, setSkuDialog] = useState<{ open: boolean; count: number; values: FormValues | null }>(
     { open: false, count: 0, values: null },
   );
@@ -90,7 +92,7 @@ export function InventoryFormPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: '', sku: '', barcode: '', cost: 0, price: 0, quantity: 0, reorderLevel: 0,
+      name: '', sku: '', cost: 0, price: 0, quantity: 0, reorderLevel: 0,
       unit: 'pcs', category: '', supplierId: '', notes: '',
     },
   });
@@ -108,7 +110,6 @@ export function InventoryFormPage() {
     reset({
       name: target.name,
       sku: target.sku,
-      barcode: target.barcodes[0] ?? '',
       cost: target.cost,
       price: target.price,
       quantity: target.quantity,
@@ -118,6 +119,7 @@ export function InventoryFormPage() {
       supplierId: target.supplierId ?? '',
       notes: target.notes ?? '',
     });
+    setBarcodes(target.barcodes);
   }, [target, reset]);
 
   const categoryOptions = useMemo(
@@ -151,6 +153,20 @@ export function InventoryFormPage() {
   const regenerateSku = () =>
     setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
 
+  const commitBarcode = (raw: string) => {
+    const code = raw.trim();
+    if (!code) return;
+    if (barcodes.includes(code)) {
+      setBarcodeError('Already added');
+      return;
+    }
+    setBarcodes([...barcodes, code]);
+    setBarcodeInput('');
+    setBarcodeError(null);
+  };
+  const removeBarcode = (code: string) =>
+    setBarcodes((prev) => prev.filter((b) => b !== code));
+
   const resolveSupplier = (supplierId: string) => {
     const idOut = supplierId || null;
     const found = (suppliers ?? []).find((s) => s.id === idOut);
@@ -162,6 +178,9 @@ export function InventoryFormPage() {
 
   const doSave = async (values: FormValues) => {
     setLoadNotice(null);
+    // Auto-commit a barcode typed but not yet added (mirrors mobile's save flow).
+    const pending = barcodeInput.trim();
+    const allBarcodes = pending && !barcodes.includes(pending) ? [...barcodes, pending] : barcodes;
     const costNum = Number(values.cost);
     const priceNum = Number(values.price);
     const supplier = resolveSupplier(values.supplierId ?? '');
@@ -185,7 +204,7 @@ export function InventoryFormPage() {
         unit: values.unit.trim() || 'pcs',
         supplierId: supplier.id,
         supplierName: supplier.name,
-        barcodes: blank(values.barcode) ? [blank(values.barcode) as string] : [],
+        barcodes: allBarcodes,
         notes: blank(values.notes),
       };
       try {
@@ -200,7 +219,7 @@ export function InventoryFormPage() {
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Save failed';
         if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
-        else if (msg.toLowerCase().includes('barcode already exists')) setError('barcode', { type: 'duplicate', message: msg });
+        else if (msg.toLowerCase().includes('barcode already exists')) setBarcodeError(msg);
       }
       return;
     }
@@ -222,7 +241,7 @@ export function InventoryFormPage() {
         unit: values.unit.trim() || 'pcs',
         supplierId: supplier.id,
         supplierName: supplier.name,
-        barcodes: blank(values.barcode) ? [blank(values.barcode) as string] : [],
+        barcodes: allBarcodes,
         category: blank(values.category),
         notes: blank(values.notes),
       });
@@ -230,7 +249,7 @@ export function InventoryFormPage() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Save failed';
       if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
-      else if (msg.toLowerCase().includes('barcode already exists')) setError('barcode', { type: 'duplicate', message: msg });
+      else if (msg.toLowerCase().includes('barcode already exists')) setBarcodeError(msg);
     }
   };
 
@@ -338,8 +357,35 @@ export function InventoryFormPage() {
             </p>
           ) : null}
 
-          <Field label="Barcode" error={errors.barcode?.message}
-            input={<input type="text" className={inputCls(!!errors.barcode)} {...register('barcode')} />} />
+          <Field label="Barcodes" error={barcodeError ?? undefined}
+            input={
+              <div className="space-y-tk-sm">
+                {barcodes.length ? (
+                  <div className="flex flex-wrap gap-tk-xs">
+                    {barcodes.map((code) => (
+                      <span key={code} className="inline-flex items-center gap-tk-xs rounded-full bg-light-subtle px-tk-sm py-[2px] text-[12px] text-light-text">
+                        <span className="font-mono">{code}</span>
+                        <button type="button" onClick={() => removeBarcode(code)} className="text-light-text-hint hover:text-error" aria-label={`Remove ${code}`}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="flex items-center gap-tk-sm">
+                  <input
+                    type="text"
+                    value={barcodeInput}
+                    onChange={(e) => { setBarcodeInput(e.target.value); if (barcodeError) setBarcodeError(null); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitBarcode(barcodeInput); } }}
+                    placeholder="Add barcode"
+                    className={inputCls(false)}
+                  />
+                  <button type="button" onClick={() => commitBarcode(barcodeInput)}
+                    className="inline-flex shrink-0 items-center rounded-md border border-light-border px-tk-md py-[10px] text-bodySmall text-light-text hover:bg-light-subtle">
+                    Add
+                  </button>
+                </div>
+              </div>
+            } />
         </Section>
 
         <Section title="Pricing">
