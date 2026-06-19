@@ -110,62 +110,99 @@ export class FirestoreProductRepository implements ProductRepository {
     return snap.size;
   }
 
-  async updateProductWithSku(
+  async updateProductWithClaims(
     id: string,
     input: ProductUpdateInput,
-    oldSku: string,
-    newSku: string,
+    sku: { old: string; next: string; changed: boolean },
+    barcode: { old: string | null; next: string | null; changed: boolean },
     actorId: string,
     actorName: string | null,
   ): Promise<void> {
-    // Variation children must be read OUTSIDE the transaction (Firestore
-    // transactions can't run queries) — same as the previous writeBatch.
-    const children = await getDocs(
-      query(collection(this.db, FirestoreCollections.products), where('baseSku', '==', oldSku)),
-    );
-    const oldClaimRef = doc(
+    // Variation children (baseSku == old) must be read OUTSIDE the transaction
+    // (Firestore transactions can't run queries) — only needed on a SKU rename.
+    const children = sku.changed
+      ? await getDocs(
+          query(
+            collection(this.db, FirestoreCollections.products),
+            where('baseSku', '==', sku.old),
+          ),
+        )
+      : null;
+
+    const newBarcodeKey = barcode.next ? normalizeBarcode(barcode.next) : '';
+    if (barcode.changed && newBarcodeKey && !isClaimableBarcode(newBarcodeKey)) {
+      throw new Error(`Invalid barcode "${barcode.next}" — it can't contain "/".`);
+    }
+    const oldBarcodeKey = barcode.old ? normalizeBarcode(barcode.old) : '';
+
+    const newSkuClaimRef = doc(
       this.db,
       FirestoreCollections.productSkus,
-      normalizeSku(oldSku),
+      normalizeSku(sku.next),
     );
-    const newClaimRef = doc(
-      this.db,
-      FirestoreCollections.productSkus,
-      normalizeSku(newSku),
-    );
-    // Move the parent's claim (delete old, set new), update the parent, and
-    // re-point every child's baseSku — atomically, so the variation group never
-    // observes a dangling parent link.
+    const newBarcodeClaimRef =
+      barcode.changed && newBarcodeKey
+        ? doc(this.db, FirestoreCollections.productBarcodes, newBarcodeKey)
+        : null;
+
+    // Move the SKU claim and/or the barcode claim, update the parent, and
+    // re-point every child's baseSku — atomically, so the group never observes
+    // a dangling link.
     await runTransaction(this.db, async (tx) => {
-      const newClaim = await tx.get(newClaimRef);
+      // Reads first (Firestore transactions require reads-before-writes).
+      const newSkuClaim = sku.changed ? await tx.get(newSkuClaimRef) : null;
+      const newBarcodeClaim = newBarcodeClaimRef ? await tx.get(newBarcodeClaimRef) : null;
       if (
-        newClaim.exists() &&
-        (newClaim.data() as { productId?: string }).productId !== id
+        sku.changed &&
+        newSkuClaim!.exists() &&
+        (newSkuClaim!.data() as { productId?: string }).productId !== id
       ) {
         throw new DuplicateSkuError();
       }
-      // Product doc: reuse updateData so searchKeywords rebuild + whitelist apply.
+      if (
+        newBarcodeClaim?.exists() &&
+        (newBarcodeClaim.data() as { productId?: string }).productId !== id
+      ) {
+        throw new DuplicateBarcodeError();
+      }
+      // Product doc: reuse updateData so searchKeywords rebuild + whitelist
+      // apply. input already carries the new sku + barcode from the form patch.
       tx.update(
         doc(this.db, FirestoreCollections.products, id),
-        this.updateData({ ...input, sku: newSku }, actorId),
+        this.updateData(input, actorId),
       );
-      for (const child of children.docs) {
-        tx.update(child.ref, {
-          baseSku: newSku,
-          updatedBy: actorId,
-          updatedByName: actorName,
-          updatedAt: serverTimestamp(),
+      if (sku.changed) {
+        for (const child of children!.docs) {
+          tx.update(child.ref, {
+            baseSku: sku.next,
+            updatedBy: actorId,
+            updatedByName: actorName,
+            updatedAt: serverTimestamp(),
+          });
+        }
+        // delete-then-set is safe even when old == next (case-only rename):
+        // same ref → the set wins, re-keying the claim's sku field.
+        tx.delete(doc(this.db, FirestoreCollections.productSkus, normalizeSku(sku.old)));
+        tx.set(newSkuClaimRef, {
+          sku: sku.next,
+          productId: id,
+          claimedBy: actorId,
+          claimedAt: serverTimestamp(),
         });
       }
-      // delete-then-set is safe even when old == new (case-only rename): same
-      // ref → the set wins, re-keying the claim's sku field.
-      tx.delete(oldClaimRef);
-      tx.set(newClaimRef, {
-        sku: newSku,
-        productId: id,
-        claimedBy: actorId,
-        claimedAt: serverTimestamp(),
-      });
+      if (barcode.changed) {
+        if (oldBarcodeKey) {
+          tx.delete(doc(this.db, FirestoreCollections.productBarcodes, oldBarcodeKey));
+        }
+        if (newBarcodeClaimRef) {
+          tx.set(newBarcodeClaimRef, {
+            barcode: newBarcodeKey,
+            productId: id,
+            claimedBy: actorId,
+            claimedAt: serverTimestamp(),
+          });
+        }
+      }
     });
   }
 

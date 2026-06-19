@@ -192,6 +192,7 @@ export function InventoryFormPage() {
         await update.mutateAsync({
           id: target.id,
           oldSku: target.sku,
+          oldBarcode: target.barcode,
           patch,
           priceChange: reason ? { price: priceNum, cost: costNum, reason } : null,
         });
