@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ChartBarIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
+import { ChartBarIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
 import { useReportData } from '@/presentation/hooks/useReportData';
 import { salesToCsv, downloadCsv } from '@/core/utils/csv';
@@ -27,6 +29,12 @@ export function SalesReportPage() {
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
       <header className="flex flex-wrap items-end justify-between gap-tk-md">
         <div>
+          <Link
+            to={RoutePaths.reports}
+            className="mb-tk-xs inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
+          >
+            <ArrowLeftIcon className="h-3.5 w-3.5" /> Reports
+          </Link>
           <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
             Sales report
           </h1>
