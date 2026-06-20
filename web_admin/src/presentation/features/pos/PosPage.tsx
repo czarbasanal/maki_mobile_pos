@@ -209,7 +209,7 @@ export function PosPage() {
           <dl className="space-y-tk-xs border-t border-light-hairline px-tk-md py-tk-sm text-bodySmall">
             <Row label="Subtotal" value={formatMoney(subtotal)} />
             <Row label="Discount" value={`− ${formatMoney(discount)}`} />
-            <Row label="Labor" value={formatMoney(labor)} />
+            {labor > 0 ? <Row label="Labor" value={formatMoney(labor)} /> : null}
             <Row label="Total" value={formatMoney(grandTotal)} strong />
           </dl>
         </div>

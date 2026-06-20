@@ -10,15 +10,24 @@ export function LaborSection() {
   const setLaborLine = useCartStore((s) => s.setLaborLine);
   const removeLaborLine = useCartStore((s) => s.removeLaborLine);
   const mechanicId = useCartStore((s) => s.mechanicId);
+  const mechanicName = useCartStore((s) => s.mechanicName);
   const setMechanic = useCartStore((s) => s.setMechanic);
 
   const { data: mechanics } = useActiveMechanics();
   const active = mechanics ?? [];
 
+  // Keep the currently-selected mechanic visible even if it was deactivated
+  // after selection — otherwise the <select> would silently show "None" while
+  // the store still holds (and would persist) the stale id.
+  const selectedMissing = !!mechanicId && !active.some((m) => m.id === mechanicId);
+  const options = selectedMissing
+    ? [{ id: mechanicId, name: `${mechanicName ?? 'Mechanic'} (inactive)` }, ...active]
+    : active;
+
   const onMechanicChange = (id: string) => {
     if (!id) return setMechanic(null, null);
-    const m = active.find((x) => x.id === id);
-    setMechanic(id, m?.name ?? null);
+    const m = options.find((x) => x.id === id);
+    setMechanic(id, m?.name ?? mechanicName ?? null);
   };
 
   return (
@@ -46,7 +55,7 @@ export function LaborSection() {
           className="rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
         >
           <option value="">None</option>
-          {active.map((m) => (
+          {options.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
             </option>
@@ -69,36 +78,46 @@ function LaborRow({
   // Fee is string-backed locally so decimals (e.g. 150.50) type cleanly; the
   // store keeps the parsed number for the totals.
   const [feeText, setFeeText] = useState(line.fee ? String(line.fee) : '');
+  // A row only counts/writes when it has a description — surface that when a
+  // fee was entered without one, so the charge isn't silently dropped.
+  const needsDescription = line.fee > 0 && line.description.trim() === '';
 
   return (
-    <div className="flex items-center gap-tk-sm">
-      <input
-        type="text"
-        value={line.description}
-        onChange={(e) => onChange(line.id, { description: e.target.value })}
-        placeholder="Description"
-        className="min-w-0 flex-1 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
-      />
-      <input
-        type="number"
-        min={0}
-        step="0.01"
-        inputMode="decimal"
-        value={feeText}
-        onChange={(e) => {
-          setFeeText(e.target.value);
-          onChange(line.id, { fee: Number(e.target.value) || 0 });
-        }}
-        placeholder="Fee"
-        className="w-24 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
-      />
-      <button
-        type="button"
-        onClick={() => onRemove(line.id)}
-        className="text-light-text-hint hover:text-error"
-      >
-        <TrashIcon className="h-4 w-4" />
-      </button>
+    <div className="space-y-tk-xs">
+      <div className="flex items-center gap-tk-sm">
+        <input
+          type="text"
+          value={line.description}
+          onChange={(e) => onChange(line.id, { description: e.target.value })}
+          placeholder="Description"
+          className="min-w-0 flex-1 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
+        />
+        <input
+          type="number"
+          min={0}
+          step="0.01"
+          inputMode="decimal"
+          value={feeText}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (Number(raw) < 0) return; // labor fees are never negative
+            setFeeText(raw);
+            onChange(line.id, { fee: Number(raw) || 0 });
+          }}
+          placeholder="Fee"
+          className="w-24 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
+        />
+        <button
+          type="button"
+          onClick={() => onRemove(line.id)}
+          className="text-light-text-hint hover:text-error"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </button>
+      </div>
+      {needsDescription ? (
+        <p className="text-[11px] text-warning-dark">Add a description to include this charge.</p>
+      ) : null}
     </div>
   );
 }
