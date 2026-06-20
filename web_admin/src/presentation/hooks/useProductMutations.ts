@@ -179,9 +179,14 @@ export function useCreateProduct() {
         actor.id,
       );
       if (imageBlob) {
-        const imageUrl = await uploadProductImage(created.id, imageBlob);
-        await repo.update(created.id, { imageUrl }, actor.id);
-        created.imageUrl = imageUrl;
+        try {
+          const imageUrl = await uploadProductImage(created.id, imageBlob);
+          await repo.update(created.id, { imageUrl }, actor.id);
+          created.imageUrl = imageUrl;
+        } catch {
+          // best-effort — the product is already created + SKU-claimed; a failed
+          // image upload shouldn't strand it (the image can be added via edit).
+        }
       }
       try {
         await repo.recordPriceChange(created.id, {

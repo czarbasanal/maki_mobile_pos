@@ -194,11 +194,16 @@ export function InventoryFormPage() {
   };
   const confirmCrop = async () => {
     if (!cropSrc || !croppedAreaPixels) return;
-    const blob = await getCroppedBlob(cropSrc, croppedAreaPixels);
-    setImageBlob(blob);
-    setImagePreview(URL.createObjectURL(blob));
-    setImageRemoved(false);
-    closeCrop();
+    try {
+      const blob = await getCroppedBlob(cropSrc, croppedAreaPixels);
+      setImageBlob(blob);
+      setImagePreview(URL.createObjectURL(blob));
+      setImageRemoved(false);
+    } catch {
+      setLoadNotice('Could not process that image — try a different file.');
+    } finally {
+      closeCrop();
+    }
   };
   const removeImage = () => {
     setImageBlob(null);
