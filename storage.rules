@@ -17,9 +17,19 @@ service firebase.storage {
     // product, overwritten on re-upload).
     match /products/{productId}/{file=**} {
       allow read: if request.auth != null;
+      // Storage rules only expose `write` (no create/update/delete split).
+      // On a DELETE there is no incoming file, so `request.resource` is null —
+      // gate that on auth alone. On an UPLOAD `request.resource` is the new
+      // file, so validate its size + content type. (Role is enforced at the
+      // application layer.)
       allow write: if request.auth != null
-                   && request.resource.size < 2 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+                   && (
+                     request.resource == null
+                     || (
+                       request.resource.size < 2 * 1024 * 1024
+                       && request.resource.contentType.matches('image/.*')
+                     )
+                   );
     }
 
     // Default-deny everything else.
