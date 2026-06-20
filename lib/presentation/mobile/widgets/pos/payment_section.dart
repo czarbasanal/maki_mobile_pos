@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -38,22 +38,37 @@ class PaymentSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: AppSpacing.sm,
-            children: [
-              for (final m in const [
-                PaymentMethod.cash,
-                PaymentMethod.gcash,
-                PaymentMethod.maya,
-                PaymentMethod.mixed,
-                PaymentMethod.salmon,
-              ])
-                ChoiceChip(
-                  label: Text(m.displayName),
-                  selected: cart.paymentMethod == m,
-                  onSelected: (_) => onPaymentMethodChanged(m),
-                ),
-            ],
+          ShaderMask(
+            shaderCallback: (rect) => LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: const [Colors.black, Colors.black, Colors.transparent],
+              stops: const [0.0, 0.9, 1.0],
+            ).createShader(rect),
+            blendMode: BlendMode.dstIn,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 24),
+              child: Row(
+                children: [
+                  for (final m in const [
+                    PaymentMethod.cash,
+                    PaymentMethod.gcash,
+                    PaymentMethod.maya,
+                    PaymentMethod.mixed,
+                    PaymentMethod.salmon,
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: _PaymentMethodChip(
+                        method: m,
+                        selected: cart.paymentMethod == m,
+                        onTap: () => onPaymentMethodChanged(m),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           ..._buildInputs(context),
@@ -81,7 +96,7 @@ class PaymentSection extends StatelessWidget {
           labelText: 'Amount Received',
           prefixText: '${AppConstants.currencySymbol} ',
           suffixIcon: IconButton(
-            icon: const Icon(CupertinoIcons.checkmark_circle),
+            icon: const Icon(LucideIcons.checkCheck),
             tooltip: 'Exact amount',
             onPressed: () {
               amountController.text = cart.grandTotal.toStringAsFixed(2);
@@ -196,28 +211,30 @@ class PaymentSection extends StatelessWidget {
   Widget _buildChangeDisplay(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final change = cart.change;
-    final isInsufficient =
-        cart.amountReceived > 0 && !cart.isPaymentValid;
+    final isInsufficient = cart.amountReceived > 0 && !cart.isPaymentValid;
     final hasReceipt = cart.amountReceived > 0;
 
-    // Border carries status: red when short, green when sufficient,
-    // hairline-neutral when no payment yet.
-    final borderColor = isInsufficient
-        ? AppColors.error
-        : hasReceipt
-            ? AppColors.success
-            : hairline;
-    final valueColor =
-        isInsufficient ? AppColors.error : AppColors.successDark;
+    // Filled tint carries status: success when sufficient, error when short,
+    // quiet muted fill before any tender is entered.
+    final Color fill;
+    if (isInsufficient) {
+      fill = AppColors.error.withValues(alpha: isDark ? 0.18 : 0.10);
+    } else if (hasReceipt) {
+      fill = isDark
+          ? AppColors.success.withValues(alpha: 0.18)
+          : AppColors.successLight;
+    } else {
+      fill = isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
+    }
+    final valueColor = isInsufficient ? AppColors.error : AppColors.successDark;
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: borderColor),
+        color: fill,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -230,14 +247,83 @@ class PaymentSection extends StatelessWidget {
           ),
           Text(
             isInsufficient
-                ? '${AppConstants.currencySymbol}${(cart.grandTotal - cart.amountReceived).toStringAsFixed(2)}'
+                ? '${AppConstants.currencySymbol}'
+                    '${(cart.grandTotal - cart.amountReceived).toStringAsFixed(2)}'
                 : '${AppConstants.currencySymbol}${change.toStringAsFixed(2)}',
             style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: hasReceipt ? valueColor : null,
+              fontWeight: FontWeight.w700,
+              color:
+                  hasReceipt ? valueColor : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A single payment-method pill chip: filled slate/gold when selected,
+/// card surface + hairline + muted icon otherwise.
+class _PaymentMethodChip extends StatelessWidget {
+  const _PaymentMethodChip({
+    required this.method,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final PaymentMethod method;
+  final bool selected;
+  final VoidCallback onTap;
+
+  IconData get _icon {
+    switch (method) {
+      case PaymentMethod.cash:
+        return LucideIcons.banknote;
+      case PaymentMethod.gcash:
+        return LucideIcons.smartphone;
+      case PaymentMethod.maya:
+        return LucideIcons.wallet;
+      case PaymentMethod.mixed:
+        return LucideIcons.layers;
+      case PaymentMethod.salmon:
+        return LucideIcons.fish;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final surface = isDark ? AppColors.darkCard : AppColors.lightCard;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final fg = selected ? theme.colorScheme.onPrimary : muted;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? theme.colorScheme.primary : surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: selected ? null : Border.all(color: hairline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_icon, size: 16, color: fg),
+            const SizedBox(width: 6),
+            Text(
+              method.displayName,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
