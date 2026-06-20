@@ -5,12 +5,13 @@ import { useCheckout } from '@/presentation/hooks/useCheckout';
 import { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { cartSubtotal, cartDiscount, cartGrandTotal, lowStockLines } from '@/domain/sales/cart';
-import { describedLaborLines } from '@/domain/sales/labor';
+import { describedLaborLines, cartLaborSubtotal } from '@/domain/sales/labor';
 import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { PaymentSection } from './PaymentSection';
+import { LaborSection } from './LaborSection';
 
 export function PosPage() {
   const { data: products } = useProducts();
@@ -34,6 +35,7 @@ export function PosPage() {
   const subtotal = cartSubtotal(lines, discountType);
   const discount = cartDiscount(lines, discountType);
   const grandTotal = cartGrandTotal(lines, laborLines, discountType);
+  const labor = cartLaborSubtotal(laborLines);
   const pay = usePaymentDraft(grandTotal);
 
   useEffect(() => {
@@ -202,9 +204,12 @@ export function PosPage() {
             </ul>
           )}
 
+          <LaborSection />
+
           <dl className="space-y-tk-xs border-t border-light-hairline px-tk-md py-tk-sm text-bodySmall">
             <Row label="Subtotal" value={formatMoney(subtotal)} />
             <Row label="Discount" value={`− ${formatMoney(discount)}`} />
+            <Row label="Labor" value={formatMoney(labor)} />
             <Row label="Total" value={formatMoney(grandTotal)} strong />
           </dl>
         </div>
