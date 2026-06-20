@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useCartStore } from './cartStore';
 import { DiscountType } from '@/domain/enums/DiscountType';
-import type { Product } from '@/domain/entities';
+import type { Draft, Product } from '@/domain/entities';
 
 const product = (over: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'A', price: 100, cost: 60, unit: 'pcs', quantity: 10, ...over } as Product);
@@ -76,5 +76,45 @@ describe('cartStore', () => {
     expect(useCartStore.getState().laborLines).toHaveLength(0);
     expect(useCartStore.getState().mechanicId).toBeNull();
     expect(useCartStore.getState().mechanicName).toBeNull();
+  });
+
+  it('loadDraft hydrates the cart and marks the draft active; clear resets it', () => {
+    const store = useCartStore.getState();
+    const draft: Draft = {
+      id: 'd1',
+      name: 'Mr Cruz bike',
+      items: [
+        { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs' },
+      ],
+      laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
+      mechanicId: 'm1',
+      mechanicName: 'Juan',
+      discountType: DiscountType.percentage,
+      createdBy: 'u1',
+      createdByName: 'Cashier',
+      createdAt: new Date('2026-02-01'),
+      updatedAt: null,
+      updatedBy: null,
+      isConverted: false,
+      convertedToSaleId: null,
+      convertedAt: null,
+      notes: null,
+    };
+
+    store.loadDraft(draft);
+    let s = useCartStore.getState();
+    expect(s.lines).toHaveLength(1);
+    expect(s.discountType).toBe(DiscountType.percentage);
+    expect(s.laborLines).toEqual(draft.laborLines);
+    expect(s.mechanicId).toBe('m1');
+    expect(s.mechanicName).toBe('Juan');
+    expect(s.draftId).toBe('d1');
+    expect(s.draftName).toBe('Mr Cruz bike');
+
+    store.clear();
+    s = useCartStore.getState();
+    expect(s.draftId).toBeNull();
+    expect(s.draftName).toBeNull();
+    expect(s.lines).toHaveLength(0);
   });
 });

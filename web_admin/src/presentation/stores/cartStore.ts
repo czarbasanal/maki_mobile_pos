@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Product } from '@/domain/entities';
+import type { Draft, Product } from '@/domain/entities';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { CartLine } from '@/domain/sales/cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
@@ -10,6 +10,8 @@ interface CartState {
   laborLines: LaborLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  draftId: string | null;
+  draftName: string | null;
   addLine: (product: Product) => void;
   setQty: (productId: string, quantity: number) => void;
   setLineDiscount: (productId: string, discountValue: number) => void;
@@ -19,6 +21,7 @@ interface CartState {
   setLaborLine: (id: string, patch: Partial<Pick<LaborLine, 'description' | 'fee'>>) => void;
   removeLaborLine: (id: string) => void;
   setMechanic: (id: string | null, name: string | null) => void;
+  loadDraft: (draft: Draft) => void;
   clear: () => void;
 }
 
@@ -28,6 +31,8 @@ export const useCartStore = create<CartState>((set) => ({
   laborLines: [],
   mechanicId: null,
   mechanicName: null,
+  draftId: null,
+  draftName: null,
   addLine: (product) =>
     set((s) => {
       if (s.lines.some((l) => l.productId === product.id)) {
@@ -85,6 +90,16 @@ export const useCartStore = create<CartState>((set) => ({
   removeLaborLine: (id) =>
     set((s) => ({ laborLines: s.laborLines.filter((l) => l.id !== id) })),
   setMechanic: (id, name) => set({ mechanicId: id, mechanicName: name }),
+  loadDraft: (draft) =>
+    set({
+      lines: draft.items,
+      discountType: draft.discountType,
+      laborLines: draft.laborLines,
+      mechanicId: draft.mechanicId,
+      mechanicName: draft.mechanicName,
+      draftId: draft.id,
+      draftName: draft.name,
+    }),
   clear: () =>
     set({
       lines: [],
@@ -92,5 +107,7 @@ export const useCartStore = create<CartState>((set) => ({
       laborLines: [],
       mechanicId: null,
       mechanicName: null,
+      draftId: null,
+      draftName: null,
     }),
 }));

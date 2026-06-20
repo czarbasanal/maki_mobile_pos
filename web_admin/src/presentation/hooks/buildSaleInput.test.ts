@@ -33,6 +33,7 @@ const input = (over: Partial<CheckoutInput> = {}): CheckoutInput => ({
   laborLines: [],
   mechanicId: null,
   mechanicName: null,
+  draftId: null,
   ...over,
 });
 
@@ -65,5 +66,9 @@ describe('buildSaleInput', () => {
     expect(s.laborLines).toEqual(labor);
     expect(s.mechanicId).toBe('m1');
     expect(s.mechanicName).toBe('Juan');
+  });
+  it('carries draftId onto the sale (sale originated from a draft)', () => {
+    const s = buildSaleInput(input({ draftId: 'd1' }), actor());
+    expect(s.draftId).toBe('d1');
   });
 });

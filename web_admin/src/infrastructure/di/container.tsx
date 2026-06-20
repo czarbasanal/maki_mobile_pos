@@ -15,6 +15,7 @@ import { FirestoreSupplierRepository } from '@/data/repositories/FirestoreSuppli
 import { FirestoreReceivingRepository } from '@/data/repositories/FirestoreReceivingRepository';
 import { FirestoreCategoryRepository } from '@/data/repositories/FirestoreCategoryRepository';
 import { FirestoreMechanicRepository } from '@/data/repositories/FirestoreMechanicRepository';
+import { FirestoreDraftRepository } from '@/data/repositories/FirestoreDraftRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -25,6 +26,7 @@ import type { SupplierRepository } from '@/domain/repositories/SupplierRepositor
 import type { ReceivingRepository } from '@/domain/repositories/ReceivingRepository';
 import type { CategoryRepository } from '@/domain/repositories/CategoryRepository';
 import type { MechanicRepository } from '@/domain/repositories/MechanicRepository';
+import type { DraftRepository } from '@/domain/repositories/DraftRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -37,6 +39,7 @@ export interface Container {
   receivingRepo: ReceivingRepository;
   categoryRepo: CategoryRepository;
   mechanicRepo: MechanicRepository;
+  draftRepo: DraftRepository;
   // Other repositories slot in here as their phases land:
   // expenseRepo, ...
 }
@@ -53,6 +56,7 @@ function buildDefaultContainer(): Container {
     receivingRepo: new FirestoreReceivingRepository(db, new FirestoreProductRepository(db)),
     categoryRepo: new FirestoreCategoryRepository(db),
     mechanicRepo: new FirestoreMechanicRepository(db),
+    draftRepo: new FirestoreDraftRepository(db),
   };
 }
 
@@ -112,6 +116,10 @@ export function useCategoryRepo(): CategoryRepository {
 
 export function useMechanicRepo(): MechanicRepository {
   return useContainer().mechanicRepo;
+}
+
+export function useDraftRepo(): DraftRepository {
+  return useContainer().draftRepo;
 }
 
 export function useReceivingRepo(): ReceivingRepository {
