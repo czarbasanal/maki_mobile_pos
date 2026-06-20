@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cartGrandTotal, changeFor, cashTenders, lowStockLines } from './cart';
+import { cartGrandTotal, changeFor, lowStockLines } from './cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
-import { PaymentMethod } from '@/domain/enums/PaymentMethod';
 import type { Product } from '@/domain/entities';
 import type { CartLine } from './cart';
 
@@ -25,12 +24,6 @@ describe('changeFor', () => {
     expect(changeFor(100, 150)).toBe(50);
     expect(changeFor(100, 100)).toBe(0);
     expect(changeFor(100, 80)).toBe(0);
-  });
-});
-
-describe('cashTenders', () => {
-  it('puts the whole total in the cash bucket', () => {
-    expect(cashTenders(250)).toEqual({ [PaymentMethod.cash]: 250 });
   });
 });
 

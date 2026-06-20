@@ -2,7 +2,6 @@ import { saleSubtotal, saleTotalDiscount, saleGrandTotal } from '@/domain/entiti
 import type { Sale } from '@/domain/entities/Sale';
 import type { SaleItem } from '@/domain/entities/SaleItem';
 import type { Product } from '@/domain/entities/Product';
-import { PaymentMethod } from '@/domain/enums/PaymentMethod';
 import type { DiscountType } from '@/domain/enums/DiscountType';
 
 /** A cart line is a SaleItem snapshot (id = product id until checkout assigns one). */
@@ -25,9 +24,6 @@ export function cartGrandTotal(lines: CartLine[], discountType: DiscountType): n
 }
 export function changeFor(grandTotal: number, amountReceived: number): number {
   return Math.max(0, amountReceived - grandTotal);
-}
-export function cashTenders(grandTotal: number): Partial<Record<PaymentMethod, number>> {
-  return { [PaymentMethod.cash]: grandTotal };
 }
 /** Product ids whose cart qty exceeds on-hand stock (for the low-stock warning). */
 export function lowStockLines(lines: CartLine[], products: Product[]): Set<string> {

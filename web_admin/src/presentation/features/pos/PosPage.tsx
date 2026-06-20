@@ -6,6 +6,7 @@ import { useCartStore } from '@/presentation/stores/cartStore';
 import { cartSubtotal, cartDiscount, cartGrandTotal, changeFor, lowStockLines } from '@/domain/sales/cart';
 import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
+import { PaymentMethod } from '@/domain/enums/PaymentMethod';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 
@@ -64,6 +65,8 @@ export function PosPage() {
       const sale = await checkout.mutateAsync({
         lines,
         discountType,
+        paymentMethod: PaymentMethod.cash,
+        tenders: { [PaymentMethod.cash]: grandTotal },
         amountReceived: received,
         changeGiven: change,
       });
