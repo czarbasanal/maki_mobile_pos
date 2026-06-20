@@ -12,6 +12,7 @@ import {
   QueueListIcon,
   UserIcon,
   UsersIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -111,6 +112,13 @@ export function SettingsPage() {
           tone="blue"
           title="Manage lists"
           subtitle="Categories, units, and other dropdown values"
+        />
+        <Row
+          to={RoutePaths.mechanics}
+          icon={WrenchScrewdriverIcon}
+          tone="orange"
+          title="Mechanics"
+          subtitle="Mechanics for labor on service sales"
         />
       </Section>
 
