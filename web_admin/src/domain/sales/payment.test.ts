@@ -33,6 +33,12 @@ describe('buildTenders', () => {
     expect(buildTenders(draft({ mode: 'gcash' }), 250)).toEqual({ gcash: 250 });
     expect(buildTenders(draft({ mode: 'maya' }), 250)).toEqual({ maya: 250 });
   });
+  it('single-method keeps the RAW total (sub-cent) so it equals netAmount exactly', () => {
+    // grandTotal can carry sub-cent fractions from an un-rounded % discount;
+    // rounding the tender here would break Σ byPaymentMethod == netAmount.
+    expect(buildTenders(draft({ mode: 'cash' }), 8.4915)).toEqual({ cash: 8.4915 });
+    expect(buildTenders(draft({ mode: 'gcash' }), 8.4915)).toEqual({ gcash: 8.4915 });
+  });
   it('mixed splits cash + chosen digital; cash = remainder', () => {
     expect(
       buildTenders(draft({ mode: 'mixed', digitalMethod: 'gcash', splitAmount: 700 }), 1000),
@@ -57,9 +63,10 @@ describe('amountReceivedFor', () => {
   it('cash returns the cash handed over', () => {
     expect(amountReceivedFor(draft({ mode: 'cash', cashReceived: 300 }), 250)).toBe(300);
   });
-  it('gcash / maya / mixed return the full total', () => {
+  it('gcash / maya / mixed return the full (raw) total', () => {
     expect(amountReceivedFor(draft({ mode: 'gcash' }), 250)).toBe(250);
     expect(amountReceivedFor(draft({ mode: 'mixed', splitAmount: 100 }), 250)).toBe(250);
+    expect(amountReceivedFor(draft({ mode: 'gcash' }), 8.4915)).toBe(8.4915);
   });
   it('salmon returns only the downpayment collected today', () => {
     expect(amountReceivedFor(draft({ mode: 'salmon', splitAmount: 500 }), 2000)).toBe(500);

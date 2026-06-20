@@ -22,9 +22,6 @@ export function cartDiscount(lines: CartLine[], discountType: DiscountType): num
 export function cartGrandTotal(lines: CartLine[], discountType: DiscountType): number {
   return saleGrandTotal(asSale(lines, discountType)); // labor = 0 this phase
 }
-export function changeFor(grandTotal: number, amountReceived: number): number {
-  return Math.max(0, amountReceived - grandTotal);
-}
 /** Product ids whose cart qty exceeds on-hand stock (for the low-stock warning). */
 export function lowStockLines(lines: CartLine[], products: Product[]): Set<string> {
   const onHand = new Map(products.map((p) => [p.id, p.quantity]));

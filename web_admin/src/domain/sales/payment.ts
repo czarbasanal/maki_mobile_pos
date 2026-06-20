@@ -37,12 +37,16 @@ export function buildTenders(
   total: number,
 ): Partial<Record<PaymentMethod, number>> {
   switch (draft.mode) {
+    // Single-method: the whole sale lands in one bucket. Use the RAW total (not
+    // roundCents) so the tender equals grandTotal/netAmount exactly — the
+    // reporting invariant Σ byPaymentMethod == netAmount must hold even when a
+    // percentage discount leaves grandTotal with sub-cent fractions.
     case 'cash':
-      return { [PaymentMethod.cash]: roundCents(total) };
+      return { [PaymentMethod.cash]: total };
     case 'gcash':
-      return { [PaymentMethod.gcash]: roundCents(total) };
+      return { [PaymentMethod.gcash]: total };
     case 'maya':
-      return { [PaymentMethod.maya]: roundCents(total) };
+      return { [PaymentMethod.maya]: total };
     case 'mixed': {
       const digital = roundCents(draft.splitAmount);
       const tenders: Partial<Record<PaymentMethod, number>> = {
@@ -69,7 +73,7 @@ export function amountReceivedFor(draft: PaymentDraft, total: number): number {
     case 'salmon':
       return roundCents(draft.splitAmount);
     default:
-      return roundCents(total); // gcash / maya / mixed — paid in full
+      return total; // gcash / maya / mixed — paid in full (matches the tender)
   }
 }
 

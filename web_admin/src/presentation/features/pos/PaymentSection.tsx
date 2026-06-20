@@ -1,5 +1,6 @@
 import { cn } from '@/core/utils/cn';
 import { formatMoney } from '@/core/utils/money';
+import { PaymentMethod } from '@/domain/enums/PaymentMethod';
 import type { PaymentMode } from '@/domain/sales/payment';
 import type { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
 
@@ -14,9 +15,6 @@ const MODES: { mode: PaymentMode; label: string }[] = [
 ];
 
 export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: number }) {
-  const { draft } = pay;
-  const remainder = Math.max(0, grandTotal - (Number(draft.splitAmount) || 0));
-
   return (
     <div className="space-y-tk-sm">
       <div className="flex flex-wrap gap-tk-xs">
@@ -27,7 +25,7 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
             onClick={() => pay.setMode(mode)}
             className={cn(
               'rounded-full border px-tk-md py-[6px] text-[12px]',
-              draft.mode === mode
+              pay.mode === mode
                 ? 'border-light-text bg-light-text text-light-background'
                 : 'border-light-border bg-light-card text-light-text-secondary hover:bg-light-subtle',
             )}
@@ -37,30 +35,20 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
         ))}
       </div>
 
-      {draft.mode === 'cash' ? (
+      {pay.mode === 'cash' ? (
         <>
-          <label className="block space-y-tk-xs">
-            <span className="text-bodySmall font-medium text-light-text">Cash received</span>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={draft.cashReceived || ''}
-              onChange={(e) => pay.setCashReceived(Number(e.target.value) || 0)}
-              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall"
-            />
-          </label>
+          <AmountInput label="Cash received" value={pay.cashText} onChange={pay.setCashText} />
           <Row label="Change" value={formatMoney(pay.changeGiven)} />
         </>
       ) : null}
 
-      {draft.mode === 'gcash' || draft.mode === 'maya' ? (
+      {pay.mode === 'gcash' || pay.mode === 'maya' ? (
         <p className="text-bodySmall text-light-text-secondary">
-          Paid in full via {draft.mode === 'gcash' ? 'GCash' : 'Maya'} — {formatMoney(grandTotal)}
+          Paid in full via {pay.mode === 'gcash' ? 'GCash' : 'Maya'} — {formatMoney(grandTotal)}
         </p>
       ) : null}
 
-      {draft.mode === 'mixed' ? (
+      {pay.mode === 'mixed' ? (
         <div className="space-y-tk-sm">
           <SubSelector
             label="Digital"
@@ -68,25 +56,18 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
               { value: 'gcash', label: 'GCash' },
               { value: 'maya', label: 'Maya' },
             ]}
-            value={draft.digitalMethod}
+            value={pay.digitalMethod}
             onChange={(v) => pay.setDigitalMethod(v as 'gcash' | 'maya')}
           />
-          <label className="block space-y-tk-xs">
-            <span className="text-bodySmall font-medium text-light-text">Digital amount</span>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={draft.splitAmount || ''}
-              onChange={(e) => pay.setSplitAmount(Number(e.target.value) || 0)}
-              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall"
-            />
-          </label>
-          <Row label="Cash portion" value={formatMoney(remainder)} />
+          <AmountInput label="Digital amount" value={pay.splitText} onChange={pay.setSplitText} />
+          <Row
+            label="Cash portion"
+            value={formatMoney(Math.max(0, pay.tenders[PaymentMethod.cash] ?? 0))}
+          />
         </div>
       ) : null}
 
-      {draft.mode === 'salmon' ? (
+      {pay.mode === 'salmon' ? (
         <div className="space-y-tk-sm">
           <SubSelector
             label="Downpayment via"
@@ -95,26 +76,44 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
               { value: 'gcash', label: 'GCash' },
               { value: 'maya', label: 'Maya' },
             ]}
-            value={draft.dpMethod}
+            value={pay.dpMethod}
             onChange={(v) => pay.setDpMethod(v as 'cash' | 'gcash' | 'maya')}
           />
-          <label className="block space-y-tk-xs">
-            <span className="text-bodySmall font-medium text-light-text">Downpayment</span>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={draft.splitAmount || ''}
-              onChange={(e) => pay.setSplitAmount(Number(e.target.value) || 0)}
-              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall"
-            />
-          </label>
-          <Row label="Salmon balance (receivable)" value={formatMoney(remainder)} />
+          <AmountInput label="Downpayment" value={pay.splitText} onChange={pay.setSplitText} />
+          <Row
+            label="Salmon balance (receivable)"
+            value={formatMoney(Math.max(0, pay.tenders[PaymentMethod.salmon] ?? 0))}
+          />
         </div>
       ) : null}
 
       {pay.error ? <p className="text-[12px] text-error-dark">{pay.error}</p> : null}
     </div>
+  );
+}
+
+function AmountInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block space-y-tk-xs">
+      <span className="text-bodySmall font-medium text-light-text">{label}</span>
+      <input
+        type="number"
+        min={0}
+        step="0.01"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall"
+      />
+    </label>
   );
 }
 
