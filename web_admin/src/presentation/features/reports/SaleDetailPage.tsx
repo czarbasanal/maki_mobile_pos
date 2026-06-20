@@ -17,7 +17,7 @@ import {
   salePartsSubtotal,
   saleTotalDiscount,
 } from '@/domain/entities';
-import { realTenderMethods } from '@/domain/enums';
+import { paymentMethodDisplayName, realTenderMethods } from '@/domain/enums';
 import { formatMoney } from '@/core/utils/money';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -105,6 +105,7 @@ export function SaleDetailPage() {
             type="button"
             onClick={() => {
               setReason('');
+              voidSale.reset();
               setVoidOpen(true);
             }}
             className="rounded-md border border-error-light px-tk-md py-tk-sm text-bodySmall font-medium text-error-dark hover:bg-error-light/30"
@@ -161,7 +162,7 @@ export function SaleDetailPage() {
           {realTenderMethods
             .filter((m) => (tenders[m] ?? 0) > 0)
             .map((m) => (
-              <Row key={m} label={m} value={formatMoney(tenders[m] ?? 0)} muted />
+              <Row key={m} label={paymentMethodDisplayName[m]} value={formatMoney(tenders[m] ?? 0)} muted />
             ))}
           <Row label="Amount received" value={formatMoney(sale.amountReceived)} muted />
           <Row label="Change" value={formatMoney(sale.changeGiven)} muted />
@@ -236,7 +237,7 @@ export function SaleDetailPage() {
         </div>
       </Dialog>
     </div>
-    <div className="hidden print:block">
+    <div id="print-receipt" className="hidden print:block">
       <Receipt sale={sale} />
     </div>
     </>

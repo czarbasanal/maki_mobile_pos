@@ -14,6 +14,8 @@ export function useVoidSale(saleId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sales', saleId] });
+      // Voided sales drop out of report totals — refresh the cached report lists.
+      qc.invalidateQueries({ queryKey: ['reports'] });
     },
   });
 }

@@ -200,8 +200,12 @@ export class FirestoreSaleRepository implements SaleRepository {
     await runTransaction(this.db, async (tx) => {
       const snap = await tx.get(saleRef); // the only read — precedes every write
       if (!snap.exists()) throw new Error('Sale not found');
-      if (snap.get('status') === SaleStatus.voided) {
-        throw new Error('This sale is already voided');
+      const status = snap.get('status');
+      if (status === SaleStatus.voided) throw new Error('This sale is already voided');
+      // Only a completed sale decremented stock, so only a completed sale may be
+      // voided + restocked (keeps the void invariant aligned with canVoidSale).
+      if (status !== SaleStatus.completed) {
+        throw new Error('Only a completed sale can be voided');
       }
 
       tx.update(saleRef, {
