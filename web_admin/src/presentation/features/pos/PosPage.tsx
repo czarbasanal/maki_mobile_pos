@@ -10,6 +10,8 @@ import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
+import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
+import { Dialog } from '@/presentation/components/common/Dialog';
 import { PaymentSection } from './PaymentSection';
 import { LaborSection } from './LaborSection';
 
@@ -25,11 +27,16 @@ export function PosPage() {
   const laborLines = useCartStore((s) => s.laborLines);
   const mechanicId = useCartStore((s) => s.mechanicId);
   const mechanicName = useCartStore((s) => s.mechanicName);
+  const draftId = useCartStore((s) => s.draftId);
+  const draftName = useCartStore((s) => s.draftName);
   const clear = useCartStore((s) => s.clear);
   const checkout = useCheckout();
+  const saveDraft = useSaveDraft();
 
   const [search, setSearch] = useState('');
   const [done, setDone] = useState<string | null>(null);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [draftNameInput, setDraftNameInput] = useState('');
 
   const isPct = discountType === DiscountType.percentage;
   const subtotal = cartSubtotal(lines, discountType);
@@ -87,6 +94,30 @@ export function PosPage() {
     }
   };
 
+  const openSave = () => {
+    setDraftNameInput(draftName ?? '');
+    setSaveOpen(true);
+  };
+  const onSaveDraft = async () => {
+    const name = draftNameInput.trim();
+    if (!name) return;
+    try {
+      await saveDraft.mutateAsync({
+        draftId,
+        name,
+        items: lines,
+        discountType,
+        laborLines: describedLaborLines(laborLines),
+        mechanicId,
+        mechanicName,
+      });
+      setSaveOpen(false);
+      clear();
+    } catch {
+      // surfaced via saveDraft.error
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-tk-lg px-tk-xl py-tk-lg lg:grid-cols-2">
       {/* Left: product search */}
@@ -135,6 +166,11 @@ export function PosPage() {
         {checkout.error ? (
           <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
             {checkout.error.message}
+          </p>
+        ) : null}
+        {saveDraft.isSuccess ? (
+          <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
+            Saved to drafts.
           </p>
         ) : null}
 
@@ -227,8 +263,60 @@ export function PosPage() {
           >
             {checkout.isPending ? 'Completing…' : 'Complete sale'}
           </button>
+          <button
+            type="button"
+            disabled={lines.length === 0 || saveDraft.isPending}
+            onClick={openSave}
+            className={cn(
+              'w-full rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-medium text-light-text hover:bg-light-subtle',
+              (lines.length === 0 || saveDraft.isPending) && 'cursor-not-allowed opacity-60',
+            )}
+          >
+            {saveDraft.isPending ? 'Saving…' : draftId ? 'Update draft' : 'Save as draft'}
+          </button>
         </div>
       </section>
+
+      <Dialog
+        open={saveOpen}
+        onClose={() => {
+          if (!saveDraft.isPending) setSaveOpen(false);
+        }}
+        title={draftId ? 'Update draft' : 'Save as draft'}
+        dismissable={!saveDraft.isPending}
+      >
+        <div className="space-y-tk-md">
+          <label className="block space-y-tk-xs">
+            <span className="text-bodySmall text-light-text-secondary">Draft name</span>
+            <input
+              type="text"
+              value={draftNameInput}
+              onChange={(e) => setDraftNameInput(e.target.value)}
+              autoFocus
+              placeholder="e.g. Mr Cruz — blue Mio"
+              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+            />
+          </label>
+          <div className="flex justify-end gap-tk-sm">
+            <button
+              type="button"
+              onClick={() => setSaveOpen(false)}
+              disabled={saveDraft.isPending}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onSaveDraft}
+              disabled={saveDraft.isPending || !draftNameInput.trim()}
+              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }
