@@ -6,10 +6,13 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   limit as fbLimit,
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
+  serverTimestamp,
   Timestamp,
   where,
   type Firestore,
@@ -23,6 +26,7 @@ import type { Sale } from '@/domain/entities';
 import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/collections';
 import { saleConverter } from '@/data/converters/saleConverter';
 import { saleItemConverter } from '@/data/converters/saleItemConverter';
+import { counterKey, formatSaleNumber } from '@/domain/sales/saleNumber';
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
@@ -104,9 +108,82 @@ export class FirestoreSaleRepository implements SaleRepository {
     });
   }
 
-  // Write methods land in phase 11.
-  async create(): Promise<Sale> {
-    throw new Error('SaleRepository.create not implemented yet (phase 11)');
+  async create(
+    input: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>,
+    actorId: string,
+  ): Promise<Sale> {
+    if (input.items.length === 0) {
+      throw new Error('Cannot complete a sale with an empty cart');
+    }
+    if (input.items.length > 200) {
+      throw new Error(
+        `This sale has ${input.items.length} lines — the max is 200. Split it into smaller sales.`,
+      );
+    }
+    const now = new Date();
+    const key = counterKey(now);
+    const saleRef = doc(collection(this.db, FirestoreCollections.sales));
+    const counterRef = doc(this.db, FirestoreCollections.settings, 'sale_counters');
+    // Pre-allocate item ids so the tx is pure writes after the single counter read.
+    const itemRefs = input.items.map(() =>
+      doc(collection(this.db, FirestoreCollections.sales, saleRef.id, Subcollections.saleItems)),
+    );
+
+    await runTransaction(this.db, async (tx) => {
+      // The only read — must precede every write.
+      const counterSnap = await tx.get(counterRef);
+      const seq =
+        (counterSnap.exists() ? (counterSnap.data() as Record<string, number>)[key] ?? 0 : 0) + 1;
+      const saleNumber = formatSaleNumber(now, seq);
+
+      tx.set(saleRef, {
+        saleNumber,
+        discountType: input.discountType,
+        paymentMethod: input.paymentMethod,
+        tenders: input.tenders,
+        amountReceived: input.amountReceived,
+        changeGiven: input.changeGiven,
+        status: input.status,
+        cashierId: input.cashierId,
+        cashierName: input.cashierName,
+        laborLines: input.laborLines,
+        mechanicId: input.mechanicId,
+        mechanicName: input.mechanicName,
+        draftId: input.draftId,
+        notes: input.notes,
+        voidedBy: null,
+        voidedByName: null,
+        voidReason: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      input.items.forEach((item, i) => {
+        tx.set(itemRefs[i], {
+          productId: item.productId,
+          sku: item.sku,
+          name: item.name,
+          unitPrice: item.unitPrice,
+          unitCost: item.unitCost,
+          quantity: item.quantity,
+          discountValue: item.discountValue,
+          unit: item.unit,
+        });
+      });
+      tx.set(counterRef, { [key]: seq }, { merge: true });
+      // Stock decrement — the products update rule permits ONLY these 4 keys.
+      for (const item of input.items) {
+        tx.update(doc(this.db, FirestoreCollections.products, item.productId), {
+          quantity: increment(-item.quantity),
+          updatedAt: serverTimestamp(),
+          updatedBy: actorId,
+          updatedByName: input.cashierName,
+        });
+      }
+    });
+
+    const created = await this.getById(saleRef.id);
+    if (!created) throw new Error('Failed to load the created sale');
+    return created;
   }
   async voidSale(): Promise<void> {
     throw new Error('SaleRepository.voidSale not implemented yet (phase 11)');
