@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -97,17 +97,19 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Success glyph — outlined success-colored circle (no fill)
+              // Success glyph — filled success-tint circle.
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.success, width: 2),
+                  color: isDark
+                      ? AppColors.success.withValues(alpha: 0.18)
+                      : AppColors.successLight,
                 ),
                 child: const Icon(
-                  CupertinoIcons.checkmark_circle,
+                  LucideIcons.check,
                   color: AppColors.successDark,
-                  size: 56,
+                  size: 48,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -139,7 +141,9 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              _buildAmountCard(theme),
+              _buildChangeDueHero(theme, isDark),
+              const SizedBox(height: AppSpacing.md),
+              _buildAmountCard(theme, mutedFill, hairline),
               if (widget.warnings.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 _buildWarningsCard(theme),
@@ -156,7 +160,7 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
                 height: 48,
                 child: OutlinedButton.icon(
                   onPressed: widget.onPrintReceipt,
-                  icon: const Icon(CupertinoIcons.doc_text),
+                  icon: const Icon(LucideIcons.receipt),
                   label: const Text('Receipt'),
                   style: OutlinedButton.styleFrom(shape: _kButtonShape),
                 ),
@@ -187,64 +191,83 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
     );
   }
 
-  Widget _buildAmountCard(ThemeData theme) {
+  Widget _buildChangeDueHero(ThemeData theme, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.success),
+        color: isDark
+            ? AppColors.success.withValues(alpha: 0.18)
+            : AppColors.successLight,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         children: [
-          _buildAmountRow(
-            theme,
-            'Total',
-            '${AppConstants.currencySymbol}${widget.sale.grandTotal.toStringAsFixed(2)}',
+          Text(
+            'CHANGE DUE',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: AppColors.successDark,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          _buildAmountRow(
-            theme,
-            'Received',
-            '${AppConstants.currencySymbol}${widget.sale.amountReceived.toStringAsFixed(2)}',
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            child: Divider(height: 1),
-          ),
-          _buildAmountRow(
-            theme,
-            'Change',
-            '${AppConstants.currencySymbol}${widget.sale.changeGiven.toStringAsFixed(2)}',
-            isHighlighted: true,
+          const SizedBox(height: 4),
+          Text(
+            '${AppConstants.currencySymbol}'
+            '${widget.sale.changeGiven.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.w700,
+              color: AppColors.successDark,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAmountRow(
-    ThemeData theme,
-    String label,
-    String value, {
-    bool isHighlighted = false,
-  }) {
+  Widget _buildAmountCard(ThemeData theme, Color fill, Color hairline) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: hairline),
+      ),
+      child: Column(
+        children: [
+          _buildAmountRow(
+            theme,
+            'Total',
+            '${AppConstants.currencySymbol}'
+            '${widget.sale.grandTotal.toStringAsFixed(2)}',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _buildAmountRow(
+            theme,
+            'Received',
+            '${AppConstants.currencySymbol}'
+            '${widget.sale.amountReceived.toStringAsFixed(2)}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountRow(ThemeData theme, String label, String value) {
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
-            fontSize: isHighlighted ? 18 : 14,
-          ),
-        ),
+        Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
         Text(
           value,
           style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w600,
-            fontSize: isHighlighted ? 24 : 14,
-            color: isHighlighted ? AppColors.successDark : null,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -265,7 +288,7 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
           const Row(
             children: [
               Icon(
-                CupertinoIcons.exclamationmark_triangle,
+                LucideIcons.alertTriangle,
                 size: 16,
                 color: AppColors.warningDark,
               ),
