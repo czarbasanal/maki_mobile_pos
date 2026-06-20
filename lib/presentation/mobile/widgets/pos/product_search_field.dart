@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/pos/barcode_scanner_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -116,16 +118,16 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
             link: _layerLink,
             showWhenUnlinked: false,
             offset: const Offset(0, 60),
-            child: Material(
-              elevation: 0,
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: hairline),
-                ),
-                clipBehavior: Clip.antiAlias,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: isDark ? Border.all(color: hairline) : null,
+                boxShadow: AppShadows.card(dark: isDark),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Material(
+                type: MaterialType.transparency,
                 child: _buildSearchResults(),
               ),
             ),
@@ -144,41 +146,69 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return CompositedTransformTarget(
       link: _layerLink,
-      child: TextField(
-        controller: widget.controller,
-        focusNode: widget.focusNode,
-        decoration: InputDecoration(
-          hintText: 'Search products or scan barcode...',
-          prefixIcon: const Icon(CupertinoIcons.search),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.controller.text.isNotEmpty)
-                IconButton(
-                  icon: const Icon(CupertinoIcons.xmark),
-                  onPressed: () {
-                    widget.controller.clear();
-                    widget.focusNode.requestFocus();
-                  },
+      child: AppCard(
+        radius: AppRadius.field,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            Icon(LucideIcons.search, size: 20, color: muted),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: TextField(
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                decoration: const InputDecoration(
+                  hintText: 'Search products or scan barcode...',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
-              IconButton(
-                icon: const Icon(CupertinoIcons.qrcode_viewfinder),
-                tooltip: 'Scan barcode',
-                onPressed: _openBarcodeScanner,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (value) {
+                  // Treat as barcode scan if it looks like a SKU
+                  final trimmed = value.trim();
+                  if (trimmed.isNotEmpty) {
+                    widget.onBarcodeScanned(trimmed);
+                  }
+                },
               ),
-            ],
-          ),
+            ),
+            if (widget.controller.text.isNotEmpty)
+              IconButton(
+                icon: Icon(LucideIcons.x, size: 18, color: muted),
+                visualDensity: VisualDensity.compact,
+                onPressed: () {
+                  widget.controller.clear();
+                  widget.focusNode.requestFocus();
+                },
+              ),
+            const SizedBox(width: 4),
+            // Filled scan button — slate (light) / gold (dark).
+            GestureDetector(
+              onTap: _openBarcodeScanner,
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(
+                  LucideIcons.scanLine,
+                  size: 18,
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+            ),
+          ],
         ),
-        textInputAction: TextInputAction.search,
-        onSubmitted: (value) {
-          // Treat as barcode scan if it looks like a SKU
-          final trimmed = value.trim();
-          if (trimmed.isNotEmpty) {
-            widget.onBarcodeScanned(trimmed);
-          }
-        },
       ),
     );
   }
@@ -195,9 +225,12 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
       child: searchResults.when(
         data: (products) {
           if (products.isEmpty) {
-            return const ListTile(
-              leading: Icon(Icons.search_off),
-              title: Text('No products found'),
+            return ListTile(
+              leading: Icon(
+                LucideIcons.searchX,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              title: const Text('No products found'),
             );
           }
 
@@ -238,7 +271,8 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Text(
-                  '${product.sku} • ₱${product.price.toStringAsFixed(2)}',
+                  '${product.sku} • ${AppConstants.currencySymbol}'
+                  '${product.price.toStringAsFixed(2)}',
                   style: theme.textTheme.bodySmall?.copyWith(color: muted),
                 ),
                 trailing: Text(
@@ -269,7 +303,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
         ),
         error: (error, _) => ListTile(
           leading: const Icon(
-            CupertinoIcons.exclamationmark_circle,
+            LucideIcons.alertTriangle,
             color: AppColors.error,
           ),
           title: Text('Error: $error'),
