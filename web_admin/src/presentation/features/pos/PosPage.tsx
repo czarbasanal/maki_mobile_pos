@@ -5,6 +5,7 @@ import { useCheckout } from '@/presentation/hooks/useCheckout';
 import { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { cartSubtotal, cartDiscount, cartGrandTotal, lowStockLines } from '@/domain/sales/cart';
+import { describedLaborLines } from '@/domain/sales/labor';
 import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { formatMoney } from '@/core/utils/money';
@@ -20,6 +21,9 @@ export function PosPage() {
   const setLineDiscount = useCartStore((s) => s.setLineDiscount);
   const removeLine = useCartStore((s) => s.removeLine);
   const setDiscountType = useCartStore((s) => s.setDiscountType);
+  const laborLines = useCartStore((s) => s.laborLines);
+  const mechanicId = useCartStore((s) => s.mechanicId);
+  const mechanicName = useCartStore((s) => s.mechanicName);
   const clear = useCartStore((s) => s.clear);
   const checkout = useCheckout();
 
@@ -29,7 +33,7 @@ export function PosPage() {
   const isPct = discountType === DiscountType.percentage;
   const subtotal = cartSubtotal(lines, discountType);
   const discount = cartDiscount(lines, discountType);
-  const grandTotal = cartGrandTotal(lines, [], discountType);
+  const grandTotal = cartGrandTotal(lines, laborLines, discountType);
   const pay = usePaymentDraft(grandTotal);
 
   useEffect(() => {
@@ -69,6 +73,9 @@ export function PosPage() {
         tenders: pay.tenders,
         amountReceived: pay.amountReceived,
         changeGiven: pay.changeGiven,
+        laborLines: describedLaborLines(laborLines),
+        mechanicId,
+        mechanicName,
       });
       setDone(sale.saleNumber);
       pay.reset();

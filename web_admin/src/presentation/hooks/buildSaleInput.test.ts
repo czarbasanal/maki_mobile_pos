@@ -5,6 +5,7 @@ import { DiscountType } from '@/domain/enums/DiscountType';
 import { SaleStatus } from '@/domain/enums/SaleStatus';
 import { UserRole } from '@/domain/enums';
 import type { User } from '@/domain/entities/User';
+import type { LaborLine } from '@/domain/entities/LaborLine';
 
 const actor = (over: Partial<User> = {}): User => ({
   id: 'u1',
@@ -29,6 +30,9 @@ const input = (over: Partial<CheckoutInput> = {}): CheckoutInput => ({
   tenders: { [PaymentMethod.cash]: 100 },
   amountReceived: 100,
   changeGiven: 0,
+  laborLines: [],
+  mechanicId: null,
+  mechanicName: null,
   ...over,
 });
 
@@ -51,5 +55,15 @@ describe('buildSaleInput', () => {
   it('falls back to email when displayName is blank', () => {
     const s = buildSaleInput(input(), actor({ displayName: '   ', email: 'x@y.z' }));
     expect(s.cashierName).toBe('x@y.z');
+  });
+  it('carries labor lines + mechanic through verbatim', () => {
+    const labor: LaborLine[] = [{ id: 'l1', description: 'Tune-up', fee: 500 }];
+    const s = buildSaleInput(
+      input({ laborLines: labor, mechanicId: 'm1', mechanicName: 'Juan' }),
+      actor(),
+    );
+    expect(s.laborLines).toEqual(labor);
+    expect(s.mechanicId).toBe('m1');
+    expect(s.mechanicName).toBe('Juan');
   });
 });
