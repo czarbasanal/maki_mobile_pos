@@ -29,7 +29,7 @@ export function PosPage() {
   const isPct = discountType === DiscountType.percentage;
   const subtotal = cartSubtotal(lines, discountType);
   const discount = cartDiscount(lines, discountType);
-  const grandTotal = cartGrandTotal(lines, discountType);
+  const grandTotal = cartGrandTotal(lines, [], discountType);
   const pay = usePaymentDraft(grandTotal);
 
   useEffect(() => {

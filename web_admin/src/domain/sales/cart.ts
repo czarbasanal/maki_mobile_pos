@@ -2,7 +2,9 @@ import { saleSubtotal, saleTotalDiscount, saleGrandTotal } from '@/domain/entiti
 import type { Sale } from '@/domain/entities/Sale';
 import type { SaleItem } from '@/domain/entities/SaleItem';
 import type { Product } from '@/domain/entities/Product';
+import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { DiscountType } from '@/domain/enums/DiscountType';
+import { cartLaborSubtotal } from './labor';
 
 /** A cart line is a SaleItem snapshot (id = product id until checkout assigns one). */
 export type CartLine = SaleItem;
@@ -19,8 +21,13 @@ export function cartSubtotal(lines: CartLine[], discountType: DiscountType): num
 export function cartDiscount(lines: CartLine[], discountType: DiscountType): number {
   return saleTotalDiscount(asSale(lines, discountType));
 }
-export function cartGrandTotal(lines: CartLine[], discountType: DiscountType): number {
-  return saleGrandTotal(asSale(lines, discountType)); // labor = 0 this phase
+export function cartGrandTotal(
+  lines: CartLine[],
+  laborLines: LaborLine[],
+  discountType: DiscountType,
+): number {
+  // Parts revenue (labor-0 path) + labor subtotal (described lines only).
+  return saleGrandTotal(asSale(lines, discountType)) + cartLaborSubtotal(laborLines);
 }
 /** Product ids whose cart qty exceeds on-hand stock (for the low-stock warning). */
 export function lowStockLines(lines: CartLine[], products: Product[]): Set<string> {
