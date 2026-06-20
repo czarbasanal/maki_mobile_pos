@@ -47,6 +47,7 @@ export const RoutePaths = {
   settings: '/settings',
   costCodeSettings: '/settings/cost-codes',
   manageLists: '/settings/lists',
+  mechanics: '/settings/mechanics',
   about: '/settings/about',
 
   userLogs: '/logs',

@@ -10,12 +10,29 @@ const line = (over: Partial<CartLine> = {}): CartLine => ({
 });
 
 describe('cartGrandTotal', () => {
-  it('sums net of per-line amount discounts', () => {
-    expect(cartGrandTotal([line({ quantity: 2 }), line({ productId: 'p2', discountValue: 20 })], DiscountType.amount))
-      .toBe(200 + 80);
+  it('sums net of per-line amount discounts (no labor)', () => {
+    expect(
+      cartGrandTotal(
+        [line({ quantity: 2 }), line({ productId: 'p2', discountValue: 20 })],
+        [],
+        DiscountType.amount,
+      ),
+    ).toBe(200 + 80);
   });
-  it('applies percentage discounts', () => {
-    expect(cartGrandTotal([line({ discountValue: 10 })], DiscountType.percentage)).toBe(90);
+  it('applies percentage discounts (no labor)', () => {
+    expect(cartGrandTotal([line({ discountValue: 10 })], [], DiscountType.percentage)).toBe(90);
+  });
+  it('adds described labor on top of parts', () => {
+    expect(
+      cartGrandTotal(
+        [line({ quantity: 2 })],
+        [
+          { id: 'l1', description: 'Tune-up', fee: 300 },
+          { id: 'l2', description: '   ', fee: 999 }, // blank desc → excluded
+        ],
+        DiscountType.amount,
+      ),
+    ).toBe(200 + 300);
   });
 });
 

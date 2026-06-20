@@ -14,6 +14,7 @@ import { FirestoreActivityLogRepository } from '@/data/repositories/FirestoreAct
 import { FirestoreSupplierRepository } from '@/data/repositories/FirestoreSupplierRepository';
 import { FirestoreReceivingRepository } from '@/data/repositories/FirestoreReceivingRepository';
 import { FirestoreCategoryRepository } from '@/data/repositories/FirestoreCategoryRepository';
+import { FirestoreMechanicRepository } from '@/data/repositories/FirestoreMechanicRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -23,6 +24,7 @@ import type { ActivityLogRepository } from '@/domain/repositories/ActivityLogRep
 import type { SupplierRepository } from '@/domain/repositories/SupplierRepository';
 import type { ReceivingRepository } from '@/domain/repositories/ReceivingRepository';
 import type { CategoryRepository } from '@/domain/repositories/CategoryRepository';
+import type { MechanicRepository } from '@/domain/repositories/MechanicRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -34,6 +36,7 @@ export interface Container {
   supplierRepo: SupplierRepository;
   receivingRepo: ReceivingRepository;
   categoryRepo: CategoryRepository;
+  mechanicRepo: MechanicRepository;
   // Other repositories slot in here as their phases land:
   // expenseRepo, ...
 }
@@ -49,6 +52,7 @@ function buildDefaultContainer(): Container {
     supplierRepo: new FirestoreSupplierRepository(db),
     receivingRepo: new FirestoreReceivingRepository(db, new FirestoreProductRepository(db)),
     categoryRepo: new FirestoreCategoryRepository(db),
+    mechanicRepo: new FirestoreMechanicRepository(db),
   };
 }
 
@@ -104,6 +108,10 @@ export function useSupplierRepo(): SupplierRepository {
 
 export function useCategoryRepo(): CategoryRepository {
   return useContainer().categoryRepo;
+}
+
+export function useMechanicRepo(): MechanicRepository {
+  return useContainer().mechanicRepo;
 }
 
 export function useReceivingRepo(): ReceivingRepository {

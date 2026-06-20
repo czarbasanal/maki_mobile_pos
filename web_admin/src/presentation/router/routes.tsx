@@ -30,6 +30,7 @@ import { InventoryListPage } from '@/presentation/features/inventory/InventoryLi
 import { InventoryDetailPage } from '@/presentation/features/inventory/InventoryDetailPage';
 import { InventoryFormPage } from '@/presentation/features/inventory/InventoryFormPage';
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
+import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
 import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
 import { PosPage } from '@/presentation/features/pos/PosPage';
@@ -91,6 +92,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.settings, element: <SettingsPage /> },
         { path: RoutePaths.costCodeSettings, element: <CostCodeSettingsPage /> },
         { path: RoutePaths.manageLists, element: <ManageListsPage /> },
+        { path: RoutePaths.mechanics, element: <MechanicsPage /> },
         { path: RoutePaths.about, element: <AboutPage /> },
       ],
     },

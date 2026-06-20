@@ -9,6 +9,7 @@ export const FirestoreCollections = {
   units: 'units',
   voidReasons: 'void_reasons',
   suppliers: 'suppliers',
+  mechanics: 'mechanics',
   sales: 'sales',
   drafts: 'drafts',
   receivings: 'receivings',

@@ -1,22 +1,33 @@
 import { create } from 'zustand';
 import type { Product } from '@/domain/entities';
+import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { CartLine } from '@/domain/sales/cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
 
 interface CartState {
   lines: CartLine[];
   discountType: DiscountType;
+  laborLines: LaborLine[];
+  mechanicId: string | null;
+  mechanicName: string | null;
   addLine: (product: Product) => void;
   setQty: (productId: string, quantity: number) => void;
   setLineDiscount: (productId: string, discountValue: number) => void;
   removeLine: (productId: string) => void;
   setDiscountType: (discountType: DiscountType) => void;
+  addLaborLine: () => void;
+  setLaborLine: (id: string, patch: Partial<Pick<LaborLine, 'description' | 'fee'>>) => void;
+  removeLaborLine: (id: string) => void;
+  setMechanic: (id: string | null, name: string | null) => void;
   clear: () => void;
 }
 
 export const useCartStore = create<CartState>((set) => ({
   lines: [],
   discountType: DiscountType.amount,
+  laborLines: [],
+  mechanicId: null,
+  mechanicName: null,
   addLine: (product) =>
     set((s) => {
       if (s.lines.some((l) => l.productId === product.id)) {
@@ -58,5 +69,28 @@ export const useCartStore = create<CartState>((set) => ({
     set((s) => ({ lines: s.lines.filter((l) => l.productId !== productId) })),
   setDiscountType: (discountType) =>
     set((s) => ({ discountType, lines: s.lines.map((l) => ({ ...l, discountValue: 0 })) })),
-  clear: () => set({ lines: [], discountType: DiscountType.amount }),
+  addLaborLine: () =>
+    set((s) => ({
+      laborLines: [...s.laborLines, { id: crypto.randomUUID(), description: '', fee: 0 }],
+    })),
+  setLaborLine: (id, patch) =>
+    set((s) => ({
+      laborLines: s.laborLines.map((l) => {
+        if (l.id !== id) return l;
+        const next = { ...l, ...patch };
+        if (patch.fee !== undefined) next.fee = Math.max(0, patch.fee || 0);
+        return next;
+      }),
+    })),
+  removeLaborLine: (id) =>
+    set((s) => ({ laborLines: s.laborLines.filter((l) => l.id !== id) })),
+  setMechanic: (id, name) => set({ mechanicId: id, mechanicName: name }),
+  clear: () =>
+    set({
+      lines: [],
+      discountType: DiscountType.amount,
+      laborLines: [],
+      mechanicId: null,
+      mechanicName: null,
+    }),
 }));

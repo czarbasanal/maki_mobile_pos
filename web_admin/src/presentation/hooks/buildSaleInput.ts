@@ -1,5 +1,6 @@
 import type { Sale } from '@/domain/entities/Sale';
 import type { User } from '@/domain/entities/User';
+import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { CartLine } from '@/domain/sales/cart';
 import type { DiscountType } from '@/domain/enums/DiscountType';
 import type { PaymentMethod } from '@/domain/enums/PaymentMethod';
@@ -12,6 +13,9 @@ export interface CheckoutInput {
   tenders: Partial<Record<PaymentMethod, number>>;
   amountReceived: number;
   changeGiven: number;
+  laborLines: LaborLine[];
+  mechanicId: string | null;
+  mechanicName: string | null;
 }
 
 /** Compose the create-payload for a completed sale from cashier input + actor.
@@ -24,9 +28,9 @@ export function buildSaleInput(
   return {
     saleNumber: '', // generated inside the repo transaction
     items: input.lines,
-    laborLines: [],
-    mechanicId: null,
-    mechanicName: null,
+    laborLines: input.laborLines,
+    mechanicId: input.mechanicId,
+    mechanicName: input.mechanicName,
     tenders: input.tenders,
     discountType: input.discountType,
     paymentMethod: input.paymentMethod,
