@@ -34,6 +34,13 @@ export function PosPage() {
     if (lines.length > 0) setDone(null);
   }, [lines.length]);
 
+  // Auto-dismiss the success banner a few seconds after a completed sale.
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(() => setDone(null), 4000);
+    return () => clearTimeout(t);
+  }, [done]);
+
   const active = useMemo(() => (products ?? []).filter((p) => p.isActive), [products]);
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
