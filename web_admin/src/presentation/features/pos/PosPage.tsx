@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { useCheckout } from '@/presentation/hooks/useCheckout';
+import { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
 import { useCartStore } from '@/presentation/stores/cartStore';
-import { cartSubtotal, cartDiscount, cartGrandTotal, changeFor, lowStockLines } from '@/domain/sales/cart';
+import { cartSubtotal, cartDiscount, cartGrandTotal, lowStockLines } from '@/domain/sales/cart';
 import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
-import { PaymentMethod } from '@/domain/enums/PaymentMethod';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
+import { PaymentSection } from './PaymentSection';
 
 export function PosPage() {
   const { data: products } = useProducts();
@@ -23,8 +24,13 @@ export function PosPage() {
   const checkout = useCheckout();
 
   const [search, setSearch] = useState('');
-  const [amountReceived, setAmountReceived] = useState('');
   const [done, setDone] = useState<string | null>(null);
+
+  const isPct = discountType === DiscountType.percentage;
+  const subtotal = cartSubtotal(lines, discountType);
+  const discount = cartDiscount(lines, discountType);
+  const grandTotal = cartGrandTotal(lines, discountType);
+  const pay = usePaymentDraft(grandTotal);
 
   useEffect(() => {
     document.title = 'POS';
@@ -51,27 +57,21 @@ export function PosPage() {
       .slice(0, 50);
   }, [active, search]);
 
-  const isPct = discountType === DiscountType.percentage;
-  const subtotal = cartSubtotal(lines, discountType);
-  const discount = cartDiscount(lines, discountType);
-  const grandTotal = cartGrandTotal(lines, discountType);
-  const received = Number(amountReceived) || 0;
-  const change = changeFor(grandTotal, received);
   const lowStock = useMemo(() => lowStockLines(lines, active), [lines, active]);
-  const canComplete = lines.length > 0 && received >= grandTotal && !checkout.isPending;
+  const canComplete = lines.length > 0 && pay.isValid && !checkout.isPending;
 
   const onComplete = async () => {
     try {
       const sale = await checkout.mutateAsync({
         lines,
         discountType,
-        paymentMethod: PaymentMethod.cash,
-        tenders: { [PaymentMethod.cash]: grandTotal },
-        amountReceived: received,
-        changeGiven: change,
+        paymentMethod: pay.paymentMethod,
+        tenders: pay.tenders,
+        amountReceived: pay.amountReceived,
+        changeGiven: pay.changeGiven,
       });
       setDone(sale.saleNumber);
-      setAmountReceived('');
+      pay.reset();
       clear();
     } catch {
       // surfaced via checkout.error
@@ -203,18 +203,7 @@ export function PosPage() {
         </div>
 
         <div className="space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-md">
-          <label className="block space-y-tk-xs">
-            <span className="text-bodySmall font-medium text-light-text">Cash received</span>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={amountReceived}
-              onChange={(e) => setAmountReceived(e.target.value)}
-              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall"
-            />
-          </label>
-          <Row label="Change" value={formatMoney(change)} />
+          <PaymentSection pay={pay} grandTotal={grandTotal} />
           <button
             type="button"
             disabled={!canComplete}
