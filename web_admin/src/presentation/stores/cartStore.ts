@@ -46,11 +46,14 @@ export const useCartStore = create<CartState>((set) => ({
       ),
     })),
   setLineDiscount: (productId, discountValue) =>
-    set((s) => ({
-      lines: s.lines.map((l) =>
-        l.productId === productId ? { ...l, discountValue: Math.max(0, discountValue) } : l,
-      ),
-    })),
+    set((s) => {
+      // Percentage discounts cap at 100 so a line can't go negative.
+      const max = s.discountType === DiscountType.percentage ? 100 : Infinity;
+      const value = Math.min(max, Math.max(0, discountValue));
+      return {
+        lines: s.lines.map((l) => (l.productId === productId ? { ...l, discountValue: value } : l)),
+      };
+    }),
   removeLine: (productId) =>
     set((s) => ({ lines: s.lines.filter((l) => l.productId !== productId) })),
   setDiscountType: (discountType) =>

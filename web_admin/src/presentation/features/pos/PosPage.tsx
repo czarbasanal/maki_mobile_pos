@@ -4,6 +4,7 @@ import { useProducts } from '@/presentation/hooks/useProducts';
 import { useCheckout } from '@/presentation/hooks/useCheckout';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { cartSubtotal, cartDiscount, cartGrandTotal, changeFor, lowStockLines } from '@/domain/sales/cart';
+import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
@@ -27,6 +28,11 @@ export function PosPage() {
   useEffect(() => {
     document.title = 'POS';
   }, []);
+
+  // Dismiss the previous sale's success banner once a new cart is started.
+  useEffect(() => {
+    if (lines.length > 0) setDone(null);
+  }, [lines.length]);
 
   const active = useMemo(() => (products ?? []).filter((p) => p.isActive), [products]);
   const results = useMemo(() => {
@@ -168,7 +174,7 @@ export function PosPage() {
                       />
                     </label>
                     <span className="ml-auto font-medium text-light-text">
-                      {formatMoney(l.unitPrice * l.quantity)}
+                      {formatMoney(saleItemNet(l, isPct))}
                     </span>
                   </div>
                   {lowStock.has(l.productId) ? (

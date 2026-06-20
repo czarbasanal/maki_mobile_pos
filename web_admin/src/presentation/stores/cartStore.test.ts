@@ -28,6 +28,13 @@ describe('cartStore', () => {
     expect(useCartStore.getState().lines[0].discountValue).toBe(0);
   });
 
+  it('clamps a percentage discount to 100', () => {
+    useCartStore.getState().addLine(product());
+    useCartStore.getState().setDiscountType(DiscountType.percentage);
+    useCartStore.getState().setLineDiscount('p1', 150);
+    expect(useCartStore.getState().lines[0].discountValue).toBe(100);
+  });
+
   it('clamps quantity to a positive integer and removes lines', () => {
     useCartStore.getState().addLine(product());
     useCartStore.getState().setQty('p1', 0);
