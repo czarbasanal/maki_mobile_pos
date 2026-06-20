@@ -43,25 +43,12 @@ export function parseDraftItems(value: unknown): SaleItem[] {
 }
 
 // Reads use this converter; writes go through the repository inline (so they can
-// use serverTimestamp). toFirestore is required by the type but unused on write.
+// use serverTimestamp and serialize items/labor to maps). toFirestore is required
+// by the type but must never be used — fail loudly if someone wires up a
+// `.withConverter(...).set(...)` write path instead of the repository.
 export const draftConverter: FirestoreDataConverter<Draft> = {
-  // Pass-through (mirrors saleConverter); real writes serialize inline in the
-  // repository via draftItemsToMaps / laborLinesToMaps.
-  toFirestore(d) {
-    return {
-      name: d.name,
-      items: d.items,
-      laborLines: d.laborLines,
-      mechanicId: d.mechanicId,
-      mechanicName: d.mechanicName,
-      discountType: d.discountType,
-      createdBy: d.createdBy,
-      createdByName: d.createdByName,
-      updatedBy: d.updatedBy,
-      isConverted: d.isConverted,
-      convertedToSaleId: d.convertedToSaleId,
-      notes: d.notes,
-    };
+  toFirestore() {
+    throw new Error('draftConverter is read-only — write drafts via FirestoreDraftRepository');
   },
   fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Draft {
     const d = snapshot.data();

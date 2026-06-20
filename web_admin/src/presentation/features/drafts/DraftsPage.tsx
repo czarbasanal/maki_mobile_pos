@@ -44,6 +44,12 @@ export function DraftsPage() {
         </p>
       </header>
 
+      {deleteDraft.error ? (
+        <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+          Could not delete the draft: {deleteDraft.error.message}
+        </p>
+      ) : null}
+
       {error ? (
         <ErrorView title="Could not load drafts" message={error.message} />
       ) : isLoading || !drafts ? (
@@ -77,7 +83,6 @@ export function DraftsPage() {
                     <button
                       type="button"
                       onClick={() => onDelete(d)}
-                      disabled={deleteDraft.isPending}
                       className="text-light-text-hint hover:text-error"
                     >
                       <TrashIcon className="h-4 w-4" />

@@ -75,6 +75,7 @@ export function PosPage() {
   const canComplete = lines.length > 0 && pay.isValid && !checkout.isPending;
 
   const onComplete = async () => {
+    saveDraft.reset(); // clear any lingering "Saved to drafts" banner
     try {
       const sale = await checkout.mutateAsync({
         lines,
@@ -173,9 +174,14 @@ export function PosPage() {
             {checkout.error.message}
           </p>
         ) : null}
-        {saveDraft.isSuccess ? (
+        {saveDraft.isSuccess && lines.length === 0 ? (
           <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
             Saved to drafts.
+          </p>
+        ) : null}
+        {markConverted.error ? (
+          <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+            Sale completed, but its draft couldn’t be marked done — delete it from Drafts to avoid re-selling.
           </p>
         ) : null}
 
