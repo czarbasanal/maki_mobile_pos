@@ -7,7 +7,7 @@ import type {
   FirestoreDataConverter,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import type { LaborLine, Sale } from '@/domain/entities';
+import type { Sale } from '@/domain/entities';
 import {
   type PaymentMethod,
   discountTypeFromString,
@@ -16,6 +16,7 @@ import {
   saleStatusFromString,
 } from '@/domain/enums';
 import { requireDate, toDate } from './timestamps';
+import { parseLaborLines } from './laborLines';
 
 export const saleConverter: FirestoreDataConverter<Sale> = {
   toFirestore(sale) {
@@ -67,18 +68,6 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
     };
   },
 };
-
-function parseLaborLines(value: unknown): LaborLine[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((raw, i) => {
-    const m = (raw ?? {}) as Record<string, unknown>;
-    return {
-      id: typeof m.id === 'string' ? m.id : `labor-${i}`,
-      description: typeof m.description === 'string' ? m.description : '',
-      fee: Number(m.fee ?? 0),
-    };
-  });
-}
 
 function parseTenders(value: unknown): Partial<Record<PaymentMethod, number>> {
   if (value == null || typeof value !== 'object') return {};
