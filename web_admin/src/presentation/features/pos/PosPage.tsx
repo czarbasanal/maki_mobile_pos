@@ -10,7 +10,7 @@ import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
-import { useSaveDraft, useMarkConverted } from '@/presentation/hooks/useDraftMutations';
+import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { PaymentSection } from './PaymentSection';
 import { LaborSection } from './LaborSection';
@@ -32,7 +32,6 @@ export function PosPage() {
   const clear = useCartStore((s) => s.clear);
   const checkout = useCheckout();
   const saveDraft = useSaveDraft();
-  const markConverted = useMarkConverted();
 
   const [search, setSearch] = useState('');
   const [done, setDone] = useState<string | null>(null);
@@ -90,9 +89,6 @@ export function PosPage() {
         draftId,
       });
       setDone(sale.saleNumber);
-      if (draftId) {
-        markConverted.mutate({ id: draftId, saleId: sale.id });
-      }
       pay.reset();
       clear();
     } catch {
@@ -177,11 +173,6 @@ export function PosPage() {
         {saveDraft.isSuccess && lines.length === 0 ? (
           <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
             Saved to drafts.
-          </p>
-        ) : null}
-        {markConverted.error ? (
-          <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
-            Sale completed, but its draft couldn’t be marked done — delete it from Drafts to avoid re-selling.
           </p>
         ) : null}
 
