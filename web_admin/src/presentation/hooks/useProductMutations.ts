@@ -4,6 +4,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import type { Product } from '@/domain/entities';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
+import { uploadProductImage, deleteProductImage } from '@/infrastructure/firebase/productImageStorage';
 
 export interface UpdateProductInput {
   id: string;
@@ -12,6 +13,8 @@ export interface UpdateProductInput {
   patch: ProductUpdateInput;
   /** Set when cost and/or price changed; triggers a best-effort price_history write. */
   priceChange: { price: number; cost: number; reason: string } | null;
+  /** Image change to apply before the doc write. Omitted = keep the current image. */
+  image?: { kind: 'keep' } | { kind: 'replace'; blob: Blob } | { kind: 'remove' };
 }
 
 export function useUpdateProduct() {
@@ -19,10 +22,16 @@ export function useUpdateProduct() {
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<void, Error, UpdateProductInput>({
-    mutationFn: async ({ id, oldSku, oldBarcodes, patch, priceChange }) => {
+    mutationFn: async ({ id, oldSku, oldBarcodes, patch, priceChange, image }) => {
       if (!actor) throw new Error('Not signed in');
       const actorName = actor.displayName.trim() || null;
       const fullPatch: ProductUpdateInput = { ...patch, updatedByName: actorName };
+      if (image?.kind === 'replace') {
+        fullPatch.imageUrl = await uploadProductImage(id, image.blob);
+      } else if (image?.kind === 'remove') {
+        await deleteProductImage(id);
+        fullPatch.imageUrl = null;
+      }
       const newSku = (fullPatch.sku ?? oldSku) as string;
       const skuChanged = fullPatch.sku !== undefined && fullPatch.sku !== oldSku;
       const newBarcodes = (fullPatch.barcodes ?? oldBarcodes) as string[];
@@ -135,6 +144,7 @@ export interface CreateProductInput {
   barcodes: string[];
   category: string | null;
   notes: string | null;
+  imageBlob?: Blob | null;
 }
 
 export function useCreateProduct() {
@@ -153,9 +163,10 @@ export function useCreateProduct() {
         }
       }
       const actorName = actor.displayName.trim() || null;
+      const { imageBlob, ...fields } = input;
       const created = await repo.create(
         {
-          ...input,
+          ...fields,
           isActive: true,
           createdBy: actor.id,
           updatedBy: actor.id,
@@ -167,6 +178,16 @@ export function useCreateProduct() {
         } as ProductCreateInput,
         actor.id,
       );
+      if (imageBlob) {
+        try {
+          const imageUrl = await uploadProductImage(created.id, imageBlob);
+          await repo.update(created.id, { imageUrl }, actor.id);
+          created.imageUrl = imageUrl;
+        } catch {
+          // best-effort — the product is already created + SKU-claimed; a failed
+          // image upload shouldn't strand it (the image can be added via edit).
+        }
+      }
       try {
         await repo.recordPriceChange(created.id, {
           price: input.price,

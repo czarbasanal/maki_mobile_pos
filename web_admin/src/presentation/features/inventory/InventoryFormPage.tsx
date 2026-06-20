@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +20,8 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
+import Cropper, { type Area } from 'react-easy-crop';
+import { getCroppedBlob } from '@/core/utils/cropImage';
 
 // Required numeric: a blank input must error, not silently coerce to 0
 // (Number('') === 0). Map blank -> NaN so z.number rejects it.
@@ -77,6 +79,13 @@ export function InventoryFormPage() {
   const [barcodes, setBarcodes] = useState<string[]>([]);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [skuDialog, setSkuDialog] = useState<{ open: boolean; count: number; values: FormValues | null }>(
     { open: false, count: 0, values: null },
   );
@@ -122,6 +131,10 @@ export function InventoryFormPage() {
     setBarcodes(target.barcodes);
   }, [target, reset]);
 
+  useEffect(() => {
+    return () => { if (imagePreview) URL.revokeObjectURL(imagePreview); };
+  }, [imagePreview]);
+
   const categoryOptions = useMemo(
     () => withCurrent((productCats ?? []).map((c) => c.name), target?.category ?? null),
     [productCats, target?.category],
@@ -166,6 +179,38 @@ export function InventoryFormPage() {
   };
   const removeBarcode = (code: string) =>
     setBarcodes((prev) => prev.filter((b) => b !== code));
+
+  const onPickFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-picking the same file
+    if (!file) return;
+    setCropSrc(URL.createObjectURL(file));
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
+  const closeCrop = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  };
+  const confirmCrop = async () => {
+    if (!cropSrc || !croppedAreaPixels) return;
+    try {
+      const blob = await getCroppedBlob(cropSrc, croppedAreaPixels);
+      setImageBlob(blob);
+      setImagePreview(URL.createObjectURL(blob));
+      setImageRemoved(false);
+    } catch {
+      setLoadNotice('Could not process that image — try a different file.');
+    } finally {
+      closeCrop();
+    }
+  };
+  const removeImage = () => {
+    setImageBlob(null);
+    setImagePreview(null);
+    setImageRemoved(true);
+  };
+  const shownImage = imagePreview ?? (!imageRemoved ? target?.imageUrl ?? null : null);
 
   const resolveSupplier = (supplierId: string) => {
     const idOut = supplierId || null;
@@ -214,6 +259,11 @@ export function InventoryFormPage() {
           oldBarcodes: target.barcodes,
           patch,
           priceChange: reason ? { price: priceNum, cost: costNum, reason } : null,
+          image: imageBlob
+            ? { kind: 'replace', blob: imageBlob }
+            : imageRemoved
+              ? { kind: 'remove' }
+              : { kind: 'keep' },
         });
         navigate(RoutePaths.inventory);
       } catch (e) {
@@ -244,6 +294,7 @@ export function InventoryFormPage() {
         barcodes: allBarcodes,
         category: blank(values.category),
         notes: blank(values.notes),
+        imageBlob,
       });
       navigate(RoutePaths.inventory);
     } catch (e) {
@@ -386,6 +437,31 @@ export function InventoryFormPage() {
                 </div>
               </div>
             } />
+
+          <Field label="Image"
+            input={
+              <div className="flex items-center gap-tk-md">
+                {shownImage ? (
+                  <img src={shownImage} alt="" className="h-16 w-16 rounded-md object-cover" />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-md border border-dashed border-light-border text-[11px] text-light-text-hint">
+                    No image
+                  </div>
+                )}
+                <div className="flex items-center gap-tk-sm">
+                  <label className="cursor-pointer rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
+                    {shownImage ? 'Change' : 'Upload'}
+                    <input type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+                  </label>
+                  {shownImage ? (
+                    <button type="button" onClick={removeImage}
+                      className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text-secondary hover:bg-light-subtle">
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            } />
         </Section>
 
         <Section title="Pricing">
@@ -480,6 +556,39 @@ export function InventoryFormPage() {
               }}
               className="inline-flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60">
               {submitting ? <Spinner className="h-3.5 w-3.5" /> : null} Change SKU
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog open={!!cropSrc} onClose={closeCrop} title="Crop image" dismissable>
+        <div className="space-y-tk-md">
+          <div className="relative h-64 w-full overflow-hidden rounded-md bg-light-subtle">
+            {cropSrc ? (
+              <Cropper
+                image={cropSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
+              />
+            ) : null}
+          </div>
+          <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">
+            Zoom
+            <input type="range" min={1} max={3} step={0.1} value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))} className="flex-1" />
+          </label>
+          <div className="flex justify-end gap-tk-sm">
+            <button type="button" onClick={closeCrop}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
+              Cancel
+            </button>
+            <button type="button" onClick={confirmCrop}
+              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark">
+              Save
             </button>
           </div>
         </div>
