@@ -42,4 +42,39 @@ describe('cartStore', () => {
     useCartStore.getState().removeLine('p1');
     expect(useCartStore.getState().lines).toHaveLength(0);
   });
+
+  it('adds, edits, and removes labor lines (fee clamps at 0)', () => {
+    const store = useCartStore.getState();
+    store.addLaborLine();
+    let lines = useCartStore.getState().laborLines;
+    expect(lines).toHaveLength(1);
+    expect(lines[0].description).toBe('');
+    expect(lines[0].fee).toBe(0);
+
+    const id = lines[0].id;
+    store.setLaborLine(id, { description: 'Tune-up' });
+    store.setLaborLine(id, { fee: -5 });
+    lines = useCartStore.getState().laborLines;
+    expect(lines[0].description).toBe('Tune-up');
+    expect(lines[0].fee).toBe(0); // clamped
+
+    store.setLaborLine(id, { fee: 300 });
+    expect(useCartStore.getState().laborLines[0].fee).toBe(300);
+
+    store.removeLaborLine(id);
+    expect(useCartStore.getState().laborLines).toHaveLength(0);
+  });
+
+  it('sets and clears the mechanic, and clear() resets labor + mechanic', () => {
+    const store = useCartStore.getState();
+    store.setMechanic('m1', 'Juan');
+    expect(useCartStore.getState().mechanicId).toBe('m1');
+    expect(useCartStore.getState().mechanicName).toBe('Juan');
+
+    store.addLaborLine();
+    store.clear();
+    expect(useCartStore.getState().laborLines).toHaveLength(0);
+    expect(useCartStore.getState().mechanicId).toBeNull();
+    expect(useCartStore.getState().mechanicName).toBeNull();
+  });
 });
