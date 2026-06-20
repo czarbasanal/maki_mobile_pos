@@ -60,7 +60,11 @@ Future<void> _pump(WidgetTester tester, List<SaleEntity> sales) {
       ],
       child: const MaterialApp(
         home: Scaffold(
-          body: TopSellingTodayWidget(),
+          // The widget lives inside a scroll view on the dashboard; mirror
+          // that here so the expanded list lays out without an overflow.
+          body: SingleChildScrollView(
+            child: TopSellingTodayWidget(),
+          ),
         ),
       ),
     ),
@@ -122,7 +126,9 @@ void main() {
       }
       expect(find.text('See less'), findsOneWidget);
 
-      // Tap See less.
+      // Tap See less (scroll it into view first — the expanded list is
+      // taller than the test viewport).
+      await tester.ensureVisible(find.text('See less'));
       await tester.tap(find.text('See less'));
       await tester.pumpAndSettle();
 
@@ -148,14 +154,15 @@ void main() {
       expect(find.text('Item 12'), findsNothing);
     });
 
-    testWidgets('rank numbers and qty-sold render correctly',
+    testWidgets('product name and qty-sold render correctly',
         (tester) async {
       await _pump(tester, _salesWithProducts(2));
       await tester.pumpAndSettle();
 
-      // First product had quantity 2, second had quantity 1.
-      expect(find.text('1'), findsOneWidget); // rank
-      expect(find.text('2'), findsOneWidget); // rank
+      // Rows show the product name over its units-sold (rank numbers were
+      // replaced by thumbnails in the refreshed list card).
+      expect(find.text('Item 1'), findsOneWidget);
+      expect(find.text('Item 2'), findsOneWidget);
       expect(find.text('2 sold'), findsOneWidget);
       expect(find.text('1 sold'), findsOneWidget);
     });

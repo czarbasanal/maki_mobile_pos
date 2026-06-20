@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -154,6 +154,16 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       message: 'Signing out...',
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkBackground
+              : AppColors.lightBackground,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leadingWidth: 16 + 42 + 12,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Center(child: _buildAvatarTile()),
+          ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -177,12 +187,12 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
             if (widget.user.hasPermission(Permission.voidSale))
               _buildVoidRequestsBell(context),
             IconButton(
-              icon: const Icon(Icons.settings_outlined),
+              icon: const Icon(LucideIcons.settings),
               onPressed: () => context.go(RoutePaths.settings),
               tooltip: 'Settings',
             ),
             IconButton(
-              icon: const Icon(CupertinoIcons.square_arrow_right),
+              icon: const Icon(LucideIcons.logOut),
               onPressed: _handleSignOut,
               tooltip: 'Sign Out',
             ),
@@ -215,7 +225,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       alignment: Alignment.center,
       children: [
         IconButton(
-          icon: const Icon(CupertinoIcons.bell),
+          icon: const Icon(LucideIcons.bell),
           tooltip: 'Void requests',
           onPressed: () => context.push(RoutePaths.voidRequests),
         ),
@@ -241,9 +251,48 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     );
   }
 
+  /// Avatar tile in the app bar — the user's initials on a brand-slate (gold
+  /// in dark) rounded tile with a soft brand glow.
+  Widget _buildAvatarTile() {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: scheme.primary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.newSalePill(dark: isDark),
+      ),
+      child: Text(
+        _initials,
+        style: TextStyle(
+          color: scheme.onPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
+      ),
+    );
+  }
+
+  String get _initials {
+    final name = widget.user.displayName.trim();
+    if (name.isEmpty) return '?';
+    final parts = name.split(RegExp(r'\s+'));
+    final first = parts.first.substring(0, 1);
+    final last = parts.length > 1 ? parts.last.substring(0, 1) : '';
+    return (first + last).toUpperCase();
+  }
+
   Widget _buildPinnedHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+        boxShadow: AppShadows.pinnedHeader(dark: isDark),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -335,7 +384,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
     return Row(
       children: [
-        Icon(CupertinoIcons.calendar, color: muted, size: 18),
+        Icon(LucideIcons.calendar, color: muted, size: 18),
         const SizedBox(width: AppSpacing.sm),
         Text(
           dateFormat.format(now),

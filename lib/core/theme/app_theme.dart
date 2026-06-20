@@ -16,7 +16,7 @@ abstract class AppTheme {
       // Roboto is bundled by Material on Android. To get Roboto on iOS/web
       // too, drop Roboto-Regular/Medium/Bold.ttf into assets/fonts/ and
       // declare them under flutter.fonts in pubspec.yaml.
-      fontFamily: AppTextStyles.fontFamily,
+      fontFamily: 'Figtree',
 
       // Color Scheme
       colorScheme: const ColorScheme.light(
@@ -24,14 +24,14 @@ abstract class AppTheme {
         onPrimary: AppColors.lightAccentText,
         secondary: AppColors.primaryAccent,
         onSecondary: AppColors.darkAccentText,
-        surface: AppColors.lightSurface,
+        surface: AppColors.lightCard,
         onSurface: AppColors.lightText,
         error: AppColors.error,
         onError: Colors.white,
       ),
 
-      // Scaffold
-      scaffoldBackgroundColor: AppColors.lightBackground,
+      // Scaffold — warm canvas; cards/app bar stay white and lift off it.
+      scaffoldBackgroundColor: AppColors.lightCanvas,
 
       // AppBar
       appBarTheme: const AppBarTheme(
@@ -45,7 +45,6 @@ abstract class AppTheme {
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontFamily: AppTextStyles.fontFamily,
           color: AppColors.lightText,
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -182,12 +181,12 @@ abstract class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.lightHairline),
+          borderRadius: BorderRadius.circular(AppRadius.field),
+          borderSide: const BorderSide(color: AppColors.lightInputBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.lightHairline),
+          borderRadius: BorderRadius.circular(AppRadius.field),
+          borderSide: const BorderSide(color: AppColors.lightInputBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -360,7 +359,7 @@ abstract class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: AppTextStyles.fontFamily,
+      fontFamily: 'Figtree',
 
       // Color Scheme
       colorScheme: const ColorScheme.dark(
@@ -368,14 +367,14 @@ abstract class AppTheme {
         onPrimary: AppColors.darkAccentText,
         secondary: AppColors.primaryAccent,
         onSecondary: AppColors.darkAccentText,
-        surface: AppColors.darkSurface,
+        surface: AppColors.darkCard,
         onSurface: AppColors.darkText,
         error: AppColors.error,
         onError: Colors.white,
       ),
 
-      // Scaffold
-      scaffoldBackgroundColor: AppColors.darkBackground,
+      // Scaffold — deepest canvas; app bar / cards lift off it.
+      scaffoldBackgroundColor: AppColors.darkCanvas,
 
       // AppBar
       appBarTheme: const AppBarTheme(
@@ -389,7 +388,6 @@ abstract class AppTheme {
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontFamily: AppTextStyles.fontFamily,
           color: AppColors.darkText,
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -519,12 +517,12 @@ abstract class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.darkHairline),
+          borderRadius: BorderRadius.circular(AppRadius.field),
+          borderSide: const BorderSide(color: AppColors.darkInputBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.darkHairline),
+          borderRadius: BorderRadius.circular(AppRadius.field),
+          borderSide: const BorderSide(color: AppColors.darkInputBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -691,6 +689,8 @@ abstract class AppTheme {
   // ==================== TEXT THEME BUILDER ====================
 
   static TextTheme _buildTextTheme(Color primaryColor, Color secondaryColor) {
+    // Family ('Figtree') is applied via ThemeData.fontFamily; the sizes,
+    // weights, and colors come from AppTextStyles.
     return TextTheme(
       displayLarge: AppTextStyles.headingXL.copyWith(color: primaryColor),
       displayMedium: AppTextStyles.headingLarge.copyWith(color: primaryColor),

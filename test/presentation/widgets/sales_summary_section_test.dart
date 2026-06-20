@@ -61,12 +61,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Gross Sales'), findsOneWidget);
-      expect(find.text('Avg Daily Sales'), findsNothing);
-      expect(find.text('Total COGS'), findsNothing);
-      expect(find.text('Gross Profit'), findsNothing);
+      expect(find.text('Avg Daily'), findsNothing);
+      expect(find.text('COGS'), findsNothing);
+      expect(find.text('Profit'), findsNothing);
     });
 
-    testWidgets('admin sees all four cards', (tester) async {
+    testWidgets('admin sees the hero plus supporting stat cards',
+        (tester) async {
       await _pump(
         tester,
         isAdmin: true,
@@ -76,9 +77,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Gross Sales'), findsOneWidget);
-      expect(find.text('Avg Daily Sales'), findsOneWidget);
-      expect(find.text('Total COGS'), findsOneWidget);
-      expect(find.text('Gross Profit'), findsOneWidget);
+      expect(find.text('Avg Daily'), findsOneWidget);
+      expect(find.text('COGS'), findsOneWidget);
+      expect(find.text('Profit'), findsOneWidget);
     });
 
     testWidgets('Gross Sales reflects grossAmount, not netAmount',
@@ -91,9 +92,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 5000 → ₱5,000.00 — the Gross Sales card shows the exact amount
-      // (not the K-suffix abbreviation used by the other cards).
-      expect(find.text('₱5,000.00'), findsOneWidget);
+      // 5000 → the hero shows ₱5,000 with the centavos (.00) rendered
+      // smaller/muted beside it (two Text widgets), never the net amount.
+      expect(find.text('₱5,000'), findsOneWidget);
+      expect(find.text('.00'), findsOneWidget);
+      expect(find.textContaining('4,500'), findsNothing);
       // The discount subtitle should be present.
       expect(find.textContaining('discount'), findsOneWidget);
     });
@@ -112,17 +115,18 @@ void main() {
       expect(find.text('—'), findsOneWidget);
     });
 
-    testWidgets('Total COGS reflects summary.totalCost', (tester) async {
-      // Use a sub-1000 value so the formatter doesn't apply the K suffix.
+    testWidgets('COGS stat reflects summary.totalCost (compact)',
+        (tester) async {
       await _pump(
         tester,
         isAdmin: true,
-        summary: _summary(cost: 234.56),
+        summary: _summary(cost: 7100),
         avgDaily: const AsyncValue.data(0),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('₱234.56'), findsOneWidget);
+      // Supporting stat cards use the compact ₱K/M format.
+      expect(find.text('₱7.1K'), findsOneWidget);
     });
 
     testWidgets('shows a spinner while today summary loads', (tester) async {

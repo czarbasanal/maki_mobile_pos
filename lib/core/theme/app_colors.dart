@@ -15,13 +15,18 @@ abstract class AppColors {
   /// older fully-saturated 0xFFFCAC18 to read less harsh on screen.
   static const Color primaryAccent = Color(0xFFE8B84C);
 
-  /// Slate used for the light-theme primary (buttons, FAB, focus). Replaces
-  /// the previous near-black so filled buttons feel less aggressive.
-  static const Color brandSlate = Color(0xFF334E58);
+  /// Slate used for the light-theme primary (buttons, FAB, focus). Darkened
+  /// (was 0xFF334E58) for the refreshed theme so the filled primary reads with
+  /// more authority against the warm canvas.
+  static const Color brandSlate = Color(0xFF283E46);
 
   // ==================== LIGHT THEME COLORS ====================
 
   static const Color lightBackground = Color(0xFFFFFFFF);
+
+  /// Warm off-white canvas the cards sit on (refreshed theme). The scaffold
+  /// uses this; cards/app bar stay [lightCard] white so they lift off it.
+  static const Color lightCanvas = Color(0xFFF6F5F3);
   static const Color lightSurface = Color(0xFFF5F5F5);
 
   /// Near-white surface used for inputs and quiet panels — lighter than
@@ -29,11 +34,17 @@ abstract class AppColors {
   /// boxed in.
   static const Color lightSurfaceMuted = Color(0xFFFAFAFA);
   static const Color lightCard = Color(0xFFFFFFFF);
-  static const Color lightText = Color(0xFF000000);
-  static const Color lightTextSecondary = Color(0xFF666666);
-  static const Color lightTextHint = Color(0xFF999999);
+  static const Color lightText = Color(0xFF16201F);
+  static const Color lightTextSecondary = Color(0xFF6A7378);
+
+  /// Quietest text — card labels, captions, the lightest muted copy.
+  static const Color lightTextMuted = Color(0xFF8A9296);
+  static const Color lightTextHint = Color(0xFF9AA0A3);
   static const Color lightDivider = Color(0xFFE0E0E0);
   static const Color lightBorder = Color(0xFFD0D0D0);
+
+  /// Resting border for input fields on the white card surface.
+  static const Color lightInputBorder = Color(0xFFE2E2E2);
 
   /// Hairline border used for outlined cards and quiet separators in the
   /// airy/minimal theme. Lighter than [lightBorder] so flat surfaces still
@@ -45,6 +56,11 @@ abstract class AppColors {
   // ==================== DARK THEME COLORS ====================
 
   static const Color darkBackground = primaryDark;
+
+  /// Deepest dark surface — the scaffold canvas behind cards (refreshed
+  /// theme). The app bar / status bar stay [darkBackground] so they read as a
+  /// distinct surface above the canvas.
+  static const Color darkCanvas = Color(0xFF0C1415);
   static const Color darkSurface = Color(0xFF1E2A2B);
 
   /// Quiet near-background surface for inputs and muted panels in dark mode.
@@ -52,19 +68,19 @@ abstract class AppColors {
   /// without leaning on a heavy fill.
   static const Color darkSurfaceMuted = Color(0xFF182425);
 
-  /// Dark-theme card colour — nudged a touch lighter than the previous value
-  /// so flat (elevation 0) cards still separate from [darkBackground] via
-  /// surface contrast alone.
-  static const Color darkCard = Color(0xFF263637);
-  static const Color darkText = Color(0xFFFFFFFF);
-  static const Color darkTextSecondary = Color(0xFFB0B0B0);
-  static const Color darkTextHint = Color(0xFF808080);
+  /// Dark-theme card / elevated surface — lifts off [darkCanvas].
+  static const Color darkCard = Color(0xFF18262A);
+  static const Color darkText = Color(0xFFECEFEF);
+  static const Color darkTextSecondary = Color(0xFF93A0A3);
+  static const Color darkTextHint = Color(0xFF6C797C);
   static const Color darkDivider = Color(0xFF3A4A4B);
   static const Color darkBorder = Color(0xFF4A5A5B);
 
-  /// Hairline border for dark-theme outlined surfaces. Soft enough to read
-  /// without competing with content.
-  static const Color darkHairline = Color(0xFF2E3E3F);
+  /// Hairline / card border for dark-theme surfaces (refreshed).
+  static const Color darkHairline = Color(0xFF243234);
+
+  /// Resting border for input fields in dark mode.
+  static const Color darkInputBorder = Color(0xFF2C3C3E);
   static const Color darkAccent = primaryAccent;
   static const Color darkAccentText = Color(0xFF000000);
 

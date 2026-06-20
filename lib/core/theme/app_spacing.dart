@@ -20,7 +20,13 @@ abstract class AppSpacing {
 abstract class AppRadius {
   static const double sm = 10;
   static const double md = 14;
+
+  /// Fields, primary button, quick-action pills, supporting stat cards.
+  static const double field = 16;
   static const double lg = 18;
+
+  /// The Gross-Sales hero card.
+  static const double hero = 22;
   static const double xl = 24;
   static const double pill = 999;
 }

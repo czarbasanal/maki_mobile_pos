@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// A customized text field widget for the POS app.
@@ -70,16 +70,37 @@ class AppTextField extends StatefulWidget {
 
 class _AppTextFieldState extends State<AppTextField> {
   late bool _obscureText;
+  FocusNode? _internalNode;
+  bool _focused = false;
+
+  FocusNode get _node => widget.focusNode ?? (_internalNode ??= FocusNode());
 
   @override
   void initState() {
     super.initState();
     _obscureText = widget.obscureText;
+    _node.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (mounted && _node.hasFocus != _focused) {
+      setState(() => _focused = _node.hasFocus);
+    }
+  }
+
+  @override
+  void dispose() {
+    _node.removeListener(_onFocusChange);
+    _internalNode?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    final field = TextFormField(
       controller: widget.controller,
       obscureText: _obscureText,
       enabled: widget.enabled,
@@ -96,7 +117,7 @@ class _AppTextFieldState extends State<AppTextField> {
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onSubmitted,
       onTap: widget.onTap,
-      focusNode: widget.focusNode,
+      focusNode: _node,
       style: TextStyle(
         color: widget.enabled
             ? Theme.of(context).textTheme.bodyLarge?.color
@@ -108,25 +129,29 @@ class _AppTextFieldState extends State<AppTextField> {
         errorText: widget.errorText,
         contentPadding: widget.contentPadding,
         prefixIcon: widget.prefixIcon != null
-            ? Icon(widget.prefixIcon, size: 22)
+            ? Icon(widget.prefixIcon, size: 20)
             : widget.prefix,
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
-                  _obscureText
-                      ? CupertinoIcons.eye
-                      : CupertinoIcons.eye_slash,
-                  size: 22,
-                  color: AppColors.lightTextSecondary,
+                  _obscureText ? LucideIcons.eyeOff : LucideIcons.eye,
+                  size: 20,
+                  color: muted,
                 ),
-                onPressed: () {
-                  setState(() {
-                    _obscureText = !_obscureText;
-                  });
-                },
+                onPressed: () => setState(() => _obscureText = !_obscureText),
               )
             : widget.suffix,
       ),
+    );
+
+    // Soft focus-ring glow around the field when it holds focus.
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.field),
+        boxShadow: _focused ? AppShadows.focusRing(dark: isDark) : null,
+      ),
+      child: field,
     );
   }
 }

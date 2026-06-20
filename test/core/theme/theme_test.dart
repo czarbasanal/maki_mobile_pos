@@ -21,20 +21,20 @@ void main() {
     });
 
     test('brandSlate has correct value', () {
-      expect(AppColors.brandSlate, const Color(0xFF334E58));
+      expect(AppColors.brandSlate, const Color(0xFF283E46));
     });
   });
 
   group('AppTheme', () {
-    test('light theme has correct background', () {
+    test('light theme scaffold is the warm canvas', () {
       final theme = AppTheme.lightTheme;
-      expect(theme.scaffoldBackgroundColor, AppColors.lightBackground);
+      expect(theme.scaffoldBackgroundColor, AppColors.lightCanvas);
       expect(theme.brightness, Brightness.light);
     });
 
-    test('dark theme has correct background', () {
+    test('dark theme scaffold is the deep canvas', () {
       final theme = AppTheme.darkTheme;
-      expect(theme.scaffoldBackgroundColor, AppColors.darkBackground);
+      expect(theme.scaffoldBackgroundColor, AppColors.darkCanvas);
       expect(theme.brightness, Brightness.dark);
     });
 

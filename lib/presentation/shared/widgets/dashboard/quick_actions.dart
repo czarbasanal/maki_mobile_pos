@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Quick action buttons for the dashboard.
@@ -35,38 +35,38 @@ class QuickActions extends StatelessWidget {
       child: Row(
         children: [
           _QuickActionButton(
-            icon: CupertinoIcons.cart_badge_plus,
+            icon: LucideIcons.shoppingCart,
             label: 'New Sale',
             isPrimary: true,
             onTap: onNewSale,
           ),
           if (onReceiving != null)
             _QuickActionButton(
-              icon: CupertinoIcons.square_arrow_down,
+              icon: LucideIcons.download,
               label: 'Receive Stock',
               onTap: onReceiving!,
             ),
           if (onInventory != null)
             _QuickActionButton(
-              icon: CupertinoIcons.cube_box,
+              icon: LucideIcons.package,
               label: 'Inventory',
               onTap: onInventory!,
             ),
           if (onExpenses != null)
             _QuickActionButton(
-              icon: CupertinoIcons.doc_text,
+              icon: LucideIcons.receipt,
               label: 'Expenses',
               onTap: onExpenses!,
             ),
           if (onReports != null)
             _QuickActionButton(
-              icon: CupertinoIcons.chart_bar,
+              icon: LucideIcons.barChart3,
               label: 'Reports',
               onTap: onReports!,
             ),
           if (onCloseDay != null)
             _QuickActionButton(
-              icon: CupertinoIcons.money_dollar_circle,
+              icon: LucideIcons.calendarX,
               label: 'Close Day',
               isDestructive: true,
               onTap: onCloseDay!,
@@ -77,11 +77,12 @@ class QuickActions extends StatelessWidget {
   }
 }
 
-/// Outlined pill button for the dashboard's quick-actions row.
+/// A single quick-action pill (50px tall, radius 16).
 ///
-/// All actions share the same neutral treatment so the row reads as a
-/// quiet menu of options. The single primary action gets a filled
-/// treatment in the brand slate to anchor the row.
+/// The row reads as a quiet menu: outlined pills with a hairline border and a
+/// muted icon. The one **primary** action (New Sale) is filled in the brand
+/// slate (gold in dark) with an elevated [AppShadows.newSalePill] glow to
+/// anchor the row. Close Day is error-outlined.
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -100,56 +101,67 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final errorColor = isDark ? const Color(0xFFFF6B5E) : AppColors.error;
 
-    final Color fg;
     final Color bg;
     final Color border;
+    final Color textColor;
+    final Color iconColor;
     if (isDestructive) {
-      fg = AppColors.error;
-      bg = Colors.transparent;
-      border = AppColors.error;
+      bg = scheme.surface;
+      border = errorColor;
+      textColor = errorColor;
+      iconColor = errorColor;
     } else if (isPrimary) {
-      fg = theme.colorScheme.onPrimary;
-      bg = theme.colorScheme.primary;
-      border = theme.colorScheme.primary;
+      bg = scheme.primary;
+      border = scheme.primary;
+      textColor = scheme.onPrimary;
+      iconColor = scheme.onPrimary;
     } else {
-      fg = theme.colorScheme.onSurface;
-      bg = Colors.transparent;
+      bg = scheme.surface;
       border = hairline;
+      textColor = scheme.onSurface;
+      iconColor = scheme.onSurfaceVariant;
     }
 
+    final radius = BorderRadius.circular(AppRadius.field);
     return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.sm + 4),
-      child: Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: border),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md + 4,
-              vertical: AppSpacing.md,
-            ),
-            child: Row(
-              children: [
-                Icon(icon, color: fg, size: 20),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w600,
+      padding: const EdgeInsets.only(right: 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          boxShadow: isPrimary ? AppShadows.newSalePill(dark: isDark) : null,
+        ),
+        child: Material(
+          color: bg,
+          borderRadius: radius,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                border: Border.all(color: border),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: iconColor, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

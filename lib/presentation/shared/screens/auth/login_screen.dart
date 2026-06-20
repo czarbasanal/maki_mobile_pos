@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/errors/errors.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/utils.dart';
@@ -115,7 +116,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightBackground,
       body: LoadingOverlay(
         isLoading: _isLoading,
         message: 'Signing in…',
@@ -144,6 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         controller: _emailController,
                         focusNode: _emailFocusNode,
                         labelText: 'Email',
+                        prefixIcon: LucideIcons.mail,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         autofocus: true,
@@ -155,6 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         controller: _passwordController,
                         focusNode: _passwordFocusNode,
                         labelText: 'Password',
+                        prefixIcon: LucideIcons.lock,
                         obscureText: true,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _handleLogin(),
@@ -172,13 +174,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: TextButton(
                           onPressed: _handleForgotPassword,
                           style: TextButton.styleFrom(
-                            foregroundColor: AppColors.lightTextSecondary,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.primary,
                           ),
                           child: const Text(
                             'Forgot password?',
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -197,25 +200,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildHeader() {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+        // Brand-slate tile in both themes — the gold logo mark pops on the
+        // dark backing whether the app is in light or dark mode.
+        Container(
+          width: 76,
+          height: 76,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.brandSlate,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isDark
+                ? const [
+                    BoxShadow(
+                      color: Color(0x73000000),
+                      blurRadius: 20,
+                      spreadRadius: -8,
+                      offset: Offset(0, 10),
+                    ),
+                  ]
+                : AppShadows.primaryButton,
+          ),
           child: Image.asset(
-            'assets/icon/200x200_maki_app_icon_black.png',
-            width: 64,
-            height: 64,
-            fit: BoxFit.cover,
+            'assets/icon/maki_logo.png',
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
         Text(
           'MAKI POS',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: 2.4,
-            color: AppColors.primaryDark,
+            color: scheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -223,7 +246,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           'Sign in to your account',
           style: TextStyle(
             fontSize: 14,
-            color: AppColors.lightTextSecondary,
+            color: scheme.onSurfaceVariant,
           ),
         ),
       ],

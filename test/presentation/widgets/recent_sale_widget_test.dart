@@ -56,9 +56,9 @@ void main() {
       await _pump(tester, [_sale(cashierName: 'Alice Bautista')]);
       await tester.pumpAndSettle();
 
-      // Subtitle reads "Alice • 3 items • 2:35 PM" (substring match
-      // keeps the assertion timezone-agnostic for the time portion).
-      expect(find.textContaining('Alice • 3 items'), findsOneWidget);
+      // Subtitle reads "Alice · 2:35 PM · 3 items" — only the first token
+      // of the cashier name leads; the surname is dropped.
+      expect(find.textContaining('Alice · '), findsOneWidget);
       // The trailing surname must NOT be in the visible subtitle.
       expect(find.textContaining('Bautista'), findsNothing);
     });
@@ -68,7 +68,7 @@ void main() {
       await _pump(tester, [_sale(cashierName: 'Maria')]);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Maria • 3 items'), findsOneWidget);
+      expect(find.textContaining('Maria · '), findsOneWidget);
     });
 
     testWidgets('blank cashier name omits the cashier prefix entirely',

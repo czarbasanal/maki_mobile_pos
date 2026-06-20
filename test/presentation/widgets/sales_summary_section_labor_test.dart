@@ -52,8 +52,8 @@ void main() {
 
     expect(find.text('Service / Labor'), findsOneWidget);
     // Parts cards still present and parts-only.
-    expect(find.text('Gross Profit'), findsOneWidget);
-    expect(find.text('Total COGS'), findsOneWidget);
+    expect(find.text('Profit'), findsOneWidget);
+    expect(find.text('COGS'), findsOneWidget);
   });
 
   testWidgets('hides Service / Labor card when no labor', (tester) async {
@@ -61,6 +61,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Service / Labor'), findsNothing);
-    expect(find.text('Gross Profit'), findsOneWidget);
+    expect(find.text('Profit'), findsOneWidget);
   });
 }

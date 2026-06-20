@@ -77,14 +77,28 @@ class AppButton extends StatelessWidget {
   }
 
   Widget _buildPrimaryButton(BuildContext context, bool isDisabled) {
-    return ElevatedButton(
-      onPressed: isDisabled ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        padding: padding,
-        disabledBackgroundColor: AppColors.lightAccent.withOpacity(0.5),
-        disabledForegroundColor: AppColors.lightAccentText.withOpacity(0.7),
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final radius = BorderRadius.circular(AppRadius.field);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: isDisabled
+            ? null
+            : (isDark ? AppShadows.primaryButtonGold : AppShadows.primaryButton),
       ),
-      child: _buildChild(AppColors.lightAccentText),
+      child: ElevatedButton(
+        onPressed: isDisabled ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          padding: padding,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: radius),
+          disabledBackgroundColor: scheme.primary.withValues(alpha: 0.5),
+          disabledForegroundColor: scheme.onPrimary.withValues(alpha: 0.7),
+        ),
+        child: _buildChild(scheme.onPrimary),
+      ),
     );
   }
 

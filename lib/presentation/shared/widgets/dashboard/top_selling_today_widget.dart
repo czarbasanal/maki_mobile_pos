@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/dashboard_list_card.dart';
 
 /// Top Selling Items Today on the mobile admin dashboard.
 ///
@@ -49,35 +50,35 @@ class _TopSellingTodayWidgetState
         final limit = _expanded ? widget.expandedLimit : widget.collapsedLimit;
         final visible = ranked.take(limit).toList();
         final canExpand = ranked.length > widget.collapsedLimit;
+        final divider = Divider(
+          height: 1,
+          thickness: 1,
+          indent: 14,
+          endIndent: 14,
+          color: theme.dividerColor,
+        );
 
-        return Card(
-          margin: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            child: Column(
-              children: [
-                for (var i = 0; i < visible.length; i++)
-                  _Row(
-                    rank: i + 1,
-                    item: visible[i],
-                  ),
-                if (canExpand)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xs),
-                    child: TextButton.icon(
-                      onPressed: () =>
-                          setState(() => _expanded = !_expanded),
-                      icon: Icon(
-                        _expanded
-                            ? CupertinoIcons.chevron_up
-                            : CupertinoIcons.chevron_down,
-                        size: 16,
-                      ),
-                      label: Text(_expanded ? 'See less' : 'See more'),
-                    ),
-                  ),
+        return DashboardListCard(
+          child: Column(
+            children: [
+              for (var i = 0; i < visible.length; i++) ...[
+                if (i > 0) divider,
+                _Row(item: visible[i]),
               ],
-            ),
+              if (canExpand) ...[
+                divider,
+                TextButton.icon(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  icon: Icon(
+                    _expanded
+                        ? LucideIcons.chevronUp
+                        : LucideIcons.chevronDown,
+                    size: 16,
+                  ),
+                  label: Text(_expanded ? 'See less' : 'See more'),
+                ),
+              ],
+            ],
           ),
         );
       },
@@ -97,32 +98,20 @@ class _TopSellingTodayWidgetState
 }
 
 class _Row extends StatelessWidget {
-  final int rank;
   final TopSellingItem item;
 
-  const _Row({required this.rank, required this.item});
+  const _Row({required this.item});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs + 2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          SizedBox(
-            width: 24,
-            child: Text(
-              '$rank',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: muted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          const _Thumb(),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,38 +119,53 @@ class _Row extends StatelessWidget {
                 Text(
                   item.name,
                   style: AppTextStyles.productName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  item.sku,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: muted,
-                    fontFamily: 'monospace',
-                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${item.quantitySold} sold',
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${item.quantitySold} sold',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                '${AppConstants.currencySymbol}${item.totalRevenue.toStringAsFixed(2)}',
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
-              ),
-            ],
+          const SizedBox(width: 8),
+          Text(
+            '${AppConstants.currencySymbol}${item.totalRevenue.toStringAsFixed(2)}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 40×40 product thumbnail placeholder (radius 11). Wire to real product
+/// images later; for now a quiet tile with a package glyph.
+class _Thumb extends StatelessWidget {
+  const _Thumb();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkHairline : AppColors.lightCanvas,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(
+          color: isDark ? AppColors.darkHairline : AppColors.lightHairline,
+        ),
+      ),
+      child: Icon(
+        LucideIcons.package,
+        size: 18,
+        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -175,14 +179,13 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
+    return DashboardListCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.cart, size: 36, color: muted),
+            Icon(LucideIcons.shoppingCart, size: 36, color: muted),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'No products sold yet today',
