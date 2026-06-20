@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -43,13 +44,13 @@ class CartItemTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.lg - 4),
         color: AppColors.error,
-        child: const Icon(CupertinoIcons.trash, color: Colors.white),
+        child: const Icon(LucideIcons.trash2, color: Colors.white),
       ),
       onDismissed: (_) => onRemove(),
-      child: Card(
+      child: AppCard(
         margin: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
+          vertical: 5,
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.sm + 4),
@@ -68,7 +69,7 @@ class CartItemTile extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(CupertinoIcons.xmark, size: 20),
+                    icon: const Icon(LucideIcons.x, size: 20),
                     onPressed: onRemove,
                     visualDensity: VisualDensity.compact,
                     tooltip: 'Remove item',
@@ -173,7 +174,7 @@ class _QuantityControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(CupertinoIcons.minus),
+            icon: const Icon(LucideIcons.minus),
             onPressed: quantity > 1 ? () => onChanged(quantity - 1) : null,
             iconSize: 18,
             padding: EdgeInsets.zero,
@@ -194,7 +195,7 @@ class _QuantityControls extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(CupertinoIcons.add),
+            icon: const Icon(LucideIcons.plus),
             onPressed: () => onChanged(quantity + 1),
             iconSize: 18,
             padding: EdgeInsets.zero,
@@ -249,7 +250,7 @@ class _DiscountButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.tag, size: 16, color: fgColor),
+            Icon(LucideIcons.tag, size: 16, color: fgColor),
             const SizedBox(width: 4),
             Text(
               hasDiscount ? label : 'Discount',
