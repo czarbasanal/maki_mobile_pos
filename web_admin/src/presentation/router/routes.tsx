@@ -32,6 +32,7 @@ import { InventoryFormPage } from '@/presentation/features/inventory/InventoryFo
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
 import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
+import { PosPage } from '@/presentation/features/pos/PosPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -55,7 +56,7 @@ export const router = createBrowserRouter(
       ),
       children: [
         { path: RoutePaths.dashboard, element: <DashboardPage /> },
-        { path: RoutePaths.pos, element: placeholder('POS', 'phase 11') },
+        { path: RoutePaths.pos, element: <PosPage /> },
         { path: RoutePaths.checkout, element: placeholder('Checkout', 'phase 11') },
         { path: RoutePaths.drafts, element: placeholder('Drafts', 'phase 10') },
         { path: RoutePaths.draftEdit, element: placeholder('Edit Draft', 'phase 10') },
