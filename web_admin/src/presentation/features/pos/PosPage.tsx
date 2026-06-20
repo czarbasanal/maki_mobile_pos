@@ -10,7 +10,7 @@ import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
-import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
+import { useSaveDraft, useMarkConverted } from '@/presentation/hooks/useDraftMutations';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { PaymentSection } from './PaymentSection';
 import { LaborSection } from './LaborSection';
@@ -32,6 +32,7 @@ export function PosPage() {
   const clear = useCartStore((s) => s.clear);
   const checkout = useCheckout();
   const saveDraft = useSaveDraft();
+  const markConverted = useMarkConverted();
 
   const [search, setSearch] = useState('');
   const [done, setDone] = useState<string | null>(null);
@@ -85,8 +86,12 @@ export function PosPage() {
         laborLines: describedLaborLines(laborLines),
         mechanicId,
         mechanicName,
+        draftId,
       });
       setDone(sale.saleNumber);
+      if (draftId) {
+        markConverted.mutate({ id: draftId, saleId: sale.id });
+      }
       pay.reset();
       clear();
     } catch {

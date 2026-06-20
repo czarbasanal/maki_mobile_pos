@@ -16,6 +16,7 @@ export interface CheckoutInput {
   laborLines: LaborLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  draftId: string | null;
 }
 
 /** Compose the create-payload for a completed sale from cashier input + actor.
@@ -39,7 +40,7 @@ export function buildSaleInput(
     status: SaleStatus.completed,
     cashierId: actor.id,
     cashierName,
-    draftId: null,
+    draftId: input.draftId,
     notes: null,
     voidedAt: null,
     voidedBy: null,
