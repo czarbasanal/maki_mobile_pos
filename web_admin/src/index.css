@@ -17,3 +17,22 @@
     @apply font-sans text-light-text bg-light-background;
   }
 }
+
+/* Print only the receipt: hide all chrome (sidebar/topbar/page content), reveal
+   the receipt subtree, and pin it to the top-left of the page. The receipt host
+   is `hidden print:block` so it only exists when printing. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-receipt,
+  #print-receipt * {
+    visibility: visible;
+  }
+  #print-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

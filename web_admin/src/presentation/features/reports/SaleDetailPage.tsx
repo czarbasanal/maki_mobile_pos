@@ -1,7 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSaleRepo } from '@/infrastructure/di/container';
+import { useVoidSale } from '@/presentation/hooks/useVoidSale';
+import { useActiveCategories } from '@/presentation/hooks/useCategories';
+import { CategoryKind } from '@/domain/categories/categoryKind';
+import { canVoidSale } from '@/domain/sales/voiding';
+import { Dialog } from '@/presentation/components/common/Dialog';
+import { Receipt } from './Receipt';
 import {
   saleEffectiveTenders,
   saleGrandTotal,
@@ -11,7 +17,7 @@ import {
   salePartsSubtotal,
   saleTotalDiscount,
 } from '@/domain/entities';
-import { realTenderMethods } from '@/domain/enums';
+import { paymentMethodDisplayName, realTenderMethods } from '@/domain/enums';
 import { formatMoney } from '@/core/utils/money';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -26,6 +32,11 @@ export function SaleDetailPage() {
     queryKey: ['sales', id],
     queryFn: () => repo.getById(id),
   });
+
+  const voidSale = useVoidSale(id);
+  const { data: voidReasons } = useActiveCategories(CategoryKind.voidReason);
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
     document.title = 'Sale detail · MAKI POS Admin';
@@ -59,7 +70,8 @@ export function SaleDetailPage() {
   const tenders = saleEffectiveTenders(sale);
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <>
+    <div className="space-y-tk-lg px-tk-xl py-tk-lg print:hidden">
       <header className="space-y-tk-xs">
         <Link to="/reports/sales" className="text-bodySmall text-light-text-secondary hover:underline">
           ← Back to sales
@@ -79,6 +91,29 @@ export function SaleDetailPage() {
           {sale.mechanicName ? ` · Mechanic: ${sale.mechanicName}` : ''}
         </p>
       </header>
+
+      <div className="flex flex-wrap gap-tk-sm">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-medium text-light-text hover:bg-light-subtle"
+        >
+          Print receipt
+        </button>
+        {canVoidSale(sale) ? (
+          <button
+            type="button"
+            onClick={() => {
+              setReason('');
+              voidSale.reset();
+              setVoidOpen(true);
+            }}
+            className="rounded-md border border-error-light px-tk-md py-tk-sm text-bodySmall font-medium text-error-dark hover:bg-error-light/30"
+          >
+            Void sale
+          </button>
+        ) : null}
+      </div>
 
       <section className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
         <table className="w-full text-bodySmall">
@@ -127,13 +162,85 @@ export function SaleDetailPage() {
           {realTenderMethods
             .filter((m) => (tenders[m] ?? 0) > 0)
             .map((m) => (
-              <Row key={m} label={m} value={formatMoney(tenders[m] ?? 0)} muted />
+              <Row key={m} label={paymentMethodDisplayName[m]} value={formatMoney(tenders[m] ?? 0)} muted />
             ))}
           <Row label="Amount received" value={formatMoney(sale.amountReceived)} muted />
           <Row label="Change" value={formatMoney(sale.changeGiven)} muted />
         </div>
       </section>
+
+      <Dialog
+        open={voidOpen}
+        onClose={() => {
+          if (!voidSale.isPending) setVoidOpen(false);
+        }}
+        title="Void sale"
+        dismissable={!voidSale.isPending}
+      >
+        <div className="space-y-tk-md">
+          <p className="text-bodySmall text-light-text-secondary">
+            Voiding restores the sold stock and removes this sale from reports. This can’t be undone.
+          </p>
+          {(voidReasons ?? []).length === 0 ? (
+            <p className="text-bodySmall text-light-text-secondary">
+              No void reasons configured.{' '}
+              <Link to="/settings/lists" className="text-light-text underline">
+                Add them in Manage lists
+              </Link>
+              .
+            </p>
+          ) : (
+            <label className="block space-y-tk-xs">
+              <span className="text-bodySmall text-light-text-secondary">Reason</span>
+              <select
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall"
+              >
+                <option value="">Select a reason…</option>
+                {(voidReasons ?? []).map((r) => (
+                  <option key={r.id} value={r.name}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {voidSale.error ? (
+            <p className="text-bodySmall text-error-dark">{voidSale.error.message}</p>
+          ) : null}
+          <div className="flex justify-end gap-tk-sm">
+            <button
+              type="button"
+              onClick={() => setVoidOpen(false)}
+              disabled={voidSale.isPending}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!reason || voidSale.isPending}
+              onClick={async () => {
+                try {
+                  await voidSale.mutateAsync({ reason });
+                  setVoidOpen(false);
+                } catch {
+                  // surfaced via voidSale.error
+                }
+              }}
+              className="rounded-md bg-error px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:bg-error-dark disabled:opacity-60"
+            >
+              {voidSale.isPending ? 'Voiding…' : 'Void sale'}
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
+    <div id="print-receipt" className="hidden print:block">
+      <Receipt sale={sale} />
+    </div>
+    </>
   );
 }
 
