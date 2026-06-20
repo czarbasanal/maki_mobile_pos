@@ -84,11 +84,4 @@ export class FirestoreDraftRepository implements DraftRepository {
     await deleteDoc(doc(this.db, FirestoreCollections.drafts, id));
   }
 
-  async markConverted(id: string, saleId: string): Promise<void> {
-    await updateDoc(doc(this.db, FirestoreCollections.drafts, id), {
-      isConverted: true,
-      convertedToSaleId: saleId,
-      convertedAt: serverTimestamp(),
-    });
-  }
 }

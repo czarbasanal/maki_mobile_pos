@@ -28,6 +28,7 @@ import { saleConverter } from '@/data/converters/saleConverter';
 import { saleItemConverter } from '@/data/converters/saleItemConverter';
 import { counterKey, formatSaleNumber } from '@/domain/sales/saleNumber';
 import { SaleStatus } from '@/domain/enums/SaleStatus';
+import { draftConversionOutcome } from '@/domain/sales/draftConversion';
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
@@ -129,10 +130,25 @@ export class FirestoreSaleRepository implements SaleRepository {
     const itemRefs = input.items.map(() =>
       doc(collection(this.db, FirestoreCollections.sales, saleRef.id, Subcollections.saleItems)),
     );
+    const draftRef = input.draftId
+      ? doc(this.db, FirestoreCollections.drafts, input.draftId)
+      : null;
 
     await runTransaction(this.db, async (tx) => {
-      // The only read — must precede every write.
+      // Reads first — must precede every write.
       const counterSnap = await tx.get(counterRef);
+      const draftSnap = draftRef ? await tx.get(draftRef) : null;
+
+      // A resumed draft converts atomically with the sale; an already-converted
+      // draft aborts the whole sale (prevents a duplicate); a deleted draft is
+      // skipped so the sale still commits.
+      const outcome = draftSnap
+        ? draftConversionOutcome(draftSnap.exists(), draftSnap.get('isConverted') === true)
+        : 'skip';
+      if (outcome === 'abort') {
+        throw new Error('This draft was already converted to a sale');
+      }
+
       const seq =
         (counterSnap.exists() ? (counterSnap.data() as Record<string, number>)[key] ?? 0 : 0) + 1;
       const saleNumber = formatSaleNumber(now, seq);
@@ -178,6 +194,14 @@ export class FirestoreSaleRepository implements SaleRepository {
           updatedAt: serverTimestamp(),
           updatedBy: actorId,
           updatedByName: input.cashierName,
+        });
+      }
+      // Mark the source draft converted, atomically with the sale.
+      if (draftRef && outcome === 'convert') {
+        tx.update(draftRef, {
+          isConverted: true,
+          convertedToSaleId: saleRef.id,
+          convertedAt: serverTimestamp(),
         });
       }
     });

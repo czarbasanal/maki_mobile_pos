@@ -60,10 +60,3 @@ export function useDeleteDraft() {
   const repo = useDraftRepo();
   return useMutation<void, Error, string>({ mutationFn: (id) => repo.delete(id) });
 }
-
-export function useMarkConverted() {
-  const repo = useDraftRepo();
-  return useMutation<void, Error, { id: string; saleId: string }>({
-    mutationFn: ({ id, saleId }) => repo.markConverted(id, saleId),
-  });
-}
