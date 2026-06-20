@@ -27,6 +27,7 @@ import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/
 import { saleConverter } from '@/data/converters/saleConverter';
 import { saleItemConverter } from '@/data/converters/saleItemConverter';
 import { counterKey, formatSaleNumber } from '@/domain/sales/saleNumber';
+import { SaleStatus } from '@/domain/enums/SaleStatus';
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
@@ -185,8 +186,45 @@ export class FirestoreSaleRepository implements SaleRepository {
     if (!created) throw new Error('Failed to load the created sale');
     return created;
   }
-  async voidSale(): Promise<void> {
-    throw new Error('SaleRepository.voidSale not implemented yet (phase 11)');
+  async voidSale(
+    id: string,
+    reason: string,
+    actorId: string,
+    actorName: string,
+  ): Promise<void> {
+    // Items are immutable once written, so loading them before the transaction
+    // is safe (a subcollection query can't run inside a transaction anyway).
+    const items = await this.loadItems(id);
+    const saleRef = doc(this.db, FirestoreCollections.sales, id);
+
+    await runTransaction(this.db, async (tx) => {
+      const snap = await tx.get(saleRef); // the only read — precedes every write
+      if (!snap.exists()) throw new Error('Sale not found');
+      if (snap.get('status') === SaleStatus.voided) {
+        throw new Error('This sale is already voided');
+      }
+
+      tx.update(saleRef, {
+        status: SaleStatus.voided,
+        voidedAt: serverTimestamp(),
+        voidedBy: actorId,
+        voidedByName: actorName,
+        voidReason: reason,
+        updatedAt: serverTimestamp(),
+        updatedBy: actorId,
+      });
+
+      // Stock restore — the reverse of the create() decrement. The products
+      // update rule permits ONLY these 4 keys.
+      for (const item of items) {
+        tx.update(doc(this.db, FirestoreCollections.products, item.productId), {
+          quantity: increment(item.quantity),
+          updatedAt: serverTimestamp(),
+          updatedBy: actorId,
+          updatedByName: actorName,
+        });
+      }
+    });
   }
 
   private async loadItems(saleId: string) {
