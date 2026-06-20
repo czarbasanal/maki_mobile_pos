@@ -7,6 +7,7 @@ import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { canVoidSale } from '@/domain/sales/voiding';
 import { Dialog } from '@/presentation/components/common/Dialog';
+import { Receipt } from './Receipt';
 import {
   saleEffectiveTenders,
   saleGrandTotal,
@@ -69,7 +70,8 @@ export function SaleDetailPage() {
   const tenders = saleEffectiveTenders(sale);
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <>
+    <div className="space-y-tk-lg px-tk-xl py-tk-lg print:hidden">
       <header className="space-y-tk-xs">
         <Link to="/reports/sales" className="text-bodySmall text-light-text-secondary hover:underline">
           ← Back to sales
@@ -90,8 +92,15 @@ export function SaleDetailPage() {
         </p>
       </header>
 
-      {canVoidSale(sale) ? (
-        <div className="flex flex-wrap gap-tk-sm">
+      <div className="flex flex-wrap gap-tk-sm">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-medium text-light-text hover:bg-light-subtle"
+        >
+          Print receipt
+        </button>
+        {canVoidSale(sale) ? (
           <button
             type="button"
             onClick={() => {
@@ -102,8 +111,8 @@ export function SaleDetailPage() {
           >
             Void sale
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <section className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
         <table className="w-full text-bodySmall">
@@ -227,6 +236,10 @@ export function SaleDetailPage() {
         </div>
       </Dialog>
     </div>
+    <div className="hidden print:block">
+      <Receipt sale={sale} />
+    </div>
+    </>
   );
 }
 
