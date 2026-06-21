@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,7 +37,7 @@ void main() {
       expect(find.text('Engine tune-up'), findsOneWidget);
       expect(find.text('₱450.00'), findsOneWidget);
       // Labor never carries a discount control.
-      expect(find.byIcon(CupertinoIcons.tag), findsNothing);
+      expect(find.byIcon(LucideIcons.tag), findsNothing);
     });
 
     testWidgets('calls onRemove when dismissed', (tester) async {
@@ -58,7 +58,7 @@ void main() {
         newFee = f;
       }));
 
-      await tester.tap(find.byIcon(CupertinoIcons.pencil));
+      await tester.tap(find.byIcon(LucideIcons.pencil));
       await tester.pumpAndSettle();
 
       await tester.enterText(

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,7 +62,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byIcon(CupertinoIcons.add));
+      await tester.tap(find.byIcon(LucideIcons.plus));
       await tester.pump();
 
       expect(newQuantity, 3);

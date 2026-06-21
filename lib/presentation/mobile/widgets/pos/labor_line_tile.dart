@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/services.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -35,10 +36,10 @@ class LaborLineTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.lg - 4),
         color: AppColors.error,
-        child: const Icon(CupertinoIcons.trash, color: Colors.white),
+        child: const Icon(LucideIcons.trash2, color: Colors.white),
       ),
       onDismissed: (_) => onRemove(),
-      child: Card(
+      child: AppCard(
         margin: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.xs,
@@ -47,7 +48,7 @@ class LaborLineTile extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.sm + 4),
           child: Row(
             children: [
-              Icon(CupertinoIcons.wrench, size: 18, color: muted),
+              Icon(LucideIcons.wrench, size: 18, color: muted),
               const SizedBox(width: AppSpacing.sm + 4),
               Expanded(
                 child: Text(
@@ -63,7 +64,7 @@ class LaborLineTile extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w600),
               ),
               IconButton(
-                icon: const Icon(CupertinoIcons.pencil, size: 20),
+                icon: const Icon(LucideIcons.pencil, size: 20),
                 visualDensity: VisualDensity.compact,
                 tooltip: 'Edit labor line',
                 onPressed: () => _showEditDialog(context),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/services.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -41,23 +42,34 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
-          onPressed: () => context.goBackOr(RoutePaths.dashboard),
-        ),
-        title: const Text('Point of Sale'),
-        actions: [
-          // Drafts button with badge
-          _buildDraftsButton(),
-          // Clear cart button
-          if (cart.isNotEmpty)
-            IconButton(
-              icon: const Icon(CupertinoIcons.trash),
-              tooltip: 'Clear Cart',
-              onPressed: _showClearCartDialog,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: theme.appBarTheme.backgroundColor,
+            boxShadow: AppShadows.pinnedHeader(
+              dark: theme.brightness == Brightness.dark,
             ),
-        ],
+          ),
+          child: AppBar(
+            leading: IconButton(
+              icon: const Icon(LucideIcons.chevronLeft),
+              onPressed: () => context.goBackOr(RoutePaths.dashboard),
+            ),
+            title: const Text('Point of Sale'),
+            actions: [
+              // Drafts button with badge
+              _buildDraftsButton(),
+              // Clear cart button
+              if (cart.isNotEmpty)
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2),
+                  tooltip: 'Clear Cart',
+                  onPressed: _showClearCartDialog,
+                ),
+            ],
+          ),
+        ),
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -118,7 +130,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   /// Product search input section.
   Widget _buildSearchSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
       child: ProductSearchField(
         controller: _searchController,
         focusNode: _searchFocusNode,
@@ -220,6 +232,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           child: cart.isEmpty
               ? _buildEmptyCart()
               : SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Column(
                     children: [
                       // Cart items (inline, not separately scrollable).
@@ -229,7 +242,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: cart.items.length,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
                         itemBuilder: (context, index) {
                           final item = cart.items[index];
                           return CartItemTile(
@@ -243,17 +256,23 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                           );
                         },
                       ),
-
-                      const Divider(height: 1),
-
+                      const SizedBox(height: AppSpacing.sm),
                       // Labor & Service — collapsible; empty for normal sales.
-                      _buildLaborSection(cart),
-
-                      const Divider(height: 1),
-
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: AppCard(child: _buildLaborSection(cart)),
+                      ),
+                      const SizedBox(height: AppSpacing.sm + 2),
                       // Cart Summary — payment is now collected on the
                       // dedicated Checkout screen, not inline.
-                      CartSummary(cart: cart),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: AppCard(child: CartSummary(cart: cart)),
+                      ),
                     ],
                   ),
                 ),
@@ -273,7 +292,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(CupertinoIcons.cart, size: 56, color: muted),
+          Icon(LucideIcons.shoppingCart, size: 56, color: muted),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Cart is empty',
@@ -299,7 +318,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       data: theme.copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         initiallyExpanded: cart.laborLines.isNotEmpty,
-        leading: const Icon(CupertinoIcons.wrench),
+        leading: const Icon(LucideIcons.wrench),
         title: const Text('Labor & Service'),
         subtitle: cart.laborLines.isEmpty
             ? Text(
@@ -349,7 +368,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: _showAddLaborDialog,
-              icon: const Icon(CupertinoIcons.add),
+              icon: const Icon(LucideIcons.plus),
               label: const Text('Add labor line'),
             ),
           ),
@@ -368,7 +387,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       child: Row(
         children: [
           const Icon(
-            CupertinoIcons.exclamationmark_circle,
+            LucideIcons.alertTriangle,
             color: AppColors.error,
             size: 18,
           ),
@@ -459,38 +478,59 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   /// Proceed-to-Checkout sits on top as the primary action; Save as
   /// Draft sits below as the secondary path.
   Widget _buildActionButtons(CartState cart) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.lg),
     );
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: FilledButton.icon(
-              // canSaveAsDraft = has items, not processing — same gate
-              // we want for "proceed to checkout" since payment entry
-              // happens on the next screen.
-              onPressed: cart.canSaveAsDraft ? _proceedToCheckout : null,
-              icon: const Icon(CupertinoIcons.arrow_right),
-              label: const Text('Proceed to Checkout'),
-              style: FilledButton.styleFrom(shape: shape),
-            ),
+    // canSaveAsDraft = has items, not processing — same gate we want for
+    // "proceed to checkout" since payment entry happens on the next screen.
+    final canProceed = cart.canSaveAsDraft;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.appBarTheme.backgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  boxShadow: canProceed
+                      ? (isDark
+                          ? AppShadows.primaryButtonGold
+                          : AppShadows.primaryButton)
+                      : null,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton.icon(
+                    onPressed: canProceed ? _proceedToCheckout : null,
+                    icon: const Icon(LucideIcons.arrowRight),
+                    label: const Text('Proceed to Checkout'),
+                    style: FilledButton.styleFrom(shape: shape),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm + 4),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: OutlinedButton.icon(
+                  onPressed: canProceed ? _showSaveDraftDialog : null,
+                  icon: const Icon(LucideIcons.save),
+                  label: const Text('Save as Draft'),
+                  style: OutlinedButton.styleFrom(shape: shape),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.sm + 4),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: OutlinedButton.icon(
-              onPressed: cart.canSaveAsDraft ? _showSaveDraftDialog : null,
-              icon: const Icon(CupertinoIcons.tray_arrow_down),
-              label: const Text('Save as Draft'),
-              style: OutlinedButton.styleFrom(shape: shape),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -509,16 +549,16 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         icon: Badge(
           isLabelVisible: count > 0,
           label: Text('$count'),
-          child: const Icon(CupertinoIcons.envelope),
+          child: const Icon(LucideIcons.inbox),
         ),
         onPressed: _navigateToDrafts,
       ),
       loading: () => IconButton(
-        icon: const Icon(CupertinoIcons.envelope),
+        icon: const Icon(LucideIcons.inbox),
         onPressed: _navigateToDrafts,
       ),
       error: (_, __) => IconButton(
-        icon: const Icon(CupertinoIcons.envelope),
+        icon: const Icon(LucideIcons.inbox),
         onPressed: _navigateToDrafts,
       ),
     );

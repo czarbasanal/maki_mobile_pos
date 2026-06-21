@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -72,11 +73,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Checkout'),
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
-          onPressed: _isProcessing ? null : () => Navigator.pop(context),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: theme.appBarTheme.backgroundColor,
+            boxShadow: AppShadows.pinnedHeader(
+              dark: theme.brightness == Brightness.dark,
+            ),
+          ),
+          child: AppBar(
+            title: const Text('Checkout'),
+            leading: IconButton(
+              icon: const Icon(LucideIcons.chevronLeft),
+              onPressed: _isProcessing ? null : () => Navigator.pop(context),
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -84,7 +96,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -98,8 +110,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     const _SectionHeader('Payment'),
                     const SizedBox(height: AppSpacing.sm),
-                    Card(
-                      margin: EdgeInsets.zero,
+                    AppCard(
                       child: PaymentSection(
                         cart: cart,
                         amountController: _amountReceivedController,
@@ -131,8 +142,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           ...cart.items.asMap().entries.map((entry) {
@@ -235,7 +246,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       border: Border.all(color: theme.colorScheme.primary),
                     ),
                     child: Icon(
-                      CupertinoIcons.wrench,
+                      LucideIcons.wrench,
                       size: 14,
                       color: theme.colorScheme.primary,
                     ),
@@ -265,8 +276,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildPaymentSummary(ThemeData theme, CartState cart) {
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -343,8 +353,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         Text(
           value,
           style: isTotal
-              ? theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
+              ? TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 26,
                   color: theme.colorScheme.primary,
                 )
               : theme.textTheme.bodyMedium?.copyWith(
@@ -366,7 +377,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: Row(
         children: [
           const Icon(
-            CupertinoIcons.exclamationmark_circle,
+            LucideIcons.alertTriangle,
             color: AppColors.error,
             size: 20,
           ),
@@ -384,51 +395,62 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Widget _buildConfirmButton(ThemeData theme, CartState cart) {
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final enabled = !_isProcessing && cart.canCheckout;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(top: BorderSide(color: hairline)),
+        color: theme.appBarTheme.backgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: FilledButton(
-            onPressed: (_isProcessing || !cart.canCheckout)
-                ? null
-                : () => _processCheckout(cart),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.success,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              boxShadow: enabled ? AppShadows.confirmButton(dark: isDark) : null,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: FilledButton(
+                onPressed: enabled ? () => _processCheckout(cart) : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor:
+                      AppColors.success.withValues(alpha: 0.4),
+                  disabledForegroundColor: Colors.white70,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                ),
+                child: _isProcessing
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(LucideIcons.checkCircle2, size: 22),
+                          const SizedBox(width: AppSpacing.sm + 4),
+                          Text(
+                            'Confirm Payment • ${AppConstants.currencySymbol}'
+                            '${cart.grandTotal.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
-            child: _isProcessing
-                ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(CupertinoIcons.checkmark_circle, size: 22),
-                      const SizedBox(width: AppSpacing.sm + 4),
-                      Text(
-                        'Confirm Payment • ${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
           ),
         ),
       ),

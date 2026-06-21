@@ -1,6 +1,9 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:ui';
+
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 /// Full-screen camera scanner that returns the first decoded barcode as
@@ -52,6 +55,25 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     Navigator.of(context).pop(raw);
   }
 
+  Widget _circleButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.12),
+        shape: const CircleBorder(),
+        child: IconButton(
+          icon: Icon(icon, color: Colors.white, size: 20),
+          tooltip: tooltip,
+          onPressed: onPressed,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,8 +83,8 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.xmark),
+        leading: _circleButton(
+          icon: LucideIcons.x,
           tooltip: 'Close',
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -72,20 +94,20 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             valueListenable: _controller,
             builder: (context, state, _) {
               final torchOn = state.torchState == TorchState.on;
-              return IconButton(
+              return _circleButton(
+                icon:
+                    torchOn ? LucideIcons.flashlight : LucideIcons.flashlightOff,
                 tooltip: torchOn ? 'Turn torch off' : 'Turn torch on',
-                icon: Icon(
-                  torchOn ? Icons.flash_on : Icons.flash_off,
-                ),
                 onPressed: () => _controller.toggleTorch(),
               );
             },
           ),
-          IconButton(
+          _circleButton(
+            icon: LucideIcons.switchCamera,
             tooltip: 'Flip camera',
-            icon: const Icon(Icons.cameraswitch_outlined),
             onPressed: () => _controller.switchCamera(),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: Stack(
@@ -109,36 +131,118 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 class _ViewfinderOverlay extends StatelessWidget {
   const _ViewfinderOverlay();
 
+  static const double _boxSize = 248;
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 240,
-            height: 240,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white, width: 2),
+          SizedBox(
+            width: _boxSize,
+            height: _boxSize,
+            child: CustomPaint(
+              painter: _CornerBracketsPainter(),
+              child: Center(
+                child: Container(
+                  width: _boxSize - 32,
+                  height: 2,
+                  color: AppColors.primaryAccent,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Hold a barcode inside the box',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              shadows: [
-                Shadow(color: Colors.black54, blurRadius: 6),
-              ],
+          const SizedBox(height: 20),
+          // Blurred dark instruction pill.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                color: Colors.black.withValues(alpha: 0.45),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.scanLine,
+                        color: AppColors.primaryAccent, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'Hold a barcode inside the box',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Paints four gold L-shaped corner brackets on the viewfinder box.
+class _CornerBracketsPainter extends CustomPainter {
+  static const double _len = 28; // arm length
+  static const double _r = 20; // corner radius
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.primaryAccent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    final w = size.width;
+    final h = size.height;
+
+    // Top-left
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, _r + _len)
+        ..lineTo(0, _r)
+        ..arcToPoint(const Offset(_r, 0), radius: const Radius.circular(_r))
+        ..lineTo(_r + _len, 0),
+      paint,
+    );
+    // Top-right
+    canvas.drawPath(
+      Path()
+        ..moveTo(w - _r - _len, 0)
+        ..lineTo(w - _r, 0)
+        ..arcToPoint(Offset(w, _r), radius: const Radius.circular(_r))
+        ..lineTo(w, _r + _len),
+      paint,
+    );
+    // Bottom-right
+    canvas.drawPath(
+      Path()
+        ..moveTo(w, h - _r - _len)
+        ..lineTo(w, h - _r)
+        ..arcToPoint(Offset(w - _r, h), radius: const Radius.circular(_r))
+        ..lineTo(w - _r - _len, h),
+      paint,
+    );
+    // Bottom-left
+    canvas.drawPath(
+      Path()
+        ..moveTo(_r + _len, h)
+        ..lineTo(_r, h)
+        ..arcToPoint(Offset(0, h - _r), radius: const Radius.circular(_r))
+        ..lineTo(0, h - _r - _len),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// Shown in place of the camera preview when the platform reports a

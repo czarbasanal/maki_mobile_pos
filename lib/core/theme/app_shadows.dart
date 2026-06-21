@@ -51,4 +51,16 @@ abstract class AppShadows {
   static List<BoxShadow> focusRing({bool dark = false}) => dark
       ? const [BoxShadow(color: Color(0x1FE8B84C), spreadRadius: 4)]
       : const [BoxShadow(color: Color(0x14283E46), spreadRadius: 4)];
+
+  /// Pinned bottom action bar — soft shadow cast UPWARD (top edge).
+  /// Mirror of [pinnedHeader] with a negative y-offset.
+  static List<BoxShadow> pinnedFooter({bool dark = false}) => dark
+      ? const [BoxShadow(color: Color(0x66000000), blurRadius: 16, offset: Offset(0, -4))]
+      : const [BoxShadow(color: Color(0x0F111C1D), blurRadius: 16, offset: Offset(0, -4))];
+
+  /// Confirm-Payment (success-green) button glow. Distinct from the
+  /// slate/gold [primaryButton]; signals the terminal "commit the sale" action.
+  static List<BoxShadow> confirmButton({bool dark = false}) => dark
+      ? const [BoxShadow(color: Color(0x734CAF50), blurRadius: 20, spreadRadius: -6, offset: Offset(0, 8))]
+      : const [BoxShadow(color: Color(0x804CAF50), blurRadius: 20, spreadRadius: -6, offset: Offset(0, 8))];
 }
