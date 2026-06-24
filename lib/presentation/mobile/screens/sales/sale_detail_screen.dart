@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -31,13 +31,13 @@ class SaleDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         title: const Text('Sale Details'),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.doc_text),
+            icon: const Icon(LucideIcons.fileText),
             tooltip: 'View Receipt',
             onPressed: () {
               final sale = saleAsync.valueOrNull;
@@ -52,7 +52,7 @@ class SaleDetailScreen extends ConsumerWidget {
         data: (sale) {
           if (sale == null) {
             return const EmptyStateView(
-              icon: CupertinoIcons.doc_text,
+              icon: LucideIcons.fileText,
               title: 'Sale not found',
             );
           }
@@ -151,7 +151,7 @@ class SaleDetailScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(CupertinoIcons.xmark_circle, color: AppColors.error, size: 32),
+          Icon(LucideIcons.xCircle, color: AppColors.error, size: 32),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -374,7 +374,7 @@ class SaleDetailScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Icon(
-                      CupertinoIcons.wrench,
+                      LucideIcons.wrench,
                       color: Colors.white,
                       size: 12,
                     ),
@@ -504,7 +504,7 @@ class SaleDetailScreen extends ConsumerWidget {
         children: [
           _buildDetailRow(
             theme,
-            CupertinoIcons.person,
+            LucideIcons.user,
             'Cashier',
             sale.cashierName,
           ),
@@ -512,7 +512,7 @@ class SaleDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildDetailRow(
               theme,
-              CupertinoIcons.wrench,
+              LucideIcons.wrench,
               'Mechanic',
               sale.mechanicName!,
             ),
@@ -520,14 +520,14 @@ class SaleDetailScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _buildDetailRow(
             theme,
-            CupertinoIcons.creditcard,
+            LucideIcons.creditCard,
             'Payment Method',
             sale.paymentMethod.displayName,
           ),
           const SizedBox(height: 12),
           _buildDetailRow(
             theme,
-            CupertinoIcons.bag,
+            LucideIcons.shoppingBag,
             'Items',
             '${sale.totalItemCount} (${sale.uniqueProductCount} products)',
           ),
@@ -535,7 +535,7 @@ class SaleDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildDetailRow(
               theme,
-              CupertinoIcons.envelope,
+              LucideIcons.inbox,
               'From Draft',
               'Yes',
             ),
@@ -590,7 +590,7 @@ class SaleDetailScreen extends ConsumerWidget {
         children: [
           _buildDetailRow(
             theme,
-            CupertinoIcons.person,
+            LucideIcons.user,
             'Voided by',
             sale.voidedByName ?? 'Unknown',
           ),
@@ -598,7 +598,7 @@ class SaleDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildDetailRow(
               theme,
-              CupertinoIcons.clock,
+              LucideIcons.clock,
               'Voided at',
               dateFormat.format(sale.voidedAt!),
             ),
@@ -608,7 +608,7 @@ class SaleDetailScreen extends ConsumerWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(CupertinoIcons.doc_text,
+                Icon(LucideIcons.fileText,
                     size: 20, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(width: 12),
                 Expanded(
@@ -654,7 +654,7 @@ class SaleDetailScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(CupertinoIcons.square_list,
+              Icon(LucideIcons.stickyNote,
                   size: 16, color: AppColors.warning),
               const SizedBox(width: AppSpacing.sm),
               Text(
@@ -691,7 +691,7 @@ class SaleDetailScreen extends ConsumerWidget {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.clock, size: 18),
+            Icon(LucideIcons.clock, size: 18),
             SizedBox(width: 8),
             Text('Void pending approval'),
           ],
@@ -715,7 +715,7 @@ class SaleDetailScreen extends ConsumerWidget {
             onRequested: () => context.showSuccessSnackBar(
                 'Void request sent — awaiting admin approval'),
           ),
-          icon: const Icon(CupertinoIcons.xmark_circle),
+          icon: const Icon(LucideIcons.xCircle),
           label: const Text('Request Void'),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.error,
@@ -737,7 +737,7 @@ class SaleDetailScreen extends ConsumerWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () => _handleVoid(context, ref, sale),
-        icon: const Icon(CupertinoIcons.xmark_circle),
+        icon: const Icon(LucideIcons.xCircle),
         label: const Text('Void This Sale'),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.error,
