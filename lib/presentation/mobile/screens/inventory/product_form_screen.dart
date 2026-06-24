@@ -681,9 +681,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             _AuditInfoCard(product: _existingProduct!),
                           ],
 
-                          if (canViewCost &&
-                              widget.isEditing &&
-                              inventoryState.showCost) ...[
+                          // Price history is admin-only data; show the link for
+                          // any admin editing a product (no longer gated behind
+                          // the cost-eye toggle).
+                          if (canViewCost && widget.isEditing) ...[
                             const SizedBox(height: 14),
                             OutlinedButton.icon(
                               onPressed: () => context.push(
@@ -1242,34 +1243,16 @@ class _AuditInfoCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
-    final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        border: Border.all(color: hairline),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
+    // Clean AppCard (the section's "AUDIT" header supplies the heading) —
+    // soft shadow / dark hairline, no inner title or border.
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(LucideIcons.info,
-                  size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Audit info',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm + 4),
           _row(context, 'Created', dateFormat.format(product.createdAt)),
           _userRow(
             ref,

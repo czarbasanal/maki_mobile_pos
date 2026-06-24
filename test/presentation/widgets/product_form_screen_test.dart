@@ -229,5 +229,17 @@ void main() {
       expect(find.textContaining('28%'), findsOneWidget);
       expect(find.textContaining('₱70.00 per unit'), findsOneWidget);
     });
+
+    testWidgets('audit is a clean AppCard and price-history shows on admin edit',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      // Section header present; audit rows render inside the card.
+      expect(find.text('AUDIT'), findsOneWidget);
+      expect(find.text('Created'), findsOneWidget);
+      // The old bordered card's inner "Audit info" header is gone.
+      expect(find.text('Audit info'), findsNothing);
+      // Price-history link shows for any admin on edit (no cost-eye gate).
+      expect(find.text('View price history'), findsOneWidget);
+    });
   });
 }
