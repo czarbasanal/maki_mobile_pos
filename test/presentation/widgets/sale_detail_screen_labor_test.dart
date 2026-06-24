@@ -64,6 +64,8 @@ void main() {
     expect(find.text('Labor'), findsWidgets);
     expect(find.text('Mechanic'), findsOneWidget);
     expect(find.text('Juan Dela Cruz'), findsOneWidget);
+    // Payment breakdown folds the mechanic into the labor row label.
+    expect(find.textContaining('Labor · Juan Dela Cruz'), findsOneWidget);
     // grandTotal = parts 200 + labor 450 = 650.00.
     expect(find.textContaining('650.00'), findsWidgets);
   });

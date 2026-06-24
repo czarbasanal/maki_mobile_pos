@@ -417,41 +417,53 @@ class SaleDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildPaymentCard(ThemeData theme, SaleEntity sale) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
+    final isDark = theme.brightness == Brightness.dark;
+    final green = AppColors.successText(isDark);
+    final mechanic = sale.mechanicName;
+    final laborLabel = (mechanic != null && mechanic.isNotEmpty)
+        ? 'Labor · $mechanic'
+        : 'Labor';
+    final cur = AppConstants.currencySymbol;
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         children: [
-          _buildPaymentRow(theme, 'Subtotal', sale.subtotal),
+          SummaryRow(
+            label: 'Subtotal',
+            value: '$cur${sale.subtotal.toStringAsFixed(2)}',
+          ),
           if (sale.hasDiscount) ...[
-            const SizedBox(height: 8),
-            _buildPaymentRow(
-              theme,
-              'Discount',
-              sale.totalDiscount,
-              isDiscount: true,
+            const SizedBox(height: AppSpacing.sm),
+            SummaryRow(
+              label: 'Discount',
+              value: '-$cur${sale.totalDiscount.toStringAsFixed(2)}',
+              valueColor: green,
             ),
           ],
           if (sale.laborLines.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildPaymentRow(
-              theme,
-              sale.laborLines.length == 1
-                  ? 'Labor (1 service)'
-                  : 'Labor (${sale.laborLines.length} services)',
-              sale.laborSubtotal,
+            const SizedBox(height: AppSpacing.sm),
+            SummaryRow(
+              label: laborLabel,
+              value: '$cur${sale.laborSubtotal.toStringAsFixed(2)}',
             ),
           ],
           const Divider(height: 24),
-          _buildPaymentRow(theme, 'Total', sale.grandTotal, isTotal: true),
+          SummaryRow(
+            label: 'Total',
+            value: '$cur${sale.grandTotal.toStringAsFixed(2)}',
+            isTotal: true,
+          ),
           const Divider(height: 24),
-          _buildPaymentRow(theme, 'Received', sale.amountReceived),
-          const SizedBox(height: 8),
-          _buildPaymentRow(theme, 'Change', sale.changeGiven, isChange: true),
+          SummaryRow(
+            label: 'Received',
+            value: '$cur${sale.amountReceived.toStringAsFixed(2)}',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SummaryRow(
+            label: 'Change',
+            value: '$cur${sale.changeGiven.toStringAsFixed(2)}',
+            valueColor: green,
+          ),
           if (sale.effectiveTenders.length > 1) ...[
             const Divider(height: 24),
             ..._tenderRows(theme, sale),
@@ -473,56 +485,14 @@ class SaleDetailScreen extends ConsumerWidget {
 
     return sale.effectiveTenders.entries
         .map((e) => Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(label(e.key), style: theme.textTheme.bodyMedium),
-                  Text(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: SummaryRow(
+                label: label(e.key),
+                value:
                     '${AppConstants.currencySymbol}${e.value.toStringAsFixed(2)}',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                ],
               ),
             ))
         .toList();
-  }
-
-  Widget _buildPaymentRow(
-    ThemeData theme,
-    String label,
-    double amount, {
-    bool isDiscount = false,
-    bool isTotal = false,
-    bool isChange = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            fontSize: isTotal ? 16 : 14,
-          ),
-        ),
-        Text(
-          '${isDiscount ? '-' : ''}${AppConstants.currencySymbol}${amount.toStringAsFixed(2)}',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: isTotal || isChange ? FontWeight.bold : FontWeight.w500,
-            fontSize: isTotal ? 18 : (isChange ? 16 : 14),
-            color: isDiscount
-                ? Colors.green[700]
-                : isChange
-                    ? Colors.green[700]
-                    : isTotal
-                        ? theme.colorScheme.primary
-                        : null,
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildDetailsCard(
