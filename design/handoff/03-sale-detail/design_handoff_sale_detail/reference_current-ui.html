@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 03: Sale Detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --warning:#FFC107;
+    --r-md:14px; --r-field:16px; --r-lg:18px; --r-hero:22px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1100px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:780px;line-height:1.5;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:360px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:780px;overflow:hidden;display:flex;flex-direction:column;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--canvas);min-height:52px;}
+  .appbar .title{font-size:18px;font-weight:600;flex:1;text-align:center;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .body{flex:1;overflow:auto;padding:16px;}
+  .body::-webkit-scrollbar{width:0;}
+  /* redesigned card = soft-shadow surface (AppCard) */
+  .card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow-card);}
+  .card.tint-error{box-shadow:none;background:rgba(244,67,54,.10);border:1px solid rgba(244,67,54,.40);}
+  .card.tint-warn{box-shadow:none;background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.40);}
+  .sec-gap{height:8px;}
+  .sech{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin:18px 2px 8px;}
+  /* sale header (AppCard radius xl) */
+  .hero{border-radius:var(--r-xl);padding:20px;text-align:center;}
+  .hero .num{font-size:20px;font-weight:700;}
+  .hero .date{font-size:14px;color:var(--muted);margin-top:8px;}
+  .hero .total{font-size:34px;font-weight:700;color:var(--slate);margin-top:16px;letter-spacing:-.5px;}
+  .hero .total.voided{color:var(--muted);text-decoration:line-through;}
+  .badge{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;color:#fff;background:var(--success);}
+  .badge.voided{background:var(--error);}
+  /* items */
+  .item{display:flex;align-items:flex-start;gap:12px;padding:12px;border-bottom:1px solid var(--hairline);}
+  .item:last-child{border-bottom:none;}
+  .qbadge{background:var(--slate);color:#fff;font-size:12px;font-weight:700;border-radius:4px;padding:2px 8px;white-space:nowrap;}
+  .wbadge{background:var(--gold);border-radius:4px;padding:5px;display:flex;align-items:center;justify-content:center;}
+  .wbadge i{width:14px;height:14px;color:#3a2e00;}
+  .item .mid{flex:1;}
+  .item .n{font-weight:600;font-size:14px;line-height:1.25;}
+  .item .s{font-size:12px;color:var(--muted);margin-top:2px;}
+  .item .disc{font-size:12px;color:var(--success-dark);margin-top:2px;}
+  .item .amt{font-weight:700;font-size:14px;}
+  /* payment summary (SummaryRow) */
+  .pad{padding:16px;}
+  .sm{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin:0;}
+  .sm + .sm{margin-top:8px;}
+  .sm .l{color:var(--muted);}
+  .sm .v{font-weight:500;}
+  .sm .v.green{color:var(--success-dark);font-weight:600;}
+  .sm-div{height:1px;background:var(--hairline);margin:12px 0;}
+  .sm-total{display:flex;justify-content:space-between;align-items:baseline;}
+  .sm-total .l{font-size:15px;font-weight:600;}
+  .sm-total .v{font-size:26px;font-weight:700;color:var(--slate);letter-spacing:-.5px;}
+  /* details */
+  .det{display:flex;align-items:center;gap:12px;padding:0;margin:0;}
+  .det + .det{margin-top:12px;}
+  .det i{width:20px;height:20px;color:var(--muted);}
+  .det .l{flex:1;font-size:13px;color:var(--muted);}
+  .det .v{font-size:14px;font-weight:500;}
+  /* voided banner / info */
+  .banner{display:flex;align-items:flex-start;gap:12px;padding:16px;margin-bottom:16px;}
+  .banner i.big{width:32px;height:32px;color:var(--error);flex:none;}
+  .banner .vh{font-size:18px;font-weight:700;color:var(--error);}
+  .banner .vr{font-size:13px;color:rgba(244,67,54,.85);margin-top:2px;}
+  /* notes */
+  .notes-h{display:flex;align-items:center;gap:8px;}
+  .notes-h i{width:16px;height:16px;color:var(--warning);}
+  .notes-h b{font-weight:600;color:var(--warning);}
+  .notes-t{margin-top:8px;font-size:14px;}
+  /* void button */
+  .actions{padding:16px;background:var(--canvas);}
+  .btn-void{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:var(--r-field);
+            width:100%;background:var(--card);color:var(--error);border:1px solid var(--error);font-weight:600;font-size:15px;}
+  .btn-void i{width:18px;height:18px;}
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 03 · Sale Detail</h1>
+    <p><b>Already redesigned</b> (shipped in bundle 03): the post-sale record now uses the new language —
+    soft-shadow <code>AppCard</code> surfaces, the shared <code>SummaryRow</code> with the <b>Total as a 26px hero</b>,
+    uppercase section headers, Lucide icons, and theme-aware colors (this fixed the old hardcoded-grey/red/amber
+    dark-mode breakage). Two states shown: a completed multi-tender (Salmon) sale, and a voided sale with notes.
+    Mark up any refinements and hand back.</p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary / hero)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> success (Change / Completed)</span>
+    <span><i class="swatch" style="background:#F44336"></i> error (Void)</span>
+    <span><i class="swatch" style="background:#FFC107"></i> warning (Notes)</span>
+    <span><i class="swatch" style="background:#FFFFFF"></i> card (soft shadow now)</span>
+    <span style="margin-left:auto">Light shown · dark theme parity (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ COMPLETED SALE ============ -->
+    <div class="frame">
+      <div class="caption">1 · Sale Detail — completed (Salmon split)</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Sale Details</div>
+          <button class="iconbtn"><i data-lucide="file-text"></i></button>
+        </div>
+        <div class="body">
+          <!-- hero -->
+          <div class="card hero">
+            <div class="num">SALE-20260529-009</div>
+            <div class="date">Friday, May 29, 2026 · 1:07 PM</div>
+            <div class="total">₱1,750.00</div>
+            <div class="badge">Completed</div>
+          </div>
+
+          <div class="sech">Items</div>
+          <div class="card">
+            <div class="item">
+              <span class="qbadge">×7</span>
+              <div class="mid"><div class="n">ASK BRAKE SHOE XRM</div><div class="s">ask-001 · ₱250.00</div><div class="s">Code: NBS</div></div>
+              <div class="amt">₱1,750.00</div>
+            </div>
+          </div>
+
+          <div class="sech">Payment</div>
+          <div class="card pad">
+            <div class="sm"><span class="l">Subtotal</span><span class="v">₱1,750.00</span></div>
+            <div class="sm-div"></div>
+            <div class="sm-total"><span class="l">Total</span><span class="v">₱1,750.00</span></div>
+            <div class="sm-div"></div>
+            <div class="sm"><span class="l">Received</span><span class="v">₱500.00</span></div>
+            <div class="sm" style="margin-top:8px"><span class="l">Change</span><span class="v green">₱0.00</span></div>
+            <div class="sm-div"></div>
+            <div class="sm"><span class="l">Downpayment (GCash)</span><span class="v">₱500.00</span></div>
+            <div class="sm" style="margin-top:8px"><span class="l">Salmon balance</span><span class="v">₱1,250.00</span></div>
+          </div>
+
+          <div class="sech">Details</div>
+          <div class="card pad">
+            <div class="det"><i data-lucide="user"></i><span class="l">Cashier</span><span class="v">Cashier</span></div>
+            <div class="det"><i data-lucide="credit-card"></i><span class="l">Payment Method</span><span class="v">Salmon</span></div>
+            <div class="det"><i data-lucide="shopping-bag"></i><span class="l">Items</span><span class="v">7 (1 products)</span></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-void"><i data-lucide="x-circle"></i> Void This Sale</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VOIDED SALE + NOTES ============ -->
+    <div class="frame">
+      <div class="caption">2 · Sale Detail — voided + notes + labor</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Sale Details</div>
+          <button class="iconbtn"><i data-lucide="file-text"></i></button>
+        </div>
+        <div class="body">
+          <!-- voided banner -->
+          <div class="card tint-error banner">
+            <i data-lucide="x-circle" class="big"></i>
+            <div><div class="vh">VOIDED</div><div class="vr">Customer cancelled — wrong part</div></div>
+          </div>
+
+          <!-- hero (voided) -->
+          <div class="card hero">
+            <div class="num">SALE-20260621-001</div>
+            <div class="date">Sunday, June 21, 2026 · 2:08 AM</div>
+            <div class="total voided">₱650.00</div>
+            <div class="badge voided">Voided</div>
+          </div>
+
+          <div class="sech">Items</div>
+          <div class="card">
+            <div class="item">
+              <span class="qbadge">×1</span>
+              <div class="mid"><div class="n">Spark Plug NGK</div><div class="s">sp-014 · ₱200.00</div><div class="s">Code: KRT</div></div>
+              <div class="amt">₱200.00</div>
+            </div>
+            <div class="item">
+              <span class="wbadge"><i data-lucide="wrench"></i></span>
+              <div class="mid"><div class="n">Engine tune-up</div><div class="s">Labor</div></div>
+              <div class="amt">₱450.00</div>
+            </div>
+          </div>
+
+          <div class="sech">Payment</div>
+          <div class="card pad">
+            <div class="sm"><span class="l">Subtotal</span><span class="v">₱200.00</span></div>
+            <div class="sm" style="margin-top:8px"><span class="l">Labor · Juan Dela Cruz</span><span class="v">₱450.00</span></div>
+            <div class="sm-div"></div>
+            <div class="sm-total"><span class="l">Total</span><span class="v">₱650.00</span></div>
+            <div class="sm-div"></div>
+            <div class="sm"><span class="l">Received</span><span class="v">₱1,000.00</span></div>
+            <div class="sm" style="margin-top:8px"><span class="l">Change</span><span class="v green">₱350.00</span></div>
+          </div>
+
+          <div class="sech">Details</div>
+          <div class="card pad">
+            <div class="det"><i data-lucide="user"></i><span class="l">Cashier</span><span class="v">Admin</span></div>
+            <div class="det"><i data-lucide="wrench"></i><span class="l">Mechanic</span><span class="v">Juan Dela Cruz</span></div>
+            <div class="det"><i data-lucide="credit-card"></i><span class="l">Payment Method</span><span class="v">Cash</span></div>
+            <div class="det"><i data-lucide="shopping-bag"></i><span class="l">Items</span><span class="v">1 (1 products)</span></div>
+          </div>
+
+          <div class="sech">Void Information</div>
+          <div class="card tint-error pad">
+            <div class="det"><i data-lucide="user"></i><span class="l">Voided by</span><span class="v">Admin</span></div>
+            <div class="det"><i data-lucide="clock"></i><span class="l">Voided at</span><span class="v">Jun 21, 2:30 AM</span></div>
+            <div class="det" style="align-items:flex-start"><i data-lucide="file-text"></i><div style="flex:1"><div class="l">Reason</div><div class="v" style="margin-top:2px">Customer cancelled — wrong part</div></div></div>
+          </div>
+
+          <div class="sech">Notes</div>
+          <div class="card tint-warn pad">
+            <div class="notes-h"><i data-lucide="sticky-note"></i><b>Notes</b></div>
+            <div class="notes-t">Refund issued in cash at counter.</div>
+          </div>
+          <div style="height:8px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Token-accurate reconstruction of the shipped redesign (bundle 03). Source: <code>lib/presentation/mobile/screens/sales/sale_detail_screen.dart</code>. Shared primitives: <code>AppCard</code>, <code>SummaryRow</code> (see <code>design/handoff/maki-theme/</code> for the full token set). Dark theme has parity (card <code>#18262A</code> on canvas <code>#0C1415</code>, gold primary, tints lifted to ~.18 alpha).</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

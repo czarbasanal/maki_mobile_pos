@@ -60,8 +60,5 @@ scripts/node_modules/
 # stray node_modules at repo root (root is Flutter-only; npm lives in web_admin/)
 /node_modules/
 
-# design-handoff artifacts (UI reconstructions / mockups — local working files)
-/design/
-
 # Firebase hosting deploy cache (generated build artifact)
 /.firebase/

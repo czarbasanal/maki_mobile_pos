@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI: Login &amp; Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet" />
+<style>
+  /* ===== Exact tokens from lib/core/theme ===== */
+  :root{
+    --primary-dark:#121C1D;      /* dark bg / brand ink */
+    --brand-slate:#334E58;       /* light-theme primary: buttons/FAB/focus */
+    --primary-accent:#E8B84C;    /* gold (dark-theme accent) */
+    --bg:#FFFFFF;                /* lightBackground */
+    --surface:#F5F5F5;           /* lightSurface */
+    --surface-muted:#FAFAFA;     /* inputs / quiet panels */
+    --card:#FFFFFF;
+    --text:#000000;
+    --text-2:#666666;            /* secondary */
+    --text-hint:#999999;
+    --divider:#E0E0E0;
+    --border:#D0D0D0;
+    --hairline:#ECECEC;          /* outlined cards / quiet separators */
+    --success:#4CAF50; --success-light:#E8F5E9; --success-dark:#2E7D32;
+    --warning:#FFC107; --warning-dark:#F57C00;
+    --error:#F44336; --error-light:#FFEBEE; --error-dark:#C62828;
+    --info:#2196F3;
+    --cash:#4CAF50; --gcash:#007DFE; --draft:#FF9800; --voided:#9E9E9E;
+    --role-admin:#9C27B0;
+    /* radii */
+    --r-sm:10px; --r-md:14px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Roboto",system-ui,sans-serif;
+    background:#0f1416; color:#e7e7e7;
+    -webkit-font-smoothing:antialiased;
+    padding:40px 24px 72px;
+  }
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20}
+
+  /* ===== Page header ===== */
+  .doc-head{max-width:980px;margin:0 auto 36px}
+  .doc-head h1{font-size:22px;font-weight:700;letter-spacing:-.2px;margin:0 0 6px}
+  .doc-head p{margin:0;color:#9aa3a6;font-size:13.5px;line-height:1.5;max-width:70ch}
+  .doc-head .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:1.5px;
+    text-transform:uppercase;color:#0f1416;background:var(--primary-accent);
+    padding:3px 9px;border-radius:var(--r-pill);margin-bottom:14px}
+
+  /* ===== Screen stage ===== */
+  .stage{display:flex;gap:48px;flex-wrap:wrap;justify-content:center;align-items:flex-start;max-width:980px;margin:0 auto}
+  .screen{width:390px}
+  .screen .caption{display:flex;justify-content:space-between;align-items:baseline;margin:0 4px 12px}
+  .screen .caption b{font-size:14px;font-weight:600;color:#e7e7e7}
+  .screen .caption span{font-size:11.5px;color:#7c8588}
+
+  /* phone frame */
+  .phone{
+    width:390px;height:820px;background:var(--bg);color:var(--text);
+    border-radius:36px;overflow:hidden;position:relative;
+    border:1px solid #2a3133;box-shadow:0 24px 60px -20px rgba(0,0,0,.6);
+  }
+  .phone .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 22px;font-size:12px;font-weight:600;color:var(--text)}
+  .phone .statusbar .dots{display:flex;gap:5px;align-items:center;color:var(--text-2)}
+  .phone .statusbar .material-symbols-outlined{font-size:16px}
+
+  /* ===== shared atoms ===== */
+  .muted{color:var(--text-2)}
+  .hint{color:var(--text-hint)}
+
+  /* ===== LOGIN ===== */
+  .login-body{height:790px;display:flex;align-items:center;justify-content:center;padding:0 24px}
+  .login-card{width:100%;max-width:330px}
+  .login-logo{width:64px;height:64px;border-radius:14px;background:var(--primary-dark);
+    margin:0 auto;display:flex;align-items:center;justify-content:center}
+  .login-logo span{color:#fff;font-weight:700;font-size:26px;letter-spacing:1px}
+  .login-title{text-align:center;margin-top:20px;font-size:18px;font-weight:700;
+    letter-spacing:2.4px;color:var(--primary-dark)}
+  .login-sub{text-align:center;margin-top:8px;font-size:14px;color:var(--text-2)}
+  .field{margin-top:16px}
+  .field .lbl{font-size:12px;font-weight:500;color:var(--text-2);margin:0 0 6px 2px}
+  .field .box{height:52px;border:1px solid var(--border);border-radius:var(--r-md);
+    background:var(--bg);display:flex;align-items:center;padding:0 14px;gap:10px;font-size:15px;color:var(--text)}
+  .field .box .material-symbols-outlined{font-size:20px;color:var(--text-hint)}
+  .field.focus .box{border-color:var(--brand-slate);border-width:1.5px}
+  .btn-primary{margin-top:24px;height:52px;border-radius:var(--r-md);background:var(--brand-slate);
+    color:#fff;font-size:16px;font-weight:600;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;border:none}
+  .forgot{margin-top:6px;text-align:center;font-size:13px;color:var(--text-2)}
+  .footer{margin-top:48px;text-align:center;font-size:11px;color:var(--text-hint);letter-spacing:.5px}
+  .err{margin-top:24px;display:flex;gap:10px;align-items:center;background:var(--error-light);
+    border-radius:8px;padding:12px 14px;color:var(--error-dark);font-size:13px}
+  .err .material-symbols-outlined{font-size:18px;color:var(--error)}
+
+  /* ===== DASHBOARD ===== */
+  .appbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+  .appbar .who .g{font-size:13px;color:var(--text-2);line-height:1.1}
+  .appbar .who .n{font-size:16px;font-weight:600;color:var(--text);line-height:1.3}
+  .appbar .acts{display:flex;align-items:center;gap:4px}
+  .iconbtn{width:40px;height:40px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--text);position:relative}
+  .iconbtn .material-symbols-outlined{font-size:22px}
+  .badge{position:absolute;top:5px;right:5px;min-width:16px;height:16px;border-radius:var(--r-pill);
+    background:var(--error);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 3px}
+  .pinned{padding:16px 16px 12px}
+  .daterow{display:flex;align-items:center;gap:8px;color:var(--text-2);font-size:15px;font-weight:500}
+  .daterow .material-symbols-outlined{font-size:18px}
+  .qa{display:flex;gap:12px;margin-top:16px;overflow:hidden}
+  .qa .pill{flex:0 0 auto;display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;
+    border-radius:var(--r-lg);border:1px solid var(--hairline);font-size:15px;font-weight:600;color:var(--text);background:var(--bg)}
+  .qa .pill .material-symbols-outlined{font-size:20px}
+  .qa .pill.primary{background:var(--brand-slate);border-color:var(--brand-slate);color:#fff}
+  .qa .pill.danger{border-color:var(--error);color:var(--error)}
+  .qa .fade{flex:0 0 14px}
+  .scroll{padding:12px 16px 20px}
+  .sec{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px}
+  .sec h3{font-size:16px;font-weight:700;color:var(--text);margin:0}
+  .sec a{font-size:13px;font-weight:500;color:var(--brand-slate);text-decoration:none}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .scard{border:1px solid var(--hairline);border-radius:var(--r-lg);padding:16px;background:var(--card)}
+  .scard .top{display:flex;justify-content:space-between;color:var(--text-2)}
+  .scard .top .material-symbols-outlined{font-size:20px}
+  .scard .t{margin-top:12px;font-size:13px;color:var(--text-2)}
+  .scard .v{margin-top:4px;font-size:24px;font-weight:600;color:var(--text);letter-spacing:-.3px}
+  .scard .s{margin-top:4px;font-size:12px;color:var(--text-2)}
+  .gap{height:24px}
+  .row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--hairline)}
+  .row:first-of-type{border-top:none}
+  .rank{width:24px;height:24px;border-radius:var(--r-pill);background:var(--surface);color:var(--text-2);
+    font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .row .nm{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .qty{font-size:12px;color:var(--text-2)}
+  .row .amt{font-size:14px;font-weight:600;color:var(--text)}
+  .saleno{font-family:"Roboto Mono",monospace;font-size:12px;font-weight:500;color:var(--text);letter-spacing:.5px}
+  .pchip{font-size:10px;font-weight:600;letter-spacing:.4px;padding:2px 7px;border-radius:var(--r-pill);text-transform:uppercase}
+  .pchip.cash{color:var(--success-dark);background:var(--success-light)}
+  .pchip.gcash{color:#024a99;background:#e3f0ff}
+  .ann{max-width:980px;margin:34px auto 0;border:1px dashed #3a4346;border-radius:14px;padding:16px 18px;color:#9aa3a6;font-size:12.5px;line-height:1.6}
+  .ann b{color:#cfd6d8}
+  @media (max-width:900px){ .phone{transform:none} .stage{gap:32px} }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <span class="tag">Current UI · faithful reconstruction</span>
+    <h1>MAKI POS — Login &amp; Dashboard (as built)</h1>
+    <p>A pixel-approximate reconstruction of the two live Flutter screens, built from the app's real
+       design tokens (<code>lib/core/theme</code>) and widget structure. This is the <em>current</em> state —
+       no redesign applied. Use it to see what exists and to mark up what you want changed. Sample data is
+       representative; copy and layout match the code.</p>
+  </div>
+
+  <div class="stage">
+    <!-- ===================== LOGIN ===================== -->
+    <div class="screen">
+      <div class="caption"><b>1 · Login</b><span>login_screen.dart</span></div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots">
+          <span class="material-symbols-outlined">signal_cellular_alt</span>
+          <span class="material-symbols-outlined">wifi</span>
+          <span class="material-symbols-outlined">battery_full</span>
+        </span></div>
+        <div class="login-body">
+          <div class="login-card">
+            <div class="login-logo"><span>マ</span></div>
+            <div class="login-title">MAKI POS</div>
+            <div class="login-sub">Sign in to your account</div>
+
+            <div class="field" style="margin-top:40px">
+              <div class="lbl">Email</div>
+              <div class="box"><span class="material-symbols-outlined">mail</span>juan@makipos.ph</div>
+            </div>
+            <div class="field focus">
+              <div class="lbl">Password</div>
+              <div class="box"><span class="material-symbols-outlined">lock</span>••••••••••</div>
+            </div>
+
+            <div class="btn-primary">Sign in</div>
+            <div class="forgot">Forgot password?</div>
+            <div class="footer">v1.0.0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <div class="screen">
+      <div class="caption"><b>2 · Dashboard (admin)</b><span>dashboard_screen.dart</span></div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots">
+          <span class="material-symbols-outlined">signal_cellular_alt</span>
+          <span class="material-symbols-outlined">wifi</span>
+          <span class="material-symbols-outlined">battery_full</span>
+        </span></div>
+
+        <div class="appbar">
+          <div class="who">
+            <div class="g">Good morning</div>
+            <div class="n">Juan Dela Cruz</div>
+          </div>
+          <div class="acts">
+            <div class="iconbtn"><span class="material-symbols-outlined">notifications</span><span class="badge">3</span></div>
+            <div class="iconbtn"><span class="material-symbols-outlined">settings</span></div>
+            <div class="iconbtn"><span class="material-symbols-outlined">logout</span></div>
+          </div>
+        </div>
+
+        <div class="pinned">
+          <div class="daterow"><span class="material-symbols-outlined">calendar_today</span>Friday, June 20, 2026</div>
+          <div class="qa">
+            <div class="pill primary"><span class="material-symbols-outlined">add_shopping_cart</span>New Sale</div>
+            <div class="pill"><span class="material-symbols-outlined">download</span>Receive Stock</div>
+            <div class="pill"><span class="material-symbols-outlined">deployed_code</span>Inventory</div>
+            <div class="pill danger"><span class="material-symbols-outlined">payments</span>Close Day</div>
+            <div class="fade"></div>
+          </div>
+        </div>
+
+        <div class="scroll">
+          <div class="sec"><h3>Today's Sales</h3></div>
+          <div class="grid2">
+            <div class="scard">
+              <div class="top"><span class="material-symbols-outlined">currency_exchange</span></div>
+              <div class="t">Gross Sales</div><div class="v">₱12,480.00</div><div class="s">₱320.00 discount</div>
+            </div>
+            <div class="scard">
+              <div class="top"><span class="material-symbols-outlined">bar_chart</span></div>
+              <div class="t">Avg Daily Sales</div><div class="v">₱9.8K</div><div class="s">this month</div>
+            </div>
+            <div class="scard">
+              <div class="top"><span class="material-symbols-outlined">deployed_code</span></div>
+              <div class="t">Total COGS</div><div class="v">₱7.1K</div>
+            </div>
+            <div class="scard">
+              <div class="top"><span class="material-symbols-outlined">trending_up</span></div>
+              <div class="t">Gross Profit</div><div class="v">₱5.4K</div><div class="s">43.2% margin</div>
+            </div>
+          </div>
+
+          <div class="gap"></div>
+
+          <div class="sec"><h3>Top Selling Items Today</h3><a>View All</a></div>
+          <div>
+            <div class="row"><div class="rank">1</div><div class="nm">Shimano Brake Pad B01S</div><div class="qty">8 sold</div><div class="amt">₱2,400</div></div>
+            <div class="row"><div class="rank">2</div><div class="nm">Engine Oil 1L · 10W-40</div><div class="qty">6 sold</div><div class="amt">₱1,770</div></div>
+            <div class="row"><div class="rank">3</div><div class="nm">Spark Plug NGK CPR8EA-9</div><div class="qty">5 sold</div><div class="amt">₱975</div></div>
+          </div>
+
+          <div class="gap"></div>
+
+          <div class="sec"><h3>Recent Transactions</h3><a>View All</a></div>
+          <div>
+            <div class="row"><div style="flex:1"><div class="saleno">SALE-20260620-014</div><div class="qty" style="margin-top:2px">9:32 AM · 3 items</div></div><span class="pchip cash">Cash</span><div class="amt">₱1,240</div></div>
+            <div class="row"><div style="flex:1"><div class="saleno">SALE-20260620-013</div><div class="qty" style="margin-top:2px">9:18 AM · 1 item</div></div><span class="pchip gcash">GCash</span><div class="amt">₱530</div></div>
+            <div class="row"><div style="flex:1"><div class="saleno">SALE-20260620-012</div><div class="qty" style="margin-top:2px">8:55 AM · 5 items</div></div><span class="pchip cash">Cash</span><div class="amt">₱2,015</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ann">
+    <b>Notes for the design session.</b> Quick-actions and the void-requests bell are role-gated:
+    cashiers see a single Gross Sales card (no COGS/Profit/Avg) and a shorter action row; the bell appears
+    for admins only. Quick actions scroll horizontally (more sit off the right edge). The same screens render in
+    a dark theme (bg <code>#121C1D</code>, gold accent <code>#E8B84C</code>) — not shown here. Lists (Top Selling,
+    Recent Transactions) are live data with empty/loading states. Full structure, copy, and token reference are in
+    <b>README.md</b>.
+  </div>
+</body>
+</html>

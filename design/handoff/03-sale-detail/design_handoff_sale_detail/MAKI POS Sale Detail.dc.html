@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- HEADER -->
+  <div style="max-width:1180px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Handoff 03 · Sale Detail · refinement
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Sale Detail — refined</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:74ch">Already on-system, so this is a polish pass. Four changes: <b>one hero, not two</b> — the header total is the single big number; the Payment card's "Total" drops to a strong recap row. <b>Change</b> reads as a tinted success block (like checkout) when there's change due. <b>Notes</b> use a readable dark-amber label instead of near-invisible <span style="font-family:'Roboto Mono'">#FFC107</span> text. Voided keeps the banner + strikethrough; the Void button stays pinned. Completed + voided states, both themes.</p>
+  </div>
+
+  <!-- changes legend -->
+  <div style="max-width:1180px;margin:0 auto 30px;display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span><b style="font-weight:600">Single hero</b> — header total only</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#4CAF50"></span><b style="font-weight:600">Change</b> — tinted block</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#B7831A"></span><b style="font-weight:600">Notes</b> — readable amber</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#F44336"></span><b style="font-weight:600">Void</b> — pinned, outlined</div>
+  </div>
+
+  <!-- ============ LIGHT ============ -->
+  <div style="max-width:1180px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start;margin-bottom:56px">
+
+    <!-- COMPLETED · LIGHT -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Completed · Salmon split · <span style="font-family:'Roboto Mono'">sale_detail_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none">
+          <span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;text-align:center;font-size:18px;font-weight:600;color:#16201F">Sale Details</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="file-text" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:16px;display:flex;flex-direction:column">
+          <!-- HERO header (single big number) -->
+          <div style="background:#fff;border-radius:24px;padding:22px 20px;box-shadow:0 2px 8px rgba(17,28,29,.06);text-align:center">
+            <div style="font-family:'Roboto Mono';font-size:14px;font-weight:600;color:#283E46;letter-spacing:.3px">SALE-20260529-009</div>
+            <div style="font-size:13px;color:#8A9296;margin-top:7px">Friday, May 29, 2026 · 1:07 PM</div>
+            <div style="font-size:34px;font-weight:700;color:#16201F;letter-spacing:-.8px;margin-top:14px">₱1,750.00</div>
+            <div style="display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;color:#2E7D32;background:#E8F5E9"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2.5"></i>Completed</div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Items</div>
+          <div style="background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 14px">
+              <span style="background:#283E46;color:#fff;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap">×7</span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;color:#16201F">ASK BRAKE SHOE XRM</div><div style="font-size:12px;color:#8A9296;margin-top:2px">ask-001 · ₱250.00/pc</div><div style="font-family:'Roboto Mono';font-size:11px;font-weight:600;color:#9AA0A3;margin-top:3px">NBS</div></div>
+              <div style="font-weight:700;font-size:14px;color:#16201F">₱1,750.00</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Payment</div>
+          <div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#8A9296">Subtotal</span><span style="font-weight:500;color:#16201F">₱1,750.00</span></div>
+            <div style="height:1px;background:#F0F0F0;margin:11px 0"></div>
+            <!-- demoted Total (recap, not a hero) -->
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600;color:#16201F">Total</span><span style="font-size:16px;font-weight:700;color:#16201F">₱1,750.00</span></div>
+            <div style="height:1px;background:#F0F0F0;margin:11px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#8A9296">Downpayment · GCash</span><span style="font-weight:500;color:#16201F">₱500.00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span style="color:#8A9296">Salmon balance</span><span style="font-weight:600;color:#16201F">₱1,250.00</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Details</div>
+          <div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;align-items:center;gap:12px"><i data-lucide="user" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Cashier</span><span style="font-size:14px;font-weight:500;color:#16201F">Cashier</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="credit-card" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Payment Method</span><span style="font-size:14px;font-weight:500;color:#16201F">Salmon</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="shopping-bag" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Items</span><span style="font-size:14px;font-weight:500;color:#16201F">7 · 1 product</span></div>
+          </div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:14px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#fff;border:1px solid #F44336;color:#F44336;font-size:15px;font-weight:600"><i data-lucide="x-circle" style="width:18px;height:18px;stroke-width:1.75"></i>Void This Sale</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOIDED · LIGHT -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Voided · notes + labor + change · <span style="font-family:'Roboto Mono'">voided</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none">
+          <span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;text-align:center;font-size:18px;font-weight:600;color:#16201F">Sale Details</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="file-text" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column">
+          <!-- voided banner -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:18px;background:rgba(244,67,54,.10);border:1px solid rgba(244,67,54,.40)">
+            <i data-lucide="x-circle" style="width:30px;height:30px;color:#F44336;stroke-width:1.9;flex:none"></i>
+            <div><div style="font-size:17px;font-weight:700;color:#D32F2F;letter-spacing:.3px">VOIDED</div><div style="font-size:13px;color:#C0392B;margin-top:2px">Customer cancelled — wrong part</div></div>
+          </div>
+          <!-- hero (voided) -->
+          <div style="background:#fff;border-radius:24px;padding:22px 20px;box-shadow:0 2px 8px rgba(17,28,29,.06);text-align:center;margin-top:14px">
+            <div style="font-family:'Roboto Mono';font-size:14px;font-weight:600;color:#283E46;letter-spacing:.3px">SALE-20260621-001</div>
+            <div style="font-size:13px;color:#8A9296;margin-top:7px">Sunday, June 21, 2026 · 2:08 AM</div>
+            <div style="font-size:34px;font-weight:700;color:#9AA0A3;letter-spacing:-.8px;margin-top:14px;text-decoration:line-through">₱650.00</div>
+            <div style="display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;color:#fff;background:#F44336"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2.5"></i>Voided</div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Items</div>
+          <div style="background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border-bottom:1px solid #F0F0F0">
+              <span style="background:#283E46;color:#fff;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap">×1</span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;color:#16201F">Spark Plug NGK</div><div style="font-size:12px;color:#8A9296;margin-top:2px">sp-014 · ₱200.00/pc</div><div style="font-family:'Roboto Mono';font-size:11px;font-weight:600;color:#9AA0A3;margin-top:3px">KRT</div></div>
+              <div style="font-weight:700;font-size:14px;color:#16201F">₱200.00</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 14px">
+              <span style="width:28px;height:28px;background:#E8B84C;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="wrench" style="width:15px;height:15px;color:#3a2e00;stroke-width:1.9"></i></span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;color:#16201F">Engine tune-up</div><div style="font-size:12px;color:#8A9296;margin-top:1px">Labor</div></div>
+              <div style="font-weight:700;font-size:14px;color:#16201F">₱450.00</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Payment</div>
+          <div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#8A9296">Subtotal</span><span style="font-weight:500;color:#16201F">₱200.00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span style="color:#8A9296">Labor · Juan Dela Cruz</span><span style="font-weight:500;color:#16201F">₱450.00</span></div>
+            <div style="height:1px;background:#F0F0F0;margin:11px 0"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600;color:#16201F">Total</span><span style="font-size:16px;font-weight:700;color:#16201F">₱650.00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:11px"><span style="color:#8A9296">Received · Cash</span><span style="font-weight:500;color:#16201F">₱1,000.00</span></div>
+            <!-- tinted Change block -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:13px 15px;border-radius:14px;background:#E8F5E9">
+              <span style="font-size:14px;font-weight:600;color:#2E7D32">Change</span>
+              <span style="font-size:22px;font-weight:700;color:#2E7D32;letter-spacing:-.5px">₱350.00</span>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Details</div>
+          <div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;align-items:center;gap:12px"><i data-lucide="user" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Cashier</span><span style="font-size:14px;font-weight:500;color:#16201F">Admin</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="wrench" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Mechanic</span><span style="font-size:14px;font-weight:500;color:#16201F">Juan Dela Cruz</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="credit-card" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Payment Method</span><span style="font-size:14px;font-weight:500;color:#16201F">Cash</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="shopping-bag" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Items</span><span style="font-size:14px;font-weight:500;color:#16201F">1 · 1 product</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Void Information</div>
+          <div style="background:rgba(244,67,54,.10);border:1px solid rgba(244,67,54,.40);border-radius:18px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px"><i data-lucide="user" style="width:20px;height:20px;color:#D32F2F;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#C0392B">Voided by</span><span style="font-size:14px;font-weight:600;color:#B5302A">Admin</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="clock" style="width:20px;height:20px;color:#D32F2F;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#C0392B">Voided at</span><span style="font-size:14px;font-weight:600;color:#B5302A">Jun 21, 2:30 AM</span></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-top:13px"><i data-lucide="file-text" style="width:20px;height:20px;color:#D32F2F;stroke-width:1.75"></i><div style="flex:1"><div style="font-size:13px;color:#C0392B">Reason</div><div style="font-size:14px;font-weight:500;color:#16201F;margin-top:2px">Customer cancelled — wrong part</div></div></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Notes</div>
+          <div style="background:rgba(255,193,7,.14);border:1px solid rgba(183,131,26,.40);border-radius:18px;padding:14px 16px">
+            <div style="display:flex;align-items:center;gap:8px"><i data-lucide="sticky-note" style="width:16px;height:16px;color:#9A6B00;stroke-width:1.9"></i><b style="font-weight:600;font-size:13px;color:#8A6100">Notes</b></div>
+            <div style="margin-top:7px;font-size:14px;color:#16201F;line-height:1.45">Refund issued in cash at counter.</div>
+          </div>
+          <div style="height:6px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DARK ============ -->
+  <div style="max-width:1180px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+
+    <!-- COMPLETED · DARK -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Completed · Salmon split · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none">
+          <span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;text-align:center;font-size:18px;font-weight:600;color:#ECEFEF">Sale Details</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="file-text" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:16px;display:flex;flex-direction:column">
+          <div style="background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 20px;text-align:center">
+            <div style="font-family:'Roboto Mono';font-size:14px;font-weight:600;color:#E8B84C;letter-spacing:.3px">SALE-20260529-009</div>
+            <div style="font-size:13px;color:#93A0A3;margin-top:7px">Friday, May 29, 2026 · 1:07 PM</div>
+            <div style="font-size:34px;font-weight:700;color:#fff;letter-spacing:-.8px;margin-top:14px">₱1,750.00</div>
+            <div style="display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;color:#8FE39A;background:rgba(76,175,80,.18)"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2.5"></i>Completed</div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Items</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 14px">
+              <span style="background:#E8B84C;color:#121C1D;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap">×7</span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;color:#ECEFEF">ASK BRAKE SHOE XRM</div><div style="font-size:12px;color:#93A0A3;margin-top:2px">ask-001 · ₱250.00/pc</div><div style="font-family:'Roboto Mono';font-size:11px;font-weight:600;color:#6C797C;margin-top:3px">NBS</div></div>
+              <div style="font-weight:700;font-size:14px;color:#ECEFEF">₱1,750.00</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Payment</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px;padding:16px">
+            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#93A0A3">Subtotal</span><span style="font-weight:500;color:#ECEFEF">₱1,750.00</span></div>
+            <div style="height:1px;background:#243234;margin:11px 0"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600;color:#ECEFEF">Total</span><span style="font-size:16px;font-weight:700;color:#ECEFEF">₱1,750.00</span></div>
+            <div style="height:1px;background:#243234;margin:11px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#93A0A3">Downpayment · GCash</span><span style="font-weight:500;color:#ECEFEF">₱500.00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span style="color:#93A0A3">Salmon balance</span><span style="font-weight:600;color:#ECEFEF">₱1,250.00</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Details</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px"><i data-lucide="user" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Cashier</span><span style="font-size:14px;font-weight:500;color:#ECEFEF">Cashier</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="credit-card" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Payment Method</span><span style="font-size:14px;font-weight:500;color:#ECEFEF">Salmon</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="shopping-bag" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Items</span><span style="font-size:14px;font-weight:500;color:#ECEFEF">7 · 1 product</span></div>
+          </div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:14px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:transparent;border:1px solid #F44336;color:#FF6B5E;font-size:15px;font-weight:600"><i data-lucide="x-circle" style="width:18px;height:18px;stroke-width:1.75"></i>Void This Sale</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOIDED · DARK -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Voided · notes + labor + change · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none">
+          <span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;text-align:center;font-size:18px;font-weight:600;color:#ECEFEF">Sale Details</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="file-text" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:18px;background:rgba(244,67,54,.18);border:1px solid rgba(244,67,54,.45)">
+            <i data-lucide="x-circle" style="width:30px;height:30px;color:#FF6B5E;stroke-width:1.9;flex:none"></i>
+            <div><div style="font-size:17px;font-weight:700;color:#FF8A80;letter-spacing:.3px">VOIDED</div><div style="font-size:13px;color:#F2A7A0;margin-top:2px">Customer cancelled — wrong part</div></div>
+          </div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 20px;text-align:center;margin-top:14px">
+            <div style="font-family:'Roboto Mono';font-size:14px;font-weight:600;color:#E8B84C;letter-spacing:.3px">SALE-20260621-001</div>
+            <div style="font-size:13px;color:#93A0A3;margin-top:7px">Sunday, June 21, 2026 · 2:08 AM</div>
+            <div style="font-size:34px;font-weight:700;color:#6C797C;letter-spacing:-.8px;margin-top:14px;text-decoration:line-through">₱650.00</div>
+            <div style="display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;color:#fff;background:#F44336"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2.5"></i>Voided</div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Items</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border-bottom:1px solid #243234">
+              <span style="background:#E8B84C;color:#121C1D;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap">×1</span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;color:#ECEFEF">Spark Plug NGK</div><div style="font-size:12px;color:#93A0A3;margin-top:2px">sp-014 · ₱200.00/pc</div><div style="font-family:'Roboto Mono';font-size:11px;font-weight:600;color:#6C797C;margin-top:3px">KRT</div></div>
+              <div style="font-weight:700;font-size:14px;color:#ECEFEF">₱200.00</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 14px">
+              <span style="width:28px;height:28px;background:#E8B84C;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="wrench" style="width:15px;height:15px;color:#3a2e00;stroke-width:1.9"></i></span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;color:#ECEFEF">Engine tune-up</div><div style="font-size:12px;color:#93A0A3;margin-top:1px">Labor</div></div>
+              <div style="font-weight:700;font-size:14px;color:#ECEFEF">₱450.00</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Payment</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px;padding:16px">
+            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#93A0A3">Subtotal</span><span style="font-weight:500;color:#ECEFEF">₱200.00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span style="color:#93A0A3">Labor · Juan Dela Cruz</span><span style="font-weight:500;color:#ECEFEF">₱450.00</span></div>
+            <div style="height:1px;background:#243234;margin:11px 0"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600;color:#ECEFEF">Total</span><span style="font-size:16px;font-weight:700;color:#ECEFEF">₱650.00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:11px"><span style="color:#93A0A3">Received · Cash</span><span style="font-weight:500;color:#ECEFEF">₱1,000.00</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:13px 15px;border-radius:14px;background:rgba(76,175,80,.16);border:1px solid rgba(76,175,80,.40)">
+              <span style="font-size:14px;font-weight:600;color:#8FE39A">Change</span>
+              <span style="font-size:22px;font-weight:700;color:#8FE39A;letter-spacing:-.5px">₱350.00</span>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Details</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px"><i data-lucide="user" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Cashier</span><span style="font-size:14px;font-weight:500;color:#ECEFEF">Admin</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="wrench" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Mechanic</span><span style="font-size:14px;font-weight:500;color:#ECEFEF">Juan Dela Cruz</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="credit-card" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Payment Method</span><span style="font-size:14px;font-weight:500;color:#ECEFEF">Cash</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="shopping-bag" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Items</span><span style="font-size:14px;font-weight:500;color:#ECEFEF">1 · 1 product</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Void Information</div>
+          <div style="background:rgba(244,67,54,.16);border:1px solid rgba(244,67,54,.45);border-radius:18px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px"><i data-lucide="user" style="width:20px;height:20px;color:#FF6B5E;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#F2A7A0">Voided by</span><span style="font-size:14px;font-weight:600;color:#FFB3AC">Admin</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px"><i data-lucide="clock" style="width:20px;height:20px;color:#FF6B5E;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#F2A7A0">Voided at</span><span style="font-size:14px;font-weight:600;color:#FFB3AC">Jun 21, 2:30 AM</span></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-top:13px"><i data-lucide="file-text" style="width:20px;height:20px;color:#FF6B5E;stroke-width:1.75"></i><div style="flex:1"><div style="font-size:13px;color:#F2A7A0">Reason</div><div style="font-size:14px;font-weight:500;color:#ECEFEF;margin-top:2px">Customer cancelled — wrong part</div></div></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Notes</div>
+          <div style="background:rgba(232,184,76,.16);border:1px solid rgba(232,184,76,.40);border-radius:18px;padding:14px 16px">
+            <div style="display:flex;align-items:center;gap:8px"><i data-lucide="sticky-note" style="width:16px;height:16px;color:#E8B84C;stroke-width:1.9"></i><b style="font-weight:600;font-size:13px;color:#E8B84C">Notes</b></div>
+            <div style="margin-top:7px;font-size:14px;color:#ECEFEF;line-height:1.45">Refund issued in cash at counter.</div>
+          </div>
+          <div style="height:6px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>

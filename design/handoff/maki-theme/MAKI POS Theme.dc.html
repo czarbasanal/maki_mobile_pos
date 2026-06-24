@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- ============ HEADER ============ -->
+  <div style="max-width:868px;margin:0 auto 40px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Global theme · Lucide icons
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">MAKI POS — elevated theme</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:64ch">Airy-minimal direction kept, surfaces lift off the background with soft shadows — Airbnb-style. Slate stays the primary, gold is the accent; in dark mode gold leads. Icons are <b>Lucide</b> (uniform 1.75px stroke, rounded caps). Login and Dashboard shown in both themes.</p>
+  </div>
+
+  <!-- ============ TOKEN STRIP ============ -->
+  <div style="max-width:868px;margin:0 auto 44px;background:#fff;border-radius:22px;padding:24px 26px;box-shadow:0 10px 30px -14px rgba(17,28,29,.22),0 2px 6px rgba(17,28,29,.05);display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start">
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:12px">Brand</div>
+      <div style="display:flex;gap:14px">
+        <div style="text-align:center"><div style="width:52px;height:52px;border-radius:14px;background:#283E46;box-shadow:0 4px 12px rgba(40,62,70,.3)"></div><div style="font-size:11px;color:#5A6468;margin-top:7px">Slate</div><div style="font-size:10px;color:#9AA0A3;font-family:'Roboto Mono'">#283E46</div></div>
+        <div style="text-align:center"><div style="width:52px;height:52px;border-radius:14px;background:#E8B84C;box-shadow:0 4px 12px rgba(232,184,76,.34)"></div><div style="font-size:11px;color:#5A6468;margin-top:7px">Gold</div><div style="font-size:10px;color:#9AA0A3;font-family:'Roboto Mono'">#E8B84C</div></div>
+        <div style="text-align:center"><div style="width:52px;height:52px;border-radius:14px;background:#121C1D"></div><div style="font-size:11px;color:#5A6468;margin-top:7px">Ink</div><div style="font-size:10px;color:#9AA0A3;font-family:'Roboto Mono'">#121C1D</div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:12px">Status</div>
+      <div style="display:flex;gap:10px">
+        <div style="text-align:center"><div style="width:40px;height:40px;border-radius:11px;background:#4CAF50"></div><div style="font-size:10px;color:#5A6468;margin-top:6px">Cash</div></div>
+        <div style="text-align:center"><div style="width:40px;height:40px;border-radius:11px;background:#007DFE"></div><div style="font-size:10px;color:#5A6468;margin-top:6px">GCash</div></div>
+        <div style="text-align:center"><div style="width:40px;height:40px;border-radius:11px;background:#FF9800"></div><div style="font-size:10px;color:#5A6468;margin-top:6px">Draft</div></div>
+        <div style="text-align:center"><div style="width:40px;height:40px;border-radius:11px;background:#F44336"></div><div style="font-size:10px;color:#5A6468;margin-top:6px">Error</div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:12px">Elevation</div>
+      <div style="display:flex;gap:14px;align-items:flex-end">
+        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(17,28,29,.08)"></div><div style="font-size:10px;color:#9AA0A3;margin-top:7px">rest</div></div>
+        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(17,28,29,.08),0 1px 2px rgba(17,28,29,.05)"></div><div style="font-size:10px;color:#9AA0A3;margin-top:7px">card</div></div>
+        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:14px;background:#fff;box-shadow:0 8px 24px rgba(17,28,29,.14),0 2px 6px rgba(17,28,29,.06)"></div><div style="font-size:10px;color:#9AA0A3;margin-top:7px">hero</div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:12px">Icons · Lucide</div>
+      <div style="display:flex;gap:16px;color:#283E46">
+        <i data-lucide="wallet" style="width:24px;height:24px;stroke-width:1.75"></i>
+        <i data-lucide="shopping-cart" style="width:24px;height:24px;stroke-width:1.75"></i>
+        <i data-lucide="package" style="width:24px;height:24px;stroke-width:1.75"></i>
+        <i data-lucide="bell" style="width:24px;height:24px;stroke-width:1.75"></i>
+        <i data-lucide="trending-up" style="width:24px;height:24px;stroke-width:1.75"></i>
+        <i data-lucide="settings" style="width:24px;height:24px;stroke-width:1.75"></i>
+      </div>
+      <div style="font-size:10px;color:#9AA0A3;font-family:'Roboto Mono';margin-top:8px">stroke 1.75 · rounded caps</div>
+    </div>
+  </div>
+
+  <!-- ============ LIGHT THEME ============ -->
+  <div style="max-width:868px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:48px;align-items:flex-start;justify-content:center;margin-bottom:56px;flex-wrap:wrap">
+
+    <!-- ----- LOGIN · LIGHT ----- -->
+    <div style="width:390px">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Login · <span style="font-family:'Roboto Mono'">login_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#FFFFFF;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F">
+          <span>9:41</span>
+          <span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <div style="height:calc(100% - 36px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 30px">
+          <div style="width:100%;max-width:330px">
+            <div style="width:74px;height:74px;border-radius:20px;background:#283E46;margin:0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -6px rgba(40,62,70,.5)"><span style="color:#fff;font-weight:700;font-size:30px">マ</span></div>
+            <div style="text-align:center;margin-top:22px;font-size:18px;font-weight:700;letter-spacing:2.4px;color:#121C1D">MAKI POS</div>
+            <div style="text-align:center;margin-top:8px;font-size:14px;color:#6A7378">Sign in to your account</div>
+
+            <div style="margin-top:38px">
+              <div style="font-size:12px;font-weight:500;color:#6A7378;margin:0 0 7px 2px">Email</div>
+              <div style="height:54px;border:1px solid #E2E2E2;border-radius:16px;background:#FAFAFA;display:flex;align-items:center;padding:0 16px;gap:11px;font-size:15px;color:#16201F"><i data-lucide="mail" style="width:20px;height:20px;color:#9AA0A3;stroke-width:1.75"></i>juan@makipos.ph</div>
+            </div>
+            <div style="margin-top:16px">
+              <div style="font-size:12px;font-weight:500;color:#283E46;margin:0 0 7px 2px">Password</div>
+              <div style="height:54px;border:1.5px solid #283E46;border-radius:16px;background:#fff;display:flex;align-items:center;padding:0 16px;gap:11px;font-size:15px;color:#16201F;box-shadow:0 0 0 4px rgba(40,62,70,.08)"><i data-lucide="lock" style="width:20px;height:20px;color:#283E46;stroke-width:1.75"></i><span style="flex:1">••••••••••</span><i data-lucide="eye-off" style="width:20px;height:20px;color:#9AA0A3;stroke-width:1.75"></i></div>
+            </div>
+
+            <div style="margin-top:26px;height:54px;border-radius:16px;background:#283E46;color:#fff;font-size:16px;font-weight:600;letter-spacing:.4px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)">Sign in</div>
+            <div style="margin-top:14px;text-align:center;font-size:13px;font-weight:500;color:#283E46">Forgot password?</div>
+          </div>
+          <div style="position:absolute;bottom:30px;left:0;right:0;text-align:center;font-size:11px;color:#B4B4B4;letter-spacing:.5px">v1.0.0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ----- DASHBOARD · LIGHT ----- -->
+    <div style="width:390px">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dashboard · admin · <span style="font-family:'Roboto Mono'">dashboard_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;background:#fff">
+          <span>9:41</span>
+          <span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <!-- appbar + pinned (white, elevated) -->
+        <div style="background:#fff;padding:6px 18px 16px;box-shadow:0 2px 10px rgba(17,28,29,.05);position:relative;z-index:2">
+          <div style="height:56px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:42px;height:42px;border-radius:14px;background:#283E46;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:15px;box-shadow:0 4px 10px -2px rgba(40,62,70,.4)">JD</div>
+              <div><div style="font-size:13px;color:#8A9296;line-height:1.1">Good morning</div><div style="font-size:16px;font-weight:600;color:#16201F;line-height:1.35">Juan Dela Cruz</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:2px">
+              <div style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F;position:relative"><i data-lucide="bell" style="width:22px;height:22px;stroke-width:1.75"></i><span style="position:absolute;top:6px;right:6px;min-width:16px;height:16px;border-radius:999px;background:#F44336;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #fff">3</span></div>
+              <div style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="settings" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+              <div style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="log-out" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;color:#8A9296;font-size:14px;font-weight:500;margin-top:2px"><i data-lucide="calendar" style="width:18px;height:18px;stroke-width:1.75"></i>Friday, June 20, 2026</div>
+          <div style="display:flex;gap:10px;margin-top:16px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)">
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:#283E46;color:#fff;font-size:14px;font-weight:600;box-shadow:0 6px 16px -4px rgba(40,62,70,.5)"><i data-lucide="shopping-cart" style="width:20px;height:20px;stroke-width:1.75"></i>New Sale</div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:#fff;border:1px solid #ECECEC;color:#16201F;font-size:14px;font-weight:600;box-shadow:0 1px 3px rgba(17,28,29,.06)"><i data-lucide="download" style="width:20px;height:20px;color:#5A6468;stroke-width:1.75"></i>Receive</div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:#fff;border:1px solid #ECECEC;color:#16201F;font-size:14px;font-weight:600;box-shadow:0 1px 3px rgba(17,28,29,.06)"><i data-lucide="package" style="width:20px;height:20px;color:#5A6468;stroke-width:1.75"></i>Inventory</div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:#fff;border:1px solid #F44336;color:#F44336;font-size:14px;font-weight:600;box-shadow:0 1px 3px rgba(17,28,29,.06)"><i data-lucide="calendar-x" style="width:20px;height:20px;stroke-width:1.75"></i>Close Day</div>
+          </div>
+        </div>
+        <!-- scroll body -->
+        <div style="padding:18px 18px 24px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:0 2px 12px"><h3 style="font-size:16px;font-weight:700;color:#16201F;margin:0">Today's Sales</h3></div>
+          <!-- HERO -->
+          <div style="background:#fff;border-radius:22px;padding:20px 22px;box-shadow:0 10px 28px -10px rgba(17,28,29,.16),0 2px 6px rgba(17,28,29,.05)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div style="display:flex;align-items:center;gap:8px;color:#8A9296;font-size:13px;font-weight:500"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.75"></i>Gross Sales</div>
+              <div style="display:inline-flex;align-items:center;gap:3px;background:#FBF3DE;color:#9A7B1F;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px"><i data-lucide="trending-up" style="width:14px;height:14px;stroke-width:2"></i>12% vs yest</div>
+            </div>
+            <div style="font-size:38px;font-weight:700;letter-spacing:-1px;color:#16201F;margin-top:10px">₱12,480<span style="font-size:22px;color:#8A9296">.00</span></div>
+            <div style="font-size:13px;color:#8A9296;margin-top:4px">₱320.00 discount applied · 14 sales</div>
+          </div>
+          <!-- 3-up supporting -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px">
+            <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)"><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><div style="font-size:11px;color:#8A9296;margin-top:8px">Avg Daily</div><div style="font-size:18px;font-weight:700;color:#16201F;margin-top:2px">₱9.8K</div></div>
+            <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)"><i data-lucide="boxes" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><div style="font-size:11px;color:#8A9296;margin-top:8px">COGS</div><div style="font-size:18px;font-weight:700;color:#16201F;margin-top:2px">₱7.1K</div></div>
+            <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)"><i data-lucide="trending-up" style="width:18px;height:18px;color:#4CAF50;stroke-width:1.75"></i><div style="font-size:11px;color:#8A9296;margin-top:8px">Profit</div><div style="font-size:18px;font-weight:700;color:#16201F;margin-top:2px">₱5.4K</div></div>
+          </div>
+
+          <!-- TOP SELLING -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:24px 2px 10px"><h3 style="font-size:16px;font-weight:700;color:#16201F;margin:0">Top Selling Today</h3><a style="font-size:13px;font-weight:500;color:#283E46;text-decoration:none">View All</a></div>
+          <div style="background:#fff;border-radius:18px;padding:6px 16px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F0F0F0">
+              <div style="width:40px;height:40px;border-radius:11px;background:repeating-linear-gradient(45deg,#EFEFEF,#EFEFEF 5px,#F7F7F7 5px,#F7F7F7 10px);flex:0 0 auto"></div>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shimano Brake Pad B01S</div><div style="font-size:12px;color:#8A9296">8 sold</div></div>
+              <div style="font-size:14px;font-weight:600;color:#16201F">₱2,400</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0">
+              <div style="width:40px;height:40px;border-radius:11px;background:repeating-linear-gradient(45deg,#EFEFEF,#EFEFEF 5px,#F7F7F7 5px,#F7F7F7 10px);flex:0 0 auto"></div>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Engine Oil 1L · 10W-40</div><div style="font-size:12px;color:#8A9296">6 sold</div></div>
+              <div style="font-size:14px;font-weight:600;color:#16201F">₱1,770</div>
+            </div>
+          </div>
+
+          <!-- RECENT -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:24px 2px 10px"><h3 style="font-size:16px;font-weight:700;color:#16201F;margin:0">Recent Transactions</h3><a style="font-size:13px;font-weight:500;color:#283E46;text-decoration:none">View All</a></div>
+          <div style="background:#fff;border-radius:18px;padding:6px 16px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #F0F0F0">
+              <div style="flex:1"><div style="font-family:'Roboto Mono';font-size:12px;font-weight:600;color:#16201F;letter-spacing:.3px">SALE-20260620-014</div><div style="font-size:12px;color:#8A9296;margin-top:2px">9:32 AM · 3 items</div></div>
+              <span style="font-size:10px;font-weight:600;letter-spacing:.4px;padding:3px 8px;border-radius:999px;text-transform:uppercase;color:#2E7D32;background:#E8F5E9">Cash</span>
+              <div style="font-size:14px;font-weight:600;color:#16201F;min-width:56px;text-align:right">₱1,240</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 0">
+              <div style="flex:1"><div style="font-family:'Roboto Mono';font-size:12px;font-weight:600;color:#16201F;letter-spacing:.3px">SALE-20260620-013</div><div style="font-size:12px;color:#8A9296;margin-top:2px">9:18 AM · 1 item</div></div>
+              <span style="font-size:10px;font-weight:600;letter-spacing:.4px;padding:3px 8px;border-radius:999px;text-transform:uppercase;color:#024A99;background:#E3F0FF">GCash</span>
+              <div style="font-size:14px;font-weight:600;color:#16201F;min-width:56px;text-align:right">₱530</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DARK THEME ============ -->
+  <div style="max-width:868px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:48px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
+
+    <!-- ----- LOGIN · DARK ----- -->
+    <div style="width:390px">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Login · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#121C1D;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF">
+          <span>9:41</span>
+          <span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <div style="height:calc(100% - 36px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 30px">
+          <div style="width:100%;max-width:330px">
+            <div style="width:74px;height:74px;border-radius:20px;background:#E8B84C;margin:0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px -6px rgba(232,184,76,.5)"><span style="color:#121C1D;font-weight:700;font-size:30px">マ</span></div>
+            <div style="text-align:center;margin-top:22px;font-size:18px;font-weight:700;letter-spacing:2.4px;color:#fff">MAKI POS</div>
+            <div style="text-align:center;margin-top:8px;font-size:14px;color:#93A0A3">Sign in to your account</div>
+
+            <div style="margin-top:38px">
+              <div style="font-size:12px;font-weight:500;color:#93A0A3;margin:0 0 7px 2px">Email</div>
+              <div style="height:54px;border:1px solid #2C3C3E;border-radius:16px;background:#18262A;display:flex;align-items:center;padding:0 16px;gap:11px;font-size:15px;color:#ECEFEF"><i data-lucide="mail" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i>juan@makipos.ph</div>
+            </div>
+            <div style="margin-top:16px">
+              <div style="font-size:12px;font-weight:500;color:#E8B84C;margin:0 0 7px 2px">Password</div>
+              <div style="height:54px;border:1.5px solid #E8B84C;border-radius:16px;background:#18262A;display:flex;align-items:center;padding:0 16px;gap:11px;font-size:15px;color:#ECEFEF;box-shadow:0 0 0 4px rgba(232,184,76,.12)"><i data-lucide="lock" style="width:20px;height:20px;color:#E8B84C;stroke-width:1.75"></i><span style="flex:1">••••••••••</span><i data-lucide="eye-off" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div>
+            </div>
+
+            <div style="margin-top:26px;height:54px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:16px;font-weight:600;letter-spacing:.4px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px -6px rgba(232,184,76,.5)">Sign in</div>
+            <div style="margin-top:14px;text-align:center;font-size:13px;font-weight:500;color:#E8B84C">Forgot password?</div>
+          </div>
+          <div style="position:absolute;bottom:30px;left:0;right:0;text-align:center;font-size:11px;color:#566163;letter-spacing:.5px">v1.0.0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ----- DASHBOARD · DARK ----- -->
+    <div style="width:390px">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dashboard · admin · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;background:#121C1D">
+          <span>9:41</span>
+          <span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span>
+        </div>
+        <div style="background:#121C1D;padding:6px 18px 16px;box-shadow:0 2px 12px rgba(0,0,0,.4);position:relative;z-index:2">
+          <div style="height:56px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:42px;height:42px;border-radius:14px;background:#E8B84C;display:flex;align-items:center;justify-content:center;color:#121C1D;font-weight:600;font-size:15px;box-shadow:0 4px 12px -2px rgba(232,184,76,.45)">JD</div>
+              <div><div style="font-size:13px;color:#93A0A3;line-height:1.1">Good morning</div><div style="font-size:16px;font-weight:600;color:#ECEFEF;line-height:1.35">Juan Dela Cruz</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:2px">
+              <div style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF;position:relative"><i data-lucide="bell" style="width:22px;height:22px;stroke-width:1.75"></i><span style="position:absolute;top:6px;right:6px;min-width:16px;height:16px;border-radius:999px;background:#F44336;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #121C1D">3</span></div>
+              <div style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="settings" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+              <div style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="log-out" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;color:#93A0A3;font-size:14px;font-weight:500;margin-top:2px"><i data-lucide="calendar" style="width:18px;height:18px;stroke-width:1.75"></i>Friday, June 20, 2026</div>
+          <div style="display:flex;gap:10px;margin-top:16px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)">
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:14px;font-weight:600;box-shadow:0 6px 16px -4px rgba(232,184,76,.45)"><i data-lucide="shopping-cart" style="width:20px;height:20px;stroke-width:1.75"></i>New Sale</div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:#18262A;border:1px solid #243234;color:#ECEFEF;font-size:14px;font-weight:600"><i data-lucide="download" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i>Receive</div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:#18262A;border:1px solid #243234;color:#ECEFEF;font-size:14px;font-weight:600"><i data-lucide="package" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i>Inventory</div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;height:50px;padding:0 18px;border-radius:16px;background:transparent;border:1px solid #F44336;color:#FF6B5E;font-size:14px;font-weight:600"><i data-lucide="calendar-x" style="width:20px;height:20px;stroke-width:1.75"></i>Close Day</div>
+          </div>
+        </div>
+        <div style="padding:18px 18px 24px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:0 2px 12px"><h3 style="font-size:16px;font-weight:700;color:#ECEFEF;margin:0">Today's Sales</h3></div>
+          <div style="background:#18262A;border-radius:22px;padding:20px 22px;border:1px solid #243234;box-shadow:0 10px 28px -10px rgba(0,0,0,.55)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div style="display:flex;align-items:center;gap:8px;color:#93A0A3;font-size:13px;font-weight:500"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.75"></i>Gross Sales</div>
+              <div style="display:inline-flex;align-items:center;gap:3px;background:rgba(232,184,76,.16);color:#E8B84C;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px"><i data-lucide="trending-up" style="width:14px;height:14px;stroke-width:2"></i>12% vs yest</div>
+            </div>
+            <div style="font-size:38px;font-weight:700;letter-spacing:-1px;color:#fff;margin-top:10px">₱12,480<span style="font-size:22px;color:#93A0A3">.00</span></div>
+            <div style="font-size:13px;color:#93A0A3;margin-top:4px">₱320.00 discount applied · 14 sales</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px">
+            <div style="background:#18262A;border-radius:16px;padding:14px;border:1px solid #243234"><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><div style="font-size:11px;color:#93A0A3;margin-top:8px">Avg Daily</div><div style="font-size:18px;font-weight:700;color:#ECEFEF;margin-top:2px">₱9.8K</div></div>
+            <div style="background:#18262A;border-radius:16px;padding:14px;border:1px solid #243234"><i data-lucide="boxes" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><div style="font-size:11px;color:#93A0A3;margin-top:8px">COGS</div><div style="font-size:18px;font-weight:700;color:#ECEFEF;margin-top:2px">₱7.1K</div></div>
+            <div style="background:#18262A;border-radius:16px;padding:14px;border:1px solid #243234"><i data-lucide="trending-up" style="width:18px;height:18px;color:#5FC86A;stroke-width:1.75"></i><div style="font-size:11px;color:#93A0A3;margin-top:8px">Profit</div><div style="font-size:18px;font-weight:700;color:#ECEFEF;margin-top:2px">₱5.4K</div></div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:24px 2px 10px"><h3 style="font-size:16px;font-weight:700;color:#ECEFEF;margin:0">Top Selling Today</h3><a style="font-size:13px;font-weight:500;color:#E8B84C;text-decoration:none">View All</a></div>
+          <div style="background:#18262A;border-radius:18px;padding:6px 16px;border:1px solid #243234">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #243234">
+              <div style="width:40px;height:40px;border-radius:11px;background:repeating-linear-gradient(45deg,#1F2E31,#1F2E31 5px,#26373A 5px,#26373A 10px);flex:0 0 auto"></div>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shimano Brake Pad B01S</div><div style="font-size:12px;color:#93A0A3">8 sold</div></div>
+              <div style="font-size:14px;font-weight:600;color:#ECEFEF">₱2,400</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0">
+              <div style="width:40px;height:40px;border-radius:11px;background:repeating-linear-gradient(45deg,#1F2E31,#1F2E31 5px,#26373A 5px,#26373A 10px);flex:0 0 auto"></div>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Engine Oil 1L · 10W-40</div><div style="font-size:12px;color:#93A0A3">6 sold</div></div>
+              <div style="font-size:14px;font-weight:600;color:#ECEFEF">₱1,770</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:24px 2px 10px"><h3 style="font-size:16px;font-weight:700;color:#ECEFEF;margin:0">Recent Transactions</h3><a style="font-size:13px;font-weight:500;color:#E8B84C;text-decoration:none">View All</a></div>
+          <div style="background:#18262A;border-radius:18px;padding:6px 16px;border:1px solid #243234">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #243234">
+              <div style="flex:1"><div style="font-family:'Roboto Mono';font-size:12px;font-weight:600;color:#ECEFEF;letter-spacing:.3px">SALE-20260620-014</div><div style="font-size:12px;color:#93A0A3;margin-top:2px">9:32 AM · 3 items</div></div>
+              <span style="font-size:10px;font-weight:600;letter-spacing:.4px;padding:3px 8px;border-radius:999px;text-transform:uppercase;color:#8FE39A;background:rgba(76,175,80,.18)">Cash</span>
+              <div style="font-size:14px;font-weight:600;color:#ECEFEF;min-width:56px;text-align:right">₱1,240</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 0">
+              <div style="flex:1"><div style="font-family:'Roboto Mono';font-size:12px;font-weight:600;color:#ECEFEF;letter-spacing:.3px">SALE-20260620-013</div><div style="font-size:12px;color:#93A0A3;margin-top:2px">9:18 AM · 1 item</div></div>
+              <span style="font-size:10px;font-weight:600;letter-spacing:.4px;padding:3px 8px;border-radius:999px;text-transform:uppercase;color:#7FB6FF;background:rgba(0,125,254,.2)">GCash</span>
+              <div style="font-size:14px;font-weight:600;color:#ECEFEF;min-width:56px;text-align:right">₱530</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+      } else if (tries++ < 60) {
+        setTimeout(go, 50);
+      }
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>

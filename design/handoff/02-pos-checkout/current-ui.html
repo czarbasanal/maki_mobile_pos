@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 02: POS · Checkout · Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --input-border:#E2E2E2; --input-fill:#FAFAFA;
+    --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --gcash:#007DFE; --gcash-dark:#024A99; --gcash-bg:#E3F0FF;
+    --error:#F44336; --warning:#FF9800;
+    --r-field:16px; --r-lg:18px; --r-hero:22px; --r-pill:999px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1280px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro{margin-bottom:8px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:760px;line-height:1.5;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:360px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:760px;overflow:hidden;display:flex;flex-direction:column;}
+  /* status + app bar */
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--card);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);
+          border-bottom:1px solid var(--hairline);min-height:52px;}
+  .appbar .title{font-size:18px;font-weight:600;flex:1;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;
+           color:var(--ink);background:transparent;border:none;position:relative;}
+  .iconbtn i{width:21px;height:21px;}
+  .muted-ic{color:var(--muted);}
+  .badge-dot{position:absolute;top:5px;right:5px;min-width:16px;height:16px;background:var(--slate);color:#fff;
+             font-size:9px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;padding:0 3px;}
+  .body{flex:1;overflow:auto;padding:14px;}
+  .body::-webkit-scrollbar{width:0;}
+  /* search */
+  .search{display:flex;align-items:center;gap:8px;background:var(--input-fill);border:1px solid var(--input-border);
+          border-radius:var(--r-field);padding:0 12px;height:48px;}
+  .search i{width:19px;height:19px;color:var(--muted);}
+  .search input{border:none;background:transparent;flex:1;font-family:inherit;font-size:14px;color:var(--ink);outline:none;}
+  .search .scan{color:var(--slate);}
+  /* card (CURRENT = flat hairline, no shadow) */
+  .card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);}
+  .sec-gap{height:14px;}
+  /* cart item */
+  .cart-item{padding:12px;}
+  .cart-item + .cart-item{margin-top:10px;}
+  .ci-row1{display:flex;align-items:flex-start;gap:8px;}
+  .ci-name{font-weight:600;font-size:14px;line-height:1.25;flex:1;}
+  .ci-x{color:var(--muted);}
+  .ci-x i{width:18px;height:18px;}
+  .ci-sub{display:flex;align-items:center;justify-content:space-between;margin-top:3px;}
+  .ci-sub .meta{font-size:12px;color:var(--muted);}
+  .costpill{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:600;color:var(--muted);
+            border:1px solid var(--hairline);border-radius:8px;padding:1px 6px;}
+  .ci-controls{display:flex;align-items:center;gap:12px;margin-top:11px;}
+  .stepper{display:flex;align-items:center;border:1px solid var(--hairline);border-radius:var(--r-field);height:40px;}
+  .stepper button{width:38px;height:100%;border:none;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;}
+  .stepper button:disabled{color:#cfd3d4;}
+  .stepper i{width:16px;height:16px;}
+  .stepper .qty{min-width:26px;text-align:center;font-weight:700;font-size:16px;}
+  .disc-btn{display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:var(--r-field);
+            border:1px solid var(--hairline);color:var(--ink);font-size:13px;font-weight:600;background:transparent;}
+  .disc-btn i{width:15px;height:15px;color:var(--muted);}
+  .disc-btn.on{border-color:var(--success);color:var(--success-dark);}
+  .disc-btn.on i{color:var(--success-dark);}
+  .ci-total{margin-left:auto;text-align:right;}
+  .ci-total .gross{font-size:11px;color:var(--muted);text-decoration:line-through;}
+  .ci-total .net{font-size:16px;font-weight:700;}
+  .ci-total .net.disc{color:var(--success-dark);}
+  /* labor */
+  .labor-head{display:flex;align-items:center;gap:10px;padding:12px;}
+  .labor-head i{width:19px;height:19px;color:var(--muted);}
+  .labor-head .lt{flex:1;}
+  .labor-head .lt b{font-size:14px;font-weight:600;display:block;}
+  .labor-head .lt span{font-size:12px;color:var(--muted);}
+  .labor-head .chev{color:var(--muted);}
+  .labor-body{padding:0 12px 12px;border-top:1px solid var(--divider);}
+  .dropdown{display:flex;align-items:center;gap:8px;height:46px;border:1px solid var(--input-border);
+            border-radius:var(--r-field);padding:0 12px;margin-top:12px;background:var(--card);}
+  .dropdown i{width:17px;height:17px;color:var(--muted);}
+  .dropdown .dl{font-size:11px;color:var(--muted);}
+  .dropdown .dv{font-size:14px;margin-left:2px;}
+  .dropdown .chev{margin-left:auto;color:var(--muted);}
+  .labor-line{display:flex;align-items:center;gap:8px;padding:11px 12px;border:1px solid var(--hairline);
+              border-radius:var(--r-lg);margin-top:10px;}
+  .labor-line i.w{width:17px;height:17px;color:var(--muted);}
+  .labor-line .desc{flex:1;font-weight:600;font-size:14px;}
+  .labor-line .fee{font-weight:700;font-size:15px;}
+  .labor-line i.e{width:18px;height:18px;color:var(--muted);}
+  .add-labor{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;margin-top:12px;
+             border:1px solid var(--input-border);border-radius:var(--r-field);color:var(--slate);font-weight:600;font-size:13px;}
+  .add-labor i{width:16px;height:16px;}
+  /* summary */
+  .summary{padding:14px;}
+  .sm-row{display:flex;justify-content:space-between;font-size:14px;margin:6px 0;}
+  .sm-row .l{color:var(--muted);}
+  .sm-row .v{font-weight:500;}
+  .sm-row .v.disc{color:var(--success-dark);}
+  .sm-div{height:1px;background:var(--hairline);margin:10px 0;}
+  .sm-total{display:flex;justify-content:space-between;align-items:baseline;}
+  .sm-total .l{font-size:15px;font-weight:600;}
+  .sm-total .v{font-size:22px;font-weight:700;color:var(--slate);}
+  /* fixed actions */
+  .actions{padding:14px;background:var(--canvas);border-top:1px solid var(--hairline);}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:var(--r-field);
+       font-weight:600;font-size:15px;border:none;width:100%;}
+  .btn i{width:18px;height:18px;}
+  .btn-primary{background:var(--slate);color:#fff;box-shadow:0 8px 20px -6px rgba(40,62,70,.55);}
+  .btn-outline{background:var(--card);color:var(--ink);border:1px solid var(--input-border);margin-top:11px;}
+  .btn-success{background:var(--success);color:#fff;}
+  /* section header */
+  .sech{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin:0 2px 8px;}
+  /* checkout order items */
+  .oi-row{display:flex;align-items:flex-start;gap:10px;padding:12px;border-bottom:1px solid var(--hairline);}
+  .oi-row:last-child{border-bottom:none;}
+  .qpill{border:1px solid var(--slate);color:var(--slate);font-size:12px;font-weight:700;border-radius:8px;padding:2px 7px;white-space:nowrap;}
+  .oi-mid{flex:1;}
+  .oi-mid .n{font-weight:600;font-size:14px;}
+  .oi-mid .s{font-size:12px;color:var(--muted);}
+  .oi-mid .off{font-size:12px;color:var(--success-dark);}
+  .oi-amt{font-weight:700;font-size:14px;}
+  .wbadge{width:26px;height:26px;border:1px solid var(--slate);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+  .wbadge i{width:14px;height:14px;color:var(--slate);}
+  /* payment chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{padding:8px 14px;border-radius:var(--r-pill);border:1px solid var(--input-border);font-size:13px;font-weight:600;color:var(--ink);background:var(--card);}
+  .chip.sel{background:var(--slate);color:#fff;border-color:var(--slate);}
+  .field{display:flex;align-items:center;gap:6px;border:1px solid var(--input-border);border-radius:var(--r-field);
+         height:50px;padding:0 12px;background:var(--input-fill);margin-top:12px;}
+  .field .pfx{color:var(--muted);font-size:15px;}
+  .field input{border:none;background:transparent;flex:1;font-size:16px;font-family:inherit;outline:none;color:var(--ink);}
+  .field .ex{color:var(--slate);}
+  .field .ex i{width:20px;height:20px;}
+  .quick{display:flex;gap:8px;margin-top:10px;}
+  .quick .qc{flex:1;text-align:center;padding:8px 0;border:1px solid var(--input-border);border-radius:var(--r-field);font-size:13px;font-weight:600;color:var(--ink);background:var(--card);}
+  .change{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:14px;border-radius:var(--r-field);border:1px solid var(--success);}
+  .change .cl{font-size:14px;color:var(--ink);font-weight:600;}
+  .change .cv{font-size:22px;font-weight:700;color:var(--success-dark);}
+  /* scanner */
+  .scanner{position:relative;background:#0b0f10;height:760px;display:flex;flex-direction:column;}
+  .scan-appbar{display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;}
+  .scan-appbar .title{flex:1;font-size:18px;font-weight:600;}
+  .scan-appbar .iconbtn{color:#fff;}
+  .scan-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+              background:radial-gradient(120% 80% at 50% 40%, #243032 0%, #0b0f10 80%);}
+  .viewfinder{width:240px;height:240px;border:2px solid #fff;border-radius:16px;}
+  .scan-hint{color:#fff;font-size:14px;font-weight:500;margin-top:16px;text-shadow:0 1px 6px rgba(0,0,0,.6);}
+  /* success dialog */
+  .dialog-wrap{background:var(--canvas);height:760px;display:flex;align-items:center;justify-content:center;padding:18px;}
+  .dialog{background:var(--card);border-radius:var(--r-hero);padding:24px;width:100%;
+          box-shadow:0 24px 60px -20px rgba(17,28,29,.4);text-align:center;}
+  .succ-ic{width:84px;height:84px;border-radius:var(--r-pill);border:2px solid var(--success);margin:0 auto;
+           display:flex;align-items:center;justify-content:center;}
+  .succ-ic i{width:48px;height:48px;color:var(--success-dark);}
+  .succ-h{font-size:20px;font-weight:700;margin:18px 0 0;}
+  .succ-num{display:inline-block;margin-top:10px;font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;
+            color:var(--muted);background:var(--input-fill);border:1px solid var(--hairline);border-radius:var(--r-pill);padding:6px 14px;}
+  .amt-card{margin-top:18px;text-align:left;border:1px solid var(--success);border-radius:var(--r-field);padding:14px;}
+  .amt-row{display:flex;justify-content:space-between;font-size:14px;margin:4px 0;}
+  .amt-row .l{color:var(--muted);} .amt-row .v{font-weight:600;}
+  .amt-div{height:1px;background:var(--hairline);margin:8px 0;}
+  .amt-row.big .l{font-size:16px;font-weight:700;color:var(--ink);}
+  .amt-row.big .v{font-size:24px;font-weight:700;color:var(--success-dark);}
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 02 · POS · Checkout · Scanner</h1>
+    <p>The sale flow <b>as it renders today</b>: it already inherits the new theme (Figtree, warm canvas
+    <code>#F6F5F3</code>, slate <code>#283E46</code>) from the Login/Dashboard work, but the <b>layout is still
+    pre-redesign</b> — flat hairline cards (no soft shadows), Cupertino icons, and the old cart/checkout
+    structure. The redesign target is the same language as the Dashboard: soft-shadow elevation, the
+    number-as-hero, Lucide icons, pill chips, one clear primary action.</p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary)</span>
+    <span><i class="swatch" style="background:#E8B84C"></i> gold (dark primary)</span>
+    <span><i class="swatch" style="background:#F6F5F3"></i> canvas</span>
+    <span><i class="swatch" style="background:#FFFFFF"></i> card (flat today)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> success / cash</span>
+    <span><i class="swatch" style="background:#007DFE"></i> gcash</span>
+    <span style="margin-left:auto">Light theme shown · dark theme exists (canvas <code>#0C1415</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ POS SCREEN ============ -->
+    <div class="frame">
+      <div class="caption">1 · Point of Sale</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Point of Sale</div>
+          <button class="iconbtn"><i data-lucide="inbox"></i><span class="badge-dot">2</span></button>
+          <button class="iconbtn muted-ic"><i data-lucide="trash-2"></i></button>
+        </div>
+        <div class="body">
+          <div class="search">
+            <i data-lucide="search"></i>
+            <input placeholder="Search products or scan barcode…" />
+            <i data-lucide="x" class="muted-ic"></i>
+            <i data-lucide="scan-line" class="scan"></i>
+          </div>
+
+          <div class="sec-gap"></div>
+
+          <!-- cart item with discount -->
+          <div class="card cart-item">
+            <div class="ci-row1">
+              <div class="ci-name">Shimano Brake Pad B01S</div>
+              <span class="ci-x"><i data-lucide="x"></i></span>
+            </div>
+            <div class="ci-sub"><span class="meta">SKU-0241 · ₱300.00/pc</span><span class="costpill">K·R·T</span></div>
+            <div class="ci-controls">
+              <div class="stepper"><button><i data-lucide="minus"></i></button><span class="qty">2</span><button><i data-lucide="plus"></i></button></div>
+              <button class="disc-btn on"><i data-lucide="tag"></i> 10%</button>
+              <div class="ci-total"><div class="gross">₱600.00</div><div class="net disc">₱540.00</div></div>
+            </div>
+          </div>
+
+          <!-- cart item no discount -->
+          <div class="card cart-item">
+            <div class="ci-row1">
+              <div class="ci-name">Engine Oil 1L · 10W-40</div>
+              <span class="ci-x"><i data-lucide="x"></i></span>
+            </div>
+            <div class="ci-sub"><span class="meta">SKU-0118 · ₱295.00/pc</span><span class="costpill">M·A·P</span></div>
+            <div class="ci-controls">
+              <div class="stepper"><button disabled><i data-lucide="minus"></i></button><span class="qty">1</span><button><i data-lucide="plus"></i></button></div>
+              <button class="disc-btn"><i data-lucide="tag"></i> Discount</button>
+              <div class="ci-total"><div class="net">₱295.00</div></div>
+            </div>
+          </div>
+
+          <div class="sec-gap"></div>
+
+          <!-- labor expanded -->
+          <div class="card">
+            <div class="labor-head">
+              <i data-lucide="wrench"></i>
+              <div class="lt"><b>Labor &amp; Service</b><span>1 service · ₱450.00</span></div>
+              <span class="chev"><i data-lucide="chevron-up"></i></span>
+            </div>
+            <div class="labor-body">
+              <div class="dropdown"><i data-lucide="wrench"></i><div><div class="dl">Mechanic</div><div class="dv">Mang Tonio</div></div><span class="chev"><i data-lucide="chevron-down"></i></span></div>
+              <div class="labor-line"><i data-lucide="wrench" class="w"></i><span class="desc">Brake bleed &amp; adjust</span><span class="fee">₱450.00</span><i data-lucide="pencil" class="e"></i></div>
+              <div class="add-labor"><i data-lucide="plus"></i> Add labor line</div>
+            </div>
+          </div>
+
+          <div class="sec-gap"></div>
+
+          <!-- summary -->
+          <div class="card summary">
+            <div class="sm-row"><span class="l">Items</span><span class="v">3 (2 products)</span></div>
+            <div class="sm-row"><span class="l">Subtotal</span><span class="v">₱895.00</span></div>
+            <div class="sm-row"><span class="l">Discount</span><span class="v disc">-₱60.00</span></div>
+            <div class="sm-row"><span class="l">Labor</span><span class="v">₱450.00</span></div>
+            <div class="sm-div"></div>
+            <div class="sm-total"><span class="l">Total</span><span class="v">₱1,285.00</span></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary">Proceed to Checkout <i data-lucide="arrow-right"></i></button>
+          <button class="btn btn-outline"><i data-lucide="save"></i> Save as Draft</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CHECKOUT SCREEN ============ -->
+    <div class="frame">
+      <div class="caption">2 · Checkout</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Checkout</div>
+        </div>
+        <div class="body">
+          <div class="sech">Order items</div>
+          <div class="card" style="margin-bottom:18px">
+            <div class="oi-row"><span class="qpill">×2</span><div class="oi-mid"><div class="n">Shimano Brake Pad B01S</div><div class="s">SKU-0241</div><div class="off">10% off</div></div><div class="oi-amt">₱540.00</div></div>
+            <div class="oi-row"><span class="qpill">×1</span><div class="oi-mid"><div class="n">Engine Oil 1L · 10W-40</div><div class="s">SKU-0118</div></div><div class="oi-amt">₱295.00</div></div>
+            <div class="oi-row"><span class="wbadge"><i data-lucide="wrench"></i></span><div class="oi-mid"><div class="n">Brake bleed &amp; adjust</div></div><div class="oi-amt">₱450.00</div></div>
+          </div>
+
+          <div class="sech">Payment summary</div>
+          <div class="card summary" style="margin-bottom:18px">
+            <div class="sm-row"><span class="l">Parts subtotal</span><span class="v">₱835.00</span></div>
+            <div class="sm-row"><span class="l">Discount</span><span class="v disc">-₱60.00</span></div>
+            <div class="sm-row"><span class="l">Labor (1 service)</span><span class="v">₱450.00</span></div>
+            <div class="sm-row"><span class="l" style="font-size:12px">Mechanic: Mang Tonio</span><span class="v"></span></div>
+            <div class="sm-div"></div>
+            <div class="sm-total"><span class="l">Total</span><span class="v">₱1,285.00</span></div>
+          </div>
+
+          <div class="sech">Payment</div>
+          <div class="card" style="padding:14px">
+            <div class="chips">
+              <span class="chip sel">Cash</span><span class="chip">GCash</span><span class="chip">Maya</span><span class="chip">Mixed</span><span class="chip">Salmon</span>
+            </div>
+            <div class="field"><span class="pfx">₱</span><input value="1,500.00" /><span class="ex"><i data-lucide="check-circle-2"></i></span></div>
+            <div class="quick"><span class="qc">₱100</span><span class="qc">₱200</span><span class="qc">₱500</span><span class="qc">₱1000</span></div>
+            <div class="change"><span class="cl">Change</span><span class="cv">₱215.00</span></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-success"><i data-lucide="check-circle-2"></i> Confirm Payment · ₱1,285.00</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SCANNER ============ -->
+    <div class="frame">
+      <div class="caption">3 · Barcode Scanner</div>
+      <div class="scanner">
+        <div class="statusbar" style="background:transparent;color:#fff"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="scan-appbar">
+          <button class="iconbtn"><i data-lucide="x"></i></button>
+          <div class="title">Scan Barcode</div>
+          <button class="iconbtn"><i data-lucide="flashlight"></i></button>
+          <button class="iconbtn"><i data-lucide="switch-camera"></i></button>
+        </div>
+        <div class="scan-stage">
+          <div class="viewfinder"></div>
+          <div class="scan-hint">Hold a barcode inside the box</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SUCCESS DIALOG ============ -->
+    <div class="frame">
+      <div class="caption">4 · Success dialog</div>
+      <div class="dialog-wrap">
+        <div class="dialog">
+          <div class="succ-ic"><i data-lucide="check-circle-2"></i></div>
+          <div class="succ-h">Payment Successful!</div>
+          <div class="succ-num">SALE-20260621-014</div>
+          <div class="amt-card">
+            <div class="amt-row"><span class="l">Total</span><span class="v">₱1,285.00</span></div>
+            <div class="amt-row"><span class="l">Received</span><span class="v">₱1,500.00</span></div>
+            <div class="amt-div"></div>
+            <div class="amt-row big"><span class="l">Change</span><span class="v">₱215.00</span></div>
+          </div>
+          <button class="btn btn-outline" style="margin-top:18px"><i data-lucide="receipt"></i> Receipt</button>
+          <button class="btn btn-success" style="margin-top:11px">Done</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Reconstruction notes: flat cards = the current state (the redesign adds the soft-shadow elevation
+  used on the Dashboard). Icons here are drawn with Lucide for clarity, but the app's POS code still uses Cupertino
+  icons — migrating to Lucide is part of this screen's work. Tablets (≥800px) split POS into search-left /
+  cart-right; phones stack as shown.</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>
