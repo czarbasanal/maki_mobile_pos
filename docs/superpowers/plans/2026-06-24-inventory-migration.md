@@ -2,417 +2,277 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrate the three Inventory mobile screens (list, product form, price history) onto the redesigned global theme — consistent `AppCard` soft-shadow surfaces, Lucide icons, sectioned product form with a live margin line and pinned submit, and an `AppCard`-wrapped price-history view.
+**Goal:** Migrate the three Inventory mobile screens (list, product form, price history) onto the redesigned global theme — exactly matching the prototype `design/handoff/04-inventory/design_handoff_inventory/MAKI POS Inventory.dc.html` (the source of truth) — and adopt grouped currency formatting app-wide.
 
-**Architecture:** Pure presentation-layer restyle. No domain/data/provider changes — same widgets, same data, same role-gating. Swap Material `Card`/flat `Container` surfaces for the shared `AppCard`; swap `CupertinoIcons`/`Icons` for `LucideIcons`; regroup the product form into sectioned `AppCard`s and pin its submit via the sale-detail footer pattern (`Column` → `Expanded(scroll)` + footer with `AppShadows.pinnedFooter`).
+**Architecture:** Presentation-layer restyle + one shared-formatter change. No domain/data/provider edits; same widgets, data, and role-gating. Surfaces → shared `AppCard`; icons → `LucideIcons`; product form regrouped into sectioned `AppCard`s with a live margin line and a pinned submit (sale-detail footer pattern); price history wrapped in cards. Currency display moves to the existing `num.toCurrency()` extension (already grouped) plus a new `toCurrencyCompact()`.
 
-**Tech Stack:** Flutter, Riverpod, `lucide_icons: ^0.257.0`, `fl_chart`, shared theme in `lib/core/theme/` + `lib/presentation/shared/widgets/common/`.
+**Tech Stack:** Flutter, Riverpod, `lucide_icons: ^0.257.0`, `fl_chart`, `intl` (`NumberFormat`), shared theme in `lib/core/theme/` + `lib/presentation/shared/widgets/common/`.
 
 ## Global Constraints
 
-- **Source of truth:** `design/handoff/04-inventory/design_handoff_inventory/` — `MAKI POS Inventory.dc.html` + `README.md` + `screenshots/`. High-fidelity: match colors, type, spacing, radii, shadows, icons.
-- **Surfaces:** neutral cards → `AppCard` (light soft shadow `AppShadows.card`; dark `#18262A` + 1px `#243234` — `AppCard` handles both). Never hand-roll the light/dark duality.
-- **Icons:** `LucideIcons.*` only. Exact members (verified in 0.257.0): `chevronLeft, eye, eyeOff, arrowUpDown, moreVertical, plus, download, package, checkCircle, alertTriangle, alertCircle, layoutGrid, search, x, slidersHorizontal, lock, qrCode, box, tag, trendingUp, hash, ruler, scanLine, briefcase, list, info, clock, trash2, save, imagePlus, arrowUp, arrowDown, chevronDown, refreshCw`. **Two substitutions** (target members absent in 0.257.0): cost field keeps **`AppIcons.peso`** (app-wide ₱ glyph; `philippinePeso` does not exist); barcode-add uses **`LucideIcons.scanLine`** (`scanBarcode` does not exist).
-- **Must-keep (no behavior change):** all role-gating (admin/staff/cashier on price·cost·SKU·delete·export; `addProduct`); cost visibility = password + 5-min auto-hide; cost-code pill for non-cost viewers; SKU-change + delete confirm dialogs and their copy; barcode multi-code + dedupe; CSV export; pull-to-refresh; all validation messages and field labels verbatim.
-- **Stat counts:** small-hero `18/700`. **Stock badge:** outlined in stock color, qty `18/700` + unit `10`.
-- **Verify each task:** `flutter analyze <changed files>` clean + the task's widget tests green. Pure icon/surface swaps are confirmed by analyze + the dark/light screenshots, not by assertions.
+- **Source of truth:** the prototype `.dc.html` + `screenshots/` in `design/handoff/04-inventory/design_handoff_inventory/`. Match colors, type, weight, spacing, radii, shadows, icons **exactly** — values are inlined per task below; when in doubt, open the prototype.
+- **Currency formatting (decided):**
+  - **Grouped thousands app-wide.** Replace inline `'${AppConstants.currencySymbol}${x.toStringAsFixed(2)}'` (and `currencySymbol + toCurrencyWithoutSymbol`-style concatenations) with `x.toCurrency()` (already `NumberFormat.currency(locale:'en_PH', symbol:'₱', decimalDigits:2)` → `₱1,234.56`).
+  - **Decimals only when needed** for *secondary* amounts (cost pill, price-history values + deltas): new `num.toCurrencyCompact()` → `₱180` when whole, `₱180.50` when fractional, always grouped. Main/selling price + margin "per unit" keep 2 decimals (`.toCurrency()`).
+- **Icons:** `LucideIcons.*` only. Verified members (0.257.0): `chevronLeft, eye, eyeOff, arrowUpDown, moreVertical, plus, download, package, checkCircle, alertTriangle, alertCircle, layoutGrid, search, x, slidersHorizontal, lock, qrCode, box, tag, trendingUp, hash, ruler, briefcase, list, info, clock, trash2, save, imagePlus, arrowUp, arrowDown, chevronDown, refreshCw`. **Substitutions** (target absent in 0.257.0): cost field keeps **`AppIcons.peso`** (`philippinePeso` missing); barcode-add uses **`LucideIcons.scanLine`** (`scanBarcode` missing). Icon stroke widths per prototype: app-bar/field icons 1.75; stat/leading/arrow icons 1.9; delta arrows 2.2; plus/save 2.
+- **Theme-aware token pairs (light / dark)** used below:
+  - canvas `#F6F5F3`/`#0C1415`; card `#FFFFFF`/`#18262A` (+1px `#243234`) — `AppCard` handles both.
+  - field fill `#FAFAFA`/`#0C1415`; field border `#E2E2E2`/`#2C3C3E`; text `#16201F`/`#ECEFEF`; muted `#8A9296`/`#93A0A3`; hint `#9AA0A3`/`#6C797C`.
+  - primary `#283E46`/gold `#E8B84C` (filled-button text on gold = `#121C1D`).
+  - **stat icon** Total `#2196F3`/`#5AA9F0`, In `#4CAF50`/`#5FC86A`, Low `#F57C00`/`#F5B547`, Out `#F44336`/`#FF6B5E`.
+  - **stat value** Total `#16201F`/`#ECEFEF`, In `#2E7D32`/`#8FE39A`, Low `#F57C00`/`#F5B547`, Out `#F44336`/`#FF6B5E`.
+  - **stock color** (tile icon + badge border/text + count): in `#4CAF50`/`#5FC86A` (badge border `#4CAF50` both), low `#F57C00`/`#F5B547`, out `#F44336`/`#FF6B5E` (badge border `#F44336` light). Leading tint = stock hue at α .10 light / .16 dark; **low tint** uses warning `rgba(255,193,7,.14)` light / `rgba(245,181,71,.16)` dark.
+- **Must-keep (no behavior change):** all role-gating (admin/staff/cashier on price·cost·SKU·delete·export; `addProduct`); cost visibility = password + 5-min auto-hide; cost-code pill for non-cost viewers; SKU-change + delete confirm dialogs and their copy; barcode multi-code + dedupe; CSV export; pull-to-refresh; all **validation messages** verbatim; date format `MMM d, y • h:mm a`; price-history source derivation (`derivePriceHistorySource`).
+- **Verify each task:** `flutter analyze <changed files>` clean + the task's tests green. Pure icon/surface swaps are gated by analyze + the light/dark screenshots.
 
 ---
 
 ## File Structure
 
 **Modify (lib):**
-- `lib/presentation/mobile/widgets/inventory/product_list_tile.dart` — `Card` → `AppCard`; `_stockStyle` Cupertino → Lucide.
-- `lib/presentation/mobile/screens/inventory/inventory_screen.dart` — summary stat cards → `AppCard` (18/700 counts); all Cupertino → Lucide; cost toggle / state views stay.
-- `lib/presentation/mobile/widgets/inventory/cost_display_toggle.dart` — `eye`/`eye_slash` Cupertino → `eye`/`eyeOff` Lucide.
-- `lib/presentation/mobile/screens/inventory/product_form_screen.dart` — regroup into sectioned `AppCard`s (`IDENTITY · PRICING · STOCK · CLASSIFICATION · AUDIT`), two-up field pairs, live margin line, pinned submit footer, Lucide icons, locked-field treatment replacing `Opacity(0.38)`.
-- `lib/presentation/mobile/screens/inventory/price_history_screen.dart` — sparklines into an `AppCard` (with from→to labels), history rows into an `AppCard`; Cupertino → Lucide.
+- `lib/core/extensions/num_extensions.dart` — add `toCurrencyCompact()`.
+- ~app-wide call sites — swap inline `currencySymbol + toStringAsFixed(2)` → `.toCurrency()` (grep-driven; ~38 files touch `currencySymbol`).
+- `lib/presentation/mobile/widgets/inventory/product_list_tile.dart` — `Card`→`AppCard`; filled price pill; filled margin badge; compact cost; theme-aware low color; Lucide; radii (card 16, leading 11, badge 12).
+- `lib/presentation/mobile/screens/inventory/inventory_screen.dart` — summary stats → `AppCard` (18/700, icon/value color split); Lucide; pinned Add (already bottom bar).
+- `lib/presentation/mobile/widgets/inventory/cost_display_toggle.dart` — `eye`/`eyeOff` Lucide.
+- `lib/presentation/mobile/screens/inventory/product_form_screen.dart` — sectioned `AppCard`s, two-up pairs, live margin line, pinned submit, Lucide, shortened labels + SKU helper, locked-field treatment.
+- `lib/presentation/mobile/screens/inventory/price_history_screen.dart` — sparkline `AppCard` (two-part trend labels), rows `AppCard`, compact values, Lucide.
 
-**Test (create/extend):**
-- `test/presentation/widgets/product_list_tile_test.dart` — extend: tile renders on `AppCard`, not `Card`.
-- `test/presentation/mobile/screens/inventory/inventory_screen_test.dart` — create: summary counts + AppCard surfaces.
-- `test/presentation/widgets/product_form_screen_test.dart` — extend: section headers, live margin line, pinned submit, locked-field helper.
-- `test/presentation/mobile/screens/inventory/price_history_screen_test.dart` — extend: from→to labels, rows on `AppCard`.
+**Test:** `test/core/extensions/num_extensions_test.dart` (create/extend), `test/presentation/widgets/product_list_tile_test.dart`, `test/presentation/mobile/screens/inventory/inventory_screen_test.dart` (create), `test/presentation/widgets/product_form_screen_test.dart`, `test/presentation/mobile/screens/inventory/price_history_screen_test.dart`.
 
-**Reference (read-only):** `lib/presentation/shared/widgets/common/app_card.dart`, `summary_row.dart`, `lib/core/theme/app_shadows.dart` (`pinnedFooter`), `lib/core/theme/app_icons.dart` (`peso`), `lib/presentation/mobile/screens/sales/sale_detail_screen.dart` (pinned-footer pattern, lines ~82-99 + `_buildVoidFooter`).
+**Reference (read-only):** `app_card.dart`, `summary_row.dart`, `app_shadows.dart` (`pinnedFooter`, `primaryButton`), `app_icons.dart` (`peso`), `sale_detail_screen.dart` `_buildVoidFooter` (pinned-footer pattern), `num_extensions.dart` (`toCurrency`).
 
 ---
 
-## Task 1: Inventory list — AppCard surfaces + Lucide
+## Task 1: Grouped currency app-wide + compact variant
 
 **Files:**
-- Modify: `lib/presentation/mobile/widgets/inventory/product_list_tile.dart`
-- Modify: `lib/presentation/mobile/screens/inventory/inventory_screen.dart`
-- Modify: `lib/presentation/mobile/widgets/inventory/cost_display_toggle.dart`
-- Test: `test/presentation/widgets/product_list_tile_test.dart`, `test/presentation/mobile/screens/inventory/inventory_screen_test.dart`
+- Modify: `lib/core/extensions/num_extensions.dart`
+- Modify: app-wide call sites (grep-driven)
+- Test: `test/core/extensions/num_extensions_test.dart`
 
 **Interfaces:**
-- Consumes: `AppCard({child, padding, margin, radius, onTap})`, `AppColors`, `AppSpacing`, `AppRadius`, `LucideIcons`, `AppIcons`.
-- Produces: a migrated `ProductListTile` and inventory list — no API/signature changes (props unchanged), so later tasks and existing call sites are unaffected.
+- Produces: `num.toCurrency()` (existing — grouped, 2 decimals) and **new** `num.toCurrencyCompact()` (grouped, 0 decimals when whole else 2). Tasks 2–4 consume both.
 
-- [ ] **Step 1: Write failing test — tile renders on AppCard, not Material Card**
+- [ ] **Step 1: Write failing test for `toCurrencyCompact`**
 
-In `test/presentation/widgets/product_list_tile_test.dart`, add inside `group('ProductListTile', …)`:
-
+In `test/core/extensions/num_extensions_test.dart`:
 ```dart
-testWidgets('renders on AppCard, not Material Card', (tester) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        home: Scaffold(
-          body: ProductListTile(
-            product: testProduct, showCost: false, onTap: () {},
-          ),
-        ),
-      ),
-    ),
-  );
-  expect(find.byType(AppCard), findsOneWidget);
-  expect(find.byType(Card), findsNothing);
-});
-```
+import 'package:flutter_test/flutter_test.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 
-Add imports at top of the test file:
-```dart
-import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `flutter test test/presentation/widgets/product_list_tile_test.dart -p vm`
-Expected: FAIL — `find.byType(AppCard)` finds nothing (tile still uses `Card`).
-
-- [ ] **Step 3: Migrate ProductListTile to AppCard + Lucide**
-
-In `product_list_tile.dart`:
-- Replace `import 'package:flutter/cupertino.dart';` with `import 'package:lucide_icons/lucide_icons.dart';` and add `import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';`.
-- Replace the outer `Card(margin: …, child: InkWell(onTap, onLongPress, borderRadius, child: Padding(padding: EdgeInsets.all(AppSpacing.sm + 4), child: Row(…))))` with:
-
-```dart
-return AppCard(
-  margin: const EdgeInsets.symmetric(
-    horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-  padding: const EdgeInsets.all(AppSpacing.sm + 4),
-  onTap: onTap,
-  child: Row(/* unchanged children */),
-);
-```
-
-  > Note: `AppCard.onTap` covers tap; `onLongPress` is not supported by `AppCard`. Wrap the `Row` child in a `GestureDetector(onLongPress: onLongPress, child: …)` when `onLongPress != null` so admin long-press-to-delete is preserved.
-
-- In `_stockStyle`, swap icons: `CupertinoIcons.exclamationmark_circle` → `LucideIcons.alertCircle`; `CupertinoIcons.exclamationmark_triangle` → `LucideIcons.alertTriangle`; `CupertinoIcons.checkmark_circle` → `LucideIcons.checkCircle`.
-
-- [ ] **Step 4: Run tile tests to verify they pass**
-
-Run: `flutter test test/presentation/widgets/product_list_tile_test.dart -p vm`
-Expected: PASS (new test + existing `displays product information`, `shows cost code when showCost is false`).
-
-- [ ] **Step 5: Write failing test — inventory summary counts render**
-
-Create `test/presentation/mobile/screens/inventory/inventory_screen_test.dart`. Harness pattern (mirror `price_history_screen_test.dart`): wrap `InventoryScreen` in `ProviderScope` + `MaterialApp`, override `productsProvider` (→ a small product list), `inventorySummaryProvider` (→ counts), and `currentUserProvider` (→ an admin `UserEntity`). Set `tester.view.physicalSize = const Size(1200, 2400)`.
-
-```dart
-testWidgets('summary stats show counts and use AppCard surfaces', (tester) async {
-  await _pump(tester); // seeds 128 total / 96 in / 21 low / 11 out
-  await tester.pump(const Duration(seconds: 1));
-  expect(find.text('Total'), findsOneWidget);
-  expect(find.text('In Stock'), findsWidgets);
-  expect(find.byType(AppCard), findsWidgets); // stat cards + rows
-});
-```
-
-> Read the real provider names/signatures in `lib/presentation/providers/` + `inventory_screen.dart` before finalizing the overrides; copy the exact provider identifiers. If a provider can't be overridden cleanly in a widget test, narrow this test to assert on `ProductListTile`/`AppCard` presence with `productsProvider` seeded and drop the summary-count asserts (note the reduction).
-
-- [ ] **Step 6: Run to verify it fails**
-
-Run: `flutter test test/presentation/mobile/screens/inventory/inventory_screen_test.dart -p vm`
-Expected: FAIL — `find.byType(AppCard)` for stat cards finds nothing (stats still flat `Container`s).
-
-- [ ] **Step 7: Migrate inventory_screen surfaces + icons**
-
-In `inventory_screen.dart`:
-- Replace `import 'package:flutter/cupertino.dart';` → `import 'package:lucide_icons/lucide_icons.dart';`; add `import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';`.
-- Summary stat cards (the `InkWell`+`Container` in `_buildSummaryRow`): replace each `Container(decoration: BoxDecoration(border: hairline …))` with `AppCard(onTap: …, padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6), radius: AppRadius.md, child: …)`. Selected state: keep the 1.5px colored border by wrapping the `AppCard` child column or, simpler, retain a thin `Container` border *inside* the card for the selected color ring (don't reintroduce the outer flat container for unselected). Bump the count `Text` to `fontSize: 18, fontWeight: FontWeight.w700`.
-- Swap every `CupertinoIcons.*` in this file to its Lucide member per the icon map in Global Constraints (`back→chevronLeft`, `eye/eye_slash` handled in cost toggle, `arrow_up_arrow_down→arrowUpDown`, `arrow_up/down→arrowUp/arrowDown`, `add→plus`, `cloud_download→download`, `cube_box→package`, `checkmark_circle→checkCircle`, `exclamationmark_triangle→alertTriangle`, `exclamationmark_circle→alertCircle`, `square_grid_2x2→layoutGrid`, `xmark→x`, `search→search`, `line_horizontal_3_decrease→slidersHorizontal`). The 3-dot overflow `PopupMenuButton` icon → `LucideIcons.moreVertical`. Empty-state `Icons.filter_alt_off_outlined` → `LucideIcons.slidersHorizontal` (or keep — note choice).
-- In `cost_display_toggle.dart`: `CupertinoIcons.eye`/`eye_slash` → `LucideIcons.eye`/`LucideIcons.eyeOff`; replace the cupertino import.
-
-- [ ] **Step 8: Run tests to verify they pass**
-
-Run: `flutter test test/presentation/mobile/screens/inventory/inventory_screen_test.dart test/presentation/widgets/product_list_tile_test.dart -p vm`
-Expected: PASS.
-
-- [ ] **Step 9: Analyze**
-
-Run: `flutter analyze lib/presentation/mobile/widgets/inventory/product_list_tile.dart lib/presentation/mobile/screens/inventory/inventory_screen.dart lib/presentation/mobile/widgets/inventory/cost_display_toggle.dart`
-Expected: `No issues found!`
-
-- [ ] **Step 10: Commit**
-
-```bash
-git add lib/presentation/mobile/widgets/inventory/product_list_tile.dart \
-        lib/presentation/mobile/screens/inventory/inventory_screen.dart \
-        lib/presentation/mobile/widgets/inventory/cost_display_toggle.dart \
-        test/presentation/widgets/product_list_tile_test.dart \
-        test/presentation/mobile/screens/inventory/inventory_screen_test.dart
-git commit -m "feat(inventory): list + tile → AppCard surfaces, Lucide icons (bundle 04)"
-```
-
----
-
-## Task 2: Product form — sectioned cards, margin line, pinned submit, Lucide
-
-**Files:**
-- Modify: `lib/presentation/mobile/screens/inventory/product_form_screen.dart`
-- Test: `test/presentation/widgets/product_form_screen_test.dart`
-
-**Interfaces:**
-- Consumes: `AppCard`, `AppShadows.pinnedFooter`, `LucideIcons`, `AppIcons.peso`, `product.profitMargin` (`double`, % from `ProductEntity`), existing controllers (`_priceController`, `_costController`).
-- Produces: same screen route + same submit/delete behavior; new private helpers `_sectionCard`, `_sectionHeader`, `_marginLine`, `_buildSubmitFooter`.
-
-- [ ] **Step 1: Write failing tests — sections, margin line, pinned submit**
-
-Read the existing harness in `test/presentation/widgets/product_form_screen_test.dart` and reuse it (admin override). Add:
-
-```dart
-testWidgets('groups fields under section headers', (tester) async {
-  await pumpForm(tester, editing: true); // existing helper or inline harness
-  await tester.pump(const Duration(seconds: 1));
-  expect(find.text('IDENTITY'), findsOneWidget);
-  expect(find.text('PRICING'), findsOneWidget);
-  expect(find.text('STOCK'), findsOneWidget);
-  expect(find.text('CLASSIFICATION'), findsOneWidget);
-});
-
-testWidgets('shows a live margin line under the pricing pair', (tester) async {
-  await pumpForm(tester, editing: true); // price 250, cost 180 seeded
-  await tester.pump(const Duration(seconds: 1));
-  // profitMargin = (250-180)/250 = 28%; unit profit = 70.00
-  expect(find.textContaining('Margin'), findsOneWidget);
-  expect(find.textContaining('28%'), findsWidgets);
-});
-
-testWidgets('submit button is pinned in a footer bar', (tester) async {
-  await pumpForm(tester, editing: true);
-  await tester.pump(const Duration(seconds: 1));
-  expect(find.byKey(const Key('product-form-submit')), findsOneWidget);
-});
-```
-
-> If `pumpForm` doesn't exist, inline a `ProviderScope`+`MaterialApp(home: ProductFormScreen(productId: …))` harness, overriding `currentUserProvider` with an admin `UserEntity` and any product/category/supplier providers the screen reads (copy exact identifiers from the screen). Seed an existing product with `price: 250, cost: 180`.
-
-- [ ] **Step 2: Run to verify they fail**
-
-Run: `flutter test test/presentation/widgets/product_form_screen_test.dart -p vm`
-Expected: FAIL — no `IDENTITY` header, no margin line, no submit key.
-
-- [ ] **Step 3: Add section + margin + footer helpers**
-
-In `product_form_screen.dart` add imports (`lucide_icons`, `app_card`, `app_shadows` via `core/theme/theme.dart` which is already imported) and these private helpers:
-
-```dart
-Widget _sectionHeader(String text) => Padding(
-      padding: const EdgeInsets.only(left: 2, bottom: 8, top: 8),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w600,
-              letterSpacing: 0.8, color: AppColors.lightTextMuted)),
-    );
-
-Widget _sectionCard({required List<Widget> children}) => AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, children: children),
-    );
-
-/// Live margin recap under the Pricing pair. Reads the price/cost controllers.
-Widget _marginLine(ThemeData theme) {
-  final price = double.tryParse(_priceController.text) ?? 0;
-  final cost = double.tryParse(_costController.text) ?? 0;
-  if (price <= 0 || cost <= 0 || cost > price) return const SizedBox.shrink();
-  final pct = ((price - cost) / price * 100).toStringAsFixed(0);
-  final unit = (price - cost).toStringAsFixed(2);
-  return Padding(
-    padding: const EdgeInsets.only(top: AppSpacing.sm, left: 2),
-    child: Row(children: [
-      const Icon(LucideIcons.trendingUp, size: 14, color: AppColors.successDark),
-      const SizedBox(width: 6),
-      Text('Margin $pct% · ${AppConstants.currencySymbol}$unit per unit',
-          style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w500,
-              color: AppColors.successDark)),
-    ]),
-  );
+void main() {
+  group('toCurrencyCompact', () {
+    test('drops decimals when whole, groups thousands', () {
+      expect(1250.toCurrencyCompact(), '₱1,250');
+      expect(180.0.toCurrencyCompact(), '₱180');
+    });
+    test('keeps 2 decimals when fractional', () {
+      expect(180.5.toCurrencyCompact(), '₱180.50');
+    });
+  });
+  test('toCurrency groups thousands with 2 decimals', () {
+    expect(1250.0.toCurrency(), '₱1,250.00');
+  });
 }
 ```
-
-Footer (mirror `sale_detail_screen.dart`'s `_buildVoidFooter`):
-```dart
-Widget _buildSubmitFooter(BuildContext context) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  return Container(
-    decoration: BoxDecoration(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      boxShadow: AppShadows.pinnedFooter(dark: isDark),
-    ),
-    child: SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: _buildSubmitButton(), // existing FilledButton, add Key('product-form-submit')
-      ),
-    ),
-  );
-}
-```
-
-Rebind the margin line to rebuild on edits: add a listener in `initState` — `_priceController.addListener(() => setState(() {}));` and the same for `_costController` (guard with `mounted`).
-
-- [ ] **Step 4: Regroup the form body + pin the footer**
-
-Wrap the scroll body in the pinned-footer layout. Where `build` currently returns `Scaffold(appBar: …, body: SingleChildScrollView(…))`, change the body to:
-
-```dart
-body: _isLoading
-    ? const Center(child: CircularProgressIndicator())
-    : Column(children: [
-        Expanded(child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16), child: Form(key: _formKey,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if (/* edit role banner cond */) _roleBanner(),
-              _imageUploader(),
-              _sectionHeader('IDENTITY'),
-              _sectionCard(children: [/* SKU field, auto-gen switch, Name */]),
-              _sectionHeader('PRICING'),
-              _sectionCard(children: [/* Selling + Cost two-up Row */, _marginLine(theme)]),
-              _sectionHeader('STOCK'),
-              _sectionCard(children: [/* Qty + Reorder two-up Row, Unit, Barcodes */]),
-              _sectionHeader('CLASSIFICATION'),
-              _sectionCard(children: [/* Category, Supplier (admin), Notes */]),
-              if (widget.isEditing && _existingProduct != null) ...[
-                _sectionHeader('AUDIT'), _AuditInfoCard(product: _existingProduct!),
-              ],
-              if (/* price-history link cond */) _priceHistoryLink(),
-            ]),
-          ),
-        )),
-        _buildSubmitFooter(context),
-      ]),
-```
-
-Two-up pairs use `Row(children: [Expanded(child: sellingField), SizedBox(width: AppSpacing.md), Expanded(child: costField)])`. Keep every field's existing controller, validator, `enabled` gate, label, hint, and helper **verbatim** — only their container/grouping changes. Move the existing field widgets into the section cards; do not duplicate logic.
-
-- [ ] **Step 5: Lucide icons + locked-field treatment**
-
-- Swap all `CupertinoIcons.*` prefixes to Lucide per the map: `back→chevronLeft`, `trash→trash2`, `qrcode→qrCode`, `arrow_2_circlepath→refreshCw`, `cube_box→box`, `tag→tag`, `number→hash`, `exclamationmark_triangle→alertTriangle`, `barcode_viewfinder→scanLine`, `list_bullet→list`, `briefcase→briefcase`, `lock→lock`, `info_circle→info`, `clock→clock`, `tray_arrow_down→save`, `add→plus`, `square_grid_2x2→layoutGrid`. **Keep `AppIcons.peso`** for the Cost field; `Icons.straighten` (Unit) → `LucideIcons.ruler`. Image-uploader placeholder icon → `LucideIcons.imagePlus` (only if defined inside this file; otherwise leave `ProductImageUploader` for its own bundle).
-- Locked fields: replace `AbsorbPointer + Opacity(0.38)` wrappers (Unit/Category for cashier) with the field rendered `enabled: false` plus a helper line stating the reason (e.g. `'Only admin can change this'` for price is already present; for cashier-locked fields add `'Cashiers can edit name and image only'`). Remove the `Opacity` wrapper.
-
-- [ ] **Step 6: Run tests to verify they pass**
-
-Run: `flutter test test/presentation/widgets/product_form_screen_test.dart -p vm`
-Expected: PASS (new section/margin/footer tests + all existing form tests).
-
-- [ ] **Step 7: Analyze**
-
-Run: `flutter analyze lib/presentation/mobile/screens/inventory/product_form_screen.dart`
-Expected: `No issues found!`
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add lib/presentation/mobile/screens/inventory/product_form_screen.dart \
-        test/presentation/widgets/product_form_screen_test.dart
-git commit -m "feat(inventory): product form → sectioned AppCards, margin line, pinned submit, Lucide (bundle 04)"
-```
-
----
-
-## Task 3: Price history — AppCard rows + sparkline card + Lucide
-
-**Files:**
-- Modify: `lib/presentation/mobile/screens/inventory/price_history_screen.dart`
-- Test: `test/presentation/mobile/screens/inventory/price_history_screen_test.dart`
-
-**Interfaces:**
-- Consumes: `AppCard`, `LucideIcons`. Existing `_Sparkline`, `_MetricLine`, `derivePriceHistorySource`, `sparklineSeries` are reused unchanged.
-- Produces: same screen behavior; sparklines + rows now wrapped in `AppCard`s with from→to labels.
-
-- [ ] **Step 1: Write failing tests — from→to labels + AppCard wrap**
-
-In `price_history_screen_test.dart`, add (the multi-entry `_pump` already exists):
-
-```dart
-testWidgets('sparkline card shows from→to labels and rows use AppCard',
-    (tester) async {
-  await _pump(tester, [
-    _e('e1', 250, 180, DateTime(2026, 6, 18), reason: 'Price + cost update'),
-    _e('e2', 230, 170, DateTime(2026, 5, 30), reason: 'Price update'),
-    _e('e3', 225, 170, DateTime(2026, 5, 12), reason: 'Initial price'),
-  ]);
-  expect(find.byType(AppCard), findsWidgets);
-  expect(find.textContaining('→'), findsWidgets); // from→to on sparkline labels
-});
-```
-
-Add import: `import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';`
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `flutter test test/presentation/mobile/screens/inventory/price_history_screen_test.dart -p vm`
-Expected: FAIL — no `AppCard`, no `→` label.
+Run: `flutter test test/core/extensions/num_extensions_test.dart`
+Expected: FAIL — `toCurrencyCompact` undefined.
 
-- [ ] **Step 3: Migrate price_history_screen**
+- [ ] **Step 3: Implement `toCurrencyCompact`**
 
-In `price_history_screen.dart`:
-- Replace `import 'package:flutter/cupertino.dart';` → `import 'package:lucide_icons/lucide_icons.dart';`; add the `app_card` import.
-- App-bar leading `CupertinoIcons.back` → `LucideIcons.chevronLeft`. Delta arrows `CupertinoIcons.arrow_up`/`arrow_down` (in `_MetricLine`) → `LucideIcons.arrowUp`/`LucideIcons.arrowDown`.
-- Wrap the sparkline section in an `AppCard(padding: const EdgeInsets.all(AppSpacing.md), child: Column(...))`. For each sparkline, change `_SparklineLabel('Price')` to a label that appends the from→to: `'Price  ${cur}${first}→${cur}${last}'` (compute first/last from the same series used to draw the line — oldest→newest). Keep the `'Not enough changes to chart'` fallback.
-- Wrap the list of history rows in a single `AppCard(padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md), child: Column(children: [...rows]))`. Keep the existing first-row-no-top-border / hairline-between-rows logic inside the card.
+Add to `extension NumExtensions on num` in `num_extensions.dart`:
+```dart
+/// Currency with grouped thousands; shows decimals only when the value
+/// has a fractional part (₱180, ₱180.50). For secondary amounts (cost
+/// pill, price-history rows) where the primary price keeps full decimals.
+String toCurrencyCompact() {
+  final hasCents = ((this * 100).round() % 100) != 0;
+  final formatter = NumberFormat.currency(
+    locale: 'en_PH',
+    symbol: AppConstants.currencySymbol,
+    decimalDigits: hasCents ? AppConstants.currencyDecimalPlaces : 0,
+  );
+  return formatter.format(this);
+}
+```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [ ] **Step 4: Run to verify it passes**
 
-Run: `flutter test test/presentation/mobile/screens/inventory/price_history_screen_test.dart -p vm`
-Expected: PASS (new test + existing empty/single-entry/delta tests).
+Run: `flutter test test/core/extensions/num_extensions_test.dart`
+Expected: PASS.
 
-- [ ] **Step 5: Analyze**
+- [ ] **Step 5: Adopt `.toCurrency()` at inline call sites (grouping app-wide)**
 
-Run: `flutter analyze lib/presentation/mobile/screens/inventory/price_history_screen.dart`
-Expected: `No issues found!`
+Find them: `grep -rn "currencySymbol}\${" lib/` and `grep -rn "currencySymbol)\}\${\|toStringAsFixed(2)" lib/`. For each inline `'${AppConstants.currencySymbol}${x.toStringAsFixed(2)}'`, replace with `x.toCurrency()` (import the extension). **Do not** change: percentage/non-currency `toStringAsFixed`; the `CurrencyInputFormatter` (text-field input); receipt-internal alignment math that depends on fixed-width strings — restyle those only if the rendered total is unchanged. Work file-by-file; analyze after each.
 
-- [ ] **Step 6: Commit**
+> Scope note: this is the broad part of the "app-wide grouping" decision. If a call site is in the **print-styled receipt** (`ReceiptWidget`), keep its layout and only swap the number formatting if column widths still align — flag in the commit if a receipt line shifts.
+
+- [ ] **Step 6: Analyze + targeted tests**
+
+Run: `flutter analyze lib/` (expect clean) and `flutter test test/ -p vm` (expect green; fix any test asserting the old un-grouped string by updating to the grouped expectation).
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add lib/presentation/mobile/screens/inventory/price_history_screen.dart \
-        test/presentation/mobile/screens/inventory/price_history_screen_test.dart
-git commit -m "feat(inventory): price history → AppCard rows + sparkline card, Lucide (bundle 04)"
+git add lib/core/extensions/num_extensions.dart test/core/extensions/num_extensions_test.dart lib/
+git commit -m "feat(core): grouped currency app-wide via toCurrency + add toCurrencyCompact (bundle 04)"
 ```
 
 ---
 
-## Task 4: Full verification + branch finish
+## Task 2: Inventory list — AppCard surfaces, filled pills, Lucide
 
-- [ ] **Step 1: Full analyze + test sweep**
+**Files:**
+- Modify: `product_list_tile.dart`, `inventory_screen.dart`, `cost_display_toggle.dart`
+- Test: `product_list_tile_test.dart`, `inventory_screen_test.dart` (create)
 
-Run: `flutter analyze` (expect clean for changed files) and `flutter test test/presentation/ -p vm` (expect all green). Investigate any failures before proceeding.
+**Interfaces:** Consumes `AppCard`, `LucideIcons`, `AppColors`, `.toCurrency()`/`.toCurrencyCompact()`. No prop changes.
 
-- [ ] **Step 2: `/code-review`** the branch diff vs `main`.
+**Exact spec (from prototype):**
+- **Tile** (`AppCard`, radius **16**, padding 12, row gap 11, align flex-start). Leading 40×40, radius **11**, bg = stock tint (in `rgba(76,175,80,.10/.16)`, low `rgba(255,193,7,.14)`/`rgba(245,181,71,.16)`, out `rgba(244,67,54,.10/.16)`), icon 21px stroke 1.9 in stock color. Name 13/600 line-height 1.25. SKU mono 12 muted; category chip 10 muted, border hairline, radius 7, padding 1×6. Pills row margin-top 8, gap 6, wrap.
+  - **Price pill — FILLED**: text 12/700; light bg `#283E46`/text `#fff`, dark bg `#E8B84C`/text `#121C1D`; radius **8**, padding 3×9. Value = `product.price.toCurrency()`.
+  - **Cost pill**: 11px; "Cost " muted + value bold (light `#16201F`/dark `#ECEFEF`); border hairline, radius 8, padding 3×8. Value = `product.cost.toCurrencyCompact()` (no colon).
+  - **Margin badge — FILLED**: 11/600; light bg `#E8F5E9`/text `#2E7D32`, dark bg `rgba(76,175,80,.18)`/text `#8FE39A`; radius 8, padding 3×8. Text `'${margin.toStringAsFixed(0)}%'`.
+  - **Cost-code pill** (non-cost): 11px muted, border hairline, radius 8, padding 3×8; `lock` 11px stroke 1.9 + "Code " + mono bold code.
+  - **Stock badge**: border 1.4px stock color, radius **12**, padding 6×11; qty 18/700 line-height 1, unit 10. (low border/text `#F57C00`/`#F5B547`.)
+- **Summary stat card** (`AppCard`, radius **14**, padding 11×4, col gap 4): icon 19px stroke 1.9 (stat icon color); count **18/700** line-height 1 (stat value color); label 10 muted. Selected card adds a **1.5px** colored border in the stock hue (keep the existing selected-filter logic).
+- **Search** (`AppCard`, radius 16, height 46, padding 0×14): `search` 18 muted + hint `Search by name, SKU, or barcode…` 14 hint.
+- **Chips**: 13px, unselected 500 on card + 1px hairline, selected 600 primary-fill/onPrimary; radius pill, padding 7×13; Category chip `layoutGrid` 14.
+- **Active-filters**: `slidersHorizontal` 15 muted + `Filters active` 13 muted + `Clear all` 13/600 primary.
+- **Bottom bar** (already `bottomNavigationBar`): bg canvas + `AppShadows.pinnedFooter`; button height 50, radius 16, primary fill, 15/600, `AppShadows.primaryButton`, `plus` 18 + `Add Product`.
 
-- [ ] **Step 3: `/verify`** — launch the app (or widget-level), confirm Inventory list / form / price-history render on the new surfaces in light AND dark, and that role-gating + dialogs still work.
+- [ ] **Step 1: Failing test — tile on AppCard with filled price pill**
 
-- [ ] **Step 4: Finish branch** via `superpowers:finishing-a-development-branch` (merge to `main` / push, since Claude Design reads the repo).
+In `product_list_tile_test.dart` add (import `app_card.dart`):
+```dart
+testWidgets('renders on AppCard with filled price pill', (tester) async {
+  await tester.pumpWidget(ProviderScope(child: MaterialApp(home: Scaffold(
+    body: ProductListTile(product: testProduct, showCost: true, onTap: () {})))));
+  expect(find.byType(AppCard), findsOneWidget);
+  expect(find.byType(Card), findsNothing);
+  expect(find.text('₱100.00'), findsOneWidget); // price keeps decimals + grouping
+});
+```
+
+- [ ] **Step 2: Run — fails** (`flutter test test/presentation/widgets/product_list_tile_test.dart -p vm`).
+
+- [ ] **Step 3: Migrate `product_list_tile.dart`** per Exact spec: `Card`→`AppCard(radius:16, padding: EdgeInsets.all(12), margin: …, onTap:onTap, child: GestureDetector(onLongPress:onLongPress, child: Row(...)))`. Swap cupertino import → `lucide_icons` + add `app_card` import. `_PricePill`→filled (theme-aware bg/text). `_CostPill`→"Cost " + `cost.toCurrencyCompact()`, no colon. `_MarginBadge`→filled tint. Price pill value→`product.price.toCurrency()`. `_stockStyle`→Lucide icons **and** theme-aware low color: make it `(_stockStyle(product, isDark))` returning `#F57C00`/`#F5B547` for low, `#5FC86A`/`#4CAF50` etc. — thread `isDark` through `_LeadingVisual`/`_StockBadge`. Apply radii 11/12.
+
+- [ ] **Step 4: Run tile tests — pass.**
+
+- [ ] **Step 5: Failing test — inventory summary on AppCard** (create `inventory_screen_test.dart`; harness mirrors `price_history_screen_test.dart`, overriding the real providers read by `inventory_screen.dart` — read them first; seed admin user + a few products + summary counts; `tester.view.physicalSize = const Size(1200, 2600)`):
+```dart
+expect(find.text('Total'), findsOneWidget);
+expect(find.text('In Stock'), findsWidgets);
+expect(find.byType(AppCard), findsWidgets);
+```
+Fallback if a provider can't be overridden: assert `ProductListTile`/`AppCard` presence with `productsProvider` seeded; drop the count asserts (note it).
+
+- [ ] **Step 6: Run — fails.**
+
+- [ ] **Step 7: Migrate `inventory_screen.dart` + `cost_display_toggle.dart`** per Exact spec: stat `Container`→`AppCard(onTap:…, radius:AppRadius.md, padding: EdgeInsets.symmetric(vertical:11,horizontal:4))`; count `18/700` with the icon-vs-value color split; selected = 1.5px colored border (inner). Swap all `CupertinoIcons.*`→Lucide (`back→chevronLeft`, `arrow_up_arrow_down→arrowUpDown`, `arrow_up/down→arrowUp/arrowDown`, `add→plus`, `cloud_download→download`, `cube_box→package`, `checkmark_circle→checkCircle`, `exclamationmark_triangle→alertTriangle`, `exclamationmark_circle→alertCircle`, `square_grid_2x2→layoutGrid`, `xmark→x`, `search→search`, `line_horizontal_3_decrease→slidersHorizontal`, overflow→`moreVertical`, empty-filter `Icons.filter_alt_off_outlined`→`slidersHorizontal`). `cost_display_toggle.dart`: `eye`/`eye_slash`→`eye`/`eyeOff` Lucide.
+
+- [ ] **Step 8: Run inventory + tile tests — pass.**
+
+- [ ] **Step 9: Analyze** the three files — clean.
+
+- [ ] **Step 10: Commit** `feat(inventory): list + tile → AppCard, filled pills, Lucide (bundle 04)`.
+
+---
+
+## Task 3: Product form — sectioned cards, margin line, pinned submit, Lucide
+
+**Files:** Modify `product_form_screen.dart`; Test `product_form_screen_test.dart`.
+
+**Interfaces:** Consumes `AppCard`, `AppShadows.pinnedFooter`/`primaryButton`, `LucideIcons`, `AppIcons.peso`, `.toCurrency()`. New private helpers `_sectionHeader`, `_sectionCard`, `_marginLine`, `_buildSubmitFooter`.
+
+**Exact spec (from prototype):**
+- **Section header**: render UPPERCASE, 11/600, letter-spacing 0.8, muted, margin `top 18, left 2, bottom 8`. Titles: `IDENTITY · PRICING · STOCK · CLASSIFICATION · AUDIT`.
+- **Section card**: `AppCard(radius:16, padding: EdgeInsets.all(14))`, margin-bottom via header spacing.
+- **Field**: label 12 muted, margin `bottom 5, left 2`, required `*` in error color. Input min-height 46, fill `#FAFAFA`/`#0C1415`, border 1px `#E2E2E2`/`#2C3C3E`, radius **14**, padding 0×13 (two-up 0×12), icon 18 (two-up 17) muted stroke 1.75, value 14 text (SKU mono).
+- **Two-up pairs** (gap 10): Selling+Cost; Quantity+Reorder.
+- **Labels (shortened to match prototype):** `SKU *`, `Product Name *`, **`Selling (₱) *`**, `Cost (₱) *`, **`Quantity *`**, **`Reorder at`**, `Unit`, `Barcodes`, `Category`, `Supplier`, `Notes`. (Validation messages unchanged.)
+- **SKU helper (shortened):** `Changing the SKU keeps past sales & receiving history intact.`
+- **Margin line** (margin-top 10): `trendingUp` 15 stroke 1.9 in successText + text 12 muted: `Margin ` + **bold** `28%` (successText, 700) + ` · ` + `${(price-cost).toCurrency()} per unit`. Hidden when price≤0/cost≤0/cost>price.
+- **View price history**: outlined button height 46, radius 14, card bg + 1px field-border, primary text, 14/600, margin-top 14, `clock` 16.
+- **Submit footer**: `Container(bg: scaffoldBg, boxShadow: AppShadows.pinnedFooter)` → `SafeArea(top:false)` → padding 12×16×16 → button height 50, radius 16, primary fill, 15/600, `AppShadows.primaryButton`, `save` 18 + `Add Product`/`Update Product`, `Key('product-form-submit')`.
+- **Icons:** `back→chevronLeft, trash→trash2, qrcode→qrCode, arrow_2_circlepath→refreshCw, cube_box→box, tag→tag, number→hash, exclamationmark_triangle→alertTriangle, barcode_viewfinder→scanLine, list_bullet→list, briefcase→briefcase, lock→lock, info_circle→info, clock→clock, tray_arrow_down→save, square_grid_2x2→layoutGrid`; **Cost keeps `AppIcons.peso`**; Unit `Icons.straighten→LucideIcons.ruler`.
+- **Locked fields:** replace `AbsorbPointer`+`Opacity(0.38)` (cashier Unit/Category) with `enabled:false` field + helper reason line (`Cashiers can edit name and image only`). Keep the existing price helper `Only admin can change price`.
+
+- [ ] **Step 1: Failing tests — sections, margin line, pinned submit** (reuse/extend existing admin harness; seed product price 250 cost 180):
+```dart
+expect(find.text('IDENTITY'), findsOneWidget);
+expect(find.text('PRICING'), findsOneWidget);
+expect(find.textContaining('Margin'), findsOneWidget);
+expect(find.textContaining('28%'), findsWidgets);     // (250-180)/250
+expect(find.textContaining('₱70.00 per unit'), findsOneWidget);
+expect(find.byKey(const Key('product-form-submit')), findsOneWidget);
+expect(find.text('Selling (₱) *'), findsOneWidget);    // shortened label
+```
+
+- [ ] **Step 2: Run — fails.**
+
+- [ ] **Step 3: Add `_sectionHeader`/`_sectionCard`/`_marginLine`/`_buildSubmitFooter` helpers** (margin line uses successText(isDark); add `_priceController`/`_costController` listeners in `initState` → `setState` guarded by `mounted` so margin updates live).
+
+- [ ] **Step 4: Regroup body + pin footer** — `body: _isLoading ? spinner : Column(children:[Expanded(child: SingleChildScrollView(padding: EdgeInsets.all(16), child: Form(key:_formKey, child: Column(children:[ roleBanner?, imageUploader, _sectionHeader('IDENTITY'), _sectionCard(children:[sku, name]), _sectionHeader('PRICING'), _sectionCard(children:[Row(Expanded(selling),SizedBox(width:10),Expanded(cost)), _marginLine(theme)]), _sectionHeader('STOCK'), _sectionCard(children:[Row(qty,reorder), unit, barcodes]), _sectionHeader('CLASSIFICATION'), _sectionCard(children:[category, supplier?, notes]), if(editing&&existing)...[_sectionHeader('AUDIT'), _AuditInfoCard(...)], priceHistoryLink? ])))), _buildSubmitFooter(context)])`. Move existing field widgets into cards unchanged except labels/helper/icons; keep controllers, validators, `enabled` gates.
+
+- [ ] **Step 5: Apply shortened labels, SKU helper, Lucide icons, locked-field treatment** per Exact spec.
+
+- [ ] **Step 6: Run form tests — pass** (new + all existing).
+
+- [ ] **Step 7: Analyze** `product_form_screen.dart` — clean.
+
+- [ ] **Step 8: Commit** `feat(inventory): product form → sectioned AppCards, margin line, pinned submit, Lucide (bundle 04)`.
+
+---
+
+## Task 4: Price history — sparkline card + rows card, Lucide
+
+**Files:** Modify `price_history_screen.dart`; Test `price_history_screen_test.dart`.
+
+**Exact spec (from prototype):**
+- **Segmented** (`All/Price/Cost`) as a pill on an `AppCard` (radius pill, padding 4): selected primary-fill 13/600 onPrimary, unselected 13/500 muted.
+- **Sparkline card** (`AppCard`, radius 18, padding 16, margin-top 14): per metric a header `Row(space-between, baseline)` — left `Price trend`/`Cost trend` 11 muted, right `${first.toCurrencyCompact()} → ${last.toCurrencyCompact()}` 13/600 text. Chart below (existing `_Sparkline`, height 40, stroke width 2.5 round caps): price stroke primary (`#283E46`/`#E8B84C`), cost stroke `#9AA0A3`/`#6C797C`. Keep `Not enough changes to chart` fallback (<2 pts).
+- **Changes** section header (11/600 uppercase muted) then **rows `AppCard`** (radius 18, padding `4 × 16`): each row padding 12×0, hairline bottom border (`#F0F0F0`/`#243234`) except last. Metrics `Row(gap 18)`: per metric — label 12 muted + value 13/600 (`entry.price.toCurrencyCompact()`) + (delta) `arrowUp`/`arrowDown` 12 stroke 2.2 (up successText / down error-or-`#FF6B5E` dark) + delta `value.toCurrencyCompact()` 12/500 colored. Meta `Wrap(gap 7, top 7)`: date (`MMM d, y • h:mm a`) + `•` + who 12/500 text + source badge (11, border hairline, radius 7, padding 1×6) via `derivePriceHistorySource`.
+- **Icons:** `back→chevronLeft`; delta `arrow_up/down→arrowUp/arrowDown`.
+
+- [ ] **Step 1: Failing test — from→to labels + AppCard** (multi-entry `_pump` exists; import `app_card`):
+```dart
+expect(find.byType(AppCard), findsWidgets);
+expect(find.textContaining('→'), findsWidgets);
+```
+
+- [ ] **Step 2: Run — fails.**
+
+- [ ] **Step 3: Migrate `price_history_screen.dart`** per Exact spec: cupertino import → `lucide_icons` + `app_card`; wrap segmented/sparklines/rows in `AppCard`s; two-part trend labels using `toCurrencyCompact()` on series endpoints; `_MetricLine` values + deltas → `toCurrencyCompact()`; Lucide arrows + back.
+
+- [ ] **Step 4: Run price-history tests — pass** (new + existing empty/single/delta).
+
+- [ ] **Step 5: Analyze** — clean.
+
+- [ ] **Step 6: Commit** `feat(inventory): price history → AppCard sparkline + rows, Lucide (bundle 04)`.
+
+---
+
+## Task 5: Full verification + branch finish
+
+- [ ] **Step 1:** `flutter analyze` (clean for changed files) + `flutter test -p vm` (all green; update any test asserting old un-grouped currency strings).
+- [ ] **Step 2:** `/code-review` the branch diff vs `main`.
+- [ ] **Step 3:** `/verify` — run app; confirm all three Inventory screens match the prototype in **light AND dark**; role-gating + dialogs + receipt totals intact.
+- [ ] **Step 4:** Finish branch via `superpowers:finishing-a-development-branch` (merge to `main` + push — Claude Design reads the repo).
 
 ---
 
 ## Self-Review
 
-**Spec coverage** (against handoff README "The migration changes"):
-1. Consistent elevation — stat cards + product rows → `AppCard`, counts 18/700 → Task 1. ✓
-2. Cupertino → Lucide everywhere → Tasks 1–3 (icon map in Global Constraints). ✓
-3. Product form sectioned cards + two-up + live margin + pinned submit → Task 2. ✓
-4. Price history rows in `AppCard` + sparkline card with from→to labels → Task 3. ✓
-- Locked-field treatment (replace `Opacity(0.38)`) → Task 2 Step 5. ✓
-- Must-keeps (role-gating, password cost, cost-code pill, dialogs+copy, barcode dedupe, CSV, pull-to-refresh, dark parity) → Global Constraints + "keep verbatim" instructions; no provider/logic edits. ✓
+**Spec coverage** — every prototype change mapped: grouped currency + compact (Task 1, decided); consistent `AppCard` elevation + 18/700 stats + color split (Task 2); filled price pill + filled margin badge + compact cost + theme-aware low color + radii (Task 2); Lucide everywhere (Tasks 2–4); sectioned form + two-up + live margin line + pinned submit + shortened labels + short SKU helper + locked-field treatment (Task 3); price-history sparkline card with two-part trend labels + rows card + compact values (Task 4). ✓
 
-**Known deviations from the handoff icon map (documented, intentional):** cost = `AppIcons.peso` (no `philippinePeso` in 0.257.0); barcode-add = `LucideIcons.scanLine` (no `scanBarcode`).
+**Decisions baked in:** decimals-only-when-needed (`toCurrencyCompact`), grouping app-wide (`toCurrency` adoption), short SKU helper — all from the user's answers.
 
-**Open risk:** widget-test overrides for `inventory_screen` / `product_form_screen` depend on exact provider identifiers — each task's first step says to read them from the screen before finalizing, and gives a narrower fallback assertion if a provider can't be overridden cleanly. TDD value on a visual migration is partial; pure icon/surface swaps are gated by `flutter analyze` + the dark/light screenshots, stated per task.
+**Documented deviations from prototype icon map:** cost = `AppIcons.peso` (no `philippinePeso` in 0.257.0); barcode-add = `LucideIcons.scanLine` (no `scanBarcode`).
+
+**Risks:** (1) app-wide currency adoption may flip existing tests asserting `₱1234.00` → `₱1,234.00`; Task 1 Step 6 handles. (2) Receipt formatting is print-styled — Task 1 Step 5 keeps its layout, Task 5 Step 3 verifies totals. (3) Widget-test provider overrides need exact identifiers — read before finalizing; narrower fallback given.
