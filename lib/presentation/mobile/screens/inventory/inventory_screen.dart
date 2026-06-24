@@ -152,8 +152,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.field),
-            boxShadow:
-                isDark ? AppShadows.primaryButtonGold : AppShadows.primaryButton,
+            boxShadow: isDark
+                ? AppShadows.primaryButtonGold
+                : AppShadows.primaryButton,
           ),
           child: SizedBox(
             width: double.infinity,
@@ -358,62 +359,72 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
           const SizedBox(height: 12),
 
-          // Filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                // Stock filter chips
-                ...StockFilter.values.map((filter) {
-                  final isSelected = inventoryState.stockFilter == filter;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(filter.label),
-                      selected: isSelected,
-                      showCheckmark: false,
-                      labelStyle: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w500,
-                        // Selected sits on a slate(light)/gold(dark) fill, so
-                        // the label flips to white(light)/near-black(dark) for
-                        // contrast; unselected uses normal ink.
-                        color: isSelected
-                            ? (isDark ? AppColors.primaryDark : Colors.white)
-                            : theme.colorScheme.onSurface,
+          // Filter chips — neutralize the chip ink feedback (the global gold
+          // `secondary` otherwise tints the tap splash/hover yellow).
+          Theme(
+            data: theme.copyWith(
+              splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+              highlightColor:
+                  theme.colorScheme.onSurface.withValues(alpha: 0.04),
+              hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+              focusColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  // Stock filter chips
+                  ...StockFilter.values.map((filter) {
+                    final isSelected = inventoryState.stockFilter == filter;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(filter.label),
+                        selected: isSelected,
+                        showCheckmark: false,
+                        labelStyle: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          // Selected sits on a slate(light)/gold(dark) fill, so
+                          // the label flips to white(light)/near-black(dark) for
+                          // contrast; unselected uses normal ink.
+                          color: isSelected
+                              ? (isDark ? AppColors.primaryDark : Colors.white)
+                              : theme.colorScheme.onSurface,
+                        ),
+                        selectedColor: isDark
+                            ? AppColors.primaryAccent
+                            : AppColors.brandSlate,
+                        backgroundColor:
+                            isDark ? AppColors.darkCard : AppColors.lightCard,
+                        side: BorderSide(
+                          color: isSelected
+                              ? Colors.transparent
+                              : (isDark
+                                  ? AppColors.darkHairline
+                                  : AppColors.lightHairline),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        onSelected: (selected) {
+                          ref
+                              .read(inventoryStateProvider.notifier)
+                              .setStockFilter(
+                                selected ? filter : StockFilter.all,
+                              );
+                        },
                       ),
-                      selectedColor: isDark
-                          ? AppColors.primaryAccent
-                          : AppColors.brandSlate,
-                      backgroundColor:
-                          isDark ? AppColors.darkCard : AppColors.lightCard,
-                      side: BorderSide(
-                        color: isSelected
-                            ? Colors.transparent
-                            : (isDark
-                                ? AppColors.darkHairline
-                                : AppColors.lightHairline),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      onSelected: (selected) {
-                        ref
-                            .read(inventoryStateProvider.notifier)
-                            .setStockFilter(
-                              selected ? filter : StockFilter.all,
-                            );
-                      },
-                    ),
-                  );
-                }),
+                    );
+                  }),
 
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
 
-                // Category filter
-                _buildCategoryFilterChip(inventoryState),
-              ],
+                  // Category filter
+                  _buildCategoryFilterChip(inventoryState),
+                ],
+              ),
             ),
           ),
         ],
@@ -672,4 +683,3 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     }
   }
 }
-
