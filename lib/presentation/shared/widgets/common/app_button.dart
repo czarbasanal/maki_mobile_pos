@@ -129,8 +129,8 @@ class AppButton extends StatelessWidget {
         backgroundColor: AppColors.error,
         foregroundColor: Colors.white,
         padding: padding,
-        disabledBackgroundColor: AppColors.error.withOpacity(0.5),
-        disabledForegroundColor: Colors.white.withOpacity(0.7),
+        disabledBackgroundColor: AppColors.error.withValues(alpha: 0.5),
+        disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
       ),
       child: _buildChild(Colors.white),
     );

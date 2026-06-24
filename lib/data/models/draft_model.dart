@@ -262,15 +262,15 @@ class DraftModel {
   double get subtotal {
     return items.fold(
       0.0,
-      (sum, item) => sum + (item.unitPrice * item.quantity),
+      (acc, item) => acc + (item.unitPrice * item.quantity),
     );
   }
 
   /// Total discount amount
   double get totalDiscount {
-    return items.fold(0.0, (sum, item) {
+    return items.fold(0.0, (acc, item) {
       final entity = item.toEntity();
-      return sum +
+      return acc +
           entity.calculateDiscountAmount(isPercentage: isPercentageDiscount);
     });
   }
@@ -282,7 +282,7 @@ class DraftModel {
   double get grandTotal => (subtotal - totalDiscount) + laborSubtotal;
 
   /// Total item count
-  int get totalItemCount => items.fold(0, (sum, item) => sum + item.quantity);
+  int get totalItemCount => items.fold(0, (acc, item) => acc + item.quantity);
 
   // ==================== COPY WITH ====================
 

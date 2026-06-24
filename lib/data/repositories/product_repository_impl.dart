@@ -894,14 +894,14 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<double> getTotalInventoryValueAtCost() async {
     final products = await getAllProducts();
-    return products.fold<double>(0.0, (sum, p) => sum + p.inventoryValueAtCost);
+    return products.fold<double>(0.0, (acc, p) => acc + p.inventoryValueAtCost);
   }
 
   @override
   Future<double> getTotalInventoryValueAtPrice() async {
     final products = await getAllProducts();
     return products.fold<double>(
-        0.0, (sum, p) => sum + p.inventoryValueAtPrice);
+        0.0, (acc, p) => acc + p.inventoryValueAtPrice);
   }
 
 }

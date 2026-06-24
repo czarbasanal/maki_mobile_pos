@@ -97,7 +97,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor:
-                          _getRoleColor(_selectedRole).withOpacity(0.2),
+                          _getRoleColor(_selectedRole).withValues(alpha: 0.2),
                       child: Icon(
                         _getRoleIcon(_selectedRole),
                         size: 50,
@@ -289,7 +289,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? _getRoleColor(role).withOpacity(0.1)
+                    ? _getRoleColor(role).withValues(alpha: 0.1)
                     : Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -302,7 +302,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _getRoleColor(role).withOpacity(0.2),
+                      color: _getRoleColor(role).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(

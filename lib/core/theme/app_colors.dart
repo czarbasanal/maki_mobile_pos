@@ -164,6 +164,6 @@ abstract class AppColors {
 
   /// Returns a color with modified opacity.
   static Color withOpacity(Color color, double opacity) {
-    return color.withOpacity(opacity);
+    return color.withValues(alpha: opacity);
   }
 }

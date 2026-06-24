@@ -325,15 +325,15 @@ class SaleModel {
   double get subtotal {
     return items.fold(
       0.0,
-      (sum, item) => sum + (item.unitPrice * item.quantity),
+      (acc, item) => acc + (item.unitPrice * item.quantity),
     );
   }
 
   /// Total discount amount
   double get totalDiscount {
-    return items.fold(0.0, (sum, item) {
+    return items.fold(0.0, (acc, item) {
       final entity = item.toEntity();
-      return sum +
+      return acc +
           entity.calculateDiscountAmount(isPercentage: isPercentageDiscount);
     });
   }
@@ -400,7 +400,7 @@ class SaleModel {
 
   // ==================== HELPER METHODS ====================
 
-  /// Parses a Firestore `tenders` map ({ '<method>': amount }) into a typed
+  /// Parses a Firestore `tenders` map (`{ '<method>': amount }`) into a typed
   /// map. Returns an empty map when absent (legacy sales).
   static Map<PaymentMethod, double> _parseTenders(dynamic value) {
     if (value is! Map) return const {};

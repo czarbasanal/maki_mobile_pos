@@ -303,7 +303,7 @@ abstract class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.lightAccent.withOpacity(0.5);
+            return AppColors.lightAccent.withValues(alpha: 0.5);
           }
           return AppColors.lightHairline;
         }),
@@ -637,7 +637,7 @@ abstract class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.darkAccent.withOpacity(0.5);
+            return AppColors.darkAccent.withValues(alpha: 0.5);
           }
           return AppColors.darkHairline;
         }),

@@ -34,7 +34,6 @@ class ProcessSaleUseCase {
     required SaleEntity sale,
     bool updateInventory = true,
   }) async {
-    final errors = <String>[];
     final warnings = <String>[];
 
     try {

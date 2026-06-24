@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
@@ -39,7 +40,7 @@ class ActivityLogger {
       ));
     } catch (e) {
       // Don't throw - logging should never break the app
-      print('Failed to log activity: $e');
+      debugPrint('Failed to log activity: $e');
     }
   }
 

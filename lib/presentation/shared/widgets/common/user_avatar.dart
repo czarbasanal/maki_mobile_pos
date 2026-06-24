@@ -33,7 +33,7 @@ class UserAvatar extends StatelessWidget {
             : null,
         boxShadow: [
           BoxShadow(
-            color: _getRoleColor(user.role).withOpacity(0.3),
+            color: _getRoleColor(user.role).withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -107,10 +107,10 @@ class RoleBadge extends StatelessWidget {
         vertical: small ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: _getRoleColor(role).withOpacity(0.15),
+        color: _getRoleColor(role).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _getRoleColor(role).withOpacity(0.3),
+          color: _getRoleColor(role).withValues(alpha: 0.3),
         ),
       ),
       child: Text(
@@ -199,7 +199,7 @@ class UserInfoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),

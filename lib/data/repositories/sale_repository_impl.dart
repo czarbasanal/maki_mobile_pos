@@ -390,7 +390,7 @@ class SaleRepositoryImpl implements SaleRepository {
       limit: 10000, // Large limit for aggregation
     );
 
-    return sales.fold<double>(0.0, (sum, sale) => sum + sale.grandTotal);
+    return sales.fold<double>(0.0, (acc, sale) => acc + sale.grandTotal);
   }
 
   @override

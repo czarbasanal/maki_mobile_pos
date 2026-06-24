@@ -636,6 +636,7 @@ class _CostCodeSettingsScreenState
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
 
     // Require password verification
     final verified = await PasswordDialog.show(

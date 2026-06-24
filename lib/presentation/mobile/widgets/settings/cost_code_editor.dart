@@ -194,7 +194,7 @@ class _CostCodeEditorState extends State<CostCodeEditor> {
                 filled: true,
                 fillColor: isDuplicate
                     ? Colors.red[50]
-                    : theme.colorScheme.primary.withOpacity(0.05),
+                    : theme.colorScheme.primary.withValues(alpha: 0.05),
                 errorText: isDuplicate ? 'Duplicate' : null,
                 errorStyle: const TextStyle(fontSize: 10),
               ),

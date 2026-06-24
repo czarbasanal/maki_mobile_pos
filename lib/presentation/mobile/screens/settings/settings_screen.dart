@@ -333,26 +333,32 @@ class SettingsScreen extends ConsumerWidget {
       builder: (sheetContext) {
         final current = ref.read(themeModeProvider);
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final entry in const [
-                (ThemeMode.system, 'System default', CupertinoIcons.brightness),
-                (ThemeMode.light, 'Light', CupertinoIcons.sun_max),
-                (ThemeMode.dark, 'Dark', CupertinoIcons.moon),
-              ])
-                RadioListTile<ThemeMode>(
-                  value: entry.$1,
-                  groupValue: current,
-                  title: Text(entry.$2),
-                  secondary: Icon(entry.$3),
-                  onChanged: (mode) {
-                    if (mode == null) return;
-                    ref.read(themeModeProvider.notifier).set(mode);
-                    Navigator.pop(sheetContext);
-                  },
-                ),
-            ],
+          child: RadioGroup<ThemeMode>(
+            groupValue: current,
+            onChanged: (mode) {
+              if (mode == null) return;
+              ref.read(themeModeProvider.notifier).set(mode);
+              Navigator.pop(sheetContext);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final entry in const [
+                  (
+                    ThemeMode.system,
+                    'System default',
+                    CupertinoIcons.brightness
+                  ),
+                  (ThemeMode.light, 'Light', CupertinoIcons.sun_max),
+                  (ThemeMode.dark, 'Dark', CupertinoIcons.moon),
+                ])
+                  RadioListTile<ThemeMode>(
+                    value: entry.$1,
+                    title: Text(entry.$2),
+                    secondary: Icon(entry.$3),
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -454,7 +460,7 @@ class _ProfileHero extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: roleColor.withOpacity(0.08),
+            backgroundColor: roleColor.withValues(alpha: 0.08),
             child: Icon(
               _roleIcon(user.role),
               color: roleColor,
@@ -486,7 +492,7 @@ class _ProfileHero extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: roleColor.withOpacity(0.08),
+                    color: roleColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(

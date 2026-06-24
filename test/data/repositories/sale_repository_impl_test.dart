@@ -108,7 +108,6 @@ void main() {
 
     test('getTodaysSales should return only today sales', () async {
       final today = DateTime.now();
-      final yesterday = today.subtract(const Duration(days: 1));
 
       // Create today's sale
       await repository.createSale(createTestSale().copyWith(createdAt: today));
