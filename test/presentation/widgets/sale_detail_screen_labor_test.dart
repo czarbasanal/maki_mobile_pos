@@ -69,4 +69,31 @@ void main() {
     // grandTotal = parts 200 + labor 450 = 650.00.
     expect(find.textContaining('650.00'), findsWidgets);
   });
+
+  testWidgets('Change renders as a tinted block when change > 0',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      harness(buildSale().copyWith(amountReceived: 1000.0, changeGiven: 350.0)),
+    );
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byKey(const Key('sale-change-block')), findsOneWidget);
+    expect(find.textContaining('350.00'), findsWidgets);
+  });
+
+  testWidgets('Change renders as a plain row (no block) when change == 0',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(harness(buildSale())); // changeGiven: 0.0
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byKey(const Key('sale-change-block')), findsNothing);
+  });
 }

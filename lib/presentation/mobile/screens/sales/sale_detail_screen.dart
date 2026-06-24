@@ -79,7 +79,7 @@ class SaleDetailScreen extends ConsumerWidget {
     final dateFormat = DateFormat('EEEE, MMMM d, y • h:mm a');
     final isVoided = sale.status == SaleStatus.voided;
 
-    return SingleChildScrollView(
+    final scroll = SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,16 +126,18 @@ class SaleDetailScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             _buildNotesCard(theme, sale),
           ],
-
-          const SizedBox(height: 24),
-
-          // Void action (only for non-voided sales) — admin voids directly,
-          // cashier/staff request approval; shows a pending state if one exists.
-          if (!isVoided) _buildVoidAction(context, ref, sale),
-
-          const SizedBox(height: 32),
         ],
       ),
+    );
+
+    // Void affordance pinned to the bottom (footer over the scroll). Voided
+    // sales — and users without a void permission — get no action bar.
+    final footer = isVoided ? null : _buildVoidFooter(context, ref, sale);
+    return Column(
+      children: [
+        Expanded(child: scroll),
+        if (footer != null) footer,
+      ],
     );
   }
 
@@ -446,26 +448,75 @@ class SaleDetailScreen extends ConsumerWidget {
             ),
           ],
           const Divider(height: 24),
-          SummaryRow(
-            label: 'Total',
-            value: '$cur${sale.grandTotal.toStringAsFixed(2)}',
-            isTotal: true,
-          ),
+          // Single hero: the header total is the glance target, so Total here is
+          // a strong recap row (16/700, default ink) — not the 26px hero variant.
+          _buildTotalRecap(theme, '$cur${sale.grandTotal.toStringAsFixed(2)}'),
           const Divider(height: 24),
           SummaryRow(
             label: 'Received',
             value: '$cur${sale.amountReceived.toStringAsFixed(2)}',
           ),
           const SizedBox(height: AppSpacing.sm),
-          SummaryRow(
-            label: 'Change',
-            value: '$cur${sale.changeGiven.toStringAsFixed(2)}',
-            valueColor: green,
-          ),
+          // Change: a tinted success block when there's change to return; a plain
+          // row at zero (no empty green box).
+          if (sale.changeGiven > 0)
+            _buildChangeBlock(theme, '$cur${sale.changeGiven.toStringAsFixed(2)}')
+          else
+            SummaryRow(
+              label: 'Change',
+              value: '$cur${sale.changeGiven.toStringAsFixed(2)}',
+              valueColor: green,
+            ),
           if (sale.effectiveTenders.length > 1) ...[
             const Divider(height: 24),
             ..._tenderRows(theme, sale),
           ],
+        ],
+      ),
+    );
+  }
+
+  /// Payment "Total" recap — strong but not the hero (the header total is).
+  Widget _buildTotalRecap(ThemeData theme, String value) {
+    final style = TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      color: theme.colorScheme.onSurface,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [Text('Total', style: style), Text(value, style: style)],
+    );
+  }
+
+  /// Change-due as a filled success-tint block (shown only when change > 0).
+  Widget _buildChangeBlock(ThemeData theme, String value) {
+    final isDark = theme.brightness == Brightness.dark;
+    final green = AppColors.successText(isDark);
+    return Container(
+      key: const Key('sale-change-block'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.successFill(isDark),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: isDark
+            ? Border.all(color: AppColors.success.withValues(alpha: 0.40))
+            : null,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Change',
+            style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w600, color: green),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+                fontSize: 22, fontWeight: FontWeight.w700, color: green),
+          ),
         ],
       ),
     );
@@ -641,28 +692,30 @@ class SaleDetailScreen extends ConsumerWidget {
 
   Widget _buildNotesCard(ThemeData theme, SaleEntity sale) {
     final isDark = theme.brightness == Brightness.dark;
+    // Readable amber: raw #FFC107 was nearly invisible on the light tint, so the
+    // label/icon darken in light and use the gold accent in dark. Body = ink.
+    const gold = Color(0xFFE8B84C);
+    final tintBase = isDark ? gold : AppColors.warning;
+    final labelColor = isDark ? gold : const Color(0xFF8A6100);
+    final iconColor = isDark ? gold : const Color(0xFF9A6B00);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: isDark ? 0.16 : 0.12),
+        color: tintBase.withValues(alpha: isDark ? 0.16 : 0.14),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+        border: Border.all(color: tintBase.withValues(alpha: 0.40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(LucideIcons.stickyNote,
-                  size: 16, color: AppColors.warning),
+              Icon(LucideIcons.stickyNote, size: 16, color: iconColor),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 'Notes',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.warning,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, color: labelColor),
               ),
             ],
           ),
@@ -674,7 +727,7 @@ class SaleDetailScreen extends ConsumerWidget {
   }
 
   /// Chooses the right void affordance for the current user and sale state.
-  Widget _buildVoidAction(BuildContext context, WidgetRef ref, SaleEntity sale) {
+  Widget? _buildVoidAction(BuildContext context, WidgetRef ref, SaleEntity sale) {
     final user = ref.watch(currentUserProvider).value;
     final pendingAsync = ref.watch(pendingVoidRequestForSaleProvider(sale.id));
     final hasPending =
@@ -717,15 +770,45 @@ class SaleDetailScreen extends ConsumerWidget {
           ),
           icon: const Icon(LucideIcons.xCircle),
           label: const Text('Request Void'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.error,
-            side: const BorderSide(color: AppColors.error),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
+          style: _voidButtonStyle(context),
         ),
       );
     }
-    return const SizedBox.shrink();
+    return null;
+  }
+
+  /// Pinned bottom action bar holding the void affordance — null when there's
+  /// nothing to show (voided sale or no permission), so no empty bar renders.
+  Widget? _buildVoidFooter(BuildContext context, WidgetRef ref, SaleEntity sale) {
+    final action = _buildVoidAction(context, ref, sale);
+    if (action == null) return null;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: action,
+        ),
+      ),
+    );
+  }
+
+  /// Outlined-red void button style — white fill in light, transparent fill +
+  /// a lighter red text in dark.
+  ButtonStyle _voidButtonStyle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return OutlinedButton.styleFrom(
+      foregroundColor: isDark ? const Color(0xFFFF6B5E) : AppColors.error,
+      backgroundColor: isDark ? null : AppColors.lightCard,
+      side: const BorderSide(color: AppColors.error),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+    );
   }
 
   Widget _buildVoidButton(
@@ -739,11 +822,7 @@ class SaleDetailScreen extends ConsumerWidget {
         onPressed: () => _handleVoid(context, ref, sale),
         icon: const Icon(LucideIcons.xCircle),
         label: const Text('Void This Sale'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.error,
-          side: const BorderSide(color: AppColors.error),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
+        style: _voidButtonStyle(context),
       ),
     );
   }
