@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -22,7 +23,7 @@ class CostDisplayToggle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
       icon: Icon(
-        showCost ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+        showCost ? LucideIcons.eye : LucideIcons.eyeOff,
         color: showCost ? AppColors.successDark : null,
       ),
       tooltip: showCost ? 'Hide costs' : 'Show costs',
@@ -82,7 +83,7 @@ class CostDisplay extends ConsumerWidget {
 
     if (showCost) {
       return Text(
-        '₱${cost.toStringAsFixed(2)}',
+        cost.toCurrency(),
         style: style,
       );
     } else {
@@ -90,7 +91,7 @@ class CostDisplay extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            CupertinoIcons.lock,
+            LucideIcons.lock,
             size: (style?.fontSize ?? 14) * 0.9,
             color: AppColors.warningDark,
           ),

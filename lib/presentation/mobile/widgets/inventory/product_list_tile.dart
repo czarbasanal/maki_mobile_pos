@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/cost_code_pill.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
 /// List tile for displaying a product in the inventory.
 ///
@@ -30,119 +31,119 @@ class ProductListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
 
-    return Card(
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _LeadingVisual(product: product, isDark: isDark),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.name,
+                style: AppTextStyles.productName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 3),
+              Row(
+                children: [
+                  Text(
+                    product.sku,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: muted,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  if (product.category != null) ...[
+                    const SizedBox(width: 6),
+                    _CategoryChip(label: product.category!),
+                  ],
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  _PricePill(value: product.price.toCurrency(), isDark: isDark),
+                  const SizedBox(width: 6),
+                  if (showCost) ...[
+                    _CostPill(value: product.cost.toCurrencyCompact()),
+                    const SizedBox(width: 6),
+                    _MarginBadge(margin: product.profitMargin, isDark: isDark),
+                  ] else
+                    CostCodePill(cost: product.cost, compact: true),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        _StockBadge(product: product, isDark: isDark),
+      ],
+    );
+
+    return AppCard(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.sm + 4),
-          child: Row(
-            children: [
-              _LeadingVisual(product: product),
-              const SizedBox(width: AppSpacing.sm + 4),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: AppTextStyles.productName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Text(
-                          product.sku,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: muted,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                        if (product.category != null) ...[
-                          Text(' • ', style: TextStyle(color: muted)),
-                          _CategoryChip(label: product.category!),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: [
-                        _PricePill(
-                          value:
-                              product.price.toCurrency(),
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        if (showCost) ...[
-                          _CostPill(
-                            value:
-                                product.cost.toCurrency(),
-                          ),
-                          const SizedBox(width: 4),
-                          _MarginBadge(
-                            margin: product.profitMargin,
-                          ),
-                        ] else
-                          CostCodePill(cost: product.cost, compact: true),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              _StockBadge(product: product),
-            ],
-          ),
-        ),
-      ),
+      radius: 16,
+      padding: const EdgeInsets.all(12),
+      onTap: onTap,
+      child: onLongPress != null
+          ? GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: onLongPress,
+              child: row,
+            )
+          : row,
     );
   }
 }
 
 /// Tile leading visual: a 40x40 thumbnail when [ProductEntity.imageUrl] is
-/// set, otherwise the stock-status icon. Stock count + color are already
+/// set, otherwise a stock-tinted icon. Stock count + color are already
 /// communicated by the trailing [_StockBadge], so the leading slot is free
 /// to surface imagery when available.
 class _LeadingVisual extends StatelessWidget {
-  const _LeadingVisual({required this.product});
+  const _LeadingVisual({required this.product, required this.isDark});
   final ProductEntity product;
+  final bool isDark;
 
   static const double _size = 40;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final url = product.imageUrl;
     if (url != null && url.isNotEmpty) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(11),
         child: Image.network(
           url,
           width: _size,
           height: _size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _stockFallback(theme),
+          errorBuilder: (_, __, ___) => _stockFallback(),
         ),
       );
     }
-    return _stockFallback(theme);
+    return _stockFallback();
   }
 
-  Widget _stockFallback(ThemeData theme) {
-    final (color, icon) = _stockStyle(product);
-    return SizedBox(
+  Widget _stockFallback() {
+    final s = _stockStyle(product, isDark);
+    return Container(
       width: _size,
       height: _size,
-      child: Icon(icon, color: color, size: 24),
+      decoration: BoxDecoration(
+        color: s.tint,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Icon(s.icon, color: s.color, size: 21),
     );
   }
 }
@@ -162,7 +163,7 @@ class _CategoryChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
         border: Border.all(color: hairline),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(7),
       ),
       child: Text(
         label,
@@ -175,24 +176,26 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
+/// Filled primary pill carrying the selling price (slate light / gold dark).
 class _PricePill extends StatelessWidget {
-  const _PricePill({required this.value, required this.color});
+  const _PricePill({required this.value, required this.isDark});
   final String value;
-  final Color color;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        border: Border.all(color: color, width: 1.2),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: isDark ? AppColors.primaryAccent : AppColors.brandSlate,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         value,
         style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.primaryDark : Colors.white,
         ),
       ),
     );
@@ -211,23 +214,21 @@ class _CostPill extends StatelessWidget {
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         border: Border.all(color: hairline),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Cost: ',
-            style: TextStyle(fontSize: 12, color: muted),
-          ),
+          Text('Cost ', style: TextStyle(fontSize: 11, color: muted)),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 12,
+            style: TextStyle(
+              fontSize: 11,
               fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ],
@@ -236,24 +237,26 @@ class _CostPill extends StatelessWidget {
   }
 }
 
+/// Filled success-tint badge carrying the profit margin %.
 class _MarginBadge extends StatelessWidget {
-  const _MarginBadge({required this.margin});
+  const _MarginBadge({required this.margin, required this.isDark});
   final double margin;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.success),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: AppColors.successFill(isDark),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         '${margin.toStringAsFixed(0)}%',
-        style: const TextStyle(
-          fontSize: 10,
+        style: TextStyle(
+          fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.successDark,
+          color: AppColors.successText(isDark),
         ),
       ),
     );
@@ -261,17 +264,18 @@ class _MarginBadge extends StatelessWidget {
 }
 
 class _StockBadge extends StatelessWidget {
-  const _StockBadge({required this.product});
+  const _StockBadge({required this.product, required this.isDark});
   final ProductEntity product;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    final (color, _) = _stockStyle(product);
+    final s = _stockStyle(product, isDark);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
-        border: Border.all(color: color, width: 1.2),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: s.border, width: 1.4),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -279,13 +283,13 @@ class _StockBadge extends StatelessWidget {
             '${product.quantity}',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: color,
+              fontWeight: FontWeight.w700,
+              color: s.color,
             ),
           ),
           Text(
             product.unit,
-            style: TextStyle(fontSize: 10, color: color),
+            style: TextStyle(fontSize: 10, color: s.color),
           ),
         ],
       ),
@@ -293,13 +297,33 @@ class _StockBadge extends StatelessWidget {
   }
 }
 
-/// Status -> (color, icon) for in / low / out of stock.
-(Color, IconData) _stockStyle(ProductEntity product) {
+/// Stock state → theme-aware colors + Lucide icon for in / low / out of stock.
+/// `color` paints the icon, count, and badge text; `border` the badge outline;
+/// `tint` the leading-visual fallback background.
+({Color color, Color border, Color tint, IconData icon}) _stockStyle(
+    ProductEntity product, bool isDark) {
   if (product.isOutOfStock) {
-    return (AppColors.error, CupertinoIcons.exclamationmark_circle);
+    return (
+      color: isDark ? const Color(0xFFFF6B5E) : AppColors.error,
+      border: AppColors.error,
+      tint: AppColors.error.withValues(alpha: isDark ? 0.16 : 0.10),
+      icon: LucideIcons.alertCircle,
+    );
   }
   if (product.isLowStock) {
-    return (AppColors.warning, CupertinoIcons.exclamationmark_triangle);
+    final low = isDark ? const Color(0xFFF5B547) : AppColors.warningDark;
+    return (
+      color: low,
+      border: low,
+      tint: (isDark ? const Color(0xFFF5B547) : AppColors.warning)
+          .withValues(alpha: isDark ? 0.16 : 0.14),
+      icon: LucideIcons.alertTriangle,
+    );
   }
-  return (AppColors.success, CupertinoIcons.checkmark_circle);
+  return (
+    color: isDark ? const Color(0xFF5FC86A) : AppColors.success,
+    border: AppColors.success,
+    tint: AppColors.success.withValues(alpha: isDark ? 0.16 : 0.10),
+    icon: LucideIcons.checkCircle,
+  );
 }
