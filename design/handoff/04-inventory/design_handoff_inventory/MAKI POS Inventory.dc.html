@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- HEADER -->
+  <div style="max-width:1320px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Handoff 04 · Inventory · migration
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Inventory — on the new language</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:78ch">All three Inventory screens migrated to the elevated system. Mixed elevation is fixed — <b>summary stats and product rows now share one soft-shadow <span style="font-family:'Roboto Mono'">AppCard</span> surface</b> (no more Material-default shadows next to flat hairline boxes). Cupertino icons → <b>Lucide</b>. The long product form is grouped into <b>sectioned cards</b> with a <b>pinned submit</b>; price-history rows are wrapped in a card. Slate primary, gold in dark.</p>
+  </div>
+
+  <!-- changes legend -->
+  <div style="max-width:1320px;margin:0 auto 30px;display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span><b style="font-weight:600">Consistent elevation</b> — stats + rows on AppCard</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#E8B84C"></span><b style="font-weight:600">Lucide</b> — replaces Cupertino</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#2196F3"></span><b style="font-weight:600">Grouped form</b> — sectioned cards + pinned submit</div>
+  </div>
+
+  <!-- ============ LIGHT ============ -->
+  <div style="max-width:1320px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start;margin-bottom:56px">
+
+    <!-- ===== 1 · INVENTORY LIST · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Inventory list · admin · <span style="font-family:'Roboto Mono'">inventory_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Inventory</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#2E7D32"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="arrow-up-down" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="more-vertical" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 0 4px">
+          <!-- summary stats — now AppCard soft surfaces -->
+          <div style="display:flex;gap:8px;padding:8px 16px 14px">
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="package" style="width:19px;height:19px;color:#2196F3;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#16201F;line-height:1">128</div><div style="font-size:10px;color:#8A9296">Total</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);border:1.5px solid #4CAF50;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="check-circle" style="width:19px;height:19px;color:#4CAF50;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#2E7D32;line-height:1">96</div><div style="font-size:10px;color:#8A9296">In Stock</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="alert-triangle" style="width:19px;height:19px;color:#F57C00;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#F57C00;line-height:1">21</div><div style="font-size:10px;color:#8A9296">Low</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="alert-circle" style="width:19px;height:19px;color:#F44336;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#F44336;line-height:1">11</div><div style="font-size:10px;color:#8A9296">Out</div></div>
+          </div>
+          <!-- search -->
+          <div style="padding:0 16px 10px">
+            <div style="display:flex;align-items:center;gap:9px;height:46px;background:#fff;border-radius:16px;padding:0 14px;box-shadow:0 2px 8px rgba(17,28,29,.06)"><i data-lucide="search" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Search by name, SKU, or barcode…</span></div>
+          </div>
+          <!-- chips -->
+          <div style="display:flex;gap:8px;padding:0 16px 8px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent)">
+            <span style="white-space:nowrap;font-size:13px;font-weight:500;padding:7px 13px;border-radius:999px;background:#fff;border:1px solid #ECECEC;color:#16201F">All</span>
+            <span style="white-space:nowrap;font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;background:#283E46;color:#fff">In Stock</span>
+            <span style="white-space:nowrap;font-size:13px;font-weight:500;padding:7px 13px;border-radius:999px;background:#fff;border:1px solid #ECECEC;color:#16201F">Low Stock</span>
+            <span style="white-space:nowrap;font-size:13px;font-weight:500;padding:7px 13px;border-radius:999px;background:#fff;border:1px solid #ECECEC;color:#16201F;display:inline-flex;align-items:center;gap:5px"><i data-lucide="layout-grid" style="width:14px;height:14px;stroke-width:1.75"></i>Category</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:2px 18px 10px"><i data-lucide="sliders-horizontal" style="width:15px;height:15px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#8A9296">Filters active</span><span style="font-size:13px;font-weight:600;color:#283E46">Clear all</span></div>
+          <!-- product tiles -->
+          <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(76,175,80,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="check-circle" style="width:21px;height:21px;color:#4CAF50;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#16201F;line-height:1.25">ASK Brake Shoe XRM 125</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#8A9296">ask-001</span><span style="font-size:10px;color:#8A9296;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Brakes</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#fff;background:#283E46;border-radius:8px;padding:3px 9px">₱250.00</span><span style="font-size:11px;color:#8A9296;border:1px solid #ECECEC;border-radius:8px;padding:3px 8px">Cost <b style="color:#16201F;font-weight:600">₱180</b></span><span style="font-size:11px;font-weight:600;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:3px 8px">28%</span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #4CAF50;border-radius:12px;padding:6px 11px;color:#4CAF50"><div style="font-size:18px;font-weight:700;line-height:1">42</div><div style="font-size:10px">pcs</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(255,193,7,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="alert-triangle" style="width:21px;height:21px;color:#F57C00;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#16201F;line-height:1.25">NGK Spark Plug CPR6EA-9</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#8A9296">ngk-014</span><span style="font-size:10px;color:#8A9296;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Electrical</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#fff;background:#283E46;border-radius:8px;padding:3px 9px">₱200.00</span><span style="font-size:11px;color:#8A9296;border:1px solid #ECECEC;border-radius:8px;padding:3px 8px">Cost <b style="color:#16201F;font-weight:600">₱150</b></span><span style="font-size:11px;font-weight:600;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:3px 8px">25%</span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #F57C00;border-radius:12px;padding:6px 11px;color:#F57C00"><div style="font-size:18px;font-weight:700;line-height:1">4</div><div style="font-size:10px">pcs</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="alert-circle" style="width:21px;height:21px;color:#F44336;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#16201F;line-height:1.25">Motul 10W-40 Engine Oil 1L</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#8A9296">mtl-10w40</span><span style="font-size:10px;color:#8A9296;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Lubricants</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#fff;background:#283E46;border-radius:8px;padding:3px 9px">₱420.00</span><span style="font-size:11px;color:#8A9296;border:1px solid #ECECEC;border-radius:8px;padding:3px 8px">Cost <b style="color:#16201F;font-weight:600">₱330</b></span><span style="font-size:11px;font-weight:600;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:3px 8px">21%</span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #F44336;border-radius:12px;padding:6px 11px;color:#F44336"><div style="font-size:18px;font-weight:700;line-height:1">0</div><div style="font-size:10px">L</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(76,175,80,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="check-circle" style="width:21px;height:21px;color:#4CAF50;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#16201F;line-height:1.25">Bridgestone Battla 80/90-17</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#8A9296">bs-8090-17</span><span style="font-size:10px;color:#8A9296;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Tires</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#fff;background:#283E46;border-radius:8px;padding:3px 9px">₱1,250.00</span><span style="font-size:11px;color:#8A9296;border:1px solid #ECECEC;border-radius:8px;padding:3px 8px;display:inline-flex;align-items:center;gap:4px"><i data-lucide="lock" style="width:11px;height:11px;stroke-width:1.9"></i>Code <b style="font-family:'Roboto Mono';color:#16201F">KRT</b></span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #4CAF50;border-radius:12px;padding:6px 11px;color:#4CAF50"><div style="font-size:18px;font-weight:700;line-height:1">18</div><div style="font-size:10px">pcs</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Product</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · PRODUCT FORM · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Product form · edit/admin · <span style="font-family:'Roboto Mono'">product_form_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Edit Product</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#2E7D32"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#F44336"><i data-lucide="trash-2" style="width:20px;height:20px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:14px 16px">
+          <!-- image uploader -->
+          <div style="height:110px;border:1.5px dashed #D7DAD9;border-radius:16px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#8A9296;box-shadow:0 2px 8px rgba(17,28,29,.05)"><i data-lucide="image-plus" style="width:26px;height:26px;stroke-width:1.6"></i><span style="font-size:12px">Add product image</span></div>
+
+          <!-- IDENTITY section -->
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Identity</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">SKU <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="qr-code" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-family:'Roboto Mono';font-size:14px;color:#16201F">ASK-001</span></div>
+            <div style="font-size:11px;color:#8A9296;margin:5px 2px 0;line-height:1.4">Changing the SKU keeps past sales &amp; receiving history intact.</div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Product Name <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="box" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">ASK Brake Shoe XRM 125</span></div>
+          </div>
+
+          <!-- PRICING section -->
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Pricing</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;gap:10px">
+              <div style="flex:1"><div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Selling (₱) <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 12px"><i data-lucide="tag" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">250.00</span></div></div>
+              <div style="flex:1"><div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Cost (₱) <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 12px"><i data-lucide="philippine-peso" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">180.00</span></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#8A9296"><i data-lucide="trending-up" style="width:15px;height:15px;color:#2E7D32;stroke-width:1.9"></i>Margin <b style="color:#2E7D32;font-weight:700">28%</b> · ₱70.00 per unit</div>
+          </div>
+
+          <!-- STOCK section -->
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Stock</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;gap:10px">
+              <div style="flex:1"><div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Quantity <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 12px"><i data-lucide="hash" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">42</span></div></div>
+              <div style="flex:1"><div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Reorder at</div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 12px"><i data-lucide="alert-triangle" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">10</span></div></div>
+            </div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Unit</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="ruler" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">pcs</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#8A9296;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Barcodes</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"><span style="font-size:12px;font-family:'Roboto Mono';background:#FAFAFA;border:1px solid #E2E2E2;border-radius:999px;padding:4px 8px 4px 12px;display:inline-flex;align-items:center;gap:5px;color:#16201F">4806504801108 <i data-lucide="x" style="width:13px;height:13px;color:#8A9296;stroke-width:2"></i></span><span style="font-size:12px;font-family:'Roboto Mono';background:#FAFAFA;border:1px solid #E2E2E2;border-radius:999px;padding:4px 8px 4px 12px;display:inline-flex;align-items:center;gap:5px;color:#16201F">4801234567890 <i data-lucide="x" style="width:13px;height:13px;color:#8A9296;stroke-width:2"></i></span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="scan-barcode" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Add barcode</span><i data-lucide="plus" style="width:17px;height:17px;color:#283E46;stroke-width:2"></i></div>
+          </div>
+
+          <!-- CLASSIFICATION section -->
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Classification</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Category</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="layout-grid" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">Brakes</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#8A9296;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Supplier</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="briefcase" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">RPM Parts Trading</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#8A9296;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Notes</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;min-height:60px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:12px 13px"><i data-lucide="list" style="width:17px;height:17px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Optional notes…</span></div>
+          </div>
+
+          <!-- AUDIT -->
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Audit</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:#8A9296">Created</span><span style="color:#16201F;font-weight:500">May 12, 2026 · 9:14 AM</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:#8A9296">Created by</span><span style="color:#16201F;font-weight:500">Admin</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:#8A9296">Last updated</span><span style="color:#16201F;font-weight:500">Jun 18, 2026 · 4:02 PM</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#8A9296">Updated by</span><span style="color:#16201F;font-weight:500">Maria S.</span></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;background:#fff;border:1px solid #E2E2E2;color:#283E46;font-size:14px;font-weight:600;margin-top:14px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="clock" style="width:16px;height:16px;stroke-width:1.75"></i>View price history</div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="save" style="width:18px;height:18px;stroke-width:2"></i>Update Product</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · PRICE HISTORY · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Price history · admin · <span style="font-family:'Roboto Mono'">price_history_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Price History</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:16px">
+          <!-- segmented -->
+          <div style="display:flex;background:#fff;border-radius:999px;padding:4px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="flex:1;text-align:center;font-size:13px;font-weight:600;padding:8px 0;color:#fff;background:#283E46;border-radius:999px">All</div>
+            <div style="flex:1;text-align:center;font-size:13px;font-weight:500;padding:8px 0;color:#8A9296">Price</div>
+            <div style="flex:1;text-align:center;font-size:13px;font-weight:500;padding:8px 0;color:#8A9296">Cost</div>
+          </div>
+          <!-- sparklines card -->
+          <div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);margin-top:14px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#8A9296">Price trend</span><span style="font-size:13px;font-weight:600;color:#16201F">₱225 → ₱250</span></div>
+            <svg viewBox="0 0 300 40" preserveAspectRatio="none" style="width:100%;height:40px;margin-top:6px"><polyline points="0,32 60,28 120,28 180,18 240,14 300,7" fill="none" stroke="#283E46" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px"><span style="font-size:11px;color:#8A9296">Cost trend</span><span style="font-size:13px;font-weight:600;color:#16201F">₱170 → ₱180</span></div>
+            <svg viewBox="0 0 300 40" preserveAspectRatio="none" style="width:100%;height:40px;margin-top:6px"><polyline points="0,33 60,31 120,31 180,24 240,22 300,16" fill="none" stroke="#9AA0A3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <!-- rows card -->
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Changes</div>
+          <div style="background:#fff;border-radius:18px;padding:4px 16px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="padding:12px 0;border-bottom:1px solid #F0F0F0">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Price</span><span style="font-weight:600;color:#16201F">₱250</span><i data-lucide="arrow-up" style="width:12px;height:12px;color:#2E7D32;stroke-width:2.2"></i><span style="font-size:12px;color:#2E7D32;font-weight:500">₱20</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Cost</span><span style="font-weight:600;color:#16201F">₱180</span><i data-lucide="arrow-up" style="width:12px;height:12px;color:#2E7D32;stroke-width:2.2"></i><span style="font-size:12px;color:#2E7D32;font-weight:500">₱10</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#8A9296">Jun 18, 2026 · 4:02 PM<span>•</span><span style="font-weight:500;color:#16201F">Maria S.</span><span style="font-size:11px;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Receiving · RCV-…3</span></div>
+            </div>
+            <div style="padding:12px 0;border-bottom:1px solid #F0F0F0">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Price</span><span style="font-weight:600;color:#16201F">₱230</span><i data-lucide="arrow-up" style="width:12px;height:12px;color:#2E7D32;stroke-width:2.2"></i><span style="font-size:12px;color:#2E7D32;font-weight:500">₱10</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Cost</span><span style="font-weight:600;color:#16201F">₱170</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#8A9296">May 30, 2026 · 11:20 AM<span>•</span><span style="font-weight:500;color:#16201F">Admin</span><span style="font-size:11px;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Manual edit</span></div>
+            </div>
+            <div style="padding:12px 0;border-bottom:1px solid #F0F0F0">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Price</span><span style="font-weight:600;color:#16201F">₱220</span><i data-lucide="arrow-down" style="width:12px;height:12px;color:#F44336;stroke-width:2.2"></i><span style="font-size:12px;color:#F44336;font-weight:500">₱5</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Cost</span><span style="font-weight:600;color:#16201F">₱170</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#8A9296">May 20, 2026 · 2:45 PM<span>•</span><span style="font-weight:500;color:#16201F">Admin</span><span style="font-size:11px;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Manual edit</span></div>
+            </div>
+            <div style="padding:12px 0">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Price</span><span style="font-weight:600;color:#16201F">₱225</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#8A9296;font-size:12px">Cost</span><span style="font-weight:600;color:#16201F">₱170</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#8A9296">May 12, 2026 · 9:14 AM<span>•</span><span style="font-weight:500;color:#16201F">Admin</span><span style="font-size:11px;border:1px solid #ECECEC;border-radius:7px;padding:1px 6px">Created</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DARK ============ -->
+  <div style="max-width:1320px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+
+    <!-- ===== 1 · INVENTORY LIST · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Inventory list · admin · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Inventory</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#8FE39A"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="arrow-up-down" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="more-vertical" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 0 4px">
+          <div style="display:flex;gap:8px;padding:8px 16px 14px">
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="package" style="width:19px;height:19px;color:#5AA9F0;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#ECEFEF;line-height:1">128</div><div style="font-size:10px;color:#93A0A3">Total</div></div>
+            <div style="flex:1;background:#18262A;border:1.5px solid #4CAF50;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="check-circle" style="width:19px;height:19px;color:#5FC86A;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#8FE39A;line-height:1">96</div><div style="font-size:10px;color:#93A0A3">In Stock</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="alert-triangle" style="width:19px;height:19px;color:#F5B547;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#F5B547;line-height:1">21</div><div style="font-size:10px;color:#93A0A3">Low</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="alert-circle" style="width:19px;height:19px;color:#FF6B5E;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#FF6B5E;line-height:1">11</div><div style="font-size:10px;color:#93A0A3">Out</div></div>
+          </div>
+          <div style="padding:0 16px 10px">
+            <div style="display:flex;align-items:center;gap:9px;height:46px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:0 14px"><i data-lucide="search" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Search by name, SKU, or barcode…</span></div>
+          </div>
+          <div style="display:flex;gap:8px;padding:0 16px 8px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent)">
+            <span style="white-space:nowrap;font-size:13px;font-weight:500;padding:7px 13px;border-radius:999px;background:#18262A;border:1px solid #2C3C3E;color:#ECEFEF">All</span>
+            <span style="white-space:nowrap;font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;background:#E8B84C;color:#121C1D">In Stock</span>
+            <span style="white-space:nowrap;font-size:13px;font-weight:500;padding:7px 13px;border-radius:999px;background:#18262A;border:1px solid #2C3C3E;color:#ECEFEF">Low Stock</span>
+            <span style="white-space:nowrap;font-size:13px;font-weight:500;padding:7px 13px;border-radius:999px;background:#18262A;border:1px solid #2C3C3E;color:#ECEFEF;display:inline-flex;align-items:center;gap:5px"><i data-lucide="layout-grid" style="width:14px;height:14px;stroke-width:1.75"></i>Category</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:2px 18px 10px"><i data-lucide="sliders-horizontal" style="width:15px;height:15px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:13px;color:#93A0A3">Filters active</span><span style="font-size:13px;font-weight:600;color:#E8B84C">Clear all</span></div>
+          <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="check-circle" style="width:21px;height:21px;color:#5FC86A;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#ECEFEF;line-height:1.25">ASK Brake Shoe XRM 125</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#93A0A3">ask-001</span><span style="font-size:10px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Brakes</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#121C1D;background:#E8B84C;border-radius:8px;padding:3px 9px">₱250.00</span><span style="font-size:11px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px">Cost <b style="color:#ECEFEF;font-weight:600">₱180</b></span><span style="font-size:11px;font-weight:600;color:#8FE39A;background:rgba(76,175,80,.18);border-radius:8px;padding:3px 8px">28%</span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #4CAF50;border-radius:12px;padding:6px 11px;color:#5FC86A"><div style="font-size:18px;font-weight:700;line-height:1">42</div><div style="font-size:10px">pcs</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(245,181,71,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="alert-triangle" style="width:21px;height:21px;color:#F5B547;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#ECEFEF;line-height:1.25">NGK Spark Plug CPR6EA-9</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#93A0A3">ngk-014</span><span style="font-size:10px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Electrical</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#121C1D;background:#E8B84C;border-radius:8px;padding:3px 9px">₱200.00</span><span style="font-size:11px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px">Cost <b style="color:#ECEFEF;font-weight:600">₱150</b></span><span style="font-size:11px;font-weight:600;color:#8FE39A;background:rgba(76,175,80,.18);border-radius:8px;padding:3px 8px">25%</span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #F5B547;border-radius:12px;padding:6px 11px;color:#F5B547"><div style="font-size:18px;font-weight:700;line-height:1">4</div><div style="font-size:10px">pcs</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(244,67,54,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="alert-circle" style="width:21px;height:21px;color:#FF6B5E;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#ECEFEF;line-height:1.25">Motul 10W-40 Engine Oil 1L</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#93A0A3">mtl-10w40</span><span style="font-size:10px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Lubricants</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#121C1D;background:#E8B84C;border-radius:8px;padding:3px 9px">₱420.00</span><span style="font-size:11px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px">Cost <b style="color:#ECEFEF;font-weight:600">₱330</b></span><span style="font-size:11px;font-weight:600;color:#8FE39A;background:rgba(76,175,80,.18);border-radius:8px;padding:3px 8px">21%</span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #F44336;border-radius:12px;padding:6px 11px;color:#FF6B5E"><div style="font-size:18px;font-weight:700;line-height:1">0</div><div style="font-size:10px">L</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:11px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px">
+              <div style="width:40px;height:40px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="check-circle" style="width:21px;height:21px;color:#5FC86A;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:#ECEFEF;line-height:1.25">Bridgestone Battla 80/90-17</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-family:'Roboto Mono';font-size:12px;color:#93A0A3">bs-8090-17</span><span style="font-size:10px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Tires</span></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;color:#121C1D;background:#E8B84C;border-radius:8px;padding:3px 9px">₱1,250.00</span><span style="font-size:11px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px;display:inline-flex;align-items:center;gap:4px"><i data-lucide="lock" style="width:11px;height:11px;stroke-width:1.9"></i>Code <b style="font-family:'Roboto Mono';color:#ECEFEF">KRT</b></span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;border:1.4px solid #4CAF50;border-radius:12px;padding:6px 11px;color:#5FC86A"><div style="font-size:18px;font-weight:700;line-height:1">18</div><div style="font-size:10px">pcs</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Product</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · PRODUCT FORM · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Product form · edit/admin · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Edit Product</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#8FE39A"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#FF6B5E"><i data-lucide="trash-2" style="width:20px;height:20px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:14px 16px">
+          <div style="height:110px;border:1.5px dashed #2C3C3E;border-radius:16px;background:#18262A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#93A0A3"><i data-lucide="image-plus" style="width:26px;height:26px;stroke-width:1.6"></i><span style="font-size:12px">Add product image</span></div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Identity</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">SKU <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="qr-code" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-family:'Roboto Mono';font-size:14px;color:#ECEFEF">ASK-001</span></div>
+            <div style="font-size:11px;color:#93A0A3;margin:5px 2px 0;line-height:1.4">Changing the SKU keeps past sales &amp; receiving history intact.</div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Product Name <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="box" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">ASK Brake Shoe XRM 125</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Pricing</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="display:flex;gap:10px">
+              <div style="flex:1"><div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Selling (₱) <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 12px"><i data-lucide="tag" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">250.00</span></div></div>
+              <div style="flex:1"><div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Cost (₱) <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 12px"><i data-lucide="philippine-peso" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">180.00</span></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#93A0A3"><i data-lucide="trending-up" style="width:15px;height:15px;color:#8FE39A;stroke-width:1.9"></i>Margin <b style="color:#8FE39A;font-weight:700">28%</b> · ₱70.00 per unit</div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Stock</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="display:flex;gap:10px">
+              <div style="flex:1"><div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Quantity <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 12px"><i data-lucide="hash" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">42</span></div></div>
+              <div style="flex:1"><div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Reorder at</div><div style="display:flex;align-items:center;gap:8px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 12px"><i data-lucide="alert-triangle" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">10</span></div></div>
+            </div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Unit</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="ruler" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">pcs</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#93A0A3;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Barcodes</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"><span style="font-size:12px;font-family:'Roboto Mono';background:#0C1415;border:1px solid #2C3C3E;border-radius:999px;padding:4px 8px 4px 12px;display:inline-flex;align-items:center;gap:5px;color:#ECEFEF">4806504801108 <i data-lucide="x" style="width:13px;height:13px;color:#93A0A3;stroke-width:2"></i></span><span style="font-size:12px;font-family:'Roboto Mono';background:#0C1415;border:1px solid #2C3C3E;border-radius:999px;padding:4px 8px 4px 12px;display:inline-flex;align-items:center;gap:5px;color:#ECEFEF">4801234567890 <i data-lucide="x" style="width:13px;height:13px;color:#93A0A3;stroke-width:2"></i></span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="scan-barcode" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Add barcode</span><i data-lucide="plus" style="width:17px;height:17px;color:#E8B84C;stroke-width:2"></i></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Classification</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Category</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="layout-grid" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">Brakes</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#93A0A3;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Supplier</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="briefcase" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">RPM Parts Trading</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#93A0A3;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Notes</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;min-height:60px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:12px 13px"><i data-lucide="list" style="width:17px;height:17px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Optional notes…</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Audit</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:#93A0A3">Created</span><span style="color:#ECEFEF;font-weight:500">May 12, 2026 · 9:14 AM</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:#93A0A3">Created by</span><span style="color:#ECEFEF;font-weight:500">Admin</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:#93A0A3">Last updated</span><span style="color:#ECEFEF;font-weight:500">Jun 18, 2026 · 4:02 PM</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#93A0A3">Updated by</span><span style="color:#ECEFEF;font-weight:500">Maria S.</span></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;background:#18262A;border:1px solid #2C3C3E;color:#E8B84C;font-size:14px;font-weight:600;margin-top:14px"><i data-lucide="clock" style="width:16px;height:16px;stroke-width:1.75"></i>View price history</div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="save" style="width:18px;height:18px;stroke-width:2"></i>Update Product</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · PRICE HISTORY · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Price history · admin · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Price History</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:16px">
+          <div style="display:flex;background:#18262A;border:1px solid #243234;border-radius:999px;padding:4px">
+            <div style="flex:1;text-align:center;font-size:13px;font-weight:600;padding:8px 0;color:#121C1D;background:#E8B84C;border-radius:999px">All</div>
+            <div style="flex:1;text-align:center;font-size:13px;font-weight:500;padding:8px 0;color:#93A0A3">Price</div>
+            <div style="flex:1;text-align:center;font-size:13px;font-weight:500;padding:8px 0;color:#93A0A3">Cost</div>
+          </div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px;padding:16px;margin-top:14px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#93A0A3">Price trend</span><span style="font-size:13px;font-weight:600;color:#ECEFEF">₱225 → ₱250</span></div>
+            <svg viewBox="0 0 300 40" preserveAspectRatio="none" style="width:100%;height:40px;margin-top:6px"><polyline points="0,32 60,28 120,28 180,18 240,14 300,7" fill="none" stroke="#E8B84C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px"><span style="font-size:11px;color:#93A0A3">Cost trend</span><span style="font-size:13px;font-weight:600;color:#ECEFEF">₱170 → ₱180</span></div>
+            <svg viewBox="0 0 300 40" preserveAspectRatio="none" style="width:100%;height:40px;margin-top:6px"><polyline points="0,33 60,31 120,31 180,24 240,22 300,16" fill="none" stroke="#6C797C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Changes</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:18px;padding:4px 16px">
+            <div style="padding:12px 0;border-bottom:1px solid #243234">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Price</span><span style="font-weight:600;color:#ECEFEF">₱250</span><i data-lucide="arrow-up" style="width:12px;height:12px;color:#8FE39A;stroke-width:2.2"></i><span style="font-size:12px;color:#8FE39A;font-weight:500">₱20</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Cost</span><span style="font-weight:600;color:#ECEFEF">₱180</span><i data-lucide="arrow-up" style="width:12px;height:12px;color:#8FE39A;stroke-width:2.2"></i><span style="font-size:12px;color:#8FE39A;font-weight:500">₱10</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#93A0A3">Jun 18, 2026 · 4:02 PM<span>•</span><span style="font-weight:500;color:#ECEFEF">Maria S.</span><span style="font-size:11px;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Receiving · RCV-…3</span></div>
+            </div>
+            <div style="padding:12px 0;border-bottom:1px solid #243234">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Price</span><span style="font-weight:600;color:#ECEFEF">₱230</span><i data-lucide="arrow-up" style="width:12px;height:12px;color:#8FE39A;stroke-width:2.2"></i><span style="font-size:12px;color:#8FE39A;font-weight:500">₱10</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Cost</span><span style="font-weight:600;color:#ECEFEF">₱170</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#93A0A3">May 30, 2026 · 11:20 AM<span>•</span><span style="font-weight:500;color:#ECEFEF">Admin</span><span style="font-size:11px;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Manual edit</span></div>
+            </div>
+            <div style="padding:12px 0;border-bottom:1px solid #243234">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Price</span><span style="font-weight:600;color:#ECEFEF">₱220</span><i data-lucide="arrow-down" style="width:12px;height:12px;color:#FF6B5E;stroke-width:2.2"></i><span style="font-size:12px;color:#FF6B5E;font-weight:500">₱5</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Cost</span><span style="font-weight:600;color:#ECEFEF">₱170</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#93A0A3">May 20, 2026 · 2:45 PM<span>•</span><span style="font-weight:500;color:#ECEFEF">Admin</span><span style="font-size:11px;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Manual edit</span></div>
+            </div>
+            <div style="padding:12px 0">
+              <div style="display:flex;gap:18px"><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Price</span><span style="font-weight:600;color:#ECEFEF">₱225</span></div><div style="display:flex;align-items:center;gap:5px;font-size:13px"><span style="color:#93A0A3;font-size:12px">Cost</span><span style="font-weight:600;color:#ECEFEF">₱170</span></div></div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px;font-size:12px;color:#93A0A3">May 12, 2026 · 9:14 AM<span>•</span><span style="font-weight:500;color:#ECEFEF">Admin</span><span style="font-size:11px;border:1px solid #2C3C3E;border-radius:7px;padding:1px 6px">Created</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>
