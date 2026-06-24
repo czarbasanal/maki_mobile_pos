@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -198,7 +199,7 @@ class TopProductsCard extends ConsumerWidget {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    '${AppConstants.currencySymbol}${product.totalRevenue.toStringAsFixed(2)}',
+                    product.totalRevenue.toCurrency(),
                     style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ],

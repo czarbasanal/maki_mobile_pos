@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
@@ -108,7 +109,7 @@ class ReceivingItemRow extends ConsumerWidget {
               ),
               const SizedBox(width: 2),
               Text(
-                '${AppConstants.currencySymbol}${delta.abs().toStringAsFixed(2)}',
+                delta.abs().toCurrency(),
                 style: TextStyle(
                   fontSize: 10,
                   color: color,
@@ -259,7 +260,7 @@ class ReceivingItemRow extends ConsumerWidget {
                   children: [
                     if (isAdmin)
                       Text(
-                        '${AppConstants.currencySymbol}${item.totalCost.toStringAsFixed(2)}',
+                        item.totalCost.toCurrency(),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                         ),

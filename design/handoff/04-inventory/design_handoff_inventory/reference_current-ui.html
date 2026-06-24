@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 04: Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --field:#FAFAFA; --input-border:#E2E2E2;
+    --info:#2196F3; --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --warning:#FFC107; --warning-dark:#F57C00;
+    --r-sm:10px; --r-md:14px; --r-field:16px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+    --shadow-mat:0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.10); /* Material default Card */
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1300px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:880px;line-height:1.5;}
+  code{font-family:'Roboto Mono',monospace;font-size:.9em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:48px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:360px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;margin-top:26px;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:800px;overflow:hidden;display:flex;flex-direction:column;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:6px;padding:8px 8px;background:var(--canvas);min-height:52px;}
+  .appbar .title{font-size:18px;font-weight:600;flex:1;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;flex:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .iconbtn.on i{color:var(--success-dark);}
+  .body{flex:1;overflow:auto;}
+  .body::-webkit-scrollbar{width:0;}
+
+  /* ---- summary stat cards (current: hairline Container, NO shadow) ---- */
+  .summary{display:flex;gap:8px;padding:16px;}
+  .stat{flex:1;border:1px solid var(--hairline);border-radius:var(--r-md);background:var(--card);
+        padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .stat.sel{border-width:1.5px;}
+  .stat i{width:20px;height:20px;}
+  .stat .v{font-size:16px;font-weight:600;line-height:1;}
+  .stat .l{font-size:10px;color:var(--muted);}
+
+  /* ---- search + filter chips ---- */
+  .searchwrap{padding:0 16px 8px;}
+  .search{display:flex;align-items:center;gap:8px;height:44px;background:var(--field);
+          border:1px solid var(--input-border);border-radius:var(--r-field);padding:0 12px;}
+  .search i{width:18px;height:18px;color:var(--muted);}
+  .search .ph{flex:1;font-size:14px;color:var(--hint);}
+  .chips{display:flex;gap:8px;padding:0 16px 6px;overflow-x:auto;}
+  .chips::-webkit-scrollbar{height:0;}
+  .chip{white-space:nowrap;font-size:13px;padding:6px 12px;border-radius:var(--r-pill);
+        border:1px solid var(--input-border);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;gap:6px;}
+  .chip i{width:15px;height:15px;}
+  .chip.sel{background:var(--slate);color:#fff;border-color:var(--slate);}
+  .activef{display:flex;align-items:center;gap:8px;padding:8px 16px;}
+  .activef i{width:16px;height:16px;color:var(--muted);}
+  .activef .t{flex:1;font-size:13px;color:var(--muted);}
+  .activef .clr{font-size:13px;font-weight:600;color:var(--slate);}
+
+  /* ---- product list tile (current: Material Card w/ default shadow) ---- */
+  .tile{display:flex;align-items:flex-start;gap:12px;background:var(--card);border-radius:var(--r-lg);
+        box-shadow:var(--shadow-mat);margin:4px 16px;padding:12px;}
+  .vis{width:40px;height:40px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex:none;}
+  .vis i{width:22px;height:22px;}
+  .vis.in{background:rgba(76,175,80,.10);color:var(--success);}
+  .vis.low{background:rgba(255,193,7,.12);color:var(--warning-dark);}
+  .vis.out{background:rgba(244,67,54,.10);color:var(--error);}
+  .tmid{flex:1;min-width:0;}
+  .tname{font-size:13px;font-weight:600;line-height:1.25;}
+  .tsku{display:flex;align-items:center;gap:6px;margin-top:3px;}
+  .tsku .sku{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--muted);}
+  .catchip{font-size:10px;color:var(--muted);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:1px 6px;}
+  .prow{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
+  .ppill{font-size:12px;font-weight:600;color:var(--slate);border:1.2px solid rgba(40,62,70,.5);border-radius:var(--r-sm);padding:3px 8px;}
+  .cpill{font-size:11px;border:1px solid var(--hairline);border-radius:var(--r-sm);padding:3px 8px;color:var(--muted);}
+  .cpill b{color:var(--ink);font-weight:600;}
+  .mbadge{font-size:11px;font-weight:600;color:var(--success-dark);border:1px solid rgba(76,175,80,.5);border-radius:var(--r-sm);padding:3px 8px;}
+  .codepill{font-size:11px;border:1px solid var(--hairline);border-radius:var(--r-sm);padding:3px 8px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;}
+  .codepill i{width:11px;height:11px;}
+  .codepill b{font-family:'Roboto Mono',monospace;color:var(--ink);}
+  .sbadge{flex:none;display:flex;flex-direction:column;align-items:center;border:1.2px solid;border-radius:var(--r-md);padding:6px 10px;}
+  .sbadge .q{font-size:18px;font-weight:600;line-height:1;}
+  .sbadge .u{font-size:10px;}
+  .sbadge.in{border-color:var(--success);color:var(--success);}
+  .sbadge.low{border-color:var(--warning);color:var(--warning-dark);}
+  .sbadge.out{border-color:var(--error);color:var(--error);}
+
+  /* ---- bottom action bar ---- */
+  .actions{padding:12px 16px;background:var(--canvas);}
+  .btn-fill{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:var(--r-field);
+            width:100%;background:var(--slate);color:#fff;border:none;font-weight:600;font-size:15px;}
+  .btn-fill i{width:18px;height:18px;}
+  .btn-out{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:var(--r-field);
+           width:100%;background:var(--card);color:var(--slate);border:1px solid var(--input-border);font-weight:600;font-size:14px;}
+  .btn-out i{width:16px;height:16px;}
+
+  /* ---- product form ---- */
+  .form{padding:16px;}
+  .banner{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:var(--r-md);
+          background:rgba(33,150,243,.08);border:1px solid rgba(33,150,243,.45);margin-bottom:14px;}
+  .banner i{width:18px;height:18px;color:var(--info);flex:none;}
+  .banner .t{font-size:13px;color:#1565C0;line-height:1.4;}
+  .imgup{height:120px;border:1.5px dashed var(--input-border);border-radius:var(--r-md);
+         display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);margin-bottom:16px;}
+  .imgup i{width:26px;height:26px;}
+  .imgup .t{font-size:12px;}
+  .field{margin-bottom:14px;}
+  .lbl{font-size:12px;color:var(--muted);margin:0 0 5px 2px;}
+  .lbl .req{color:var(--error);}
+  .inp{display:flex;align-items:center;gap:10px;min-height:48px;background:var(--field);
+       border:1px solid var(--input-border);border-radius:var(--r-field);padding:0 14px;}
+  .inp i{width:18px;height:18px;color:var(--muted);flex:none;}
+  .inp .val{flex:1;font-size:14px;}
+  .inp .val.ph{color:var(--hint);}
+  .inp.dis{opacity:.5;}
+  .inp .end{width:30px;height:30px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;}
+  .inp .end i{width:16px;height:16px;}
+  .help{font-size:11px;color:var(--muted);margin:5px 2px 0;line-height:1.4;}
+  .help.warn{color:var(--warning-dark);font-style:italic;}
+  .switchrow{display:flex;align-items:center;gap:10px;padding:6px 2px;margin-bottom:6px;}
+  .switchrow .sw{width:40px;height:24px;border-radius:var(--r-pill);background:var(--slate);position:relative;flex:none;}
+  .switchrow .sw::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;right:3px;}
+  .switchrow .st{flex:1;}
+  .switchrow .st .n{font-size:14px;}
+  .switchrow .st .s{font-size:12px;color:var(--muted);margin-top:1px;}
+  .bcchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .bcchip{font-size:12px;font-family:'Roboto Mono',monospace;background:var(--field);border:1px solid var(--input-border);
+          border-radius:var(--r-pill);padding:4px 8px 4px 12px;display:inline-flex;align-items:center;gap:4px;}
+  .bcchip i{width:13px;height:13px;color:var(--muted);}
+  .auditcard{border:1px solid var(--hairline);border-radius:var(--r-md);padding:14px;margin:6px 0 16px;}
+  .auditcard .ah{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:10px;}
+  .auditcard .ah i{width:16px;height:16px;color:var(--slate);}
+  .arow{display:flex;justify-content:space-between;font-size:12px;margin-top:6px;}
+  .arow .l{color:var(--muted);}
+
+  /* ---- price history ---- */
+  .ph-pad{padding:24px;}
+  .seg{display:flex;border:1px solid var(--input-border);border-radius:var(--r-pill);overflow:hidden;margin-bottom:24px;}
+  .seg div{flex:1;text-align:center;font-size:13px;font-weight:500;padding:8px 0;color:var(--ink);}
+  .seg div.sel{background:var(--slate);color:#fff;}
+  .spark-lbl{font-size:11px;color:var(--muted);text-transform:none;margin:0 0 4px;}
+  .spark{height:44px;margin-bottom:16px;}
+  .ph-row{padding:10px 0;border-top:1px solid var(--hairline);}
+  .ph-row:first-of-type{border-top:none;}
+  .ph-metrics{display:flex;gap:16px;}
+  .ml{display:flex;align-items:center;gap:4px;font-size:13px;}
+  .ml .ml-lbl{color:var(--muted);font-size:12px;}
+  .ml .ml-val{font-weight:600;}
+  .ml i{width:12px;height:12px;}
+  .ml.up i,.ml.up .d{color:var(--success-dark);}
+  .ml.down i,.ml.down .d{color:var(--error);}
+  .ml .d{font-size:12px;font-weight:500;}
+  .ph-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted);}
+  .ph-meta .bullet{color:var(--muted);}
+  .ph-meta .who{font-weight:500;}
+  .srcbadge{font-size:11px;color:var(--muted);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:1px 6px;}
+
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.5;max-width:1100px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 04 · Inventory</h1>
+    <p><b>Pre-redesign (partial).</b> These three screens already use <code>AppColors</code> tokens and are
+    dark-aware, but they are <b>not yet on the redesigned surface language</b>: icons are still
+    <b>Cupertino</b> (not Lucide), product rows use Material-default <code>Card</code> shadows while the summary
+    stats use flat hairline <code>Container</code>s (mixed elevation), there are no <code>AppCard</code>
+    soft-shadow surfaces, and no hero-number treatment. This bundle <b>migrates Inventory onto the new
+    language</b> (Lucide icons, consistent <code>AppCard</code> surfaces, hero stats) — same pass done for
+    POS/Checkout/Sale-Detail. Mark up the migration you want and hand back. <i>(Icons here are rendered with
+    Lucide — the migration target — even though the live screens still ship Cupertino glyphs.)</i></p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#2196F3"></i> info (Total)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> success (In stock)</span>
+    <span><i class="swatch" style="background:#FFC107"></i> warning (Low)</span>
+    <span><i class="swatch" style="background:#F44336"></i> error (Out)</span>
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary)</span>
+    <span><i class="swatch" style="background:#FFFFFF"></i> card</span>
+    <span style="margin-left:auto">Light shown · dark theme parity (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ 1 · INVENTORY LIST ============ -->
+    <div class="frame">
+      <div class="caption">1 · Inventory list — admin, cost shown</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Inventory</div>
+          <button class="iconbtn on" title="Hide costs"><i data-lucide="eye"></i></button>
+          <button class="iconbtn" title="Sort by"><i data-lucide="arrow-up-down"></i></button>
+          <button class="iconbtn"><i data-lucide="more-vertical"></i></button>
+        </div>
+        <div class="body">
+          <!-- summary stats: flat hairline cards (current) -->
+          <div class="summary">
+            <div class="stat"><i data-lucide="package" style="color:var(--info)"></i><div class="v" style="color:var(--info)">128</div><div class="l">Total</div></div>
+            <div class="stat sel" style="border-color:var(--success)"><i data-lucide="check-circle" style="color:var(--success)"></i><div class="v" style="color:var(--success)">96</div><div class="l">In Stock</div></div>
+            <div class="stat"><i data-lucide="alert-triangle" style="color:var(--warning)"></i><div class="v" style="color:var(--warning-dark)">21</div><div class="l">Low</div></div>
+            <div class="stat"><i data-lucide="alert-circle" style="color:var(--error)"></i><div class="v" style="color:var(--error)">11</div><div class="l">Out</div></div>
+          </div>
+
+          <!-- search -->
+          <div class="searchwrap">
+            <div class="search"><i data-lucide="search"></i><span class="ph">Search by name, SKU, or barcode...</span></div>
+          </div>
+
+          <!-- filter chips -->
+          <div class="chips">
+            <span class="chip">All</span>
+            <span class="chip sel">In Stock</span>
+            <span class="chip">Low Stock</span>
+            <span class="chip">Out of Stock</span>
+            <span class="chip"><i data-lucide="layout-grid"></i> Category</span>
+          </div>
+          <div class="activef"><i data-lucide="sliders-horizontal"></i><span class="t">Filters active</span><span class="clr">Clear all</span></div>
+
+          <!-- product tiles -->
+          <div class="tile">
+            <div class="vis in"><i data-lucide="check-circle"></i></div>
+            <div class="mid">
+              <div class="tname">ASK Brake Shoe XRM 125</div>
+              <div class="tsku"><span class="sku">ask-001</span><span class="catchip">Brakes</span></div>
+              <div class="prow">
+                <span class="ppill">₱250.00</span>
+                <span class="cpill">Cost: <b>₱180.00</b></span>
+                <span class="mbadge">28%</span>
+              </div>
+            </div>
+            <div class="sbadge in"><div class="q">42</div><div class="u">pcs</div></div>
+          </div>
+
+          <div class="tile">
+            <div class="vis low"><i data-lucide="alert-triangle"></i></div>
+            <div class="mid">
+              <div class="tname">NGK Spark Plug CPR6EA-9</div>
+              <div class="tsku"><span class="sku">ngk-014</span><span class="catchip">Electrical</span></div>
+              <div class="prow">
+                <span class="ppill">₱200.00</span>
+                <span class="cpill">Cost: <b>₱150.00</b></span>
+                <span class="mbadge">25%</span>
+              </div>
+            </div>
+            <div class="sbadge low"><div class="q">4</div><div class="u">pcs</div></div>
+          </div>
+
+          <div class="tile">
+            <div class="vis out"><i data-lucide="alert-circle"></i></div>
+            <div class="mid">
+              <div class="tname">Motul 10W-40 Engine Oil 1L</div>
+              <div class="tsku"><span class="sku">mtl-10w40</span><span class="catchip">Lubricants</span></div>
+              <div class="prow">
+                <span class="ppill">₱420.00</span>
+                <span class="cpill">Cost: <b>₱330.00</b></span>
+                <span class="mbadge">21%</span>
+              </div>
+            </div>
+            <div class="sbadge out"><div class="q">0</div><div class="u">L</div></div>
+          </div>
+
+          <!-- staff view: cost code pill instead of cost+margin (shown for reference) -->
+          <div class="tile">
+            <div class="vis in"><i data-lucide="check-circle"></i></div>
+            <div class="mid">
+              <div class="tname">Bridgestone Battla 80/90-17</div>
+              <div class="tsku"><span class="sku">bs-8090-17</span><span class="catchip">Tires</span></div>
+              <div class="prow">
+                <span class="ppill">₱1,250.00</span>
+                <span class="codepill"><i data-lucide="lock"></i> Code <b>KRT</b></span>
+              </div>
+            </div>
+            <div class="sbadge in"><div class="q">18</div><div class="u">pcs</div></div>
+          </div>
+          <div style="height:8px"></div>
+        </div>
+        <div class="actions">
+          <button class="btn-fill"><i data-lucide="plus"></i> Add Product</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2 · PRODUCT FORM (EDIT) ============ -->
+    <div class="frame">
+      <div class="caption">2 · Product form — edit (admin)</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Edit Product</div>
+          <button class="iconbtn on"><i data-lucide="eye"></i></button>
+          <button class="iconbtn" title="Delete"><i data-lucide="trash-2" style="color:var(--error)"></i></button>
+        </div>
+        <div class="body">
+          <div class="form">
+            <!-- image uploader -->
+            <div class="imgup"><i data-lucide="image-plus"></i><span class="t">Add product image</span></div>
+
+            <!-- SKU -->
+            <div class="field">
+              <div class="lbl">SKU <span class="req">*</span></div>
+              <div class="inp"><i data-lucide="qr-code"></i><span class="val" style="font-family:'Roboto Mono',monospace">ASK-001</span></div>
+              <div class="help">Changing the SKU keeps past sales &amp; receiving history intact and keeps the old code scannable.</div>
+            </div>
+
+            <!-- Name -->
+            <div class="field">
+              <div class="lbl">Product Name <span class="req">*</span></div>
+              <div class="inp"><i data-lucide="box"></i><span class="val">ASK Brake Shoe XRM 125</span></div>
+            </div>
+
+            <!-- Selling price -->
+            <div class="field">
+              <div class="lbl">Selling Price (₱) <span class="req">*</span></div>
+              <div class="inp"><i data-lucide="tag"></i><span class="val">250.00</span></div>
+            </div>
+
+            <!-- Cost -->
+            <div class="field">
+              <div class="lbl">Cost (₱) <span class="req">*</span></div>
+              <div class="inp"><i data-lucide="philippine-peso"></i><span class="val">180.00</span></div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="field">
+              <div class="lbl">Initial Quantity <span class="req">*</span></div>
+              <div class="inp"><i data-lucide="hash"></i><span class="val">42</span></div>
+            </div>
+
+            <!-- Reorder level -->
+            <div class="field">
+              <div class="lbl">Reorder Level</div>
+              <div class="inp"><i data-lucide="alert-triangle"></i><span class="val">10</span></div>
+              <div class="help">Alert when stock falls below this level</div>
+            </div>
+
+            <!-- Unit -->
+            <div class="field">
+              <div class="lbl">Unit</div>
+              <div class="inp"><i data-lucide="ruler"></i><span class="val">pcs</span><span class="end"><i data-lucide="chevron-down"></i></span></div>
+            </div>
+
+            <!-- Barcodes -->
+            <div class="field">
+              <div class="lbl">Barcodes</div>
+              <div class="bcchips">
+                <span class="bcchip">4806504801108 <i data-lucide="x"></i></span>
+                <span class="bcchip">4801234567890 <i data-lucide="x"></i></span>
+              </div>
+              <div class="inp"><i data-lucide="scan-barcode"></i><span class="val ph">Add barcode</span><span class="end"><i data-lucide="plus"></i></span></div>
+            </div>
+
+            <!-- Category -->
+            <div class="field">
+              <div class="lbl">Category</div>
+              <div class="inp"><i data-lucide="layout-grid"></i><span class="val">Brakes</span><span class="end"><i data-lucide="chevron-down"></i></span></div>
+            </div>
+
+            <!-- Supplier -->
+            <div class="field">
+              <div class="lbl">Supplier</div>
+              <div class="inp"><i data-lucide="briefcase"></i><span class="val">RPM Parts Trading</span><span class="end"><i data-lucide="chevron-down"></i></span></div>
+            </div>
+
+            <!-- Notes -->
+            <div class="field">
+              <div class="lbl">Notes</div>
+              <div class="inp" style="min-height:64px;align-items:flex-start;padding-top:12px"><i data-lucide="list"></i><span class="val ph">Optional notes…</span></div>
+            </div>
+
+            <!-- Audit info -->
+            <div class="auditcard">
+              <div class="ah"><i data-lucide="info"></i> Audit info</div>
+              <div class="arow"><span class="l">Created</span><span>May 12, 2026 · 9:14 AM</span></div>
+              <div class="arow"><span class="l">Created by</span><span>Admin</span></div>
+              <div class="arow"><span class="l">Last updated</span><span>Jun 18, 2026 · 4:02 PM</span></div>
+              <div class="arow"><span class="l">Updated by</span><span>Maria S.</span></div>
+            </div>
+
+            <!-- price history link -->
+            <button class="btn-out" style="margin-bottom:16px"><i data-lucide="clock"></i> View price history</button>
+
+            <!-- submit -->
+            <button class="btn-fill"><i data-lucide="save"></i> Update Product</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3 · PRICE HISTORY ============ -->
+    <div class="frame">
+      <div class="caption">3 · Price history — admin only</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Price History</div>
+        </div>
+        <div class="body">
+          <div class="ph-pad">
+            <!-- segmented filter -->
+            <div class="seg"><div class="sel">All</div><div>Price</div><div>Cost</div></div>
+
+            <!-- sparklines -->
+            <div class="spark-lbl">Price</div>
+            <svg class="spark" viewBox="0 0 300 44" preserveAspectRatio="none"><polyline points="0,34 60,30 120,30 180,20 240,16 300,8" fill="none" stroke="#283E46" stroke-width="2"/></svg>
+            <div class="spark-lbl">Cost</div>
+            <svg class="spark" viewBox="0 0 300 44" preserveAspectRatio="none"><polyline points="0,36 60,33 120,33 180,24 240,22 300,18" fill="none" stroke="#283E46" stroke-width="2"/></svg>
+
+            <!-- history rows (newest first) -->
+            <div class="ph-row">
+              <div class="ph-metrics">
+                <div class="ml up"><span class="ml-lbl">Price</span><span class="ml-val">₱250.00</span><i data-lucide="arrow-up"></i><span class="d">₱20.00</span></div>
+                <div class="ml up"><span class="ml-lbl">Cost</span><span class="ml-val">₱180.00</span><i data-lucide="arrow-up"></i><span class="d">₱10.00</span></div>
+              </div>
+              <div class="ph-meta"><span>Jun 18, 2026 · 4:02 PM</span><span class="bullet">•</span><span class="who">Maria S.</span><span class="srcbadge">Receiving (RCV-20260618-3)</span></div>
+            </div>
+
+            <div class="ph-row">
+              <div class="ph-metrics">
+                <div class="ml up"><span class="ml-lbl">Price</span><span class="ml-val">₱230.00</span><i data-lucide="arrow-up"></i><span class="d">₱10.00</span></div>
+                <div class="ml"><span class="ml-lbl">Cost</span><span class="ml-val">₱170.00</span></div>
+              </div>
+              <div class="ph-meta"><span>May 30, 2026 · 11:20 AM</span><span class="bullet">•</span><span class="who">Admin</span><span class="srcbadge">Manual edit</span></div>
+            </div>
+
+            <div class="ph-row">
+              <div class="ph-metrics">
+                <div class="ml down"><span class="ml-lbl">Price</span><span class="ml-val">₱220.00</span><i data-lucide="arrow-down"></i><span class="d">₱5.00</span></div>
+                <div class="ml"><span class="ml-lbl">Cost</span><span class="ml-val">₱170.00</span></div>
+              </div>
+              <div class="ph-meta"><span>May 20, 2026 · 2:45 PM</span><span class="bullet">•</span><span class="who">Admin</span><span class="srcbadge">Manual edit</span></div>
+            </div>
+
+            <div class="ph-row">
+              <div class="ph-metrics">
+                <div class="ml"><span class="ml-lbl">Price</span><span class="ml-val">₱225.00</span></div>
+                <div class="ml"><span class="ml-lbl">Cost</span><span class="ml-val">₱170.00</span></div>
+              </div>
+              <div class="ph-meta"><span>May 12, 2026 · 9:14 AM</span><span class="bullet">•</span><span class="who">Admin</span><span class="srcbadge">Created</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Token-accurate reconstruction of the <b>current</b> Inventory screens. Sources:
+  <code>lib/presentation/mobile/screens/inventory/inventory_screen.dart</code>,
+  <code>product_form_screen.dart</code>,
+  <code>price_history_screen.dart</code>. Current state: <code>AppColors</code> tokens + dark-aware, but Cupertino
+  icons, Material-<code>Card</code>/flat-<code>Container</code> mixed elevation (no <code>AppCard</code>), and no
+  hero treatment. Migration target = the global theme in <code>design/handoff/maki-theme/</code>
+  (Lucide, soft-shadow <code>AppCard</code>). The form shows a representative field subset — see README for the
+  full list.</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

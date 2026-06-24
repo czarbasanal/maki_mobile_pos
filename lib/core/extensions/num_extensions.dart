@@ -37,6 +37,26 @@ extension NumExtensions on num {
     return formatter.format(this).trim();
   }
 
+  /// Currency with grouped thousands; shows decimals only when the value
+  /// has a fractional part.
+  ///
+  /// For *secondary* amounts (cost pill, price-history rows) where the
+  /// primary price keeps full decimals. Examples:
+  /// ```dart
+  /// 180.0.toCurrencyCompact()  // Returns "₱180"
+  /// 180.5.toCurrencyCompact()  // Returns "₱180.50"
+  /// 1250.toCurrencyCompact()   // Returns "₱1,250"
+  /// ```
+  String toCurrencyCompact() {
+    final hasCents = ((this * 100).round() % 100) != 0;
+    final formatter = NumberFormat.currency(
+      locale: 'en_PH',
+      symbol: AppConstants.currencySymbol,
+      decimalDigits: hasCents ? AppConstants.currencyDecimalPlaces : 0,
+    );
+    return formatter.format(this);
+  }
+
   /// Formats the number with thousand separators.
   ///
   /// Example:

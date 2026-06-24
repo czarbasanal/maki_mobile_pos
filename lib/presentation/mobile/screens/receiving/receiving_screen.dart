@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -190,7 +190,7 @@ class ReceivingScreen extends ConsumerWidget {
             ),
             if (isAdmin)
               Text(
-                '${AppConstants.currencySymbol}${receiving.totalCost.toStringAsFixed(2)}',
+                receiving.totalCost.toCurrency(),
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.primary,

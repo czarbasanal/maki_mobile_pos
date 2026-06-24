@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_list_tile.dart';
 import 'package:maki_mobile_pos/presentation/providers/cost_code_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
 void main() {
   final testProduct = ProductEntity(
@@ -23,6 +25,28 @@ void main() {
   );
 
   group('ProductListTile', () {
+    testWidgets('renders on AppCard (not Material Card) with filled price pill',
+        (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProductListTile(
+                product: testProduct,
+                showCost: true,
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(AppCard), findsOneWidget);
+      expect(find.byType(Card), findsNothing);
+      // Price keeps full decimals + grouping; cost pill is compact.
+      expect(find.text('₱100.00'), findsOneWidget);
+    });
+
     testWidgets('displays product information', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -86,7 +110,8 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('60.00'), findsOneWidget);
+      // Cost pill is compact (whole pesos drop decimals): ₱60.
+      expect(find.text('₱60'), findsOneWidget);
     });
 
     testWidgets('shows low stock warning', (tester) async {
@@ -108,7 +133,7 @@ void main() {
 
       // Low-stock products show the triangle indicator (per _stockStyle).
       expect(
-        find.byIcon(CupertinoIcons.exclamationmark_triangle),
+        find.byIcon(LucideIcons.alertTriangle),
         findsOneWidget,
       );
     });

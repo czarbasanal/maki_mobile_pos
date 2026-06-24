@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -264,14 +264,14 @@ class DraftDetailSheet extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} / ${item.unit}',
+                  '${item.sku} • ${item.unitPrice.toCurrency()} / ${item.unit}',
                   style: theme.textTheme.bodySmall?.copyWith(color: muted),
                 ),
                 if (hasDiscount)
                   Text(
                     draft.isPercentageDiscount
                         ? '${item.discountValue.toStringAsFixed(0)}% off'
-                        : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} off',
+                        : '${item.discountValue.toCurrency()} off',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.successDark,
                       fontWeight: FontWeight.w500,
@@ -285,14 +285,14 @@ class DraftDetailSheet extends StatelessWidget {
             children: [
               if (hasDiscount)
                 Text(
-                  '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
+                  item.grossAmount.toCurrency(),
                   style: theme.textTheme.bodySmall?.copyWith(
                     decoration: TextDecoration.lineThrough,
                     color: muted,
                   ),
                 ),
               Text(
-                '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
+                netAmount.toCurrency(),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: hasDiscount ? AppColors.successDark : null,
@@ -315,14 +315,14 @@ class DraftDetailSheet extends StatelessWidget {
             SummaryRow(
               label: 'Subtotal',
               value:
-                  '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
+                  draft.subtotal.toCurrency(),
             ),
             if (draft.hasDiscount) ...[
               const SizedBox(height: AppSpacing.sm),
               SummaryRow(
                 label: 'Discount',
                 value:
-                    '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
+                    '-${draft.totalDiscount.toCurrency()}',
                 valueColor: AppColors.successDark,
               ),
             ],
@@ -337,14 +337,14 @@ class DraftDetailSheet extends StatelessWidget {
                   child: SummaryRow(
                     label: line.description,
                     value:
-                        '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                        line.fee.toCurrency(),
                   ),
                 ),
               ),
               SummaryRow(
                 label: 'Labor',
                 value:
-                    '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
+                    draft.laborSubtotal.toCurrency(),
               ),
             ],
             const Padding(
@@ -354,7 +354,7 @@ class DraftDetailSheet extends StatelessWidget {
             SummaryRow(
               label: 'Total',
               value:
-                  '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+                  draft.grandTotal.toCurrency(),
               isTotal: true,
             ),
           ],

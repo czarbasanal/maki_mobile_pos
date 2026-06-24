@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -83,6 +84,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _reorderLevelController.text = '${AppConstants.defaultReorderLevel}';
     _unitController.text = 'pcs';
 
+    // Keep the live margin recap (under the Pricing pair) in sync as the
+    // price/cost fields are edited.
+    _priceController.addListener(_onPriceOrCostChanged);
+    _costController.addListener(_onPriceOrCostChanged);
+
     if (widget.productId != null) {
       _loadProduct();
     } else {
@@ -91,6 +97,260 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _skuController.text = SkuGenerator.generateForName(null);
       _nameFocusNode.addListener(_onNameFocusChange);
     }
+  }
+
+  void _onPriceOrCostChanged() {
+    if (mounted) setState(() {});
+  }
+
+  // ---- Bundle 04 layout helpers (sectioned cards + pinned submit) ----
+
+  Widget _sectionHeader(String text) => Padding(
+        padding: const EdgeInsets.only(left: 2, top: 18, bottom: 8),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.8,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+
+  Widget _sectionCard({required List<Widget> children}) => AppCard(
+        radius: AppRadius.field,
+        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      );
+
+  /// Info-tinted banner stating a role's edit limits.
+  Widget _roleBanner(String text) => Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.sm + 4),
+        decoration: BoxDecoration(
+          color: AppColors.info.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.info.withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          children: [
+            const Icon(LucideIcons.info, color: AppColors.infoDark, size: 18),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                text,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.infoDark),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  /// Dims + blocks a field for roles that can't edit it (cashier). Gentler
+  /// than the old 0.38 opacity; the role banner states the reason.
+  Widget _lockable(bool locked, Widget child) => locked
+      ? Opacity(opacity: 0.6, child: AbsorbPointer(child: child))
+      : child;
+
+  Widget _priceField(bool canEditPrice) => TextFormField(
+        key: const Key('product-price-field'),
+        controller: _priceController,
+        decoration: InputDecoration(
+          labelText: 'Selling (${AppConstants.currencySymbol}) *',
+          prefixIcon: const Icon(LucideIcons.tag),
+          helperText: canEditPrice ? null : 'Only admin can change price',
+          helperStyle: const TextStyle(
+            color: AppColors.warningDark,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        enabled: canEditPrice,
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Price is required';
+          final price = double.tryParse(value);
+          if (price == null || price < 0) return 'Enter a valid price';
+          return null;
+        },
+      );
+
+  Widget _costField(bool canEditCost) => TextFormField(
+        key: const Key('product-cost-field'),
+        controller: _costController,
+        decoration: InputDecoration(
+          labelText: 'Cost (${AppConstants.currencySymbol}) *',
+          prefixIcon: const Icon(AppIcons.peso),
+        ),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        enabled: canEditCost,
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Cost is required';
+          final cost = double.tryParse(value);
+          if (cost == null || cost < 0) return 'Enter a valid cost';
+          return null;
+        },
+      );
+
+  Widget _costCodeField() => TextFormField(
+        controller: _costCodeController,
+        textCapitalization: TextCapitalization.characters,
+        decoration: const InputDecoration(
+          labelText: 'Cost Code *',
+          prefixIcon: Icon(LucideIcons.lock),
+          helperText: 'Enter the product cost code',
+        ),
+        validator: (value) {
+          final code = value?.trim() ?? '';
+          if (code.isEmpty) return 'Cost code is required';
+          if (!ref.read(isValidCodeProvider(code))) return 'Invalid cost code';
+          return null;
+        },
+      );
+
+  Widget _quantityField(bool isNameOnly) => TextFormField(
+        controller: _quantityController,
+        enabled: !isNameOnly,
+        decoration: const InputDecoration(
+          labelText: 'Quantity *',
+          prefixIcon: Icon(LucideIcons.hash),
+        ),
+        keyboardType: TextInputType.number,
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Quantity is required';
+          final qty = int.tryParse(value);
+          if (qty == null || qty < 0) return 'Enter a valid quantity';
+          return null;
+        },
+      );
+
+  Widget _reorderField(bool isNameOnly) => TextFormField(
+        controller: _reorderLevelController,
+        enabled: !isNameOnly,
+        decoration: const InputDecoration(
+          labelText: 'Reorder at',
+          prefixIcon: Icon(LucideIcons.alertTriangle),
+          helperText: 'Alert when stock falls below this level',
+        ),
+        keyboardType: TextInputType.number,
+      );
+
+  Widget _supplierField(AsyncValue<List<SupplierEntity>> suppliersAsync) =>
+      suppliersAsync.when(
+        data: (suppliers) {
+          final items = <DropdownMenuItem<String>>[
+            const DropdownMenuItem<String>(
+              value: null,
+              child: Text('No supplier'),
+            ),
+            ...suppliers.map(
+              (s) => DropdownMenuItem<String>(
+                value: s.id,
+                child: Text(s.name),
+              ),
+            ),
+          ];
+          final selected = _selectedSupplierId;
+          final safe =
+              items.any((i) => i.value == selected) ? selected : null;
+          return AppDropdown<String>(
+            initialValue: safe,
+            key: ValueKey('supplier:$safe:${suppliers.length}'),
+            decoration: const InputDecoration(
+              labelText: 'Supplier',
+              prefixIcon: Icon(LucideIcons.briefcase),
+            ),
+            items: items,
+            onChanged: (value) {
+              setState(() => _selectedSupplierId = value);
+            },
+          );
+        },
+        loading: () => const LinearProgressIndicator(),
+        error: (_, __) => const Text('Could not load suppliers'),
+      );
+
+  /// Live margin recap shown under the Pricing pair (only when both > 0 and
+  /// cost ≤ price). "Margin 28% · ₱70.00 per unit" — the % bold-green.
+  Widget _marginLine() {
+    final price = double.tryParse(_priceController.text) ?? 0;
+    final cost = double.tryParse(_costController.text) ?? 0;
+    if (price <= 0 || cost <= 0 || cost > price) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final green = AppColors.successText(isDark);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final pct = ((price - cost) / price * 100).toStringAsFixed(0);
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, left: 2),
+      child: Row(
+        children: [
+          Icon(LucideIcons.trendingUp, size: 15, color: green),
+          const SizedBox(width: 6),
+          Text('Margin ', style: TextStyle(fontSize: 12, color: muted)),
+          Text('$pct%',
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: green)),
+          Text(' · ${(price - cost).toCurrency()} per unit',
+              style: TextStyle(fontSize: 12, color: muted)),
+        ],
+      ),
+    );
+  }
+
+  /// Pinned bottom submit bar (mirrors the sale-detail footer).
+  Widget _buildSubmitFooter(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.field),
+            boxShadow: isDark
+                ? AppShadows.primaryButtonGold
+                : AppShadows.primaryButton,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: FilledButton.icon(
+              key: const Key('product-form-submit'),
+              onPressed: _isSaving ? null : _handleSubmit,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(LucideIcons.save, size: 18),
+              label: Text(widget.isEditing ? 'Update Product' : 'Add Product'),
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.field),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _onNameFocusChange() {
@@ -194,7 +454,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Product' : 'Add Product'),
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.inventory),
         ),
         actions: [
@@ -213,7 +473,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             IconButton(
               tooltip: 'Delete',
               icon: const Icon(
-                CupertinoIcons.trash,
+                LucideIcons.trash2,
                 color: AppColors.error,
               ),
               onPressed: _isSaving ? null : _confirmDelete,
@@ -222,447 +482,226 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Role info banner for staff — outlined info pill
-                    if (userRole == UserRole.staff && widget.isEditing)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                        padding: const EdgeInsets.all(AppSpacing.sm + 4),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: AppColors.info),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              CupertinoIcons.info_circle,
-                              color: AppColors.infoDark,
-                              size: 20,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Text(
-                                'You can edit product details except price and cost fields.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: AppColors.infoDark),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // Role info banner for cashier
-                    if (isNameOnly && widget.isEditing)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                        padding: const EdgeInsets.all(AppSpacing.sm + 4),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: AppColors.info),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              CupertinoIcons.info_circle,
-                              color: AppColors.infoDark,
-                              size: 20,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Text(
-                                'You can edit the product name and image.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: AppColors.infoDark),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // Product image — admin and cashier can pick/replace;
-                    // staff sees existing image read-only. Bytes are held in
-                    // memory and uploaded on save.
-                    Padding(
-                      padding:
-                          const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: ProductImageUploader(
-                        existingUrl: _imageMarkedForRemoval
-                            ? null
-                            : _existingProduct?.imageUrl,
-                        pendingBytes: _pendingImageBytes,
-                        enabled: userRole == UserRole.admin ||
-                            isNameOnly ||
-                            (userRole == UserRole.staff && isCreating),
-                        onChanged: (bytes, {required removed}) {
-                          setState(() {
-                            if (removed) {
-                              _pendingImageBytes = null;
-                              _imageMarkedForRemoval = true;
-                            } else {
-                              _pendingImageBytes = bytes;
-                              _imageMarkedForRemoval = false;
-                            }
-                          });
-                        },
-                      ),
-                    ),
-
-                    // SKU — Auto/Manual generator is create-only. On edit the
-                    // field is editable for admins (history-safe; old code is
-                    // kept scannable) and read-only for everyone else.
-                    if (isCreating)
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: const Text('Auto-generate SKU'),
-                        subtitle: Text(
-                          _autoGenerateSku
-                              ? 'Built from category + random suffix'
-                              : 'Type the SKU manually',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        value: _autoGenerateSku,
-                        onChanged: (v) {
-                          setState(() {
-                            _autoGenerateSku = v;
-                            if (v) {
-                              _skuController.text =
-                                  SkuGenerator.generateForName(
-                                _nameController.text,
-                              );
-                            }
-                          });
-                        },
-                      ),
-                    TextFormField(
-                      key: const Key('product-sku-field'),
-                      controller: _skuController,
-                      decoration: InputDecoration(
-                        labelText: 'SKU *',
-                        prefixIcon: const Icon(CupertinoIcons.qrcode),
-                        helperText: (!isCreating && userRole == UserRole.admin)
-                            ? 'Changing the SKU keeps past sales & receiving '
-                                'history intact and keeps the old code scannable.'
-                            : null,
-                        suffixIcon: (isCreating && _autoGenerateSku)
-                            ? IconButton(
-                                tooltip: 'Regenerate',
-                                icon: const Icon(
-                                    CupertinoIcons.arrow_2_circlepath),
-                                onPressed: _regenerateSku,
-                              )
-                            : null,
-                      ),
-                      enabled: skuFieldEnabled,
-                      validator: (value) {
-                        final v = value?.trim() ?? '';
-                        if (v.isEmpty) return 'SKU is required';
-                        if (!SkuGenerator.isValidSku(v)) {
-                          return 'Use only letters, numbers, and hyphens (max 50)';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Name
-                    TextFormField(
-                      controller: _nameController,
-                      focusNode: _nameFocusNode,
-                      decoration: const InputDecoration(
-                        labelText: 'Product Name *',
-                        prefixIcon: Icon(CupertinoIcons.cube_box),
-                      ),
-                      validator: (value) =>
-                          value?.isEmpty == true ? 'Name is required' : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Price - disabled for staff
-                    TextFormField(
-                      controller: _priceController,
-                      decoration: InputDecoration(
-                        labelText:
-                            'Selling Price (${AppConstants.currencySymbol}) *',
-                        prefixIcon: const Icon(CupertinoIcons.tag),
-                        helperText:
-                            canEditPrice ? null : 'Only admin can change price',
-                        helperStyle: const TextStyle(
-                          color: AppColors.warningDark,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      enabled: canEditPrice,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Price is required';
-                        }
-                        final price = double.tryParse(value);
-                        if (price == null || price < 0) {
-                          return 'Enter a valid price';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Cost - admin only. On create the field is shown so a
-                    // cost can be entered; on edit it's hidden by default and
-                    // revealed via the AppBar toggle.
-                    if (showCostField)
-                      Column(
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextFormField(
-                            controller: _costController,
-                            decoration: InputDecoration(
-                              labelText:
-                                  'Cost (${AppConstants.currencySymbol}) *',
-                              prefixIcon: const Icon(AppIcons.peso),
-                                  ),
-                            keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true),
-                            enabled: canEditCost,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Cost is required';
-                              }
-                              final cost = double.tryParse(value);
-                              if (cost == null || cost < 0) {
-                                return 'Enter a valid cost';
-                              }
-                              return null;
-                            },
+                          if (userRole == UserRole.staff && widget.isEditing)
+                            _roleBanner(
+                                'You can edit product details except price and cost fields.'),
+                          if (isNameOnly && widget.isEditing)
+                            _roleBanner(
+                                'You can edit the product name and image.'),
+
+                          // Product image — bytes held in memory, uploaded on save.
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.md),
+                            child: ProductImageUploader(
+                              existingUrl: _imageMarkedForRemoval
+                                  ? null
+                                  : _existingProduct?.imageUrl,
+                              pendingBytes: _pendingImageBytes,
+                              enabled: userRole == UserRole.admin ||
+                                  isNameOnly ||
+                                  (userRole == UserRole.staff && isCreating),
+                              onChanged: (bytes, {required removed}) {
+                                setState(() {
+                                  if (removed) {
+                                    _pendingImageBytes = null;
+                                    _imageMarkedForRemoval = true;
+                                  } else {
+                                    _pendingImageBytes = bytes;
+                                    _imageMarkedForRemoval = false;
+                                  }
+                                });
+                              },
+                            ),
                           ),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
 
-                    // Cost Code — staff enter the product's letter code; the
-                    // app decodes it to the real cost in CreateProductUseCase.
-                    // The numeric cost is never shown to staff.
-                    if (showCostCodeField)
-                      Column(
-                        children: [
-                          TextFormField(
-                            controller: _costCodeController,
-                            textCapitalization: TextCapitalization.characters,
-                            decoration: const InputDecoration(
-                              labelText: 'Cost Code *',
-                              prefixIcon: Icon(CupertinoIcons.lock),
-                              helperText: 'Enter the product cost code',
-                            ),
-                            validator: (value) {
-                              final code = value?.trim() ?? '';
-                              if (code.isEmpty) return 'Cost code is required';
-                              if (!ref.read(isValidCodeProvider(code))) {
-                                return 'Invalid cost code';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
-
-                    // Quantity
-                    TextFormField(
-                      controller: _quantityController,
-                      enabled: !isNameOnly,
-                      decoration: const InputDecoration(
-                        labelText: 'Initial Quantity *',
-                        prefixIcon: Icon(CupertinoIcons.number),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Quantity is required';
-                        }
-                        final qty = int.tryParse(value);
-                        if (qty == null || qty < 0) {
-                          return 'Enter a valid quantity';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Reorder Level
-                    TextFormField(
-                      controller: _reorderLevelController,
-                      enabled: !isNameOnly,
-                      decoration: const InputDecoration(
-                        labelText: 'Reorder Level',
-                        prefixIcon: Icon(CupertinoIcons.exclamationmark_triangle),
-                        helperText: 'Alert when stock falls below this level',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Unit — admin-managed dropdown. Required field; empty
-                    // submissions fall back to 'pcs' downstream so legacy
-                    // products created before units were seeded still save.
-                    AbsorbPointer(
-                      absorbing: isNameOnly,
-                      child: Opacity(
-                        opacity: isNameOnly ? 0.38 : 1.0,
-                        child: _AdminListDropdownField(
-                          kind: CategoryKind.unit,
-                          controller: _unitController,
-                          label: 'Unit',
-                          icon: Icons.straighten,
-                          onChanged: (value) {
-                            setState(() {
-                              _unitController.text = value ?? '';
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Barcodes — one or more vendor codes that should
-                    // resolve to this product when scanned. The custom
-                    // SKU above is still the primary identifier; entries
-                    // here are additional scan-only aliases.
-                    _buildBarcodesField(enabled: !isNameOnly),
-                    const SizedBox(height: 16),
-
-                    // Category — admin-managed dropdown. If the product is
-                    // tied to a category that's been deactivated since last
-                    // edit, we surface it inline so the user can keep it or
-                    // pick a current active one.
-                    AbsorbPointer(
-                      absorbing: isNameOnly,
-                      child: Opacity(
-                        opacity: isNameOnly ? 0.38 : 1.0,
-                        child: _AdminListDropdownField(
-                          kind: CategoryKind.product,
-                          controller: _categoryController,
-                          label: 'Category',
-                          icon: CupertinoIcons.square_grid_2x2,
-                          includeNoneOption: true,
-                          onChanged: (value) {
-                            setState(() {
-                              _categoryController.text = value ?? '';
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Supplier - admin only can change supplier
-                    if (canSelectSupplier)
-                      suppliersAsync.when(
-                        data: (suppliers) {
-                          final items = <DropdownMenuItem<String>>[
-                            const DropdownMenuItem<String>(
-                              value: null,
-                              child: Text('No supplier'),
-                            ),
-                            ...suppliers.map(
-                              (s) => DropdownMenuItem<String>(
-                                value: s.id,
-                                child: Text(s.name),
-                              ),
-                            ),
-                          ];
-                          // Guard against a stale supplier id pointing at a
-                          // supplier that's been removed from the active list.
-                          final selected = _selectedSupplierId;
-                          final safe = items.any((i) => i.value == selected)
-                              ? selected
-                              : null;
-                          return AppDropdown<String>(
-                            initialValue: safe,
-                            key: ValueKey('supplier:$safe:${suppliers.length}'),
-                            decoration: const InputDecoration(
-                              labelText: 'Supplier',
-                              prefixIcon: Icon(CupertinoIcons.briefcase),
-                            ),
-                            items: items,
-                            onChanged: (value) {
-                              setState(() => _selectedSupplierId = value);
-                            },
-                          );
-                        },
-                        loading: () => const LinearProgressIndicator(),
-                        error: (_, __) =>
-                            const Text('Could not load suppliers'),
-                      ),
-
-
-                    const SizedBox(height: 16),
-
-                    // Notes
-                    TextFormField(
-                      controller: _notesController,
-                      enabled: !isNameOnly,
-                      decoration: const InputDecoration(
-                        labelText: 'Notes',
-                        prefixIcon: Icon(CupertinoIcons.list_bullet),
-                      ),
-                      maxLines: 3,
-                    ),
-                    // Audit metadata (edit mode only) — shows who/when this
-                    // product was created and last updated. Reads off the
-                    // already-loaded _existingProduct so no extra fetch.
-                    if (widget.isEditing && _existingProduct != null) ...[
-                      const SizedBox(height: 24),
-                      _AuditInfoCard(product: _existingProduct!),
-                    ],
-                    if (canViewCost &&
-                        widget.isEditing &&
-                        inventoryState.showCost) ...[
-                      const SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        onPressed: () => context.push(
-                          '/inventory/${widget.productId}/price-history',
-                        ),
-                        icon: const Icon(CupertinoIcons.clock),
-                        label: const Text('View price history'),
-                      ),
-                    ],
-
-                    const SizedBox(height: 32),
-
-                    // Submit button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: FilledButton.icon(
-                        onPressed: _isSaving ? null : _handleSubmit,
-                        icon: _isSaving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                          _sectionHeader('IDENTITY'),
+                          _sectionCard(children: [
+                            if (isCreating)
+                              SwitchListTile(
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
+                                title: const Text('Auto-generate SKU'),
+                                subtitle: Text(
+                                  _autoGenerateSku
+                                      ? 'Built from category + random suffix'
+                                      : 'Type the SKU manually',
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
+                                value: _autoGenerateSku,
+                                onChanged: (v) {
+                                  setState(() {
+                                    _autoGenerateSku = v;
+                                    if (v) {
+                                      _skuController.text =
+                                          SkuGenerator.generateForName(
+                                        _nameController.text,
+                                      );
+                                    }
+                                  });
+                                },
+                              ),
+                            TextFormField(
+                              key: const Key('product-sku-field'),
+                              controller: _skuController,
+                              decoration: InputDecoration(
+                                labelText: 'SKU *',
+                                prefixIcon: const Icon(LucideIcons.qrCode),
+                                helperText:
+                                    (!isCreating && userRole == UserRole.admin)
+                                        ? 'Changing the SKU keeps past sales & '
+                                            'receiving history intact.'
+                                        : null,
+                                suffixIcon: (isCreating && _autoGenerateSku)
+                                    ? IconButton(
+                                        tooltip: 'Regenerate',
+                                        icon: const Icon(LucideIcons.refreshCw),
+                                        onPressed: _regenerateSku,
+                                      )
+                                    : null,
+                              ),
+                              enabled: skuFieldEnabled,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) return 'SKU is required';
+                                if (!SkuGenerator.isValidSku(v)) {
+                                  return 'Use only letters, numbers, and hyphens (max 50)';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _nameController,
+                              focusNode: _nameFocusNode,
+                              decoration: const InputDecoration(
+                                labelText: 'Product Name *',
+                                prefixIcon: Icon(LucideIcons.box),
+                              ),
+                              validator: (value) => value?.isEmpty == true
+                                  ? 'Name is required'
+                                  : null,
+                            ),
+                          ]),
+
+                          _sectionHeader('PRICING'),
+                          _sectionCard(children: [
+                            if (showCostField)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: _priceField(canEditPrice)),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: _costField(canEditCost)),
+                                ],
                               )
-                            : const Icon(CupertinoIcons.tray_arrow_down),
-                        label: Text(widget.isEditing
-                            ? 'Update Product'
-                            : 'Add Product'),
+                            else
+                              _priceField(canEditPrice),
+                            if (showCostCodeField) ...[
+                              const SizedBox(height: 14),
+                              _costCodeField(),
+                            ],
+                            if (showCostField) _marginLine(),
+                          ]),
+
+                          _sectionHeader('STOCK'),
+                          _sectionCard(children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: _quantityField(isNameOnly)),
+                                const SizedBox(width: 10),
+                                Expanded(child: _reorderField(isNameOnly)),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            _lockable(
+                              isNameOnly,
+                              _AdminListDropdownField(
+                                kind: CategoryKind.unit,
+                                controller: _unitController,
+                                label: 'Unit',
+                                icon: LucideIcons.ruler,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _unitController.text = value ?? '';
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            _buildBarcodesField(enabled: !isNameOnly),
+                          ]),
+
+                          _sectionHeader('CLASSIFICATION'),
+                          _sectionCard(children: [
+                            _lockable(
+                              isNameOnly,
+                              _AdminListDropdownField(
+                                kind: CategoryKind.product,
+                                controller: _categoryController,
+                                label: 'Category',
+                                icon: LucideIcons.layoutGrid,
+                                includeNoneOption: true,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _categoryController.text = value ?? '';
+                                  });
+                                },
+                              ),
+                            ),
+                            if (canSelectSupplier) ...[
+                              const SizedBox(height: 14),
+                              _supplierField(suppliersAsync),
+                            ],
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _notesController,
+                              enabled: !isNameOnly,
+                              decoration: const InputDecoration(
+                                labelText: 'Notes',
+                                prefixIcon: Icon(LucideIcons.list),
+                              ),
+                              maxLines: 3,
+                            ),
+                          ]),
+
+                          if (widget.isEditing && _existingProduct != null) ...[
+                            _sectionHeader('AUDIT'),
+                            _AuditInfoCard(product: _existingProduct!),
+                          ],
+
+                          if (canViewCost &&
+                              widget.isEditing &&
+                              inventoryState.showCost) ...[
+                            const SizedBox(height: 14),
+                            OutlinedButton.icon(
+                              onPressed: () => context.push(
+                                '/inventory/${widget.productId}/price-history',
+                              ),
+                              icon: const Icon(LucideIcons.clock),
+                              label: const Text('View price history'),
+                            ),
+                          ],
+
+                          const SizedBox(height: 8),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                _buildSubmitFooter(context),
+              ],
             ),
     );
   }
@@ -711,11 +750,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             decoration: InputDecoration(
               labelText: 'Add barcode',
               hintText: 'e.g. 4806504801108',
-              prefixIcon: const Icon(CupertinoIcons.barcode_viewfinder),
+              prefixIcon: const Icon(LucideIcons.scanLine),
               errorText: _barcodeError,
               suffixIcon: IconButton(
                 tooltip: 'Add',
-                icon: const Icon(CupertinoIcons.add),
+                icon: const Icon(LucideIcons.plus),
                 onPressed: _addBarcodeFromInput,
               ),
             ),
@@ -1219,7 +1258,7 @@ class _AuditInfoCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(CupertinoIcons.info_circle,
+              Icon(LucideIcons.info,
                   size: 18, color: theme.colorScheme.primary),
               const SizedBox(width: AppSpacing.sm),
               Text(

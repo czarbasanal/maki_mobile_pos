@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -293,14 +294,14 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                   Text(
-                    '${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} each',
+                    '${item.unitPrice.toCurrency()} each',
                     style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ],
               ),
             ),
             Text(
-              '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
+              item.grossAmount.toCurrency(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -386,7 +387,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             ),
           ),
           Text(
-            '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+            line.fee.toCurrency(),
             style: theme.textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w500),
           ),
@@ -420,14 +421,14 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             SummaryRow(
               label: 'Subtotal',
               value:
-                  '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
+                  draft.subtotal.toCurrency(),
             ),
             if (draft.totalDiscount > 0) ...[
               const SizedBox(height: 4),
               SummaryRow(
                 label: 'Discount',
                 value:
-                    '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
+                    '-${draft.totalDiscount.toCurrency()}',
                 valueColor: AppColors.successDark,
               ),
             ],
@@ -438,14 +439,14 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     ? 'Labor (1 service)'
                     : 'Labor (${draft.laborLines.length} services)',
                 value:
-                    '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
+                    draft.laborSubtotal.toCurrency(),
               ),
             ],
             const Divider(height: AppSpacing.md),
             SummaryRow(
               label: 'Total (${draft.totalItemCount} items)',
               value:
-                  '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+                  draft.grandTotal.toCurrency(),
               isTotal: true,
             ),
             const SizedBox(height: AppSpacing.md),

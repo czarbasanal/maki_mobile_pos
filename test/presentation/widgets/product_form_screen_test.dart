@@ -178,4 +178,56 @@ void main() {
           ));
     });
   });
+
+  // Pumps the *create* form (no productId) so the cost field + margin line
+  // are always shown (admin).
+  Future<void> pumpCreate(WidgetTester tester, UserRole role) async {
+    tester.view.physicalSize = const Size(1200, 2600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWith((ref) => Stream.value(user(role))),
+          productRepositoryProvider.overrideWith((ref) => repo),
+          activityLogRepositoryProvider.overrideWith((ref) => logRepo),
+          costCodeMappingProvider
+              .overrideWith((ref) => CostCodeEntity.defaultMapping()),
+        ],
+        child: const MaterialApp(home: ProductFormScreen()),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+  }
+
+  group('ProductFormScreen — bundle 04 layout', () {
+    testWidgets('groups fields under uppercase section headers',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      expect(find.text('IDENTITY'), findsOneWidget);
+      expect(find.text('PRICING'), findsOneWidget);
+      expect(find.text('STOCK'), findsOneWidget);
+      expect(find.text('CLASSIFICATION'), findsOneWidget);
+    });
+
+    testWidgets('uses the shortened Selling label and a keyed pinned submit',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      expect(find.text('Selling (₱) *'), findsOneWidget);
+      expect(find.byKey(const Key('product-form-submit')), findsOneWidget);
+    });
+
+    testWidgets('shows a live margin line from the price/cost pair',
+        (tester) async {
+      await pumpCreate(tester, UserRole.admin);
+      await tester.enterText(
+          find.byKey(const Key('product-price-field')), '250');
+      await tester.enterText(
+          find.byKey(const Key('product-cost-field')), '180');
+      await tester.pump();
+      // (250-180)/250 = 28%; unit profit ₱70.00.
+      expect(find.textContaining('28%'), findsOneWidget);
+      expect(find.textContaining('₱70.00 per unit'), findsOneWidget);
+    });
+  });
 }

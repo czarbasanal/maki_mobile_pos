@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -277,7 +278,7 @@ class ReceiptWidget extends ConsumerWidget {
                             ),
                           ),
                           Text(
-                            '@${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}'
+                            '@${item.unitPrice.toCurrency()}'
                             '  •  Code: ${costMapping.encode(item.unitCost)}',
                             style: const TextStyle(
                               fontSize: 10,
@@ -301,7 +302,7 @@ class ReceiptWidget extends ConsumerWidget {
                     SizedBox(
                       width: 70,
                       child: Text(
-                        '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
+                        netAmount.toCurrency(),
                         textAlign: TextAlign.right,
                         style: const TextStyle(
                           fontSize: 12,
@@ -317,7 +318,7 @@ class ReceiptWidget extends ConsumerWidget {
                     child: Text(
                       sale.isPercentageDiscount
                           ? '  Discount: ${item.discountValue.toStringAsFixed(0)}%'
-                          : '  Discount: -${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)}',
+                          : '  Discount: -${item.discountValue.toCurrency()}',
                       style: const TextStyle(
                         fontSize: 10,
                         color: AppColors.successDark,
@@ -357,7 +358,7 @@ class ReceiptWidget extends ConsumerWidget {
                   SizedBox(
                     width: 70,
                     child: Text(
-                      '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                      line.fee.toCurrency(),
                       textAlign: TextAlign.right,
                       style: const TextStyle(
                           fontSize: 12, color: Colors.black),
@@ -408,7 +409,7 @@ class ReceiptWidget extends ConsumerWidget {
           ),
         ),
         Text(
-          '${isDiscount ? '-' : ''}${AppConstants.currencySymbol}${amount.abs().toStringAsFixed(2)}',
+          '${isDiscount ? '-' : ''}${amount.abs().toCurrency()}',
           style: TextStyle(
             fontWeight: isGrandTotal ? FontWeight.w600 : FontWeight.w500,
             fontSize: isGrandTotal ? 16 : 12,
@@ -464,7 +465,7 @@ class ReceiptWidget extends ConsumerWidget {
           ),
         ),
         Text(
-          '${AppConstants.currencySymbol}${amount.toStringAsFixed(2)}',
+          amount.toCurrency(),
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: isChange ? 18 : 12,

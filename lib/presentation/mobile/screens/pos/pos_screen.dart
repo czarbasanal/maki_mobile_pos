@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -198,7 +199,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text(
-                '${product.sku} • ${AppConstants.currencySymbol}${product.price.toStringAsFixed(2)}',
+                '${product.sku} • ${product.price.toCurrency()}',
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
               trailing: Text(
@@ -334,8 +335,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                     theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 12),
               )
             : Text(
-                '${cart.laborLines.length} service(s) · '
-                '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
+                '${cart.laborLines.length} service(s) · ${cart.laborSubtotal.toCurrency()}',
                 style:
                     theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 12),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
@@ -77,7 +78,7 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
         _errorText = 'Cannot exceed 100%';
       } else if (!_isPercentage && value > widget.maxAmount) {
         _errorText =
-            'Cannot exceed item total (${AppConstants.currencySymbol}${widget.maxAmount.toStringAsFixed(2)})';
+            'Cannot exceed item total (${widget.maxAmount.toCurrency()})';
       } else {
         _errorText = null;
       }
@@ -196,7 +197,7 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
               errorText: _errorText,
               helperText: _isPercentage
                   ? 'Enter percentage (0-100)'
-                  : 'Max: ${AppConstants.currencySymbol}${widget.maxAmount.toStringAsFixed(2)}',
+                  : 'Max: ${widget.maxAmount.toCurrency()}',
               helperStyle: TextStyle(color: muted),
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),

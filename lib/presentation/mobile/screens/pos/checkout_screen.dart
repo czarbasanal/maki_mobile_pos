@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -205,7 +206,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           Text(
                             cart.isPercentageDiscount
                                 ? '${item.discountValue.toStringAsFixed(0)}% off'
-                                : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} off',
+                                : '${item.discountValue.toCurrency()} off',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: AppColors.successText(isDark),
                             ),
@@ -214,7 +215,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                   Text(
-                    '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
+                    netAmount.toCurrency(),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -262,7 +263,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                   Text(
-                    '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                    line.fee.toCurrency(),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -292,14 +293,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             SummaryRow(
               label: cart.laborLines.isEmpty ? 'Subtotal' : 'Parts subtotal',
               value:
-                  '${AppConstants.currencySymbol}${cart.partsSubtotal.toStringAsFixed(2)}',
+                  cart.partsSubtotal.toCurrency(),
             ),
             if (cart.hasDiscount) ...[
               const SizedBox(height: 6),
               SummaryRow(
                 label: 'Discount',
                 value:
-                    '-${AppConstants.currencySymbol}${cart.totalDiscount.toStringAsFixed(2)}',
+                    '-${cart.totalDiscount.toCurrency()}',
                 valueColor: AppColors.successText(isDark),
               ),
             ],
@@ -308,7 +309,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               SummaryRow(
                 label: laborLabel,
                 value:
-                    '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
+                    cart.laborSubtotal.toCurrency(),
               ),
             ],
             const Padding(
@@ -318,7 +319,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             SummaryRow(
               label: 'Total',
               value:
-                  '${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
+                  cart.grandTotal.toCurrency(),
               isTotal: true,
             ),
           ],

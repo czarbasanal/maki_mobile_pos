@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -174,7 +174,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                 ),
               ),
               Text(
-                '${AppConstants.currencySymbol}${dailyTotal.toStringAsFixed(2)}',
+                dailyTotal.toCurrency(),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,
@@ -242,7 +242,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '${AppConstants.currencySymbol}${sale.grandTotal.toStringAsFixed(2)}',
+            sale.grandTotal.toCurrency(),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: isVoided ? muted : null,

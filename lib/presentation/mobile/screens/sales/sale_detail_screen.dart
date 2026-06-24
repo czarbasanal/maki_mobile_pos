@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -214,7 +215,7 @@ class SaleDetailScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.md),
             // Grand total
             Text(
-              '${AppConstants.currencySymbol}${sale.grandTotal.toStringAsFixed(2)}',
+              sale.grandTotal.toCurrency(),
               style: theme.textTheme.displaySmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: voided
@@ -318,7 +319,7 @@ class SaleDetailScreen extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}',
+                          '${item.sku} • ${item.unitPrice.toCurrency()}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -333,7 +334,7 @@ class SaleDetailScreen extends ConsumerWidget {
                           Text(
                             sale.isPercentageDiscount
                                 ? '${item.discountValue.toStringAsFixed(0)}% discount'
-                                : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} discount',
+                                : '${item.discountValue.toCurrency()} discount',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: AppColors.successText(isDark),
                             ),
@@ -342,7 +343,7 @@ class SaleDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
+                    netAmount.toCurrency(),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -402,7 +403,7 @@ class SaleDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                    line.fee.toCurrency(),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -538,7 +539,7 @@ class SaleDetailScreen extends ConsumerWidget {
               child: SummaryRow(
                 label: label(e.key),
                 value:
-                    '${AppConstants.currencySymbol}${e.value.toStringAsFixed(2)}',
+                    e.value.toCurrency(),
               ),
             ))
         .toList();

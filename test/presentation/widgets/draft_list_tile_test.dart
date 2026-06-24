@@ -223,8 +223,8 @@ void main() {
         ),
       );
 
-      // The tile renders draft.grandTotal.toStringAsFixed(2) prefixed with ₱
-      expect(find.text('₱1450.00'), findsOneWidget);
+      // The tile renders draft.grandTotal via .toCurrency() (grouped thousands).
+      expect(find.text('₱1,450.00'), findsOneWidget);
     });
   });
 }

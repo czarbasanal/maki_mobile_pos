@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -204,7 +205,7 @@ class PaymentSection extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.sm),
       Text(
-        'Cash portion: ${AppConstants.currencySymbol}${cashPortion.toStringAsFixed(2)}',
+        'Cash portion: ${cashPortion.toCurrency()}',
         style: theme.textTheme.titleMedium,
       ),
     ];
@@ -239,7 +240,7 @@ class PaymentSection extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.sm),
       Text(
-        'Salmon balance: ${AppConstants.currencySymbol}${balance.toStringAsFixed(2)}',
+        'Salmon balance: ${balance.toCurrency()}',
         style: theme.textTheme.titleMedium,
       ),
     ];
@@ -329,7 +330,7 @@ class PaymentSection extends StatelessWidget {
             isInsufficient
                 ? '${AppConstants.currencySymbol}'
                     '${(cart.grandTotal - cart.amountReceived).toStringAsFixed(2)}'
-                : '${AppConstants.currencySymbol}${change.toStringAsFixed(2)}',
+                : change.toCurrency(),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
