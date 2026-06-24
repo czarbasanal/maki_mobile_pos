@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -302,7 +303,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                               '${product.sku} • Stock: ${product.quantity}'),
                           trailing: _isAdmin
                               ? Text(
-                                  '${AppConstants.currencySymbol}${product.cost.toStringAsFixed(2)}',
+                                  product.cost.toCurrency(),
                                 )
                               : null,
                           onTap: () => onSelected(product),
@@ -535,7 +536,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                         style: TextStyle(fontSize: 12),
                       ),
                       Text(
-                        '${AppConstants.currencySymbol}${state.totalCost.toStringAsFixed(2)}',
+                        state.totalCost.toCurrency(),
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,

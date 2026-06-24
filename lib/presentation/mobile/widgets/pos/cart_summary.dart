@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/cart_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/summary_row.dart';
@@ -25,14 +25,14 @@ class CartSummary extends StatelessWidget {
           SummaryRow(
             label: 'Subtotal · $itemCount item${itemCount == 1 ? '' : 's'}',
             value:
-                '${AppConstants.currencySymbol}${cart.subtotal.toStringAsFixed(2)}',
+                cart.subtotal.toCurrency(),
           ),
           if (cart.hasDiscount) ...[
             const SizedBox(height: 6),
             SummaryRow(
               label: 'Discount',
               value:
-                  '-${AppConstants.currencySymbol}${cart.totalDiscount.toStringAsFixed(2)}',
+                  '-${cart.totalDiscount.toCurrency()}',
               valueColor: AppColors.successText(isDark),
             ),
           ],
@@ -41,7 +41,7 @@ class CartSummary extends StatelessWidget {
             SummaryRow(
               label: 'Labor',
               value:
-                  '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
+                  cart.laborSubtotal.toCurrency(),
             ),
           ],
           const SizedBox(height: AppSpacing.sm + 1),
@@ -50,7 +50,7 @@ class CartSummary extends StatelessWidget {
           SummaryRow(
             label: 'Total',
             value:
-                '${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
+                cart.grandTotal.toCurrency(),
             isTotal: true,
           ),
         ],

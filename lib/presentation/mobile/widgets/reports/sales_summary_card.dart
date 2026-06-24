@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
-import 'package:maki_mobile_pos/core/constants/constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -96,7 +95,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     child: _MetricCard(
                       label: 'Gross Sales',
                       value:
-                          '${AppConstants.currencySymbol}${summary.grossAmount.toStringAsFixed(2)}',
+                          summary.grossAmount.toCurrency(),
                       icon: AppIcons.peso,
                       subtitle: 'Before discounts',
                     ),
@@ -106,7 +105,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     child: _MetricCard(
                       label: 'Discounts',
                       value:
-                          '-${AppConstants.currencySymbol}${summary.totalDiscounts.toStringAsFixed(2)}',
+                          '-${summary.totalDiscounts.toCurrency()}',
                       icon: CupertinoIcons.tag,
                     ),
                   ),
@@ -133,7 +132,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    '${AppConstants.currencySymbol}${summary.netAmount.toStringAsFixed(2)}',
+                    summary.netAmount.toCurrency(),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.primary,
@@ -161,7 +160,7 @@ class SalesSummaryCard extends ConsumerWidget {
                     Icon(CupertinoIcons.arrow_right, size: 14, color: muted),
                     const SizedBox(width: 4),
                     Text(
-                      'Avg: ${AppConstants.currencySymbol}${summary.averageSaleAmount.toStringAsFixed(2)}',
+                      'Avg: ${summary.averageSaleAmount.toCurrency()}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: muted,
                         fontWeight: FontWeight.w600,
@@ -179,7 +178,7 @@ class SalesSummaryCard extends ConsumerWidget {
                       child: _MetricCard(
                         label: 'Total Cost',
                         value:
-                            '${AppConstants.currencySymbol}${summary.totalCost.toStringAsFixed(2)}',
+                            summary.totalCost.toCurrency(),
                         icon: CupertinoIcons.cube_box,
                       ),
                     ),
@@ -188,7 +187,7 @@ class SalesSummaryCard extends ConsumerWidget {
                       child: _MetricCard(
                         label: 'Gross Profit',
                         value:
-                            '${AppConstants.currencySymbol}${summary.totalProfit.toStringAsFixed(2)}',
+                            summary.totalProfit.toCurrency(),
                         icon: CupertinoIcons.arrow_up_right,
                         accent: AppColors.success,
                         subtitle:
@@ -207,7 +206,7 @@ class SalesSummaryCard extends ConsumerWidget {
                       child: _MetricCard(
                         label: 'Service Revenue',
                         value:
-                            '${AppConstants.currencySymbol}${summary.laborRevenue.toStringAsFixed(2)}',
+                            summary.laborRevenue.toCurrency(),
                         icon: CupertinoIcons.wrench,
                         subtitle: 'Labor (no COGS)',
                       ),
@@ -217,7 +216,7 @@ class SalesSummaryCard extends ConsumerWidget {
                       child: _MetricCard(
                         label: 'Service Profit',
                         value:
-                            '${AppConstants.currencySymbol}${summary.laborProfit.toStringAsFixed(2)}',
+                            summary.laborProfit.toCurrency(),
                         icon: CupertinoIcons.arrow_up_right,
                         accent: AppColors.success,
                       ),

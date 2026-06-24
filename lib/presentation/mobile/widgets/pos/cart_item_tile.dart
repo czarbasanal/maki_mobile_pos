@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -81,7 +82,7 @@ class CartItemTile extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)} / ${item.unit}',
+                      '${item.sku} • ${item.unitPrice.toCurrency()} / ${item.unit}',
                       style:
                           theme.textTheme.bodySmall?.copyWith(color: muted),
                       maxLines: 1,
@@ -116,7 +117,7 @@ class CartItemTile extends StatelessWidget {
                       // net — the net is the hero (17/700), matching handoff.
                       if (item.hasDiscount)
                         Text(
-                          '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
+                          item.grossAmount.toCurrency(),
                           style: TextStyle(
                             fontSize: 11,
                             decoration: TextDecoration.lineThrough,
@@ -124,7 +125,7 @@ class CartItemTile extends StatelessWidget {
                           ),
                         ),
                       Text(
-                        '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
+                        netAmount.toCurrency(),
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,

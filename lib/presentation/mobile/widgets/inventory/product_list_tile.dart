@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/cost_code_pill.dart';
@@ -78,14 +78,14 @@ class ProductListTile extends StatelessWidget {
                       children: [
                         _PricePill(
                           value:
-                              '${AppConstants.currencySymbol}${product.price.toStringAsFixed(2)}',
+                              product.price.toCurrency(),
                           color: theme.colorScheme.primary,
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         if (showCost) ...[
                           _CostPill(
                             value:
-                                '${AppConstants.currencySymbol}${product.cost.toStringAsFixed(2)}',
+                                product.cost.toCurrency(),
                           ),
                           const SizedBox(width: 4),
                           _MarginBadge(

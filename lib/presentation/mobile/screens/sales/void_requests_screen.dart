@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
@@ -56,7 +56,7 @@ class VoidRequestsScreen extends ConsumerWidget {
             : CupertinoIcons.check_mark_circled,
       ),
       title: Text(
-        '${r.saleNumber} • ${AppConstants.currencySymbol}${r.saleGrandTotal.toStringAsFixed(2)}',
+        '${r.saleNumber} • ${r.saleGrandTotal.toCurrency()}',
       ),
       subtitle: Text(
         '${r.requestedByName} • ${r.reason}\n${df.format(r.createdAt)} • ${r.status.value}',

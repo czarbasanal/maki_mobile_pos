@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:intl/intl.dart';
@@ -77,7 +77,7 @@ class DraftListTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+                        draft.grandTotal.toCurrency(),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.primary,
@@ -211,7 +211,7 @@ class DraftListTile extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.sm + 4),
                     Text(
-                      '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
+                      item.grossAmount.toCurrency(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),

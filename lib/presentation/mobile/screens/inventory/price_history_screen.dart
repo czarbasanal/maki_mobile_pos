@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/price_history_view.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
@@ -307,14 +307,14 @@ class _MetricLine extends StatelessWidget {
       children: [
         Text('$label ',
             style: theme.textTheme.bodySmall?.copyWith(color: muted)),
-        Text('${AppConstants.currencySymbol}${value.toStringAsFixed(2)}',
+        Text(value.toCurrency(),
             style: theme.textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w600)),
         if (changed) ...[
           const SizedBox(width: 4),
           Icon(up ? CupertinoIcons.arrow_up : CupertinoIcons.arrow_down,
               size: 12, color: arrowColor),
-          Text('${AppConstants.currencySymbol}${delta.abs().toStringAsFixed(2)}',
+          Text(delta.abs().toCurrency(),
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: arrowColor, fontWeight: FontWeight.w500)),
         ],

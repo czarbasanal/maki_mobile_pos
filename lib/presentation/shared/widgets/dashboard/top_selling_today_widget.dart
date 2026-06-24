@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
@@ -132,7 +132,7 @@ class _Row extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '${AppConstants.currencySymbol}${item.totalRevenue.toStringAsFixed(2)}',
+            item.totalRevenue.toCurrency(),
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),

@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -217,7 +217,7 @@ class DraftsListScreen extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     Text(
-                      'Total: ${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+                      'Total: ${draft.grandTotal.toCurrency()}',
                       style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
                   ],
