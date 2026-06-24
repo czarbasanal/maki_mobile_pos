@@ -351,7 +351,9 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
+          // Room above the picker so its floating "Mechanic" label isn't
+          // clipped (same fix as the POS labor section).
+          const SizedBox(height: AppSpacing.sm),
           MechanicPicker(
             selectedMechanicId: draft.mechanicId,
             onChanged: (m) => _onMechanicChanged(m?.id, m?.name),
@@ -415,36 +417,36 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       child: SafeArea(
         child: Column(
           children: [
-            _buildSummaryRow(
-              'Subtotal',
-              '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
+            SummaryRow(
+              label: 'Subtotal',
+              value:
+                  '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
             ),
             if (draft.totalDiscount > 0) ...[
               const SizedBox(height: 4),
-              _buildSummaryRow(
-                'Discount',
-                '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
+              SummaryRow(
+                label: 'Discount',
+                value:
+                    '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
                 valueColor: AppColors.successDark,
               ),
             ],
             if (draft.laborLines.isNotEmpty) ...[
               const SizedBox(height: 4),
-              _buildSummaryRow(
-                draft.laborLines.length == 1
+              SummaryRow(
+                label: draft.laborLines.length == 1
                     ? 'Labor (1 service)'
                     : 'Labor (${draft.laborLines.length} services)',
-                '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
+                value:
+                    '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
               ),
             ],
             const Divider(height: AppSpacing.md),
-            _buildSummaryRow(
-              'Total (${draft.totalItemCount} items)',
-              '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
-              isBold: true,
-              valueStyle: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
+            SummaryRow(
+              label: 'Total (${draft.totalItemCount} items)',
+              value:
+                  '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+              isTotal: true,
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
@@ -473,36 +475,6 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryRow(
-    String label,
-    String value, {
-    bool isBold = false,
-    Color? valueColor,
-    TextStyle? valueStyle,
-  }) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        Text(
-          value,
-          style: valueStyle ??
-              theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: isBold ? FontWeight.w600 : FontWeight.w500,
-                color: valueColor,
-              ),
-        ),
-      ],
     );
   }
 

@@ -46,9 +46,9 @@ void main() {
 
     // Labor line appears in the order list.
     expect(find.text('Engine tune-up'), findsOneWidget);
-    // Labor subtotal row + mechanic line in the payment summary.
-    expect(find.textContaining('Labor (1 service'), findsOneWidget);
-    expect(find.textContaining('Mechanic: Juan Dela Cruz'), findsOneWidget);
+    // Labor subtotal row folds the mechanic name into its label
+    // ("Labor · {mechanic}") in the payment summary.
+    expect(find.textContaining('Labor · Juan Dela Cruz'), findsOneWidget);
     // Grand total is labor-inclusive: 100 + 450 = 550.
     expect(find.textContaining('₱550.00'), findsWidgets);
     // When labor is present, the parts subtotal row is labelled 'Parts subtotal'.

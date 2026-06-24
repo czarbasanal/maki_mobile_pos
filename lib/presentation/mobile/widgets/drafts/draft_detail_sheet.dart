@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/summary_row.dart';
 import 'package:intl/intl.dart';
 
 /// Bottom sheet showing full draft details.
@@ -108,7 +109,7 @@ class DraftDetailSheet extends StatelessWidget {
                     const SizedBox(height: AppSpacing.lg),
                     const _SectionHeader('Summary'),
                     const SizedBox(height: AppSpacing.sm),
-                    _buildSummaryCard(theme),
+                    _buildSummaryCard(),
                     const SizedBox(height: AppSpacing.lg),
                     const _SectionHeader('Information'),
                     const SizedBox(height: AppSpacing.sm),
@@ -304,24 +305,24 @@ class DraftDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCard(ThemeData theme) {
+  Widget _buildSummaryCard() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
-            _buildSummaryRow(
-              theme,
-              'Subtotal',
-              '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
+            SummaryRow(
+              label: 'Subtotal',
+              value:
+                  '${AppConstants.currencySymbol}${draft.subtotal.toStringAsFixed(2)}',
             ),
             if (draft.hasDiscount) ...[
               const SizedBox(height: AppSpacing.sm),
-              _buildSummaryRow(
-                theme,
-                'Discount',
-                '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
+              SummaryRow(
+                label: 'Discount',
+                value:
+                    '-${AppConstants.currencySymbol}${draft.totalDiscount.toStringAsFixed(2)}',
                 valueColor: AppColors.successDark,
               ),
             ],
@@ -333,65 +334,32 @@ class DraftDetailSheet extends StatelessWidget {
               ...draft.laborLines.map(
                 (line) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                  child: _buildSummaryRow(
-                    theme,
-                    line.description,
-                    '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
+                  child: SummaryRow(
+                    label: line.description,
+                    value:
+                        '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
                   ),
                 ),
               ),
-              _buildSummaryRow(
-                theme,
-                'Labor',
-                '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
+              SummaryRow(
+                label: 'Labor',
+                value:
+                    '${AppConstants.currencySymbol}${draft.laborSubtotal.toStringAsFixed(2)}',
               ),
             ],
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Divider(height: 1),
             ),
-            _buildSummaryRow(
-              theme,
-              'Total',
-              '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
+            SummaryRow(
+              label: 'Total',
+              value:
+                  '${AppConstants.currencySymbol}${draft.grandTotal.toStringAsFixed(2)}',
               isTotal: true,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryRow(
-    ThemeData theme,
-    String label,
-    String value, {
-    bool isTotal = false,
-    Color? valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: isTotal
-              ? theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)
-              : theme.textTheme.bodyMedium,
-        ),
-        Text(
-          value,
-          style: isTotal
-              ? theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.primary,
-                )
-              : theme.textTheme.bodyMedium?.copyWith(
-                  color: valueColor,
-                  fontWeight: valueColor != null ? FontWeight.w600 : null,
-                ),
-        ),
-      ],
     );
   }
 

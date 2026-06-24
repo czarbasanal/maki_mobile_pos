@@ -318,21 +318,32 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       data: theme.copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         initiallyExpanded: cart.laborLines.isNotEmpty,
-        leading: const Icon(LucideIcons.wrench),
-        title: const Text('Labor & Service'),
+        // Wrench + chevron muted to match the handoff's quiet header.
+        iconColor: muted,
+        collapsedIconColor: muted,
+        leading: const Icon(LucideIcons.wrench, size: 19),
+        title: Text(
+          'Labor & Service',
+          style: theme.textTheme.bodyMedium
+              ?.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         subtitle: cart.laborLines.isEmpty
             ? Text(
                 'Optional — add mechanic labor',
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                style:
+                    theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 12),
               )
             : Text(
-                '${cart.laborLines.length} service(s) • '
+                '${cart.laborLines.length} service(s) · '
                 '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                style:
+                    theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 12),
               ),
+        // Top inset gives the mechanic dropdown's floating "Mechanic" label
+        // room above the field — at top:0 it was clipped (cut off).
         childrenPadding: const EdgeInsets.fromLTRB(
           AppSpacing.md,
-          0,
+          AppSpacing.sm,
           AppSpacing.md,
           AppSpacing.md,
         ),

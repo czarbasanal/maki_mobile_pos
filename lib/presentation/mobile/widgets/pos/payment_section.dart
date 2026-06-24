@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
 /// Payment method selection and amount inputs.
 ///
@@ -90,31 +91,87 @@ class PaymentSection extends StatelessWidget {
 
   List<Widget> _buildSingleInputs(BuildContext context) {
     return [
-      TextField(
-        controller: amountController,
-        decoration: InputDecoration(
-          labelText: 'Amount Received',
-          prefixText: '${AppConstants.currencySymbol} ',
-          suffixIcon: IconButton(
-            icon: const Icon(LucideIcons.checkCheck),
-            tooltip: 'Exact amount',
-            onPressed: () {
-              amountController.text = cart.grandTotal.toStringAsFixed(2);
-              onAmountChanged(amountController.text);
-            },
-          ),
-        ),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-        ],
-        onChanged: onAmountChanged,
-      ),
-      const SizedBox(height: AppSpacing.sm + 4),
+      _buildAmountReceivedField(context),
+      const SizedBox(height: AppSpacing.sm + 2),
       _buildQuickAmountButtons(context),
       const SizedBox(height: AppSpacing.md),
       if (cart.paymentMethod == PaymentMethod.cash) _buildChangeDisplay(context),
     ];
+  }
+
+  /// Amount-received entry as an elevated pill (₱ prefix + value + inline
+  /// "Exact" fill button), matching the handoff. No floating label — the
+  /// PAYMENT section header and selected method supply the context.
+  Widget _buildAmountReceivedField(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Text(
+            AppConstants.currencySymbol,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: muted,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: TextField(
+              controller: amountController,
+              decoration: const InputDecoration(
+                hintText: '0.00',
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 16),
+              ),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              ],
+              onChanged: onAmountChanged,
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              amountController.text = cart.grandTotal.toStringAsFixed(2);
+              onAmountChanged(amountController.text);
+            },
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.checkCheck,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Exact',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Widget> _buildMixedInputs(BuildContext context) {
@@ -189,22 +246,27 @@ class PaymentSection extends StatelessWidget {
   }
 
   Widget _buildQuickAmountButtons(BuildContext context) {
-    final amounts = [100, 200, 500, 1000];
+    const amounts = [100, 200, 500, 1000];
 
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: amounts.map((amount) {
-        return ActionChip(
-          label: Text('${AppConstants.currencySymbol}$amount'),
-          onPressed: () {
-            final current = double.tryParse(amountController.text) ?? 0;
-            final newAmount = current + amount;
-            amountController.text = newAmount.toStringAsFixed(2);
-            onAmountChanged(amountController.text);
-          },
-        );
-      }).toList(),
+    void add(int amount) {
+      final current = double.tryParse(amountController.text) ?? 0;
+      final newAmount = current + amount;
+      amountController.text = newAmount.toStringAsFixed(2);
+      onAmountChanged(amountController.text);
+    }
+
+    return Row(
+      children: [
+        for (var i = 0; i < amounts.length; i++) ...[
+          if (i > 0) const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: _QuickAmountButton(
+              amount: amounts[i],
+              onTap: () => add(amounts[i]),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -221,28 +283,46 @@ class PaymentSection extends StatelessWidget {
     if (isInsufficient) {
       fill = AppColors.error.withValues(alpha: isDark ? 0.18 : 0.10);
     } else if (hasReceipt) {
-      fill = isDark
-          ? AppColors.success.withValues(alpha: 0.18)
-          : AppColors.successLight;
+      fill = AppColors.successFill(isDark);
     } else {
       fill = isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
     }
-    final valueColor = isInsufficient ? AppColors.error : AppColors.successDark;
+    // Content colour: green when sufficient, red when short, muted before
+    // any tender is entered.
+    final Color contentColor;
+    if (!hasReceipt) {
+      contentColor = theme.colorScheme.onSurfaceVariant;
+    } else if (isInsufficient) {
+      contentColor = AppColors.error;
+    } else {
+      contentColor = AppColors.successText(isDark);
+    }
+    // Dark mode draws a faint matching border (the light tint is too quiet on
+    // the dark canvas on its own) — mirrors the handoff.
+    final Border? border = (isDark && hasReceipt)
+        ? Border.all(
+            color: (isInsufficient ? AppColors.error : AppColors.success)
+                .withValues(alpha: 0.4),
+          )
+        : null;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: fill,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: border,
+        borderRadius: BorderRadius.circular(AppRadius.field),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             isInsufficient ? 'Amount Short' : 'Change',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: contentColor,
             ),
           ),
           Text(
@@ -250,10 +330,11 @@ class PaymentSection extends StatelessWidget {
                 ? '${AppConstants.currencySymbol}'
                     '${(cart.grandTotal - cart.amountReceived).toStringAsFixed(2)}'
                 : '${AppConstants.currencySymbol}${change.toStringAsFixed(2)}',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: TextStyle(
+              fontSize: 24,
               fontWeight: FontWeight.w700,
-              color:
-                  hasReceipt ? valueColor : theme.colorScheme.onSurfaceVariant,
+              letterSpacing: -0.5,
+              color: contentColor,
             ),
           ),
         ],
@@ -323,6 +404,56 @@ class _PaymentMethodChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A quick-amount preset button: equal-width card on the surface, adds its
+/// amount to the tender on tap. Matches the handoff's 4-up button row.
+class _QuickAmountButton extends StatelessWidget {
+  const _QuickAmountButton({required this.amount, required this.onTap});
+
+  final int amount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final surface = isDark ? AppColors.darkCard : AppColors.lightCard;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: hairline),
+          // Quiet lift in light mode; the dark hairline carries it in dark.
+          boxShadow: isDark
+              ? null
+              : const [
+                  BoxShadow(
+                    color: Color(0x0D111C1D),
+                    blurRadius: 3,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+        ),
+        child: Text(
+          '${AppConstants.currencySymbol}$amount',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
       ),
     );
