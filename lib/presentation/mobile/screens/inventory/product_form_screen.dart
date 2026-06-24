@@ -106,7 +106,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // ---- Bundle 04 layout helpers (sectioned cards + pinned submit) ----
 
   Widget _sectionHeader(String text) => Padding(
-        padding: const EdgeInsets.only(left: 2, top: 18, bottom: 8),
+        padding: const EdgeInsets.only(left: 2, top: 22, bottom: 10),
         child: Text(
           text,
           style: TextStyle(
@@ -120,8 +120,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Widget _sectionCard({required List<Widget> children}) => AppCard(
         radius: AppRadius.field,
-        padding: const EdgeInsets.all(14),
-        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        padding: const EdgeInsets.all(18),
+        margin: const EdgeInsets.only(bottom: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: children,
@@ -303,6 +303,54 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           Text(' · ${(price - cost).toCurrency()} per unit',
               style: TextStyle(fontSize: 12, color: muted)),
         ],
+      ),
+    );
+  }
+
+  /// "View price history" — a full-width card button (white/dark fill, hairline
+  /// border, slate/gold text, subtle light-mode lift) per the handoff.
+  Widget _priceHistoryButton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: isDark
+              ? null
+              : const [
+                  BoxShadow(
+                      color: Color(0x0D111C1D),
+                      blurRadius: 3,
+                      offset: Offset(0, 1)),
+                ],
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: OutlinedButton.icon(
+            onPressed: () => context.push(
+              '/inventory/${widget.productId}/price-history',
+            ),
+            icon: const Icon(LucideIcons.clock, size: 16),
+            label: const Text('View price history'),
+            style: OutlinedButton.styleFrom(
+              backgroundColor:
+                  isDark ? AppColors.darkCard : AppColors.lightCard,
+              foregroundColor:
+                  isDark ? AppColors.primaryAccent : AppColors.brandSlate,
+              side: BorderSide(
+                color:
+                    isDark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              textStyle:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -684,16 +732,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           // Price history is admin-only data; show the link for
                           // any admin editing a product (no longer gated behind
                           // the cost-eye toggle).
-                          if (canViewCost && widget.isEditing) ...[
-                            const SizedBox(height: 14),
-                            OutlinedButton.icon(
-                              onPressed: () => context.push(
-                                '/inventory/${widget.productId}/price-history',
-                              ),
-                              icon: const Icon(LucideIcons.clock),
-                              label: const Text('View price history'),
-                            ),
-                          ],
+                          if (canViewCost && widget.isEditing)
+                            _priceHistoryButton(context),
 
                           const SizedBox(height: 8),
                         ],
@@ -1249,7 +1289,7 @@ class _AuditInfoCard extends ConsumerWidget {
     // soft shadow / dark hairline, no inner title or border.
     return AppCard(
       radius: AppRadius.field,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
