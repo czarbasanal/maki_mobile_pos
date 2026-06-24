@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 05: Receiving</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --field:#FAFAFA; --input-border:#E2E2E2; --panel:#FAFAFA;
+    --info:#2196F3; --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --warning:#FFC107; --warning-dark:#F57C00;
+    /* current hardcoded Material status palette (what ships today) */
+    --green50:#E8F5E9; --green700:#388E3C; --orange50:#FFF3E0; --orange700:#F57C00;
+    --blue50:#E3F2FD; --blue700:#1976D2; --blue100:#BBDEFB; --grey50:#FAFAFA; --grey200:#EEEEEE; --grey700:#616161;
+    --r-sm:10px; --r-md:14px; --r-field:16px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+    --shadow-mat:0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1500px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:900px;line-height:1.5;}
+  code{font-family:'Roboto Mono',monospace;font-size:.9em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:46px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:380px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;margin-top:26px;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:820px;overflow:hidden;display:flex;flex-direction:column;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--canvas);min-height:52px;}
+  .appbar .title{flex:1;}
+  .appbar .title .t{font-size:18px;font-weight:600;}
+  .appbar .title .sub{font-size:12px;color:var(--muted);margin-top:1px;font-family:'Roboto Mono';}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;flex:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .draftbtn{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--slate);padding:0 8px;}
+  .draftbtn i{width:17px;height:17px;}
+  .body{flex:1;overflow:auto;}
+  .body::-webkit-scrollbar{width:0;}
+
+  /* summary stat cards (current: hardcoded color tint Containers) */
+  .summary{display:flex;gap:12px;padding:16px;}
+  .stat{flex:1;border-radius:12px;padding:16px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid;}
+  .stat i{width:24px;height:24px;}
+  .stat .v{font-size:24px;font-weight:700;line-height:1;}
+  .stat .l{font-size:12px;color:var(--grey700);}
+  .stat.draft{background:rgba(245,124,0,.10);border-color:rgba(245,124,0,.30);}
+  .stat.draft i,.stat.draft .v{color:#F57C00;}
+  .stat.done{background:rgba(76,175,80,.10);border-color:rgba(76,175,80,.30);}
+  .stat.done i,.stat.done .v{color:#43A047;}
+  .stat.total{background:rgba(33,150,243,.10);border-color:rgba(33,150,243,.30);}
+  .stat.total i,.stat.total .v{color:#1E88E5;}
+
+  .sech{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 4px 16px;}
+  .sech .t{font-size:16px;font-weight:600;}
+  .sech .link{font-size:13px;font-weight:600;color:var(--slate);padding:6px 8px;}
+  .monthhdr{display:flex;align-items:center;gap:8px;padding:12px 16px 6px;}
+  .monthhdr .m{flex:1;font-size:13px;font-weight:600;color:var(--muted);}
+  .monthhdr .c{font-size:12px;color:var(--muted);}
+
+  /* list tile (current: Material Card) */
+  .tile{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-md);
+        box-shadow:var(--shadow-mat);margin:4px 16px;padding:10px 12px;}
+  .lead{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .lead i{width:19px;height:19px;}
+  .lead.done{background:var(--green50);} .lead.done i{color:var(--green700);}
+  .lead.draft{background:var(--orange50);} .lead.draft i{color:var(--orange700);}
+  .lead.cancel{background:var(--grey200);} .lead.cancel i{color:var(--grey700);}
+  .tmid{flex:1;min-width:0;}
+  .tref{font-size:13px;font-weight:600;font-family:'Roboto Mono';}
+  .tsub{font-size:12px;color:var(--grey700);margin-top:2px;}
+  .ttrail{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none;}
+  .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;}
+  .badge.done{background:var(--green50);color:var(--green700);}
+  .badge.draft{background:var(--orange50);color:var(--orange700);}
+  .ttrail .ct{font-size:13px;font-weight:600;}
+  .ttrail .cost{font-size:12px;color:var(--slate);}
+  .resume{font-size:13px;font-weight:600;color:var(--slate);}
+
+  /* pinned footer */
+  .footer{padding:12px 16px 16px;background:var(--canvas);box-shadow:0 -4px 16px rgba(17,28,29,.05);}
+  .btn-fill{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:var(--r-field);
+            width:100%;background:var(--slate);color:#fff;border:none;font-weight:600;font-size:15px;}
+  .btn-fill i{width:18px;height:18px;}
+  .summ{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;}
+  .summ .lbls{font-size:13px;color:var(--grey700);line-height:1.5;}
+  .summ .tot .l{font-size:12px;color:var(--muted);text-align:right;}
+  .summ .tot .v{font-size:22px;font-weight:700;color:var(--slate);}
+
+  /* bulk receiving entry */
+  .banner{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--success-bg);}
+  .banner i{width:18px;height:18px;color:var(--success-dark);}
+  .banner span{font-size:13px;font-weight:500;color:var(--success-dark);}
+  .row-field{display:flex;align-items:center;gap:10px;padding:14px 16px;}
+  .row-field i.pre{width:20px;height:20px;color:var(--muted);flex:none;}
+  .field-out{flex:1;display:flex;align-items:center;gap:8px;min-height:48px;border:1px solid var(--input-border);border-radius:6px;padding:0 12px;background:#fff;}
+  .field-out .lbl{font-size:12px;color:var(--muted);}
+  .field-out .val{flex:1;font-size:14px;}
+  .field-out .val.ph{color:var(--hint);}
+  .field-out i{width:16px;height:16px;color:var(--muted);}
+  .addpanel{background:var(--panel);padding:14px 16px;}
+  .addpanel .h{font-size:14px;font-weight:700;margin-bottom:10px;}
+  .qtyrow{display:flex;gap:10px;align-items:flex-end;margin-top:10px;}
+  .mini{flex:1;}
+  .mini .lbl{font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .mini .box{display:flex;align-items:center;min-height:46px;border:1px solid var(--input-border);border-radius:6px;padding:0 10px;background:#fff;font-size:14px;}
+  .addbtn{height:46px;padding:0 18px;border-radius:8px;background:var(--slate);color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;}
+  .costwarn{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;border-radius:8px;padding:8px 10px;background:var(--orange50);color:var(--orange700);border:1px solid rgba(245,124,0,.3);}
+  .costwarn i{width:14px;height:14px;}
+
+  /* receiving item row */
+  .irow{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:var(--r-md);box-shadow:var(--shadow-mat);margin:6px 16px;padding:12px;}
+  .iinfo{flex:1;min-width:0;}
+  .iname{font-size:13px;font-weight:600;line-height:1.25;}
+  .isku{font-size:12px;color:var(--grey700);font-family:'Roboto Mono';margin-top:2px;display:flex;align-items:center;gap:8px;}
+  .nv{font-size:10px;font-weight:600;background:var(--blue100);color:var(--blue700);border-radius:4px;padding:2px 6px;}
+  .iprice{font-size:12px;color:var(--slate);margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .diff{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600;border:1px solid;border-radius:4px;padding:1px 5px;}
+  .diff i{width:11px;height:11px;}
+  .diff.up{color:#C62828;border-color:#C62828;} .diff.down{color:#2E7D32;border-color:#2E7D32;}
+  .stepper{display:flex;align-items:center;gap:2px;flex:none;}
+  .stepper i{width:22px;height:22px;color:var(--slate);}
+  .stepper .q{width:42px;height:36px;border:1px solid var(--input-border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .itot{width:78px;text-align:right;flex:none;}
+  .itot .v{font-size:14px;font-weight:700;}
+  .itot .u{font-size:11px;color:var(--grey700);}
+  .ix{width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .ix i{width:18px;height:18px;color:var(--muted);}
+
+  /* batch import preview */
+  .pad{padding:16px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .chip{font-size:12px;font-weight:600;border:1px solid;border-radius:var(--r-pill);padding:6px 12px;}
+  .chip.match{color:var(--success-dark);border-color:var(--success);background:rgba(76,175,80,.13);}
+  .chip.var{color:var(--warning-dark);border-color:var(--warning-dark);background:rgba(245,124,0,.13);}
+  .chip.new{color:var(--info);border-color:var(--info);background:rgba(33,150,243,.13);}
+  .chip.err{color:var(--error);border-color:var(--error);background:rgba(244,67,54,.13);}
+  .errbox{border:1px solid var(--error);border-radius:var(--r-md);padding:12px;margin-bottom:14px;}
+  .errbox .h{font-size:13px;font-weight:600;color:var(--error);margin-bottom:4px;}
+  .errbox .e{font-size:12px;color:var(--error);margin-top:2px;}
+  .crow{display:flex;align-items:center;gap:10px;border:1px solid var(--divider);border-radius:var(--r-md);padding:12px;margin-bottom:6px;}
+  .crow .ci{flex:1;min-width:0;}
+  .crow .cn{font-size:14px;font-weight:600;}
+  .crow .cd{font-size:12px;color:var(--muted);margin-top:2px;}
+  .rbadge{font-size:11px;font-weight:600;border-radius:var(--r-pill);padding:3px 9px;}
+  .rbadge.match{color:var(--success-dark);background:rgba(76,175,80,.13);}
+  .rbadge.var{color:var(--warning-dark);background:rgba(245,124,0,.13);}
+  .rbadge.new{color:var(--info);background:rgba(33,150,243,.13);}
+  .help{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--input-border);border-radius:var(--r-md);padding:14px;margin-bottom:14px;font-size:14px;font-weight:600;}
+  .help i{width:18px;height:18px;color:var(--muted);}
+  .btnrow{display:flex;gap:8px;padding:12px 16px 16px;background:var(--canvas);}
+  .btn-out2{flex:1;height:46px;border:1px solid var(--input-border);border-radius:var(--r-field);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:var(--ink);background:#fff;}
+  .btn-fill2{flex:1;height:46px;border-radius:var(--r-field);background:var(--slate);color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-fill2 i{width:16px;height:16px;}
+
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:60px 24px;text-align:center;color:var(--muted);}
+  .empty i{width:56px;height:56px;color:#C7CCCE;}
+  .empty .t{font-size:16px;font-weight:600;color:var(--grey700);}
+  .empty .s{font-size:13px;color:var(--hint);}
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.5;max-width:1100px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 05 · Receiving</h1>
+    <p><b>Pre-redesign (mixed).</b> The Receiving flow (landing, bulk-receiving form, batch CSV import, drafts &amp; history)
+    is <b>not on the redesigned language</b>: icons are <b>Cupertino</b>, surfaces are Material <code>Card</code>s / flat
+    bordered <code>Container</code>s (no <code>AppCard</code>), and status uses <b>hardcoded</b> <code>Colors.green/orange/blue/grey</code>
+    (dark-mode-fragile) rather than theme-aware tokens. The batch-import flow is partly on-system already (semantic
+    <code>AppColors</code> chips). Currency renders grouped (<code>₱1,234.00</code>) from the app-wide formatter. This
+    bundle migrates all five surfaces to <b>Lucide + <code>AppCard</code> + theme-aware status colors</b> (with dark
+    parity) — the same pass done for POS/Checkout/Sale-Detail/Inventory. Mark up the migration you want and hand back.
+    <i>(Icons here render in Lucide — the migration target — even though the live screens still ship Cupertino.)</i></p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#F57C00"></i> draft (warning)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> completed (success)</span>
+    <span><i class="swatch" style="background:#2196F3"></i> total / info</span>
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary)</span>
+    <span><i class="swatch" style="background:#F44336"></i> error</span>
+    <span style="margin-left:auto">Light shown · dark parity target (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ 1 · RECEIVING LANDING ============ -->
+    <div class="frame">
+      <div class="caption">1 · Receiving landing — admin · receiving_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Receiving</div></div>
+          <button class="iconbtn" title="Batch import (CSV)"><i data-lucide="upload-cloud"></i></button>
+        </div>
+        <div class="body">
+          <div class="summary">
+            <div class="stat draft"><i data-lucide="square-pen"></i><div class="v">3</div><div class="l">Drafts</div></div>
+            <div class="stat done"><i data-lucide="check-circle"></i><div class="v">12</div><div class="l">Completed</div></div>
+            <div class="stat total"><i data-lucide="calendar"></i><div class="v" style="font-size:20px">₱45.6K</div><div class="l">Total Received</div></div>
+          </div>
+          <div class="sech"><span class="t">Recent Receivings</span><span class="link">View all</span></div>
+          <div class="tile">
+            <div class="lead done"><i data-lucide="check-circle"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260624-3</div><div class="tsub">Jun 24, 2026 · 9:14 AM · RPM Parts Trading</div></div>
+            <div class="ttrail"><span class="badge done">Completed</span><span class="ct">48 items</span><span class="cost">₱12,400.00</span></div>
+          </div>
+          <div class="tile">
+            <div class="lead done"><i data-lucide="check-circle"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260623-2</div><div class="tsub">Jun 23, 2026 · 4:02 PM · Speedstar Distributors</div></div>
+            <div class="ttrail"><span class="badge done">Completed</span><span class="ct">18 items</span><span class="cost">₱6,150.00</span></div>
+          </div>
+          <div class="tile">
+            <div class="lead draft"><i data-lucide="square-pen"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260623-1</div><div class="tsub">Jun 23, 2026 · 10:20 AM</div></div>
+            <div class="ttrail"><span class="badge draft">Draft</span><span class="ct">5 items</span></div>
+          </div>
+        </div>
+        <div class="footer">
+          <button class="btn-fill"><i data-lucide="plus"></i> New Receiving</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2 · BULK RECEIVING (edit) ============ -->
+    <div class="frame">
+      <div class="caption">2 · Bulk receiving — edit/admin · bulk_receiving_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Receive Stock</div><div class="sub">RCV-20260624-4</div></div>
+          <button class="iconbtn" title="Import CSV"><i data-lucide="upload-cloud"></i></button>
+          <span class="draftbtn"><i data-lucide="save"></i> Save Draft</span>
+        </div>
+        <div class="body">
+          <div class="row-field">
+            <i data-lucide="briefcase" class="pre"></i>
+            <div class="field-out"><span class="val">RPM Parts Trading</span><i data-lucide="chevron-down"></i></div>
+          </div>
+          <div class="addpanel">
+            <div class="h">Add Product</div>
+            <div class="field-out"><i data-lucide="search"></i><span class="val ph">Search product by name or SKU</span></div>
+            <div class="qtyrow">
+              <div class="mini" style="flex:.8"><div class="lbl">Quantity</div><div class="box">24 <span style="margin-left:auto;color:var(--muted)">pcs</span></div></div>
+              <div class="mini"><div class="lbl">Unit Cost</div><div class="box">₱ 175.00</div></div>
+              <div class="addbtn">Add</div>
+            </div>
+            <div class="costwarn"><i data-lucide="arrow-up-right"></i>Cost increased by 9% — A new SKU variation will be created</div>
+          </div>
+
+          <div class="irow">
+            <div class="iinfo">
+              <div class="iname">ASK Brake Shoe XRM 125</div>
+              <div class="isku">ask-001</div>
+              <div class="iprice">Cost ₱180.00 · Sells ₱250.00 · pcs <span class="diff up"><i data-lucide="arrow-up"></i>₱5.00</span></div>
+            </div>
+            <div class="stepper"><i data-lucide="minus-circle"></i><span class="q">12</span><i data-lucide="plus-circle"></i></div>
+            <div class="itot"><div class="v">₱2,160.00</div><div class="u">12 pcs</div></div>
+            <div class="ix"><i data-lucide="x"></i></div>
+          </div>
+          <div class="irow">
+            <div class="iinfo">
+              <div class="iname">NGK Spark Plug CPR6EA-9</div>
+              <div class="isku">ngk-014 <span class="nv">New Variant</span></div>
+              <div class="iprice">Cost ₱160.00 · Sells ₱200.00 · pcs</div>
+            </div>
+            <div class="stepper"><i data-lucide="minus-circle"></i><span class="q">24</span><i data-lucide="plus-circle"></i></div>
+            <div class="itot"><div class="v">₱3,840.00</div><div class="u">24 pcs</div></div>
+            <div class="ix"><i data-lucide="x"></i></div>
+          </div>
+        </div>
+        <div class="footer">
+          <div class="summ">
+            <div class="lbls">2 products<br>36 total units</div>
+            <div class="tot"><div class="l">Total Cost</div><div class="v">₱6,000.00</div></div>
+          </div>
+          <button class="btn-fill">Complete Receiving</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3 · BATCH IMPORT (preview) ============ -->
+    <div class="frame">
+      <div class="caption">3 · Batch import — preview · batch_import_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Batch Import</div></div>
+        </div>
+        <div class="body">
+          <div class="pad">
+            <div class="chips">
+              <span class="chip match">Match · 18</span>
+              <span class="chip var">Cost variation · 3</span>
+              <span class="chip new">New product · 4</span>
+              <span class="chip err">Errors · 2</span>
+            </div>
+            <div class="errbox">
+              <div class="h">Skipped rows:</div>
+              <div class="e">Row 7: missing required column "cost"</div>
+              <div class="e">Row 19: quantity is not a number</div>
+            </div>
+            <div class="crow">
+              <div class="ci"><div class="cn">ASK Brake Shoe XRM 125</div><div class="cd">ask-001 • 24 pcs • cost 180.00</div></div>
+              <span class="rbadge match">Match</span>
+            </div>
+            <div class="crow">
+              <div class="ci"><div class="cn">NGK Spark Plug CPR6EA-9</div><div class="cd">ngk-014 • 24 pcs • cost 160.00</div></div>
+              <span class="rbadge var">Variation</span>
+            </div>
+            <div class="crow">
+              <div class="ci"><div class="cn">Motul 10W-40 Engine Oil 1L</div><div class="cd">GENERATE • 12 L • cost 330.00</div></div>
+              <span class="rbadge new">New</span>
+            </div>
+          </div>
+        </div>
+        <div class="btnrow">
+          <div class="btn-out2">Cancel</div>
+          <div class="btn-fill2"><i data-lucide="arrow-right-circle"></i>Import 25 row(s)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4 · DRAFTS LIST ============ -->
+    <div class="frame">
+      <div class="caption">4 · Draft receivings · receiving_drafts_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Draft Receivings</div></div>
+        </div>
+        <div class="body" style="padding-top:8px">
+          <div class="tile">
+            <div class="lead draft"><i data-lucide="square-pen"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260623-1</div><div class="tsub">5 item(s) • 42 units<br>Jun 23, 2026 · 10:20 AM</div></div>
+            <span class="resume">Resume</span>
+          </div>
+          <div class="tile">
+            <div class="lead draft"><i data-lucide="square-pen"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260621-2</div><div class="tsub">2 item(s) • 8 units<br>Jun 21, 2026 · 3:48 PM</div></div>
+            <span class="resume">Resume</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 5 · HISTORY (month grouped) ============ -->
+    <div class="frame">
+      <div class="caption">5 · Receiving history — admin · receiving_history_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Receiving History</div></div>
+        </div>
+        <div class="body" style="padding-top:8px">
+          <div class="monthhdr"><span class="m">JUNE 2026</span><span class="c">6</span></div>
+          <div class="tile">
+            <div class="lead done"><i data-lucide="check-circle"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260624-3</div><div class="tsub">Jun 24, 2026 · 9:14 AM<br>RPM Parts Trading</div></div>
+            <div class="ttrail"><span class="ct">48 items</span><span class="cost">₱12,400.00</span></div>
+          </div>
+          <div class="tile">
+            <div class="lead done"><i data-lucide="check-circle"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260623-2</div><div class="tsub">Jun 23, 2026 · 4:02 PM<br>Speedstar Distributors</div></div>
+            <div class="ttrail"><span class="ct">18 items</span><span class="cost">₱6,150.00</span></div>
+          </div>
+          <div class="monthhdr"><span class="m">MAY 2026</span><span class="c">9</span></div>
+          <div class="tile">
+            <div class="lead done"><i data-lucide="check-circle"></i></div>
+            <div class="tmid"><div class="tref">RCV-20260530-5</div><div class="tsub">May 30, 2026 · 11:20 AM<br>RPM Parts Trading</div></div>
+            <div class="ttrail"><span class="ct">31 items</span><span class="cost">₱9,800.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Token-accurate reconstruction of the <b>current</b> Receiving surfaces. Sources:
+  <code>lib/presentation/mobile/screens/receiving/*.dart</code> +
+  <code>lib/presentation/mobile/widgets/receiving/*.dart</code>. Current state: Cupertino icons, Material
+  <code>Card</code> / flat bordered <code>Container</code> surfaces (no <code>AppCard</code>), hardcoded
+  <code>Colors.green/orange/blue/grey</code> status tints (no dark parity); batch-import chips already semantic.
+  Migration target = the global theme in <code>design/handoff/maki-theme/</code> (Lucide, soft-shadow
+  <code>AppCard</code>, theme-aware status tokens). The bulk-receiving read-only/completed view and the in-form CSV
+  dialog are documented in the README.</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>
