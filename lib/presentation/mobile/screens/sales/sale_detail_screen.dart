@@ -140,18 +140,19 @@ class SaleDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildVoidedBanner(ThemeData theme, SaleEntity sale) {
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.red[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red[300]!),
+        color: AppColors.error.withValues(alpha: isDark ? 0.18 : 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          Icon(CupertinoIcons.xmark_circle, color: Colors.red[700], size: 32),
-          const SizedBox(width: 16),
+          Icon(CupertinoIcons.xmark_circle, color: AppColors.error, size: 32),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +160,7 @@ class SaleDetailScreen extends ConsumerWidget {
                 Text(
                   'VOIDED',
                   style: TextStyle(
-                    color: Colors.red[700],
+                    color: AppColors.error,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -168,7 +169,7 @@ class SaleDetailScreen extends ConsumerWidget {
                   Text(
                     sale.voidReason!,
                     style: TextStyle(
-                      color: Colors.red[600],
+                      color: AppColors.error.withValues(alpha: 0.85),
                       fontSize: 13,
                     ),
                   ),
@@ -185,63 +186,60 @@ class SaleDetailScreen extends ConsumerWidget {
     SaleEntity sale,
     DateFormat dateFormat,
   ) {
-    return Container(
-      width: double.infinity,
+    final voided = sale.status == SaleStatus.voided;
+    return AppCard(
+      radius: AppRadius.xl,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          // Sale number
-          Text(
-            sale.saleNumber,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Date
-          Text(
-            dateFormat.format(sale.createdAt),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Grand total
-          Text(
-            '${AppConstants.currencySymbol}${sale.grandTotal.toStringAsFixed(2)}',
-            style: theme.textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: sale.status == SaleStatus.voided
-                  ? Colors.grey
-                  : theme.colorScheme.primary,
-              decoration: sale.status == SaleStatus.voided
-                  ? TextDecoration.lineThrough
-                  : null,
-            ),
-          ),
-          // Status badge
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color:
-                  sale.status == SaleStatus.voided ? Colors.red : Colors.green,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              sale.status.displayName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          children: [
+            // Sale number
+            Text(
+              sale.saleNumber,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.sm),
+            // Date
+            Text(
+              dateFormat.format(sale.createdAt),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // Grand total
+            Text(
+              '${AppConstants.currencySymbol}${sale.grandTotal.toStringAsFixed(2)}',
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: voided
+                    ? theme.colorScheme.onSurfaceVariant
+                    : theme.colorScheme.primary,
+                decoration: voided ? TextDecoration.lineThrough : null,
+              ),
+            ),
+            // Status badge
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: voided ? AppColors.error : AppColors.success,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                sale.status.displayName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -580,12 +578,13 @@ class SaleDetailScreen extends ConsumerWidget {
     SaleEntity sale,
     DateFormat dateFormat,
   ) {
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.red[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red[200]!),
+        color: AppColors.error.withValues(alpha: isDark ? 0.18 : 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
@@ -609,7 +608,8 @@ class SaleDetailScreen extends ConsumerWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(CupertinoIcons.doc_text, size: 20, color: Colors.grey[600]),
+                Icon(CupertinoIcons.doc_text,
+                    size: 20, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -618,7 +618,7 @@ class SaleDetailScreen extends ConsumerWidget {
                       Text(
                         'Reason',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -640,13 +640,14 @@ class SaleDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildNotesCard(ThemeData theme, SaleEntity sale) {
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.amber[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber[200]!),
+        color: AppColors.warning.withValues(alpha: isDark ? 0.16 : 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,18 +655,18 @@ class SaleDetailScreen extends ConsumerWidget {
           Row(
             children: [
               Icon(CupertinoIcons.square_list,
-                  size: 16, color: Colors.amber[700]),
-              const SizedBox(width: 8),
+                  size: 16, color: AppColors.warning),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 'Notes',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Colors.amber[700],
+                  color: AppColors.warning,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(sale.notes!),
         ],
       ),
@@ -717,8 +718,8 @@ class SaleDetailScreen extends ConsumerWidget {
           icon: const Icon(CupertinoIcons.xmark_circle),
           label: const Text('Request Void'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.red,
-            side: const BorderSide(color: Colors.red),
+            foregroundColor: AppColors.error,
+            side: const BorderSide(color: AppColors.error),
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
         ),
@@ -739,8 +740,8 @@ class SaleDetailScreen extends ConsumerWidget {
         icon: const Icon(CupertinoIcons.xmark_circle),
         label: const Text('Void This Sale'),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.red,
-          side: const BorderSide(color: Colors.red),
+          foregroundColor: AppColors.error,
+          side: const BorderSide(color: AppColors.error),
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
       ),
