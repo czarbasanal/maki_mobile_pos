@@ -91,6 +91,19 @@ abstract class AppColors {
   static const Color successLight = Color(0xFFE8F5E9);
   static const Color successDark = Color(0xFF2E7D32);
 
+  /// Brighter green for success text/values painted on a dark surface — the
+  /// `successDark` (#2E7D32) used in light mode reads almost black on the dark
+  /// canvas, so dark mode uses this lighter green for parity with the handoff.
+  static const Color successOnDark = Color(0xFF8FE39A);
+
+  /// Green text/value color appropriate for the current brightness.
+  static Color successText(bool dark) => dark ? successOnDark : successDark;
+
+  /// Filled success-tint surface (e.g. Change box, applied-discount chip)
+  /// appropriate for the current brightness.
+  static Color successFill(bool dark) =>
+      dark ? success.withValues(alpha: 0.18) : successLight;
+
   /// Warning color (amber) - for warnings and cautions
   static const Color warning = Color(0xFFFFC107);
   static const Color warningLight = Color(0xFFFFF8E1);

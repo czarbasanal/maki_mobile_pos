@@ -29,10 +29,8 @@ class CartItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
-    final discountAmount = item.calculateDiscountAmount(
-      isPercentage: isPercentageDiscount,
-    );
     final netAmount = item.calculateNetAmount(
       isPercentage: isPercentageDiscount,
     );
@@ -63,7 +61,7 @@ class CartItemTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.name,
-                      style: AppTextStyles.productName,
+                      style: AppTextStyles.productName.copyWith(fontSize: 14),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -114,27 +112,25 @@ class CartItemTile extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      if (item.hasDiscount) ...[
+                      // Discounted: small strikethrough gross over the green
+                      // net — the net is the hero (17/700), matching handoff.
+                      if (item.hasDiscount)
                         Text(
                           '${AppConstants.currencySymbol}${item.grossAmount.toStringAsFixed(2)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          style: TextStyle(
+                            fontSize: 11,
                             decoration: TextDecoration.lineThrough,
                             color: muted,
                           ),
                         ),
-                        Text(
-                          '-${AppConstants.currencySymbol}${discountAmount.toStringAsFixed(2)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.successDark,
-                          ),
-                        ),
-                      ],
                       Text(
                         '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color:
-                              item.hasDiscount ? AppColors.successDark : null,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: item.hasDiscount
+                              ? AppColors.successText(isDark)
+                              : theme.colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -167,6 +163,7 @@ class _QuantityControls extends StatelessWidget {
     return Container(
       height: _kPillHeight,
       decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCanvas : AppColors.lightSurfaceMuted,
         border: Border.all(color: hairline),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
@@ -233,8 +230,9 @@ class _DiscountButton extends StatelessWidget {
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
-    final borderColor = hasDiscount ? AppColors.success : hairline;
-    final fgColor = hasDiscount ? AppColors.successDark : muted;
+    // Applied = filled success-tint chip (no border); unapplied = quiet
+    // hairline-outlined chip. Matches the handoff.
+    final fgColor = hasDiscount ? AppColors.successText(isDark) : muted;
 
     return InkWell(
       onTap: onTap,
@@ -244,8 +242,9 @@ class _DiscountButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm + 4),
         alignment: Alignment.center,
         decoration: BoxDecoration(
+          color: hasDiscount ? AppColors.successFill(isDark) : null,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: borderColor),
+          border: hasDiscount ? null : Border.all(color: hairline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

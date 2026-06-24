@@ -14,42 +14,38 @@ class CartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final itemCount = cart.totalItemCount;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         children: [
+          // Item count folded into the Subtotal label — matches the handoff.
           _buildSummaryRow(
             context,
-            'Items',
-            '${cart.totalItemCount} (${cart.uniqueProductCount} products)',
-            isSecondary: true,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _buildSummaryRow(
-            context,
-            'Subtotal',
+            'Subtotal · $itemCount item${itemCount == 1 ? '' : 's'}',
             '${AppConstants.currencySymbol}${cart.subtotal.toStringAsFixed(2)}',
           ),
           if (cart.hasDiscount) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             _buildSummaryRow(
               context,
               'Discount',
               '-${AppConstants.currencySymbol}${cart.totalDiscount.toStringAsFixed(2)}',
-              valueColor: AppColors.successDark,
+              valueColor: AppColors.successText(isDark),
             ),
           ],
           if (cart.laborLines.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             _buildSummaryRow(
               context,
               'Labor',
               '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
             ),
           ],
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.sm + 1),
           const Divider(height: 1),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.sm + 1),
           _buildSummaryRow(
             context,
             'Total',
@@ -66,39 +62,45 @@ class CartSummary extends StatelessWidget {
     String label,
     String value, {
     bool isTotal = false,
-    bool isSecondary = false,
     Color? valueColor,
   }) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
 
+    if (isTotal) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ],
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: isTotal
-              ? theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w600)
-              : isSecondary
-                  ? theme.textTheme.bodySmall?.copyWith(color: muted)
-                  : theme.textTheme.bodyMedium,
-        ),
+        Text(label, style: TextStyle(fontSize: 13, color: muted)),
         Text(
           value,
-          style: isTotal
-              ? theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.primary,
-                )
-              : isSecondary
-                  ? theme.textTheme.bodySmall?.copyWith(color: muted)
-                  : theme.textTheme.bodyMedium?.copyWith(
-                      color: valueColor,
-                      fontWeight: valueColor != null
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: valueColor,
+          ),
         ),
       ],
     );

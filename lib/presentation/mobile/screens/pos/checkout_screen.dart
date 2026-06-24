@@ -168,18 +168,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   // Quantity badge — outlined primary, no fill
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 4,
+                      horizontal: 7,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: theme.colorScheme.primary),
                     ),
                     child: Text(
                       '×${item.quantity}',
                       style: TextStyle(
                         color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
                     ),
@@ -191,7 +191,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       children: [
                         Text(
                           item.name,
-                          style: AppTextStyles.productName,
+                          style:
+                              AppTextStyles.productName.copyWith(fontSize: 14),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -206,7 +207,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 ? '${item.discountValue.toStringAsFixed(0)}% off'
                                 : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} off',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.successDark,
+                              color: AppColors.successText(isDark),
                             ),
                           ),
                       ],
@@ -214,8 +215,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   Text(
                     '${AppConstants.currencySymbol}${netAmount.toStringAsFixed(2)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -237,12 +239,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 4,
-                    ),
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: theme.colorScheme.primary),
                     ),
                     child: Icon(
@@ -255,15 +256,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   Expanded(
                     child: Text(
                       line.description.isEmpty ? 'Service' : line.description,
-                      style: AppTextStyles.productName,
+                      style: AppTextStyles.productName.copyWith(fontSize: 14),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Text(
                     '${AppConstants.currencySymbol}${line.fee.toStringAsFixed(2)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -276,6 +278,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildPaymentSummary(ThemeData theme, CartState cart) {
+    final isDark = theme.brightness == Brightness.dark;
+    final mechanic = cart.mechanicName;
+    // Mechanic folded onto the Labor row ("Labor · Mang Tonio") per the handoff.
+    final laborLabel = (mechanic != null && mechanic.isNotEmpty)
+        ? 'Labor · $mechanic'
+        : 'Labor';
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -287,38 +295,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               '${AppConstants.currencySymbol}${cart.partsSubtotal.toStringAsFixed(2)}',
             ),
             if (cart.hasDiscount) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: 6),
               _buildSummaryRow(
                 theme,
                 'Discount',
                 '-${AppConstants.currencySymbol}${cart.totalDiscount.toStringAsFixed(2)}',
-                valueColor: AppColors.successDark,
+                valueColor: AppColors.successText(isDark),
               ),
             ],
             if (cart.laborLines.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: 6),
               _buildSummaryRow(
                 theme,
-                'Labor (${cart.laborLines.length} '
-                    'service${cart.laborLines.length == 1 ? '' : 's'})',
+                laborLabel,
                 '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
               ),
-              if (cart.mechanicName != null &&
-                  cart.mechanicName!.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Mechanic: ${cart.mechanicName}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
             ],
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm + 4),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm + 1),
               child: Divider(height: 1),
             ),
             _buildSummaryRow(
@@ -340,28 +334,48 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     bool isTotal = false,
     Color? valueColor,
   }) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    if (isTotal) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ],
+      );
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: isTotal
-              ? theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)
-              : theme.textTheme.bodyMedium,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 13, color: muted),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
+        const SizedBox(width: AppSpacing.sm),
         Text(
           value,
-          style: isTotal
-              ? TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 26,
-                  color: theme.colorScheme.primary,
-                )
-              : theme.textTheme.bodyMedium?.copyWith(
-                  color: valueColor,
-                  fontWeight: valueColor != null ? FontWeight.w600 : null,
-                ),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: valueColor,
+          ),
         ),
       ],
     );
@@ -437,14 +451,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(LucideIcons.checkCircle2, size: 22),
-                          const SizedBox(width: AppSpacing.sm + 4),
+                          const Icon(LucideIcons.checkCircle2, size: 20),
+                          const SizedBox(width: AppSpacing.sm),
                           Text(
-                            'Confirm Payment • ${AppConstants.currencySymbol}'
+                            'Confirm Payment · ${AppConstants.currencySymbol}'
                             '${cart.grandTotal.toStringAsFixed(2)}',
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -565,6 +579,7 @@ class _SectionHeader extends StatelessWidget {
     return Text(
       title.toUpperCase(),
       style: theme.textTheme.labelSmall?.copyWith(
+        fontSize: 11,
         color: theme.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.8,

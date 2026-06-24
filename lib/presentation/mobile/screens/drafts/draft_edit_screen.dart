@@ -351,7 +351,9 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
+          // Room above the picker so its floating "Mechanic" label isn't
+          // clipped (same fix as the POS labor section).
+          const SizedBox(height: AppSpacing.sm),
           MechanicPicker(
             selectedMechanicId: draft.mechanicId,
             onChanged: (m) => _onMechanicChanged(m?.id, m?.name),
