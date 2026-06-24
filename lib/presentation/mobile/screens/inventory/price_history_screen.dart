@@ -1,11 +1,12 @@
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/core/utils/price_history_view.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
     show PriceHistoryEntry;
@@ -36,7 +37,7 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text('Price History'),
@@ -59,6 +60,7 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
       return const Center(child: Text('No price changes yet.'));
     }
     final rows = buildPriceHistoryRows(entries, _metric);
+    final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
@@ -66,11 +68,30 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
           selected: _metric,
           onChanged: (m) => setState(() => _metric = m),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         _SparklineSection(entries: entries, metric: _metric),
-        const SizedBox(height: AppSpacing.lg),
-        for (var i = 0; i < rows.length; i++)
-          _HistoryRow(row: rows[i], metric: _metric, isFirst: i == 0),
+        Padding(
+          padding: const EdgeInsets.only(left: 2, top: 18, bottom: 8),
+          child: Text(
+            'CHANGES',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        AppCard(
+          radius: AppRadius.lg,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Column(
+            children: [
+              for (var i = 0; i < rows.length; i++)
+                _HistoryRow(row: rows[i], metric: _metric, isFirst: i == 0),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -116,44 +137,70 @@ class _SparklineSection extends StatelessWidget {
     }
     final showPrice = metric != PriceMetric.cost;
     final showCost = metric != PriceMetric.price;
-    final lineColor = theme.colorScheme.primary;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (showPrice) ...[
-          const _SparklineLabel('Price'),
-          _Sparkline(
-            values: sparklineSeries(entries, forCost: false),
-            color: lineColor,
-          ),
-          if (showCost) const SizedBox(height: AppSpacing.md),
+    final isDark = theme.brightness == Brightness.dark;
+    final priceColor = theme.colorScheme.primary;
+    final costColor =
+        isDark ? const Color(0xFF6C797C) : const Color(0xFF9AA0A3);
+    final priceSeries = sparklineSeries(entries, forCost: false);
+    final costSeries = sparklineSeries(entries, forCost: true);
+    return AppCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showPrice) ...[
+            _TrendHeader(
+              label: 'Price trend',
+              from: priceSeries.first,
+              to: priceSeries.last,
+            ),
+            const SizedBox(height: 6),
+            _Sparkline(values: priceSeries, color: priceColor),
+            if (showCost) const SizedBox(height: AppSpacing.md),
+          ],
+          if (showCost) ...[
+            _TrendHeader(
+              label: 'Cost trend',
+              from: costSeries.first,
+              to: costSeries.last,
+            ),
+            const SizedBox(height: 6),
+            _Sparkline(values: costSeries, color: costColor),
+          ],
         ],
-        if (showCost) ...[
-          const _SparklineLabel('Cost'),
-          _Sparkline(
-            values: sparklineSeries(entries, forCost: true),
-            color: lineColor,
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
 
-class _SparklineLabel extends StatelessWidget {
-  const _SparklineLabel(this.text);
-  final String text;
+/// Sparkline header: a muted "Price/Cost trend" label on the left, the
+/// from→to range (compact) on the right.
+class _TrendHeader extends StatelessWidget {
+  const _TrendHeader(
+      {required this.label, required this.from, required this.to});
+  final String label;
+  final double from;
+  final double to;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        text,
-        style: theme.textTheme.labelSmall
-            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelSmall
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+        Text(
+          '${from.toCurrencyCompact()} → ${to.toCurrencyCompact()}',
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+      ],
     );
   }
 }
@@ -307,14 +354,14 @@ class _MetricLine extends StatelessWidget {
       children: [
         Text('$label ',
             style: theme.textTheme.bodySmall?.copyWith(color: muted)),
-        Text(value.toCurrency(),
+        Text(value.toCurrencyCompact(),
             style: theme.textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w600)),
         if (changed) ...[
           const SizedBox(width: 4),
-          Icon(up ? CupertinoIcons.arrow_up : CupertinoIcons.arrow_down,
+          Icon(up ? LucideIcons.arrowUp : LucideIcons.arrowDown,
               size: 12, color: arrowColor),
-          Text(delta.abs().toCurrency(),
+          Text(delta.abs().toCurrencyCompact(),
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: arrowColor, fontWeight: FontWeight.w500)),
         ],

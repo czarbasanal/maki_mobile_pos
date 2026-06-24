@@ -11,6 +11,7 @@ import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/price_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
 PriceHistoryEntry _e(String id, double price, double cost, DateTime at,
         {String? reason}) =>
@@ -83,5 +84,19 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.byType(LineChart), findsWidgets);
+  });
+
+  testWidgets('sparkline + rows sit on AppCards with from→to trend labels',
+      (tester) async {
+    await _pump(tester, [
+      _e('e3', 250, 180, DateTime(2026, 6, 18), reason: 'Price + cost update'),
+      _e('e2', 230, 170, DateTime(2026, 5, 30), reason: 'Price update'),
+      _e('e1', 225, 170, DateTime(2026, 5, 12), reason: 'Initial price'),
+    ]);
+    // Sparkline card + changes card are AppCard surfaces.
+    expect(find.byType(AppCard), findsWidgets);
+    // Two-part trend header carries the from→to range.
+    expect(find.textContaining('→'), findsWidgets);
+    expect(find.text('CHANGES'), findsOneWidget);
   });
 }
