@@ -314,6 +314,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   Widget _buildSearchAndFilters(InventoryState inventoryState) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -369,6 +371,33 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     child: FilterChip(
                       label: Text(filter.label),
                       selected: isSelected,
+                      showCheckmark: false,
+                      labelStyle: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                        // Selected sits on a slate(light)/gold(dark) fill, so
+                        // the label flips to white(light)/near-black(dark) for
+                        // contrast; unselected uses normal ink.
+                        color: isSelected
+                            ? (isDark ? AppColors.primaryDark : Colors.white)
+                            : theme.colorScheme.onSurface,
+                      ),
+                      selectedColor: isDark
+                          ? AppColors.primaryAccent
+                          : AppColors.brandSlate,
+                      backgroundColor:
+                          isDark ? AppColors.darkCard : AppColors.lightCard,
+                      side: BorderSide(
+                        color: isSelected
+                            ? Colors.transparent
+                            : (isDark
+                                ? AppColors.darkHairline
+                                : AppColors.lightHairline),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
                       onSelected: (selected) {
                         ref
                             .read(inventoryStateProvider.notifier)
