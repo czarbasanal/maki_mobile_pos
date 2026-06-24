@@ -289,95 +289,41 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
-            _buildSummaryRow(
-              theme,
-              cart.laborLines.isEmpty ? 'Subtotal' : 'Parts subtotal',
-              '${AppConstants.currencySymbol}${cart.partsSubtotal.toStringAsFixed(2)}',
+            SummaryRow(
+              label: cart.laborLines.isEmpty ? 'Subtotal' : 'Parts subtotal',
+              value:
+                  '${AppConstants.currencySymbol}${cart.partsSubtotal.toStringAsFixed(2)}',
             ),
             if (cart.hasDiscount) ...[
               const SizedBox(height: 6),
-              _buildSummaryRow(
-                theme,
-                'Discount',
-                '-${AppConstants.currencySymbol}${cart.totalDiscount.toStringAsFixed(2)}',
+              SummaryRow(
+                label: 'Discount',
+                value:
+                    '-${AppConstants.currencySymbol}${cart.totalDiscount.toStringAsFixed(2)}',
                 valueColor: AppColors.successText(isDark),
               ),
             ],
             if (cart.laborLines.isNotEmpty) ...[
               const SizedBox(height: 6),
-              _buildSummaryRow(
-                theme,
-                laborLabel,
-                '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
+              SummaryRow(
+                label: laborLabel,
+                value:
+                    '${AppConstants.currencySymbol}${cart.laborSubtotal.toStringAsFixed(2)}',
               ),
             ],
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.sm + 1),
               child: Divider(height: 1),
             ),
-            _buildSummaryRow(
-              theme,
-              'Total',
-              '${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
+            SummaryRow(
+              label: 'Total',
+              value:
+                  '${AppConstants.currencySymbol}${cart.grandTotal.toStringAsFixed(2)}',
               isTotal: true,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryRow(
-    ThemeData theme,
-    String label,
-    String value, {
-    bool isTotal = false,
-    Color? valueColor,
-  }) {
-    final muted = theme.colorScheme.onSurfaceVariant;
-    if (isTotal) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-        ],
-      );
-    }
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(fontSize: 13, color: muted),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: valueColor,
-          ),
-        ),
-      ],
     );
   }
 

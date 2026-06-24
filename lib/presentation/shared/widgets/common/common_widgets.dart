@@ -14,4 +14,5 @@ export 'app_text_field.dart';
 export 'loading_overlay.dart';
 export 'password_dialog.dart';
 export 'state_views.dart';
+export 'summary_row.dart';
 export 'user_avatar.dart';
