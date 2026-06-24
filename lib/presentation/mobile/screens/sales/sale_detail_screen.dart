@@ -248,10 +248,12 @@ class SaleDetailScreen extends ConsumerWidget {
 
   Widget _buildSectionHeader(ThemeData theme, String title) {
     return Text(
-      title,
-      style: theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: Colors.grey[700],
+      title.toUpperCase(),
+      style: theme.textTheme.labelSmall?.copyWith(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
+        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -261,12 +263,10 @@ class SaleDetailScreen extends ConsumerWidget {
     SaleEntity sale,
     CostCodeEntity costMapping,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    return AppCard(
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           ...sale.items.asMap().entries.map((entry) {
@@ -283,7 +283,7 @@ class SaleDetailScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 border: isLast
                     ? null
-                    : Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                    : Border(bottom: BorderSide(color: hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,13 +320,13 @@ class SaleDetailScreen extends ConsumerWidget {
                         Text(
                           '${item.sku} • ${AppConstants.currencySymbol}${item.unitPrice.toStringAsFixed(2)}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         Text(
                           'Code: ${costMapping.encode(item.unitCost)}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         if (item.hasDiscount)
@@ -335,7 +335,7 @@ class SaleDetailScreen extends ConsumerWidget {
                                 ? '${item.discountValue.toStringAsFixed(0)}% discount'
                                 : '${AppConstants.currencySymbol}${item.discountValue.toStringAsFixed(2)} discount',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.green[700],
+                              color: AppColors.successText(isDark),
                             ),
                           ),
                       ],
@@ -361,7 +361,7 @@ class SaleDetailScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 border: isLast
                     ? null
-                    : Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                    : Border(bottom: BorderSide(color: hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,7 +395,7 @@ class SaleDetailScreen extends ConsumerWidget {
                         Text(
                           'Labor',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -500,12 +500,8 @@ class SaleDetailScreen extends ConsumerWidget {
     SaleEntity sale,
     DateFormat dateFormat,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         children: [
           _buildDetailRow(
@@ -559,13 +555,13 @@ class SaleDetailScreen extends ConsumerWidget {
   ) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
+        Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
