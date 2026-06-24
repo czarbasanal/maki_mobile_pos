@@ -62,3 +62,6 @@ scripts/node_modules/
 
 # design-handoff artifacts (UI reconstructions / mockups — local working files)
 /design/
+
+# Firebase hosting deploy cache (generated build artifact)
+/.firebase/
