@@ -24,6 +24,11 @@ abstract class AppTheme {
         onPrimary: AppColors.lightAccentText,
         secondary: AppColors.primaryAccent,
         onSecondary: AppColors.darkAccentText,
+        // Set explicitly: ColorScheme falls secondaryContainer back to
+        // `secondary` (gold), which tinted default chips/state-layers yellow.
+        // A neutral container keeps M3 components on-brand.
+        secondaryContainer: Color(0xFFEDEFF1),
+        onSecondaryContainer: AppColors.lightText,
         surface: AppColors.lightCard,
         onSurface: AppColors.lightText,
         error: AppColors.error,
@@ -367,6 +372,10 @@ abstract class AppTheme {
         onPrimary: AppColors.darkAccentText,
         secondary: AppColors.primaryAccent,
         onSecondary: AppColors.darkAccentText,
+        // Set explicitly (see light scheme): a neutral dark container instead
+        // of the gold `secondary` fallback.
+        secondaryContainer: AppColors.darkHairline,
+        onSecondaryContainer: AppColors.darkText,
         surface: AppColors.darkCard,
         onSurface: AppColors.darkText,
         error: AppColors.error,
