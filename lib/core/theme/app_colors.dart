@@ -119,6 +119,28 @@ abstract class AppColors {
   static const Color infoLight = Color(0xFFE3F2FD);
   static const Color infoDark = Color(0xFF1565C0);
 
+  // ── Status dark-parity variants (Receiving bundle 05) ──
+  // The light-mode status hues read poorly on the dark canvas; these lighter
+  // variants give icon/badge parity with the handoff prototype.
+  static const Color successOnDarkIcon = Color(0xFF5FC86A);
+  static Color successIcon(bool dark) => dark ? successOnDarkIcon : success;
+
+  static const Color warningOnDark = Color(0xFFF5B547);
+  static const Color warningTextLight = Color(0xFF9A6300);
+  static Color warningIcon(bool dark) => dark ? warningOnDark : warningDark;
+  static Color warningBadgeText(bool dark) =>
+      dark ? warningOnDark : warningTextLight;
+
+  static const Color infoOnDarkIcon = Color(0xFF5AA9F0);
+  static const Color infoTextLight = Color(0xFF1976D2);
+  static const Color infoOnDarkText = Color(0xFF7FB6FF);
+  static Color infoIcon(bool dark) => dark ? infoOnDarkIcon : info;
+  static Color infoBadgeText(bool dark) => dark ? infoOnDarkText : infoTextLight;
+
+  static const Color errorOnDark = Color(0xFFFF6B5E);
+  static Color costUp(bool dark) => dark ? errorOnDark : errorDark;
+  static Color costDown(bool dark) => dark ? successOnDark : successDark;
+
   // ==================== POS SPECIFIC COLORS ====================
 
   /// Color for cash payments
