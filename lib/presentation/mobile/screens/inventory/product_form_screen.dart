@@ -110,10 +110,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         child: Text(
           text,
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       );
