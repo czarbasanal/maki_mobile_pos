@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
-import 'package:maki_mobile_pos/core/utils/price_history_view.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
     show PriceHistoryEntry;
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/price_history_screen.dart';
@@ -73,15 +72,12 @@ void main() {
       _e('e1', 100, 60, DateTime(2026, 1, 1), reason: 'Initial price'),
     ]);
     expect(find.byType(LineChart), findsWidgets);
-    expect(find.byType(SegmentedButton<PriceMetric>), findsOneWidget);
+    expect(find.byKey(const Key('metric-filter')), findsOneWidget);
     expect(find.text('Alice Admin'), findsWidgets);
 
-    // Switch to the Cost filter — target the segment (the label 'Cost' also
-    // appears on the sparkline, so scope the finder to the SegmentedButton).
-    await tester.tap(find.descendant(
-      of: find.byType(SegmentedButton<PriceMetric>),
-      matching: find.text('Cost'),
-    ));
+    // Switch to the Cost filter — tap the segment by key (the label 'Cost'
+    // also appears on the sparkline trend header).
+    await tester.tap(find.byKey(const Key('metric-seg-cost')));
     await tester.pumpAndSettle();
     expect(find.byType(LineChart), findsWidgets);
   });
