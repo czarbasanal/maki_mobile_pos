@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -21,7 +22,7 @@ class ReceivingDraftsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.receiving),
         ),
         title: const Text('Draft Receivings'),
@@ -30,17 +31,19 @@ class ReceivingDraftsScreen extends ConsumerWidget {
         data: (drafts) {
           if (drafts.isEmpty) {
             return const EmptyStateView(
-              icon: CupertinoIcons.square_pencil,
+              icon: LucideIcons.edit,
               title: 'No Drafts',
               subtitle: 'In-progress receivings appear here',
             );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             itemCount: drafts.length,
-            itemBuilder: (context, index) =>
-                _DraftItem(draft: drafts[index], dateFormat: dateFormat),
+            itemBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _DraftItem(draft: drafts[index], dateFormat: dateFormat),
+            ),
           );
         },
         loading: () => const LoadingView(),
@@ -61,40 +64,61 @@ class _DraftItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.orange[50],
-            borderRadius: BorderRadius.circular(8),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final warn = AppColors.warningIcon(isDark);
+    final accent = isDark ? AppColors.primaryAccent : AppColors.brandSlate;
+
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.all(13),
+      onTap: () => context.push('${RoutePaths.bulkReceiving}/${draft.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: warn.withValues(alpha: isDark ? 0.16 : 0.12),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(LucideIcons.edit, color: warn, size: 20),
           ),
-          child: Icon(CupertinoIcons.square_pencil, color: Colors.orange[700]),
-        ),
-        title: Text(
-          draft.referenceNumber,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${draft.uniqueProductCount} item(s) • ${draft.totalQuantity} units',
-              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  draft.referenceNumber,
+                  style: TextStyle(
+                    fontFamily: 'RobotoMono',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${draft.uniqueProductCount} item(s) · ${draft.totalQuantity} units · ${dateFormat.format(draft.createdAt)}',
+                  style: TextStyle(fontSize: 12, color: muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            Text(
-              dateFormat.format(draft.createdAt),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Resume',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: accent,
             ),
-          ],
-        ),
-        trailing: TextButton(
-          onPressed: () =>
-              context.push('${RoutePaths.bulkReceiving}/${draft.id}'),
-          child: const Text('Resume'),
-        ),
-        onTap: () => context.push('${RoutePaths.bulkReceiving}/${draft.id}'),
+          ),
+        ],
       ),
     );
   }
