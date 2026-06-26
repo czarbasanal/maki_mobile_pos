@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -79,7 +79,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.receiving),
         ),
         title: Column(
@@ -89,7 +89,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             Text(
               receivingState.referenceNumber,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+                fontFamily: 'RobotoMono',
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -99,15 +100,15 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             : [
                 // Import CSV button
                 IconButton(
-                  icon: const Icon(CupertinoIcons.cloud_upload),
+                  icon: const Icon(LucideIcons.uploadCloud),
                   tooltip: 'Import CSV',
                   onPressed: () => _showCsvImport(context),
                 ),
                 // Save as draft
                 TextButton.icon(
                   onPressed: receivingState.isEmpty ? null : _saveDraft,
-                  icon: const Icon(CupertinoIcons.tray_arrow_down),
-                  label: const Text('Save Draft'),
+                  icon: const Icon(LucideIcons.save, size: 16),
+                  label: const Text('Draft'),
                 ),
               ],
       ),
@@ -118,13 +119,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
           // Supplier selection
           _buildSupplierSection(receivingState),
 
-          const Divider(height: 1),
-
           // Product entry section (hidden when read-only)
-          if (!isReadOnly) ...[
-            _buildProductEntrySection(theme),
-            const Divider(height: 1),
-          ],
+          if (!isReadOnly) _buildProductEntrySection(theme),
 
           // Items list
           Expanded(
@@ -139,6 +135,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   }
 
   Widget _buildReadOnlyBanner(CurrentReceivingState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = AppColors.successText(isDark);
     final completedAt = state.completedAt;
     final dateText = completedAt != null
         ? DateFormat('MMM d, y • h:mm a').format(completedAt)
@@ -149,13 +147,13 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm + 2,
       ),
-      color: AppColors.successLight,
+      color: AppColors.successFill(isDark),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            CupertinoIcons.checkmark_circle,
-            color: AppColors.successDark,
+          Icon(
+            LucideIcons.checkCircle,
+            color: fg,
             size: 18,
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -165,8 +163,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                   ? 'Completed on $dateText. Read-only.'
                   : 'Completed. Read-only.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.successDark,
+              style: TextStyle(
+                color: fg,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -179,11 +177,12 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   Widget _buildSupplierSection(CurrentReceivingState state) {
     final suppliersAsync = ref.watch(suppliersProvider);
 
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          const Icon(CupertinoIcons.briefcase, color: Colors.grey),
+          Icon(LucideIcons.briefcase, color: muted),
           const SizedBox(width: 12),
           Expanded(
             child: suppliersAsync.when(
@@ -234,15 +233,16 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   }
 
   Widget _buildProductEntrySection(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.grey[50],
+    return AppCard(
+      radius: AppRadius.field,
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Add Product',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
 
@@ -265,11 +265,11 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                 focusNode: focusNode,
                 decoration: InputDecoration(
                   labelText: 'Search product by name or SKU',
-                  prefixIcon: const Icon(CupertinoIcons.search),
+                  prefixIcon: const Icon(LucideIcons.search),
                   border: const OutlineInputBorder(),
                   suffixIcon: controller.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(CupertinoIcons.xmark),
+                          icon: const Icon(LucideIcons.x),
                           onPressed: () {
                             controller.clear();
                             setState(() => _selectedProduct = null);
@@ -390,22 +390,24 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
         ? (difference / originalCost * 100).toStringAsFixed(1)
         : '0';
 
+    // A cost change of either direction spawns a new SKU variation — the
+    // notice carries a single warning semantic, not up/down coloring.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final warn = AppColors.warningIcon(isDark);
+    final fg = AppColors.warningBadgeText(isDark);
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isIncrease ? Colors.orange[50] : Colors.blue[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isIncrease ? Colors.orange[200]! : Colors.blue[200]!,
-        ),
+        color: warn.withValues(alpha: isDark ? 0.14 : 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: warn.withValues(alpha: isDark ? 0.34 : 0.30)),
       ),
       child: Row(
         children: [
           Icon(
-            isIncrease
-                ? CupertinoIcons.arrow_up_right
-                : CupertinoIcons.arrow_down_right,
-            color: isIncrease ? Colors.orange[700] : Colors.blue[700],
+            isIncrease ? LucideIcons.arrowUpRight : LucideIcons.arrowDownRight,
+            color: fg,
             size: 20,
           ),
           const SizedBox(width: 8),
@@ -414,10 +416,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
               isIncrease
                   ? 'Cost increased by $percentChange% - A new SKU variation will be created'
                   : 'Cost decreased by $percentChange% - A new SKU variation will be created',
-              style: TextStyle(
-                fontSize: 12,
-                color: isIncrease ? Colors.orange[700] : Colors.blue[700],
-              ),
+              style: TextStyle(fontSize: 12, color: fg),
             ),
           ),
         ],
@@ -430,25 +429,23 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
       // SingleChildScrollView handles the overflow when the keyboard
       // shrinks the Expanded slot — without it the icon + texts no
       // longer fit and Flutter throws RenderFlex overflowed.
+      final muted = Theme.of(context).colorScheme.onSurfaceVariant;
       return SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_shopping_cart, size: 64, color: Colors.grey[400]),
+              Icon(LucideIcons.shoppingCart, size: 64, color: muted),
               const SizedBox(height: 16),
               Text(
                 'No items added yet',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 18, color: muted),
               ),
               const SizedBox(height: 8),
               Text(
                 'Search and add products above',
-                style: TextStyle(color: Colors.grey[500]),
+                style: TextStyle(color: muted),
               ),
             ],
           ),
@@ -495,19 +492,16 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   }
 
   Widget _buildBottomSection(ThemeData theme, CurrentReceivingState state) {
+    final isDark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
       ),
       child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           children: [
             // Summary
@@ -519,11 +513,11 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                   children: [
                     Text(
                       '${state.itemCount} products',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 13, color: muted),
                     ),
                     Text(
                       '${state.totalQuantity} total units',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 13, color: muted),
                     ),
                   ],
                 ),
@@ -531,15 +525,16 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
+                      Text(
                         'Total Cost',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 12, color: muted),
                       ),
                       Text(
                         state.totalCost.toCurrency(),
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -547,7 +542,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             // Error message — only relevant during edit; suppress when
             // viewing a completed receiving.
@@ -556,7 +551,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
                   state.errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(color: AppColors.error),
                 ),
               ),
 
@@ -564,22 +559,39 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             // (the back arrow handles navigation, and there's no edit to
             // commit, so a button would just be visual noise).
             if (!state.isReadOnly)
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: state.isEmpty || state.isProcessing
-                      ? null
-                      : _confirmAndComplete,
-                  child: state.isProcessing
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Complete Receiving'),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.field),
+                  boxShadow: isDark
+                      ? AppShadows.primaryButtonGold
+                      : AppShadows.primaryButton,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton.icon(
+                    onPressed: state.isEmpty || state.isProcessing
+                        ? null
+                        : _confirmAndComplete,
+                    icon: state.isProcessing
+                        ? const SizedBox.shrink()
+                        : const Icon(LucideIcons.checkCircle, size: 18),
+                    label: state.isProcessing
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Complete Receiving'),
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.field),
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -766,9 +778,10 @@ class _PriceChangeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
     final up = change.newCost > change.oldCost;
-    final color = up ? AppColors.errorDark : AppColors.successDark;
+    final color = up ? AppColors.costUp(isDark) : AppColors.costDown(isDark);
     final symbol = AppConstants.currencySymbol;
 
     return Padding(
@@ -789,7 +802,7 @@ class _PriceChangeRow extends StatelessWidget {
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
               const SizedBox(width: 6),
-              Icon(CupertinoIcons.arrow_right, size: 12, color: muted),
+              Icon(LucideIcons.arrowRight, size: 12, color: muted),
               const SizedBox(width: 6),
               Text(
                 '$symbol${change.newCost.toStringAsFixed(2)}',
