@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/batch_import.dart';
@@ -126,7 +126,7 @@ class CsvImportDialogState extends ConsumerState<CsvImportDialog> {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(CupertinoIcons.cloud_upload),
+          Icon(LucideIcons.uploadCloud),
           SizedBox(width: 12),
           Text('Import from CSV'),
         ],
@@ -150,7 +150,7 @@ class CsvImportDialogState extends ConsumerState<CsvImportDialog> {
                     ? const CircularProgressIndicator()
                     : OutlinedButton.icon(
                         onPressed: _isLoading ? null : _selectFile,
-                        icon: const Icon(CupertinoIcons.folder_open),
+                        icon: const Icon(LucideIcons.folderOpen),
                         label: const Text('Select CSV file'),
                       ),
               ),

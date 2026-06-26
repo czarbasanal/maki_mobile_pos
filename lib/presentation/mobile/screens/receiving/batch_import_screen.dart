@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -140,7 +140,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.receiving),
         ),
         title: const Text('Batch Import'),
@@ -176,7 +176,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
           const SizedBox(height: AppSpacing.lg),
           FilledButton.icon(
             onPressed: _pickAndParse,
-            icon: const Icon(CupertinoIcons.cloud_upload),
+            icon: const Icon(LucideIcons.uploadCloud),
             label: const Text('Pick CSV file'),
           ),
         ],
@@ -216,7 +216,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
               if (blockedByPermission) ...[
                 _Banner(
                   color: AppColors.error,
-                  icon: CupertinoIcons.exclamationmark_circle,
+                  icon: LucideIcons.alertCircle,
                   text:
                       'This file contains $newProducts new product(s). Auto-creating products requires admin permission.',
                 ),
@@ -230,33 +230,10 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
             ],
           ),
         ),
-        SafeArea(
-          minimum: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _resetToIdle,
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: (classified.isEmpty || blockedByPermission)
-                      ? null
-                      : _commit,
-                  icon: const Icon(CupertinoIcons.arrow_right_circle),
-                  label: Text('Import ${classified.length} row(s)'),
-                ),
-              ),
-            ],
-          ),
+        _ImportActionBar(
+          onCancel: _resetToIdle,
+          onImport: (classified.isEmpty || blockedByPermission) ? null : _commit,
+          rowCount: classified.length,
         ),
       ],
     );
@@ -269,7 +246,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            CupertinoIcons.check_mark_circled,
+            LucideIcons.checkCircle,
             size: 64,
             color: AppColors.success,
           ),
@@ -307,7 +284,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            CupertinoIcons.exclamationmark_triangle,
+            LucideIcons.alertTriangle,
             size: 56,
             color: AppColors.error,
           ),
@@ -334,11 +311,9 @@ class _CsvFormatHelp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: theme.dividerColor),
-      ),
+    return AppCard(
+      radius: AppRadius.field,
+      clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         title: Text('CSV format', style: theme.textTheme.titleSmall),
         childrenPadding: const EdgeInsets.fromLTRB(
@@ -397,7 +372,7 @@ class _SupplierFilter extends ConsumerWidget {
           initialValue: selectedSupplierId,
           decoration: const InputDecoration(
             labelText: 'Supplier (applies to all rows)',
-            prefixIcon: Icon(CupertinoIcons.briefcase),
+            prefixIcon: Icon(LucideIcons.briefcase),
           ),
           items: items,
           onChanged: (id) {
@@ -427,11 +402,13 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: color.withValues(alpha: isDark ? 0.12 : 0.07),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.45 : 0.40)),
+        borderRadius: BorderRadius.circular(AppRadius.field),
       ),
       child: Row(
         children: [
@@ -444,6 +421,82 @@ class _Banner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pinned Cancel / Import action bar for the preview step — soft top
+/// shadow surface with a slate primary Import button.
+class _ImportActionBar extends StatelessWidget {
+  const _ImportActionBar({
+    required this.onCancel,
+    required this.onImport,
+    required this.rowCount,
+  });
+
+  final VoidCallback onCancel;
+  final VoidCallback? onImport;
+  final int rowCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm + 4,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 10,
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: onCancel,
+                  child: const Text('Cancel'),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              flex: 14,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.field),
+                  boxShadow: onImport == null
+                      ? null
+                      : (isDark
+                          ? AppShadows.primaryButtonGold
+                          : AppShadows.primaryButton),
+                ),
+                child: SizedBox(
+                  height: 48,
+                  child: FilledButton.icon(
+                    onPressed: onImport,
+                    icon: const Icon(LucideIcons.arrowRightCircle, size: 17),
+                    label: Text('Import $rowCount row(s)'),
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.field),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/batch_import.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Shared preview of a parsed + classified CSV import: summary chips, a
 /// skipped-rows error list, and one tile per classified row. Used by both the
@@ -42,7 +43,24 @@ class ImportPreview extends StatelessWidget {
   }
 }
 
-// ---- moved verbatim from batch_import_screen.dart ----
+/// Theme-aware (fill, text) pair for a status chip/badge.
+({Color fill, Color fg}) _matchTone(bool dark) =>
+    (fill: AppColors.successFill(dark), fg: AppColors.successText(dark));
+
+({Color fill, Color fg}) _variationTone(bool dark) => (
+      fill: AppColors.warningIcon(dark).withValues(alpha: dark ? 0.18 : 0.13),
+      fg: AppColors.warningBadgeText(dark),
+    );
+
+({Color fill, Color fg}) _newTone(bool dark) => (
+      fill: AppColors.info.withValues(alpha: dark ? 0.20 : 0.13),
+      fg: AppColors.infoBadgeText(dark),
+    );
+
+({Color fill, Color fg}) _errorTone(bool dark) => (
+      fill: AppColors.error.withValues(alpha: dark ? 0.18 : 0.12),
+      fg: AppColors.errorText(dark),
+    );
 
 class _SummaryChips extends StatelessWidget {
   const _SummaryChips({
@@ -59,47 +77,44 @@ class _SummaryChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Wrap(
       spacing: AppSpacing.xs,
       runSpacing: AppSpacing.xs,
       children: [
-        _Chip(label: 'Match', count: existing, color: AppColors.success),
+        _Chip(label: 'Match', count: existing, tone: _matchTone(dark)),
         _Chip(
           label: 'Cost variation',
           count: mismatch,
-          color: AppColors.warningDark,
+          tone: _variationTone(dark),
         ),
-        _Chip(label: 'New product', count: newProducts, color: AppColors.info),
+        _Chip(label: 'New product', count: newProducts, tone: _newTone(dark)),
         if (errors > 0)
-          _Chip(label: 'Errors', count: errors, color: AppColors.error),
+          _Chip(label: 'Errors', count: errors, tone: _errorTone(dark)),
       ],
     );
   }
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.count, required this.color});
+  const _Chip({required this.label, required this.count, required this.tone});
 
   final String label;
   final int count;
-  final Color color;
+  final ({Color fill, Color fg}) tone;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withAlpha(0x22),
-        border: Border.all(color: color),
+        color: tone.fill,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         '$label · $count',
         style: TextStyle(
-          color: color,
+          color: tone.fg,
           fontWeight: FontWeight.w600,
           fontSize: 12,
         ),
@@ -115,20 +130,26 @@ class _ErrorList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = AppColors.errorText(dark);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.error),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: AppColors.error.withValues(alpha: dark ? 0.12 : 0.07),
+        border: Border.all(
+          color: AppColors.error.withValues(alpha: dark ? 0.45 : 0.40),
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.field),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Skipped rows:',
+          Text(
+            'Skipped rows',
             style: TextStyle(
+              fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.error,
+              color: fg,
             ),
           ),
           const SizedBox(height: 4),
@@ -137,7 +158,7 @@ class _ErrorList extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 '$e',
-                style: const TextStyle(color: AppColors.error, fontSize: 12),
+                style: TextStyle(color: fg, fontSize: 12),
               ),
             ),
         ],
@@ -151,70 +172,74 @@ class _ClassifiedRowTile extends StatelessWidget {
 
   final ClassifiedRow c;
 
-  ({String label, Color color}) _badge() {
+  ({String label, ({Color fill, Color fg}) tone}) _badge(bool dark) {
     if (c is ExistingMatchRow) {
-      return (label: 'Match', color: AppColors.success);
+      return (label: 'Match', tone: _matchTone(dark));
     }
     if (c is CostMismatchRow) {
-      return (label: 'Variation', color: AppColors.warningDark);
+      return (label: 'Variation', tone: _variationTone(dark));
     }
-    return (label: 'New', color: AppColors.info);
+    return (label: 'New', tone: _newTone(dark));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
-    final badge = _badge();
+    final badge = _badge(dark);
     final row = c.row;
-    return Card(
-      elevation: 0,
+    return AppCard(
+      radius: AppRadius.field,
       margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: theme.dividerColor),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm + 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    row.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  row.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
-                  Text(
-                    '${row.sku} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
-                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: badge.color.withAlpha(0x22),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Text(
-                badge.label,
-                style: TextStyle(
-                  color: badge.color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 11,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  '${row.sku} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontFamily: 'RobotoMono',
+                    fontSize: 12,
+                    color: muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm + 2,
+              vertical: 3,
+            ),
+            decoration: BoxDecoration(
+              color: badge.tone.fill,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              badge.label,
+              style: TextStyle(
+                color: badge.tone.fg,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

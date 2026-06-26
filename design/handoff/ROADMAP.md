@@ -19,13 +19,13 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 01 | **Login + Dashboard** | `dashboard_screen` (+ login) | ✅ Shipped |
 | 02 | **POS + Checkout** | `pos_screen`, `checkout_screen`, `barcode_scanner_screen` | ✅ Shipped |
 | 03 | **Sale Detail** | `sale_detail_screen` | ✅ Merged to `main` |
+| 04 | **Inventory** | `inventory_screen`, `product_form_screen`, `price_history_screen` | ✅ Merged to `main` |
+| 05 | **Receiving** | `receiving_screen`, `bulk_receiving_screen`, `batch_import_screen`, `receiving_drafts_screen`, `receiving_history_screen` | ✅ Merged to `main` |
 
 ## 🔜 Remaining (proposed order)
 
 | # | Bundle | Screens in scope |
 |---|--------|------------------|
-| 04 | **Inventory** | `inventory_screen`, `product_form_screen`, `price_history_screen` |
-| 05 | **Receiving** | `receiving_screen`, `bulk_receiving_screen`, `batch_import_screen`, `receiving_drafts_screen`, `receiving_history_screen` |
 | 06 | **Reports** | `reports_screen`, `sales_list_screen`, `sales_report_screen`, `profit_report_screen`, `top_selling_screen`, `end_of_day_screen`, `daily_closing_history_screen` |
 | 07 | **Void Requests** | `void_requests_screen` (sales family; pairs with shipped Sale Detail) |
 | 08 | **Expenses** | `expenses_screen`, `expense_form_screen`, `expense_history_screen` |
@@ -35,7 +35,7 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 12 | **Users** | `users_screen`, `user_form_screen` |
 | 13 | **Logs** | `activity_logs_screen`, `user_logs_screen` |
 
-**Coverage:** 4 bundles done (8 screens incl. login) + 10 remaining (~33 screens)
+**Coverage:** 6 bundles done (13 screens incl. login) + 8 remaining (~28 screens)
 = ~41 files ≈ the "~39-screen inventory" the handoffs reference.
 
 ## Notes on ordering
