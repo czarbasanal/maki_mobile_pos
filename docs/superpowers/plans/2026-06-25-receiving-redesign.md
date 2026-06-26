@@ -30,7 +30,7 @@
 | `back` | `chevronLeft` | every app-bar back button |
 | `cloud_upload` | `uploadCloud` | batch-import action, CSV import |
 | `add` | `plus` | New Receiving |
-| `square_pencil` | `squarePen` | drafts icon, adjust-stock (read-only) |
+| `square_pencil` | `edit` | drafts icon, adjust-stock (read-only) — NOTE: `lucide_icons 0.257.0` has no `squarePen`; `LucideIcons.edit` is the boxed-pencil equivalent |
 | `checkmark_circle` | `checkCircle` | completed status, Complete Receiving, done |
 | `calendar` | `trendingUp` | **Received/total summary card** (icon change + color → info) |
 | `cube_box` | `package` | empty states |
@@ -43,7 +43,7 @@
 | `arrow_up` / `arrow_down` | `arrowUp` / `arrowDown` | cost-diff badge |
 | `arrow_right_circle` | `arrowRightCircle` | Import N rows |
 | `arrow_right` | `arrowRight` | price-change preview |
-| `pencil` | `squarePen` | item-row adjust-stock |
+| `pencil` | `edit` | item-row adjust-stock |
 | `trash` | `trash2` | swipe-to-delete |
 | `folder_open` | `folderOpen` | CSV dialog select file |
 | `exclamationmark_circle` | `alertCircle` | error banner |

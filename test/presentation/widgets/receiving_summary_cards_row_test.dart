@@ -52,7 +52,7 @@ Future<void> _pump(
         recentReceivingsProvider.overrideWith(
           (ref) => recentStream ?? Stream.value(recent),
         ),
-        // The "Total Received" card is admin-only — give the test an
+        // The "Received" card is admin-only — give the test an
         // admin user so all three cards render.
         currentUserProvider.overrideWith((ref) => Stream.value(_adminUser())),
       ],
@@ -78,7 +78,7 @@ void main() {
 
       expect(find.text('Drafts'), findsOneWidget);
       expect(find.text('Completed'), findsOneWidget);
-      expect(find.text('Total Received'), findsOneWidget);
+      expect(find.text('Received'), findsOneWidget);
     });
 
     testWidgets(
@@ -181,7 +181,7 @@ void main() {
       // None of the count cards render in the error path...
       expect(find.text('Drafts'), findsNothing);
       expect(find.text('Completed'), findsNothing);
-      expect(find.text('Total Received'), findsNothing);
+      expect(find.text('Received'), findsNothing);
       // ...instead the user sees a visible error message with the cause
       // surfaced — replaces the previous silent SizedBox.shrink.
       expect(find.textContaining('boom'), findsOneWidget);

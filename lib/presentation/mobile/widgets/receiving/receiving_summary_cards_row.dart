@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Three summary cards on the receiving screen — Drafts (open, any
-/// age), Completed (this month), Total Received (this month, peso).
+/// age), Completed (this month), Received (this month, peso).
 /// Each card resolves its own loading state independently so a
 /// fast-arriving count doesn't have to wait on a slower peso-total
 /// query.
@@ -30,6 +32,7 @@ class ReceivingSummaryCardsRow extends ConsumerWidget {
     final mtdTotal = ref.watch(monthToDateReceivingTotalProvider);
     final isAdmin =
         ref.watch(currentUserProvider).valueOrNull?.role == UserRole.admin;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Surface a visible error chip rather than collapsing the row —
     // the previous SizedBox.shrink path silently hid all three cards
@@ -58,29 +61,30 @@ class ReceivingSummaryCardsRow extends ConsumerWidget {
             child: _CountCard(
               label: 'Drafts',
               value: draftValue,
-              icon: CupertinoIcons.square_pencil,
-              color: Colors.orange,
+              icon: LucideIcons.edit,
+              iconColor: AppColors.warningIcon(isDark),
               onTap: onTapDrafts,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: _CountCard(
               label: 'Completed',
               value: completedValue,
-              icon: CupertinoIcons.checkmark_circle,
-              color: Colors.green,
+              icon: LucideIcons.checkCircle,
+              iconColor: AppColors.successIcon(isDark),
               onTap: onTapCompleted,
             ),
           ),
           if (isAdmin) ...[
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: _CountCard(
-                label: 'Total Received',
+                label: 'Received',
                 value: totalValue,
-                icon: CupertinoIcons.calendar,
-                color: Colors.blue,
+                icon: LucideIcons.trendingUp,
+                iconColor: AppColors.infoIcon(isDark),
+                valueFontSize: 20,
               ),
             ),
           ],
@@ -103,39 +107,39 @@ class ReceivingSummaryCardsRow extends ConsumerWidget {
 
 /// Renders one count card. Pass `null` for [value] to show a loading
 /// spinner — keeps the label and icon visible so the user can see
-/// which card is still populating. The 32 px reservation on the value
+/// which card is still populating. The reserved height on the value
 /// slot keeps the row's height identical loading vs loaded so cards
 /// don't shift as data arrives.
 class _CountCard extends StatelessWidget {
   final String label;
   final String? value;
   final IconData icon;
-  final Color color;
+  final Color iconColor;
+  final double valueFontSize;
   final VoidCallback? onTap;
 
   const _CountCard({
     required this.label,
     required this.value,
     required this.icon,
-    required this.color,
+    required this.iconColor,
+    this.valueFontSize = 22,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+    final theme = Theme.of(context);
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+      onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 8),
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(height: 6),
           SizedBox(
-            height: 32,
+            height: 26,
             child: Center(
               child: value == null
                   ? SizedBox(
@@ -143,35 +147,30 @@ class _CountCard extends StatelessWidget {
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation(color),
+                        valueColor: AlwaysStoppedAnimation(iconColor),
                       ),
                     )
                   : Text(
                       value!,
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: color,
+                        fontSize: valueFontSize,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
             ),
           ),
+          const SizedBox(height: 3),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+              fontSize: 11,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
       ),
-    );
-
-    if (onTap == null) return card;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: card,
     );
   }
 }
@@ -198,7 +197,7 @@ class _ErrorRow extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              CupertinoIcons.exclamationmark_triangle,
+              LucideIcons.alertTriangle,
               color: theme.colorScheme.error,
               size: 18,
             ),
