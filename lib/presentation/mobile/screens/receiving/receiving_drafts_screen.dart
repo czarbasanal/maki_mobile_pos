@@ -110,13 +110,19 @@ class _DraftItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            'Resume',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: accent,
+          TextButton(
+            onPressed: () =>
+                context.push('${RoutePaths.bulkReceiving}/${draft.id}'),
+            style: TextButton.styleFrom(
+              foregroundColor: accent,
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
+            child: const Text('Resume'),
           ),
         ],
       ),

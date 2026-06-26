@@ -196,9 +196,7 @@ class ReceivingItemRow extends ConsumerWidget {
                         ),
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark
-                              ? const Color(0xFFB8C4C6)
-                              : AppColors.brandSlate,
+                          color: AppColors.brandMutedText(isDark),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),

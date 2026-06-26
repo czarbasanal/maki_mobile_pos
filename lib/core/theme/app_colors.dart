@@ -141,6 +141,16 @@ abstract class AppColors {
   static Color costUp(bool dark) => dark ? errorOnDark : errorDark;
   static Color costDown(bool dark) => dark ? successOnDark : successDark;
 
+  /// Error text/value color appropriate for the current brightness — used
+  /// for the import skipped-rows box and the Errors chip.
+  static Color errorText(bool dark) =>
+      dark ? const Color(0xFFFF8A80) : const Color(0xFFD32F2F);
+
+  /// Lightly brand-tinted secondary text (e.g. the receiving line pricing
+  /// subtitle): brand slate in light, a readable slate-grey on the dark canvas.
+  static Color brandMutedText(bool dark) =>
+      dark ? const Color(0xFFB8C4C6) : brandSlate;
+
   // ==================== POS SPECIFIC COLORS ====================
 
   /// Color for cash payments

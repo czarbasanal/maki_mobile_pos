@@ -59,7 +59,7 @@ class ImportPreview extends StatelessWidget {
 
 ({Color fill, Color fg}) _errorTone(bool dark) => (
       fill: AppColors.error.withValues(alpha: dark ? 0.18 : 0.12),
-      fg: dark ? const Color(0xFFFF8A80) : const Color(0xFFD32F2F),
+      fg: AppColors.errorText(dark),
     );
 
 class _SummaryChips extends StatelessWidget {
@@ -131,8 +131,7 @@ class _ErrorList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? const Color(0xFFF2A7A0) : const Color(0xFFC0392B);
-    final titleFg = dark ? const Color(0xFFFF8A80) : const Color(0xFFD32F2F);
+    final fg = AppColors.errorText(dark);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm + 4),
       decoration: BoxDecoration(
@@ -150,7 +149,7 @@ class _ErrorList extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: titleFg,
+              color: fg,
             ),
           ),
           const SizedBox(height: 4),

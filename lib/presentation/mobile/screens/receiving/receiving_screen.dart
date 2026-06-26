@@ -365,16 +365,19 @@ class _SectionHeader extends StatelessWidget {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: onViewAll,
-            child: Text(
-              'View all',
-              style: TextStyle(
+          TextButton(
+            onPressed: onViewAll,
+            style: TextButton.styleFrom(
+              foregroundColor:
+                  isDark ? AppColors.primaryAccent : AppColors.brandSlate,
+              textStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.primaryAccent : AppColors.brandSlate,
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
+            child: const Text('View all'),
           ),
         ],
       ),
