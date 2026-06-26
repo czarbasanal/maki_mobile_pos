@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -28,7 +28,7 @@ class ReceivingHistoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.receiving),
         ),
         title: const Text('Receiving History'),
@@ -41,7 +41,7 @@ class ReceivingHistoryScreen extends ConsumerWidget {
 
           if (completed.isEmpty) {
             return const EmptyStateView(
-              icon: CupertinoIcons.cube_box,
+              icon: LucideIcons.package,
               title: 'No Receiving History',
               subtitle: 'Completed receivings will appear here',
             );
@@ -64,10 +64,13 @@ class ReceivingHistoryScreen extends ConsumerWidget {
                 ),
                 SliverList.builder(
                   itemCount: group.items.length,
-                  itemBuilder: (context, i) => _ReceivingHistoryItem(
-                    receiving: group.items[i],
-                    dateFormat: dateFormat,
-                    isAdmin: isAdmin,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: _ReceivingHistoryItem(
+                      receiving: group.items[i],
+                      dateFormat: dateFormat,
+                      isAdmin: isAdmin,
+                    ),
                   ),
                 ),
               ],
@@ -93,25 +96,25 @@ class _MonthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
           Expanded(
             child: Text(
               label,
-              style: theme.textTheme.titleSmall?.copyWith(
+              style: TextStyle(
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 0.6,
+                color: muted,
               ),
             ),
           ),
           Text(
             '$count',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(fontSize: 12, color: muted),
           ),
         ],
       ),
@@ -134,58 +137,79 @@ class _ReceivingHistoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.green[50],
-            borderRadius: BorderRadius.circular(8),
+    final isDark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    final subtitle = receiving.supplierName != null
+        ? '${dateFormat.format(receiving.completedAt ?? receiving.createdAt)} · ${receiving.supplierName}'
+        : dateFormat.format(receiving.completedAt ?? receiving.createdAt);
+
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.all(12),
+      onTap: () => context.push('${RoutePaths.bulkReceiving}/${receiving.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: isDark ? 0.16 : 0.10),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(
+              LucideIcons.checkCircle,
+              color: AppColors.successIcon(isDark),
+              size: 20,
+            ),
           ),
-          child:
-              Icon(CupertinoIcons.checkmark_circle, color: Colors.green[700]),
-        ),
-        title: Text(
-          receiving.referenceNumber,
-          style: AppTextStyles.productName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              dateFormat.format(receiving.completedAt ?? receiving.createdAt),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-            if (receiving.supplierName != null)
-              Text(
-                receiving.supplierName!,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '${receiving.totalQuantity} items',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            if (isAdmin)
-              Text(
-                receiving.totalCost.toCurrency(),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.primary,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  receiving.referenceNumber,
+                  style: TextStyle(
+                    fontFamily: 'RobotoMono',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${receiving.totalQuantity} items',
+                style: TextStyle(fontSize: 12, color: muted),
               ),
-          ],
-        ),
-        onTap: () =>
-            context.push('${RoutePaths.bulkReceiving}/${receiving.id}'),
+              if (isAdmin)
+                Text(
+                  receiving.totalCost.toCurrency(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
