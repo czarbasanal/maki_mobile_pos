@@ -73,8 +73,10 @@ class ReceivingItemRow extends ConsumerWidget {
     if (sellingPrice != null) {
       parts.add('Sells $symbol${sellingPrice.toStringAsFixed(2)}');
     }
-    final pricing = parts.join(' • ');
-    return pricing.isEmpty ? item.unit : '$pricing • ${item.unit}';
+    // Unit is omitted here — it already shows in the quantity/total column,
+    // and keeping it on this line crowds out the selling price on narrow rows.
+    final pricing = parts.join(' · ');
+    return pricing.isEmpty ? item.unit : pricing;
   }
 
   Widget _buildCard(BuildContext context, WidgetRef ref) {
@@ -198,6 +200,7 @@ class ReceivingItemRow extends ConsumerWidget {
                           fontSize: 12,
                           color: AppColors.brandMutedText(isDark),
                         ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -234,6 +237,8 @@ class ReceivingItemRow extends ConsumerWidget {
                       ? () => onQuantityChanged(item.quantity - 1)
                       : null,
                   visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                 ),
                 SizedBox(
                   width: 46,
@@ -281,6 +286,8 @@ class ReceivingItemRow extends ConsumerWidget {
                   icon: Icon(LucideIcons.plusCircle, size: 22, color: accent),
                   onPressed: () => onQuantityChanged(item.quantity + 1),
                   visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                 ),
               ],
             ),
@@ -315,6 +322,8 @@ class ReceivingItemRow extends ConsumerWidget {
               icon: Icon(LucideIcons.x, color: muted),
               onPressed: onRemove,
               visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.only(left: 4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             )
           else if (onAdjustStock != null)
             IconButton(
@@ -322,6 +331,8 @@ class ReceivingItemRow extends ConsumerWidget {
               tooltip: 'Adjust stock',
               onPressed: onAdjustStock,
               visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.only(left: 4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
         ],
       ),
