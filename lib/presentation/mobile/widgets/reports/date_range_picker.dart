@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Date range presets.
 enum DateRangePreset {
@@ -19,9 +20,9 @@ enum DateRangePreset {
   const DateRangePreset(this.label);
 }
 
-/// Widget for selecting a date range. Two side-by-side controls span the
-/// viewport width — a preset dropdown on the left and the active date
-/// range pill on the right (which also opens a custom range picker on tap).
+/// Widget for selecting a date range. Two side-by-side `AppCard` pills span the
+/// viewport width — a preset dropdown on the left and the active date range
+/// pill on the right (which also opens a custom range picker on tap).
 class DateRangePicker extends StatelessWidget {
   final DateTime startDate;
   final DateTime endDate;
@@ -38,30 +39,22 @@ class DateRangePicker extends StatelessWidget {
     required this.onCustomRangeSelected,
   });
 
-  static const double _controlHeight = 48;
+  static const double _controlHeight = 46;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, y');
-    final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(bottom: BorderSide(color: hairline)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Preset dropdown.
-          Expanded(child: _buildPresetDropdown(context, theme)),
+          // Preset dropdown (≈1 : 1.3 ratio so the date never clips).
+          Expanded(flex: 10, child: _buildPresetDropdown(context, theme)),
           const SizedBox(width: AppSpacing.sm),
-          // Active date range pill — opens the custom range picker.
-          Expanded(child: _buildDatePill(context, theme, dateFormat)),
+          Expanded(flex: 13, child: _buildDatePill(context, theme, dateFormat)),
         ],
       ),
     );
@@ -69,59 +62,62 @@ class DateRangePicker extends StatelessWidget {
 
   Widget _buildPresetDropdown(BuildContext context, ThemeData theme) {
     final primary = theme.colorScheme.primary;
-    final outlineBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      borderSide: BorderSide(color: primary),
-    );
-    return SizedBox(
-      height: _controlHeight,
-      child: DropdownButtonFormField<DateRangePreset>(
-        initialValue: selectedPreset,
-        // Forces a fresh rebuild when the parent's selectedPreset changes
-        // (e.g. user picks a custom range via the date pill, which sets
-        // preset to .custom externally).
-        key: ValueKey('preset:${selectedPreset.name}'),
-        isDense: true,
-        isExpanded: true,
-        icon: Icon(CupertinoIcons.chevron_down, size: 16, color: primary),
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: primary,
-          fontSize: 14,
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return AppCard(
+      radius: AppRadius.md,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      child: SizedBox(
+        height: _controlHeight,
+        child: Row(
+          children: [
+            Icon(LucideIcons.calendarDays, size: 17, color: primary),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButtonFormField<DateRangePreset>(
+                  initialValue: selectedPreset,
+                  // Forces a fresh rebuild when the parent's selectedPreset
+                  // changes (e.g. user picks a custom range via the date pill,
+                  // which sets preset to .custom externally).
+                  key: ValueKey('preset:${selectedPreset.name}'),
+                  isDense: true,
+                  isExpanded: true,
+                  icon: const SizedBox.shrink(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 14,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                  items: DateRangePreset.values
+                      .map((p) => DropdownMenuItem<DateRangePreset>(
+                            value: p,
+                            child: Text(
+                              p.label,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (preset) {
+                    if (preset == null) return;
+                    if (preset == DateRangePreset.custom) {
+                      _showCustomDatePicker(context);
+                    } else {
+                      onPresetChanged(preset);
+                    }
+                  },
+                ),
+              ),
+            ),
+            Icon(LucideIcons.chevronDown, size: 16, color: muted),
+          ],
         ),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm + 4,
-            vertical: AppSpacing.sm,
-          ),
-          prefixIcon: Icon(
-            CupertinoIcons.calendar_today,
-            size: 16,
-            color: primary,
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 32,
-            minHeight: 0,
-          ),
-          border: outlineBorder,
-          enabledBorder: outlineBorder,
-          focusedBorder: outlineBorder,
-        ),
-        items: DateRangePreset.values
-            .map((p) => DropdownMenuItem<DateRangePreset>(
-                  value: p,
-                  child: Text(p.label),
-                ))
-            .toList(),
-        onChanged: (preset) {
-          if (preset == null) return;
-          if (preset == DateRangePreset.custom) {
-            _showCustomDatePicker(context);
-          } else {
-            onPresetChanged(preset);
-          }
-        },
       ),
     );
   }
@@ -132,42 +128,35 @@ class DateRangePicker extends StatelessWidget {
     DateFormat dateFormat,
   ) {
     final primary = theme.colorScheme.primary;
+    final muted = theme.colorScheme.onSurfaceVariant;
     final label = _isSameDay(startDate, endDate)
         ? dateFormat.format(startDate)
         : '${dateFormat.format(startDate)} – ${dateFormat.format(endDate)}';
 
-    return SizedBox(
-      height: _controlHeight,
-      child: InkWell(
-        onTap: () => _showCustomDatePicker(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm + 4,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: primary),
-          ),
-          child: Row(
-            children: [
-              Icon(CupertinoIcons.calendar, size: 16, color: primary),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: primary,
-                    fontSize: 14,
-                  ),
+    return AppCard(
+      radius: AppRadius.md,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      onTap: () => _showCustomDatePicker(context),
+      child: SizedBox(
+        height: _controlHeight,
+        child: Row(
+          children: [
+            Icon(LucideIcons.calendar, size: 17, color: primary),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 13,
                 ),
               ),
-              const SizedBox(width: 4),
-              Icon(CupertinoIcons.chevron_down, size: 16, color: primary),
-            ],
-          ),
+            ),
+            const SizedBox(width: 4),
+            Icon(LucideIcons.chevronDown, size: 16, color: muted),
+          ],
         ),
       ),
     );

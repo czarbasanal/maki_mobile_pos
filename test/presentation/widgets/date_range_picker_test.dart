@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 void main() {
   group('DateRangePicker', () {
@@ -81,5 +83,31 @@ void main() {
       expect(find.textContaining('Feb 1'), findsOneWidget);
       expect(find.textContaining('Feb 5'), findsOneWidget);
     });
+
+    testWidgets('renders Lucide calendar icons inside AppCard pills',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: _Harness()),
+        ),
+      );
+
+      expect(find.byIcon(LucideIcons.calendarDays), findsOneWidget);
+      expect(find.byIcon(LucideIcons.calendar), findsOneWidget);
+      expect(find.byType(AppCard), findsNWidgets(2));
+    });
   });
+}
+
+class _Harness extends StatelessWidget {
+  const _Harness();
+
+  @override
+  Widget build(BuildContext context) => DateRangePicker(
+        startDate: DateTime(2025, 2, 5),
+        endDate: DateTime(2025, 2, 5),
+        selectedPreset: DateRangePreset.today,
+        onPresetChanged: (_) {},
+        onCustomRangeSelected: (_, __) {},
+      );
 }
