@@ -153,8 +153,7 @@ class _RankRow extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = AppColors.hairline(isDark);
     final progress =
         maxQuantity > 0 ? product.quantitySold / maxQuantity : 0.0;
     final medal = _rankColors(index, isDark);
@@ -291,7 +290,7 @@ class _RankRow extends StatelessWidget {
         );
       default:
         return _RankColors(
-          ring: dark ? const Color(0xFF2C3C3E) : AppColors.lightHairline,
+          ring: dark ? AppColors.darkInputBorder : AppColors.lightHairline,
           number:
               dark ? AppColors.darkTextSecondary : AppColors.lightTextMuted,
           bar: dark ? const Color(0xFF5E7A84) : const Color(0xFF283E46),

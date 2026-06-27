@@ -159,7 +159,9 @@ class SalesSummaryCard extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(0, 15, 0, 13),
               child: Row(
                 children: [
-                  Expanded(child: Divider(height: 1, color: _hairline(isDark))),
+                  Expanded(
+                      child: Divider(
+                          height: 1, color: AppColors.hairline(isDark))),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
@@ -180,7 +182,9 @@ class SalesSummaryCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  Expanded(child: Divider(height: 1, color: _hairline(isDark))),
+                  Expanded(
+                      child: Divider(
+                          height: 1, color: AppColors.hairline(isDark))),
                 ],
               ),
             ),
@@ -305,9 +309,6 @@ class SalesSummaryCard extends ConsumerWidget {
       ),
     );
   }
-
-  static Color _hairline(bool dark) =>
-      dark ? AppColors.darkHairline : AppColors.lightHairline;
 }
 
 /// Outlined metric card — neutral by default, semantic accent for status.
@@ -333,9 +334,7 @@ class _MetricCard extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    final borderColor = accent ?? hairline;
+    final borderColor = accent ?? AppColors.hairline(isDark);
     final labelColor = accent ?? muted;
     final valueColor = accent != null
         ? (accent == AppColors.success

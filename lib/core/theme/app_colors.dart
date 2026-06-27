@@ -151,6 +151,10 @@ abstract class AppColors {
   static Color brandMutedText(bool dark) =>
       dark ? const Color(0xFFB8C4C6) : brandSlate;
 
+  /// Hairline border / progress-track color for the current brightness — the
+  /// card outline + metric/rank borders used across the reports surfaces.
+  static Color hairline(bool dark) => dark ? darkHairline : lightHairline;
+
   // ==================== POS SPECIFIC COLORS ====================
 
   /// Color for cash payments

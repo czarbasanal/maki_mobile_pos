@@ -67,7 +67,11 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           // Date range picker — replaced by the forced-today banner for roles
           // restricted to the current day.
           if (dailyOnly)
-            const _DailyOnlyBanner()
+            const ReportsWarningBanner(
+              icon: LucideIcons.alertTriangle,
+              title: "Showing today's sales only",
+              subtitle: "Your role can view the current day's sales.",
+            )
           else
             DateRangePicker(
               startDate: _startDate,
@@ -130,8 +134,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = AppColors.hairline(isDark);
     final dateFormat = DateFormat('EEEE, MMMM d');
     final isToday = _isToday(date);
 
@@ -427,61 +430,6 @@ class _PaymentPill extends StatelessWidget {
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
               color: fg,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Forced-today warning shown to daily-reports-only roles in place of the
-/// date-range picker.
-class _DailyOnlyBanner extends StatelessWidget {
-  const _DailyOnlyBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final bg =
-        dark ? const Color(0x1FF5B547) : const Color(0xFFFFF6E6);
-    final border =
-        dark ? const Color(0x66F5B547) : const Color(0xFFF0C36B);
-    final title =
-        dark ? AppColors.warningOnDark : const Color(0xFF8A5E12);
-    final sub = dark ? AppColors.warningOnDark : const Color(0xFFA07A2E);
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        children: [
-          Icon(LucideIcons.alertTriangle,
-              size: 19, color: AppColors.warningIcon(dark)),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Showing today's sales only",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: title,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  'Your role can view the current day\'s sales.',
-                  style: TextStyle(fontSize: 11.5, color: sub),
-                ),
-              ],
             ),
           ),
         ],

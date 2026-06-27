@@ -258,8 +258,7 @@ class _ProfitMetricCard extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = AppColors.hairline(isDark);
     final valueColor =
         accent == AppColors.success ? AppColors.successText(isDark) : null;
 

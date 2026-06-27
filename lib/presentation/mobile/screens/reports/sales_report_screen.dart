@@ -75,7 +75,11 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
             children: [
               // Date range picker — replaced by a warning for today-only roles.
               if (dailyOnly)
-                const _DailyOnlyNotice()
+                const ReportsWarningBanner(
+                  icon: LucideIcons.lock,
+                  title: "Showing today's sales only. "
+                      'Contact an admin for historical reports.',
+                )
               else
                 DateRangePicker(
                   startDate: _startDate,
@@ -194,8 +198,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = AppColors.hairline(isDark);
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Column(
@@ -307,42 +310,6 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
       _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
       _selectedPreset = DateRangePreset.custom;
     });
-  }
-}
-
-/// Today-only notice shown to daily-reports roles in place of the picker.
-class _DailyOnlyNotice extends StatelessWidget {
-  const _DailyOnlyNotice();
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final bg = dark ? const Color(0x1FF5B547) : const Color(0xFFFFF6E6);
-    final border = dark ? const Color(0x66F5B547) : const Color(0xFFF0C36B);
-    final text = dark ? AppColors.warningOnDark : const Color(0xFF8A5E12);
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        children: [
-          Icon(LucideIcons.lock, size: 19, color: AppColors.warningIcon(dark)),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              "Showing today's sales only. "
-              'Contact an admin for historical reports.',
-              style: TextStyle(fontSize: 13, color: text),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
