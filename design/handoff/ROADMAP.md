@@ -21,12 +21,13 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 03 | **Sale Detail** | `sale_detail_screen` | ✅ Merged to `main` |
 | 04 | **Inventory** | `inventory_screen`, `product_form_screen`, `price_history_screen` | ✅ Merged to `main` |
 | 05 | **Receiving** | `receiving_screen`, `bulk_receiving_screen`, `batch_import_screen`, `receiving_drafts_screen`, `receiving_history_screen` | ✅ Merged to `main` |
+| 06a | **Reports (hub / lists)** | `sales_list_screen`, `sales_report_screen`, `profit_report_screen`, `top_selling_screen` (+ shared `date_range_picker`, `sales_summary_card`, `top_products_card`; new `payment_method_style`, `reports_warning_banner`; dead `reports_screen` deleted) | ✅ Merged to `main` |
 
 ## 🔜 Remaining (proposed order)
 
 | # | Bundle | Screens in scope |
 |---|--------|------------------|
-| 06 | **Reports** | `reports_screen`, `sales_list_screen`, `sales_report_screen`, `profit_report_screen`, `top_selling_screen`, `end_of_day_screen`, `daily_closing_history_screen` |
+| 06b | **Closing** | `end_of_day_screen`, `daily_closing_history_screen` (current-UI capture ready in `design/handoff/06b-closing/`; awaiting redesign hand-off) |
 | 07 | **Void Requests** | `void_requests_screen` (sales family; pairs with shipped Sale Detail) |
 | 08 | **Expenses** | `expenses_screen`, `expense_form_screen`, `expense_history_screen` |
 | 09 | **Drafts** | `drafts_list_screen`, `draft_edit_screen` |
