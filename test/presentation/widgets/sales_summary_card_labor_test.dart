@@ -59,7 +59,7 @@ void main() {
     ));
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Service Revenue'), findsOneWidget);
+    expect(find.text('Service Rev.'), findsOneWidget);
     expect(find.text('Service Profit'), findsOneWidget);
     // The formatted value ₱450.00 should appear.
     expect(find.textContaining('450'), findsWidgets);
