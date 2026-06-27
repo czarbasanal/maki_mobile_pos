@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
@@ -50,13 +50,13 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Sales History'),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.chart_bar),
+            icon: const Icon(LucideIcons.barChart3),
             tooltip: 'Reports',
             onPressed: () => _navigateToReports(context),
           ),
@@ -64,8 +64,11 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       ),
       body: Column(
         children: [
-          // Date range picker — hidden when role is restricted to today.
-          if (!dailyOnly)
+          // Date range picker — replaced by the forced-today banner for roles
+          // restricted to the current day.
+          if (dailyOnly)
+            const _DailyOnlyBanner()
+          else
             DateRangePicker(
               startDate: _startDate,
               endDate: _endDate,
@@ -75,15 +78,13 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
             ),
 
           // Sales list
-          Expanded(
-            child: _buildSalesList(),
-          ),
+          Expanded(child: _buildSalesList(dailyOnly)),
         ],
       ),
     );
   }
 
-  Widget _buildSalesList() {
+  Widget _buildSalesList(bool dailyOnly) {
     final params = DateRangeParams(
       startDate: _startDate,
       endDate: _endDate,
@@ -95,26 +96,25 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       data: (sales) {
         if (sales.isEmpty) {
           return const EmptyStateView(
-            icon: CupertinoIcons.doc_text,
+            icon: LucideIcons.fileText,
             title: 'No Sales Found',
             subtitle: 'Try adjusting your date range or filters',
           );
         }
 
-        // Group sales by date
         final groupedSales = _groupSalesByDate(sales);
 
         return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(salesByDateRangeProvider(params));
           },
-          child: ListView.builder(
-            itemCount: groupedSales.length,
+          child: ListView(
             padding: const EdgeInsets.only(bottom: 16),
-            itemBuilder: (context, index) {
-              final dateGroup = groupedSales.entries.elementAt(index);
-              return _buildDateGroup(dateGroup.key, dateGroup.value);
-            },
+            children: [
+              for (final entry in groupedSales.entries)
+                _buildDateGroup(entry.key, entry.value),
+              if (dailyOnly) const _EarlierDaysFooter(),
+            ],
           ),
         );
       },
@@ -132,7 +132,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final hairline =
         isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    final dateFormat = DateFormat('EEEE, MMMM d, y');
+    final dateFormat = DateFormat('EEEE, MMMM d');
     final isToday = _isToday(date);
 
     final completedSales = sales.where((s) => s.status == SaleStatus.completed);
@@ -142,19 +142,11 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date header — flat with hairline borders
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm + 4,
-          ),
-          decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(color: hairline),
-              bottom: BorderSide(color: hairline),
-            ),
-          ),
+        // Day header — on canvas, baseline-aligned.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: Column(
@@ -163,12 +155,15 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                     Text(
                       isToday ? 'Today' : dateFormat.format(date),
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
                       ),
                     ),
+                    const SizedBox(height: 1),
                     Text(
                       '$dailyCount sale${dailyCount != 1 ? 's' : ''}',
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: muted, fontSize: 12),
                     ),
                   ],
                 ),
@@ -176,14 +171,28 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
               Text(
                 dailyTotal.toCurrency(),
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
                   color: theme.colorScheme.primary,
                 ),
               ),
             ],
           ),
         ),
-        ...sales.map((sale) => _buildSaleItem(sale)),
+        // Day card holding the sale rows.
+        AppCard(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          child: Column(
+            children: [
+              for (var i = 0; i < sales.length; i++) ...[
+                _buildSaleItem(sales[i]),
+                if (i != sales.length - 1)
+                  Divider(height: 1, color: hairline),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -191,80 +200,112 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   Widget _buildSaleItem(SaleEntity sale) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
     final timeFormat = DateFormat('h:mm a');
     final isVoided = sale.status == SaleStatus.voided;
 
-    return ListTile(
+    final leadBg = isVoided
+        ? (isDark ? const Color(0x29F44336) : const Color(0x1AF44336))
+        : (isDark ? const Color(0x0DFFFFFF) : const Color(0x12283E46));
+    final leadColor = isVoided
+        ? (isDark ? AppColors.errorOnDark : AppColors.error)
+        : (isDark ? const Color(0xFF9FB0B0) : theme.colorScheme.primary);
+
+    return InkWell(
       onTap: () => _navigateToSaleDetail(sale),
-      // Outlined leading glyph; no tinted background.
-      leading: Icon(
-        isVoided ? CupertinoIcons.xmark_circle : CupertinoIcons.doc_text,
-        color: isVoided ? AppColors.error : muted,
-        size: 24,
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              sale.saleNumber,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                decoration: isVoided ? TextDecoration.lineThrough : null,
-                color: isVoided ? muted : null,
-              ),
-            ),
-          ),
-          if (isVoided)
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        child: Row(
+          children: [
+            // Leading tinted square.
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.error),
+                color: leadBg,
+                borderRadius: BorderRadius.circular(11),
               ),
-              child: const Text(
-                'VOID',
-                style: TextStyle(
-                  color: AppColors.error,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
+              child: Icon(
+                isVoided ? LucideIcons.xCircle : LucideIcons.fileText,
+                size: 19,
+                color: leadColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Middle.
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          sale.saleNumber,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'RobotoMono',
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                            color: isVoided ? AppColors.lightTextHint : null,
+                            decoration:
+                                isVoided ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
+                      ),
+                      if (isVoided) ...[
+                        const SizedBox(width: 7),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(color: AppColors.error),
+                          ),
+                          child: const Text(
+                            'VOID',
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${timeFormat.format(sale.createdAt)} • ${sale.cashierName} • ${sale.totalItemCount} item${sale.totalItemCount == 1 ? '' : 's'}',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: muted, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Trailing: total + payment pill.
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  sale.grandTotal.toCurrency(),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: isVoided ? muted : null,
+                    decoration: isVoided ? TextDecoration.lineThrough : null,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                _PaymentPill(method: sale.paymentMethod),
+              ],
             ),
-        ],
-      ),
-      subtitle: Text(
-        '${timeFormat.format(sale.createdAt)} • ${sale.cashierName} • ${sale.totalItemCount} items',
-        style: theme.textTheme.bodySmall?.copyWith(color: muted),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            sale.grandTotal.toCurrency(),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: isVoided ? muted : null,
-              decoration: isVoided ? TextDecoration.lineThrough : null,
-            ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                _paymentIcon(sale.paymentMethod),
-                size: 14,
-                color: muted,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                sale.paymentMethod.displayName,
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -357,20 +398,118 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
         date.month == now.month &&
         date.day == now.day;
   }
+}
 
-  IconData _paymentIcon(PaymentMethod method) {
-    switch (method) {
-      case PaymentMethod.cash:
-        return AppIcons.peso;
-      case PaymentMethod.maya:
-        return CupertinoIcons.creditcard;
-      case PaymentMethod.gcash:
-        return CupertinoIcons.device_phone_portrait;
-      case PaymentMethod.salmon:
-        return CupertinoIcons.calendar;
-      case PaymentMethod.mixed:
-        return CupertinoIcons.square_split_2x1;
-    }
+/// Pill summarizing a sale's payment method (icon + label, method-tinted).
+class _PaymentPill extends StatelessWidget {
+  const _PaymentPill({required this.method});
+  final PaymentMethod method;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = PaymentMethodStyle.pillFg(method, dark: dark);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: PaymentMethodStyle.pillBg(method, dark: dark),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(PaymentMethodStyle.iconFor(method), size: 12, color: fg),
+          const SizedBox(width: 4),
+          Text(
+            method.displayName,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+              color: fg,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
+/// Forced-today warning shown to daily-reports-only roles in place of the
+/// date-range picker.
+class _DailyOnlyBanner extends StatelessWidget {
+  const _DailyOnlyBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final bg =
+        dark ? const Color(0x1FF5B547) : const Color(0xFFFFF6E6);
+    final border =
+        dark ? const Color(0x66F5B547) : const Color(0xFFF0C36B);
+    final title =
+        dark ? AppColors.warningOnDark : const Color(0xFF8A5E12);
+    final sub = dark ? AppColors.warningOnDark : const Color(0xFFA07A2E);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.alertTriangle,
+              size: 19, color: AppColors.warningIcon(dark)),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Showing today's sales only",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: title,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  'Your role can view the current day\'s sales.',
+                  style: TextStyle(fontSize: 11.5, color: sub),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Footer shown to daily-only roles below the single Today group.
+class _EarlierDaysFooter extends StatelessWidget {
+  const _EarlierDaysFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(LucideIcons.lock, size: 13, color: muted),
+          const SizedBox(width: 7),
+          Text(
+            'Earlier days are not available for your role',
+            style: TextStyle(fontSize: 12, color: muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
