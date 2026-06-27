@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Sales report dashboard with summary and analytics.
 class SalesReportScreen extends ConsumerStatefulWidget {
@@ -53,7 +55,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         title: const Text('Sales Report'),
@@ -71,32 +73,9 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Date range picker — hidden for roles restricted to today.
+              // Date range picker — replaced by a warning for today-only roles.
               if (dailyOnly)
-                Container(
-                  margin: const EdgeInsets.all(AppSpacing.md),
-                  padding: const EdgeInsets.all(AppSpacing.sm + 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.warning),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.lock_clock_outlined,
-                        color: AppColors.warningDark,
-                      ),
-                      SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          "Showing today's sales only. "
-                          'Contact an admin for historical reports.',
-                          style: TextStyle(color: AppColors.warningDark),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
+                const _DailyOnlyNotice()
               else
                 DateRangePicker(
                   startDate: _startDate,
@@ -108,7 +87,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
               // Sales summary
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 12),
                 child: SalesSummaryCard(
                   startDate: _startDate,
                   endDate: _endDate,
@@ -117,7 +96,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
               // Top selling products
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: TopProductsCard(
                   startDate: _startDate,
                   endDate: _endDate,
@@ -126,26 +105,19 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
               // Payment method breakdown
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: _buildPaymentBreakdown(),
               ),
 
               // End-of-day closing entry
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Card(
-                  margin: EdgeInsets.zero,
-                  child: ListTile(
-                    leading: const Icon(CupertinoIcons.money_dollar_circle),
-                    title: const Text('End-of-Day Closing'),
-                    subtitle: const Text('Reconcile the cash drawer'),
-                    trailing: const Icon(CupertinoIcons.chevron_right),
-                    onTap: () => context.pushNamed(RouteNames.endOfDay),
-                  ),
+                child: _EodTile(
+                  onTap: () => context.pushNamed(RouteNames.endOfDay),
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -167,86 +139,113 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
         if (total == 0) return const SizedBox.shrink();
 
         final theme = Theme.of(context);
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Payment Methods',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+        return AppCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(LucideIcons.wallet,
+                      color: theme.colorScheme.primary, size: 19),
+                  const SizedBox(width: 9),
+                  Text(
+                    'Payment Methods',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                ...summary.byPaymentMethod.entries
+                ],
+              ),
+              const SizedBox(height: 14),
+              ...() {
+                final entries = summary.byPaymentMethod.entries
                     .where((entry) => entry.value > 0)
-                    .map((entry) {
-                  final percentage =
-                      total > 0 ? (entry.value / total * 100) : 0;
-                  return _buildPaymentMethodRow(
-                    entry.key.displayName,
-                    entry.value,
-                    percentage.toDouble(),
-                  );
-                }),
-              ],
-            ),
+                    .toList();
+                return [
+                  for (var i = 0; i < entries.length; i++)
+                    _buildPaymentMethodRow(
+                      entries[i].key,
+                      entries[i].value,
+                      total > 0 ? (entries[i].value / total * 100) : 0,
+                      isLast: i == entries.length - 1,
+                    ),
+                ];
+              }(),
+            ],
           ),
         );
       },
-      loading: () => const Card(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(child: CircularProgressIndicator()),
-        ),
+      loading: () => const AppCard(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
       ),
       error: (_, __) => const SizedBox.shrink(),
     );
   }
 
   Widget _buildPaymentMethodRow(
-    String method,
+    PaymentMethod method,
     double amount,
-    double percentage,
-  ) {
-    return Builder(builder: (context) {
-      final theme = Theme.of(context);
-      final isDark = theme.brightness == Brightness.dark;
-      final hairline =
-          isDark ? AppColors.darkHairline : AppColors.lightHairline;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm + 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(method),
-                Text(
-                  '₱${amount.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: LinearProgressIndicator(
-                value: percentage / 100,
-                backgroundColor: hairline,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  theme.colorScheme.primary,
-                ),
-                minHeight: 8,
+    num percentage, {
+    required bool isLast,
+  }) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline =
+        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                method.displayName,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 13),
               ),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '₱${amount.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' · ${percentage.toStringAsFixed(1)}%',
+                      style: TextStyle(color: muted),
+                    ),
+                  ],
+                  style: const TextStyle(fontSize: 12.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: LinearProgressIndicator(
+              value: percentage / 100,
+              backgroundColor: hairline,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                PaymentMethodStyle.barFill(method, dark: isDark),
+              ),
+              minHeight: 7,
             ),
-          ],
-        ),
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 
   void _handlePresetChange(DateRangePreset preset) {
@@ -308,5 +307,96 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
       _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
       _selectedPreset = DateRangePreset.custom;
     });
+  }
+}
+
+/// Today-only notice shown to daily-reports roles in place of the picker.
+class _DailyOnlyNotice extends StatelessWidget {
+  const _DailyOnlyNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final bg = dark ? const Color(0x1FF5B547) : const Color(0xFFFFF6E6);
+    final border = dark ? const Color(0x66F5B547) : const Color(0xFFF0C36B);
+    final text = dark ? AppColors.warningOnDark : const Color(0xFF8A5E12);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.lock, size: 19, color: AppColors.warningIcon(dark)),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Text(
+              "Showing today's sales only. "
+              'Contact an admin for historical reports.',
+              style: TextStyle(fontSize: 13, color: text),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// End-of-Day closing entry tile.
+class _EodTile extends StatelessWidget {
+  const _EodTile({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final dark = theme.brightness == Brightness.dark;
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color:
+                  dark ? const Color(0x1FE8B84C) : const Color(0x12283E46),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(LucideIcons.circleDollarSign,
+                size: 21, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'End-of-Day Closing',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  'Reconcile the cash drawer',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: muted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Icon(LucideIcons.chevronRight, size: 18, color: muted),
+        ],
+      ),
+    );
   }
 }
