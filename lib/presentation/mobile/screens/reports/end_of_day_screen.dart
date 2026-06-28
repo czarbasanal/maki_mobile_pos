@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -9,6 +10,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 
 /// End-of-day review + close flow for the current business day.
 ///
@@ -59,13 +61,13 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         title: const Text('End-of-Day Closing'),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.clock),
+            icon: const Icon(LucideIcons.history),
             tooltip: 'History',
             onPressed: () => context.pushNamed(RouteNames.endOfDayHistory),
           ),
@@ -96,124 +98,138 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
         final variance = counted == null ? null : counted - expected;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _section('Sales', [
-                  _row('Gross sales', draft.grossSales),
-                  _row('Cash sales', draft.cashSales),
-                  _row('Non-cash sales', draft.nonCashSales),
-                  if (draft.gcashSales > 0) _row('  GCash', draft.gcashSales),
-                  if (draft.mayaSales > 0) _row('  Maya', draft.mayaSales),
-                  _row('Discounts', draft.totalDiscounts),
-                  if (draft.laborRevenue > 0)
-                    _row('Labor revenue (service)', draft.laborRevenue),
-                  _rowText('Sales count', '${draft.salesCount}'),
-                  if (draft.salmonReceivable > 0)
-                    _row('Salmon receivable (next day)',
-                        draft.salmonReceivable),
-                ]),
-                const SizedBox(height: 16),
-                _section('Expenses', [
-                  _row('Total expenses', draft.totalExpenses),
-                  _row('Cash expenses', draft.cashExpenses),
-                ]),
-                const SizedBox(height: 16),
-                _section('Plate No Orders', [
-                  TextFormField(
-                    controller: _plateDpController,
-                    enabled: !_busy,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Plate No DP',
-                      prefixText: '₱ ',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _plateDeliveryController,
-                    enabled: !_busy,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Plate No Delivery',
-                      prefixText: '₱ ',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ]),
-                const SizedBox(height: 16),
-                _section('Cash reconciliation', [
-                  TextFormField(
-                    controller: _floatController,
-                    enabled: !_busy,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Opening float',
-                      prefixText: '₱ ',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 12),
-                  _row('Expected cash', expected, emphasize: true),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _countedController,
-                    enabled: !_busy,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Counted cash *',
-                      prefixText: '₱ ',
-                    ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) {
-                        return 'Counted cash is required';
-                      }
-                      final parsed = double.tryParse(v);
-                      if (parsed == null || parsed < 0) {
-                        return 'Enter a valid amount';
-                      }
-                      return null;
-                    },
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  if (variance != null) ...[
-                    const SizedBox(height: 12),
-                    _varianceRow(variance),
+                ClosingSectionCard(
+                  icon: LucideIcons.receipt,
+                  title: 'Sales',
+                  children: [
+                    ClosingKvRow(
+                        label: 'Gross sales', value: _peso(draft.grossSales)),
+                    ClosingKvRow(
+                        label: 'Cash sales', value: _peso(draft.cashSales)),
+                    ClosingKvRow(
+                        label: 'Non-cash sales',
+                        value: _peso(draft.nonCashSales)),
+                    if (draft.gcashSales > 0)
+                      ClosingKvRow(
+                          label: 'GCash',
+                          value: _peso(draft.gcashSales),
+                          indented: true),
+                    if (draft.mayaSales > 0)
+                      ClosingKvRow(
+                          label: 'Maya',
+                          value: _peso(draft.mayaSales),
+                          indented: true),
+                    ClosingKvRow(
+                        label: 'Discounts',
+                        value: _peso(draft.totalDiscounts)),
+                    if (draft.laborRevenue > 0)
+                      ClosingKvRow(
+                          label: 'Labor revenue (service)',
+                          value: _peso(draft.laborRevenue)),
+                    ClosingKvRow(
+                        label: 'Sales count', value: '${draft.salesCount}'),
+                    if (draft.salmonReceivable > 0)
+                      ClosingKvRow(
+                          label: 'Salmon receivable (next day)',
+                          value: _peso(draft.salmonReceivable)),
                   ],
-                ]),
-                const SizedBox(height: 16),
-                TextFormField(
+                ),
+                const SizedBox(height: 12),
+                ClosingSectionCard(
+                  icon: LucideIcons.arrowDownCircle,
+                  title: 'Expenses',
+                  children: [
+                    ClosingKvRow(
+                        label: 'Total expenses',
+                        value: _peso(draft.totalExpenses)),
+                    ClosingKvRow(
+                        label: 'Cash expenses',
+                        value: _peso(draft.cashExpenses)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClosingSectionCard(
+                  icon: LucideIcons.clipboardList,
+                  title: 'Plate No Orders',
+                  children: [
+                    ClosingField(
+                      label: 'Plate No DP',
+                      controller: _plateDpController,
+                      enabled: !_busy,
+                      hintText: '0',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 12),
+                    ClosingField(
+                      label: 'Plate No Delivery',
+                      controller: _plateDeliveryController,
+                      enabled: !_busy,
+                      hintText: '0',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClosingSectionCard(
+                  icon: LucideIcons.calculator,
+                  title: 'Cash reconciliation',
+                  children: [
+                    ClosingField(
+                      label: 'Opening float',
+                      controller: _floatController,
+                      enabled: !_busy,
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 12),
+                    _expectedCashPanel(expected),
+                    const SizedBox(height: 12),
+                    ClosingField(
+                      label: 'Counted cash',
+                      controller: _countedController,
+                      enabled: !_busy,
+                      required: true,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return 'Counted cash is required';
+                        }
+                        final parsed = double.tryParse(v);
+                        if (parsed == null || parsed < 0) {
+                          return 'Enter a valid amount';
+                        }
+                        return null;
+                      },
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    if (variance != null) ...[
+                      const SizedBox(height: 12),
+                      VariancePanel(variance: variance),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClosingField(
+                  label: 'Notes',
                   controller: _notesController,
                   enabled: !_busy,
+                  pesoPrefix: false,
+                  hintText: 'Optional…',
                   maxLines: 2,
-                  decoration: const InputDecoration(labelText: 'Notes'),
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _busy ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: _busy
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('Close Day'),
+                const SizedBox(height: 14),
+                _closeDayButton(),
+                const SizedBox(height: 9),
+                Text(
+                  "Closing locks the day — it can't be edited afterward.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -223,6 +239,80 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
       },
     );
   }
+
+  Widget _expectedCashPanel(double expected) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: dark ? const Color(0x1AE8B84C) : const Color(0x0F283E46),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Expected cash',
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          Text(
+            _peso(expected),
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _closeDayButton() {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF44336).withValues(alpha: 0.42),
+            blurRadius: 20,
+            spreadRadius: -6,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: FilledButton.icon(
+          onPressed: _busy ? null : _submit,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.error,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          icon: _busy
+              ? const SizedBox.shrink()
+              : const Icon(LucideIcons.lock, size: 18),
+          label: _busy
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                )
+              : const Text('Close Day'),
+        ),
+      ),
+    );
+  }
+
+  String _peso(double v) =>
+      '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _busy) return;
@@ -269,78 +359,6 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     context.showSuccessSnackBar('Day closed');
   }
 
-  Widget _section(String title, List<Widget> children) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _row(String label, double value, {bool emphasize = false}) {
-    final theme = Theme.of(context);
-    final style = emphasize
-        ? theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)
-        : theme.textTheme.bodyMedium;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: theme.textTheme.bodyMedium),
-          Text(
-            '${AppConstants.currencySymbol}${value.toCurrencyWithoutSymbol()}',
-            style: style,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _rowText(String label, String value) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: theme.textTheme.bodyMedium),
-          Text(value, style: theme.textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-
-  Widget _varianceRow(double variance) {
-    final theme = Theme.of(context);
-    final color = variance == 0
-        ? AppColors.successDark
-        : (variance < 0 ? AppColors.error : AppColors.warningDark);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('Variance', style: theme.textTheme.bodyMedium),
-        Text(
-          '${variance >= 0 ? '+' : ''}${AppConstants.currencySymbol}${variance.toCurrencyWithoutSymbol()}',
-          style: theme.textTheme.titleMedium
-              ?.copyWith(color: color, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
 }
 
 /// Read-only view of an already-saved closing.
