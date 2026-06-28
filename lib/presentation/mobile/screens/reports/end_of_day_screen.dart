@@ -245,7 +245,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: dark ? const Color(0x1AE8B84C) : const Color(0x0F283E46),
+        color: AppColors.emphasisTint(dark),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(

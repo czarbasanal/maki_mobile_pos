@@ -155,6 +155,20 @@ abstract class AppColors {
   /// card outline + metric/rank borders used across the reports surfaces.
   static Color hairline(bool dark) => dark ? darkHairline : lightHairline;
 
+  // ── Soft-amber notice banner (daily-only picker replacement, post-close
+  // warning). One source of truth for the warning-banner palette. ──
+  static Color warningBannerFill(bool dark) =>
+      dark ? const Color(0x1FF5B547) : const Color(0xFFFFF6E6);
+  static Color warningBannerBorder(bool dark) =>
+      dark ? const Color(0x66F5B547) : const Color(0xFFF0C36B);
+  static Color warningBannerText(bool dark) =>
+      dark ? warningOnDark : const Color(0xFF8A5E12);
+
+  /// Emphasis-surface tint for hero key-value panels (Net Sales, Expected
+  /// cash): a faint slate wash in light, a faint gold wash in dark.
+  static Color emphasisTint(bool dark) =>
+      dark ? const Color(0x1AE8B84C) : const Color(0x0F283E46);
+
   // ==================== POS SPECIFIC COLORS ====================
 
   /// Color for cash payments

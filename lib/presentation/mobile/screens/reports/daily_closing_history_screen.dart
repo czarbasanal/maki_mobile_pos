@@ -208,6 +208,14 @@ class _ClosingTileState extends State<_ClosingTile> {
               ],
             ),
           ),
+          if (c.notes != null && c.notes!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Notes: ${c.notes}',
+                style: TextStyle(fontSize: 11.5, color: muted),
+              ),
+            ),
         ],
       ),
     );

@@ -321,9 +321,9 @@ class PostCloseWarningBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final bg = dark ? const Color(0x1FF5B547) : const Color(0xFFFFF6E6);
-    final borderC = dark ? const Color(0x66F5B547) : const Color(0xFFF0C36B);
-    final textC = dark ? AppColors.warningOnDark : const Color(0xFF8A5E12);
+    final bg = AppColors.warningBannerFill(dark);
+    final borderC = AppColors.warningBannerBorder(dark);
+    final textC = AppColors.warningBannerText(dark);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
