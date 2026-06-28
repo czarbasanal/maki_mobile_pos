@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -374,233 +373,183 @@ class _ClosedView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final variance = closing.variance;
-    final varianceColor = variance == 0
-        ? AppColors.successDark
-        : (variance < 0 ? AppColors.error : AppColors.warningDark);
-
     final liveDraft = ref.watch(dailyClosingDraftProvider(date)).valueOrNull;
     final activity = liveDraft == null
         ? null
         : PostCloseActivity.between(closing: closing, current: liveDraft);
+    final showActivity = activity != null && activity.hasChanged;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (activity != null && activity.hasChanged) ...[
-            _postCloseBanner(context, activity),
-            const SizedBox(height: 16),
+          if (showActivity) ...[
+            PostCloseWarningBanner(message: _postCloseMessage(context, activity)),
+            const SizedBox(height: 12),
           ],
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.successDark),
-            ),
-            child: Row(
-              children: [
-                const Icon(CupertinoIcons.checkmark_seal,
-                    color: AppColors.successDark),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    'Closed by ${closing.closedByName} at '
-                    '${TimeOfDay.fromDateTime(closing.closedAt).format(context)}',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
+          ClosedByBanner(
+            text: 'Closed by ${closing.closedByName} at '
+                '${TimeOfDay.fromDateTime(closing.closedAt).format(context)}',
           ),
-          const SizedBox(height: 16),
-          _card(context, 'Sales', {
-            'Gross sales': closing.grossSales,
-            'Cash sales': closing.cashSales,
-            'Non-cash sales': closing.nonCashSales,
-            if (closing.gcashSales > 0) '  GCash': closing.gcashSales,
-            if (closing.mayaSales > 0) '  Maya': closing.mayaSales,
-            'Discounts': closing.totalDiscounts,
-            if (closing.laborRevenue > 0)
-              'Labor revenue (service)': closing.laborRevenue,
-            if (closing.salmonReceivable > 0)
-              'Salmon receivable': closing.salmonReceivable,
-          }),
-          const SizedBox(height: 16),
-          _card(context, 'Expenses', {
-            'Total expenses': closing.totalExpenses,
-            'Cash expenses': closing.cashExpenses,
-          }),
-          if (closing.plateNoDp > 0 || closing.plateNoDelivery > 0) ...[
-            const SizedBox(height: 16),
-            _card(context, 'Plate No Orders', {
-              'Plate No DP': closing.plateNoDp,
-              'Plate No Delivery': closing.plateNoDelivery,
-            }),
-          ],
-          const SizedBox(height: 16),
-          _card(context, 'Cash reconciliation', {
-            'Opening float': closing.openingFloat,
-            'Expected cash': closing.expectedCash,
-            'Counted cash': closing.countedCash,
-          }),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ClosingSectionCard(
+            icon: LucideIcons.receipt,
+            title: 'Sales',
+            children: [
+              ClosingKvRow(
+                  label: 'Gross sales', value: _peso(closing.grossSales)),
+              ClosingKvRow(
+                  label: 'Cash sales', value: _peso(closing.cashSales)),
+              ClosingKvRow(
+                  label: 'Non-cash sales', value: _peso(closing.nonCashSales)),
+              if (closing.gcashSales > 0)
+                ClosingKvRow(
+                    label: 'GCash',
+                    value: _peso(closing.gcashSales),
+                    indented: true),
+              if (closing.mayaSales > 0)
+                ClosingKvRow(
+                    label: 'Maya',
+                    value: _peso(closing.mayaSales),
+                    indented: true),
+              ClosingKvRow(
+                  label: 'Discounts', value: _peso(closing.totalDiscounts)),
+              if (closing.laborRevenue > 0)
+                ClosingKvRow(
+                    label: 'Labor revenue (service)',
+                    value: _peso(closing.laborRevenue)),
+              if (closing.salmonReceivable > 0)
+                ClosingKvRow(
+                    label: 'Salmon receivable',
+                    value: _peso(closing.salmonReceivable)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClosingSectionCard(
+            icon: LucideIcons.arrowDownCircle,
+            title: 'Expenses',
+            children: [
+              ClosingKvRow(
+                  label: 'Total expenses',
+                  value: _peso(closing.totalExpenses)),
+              ClosingKvRow(
+                  label: 'Cash expenses', value: _peso(closing.cashExpenses)),
+            ],
+          ),
+          if (closing.plateNoDp > 0 || closing.plateNoDelivery > 0) ...[
+            const SizedBox(height: 12),
+            ClosingSectionCard(
+              icon: LucideIcons.clipboardList,
+              title: 'Plate No Orders',
               children: [
-                Text('Variance', style: theme.textTheme.titleMedium),
-                Text(
-                  '${variance >= 0 ? '+' : ''}${AppConstants.currencySymbol}${variance.toCurrencyWithoutSymbol()}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      color: varianceColor, fontWeight: FontWeight.bold),
-                ),
+                ClosingKvRow(
+                    label: 'Plate No DP', value: _peso(closing.plateNoDp)),
+                ClosingKvRow(
+                    label: 'Plate No Delivery',
+                    value: _peso(closing.plateNoDelivery)),
               ],
             ),
+          ],
+          const SizedBox(height: 12),
+          ClosingSectionCard(
+            icon: LucideIcons.calculator,
+            title: 'Cash reconciliation',
+            children: [
+              ClosingKvRow(
+                  label: 'Opening float', value: _peso(closing.openingFloat)),
+              ClosingKvRow(
+                  label: 'Expected cash', value: _peso(closing.expectedCash)),
+              ClosingKvRow(
+                  label: 'Counted cash', value: _peso(closing.countedCash)),
+              const SizedBox(height: 6),
+              VariancePanel(variance: closing.variance),
+            ],
           ),
-          if (activity != null && activity.hasChanged) ...[
-            const SizedBox(height: 16),
-            _afterCloseSection(context, activity),
+          if (showActivity) ...[
+            const SizedBox(height: 12),
+            _afterCloseCard(context, activity),
           ],
           if (closing.notes != null) ...[
-            const SizedBox(height: 16),
-            Text('Notes: ${closing.notes}', style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            ClosingSectionCard(
+              icon: LucideIcons.stickyNote,
+              title: 'Notes',
+              children: [
+                Text(
+                  closing.notes!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
           ],
         ],
       ),
     );
   }
 
-  Widget _postCloseBanner(BuildContext context, PostCloseActivity activity) {
-    final theme = Theme.of(context);
+  String _postCloseMessage(BuildContext context, PostCloseActivity activity) {
     final closedTime =
         TimeOfDay.fromDateTime(closing.closedAt).format(context);
     final amount =
         '${AppConstants.currencySymbol}${activity.grossDelta.abs().toCurrencyWithoutSymbol()}';
-
-    final message = activity.isAdditional
+    return activity.isAdditional
         ? '${activity.extraSales} sale${activity.extraSales == 1 ? '' : 's'} '
             'totaling $amount were recorded after this day was closed at '
             '$closedTime. See "After close" below for the updated cash on hand.'
         : 'Activity changed after this day was closed at $closedTime. '
             'See "After close" below for the updated cash on hand.';
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.warning),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(CupertinoIcons.exclamationmark_triangle,
-              color: AppColors.warningDark),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: AppColors.warningDark),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
-  Widget _afterCloseSection(BuildContext context, PostCloseActivity activity) {
+  Widget _afterCloseCard(BuildContext context, PostCloseActivity activity) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     String signed(double v) =>
         '${v >= 0 ? '+' : '-'}${AppConstants.currencySymbol}${v.abs().toCurrencyWithoutSymbol()}';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('After close',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.md),
-            _kvText(
-              context,
-              'Sales after close',
-              '${activity.extraSales >= 0 ? '+' : ''}${activity.extraSales} '
-                  '· ${signed(activity.grossDelta)}',
-            ),
-            _kvText(context, 'Cash collected after close',
-                signed(activity.cashSalesDelta)),
-            if (activity.cashExpensesDelta.abs() > 0.005)
-              _kvText(context, 'Cash expenses after close',
-                  signed(-activity.cashExpensesDelta)),
-            const Divider(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Updated cash on hand',
-                    style: theme.textTheme.titleMedium),
-                Text(
-                  '${AppConstants.currencySymbol}${activity.updatedCashOnHand.toCurrencyWithoutSymbol()}',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ],
+    return ClosingSectionCard(
+      icon: LucideIcons.clock,
+      title: 'After close',
+      iconColor: AppColors.warningIcon(isDark),
+      children: [
+        ClosingKvRow(
+          label: 'Sales after close',
+          value: '${activity.extraSales >= 0 ? '+' : ''}${activity.extraSales}'
+              ' · ${signed(activity.grossDelta)}',
         ),
-      ),
-    );
-  }
-
-  Widget _kvText(BuildContext context, String label, String value) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: theme.textTheme.bodyMedium),
-          Text(value, style: theme.textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-
-  Widget _card(BuildContext context, String title, Map<String, double> rows) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        ClosingKvRow(
+            label: 'Cash collected after close',
+            value: signed(activity.cashSalesDelta)),
+        if (activity.cashExpensesDelta.abs() > 0.005)
+          ClosingKvRow(
+              label: 'Cash expenses after close',
+              value: signed(-activity.cashExpensesDelta)),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          child: Divider(height: 1, color: AppColors.hairline(isDark)),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.md),
-            ...rows.entries.map(
-              (e) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(e.key, style: theme.textTheme.bodyMedium),
-                    Text(
-                      '${AppConstants.currencySymbol}${e.value.toCurrencyWithoutSymbol()}',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
+            Text(
+              'Updated cash on hand',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
+            ),
+            Text(
+              _peso(activity.updatedCashOnHand),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
+
+  String _peso(double v) =>
+      '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
 }
