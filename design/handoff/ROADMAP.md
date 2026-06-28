@@ -23,12 +23,12 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 05 | **Receiving** | `receiving_screen`, `bulk_receiving_screen`, `batch_import_screen`, `receiving_drafts_screen`, `receiving_history_screen` | ✅ Merged to `main` |
 | 06a | **Reports (hub / lists)** | `sales_list_screen`, `sales_report_screen`, `profit_report_screen`, `top_selling_screen` (+ shared `date_range_picker`, `sales_summary_card`, `top_products_card`; new `payment_method_style`, `reports_warning_banner`; dead `reports_screen` deleted) | ✅ Merged to `main` |
 | 06b | **Closing** | `end_of_day_screen` (form + closed view), `daily_closing_history_screen` (+ new `variance_style`, `closing_widgets`) | ✅ Merged to `main` |
+| 07 | **Void Requests** | `void_requests_screen` + resolve sheet + approve/reject dialogs (+ new `void_status_style`) | ✅ Merged to `main` |
 
 ## 🔜 Remaining (proposed order)
 
 | # | Bundle | Screens in scope |
 |---|--------|------------------|
-| 07 | **Void Requests** | `void_requests_screen` (sales family; pairs with shipped Sale Detail) — current-UI capture ready in `design/handoff/07-void-requests/`; awaiting redesign hand-off |
 | 08 | **Expenses** | `expenses_screen`, `expense_form_screen`, `expense_history_screen` |
 | 09 | **Drafts** | `drafts_list_screen`, `draft_edit_screen` |
 | 10 | **Settings** | `settings_screen`, `category_settings_screen`, `category_editor_screen`, `cost_code_settings_screen`, `mechanic_editor_screen`, `about_screen` |
@@ -36,10 +36,10 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 12 | **Users** | `users_screen`, `user_form_screen` |
 | 13 | **Logs** | `activity_logs_screen` (⚠️ `user_logs_screen` is a 0-byte stub — `/logs` mounts `ActivityLogsScreen`; effectively one screen) |
 
-**⚙️ Sequencing decision (2026-06-28):** the cross-cutting **modals + bottom-sheets sync**
-(`design/handoff/modals-bottomsheets/`) lands **before bundle 07**. It defines shared dialog +
-bottom-sheet shells; 07 (and later bundles) then consume those shells instead of being restyled
-twice. Order: **modals sync → 07 Void Requests → 08 → …**. Both await their redesign hand-off files.
+**⚙️ Sequencing (updated 2026-06-28):** 07 shipped first (user call). The cross-cutting
+**modals + bottom-sheets sync** (`design/handoff/modals-bottomsheets/`) is next — it defines shared
+dialog + bottom-sheet shells that 08–13 (and a future refactor of 07's sheet/dialogs) consume.
+Order now: **modals sync → 08 → 09 → …**. All await their redesign hand-off files.
 
 **Current-UI capture packages are ready for every remaining bundle** (07–13):
 `design/handoff/<NN-name>/{reference_current-ui.html, README.md}`. Hand each to Claude
