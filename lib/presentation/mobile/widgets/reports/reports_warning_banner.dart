@@ -3,7 +3,8 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Soft-amber notice shown to daily-reports-only roles in place of the
 /// date-range picker. Used by both Sales History (two-line, alert-triangle)
-/// and Sales Report (single-line, lock) so the warning palette lives once.
+/// and Sales Report (single-line, lock). The amber palette is centralized in
+/// [AppColors.warningBanner*] (shared with the End-of-Day post-close banner).
 class ReportsWarningBanner extends StatelessWidget {
   const ReportsWarningBanner({
     super.key,
@@ -19,10 +20,9 @@ class ReportsWarningBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final bg = dark ? const Color(0x1FF5B547) : const Color(0xFFFFF6E6);
-    final border = dark ? const Color(0x66F5B547) : const Color(0xFFF0C36B);
-    final titleColor =
-        dark ? AppColors.warningOnDark : const Color(0xFF8A5E12);
+    final bg = AppColors.warningBannerFill(dark);
+    final border = AppColors.warningBannerBorder(dark);
+    final titleColor = AppColors.warningBannerText(dark);
     final subColor =
         dark ? AppColors.warningOnDark : const Color(0xFFA07A2E);
 

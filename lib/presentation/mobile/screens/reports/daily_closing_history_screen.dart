@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -9,6 +9,8 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// List of past end-of-day closings, newest first. Tap a row to expand its
 /// reconciliation detail.
@@ -22,7 +24,7 @@ class DailyClosingHistoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.endOfDay),
         ),
         title: const Text('Closing History'),
@@ -34,10 +36,9 @@ class DailyClosingHistoryScreen extends ConsumerWidget {
           if (closings.isEmpty) {
             return const Center(child: Text('No closings yet.'));
           }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
             itemCount: closings.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) => _ClosingTile(closing: closings[i]),
           );
         },
@@ -46,90 +47,180 @@ class DailyClosingHistoryScreen extends ConsumerWidget {
   }
 }
 
-class _ClosingTile extends StatelessWidget {
+class _ClosingTile extends StatefulWidget {
   final DailyClosingEntity closing;
 
   const _ClosingTile({required this.closing});
 
   @override
+  State<_ClosingTile> createState() => _ClosingTileState();
+}
+
+class _ClosingTileState extends State<_ClosingTile> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final variance = closing.variance;
-    final color = variance == 0
-        ? AppColors.successDark
-        : (variance < 0 ? AppColors.error : AppColors.warningDark);
-    final dateLabel = DateFormat('EEE, MMM d, y').format(closing.businessDate);
-    final closedAtLabel = DateFormat('MMM d, h:mm a').format(closing.closedAt);
-    final cashOnHand = closing.countedCash;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final c = widget.closing;
+    final dateLabel = DateFormat('EEE, MMM d, y').format(c.businessDate);
+    final closedAtLabel = DateFormat('MMM d, h:mm a').format(c.closedAt);
 
-    return Card(
-      margin: EdgeInsets.zero,
-      child: ExpansionTile(
-        shape: const Border(),
-        title: Text(dateLabel,
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w600)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AppCard(
+        radius: AppRadius.field,
+        clipBehavior: Clip.antiAlias,
+        padding: EdgeInsets.zero,
+        child: Column(
           children: [
-            Text(
-              'Cash on hand: ${AppConstants.currencySymbol}${cashOnHand.toCurrencyWithoutSymbol()}',
-              style: theme.textTheme.bodySmall,
+            InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dateLabel,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text.rich(
+                            TextSpan(
+                              style: TextStyle(
+                                  fontSize: 12, color: muted, height: 1.5),
+                              children: [
+                                const TextSpan(text: 'Cash on hand '),
+                                TextSpan(
+                                  text:
+                                      '${AppConstants.currencySymbol}${c.countedCash.toCurrencyWithoutSymbol()}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                TextSpan(text: '\nClosed $closedAtLabel'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    VariancePill(variance: c.variance),
+                    const SizedBox(width: 8),
+                    Icon(
+                      _expanded
+                          ? LucideIcons.chevronUp
+                          : LucideIcons.chevronDown,
+                      size: 18,
+                      color: muted,
+                    ),
+                  ],
+                ),
+              ),
             ),
-            Text(
-              'Closed $closedAtLabel',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
+            if (_expanded) _buildDetail(context, c),
           ],
         ),
-        trailing: Text(
-          '${variance >= 0 ? '+' : ''}${AppConstants.currencySymbol}${variance.toCurrencyWithoutSymbol()}',
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: color, fontWeight: FontWeight.bold),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      ),
+    );
+  }
+
+  Widget _buildDetail(BuildContext context, DailyClosingEntity c) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.hairline(isDark))),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _kv(context, 'Gross sales', closing.grossSales),
-          _kv(context, 'Cash sales', closing.cashSales),
-          _kv(context, 'Non-cash sales', closing.nonCashSales),
-          if (closing.gcashSales > 0)
-            _kv(context, '  GCash', closing.gcashSales),
-          if (closing.mayaSales > 0) _kv(context, '  Maya', closing.mayaSales),
-          if (closing.salmonReceivable > 0)
-            _kv(context, 'Salmon receivable', closing.salmonReceivable),
-          _kv(context, 'Total expenses', closing.totalExpenses),
-          _kv(context, 'Cash expenses', closing.cashExpenses),
-          _kv(context, 'Opening float', closing.openingFloat),
-          _kv(context, 'Expected cash', closing.expectedCash),
-          _kv(context, 'Counted cash', closing.countedCash),
-          const SizedBox(height: 4),
-          Text(
-            'Closed by ${closing.closedByName} · '
-            '${DateFormat('MMM d, y · h:mm a').format(closing.closedAt)}',
-            style: theme.textTheme.bodySmall,
+          ClosingKvRow(
+              label: 'Gross sales', value: _peso(c.grossSales), dense: true),
+          ClosingKvRow(
+              label: 'Cash sales', value: _peso(c.cashSales), dense: true),
+          ClosingKvRow(
+              label: 'Non-cash sales',
+              value: _peso(c.nonCashSales),
+              dense: true),
+          if (c.gcashSales > 0)
+            ClosingKvRow(
+                label: 'GCash',
+                value: _peso(c.gcashSales),
+                dense: true,
+                indented: true),
+          if (c.mayaSales > 0)
+            ClosingKvRow(
+                label: 'Maya',
+                value: _peso(c.mayaSales),
+                dense: true,
+                indented: true),
+          if (c.salmonReceivable > 0)
+            ClosingKvRow(
+                label: 'Salmon receivable',
+                value: _peso(c.salmonReceivable),
+                dense: true),
+          ClosingKvRow(
+              label: 'Total expenses',
+              value: _peso(c.totalExpenses),
+              dense: true),
+          ClosingKvRow(
+              label: 'Cash expenses',
+              value: _peso(c.cashExpenses),
+              dense: true),
+          ClosingKvRow(
+              label: 'Opening float',
+              value: _peso(c.openingFloat),
+              dense: true),
+          ClosingKvRow(
+              label: 'Expected cash',
+              value: _peso(c.expectedCash),
+              dense: true),
+          ClosingKvRow(
+              label: 'Counted cash',
+              value: _peso(c.countedCash),
+              dense: true),
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Row(
+              children: [
+                Icon(LucideIcons.user, size: 13, color: muted),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    'Closed by ${c.closedByName} · '
+                    '${DateFormat('MMM d, y · h:mm a').format(c.closedAt)}',
+                    style: TextStyle(fontSize: 11.5, color: muted),
+                  ),
+                ),
+              ],
+            ),
           ),
-          if (closing.notes != null)
-            Text('Notes: ${closing.notes}', style: theme.textTheme.bodySmall),
+          if (c.notes != null && c.notes!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Notes: ${c.notes}',
+                style: TextStyle(fontSize: 11.5, color: muted),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _kv(BuildContext context, String label, double value) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: theme.textTheme.bodySmall),
-          Text(
-            '${AppConstants.currencySymbol}${value.toCurrencyWithoutSymbol()}',
-            style: theme.textTheme.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
+  String _peso(double v) =>
+      '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
 }

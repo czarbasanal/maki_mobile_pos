@@ -125,9 +125,7 @@ class SalesSummaryCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0x1AE8B84C)
-                  : const Color(0x0F283E46),
+              color: AppColors.emphasisTint(isDark),
               borderRadius: BorderRadius.circular(13),
             ),
             child: Row(
