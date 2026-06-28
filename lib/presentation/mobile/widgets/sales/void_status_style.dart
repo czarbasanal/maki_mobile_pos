@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/void_request_entity.dart';
 
 /// Status color/icon language for the Void Requests queue — pending = amber,
@@ -35,7 +36,8 @@ class VoidStatusStyle {
   static VoidStatusStyle of(VoidRequestStatus status, {required bool dark}) {
     switch (status) {
       case VoidRequestStatus.pending:
-        final c = dark ? const Color(0xFFF5B547) : const Color(0xFFC8881A);
+        // Deep amber #C8881A in light has no token; gold-on-dark is warningOnDark.
+        final c = dark ? AppColors.warningOnDark : const Color(0xFFC8881A);
         return VoidStatusStyle(
           squareIcon: LucideIcons.clock,
           pillIcon: LucideIcons.clock,
@@ -48,13 +50,13 @@ class VoidStatusStyle {
         return VoidStatusStyle(
           squareIcon: LucideIcons.checkCircle2,
           pillIcon: LucideIcons.check,
-          iconColor: dark ? const Color(0xFF5FC86A) : const Color(0xFF2E7D32),
-          textColor: dark ? const Color(0xFF8FE39A) : const Color(0xFF2E7D32),
-          tint: dark ? const Color(0x294CAF50) : const Color(0xFFE8F5E9),
+          iconColor: dark ? AppColors.successOnDarkIcon : AppColors.successDark,
+          textColor: dark ? AppColors.successOnDark : AppColors.successDark,
+          tint: dark ? const Color(0x294CAF50) : AppColors.successLight,
           label: 'Approved',
         );
       case VoidRequestStatus.rejected:
-        final c = dark ? const Color(0xFFFF6B5E) : const Color(0xFFF44336);
+        final c = dark ? AppColors.errorOnDark : AppColors.error;
         return VoidStatusStyle(
           squareIcon: LucideIcons.xCircle,
           pillIcon: LucideIcons.x,
