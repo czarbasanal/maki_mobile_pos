@@ -34,7 +34,14 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 10 | **Settings** | `settings_screen`, `category_settings_screen`, `category_editor_screen`, `cost_code_settings_screen`, `mechanic_editor_screen`, `about_screen` |
 | 11 | **Suppliers** | `suppliers_screen`, `supplier_form_screen` |
 | 12 | **Users** | `users_screen`, `user_form_screen` |
-| 13 | **Logs** | `activity_logs_screen`, `user_logs_screen` |
+| 13 | **Logs** | `activity_logs_screen` (⚠️ `user_logs_screen` is a 0-byte stub — `/logs` mounts `ActivityLogsScreen`; effectively one screen) |
+
+**Current-UI capture packages are ready for every remaining bundle** (07–13):
+`design/handoff/<NN-name>/{reference_current-ui.html, README.md}`. Hand each to Claude
+Design; on return → spec → plan → TDD → code-review → verify → finish (the 06a/06b flow).
+Per-bundle current-state notes (icons, surfaces, role gating, color discrepancies to
+resolve — e.g. Users cashier=orange, Settings role-pill admin=red in source) live in
+each bundle's README.
 
 **Coverage:** 6 bundles done (13 screens incl. login) + 8 remaining (~28 screens)
 = ~41 files ≈ the "~39-screen inventory" the handoffs reference.
