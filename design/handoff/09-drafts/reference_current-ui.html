@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 09: Drafts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --field:#FAFAFA; --input-border:#E2E2E2;
+    --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --warning:#FFC107; --warning-dark:#F57C00;
+    --r-sm:10px; --r-md:14px; --r-field:16px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+    --shadow-mat:0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1400px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:980px;line-height:1.55;}
+  code{font-family:'Roboto Mono',monospace;font-size:.9em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:46px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:380px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;margin-top:26px;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:840px;overflow:hidden;display:flex;flex-direction:column;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--canvas);min-height:52px;}
+  .appbar .title{flex:1;font-size:18px;font-weight:600;padding-left:6px;}
+  .appbar .act{font-size:13px;font-weight:600;color:var(--slate);padding:0 8px;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;flex:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .body{flex:1;overflow:auto;background:var(--canvas);}
+  .body::-webkit-scrollbar{width:0;}
+
+  /* current draft card (Material Card, soft shadow) */
+  .dcard{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow-mat);
+         margin:8px 16px;padding:14px;}
+  .dhead{display:flex;align-items:flex-start;gap:12px;}
+  .dhead i.lead{width:22px;height:22px;color:var(--muted);flex:none;margin-top:1px;}
+  .dhead .mid{flex:1;min-width:0;}
+  .dhead .nm{font-size:15.5px;font-weight:600;}
+  .dhead .dt{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .dhead .right{text-align:right;flex:none;}
+  .dhead .tot{font-size:15.5px;font-weight:600;color:var(--slate);}
+  .dhead .ct{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  /* items-preview box (muted fill + hairline) */
+  .preview{margin-top:12px;background:var(--field);border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px;}
+  .svcbadge{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--slate);border-radius:var(--r-sm);
+            padding:2px 8px;font-size:11px;font-weight:600;color:var(--slate);margin-bottom:8px;}
+  .svcbadge i{width:12px;height:12px;}
+  .prow{display:flex;align-items:center;gap:8px;font-size:13px;padding:2px 0;}
+  .prow .pn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .prow .pq{color:var(--muted);}
+  .prow .pp{font-weight:500;}
+  .more{font-size:12.5px;color:var(--muted);font-style:italic;margin-top:4px;}
+
+  .dfoot{display:flex;align-items:center;gap:8px;margin-top:12px;}
+  .dfoot .by{flex:1;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ico-out{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--muted);}
+  .ico-out i{width:19px;height:19px;}
+  .btn-load{display:inline-flex;align-items:center;gap:6px;background:var(--slate);color:#fff;border-radius:var(--r-field);
+            padding:9px 16px;font-size:14px;font-weight:600;}
+  .btn-load i{width:17px;height:17px;}
+
+  /* draft editor item row (raw Material Card) */
+  .icard{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow-mat);margin:6px 16px;padding:12px;
+         display:flex;align-items:center;gap:12px;}
+  .qbadge{width:40px;height:40px;border-radius:var(--r-sm);border:1.2px solid var(--slate);display:flex;align-items:center;
+          justify-content:center;font-weight:600;font-size:13px;color:var(--slate);flex:none;}
+  .icard .mid{flex:1;min-width:0;}
+  .icard .nm{font-size:14.5px;font-weight:600;}
+  .icard .meta{font-size:12px;color:var(--muted);margin-top:2px;font-family:'Roboto Mono';}
+  .icard .meta.plain{font-family:'Figtree';}
+  .icard .amt{font-size:15px;font-weight:600;flex:none;}
+
+  /* section header band (hairline top) */
+  .band{border-top:1px solid var(--hairline);background:var(--canvas);padding:10px 16px;}
+  .bandhead{display:flex;align-items:center;gap:8px;}
+  .bandhead i{width:16px;height:16px;color:var(--muted);}
+  .bandhead .lbl{font-size:13px;font-weight:600;color:var(--muted);flex:1;}
+  .bandhead .add{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--slate);}
+  .bandhead .add i{width:15px;height:15px;color:var(--slate);}
+  .dd{margin-top:10px;height:48px;border:1px solid var(--input-border);border-radius:var(--r-field);background:var(--field);
+      display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;color:var(--ink);}
+  .dd i.lead{width:18px;height:18px;color:var(--muted);}
+  .dd .chev{margin-left:auto;width:18px;height:18px;color:var(--muted);}
+  .laborrow{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;}
+  .laborrow i.w{width:14px;height:14px;color:var(--muted);}
+  .laborrow .ld{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .laborrow .lf{font-weight:500;}
+  .laborrow i.x{width:16px;height:16px;color:var(--muted);}
+
+  /* summary / actions footer */
+  .summary{border-top:1px solid var(--hairline);background:var(--canvas);padding:14px 16px 18px;}
+  .srow{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;color:var(--ink);}
+  .srow .v.disc{color:var(--success-dark);}
+  .srow.total{font-size:17px;font-weight:700;border-top:1px solid var(--divider);margin-top:8px;padding-top:10px;}
+  .sacts{display:flex;gap:12px;margin-top:14px;}
+  .btn-out{flex:1;height:48px;border:1px solid var(--input-border);border-radius:var(--r-field);display:flex;align-items:center;
+           justify-content:center;gap:7px;font-weight:600;font-size:14px;color:var(--ink);background:#fff;}
+  .btn-out i{width:17px;height:17px;}
+  .btn-fill{flex:2;height:48px;border-radius:var(--r-field);background:var(--slate);color:#fff;font-weight:600;font-size:14px;
+            display:flex;align-items:center;justify-content:center;gap:7px;}
+  .btn-fill i{width:17px;height:17px;}
+
+  /* bottom sheet (detail) */
+  .sheet{position:absolute;left:0;right:0;bottom:0;height:88%;background:var(--canvas);border-radius:24px 24px 0 0;
+         box-shadow:0 -8px 30px rgba(17,28,29,.18);display:flex;flex-direction:column;}
+  .scrim{position:absolute;inset:0;background:rgba(17,28,29,.32);}
+  .grab{width:40px;height:4px;border-radius:999px;background:var(--hairline);margin:12px auto 4px;}
+  .shead{display:flex;align-items:center;gap:14px;padding:14px 18px;}
+  .shead i.lead{width:28px;height:28px;color:var(--muted);flex:none;}
+  .shead .mid{flex:1;min-width:0;}
+  .shead .nm{font-size:19px;font-weight:600;}
+  .shead .dt{font-size:12.5px;color:var(--muted);margin-top:3px;}
+  .shead i.x{width:22px;height:22px;color:var(--muted);}
+  .sbody{flex:1;overflow:auto;padding:14px 18px;border-top:1px solid var(--divider);}
+  .sechead{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--muted);margin:14px 0 8px;}
+  .sechead0{margin-top:0;}
+  .infocard,.sumcard{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow-mat);padding:14px;}
+  .inforow{display:flex;align-items:center;gap:12px;font-size:13.5px;padding:4px 0;}
+  .inforow i{width:18px;height:18px;color:var(--muted);}
+  .inforow .l{flex:1;color:var(--muted);}
+  .inforow .v{font-weight:500;}
+  .sheetftr{display:flex;gap:12px;padding:14px 18px 18px;border-top:1px solid var(--hairline);background:var(--canvas);}
+  .ftr-del{width:52px;height:48px;border:1px solid var(--error);border-radius:var(--r-field);display:flex;align-items:center;
+           justify-content:center;color:var(--error);}
+  .ftr-del i{width:19px;height:19px;}
+
+  /* dialog */
+  .dlgwrap{position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px;}
+  .dlg{width:100%;background:var(--card);border-radius:var(--r-xl);padding:20px;box-shadow:0 20px 50px rgba(17,28,29,.25);}
+  .dlg .dh{font-size:18px;font-weight:600;margin-bottom:12px;}
+  .dlg p{font-size:14px;color:var(--ink);margin:0 0 12px;line-height:1.5;}
+  .dlg .box{background:var(--field);border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px;}
+  .dlg .box .bi{font-size:14px;font-weight:500;}
+  .dlg .box .bt{font-size:13px;color:var(--muted);margin-top:2px;}
+  .dlg .warn{font-size:12px;color:var(--error);margin-top:12px;}
+  .dlg .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+  .dlg .acts .cancel{font-size:14px;font-weight:600;color:var(--muted);padding:10px 12px;}
+  .dlg .acts .ok{font-size:14px;font-weight:600;color:#fff;background:var(--error);border-radius:var(--r-md);padding:10px 18px;}
+
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:70px 24px;text-align:center;color:var(--muted);height:100%;}
+  .empty i{width:56px;height:56px;color:#C7CCCE;}
+  .empty .t{font-size:16px;font-weight:600;color:var(--muted);}
+  .empty .s{font-size:13px;color:var(--muted);max-width:240px;line-height:1.5;}
+  .empty .cta{display:inline-flex;align-items:center;gap:7px;background:var(--slate);color:#fff;border-radius:var(--r-field);
+              padding:11px 18px;font-size:14px;font-weight:600;margin-top:6px;}
+  .empty .cta i{width:17px;height:17px;}
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.55;max-width:1150px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 09 · Drafts</h1>
+    <p><b>Pre-redesign (mixed Material).</b> The mobile <b>Drafts</b> flow lets a cashier save a cart-in-progress
+    and resume it later. It has two routed screens — the <b>Saved Drafts</b> list (<code>/drafts</code>) and the
+    <b>Draft editor</b> (<code>/drafts/:id</code>) — plus a tap-through <b>detail bottom sheet</b>. The list rows and
+    sheet are already on soft-shadow <code>Card</code>s with theme-aware hairlines, but <b>every icon is still
+    Cupertino</b> (doc, cart-badge-plus, trash, wrench, clock, pencil…) and the editor's item rows are raw Material
+    <code>Card</code>s; nothing uses <code>AppCard</code> yet. There are <b>no status color semantics</b> — drafts have
+    no state beyond "active". The one already-Lucide piece is the shared <code>MechanicPicker</code> dropdown.
+    This bundle migrates the surface onto the elevated theme — <b>Lucide + soft-shadow <code>AppCard</code> + neutral
+    discipline</b> with dark parity. Currency renders grouped (<code>₱1,234.00</code>); SKUs in Roboto&nbsp;Mono.
+    Mark up the redesign you want and hand back.
+    <i>(Icons here render in Lucide — the migration target — even though the live screens still ship Cupertino.)</i></p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary)</span>
+    <span><i class="swatch" style="background:#2E7D32"></i> discount / success</span>
+    <span><i class="swatch" style="background:#F44336"></i> destructive (delete)</span>
+    <span><i class="swatch" style="background:#FAFAFA;border-color:#ECECEC"></i> muted fill (preview / info)</span>
+    <span style="margin-left:auto">Light shown · dark parity target (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ 1 · SAVED DRAFTS LIST ============ -->
+    <div class="frame">
+      <div class="caption">1 · Saved Drafts list · drafts_list_screen.dart + DraftListTile</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Saved Drafts</div>
+          <button class="iconbtn"><i data-lucide="refresh-cw"></i></button>
+        </div>
+        <div class="body">
+          <!-- service-job draft (has labor) -->
+          <div class="dcard">
+            <div class="dhead">
+              <i class="lead" data-lucide="file-text"></i>
+              <div class="mid">
+                <div class="nm">Mr. Reyes — XRM tune-up</div>
+                <div class="dt">Jun 27, 2:14 PM</div>
+              </div>
+              <div class="right">
+                <div class="tot">₱1,840.00</div>
+                <div class="ct">5 items</div>
+              </div>
+            </div>
+            <div class="preview">
+              <div class="svcbadge"><i data-lucide="wrench"></i> Service job</div>
+              <div class="prow"><span class="pn">NGK Spark Plug CPR6EA-9</span><span class="pq">×2</span><span class="pp">₱400.00</span></div>
+              <div class="prow"><span class="pn">ASK Brake Shoe XRM 125</span><span class="pq">×1</span><span class="pp">₱260.00</span></div>
+              <div class="prow"><span class="pn">Castrol Power1 4T 1L</span><span class="pq">×1</span><span class="pp">₱380.00</span></div>
+              <div class="more">+1 more item</div>
+            </div>
+            <div class="dfoot">
+              <span class="by">By Maria Santos</span>
+              <span class="ico-out"><i data-lucide="trash-2"></i></span>
+              <span class="btn-load"><i data-lucide="cart"></i> Load</span>
+            </div>
+          </div>
+
+          <!-- plain parts-only draft -->
+          <div class="dcard">
+            <div class="dhead">
+              <i class="lead" data-lucide="file-text"></i>
+              <div class="mid">
+                <div class="nm">Walk-in — oil change</div>
+                <div class="dt">Jun 27, 11:02 AM</div>
+              </div>
+              <div class="right">
+                <div class="tot">₱620.00</div>
+                <div class="ct">2 items</div>
+              </div>
+            </div>
+            <div class="preview">
+              <div class="prow"><span class="pn">Shell Advance AX5 1L</span><span class="pq">×1</span><span class="pp">₱340.00</span></div>
+              <div class="prow"><span class="pn">Oil Filter Element</span><span class="pq">×1</span><span class="pp">₱280.00</span></div>
+            </div>
+            <div class="dfoot">
+              <span class="by">By Juan Dela Cruz</span>
+              <span class="ico-out"><i data-lucide="trash-2"></i></span>
+              <span class="btn-load"><i data-lucide="cart"></i> Load</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2 · EMPTY STATE ============ -->
+    <div class="frame">
+      <div class="caption">2 · Empty — no saved drafts · EmptyStateView</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Saved Drafts</div>
+          <button class="iconbtn"><i data-lucide="refresh-cw"></i></button>
+        </div>
+        <div class="body">
+          <div class="empty">
+            <i data-lucide="mail"></i>
+            <div class="t">No Saved Drafts</div>
+            <div class="s">Drafts you save from the POS screen will appear here.</div>
+            <span class="cta"><i data-lucide="shopping-cart"></i> Go to POS</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3 · DETAIL BOTTOM SHEET ============ -->
+    <div class="frame">
+      <div class="caption">3 · Detail sheet (tap a row) · DraftDetailSheet</div>
+      <div class="screen" style="position:relative;">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Saved Drafts</div>
+          <button class="iconbtn"><i data-lucide="refresh-cw"></i></button>
+        </div>
+        <div class="body" style="filter:saturate(.9);opacity:.55;">
+          <div class="dcard"><div class="dhead"><i class="lead" data-lucide="file-text"></i><div class="mid"><div class="nm">Mr. Reyes — XRM tune-up</div><div class="dt">Jun 27, 2:14 PM</div></div><div class="right"><div class="tot">₱1,840.00</div><div class="ct">5 items</div></div></div></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="shead">
+            <i class="lead" data-lucide="file-text"></i>
+            <div class="mid">
+              <div class="nm">Mr. Reyes — XRM tune-up</div>
+              <div class="dt">Saturday, June 27, 2026 • 2:14 PM</div>
+            </div>
+            <i class="x" data-lucide="x"></i>
+          </div>
+          <div class="sbody">
+            <div class="sechead sechead0">ITEMS (4)</div>
+            <div class="icard">
+              <div class="qbadge">×2</div>
+              <div class="mid"><div class="nm">NGK Spark Plug CPR6EA-9</div><div class="meta">SPK-NGK-CPR6 • ₱200.00 / pc</div></div>
+              <div class="amt">₱400.00</div>
+            </div>
+            <div class="icard">
+              <div class="qbadge">×1</div>
+              <div class="mid"><div class="nm">ASK Brake Shoe XRM 125</div><div class="meta">BRK-ASK-XRM125 • ₱260.00 / set</div></div>
+              <div class="amt">₱260.00</div>
+            </div>
+            <div class="sechead">SUMMARY</div>
+            <div class="sumcard">
+              <div class="srow"><span>Subtotal</span><span class="v">₱1,440.00</span></div>
+              <div class="srow"><span>Labor</span><span class="v">₱400.00</span></div>
+              <div class="srow total"><span>Total</span><span>₱1,840.00</span></div>
+            </div>
+            <div class="sechead">INFORMATION</div>
+            <div class="infocard">
+              <div class="inforow"><i data-lucide="user"></i><span class="l">Created by</span><span class="v">Maria Santos</span></div>
+              <div class="inforow"><i data-lucide="wrench"></i><span class="l">Mechanic</span><span class="v">Boy Mekaniko</span></div>
+              <div class="inforow"><i data-lucide="calendar"></i><span class="l">Created</span><span class="v">Jun 27, 2:08 PM</span></div>
+              <div class="inforow"><i data-lucide="box"></i><span class="l">Items</span><span class="v">5 (4 products)</span></div>
+            </div>
+          </div>
+          <div class="sheetftr">
+            <div class="ftr-del"><i data-lucide="trash-2"></i></div>
+            <div class="btn-fill" style="flex:1"><i data-lucide="cart"></i> Load into Cart</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4 · DRAFT EDITOR ============ -->
+    <div class="frame">
+      <div class="caption">4 · Draft editor · draft_edit_screen.dart (/drafts/:id)</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Mr. Reyes — XRM tune-up</div>
+          <button class="iconbtn"><i data-lucide="trash-2"></i></button>
+        </div>
+        <!-- info header -->
+        <div style="padding:12px 16px;border-bottom:1px solid var(--hairline);background:var(--canvas);">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);"><i data-lucide="clock" style="width:14px;height:14px;"></i> Created Jun 27, 2026 • 2:08 PM</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:4px;"><i data-lucide="square-pen" style="width:14px;height:14px;"></i> Updated Jun 27, 2026 • 2:14 PM</div>
+        </div>
+        <div class="body" style="flex:1;">
+          <div class="icard">
+            <div class="qbadge">2x</div>
+            <div class="mid"><div class="nm">NGK Spark Plug CPR6EA-9</div><div class="meta">SKU: SPK-NGK-CPR6</div><div class="meta plain">₱200.00 each</div></div>
+            <div class="amt">₱400.00</div>
+          </div>
+          <div class="icard">
+            <div class="qbadge">1x</div>
+            <div class="mid"><div class="nm">ASK Brake Shoe XRM 125</div><div class="meta">SKU: BRK-ASK-XRM125</div><div class="meta plain">₱260.00 each</div></div>
+            <div class="amt">₱260.00</div>
+          </div>
+          <div class="icard">
+            <div class="qbadge">1x</div>
+            <div class="mid"><div class="nm">Castrol Power1 4T 1L</div><div class="meta">SKU: OIL-CAS-P1-1L</div><div class="meta plain">₱380.00 each</div></div>
+            <div class="amt">₱380.00</div>
+          </div>
+        </div>
+        <!-- labor & service band -->
+        <div class="band">
+          <div class="bandhead">
+            <i data-lucide="wrench"></i>
+            <span class="lbl">Labor &amp; Service</span>
+            <span class="add"><i data-lucide="plus"></i> Add Labor</span>
+          </div>
+          <div class="dd"><i class="lead" data-lucide="wrench"></i> Boy Mekaniko <i class="chev" data-lucide="chevron-down"></i></div>
+          <div class="laborrow"><i class="w" data-lucide="wrench"></i><span class="ld">Engine tune-up &amp; carburetor clean</span><span class="lf">₱400.00</span><i class="x" data-lucide="x"></i></div>
+        </div>
+        <!-- summary + actions -->
+        <div class="summary">
+          <div class="srow"><span>Subtotal</span><span class="v">₱1,040.00</span></div>
+          <div class="srow"><span>Labor (1 service)</span><span class="v">₱400.00</span></div>
+          <div class="srow total"><span>Total (4 items)</span><span>₱1,440.00</span></div>
+          <div class="sacts">
+            <div class="btn-out"><i data-lucide="square-pen"></i> Edit in POS</div>
+            <div class="btn-fill"><i data-lucide="cart"></i> Checkout</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 5 · DELETE CONFIRM DIALOG ============ -->
+    <div class="frame">
+      <div class="caption">5 · Delete confirm (list trash) · AlertDialog</div>
+      <div class="screen" style="position:relative;">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Saved Drafts</div>
+          <button class="iconbtn"><i data-lucide="refresh-cw"></i></button>
+        </div>
+        <div class="body" style="opacity:.45;"></div>
+        <div class="dlgwrap" style="flex-direction:column;gap:16px;">
+          <div class="dlg">
+            <div class="dh">Delete Draft?</div>
+            <p>Are you sure you want to delete "Mr. Reyes — XRM tune-up"?</p>
+            <div class="box"><div class="bi">5 item(s)</div><div class="bt">Total: ₱1,840.00</div></div>
+            <div class="warn">This action cannot be undone.</div>
+            <div class="acts"><span class="cancel">Cancel</span><span class="ok">Delete</span></div>
+          </div>
+          <div class="dlg">
+            <div class="dh">Replace Cart?</div>
+            <p>Your current cart has 3 item(s). Loading this draft will replace them.</p>
+            <div class="acts"><span class="cancel">Cancel</span><span class="ok" style="background:#283E46;">Replace</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Token-accurate reconstruction of the <b>current</b> Drafts surface. Sources:
+  <code>lib/presentation/mobile/screens/drafts/drafts_list_screen.dart</code>,
+  <code>lib/presentation/mobile/screens/drafts/draft_edit_screen.dart</code>,
+  <code>lib/presentation/mobile/widgets/drafts/draft_list_tile.dart</code>,
+  <code>lib/presentation/mobile/widgets/drafts/draft_detail_sheet.dart</code> (+ shared
+  <code>MechanicPicker</code>, <code>SummaryRow</code>, <code>EmptyStateView</code>/<code>LoadingView</code>). Entity:
+  <code>DraftEntity</code> (<code>name</code>, <code>items[]</code> = <code>SaleItemEntity</code>, <code>laborLines[]</code>,
+  <code>mechanicId/mechanicName</code>, <code>discountType</code>, <code>notes</code>, <code>createdBy/createdByName</code>,
+  <code>createdAt/updatedAt</code>; derived <code>subtotal</code> / <code>totalDiscount</code> / <code>laborSubtotal</code> /
+  <code>grandTotal</code> / <code>totalItemCount</code>). Current state: list rows + detail sheet already on soft-shadow
+  <code>Card</code>s with theme-aware hairlines &amp; muted fills, but <b>all icons are Cupertino</b>
+  (<code>doc_text</code>, <code>cart_badge_plus</code>, <code>trash</code>, <code>wrench</code>, <code>clock</code>,
+  <code>pencil</code>, <code>xmark</code>, <code>refresh</code>) and the editor's item rows are raw Material
+  <code>Card</code>s — no <code>AppCard</code>. Drafts have <b>no status</b> so there is no color semantics; the only
+  accent is the slate primary (total, qty badge, service-job badge, Load button) and success-green for discount/labor
+  affordances. Behavior to preserve: <b>Load is destructive</b> — loading a draft into the cart immediately deletes it
+  from the collection (re-saving creates a new entry); if the cart is non-empty it prompts <b>Replace Cart?</b> first.
+  Delete needs <b>creator-or-admin</b> permission (trash hidden otherwise) and confirms with an item/total preview +
+  "cannot be undone". The editor persists labor/mechanic edits through the <b>full</b> <code>updateDraft</code> path
+  (never <code>updateDraftItems</code>, which would drop labor); <b>Checkout</b> and <b>Edit in POS</b> both consume the
+  draft then navigate. Totals math: <code>grandTotal = subtotal − discount + laborSubtotal</code>; labor lines require a
+  fee &gt; 0. Currency grouped <code>₱1,234.00</code>; dates <code>MMM d, h:mm a</code> (list) / <code>MMM d, y • h:mm a</code>
+  (editor). Migration target = the global theme in <code>design/handoff/maki-theme/</code> (Lucide, soft-shadow
+  <code>AppCard</code>, neutral-by-default discipline, dark parity).</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>
