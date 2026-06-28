@@ -36,6 +36,11 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 12 | **Users** | `users_screen`, `user_form_screen` |
 | 13 | **Logs** | `activity_logs_screen` (⚠️ `user_logs_screen` is a 0-byte stub — `/logs` mounts `ActivityLogsScreen`; effectively one screen) |
 
+**⚙️ Sequencing decision (2026-06-28):** the cross-cutting **modals + bottom-sheets sync**
+(`design/handoff/modals-bottomsheets/`) lands **before bundle 07**. It defines shared dialog +
+bottom-sheet shells; 07 (and later bundles) then consume those shells instead of being restyled
+twice. Order: **modals sync → 07 Void Requests → 08 → …**. Both await their redesign hand-off files.
+
 **Current-UI capture packages are ready for every remaining bundle** (07–13):
 `design/handoff/<NN-name>/{reference_current-ui.html, README.md}`. Hand each to Claude
 Design; on return → spec → plan → TDD → code-review → verify → finish (the 06a/06b flow).
