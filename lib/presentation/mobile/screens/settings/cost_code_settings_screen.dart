@@ -536,28 +536,15 @@ class _CostCodeSettingsScreenState
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset to Default?'),
-        content: const Text(
-          'This will reset the cost code mapping to the original values. '
+    final confirmed = await context.showConfirmDialog(
+      title: 'Reset to Default?',
+      message: 'This will reset the cost code mapping to the original values. '
           'This action requires password verification.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset'),
-          ),
-        ],
-      ),
+      confirmText: 'Reset',
+      icon: LucideIcons.rotateCcw,
     );
 
-    if (confirmed != true) return;
+    if (!confirmed) return;
     if (!mounted) return;
 
     // Require password verification

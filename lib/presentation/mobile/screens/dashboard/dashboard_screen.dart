@@ -101,28 +101,15 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
   // ==================== ACTIONS ====================
 
   Future<void> _handleSignOut() async {
-    final shouldSignOut = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
+    final shouldSignOut = await context.showConfirmDialog(
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmText: 'Sign Out',
+      icon: LucideIcons.logOut,
+      isDangerous: true,
     );
 
-    if (shouldSignOut != true) return;
+    if (!shouldSignOut) return;
 
     setState(() => _isLoggingOut = true);
 

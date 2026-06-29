@@ -318,32 +318,16 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   }
 
   Future<void> _toggleUserActive(UserEntity user) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(user.isActive ? 'Deactivate User?' : 'Reactivate User?'),
-        content: Text(
-          user.isActive
-              ? '${user.displayName} will no longer be able to log in.'
-              : '${user.displayName} will be able to log in again.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: user.isActive ? Colors.red : Colors.green,
-            ),
-            child: Text(user.isActive ? 'Deactivate' : 'Reactivate'),
-          ),
-        ],
-      ),
+    final confirmed = await context.showConfirmDialog(
+      title: user.isActive ? 'Deactivate User?' : 'Reactivate User?',
+      message: user.isActive
+          ? '${user.displayName} will no longer be able to log in.'
+          : '${user.displayName} will be able to log in again.',
+      confirmText: user.isActive ? 'Deactivate' : 'Reactivate',
+      isDangerous: user.isActive,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) return;
 

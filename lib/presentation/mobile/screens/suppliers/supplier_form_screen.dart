@@ -285,27 +285,15 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
     final supplier = _existingSupplier;
     if (supplier == null) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Deactivate supplier?'),
-        content: Text(
-          '"${supplier.name}" will be hidden from the active list. '
+    final confirmed = await context.showConfirmDialog(
+      title: 'Deactivate supplier?',
+      message: '"${supplier.name}" will be hidden from the active list. '
           'Existing records keep their supplier; you can reactivate it later.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Deactivate'),
-          ),
-        ],
-      ),
+      confirmText: 'Deactivate',
+      icon: LucideIcons.archive,
+      isDangerous: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     await _runSetActive(
       action: () => ref

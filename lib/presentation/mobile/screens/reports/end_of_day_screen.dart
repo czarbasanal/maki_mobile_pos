@@ -315,26 +315,14 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _busy) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Close this day?'),
-        content: const Text(
+    final confirmed = await context.showConfirmDialog(
+      title: 'Close this day?',
+      message:
           'This saves the end-of-day closing. It cannot be edited afterward.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Close Day'),
-          ),
-        ],
-      ),
+      confirmText: 'Close Day',
+      icon: LucideIcons.lock,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     setState(() => _busy = true);
     final notes = _notesController.text.trim();
