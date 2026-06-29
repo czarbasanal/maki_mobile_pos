@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- HEADER -->
+  <div style="max-width:2150px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Handoff 11 · Suppliers · migration
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Suppliers — on the new language</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:82ch">The supplier directory (list + add/edit form) migrated to the elevated system. Material <span style="font-family:'Roboto Mono'">Card</span> + <span style="font-family:'Roboto Mono'">ListTile</span> rows become soft-shadow <span style="font-family:'Roboto Mono'">AppCard</span>s; the scrolled <span style="font-family:'Roboto Mono'">Form</span> is grouped into <b>sectioned cards with a pinned submit</b>; Cupertino icons → <b>Lucide</b>. Suppliers carry <b>no status</b>, so the surface stays strictly neutral — the only differentiation is the <b>muted + strikethrough</b> treatment for inactive rows. Full dark parity. <i>No delete / deactivate UI is introduced — none exists on these screens.</i></p>
+  </div>
+
+  <!-- changes legend -->
+  <div style="max-width:2150px;margin:0 auto 30px;display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span><b style="font-weight:600">AppCard rows</b> — Material Card/ListTile → soft-shadow surface</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#2196F3"></span><b style="font-weight:600">Grouped form</b> — sectioned cards + pinned submit</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#E8B84C"></span><b style="font-weight:600">Lucide</b> — replaces Cupertino</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#8A9296"></span><b style="font-weight:600">Neutral discipline</b> — inactive = muted + strikethrough</div>
+  </div>
+
+  <!-- ============ LIGHT ============ -->
+  <div style="max-width:2150px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start;margin-bottom:56px">
+
+    <!-- ===== 1 · SUPPLIERS LIST · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Suppliers list · <span style="font-family:'Roboto Mono'">suppliers_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Suppliers</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="padding:8px 16px 12px;flex:none">
+          <div style="display:flex;align-items:center;gap:9px;height:46px;background:#fff;border-radius:16px;padding:0 14px;box-shadow:0 2px 8px rgba(17,28,29,.06)"><i data-lucide="search" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Search suppliers…</span></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#283E46;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#16201F;line-height:1.25">RoadKing Auto Parts</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#5A6468">Marco Villanueva</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#283E46;border:1px solid #E2E2E2;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>30 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#283E46;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#16201F;line-height:1.25">Yamaha Genuine Parts Dist.</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#5A6468">Liza Tan</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#283E46;border:1px solid #E2E2E2;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>60 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#283E46;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#16201F;line-height:1.25">NGK Spark Plugs PH</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#5A6468">Engr. Paolo Reyes</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#283E46;border:1px solid #E2E2E2;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>Cash</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#283E46;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#16201F;line-height:1.25">Banlawan Motor Supply</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#5A6468">Aileen Cruz</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#283E46;border:1px solid #E2E2E2;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>45 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · SHOW INACTIVE · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Show-inactive on · strikethrough rows</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Suppliers</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#283E46;background:rgba(40,62,70,.08)"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="padding:8px 16px 12px;flex:none">
+          <div style="display:flex;align-items:center;gap:9px;height:46px;background:#fff;border-radius:16px;padding:0 14px;box-shadow:0 2px 8px rgba(17,28,29,.06)"><i data-lucide="search" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Search suppliers…</span></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#283E46;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#16201F;line-height:1.25">RoadKing Auto Parts</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#5A6468">Marco Villanueva</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#283E46;border:1px solid #E2E2E2;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>30 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#283E46;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#16201F;line-height:1.25">Yamaha Genuine Parts Dist.</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#5A6468">Liza Tan</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#283E46;border:1px solid #E2E2E2;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>60 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px;opacity:.62">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#8A9296;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#8A9296;line-height:1.25;text-decoration:line-through">Old Town Bearings Co.</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#9AA0A3">Ramon Dizon</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#9AA0A3;border:1px solid #ECECEC;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>Cash</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#B6BBBD;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:13px 14px;opacity:.62">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(40,62,70,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#8A9296;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#8A9296;line-height:1.25;text-decoration:line-through">Sunrise Lubricants Trading</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#9AA0A3">Grace Lim</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#9AA0A3;border:1px solid #ECECEC;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>N/A</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#B6BBBD;stroke-width:1.9;flex:none"></i>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · EMPTY / NO RESULTS · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Empty / no results · <span style="font-family:'Roboto Mono'">EmptyStateView</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Suppliers</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="padding:8px 16px 12px;flex:none">
+          <div style="display:flex;align-items:center;gap:9px;height:46px;background:#fff;border-radius:16px;padding:0 14px;box-shadow:0 2px 8px rgba(17,28,29,.06)"><i data-lucide="search" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">brembo</span><i data-lucide="x" style="width:17px;height:17px;color:#8A9296;stroke-width:2"></i></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:0 40px 60px;text-align:center">
+          <div style="width:88px;height:88px;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(17,28,29,.06);display:flex;align-items:center;justify-content:center"><i data-lucide="users" style="width:40px;height:40px;color:#C7CCCE;stroke-width:1.5"></i></div>
+          <div>
+            <div style="font-size:17px;font-weight:600;color:#16201F">No suppliers found</div>
+            <div style="font-size:14px;color:#8A9296;margin-top:5px;line-height:1.5">Try a different search</div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · ADD SUPPLIER FORM · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Add Supplier form · <span style="font-family:'Roboto Mono'">supplier_form_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Add Supplier</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:8px 16px 14px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:8px 2px 8px">Identity</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Supplier Name <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="briefcase" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">RoadKing Auto Parts</span></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Contact Person</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="user" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">Marco Villanueva</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Contact</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Contact Number</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="phone" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">0917 555 2048</span></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Alternative Number</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="smartphone" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Alternative number</span></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Email</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="mail" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">sales@roadking.ph</span></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Address</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;min-height:64px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:13px"><i data-lucide="map-pin" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F;line-height:1.45">142 Banawe St, Quezon City</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Terms</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Payment Terms <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="credit-card" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">30 Days</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#8A9296;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Notes</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;min-height:72px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:13px"><i data-lucide="list" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Optional notes…</span></div>
+          </div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · VALIDATION · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Validation · name / phone / email</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Edit Supplier</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:8px 16px 14px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:8px 2px 8px">Identity</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#F44336;margin:0 0 5px 2px">Supplier Name <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1.5px solid #F44336;border-radius:14px;padding:0 13px"><i data-lucide="briefcase" style="width:18px;height:18px;color:#F44336;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#9AA0A3">Supplier name</span></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#F44336;margin:6px 0 0 4px"><i data-lucide="alert-circle" style="width:13px;height:13px;stroke-width:2"></i>This field is required</div>
+            <div style="font-size:12px;color:#8A9296;margin:14px 0 5px 2px">Contact Person</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="user" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">Liza Tan</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Contact</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#F44336;margin:0 0 5px 2px">Contact Number</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1.5px solid #F44336;border-radius:14px;padding:0 13px"><i data-lucide="phone" style="width:18px;height:18px;color:#F44336;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">12ab</span></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#F44336;margin:6px 0 0 4px"><i data-lucide="alert-circle" style="width:13px;height:13px;stroke-width:2"></i>Enter a valid phone number</div>
+            <div style="font-size:12px;color:#F44336;margin:14px 0 5px 2px">Email</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1.5px solid #F44336;border-radius:14px;padding:0 13px"><i data-lucide="mail" style="width:18px;height:18px;color:#F44336;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">liza@@parts</span></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#F44336;margin:6px 0 0 4px"><i data-lucide="alert-circle" style="width:13px;height:13px;stroke-width:2"></i>Enter a valid email</div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#8A9296;text-transform:uppercase;margin:18px 2px 8px">Terms</div>
+          <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 5px 2px">Payment Terms <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 13px"><i data-lucide="credit-card" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#16201F">60 Days</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#8A9296;stroke-width:1.75"></i></div>
+          </div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="save" style="width:18px;height:18px;stroke-width:2"></i>Update Supplier</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ DARK ============ -->
+  <div style="max-width:2150px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+
+    <!-- ===== 1 · SUPPLIERS LIST · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Suppliers list · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Suppliers</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="padding:8px 16px 12px;flex:none">
+          <div style="display:flex;align-items:center;gap:9px;height:46px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:0 14px"><i data-lucide="search" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Search suppliers…</span></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#9FB0B0;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#ECEFEF;line-height:1.25">RoadKing Auto Parts</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#A9B4B5">Marco Villanueva</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C9D2D2;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>30 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#9FB0B0;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#ECEFEF;line-height:1.25">Yamaha Genuine Parts Dist.</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#A9B4B5">Liza Tan</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C9D2D2;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>60 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#9FB0B0;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#ECEFEF;line-height:1.25">NGK Spark Plugs PH</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#A9B4B5">Engr. Paolo Reyes</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C9D2D2;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>Cash</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#9FB0B0;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#ECEFEF;line-height:1.25">Banlawan Motor Supply</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#A9B4B5">Aileen Cruz</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C9D2D2;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>45 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · SHOW INACTIVE · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Show-inactive on · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Suppliers</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#E8B84C;background:rgba(232,184,76,.12)"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="padding:8px 16px 12px;flex:none">
+          <div style="display:flex;align-items:center;gap:9px;height:46px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:0 14px"><i data-lucide="search" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Search suppliers…</span></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#9FB0B0;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#ECEFEF;line-height:1.25">RoadKing Auto Parts</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#A9B4B5">Marco Villanueva</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C9D2D2;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>30 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#9FB0B0;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#ECEFEF;line-height:1.25">Yamaha Genuine Parts Dist.</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#A9B4B5">Liza Tan</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C9D2D2;border:1px solid #2C3C3E;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>60 Days</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px;opacity:.6">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.035);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#6C797C;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#7E8B8D;line-height:1.25;text-decoration:line-through">Old Town Bearings Co.</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#6C797C">Ramon Dizon</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#6C797C;border:1px solid #243234;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>Cash</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#4E5B5E;stroke-width:1.9;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:13px 14px;opacity:.6">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.035);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="briefcase" style="width:21px;height:21px;color:#6C797C;stroke-width:1.8"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#7E8B8D;line-height:1.25;text-decoration:line-through">Sunrise Lubricants Trading</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap"><span style="font-size:13px;color:#6C797C">Grace Lim</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#6C797C;border:1px solid #243234;border-radius:8px;padding:3px 8px"><i data-lucide="credit-card" style="width:12px;height:12px;stroke-width:1.9"></i>N/A</span></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:#4E5B5E;stroke-width:1.9;flex:none"></i>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · EMPTY / NO RESULTS · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Empty / no results · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Suppliers</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="padding:8px 16px 12px;flex:none">
+          <div style="display:flex;align-items:center;gap:9px;height:46px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:0 14px"><i data-lucide="search" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">brembo</span><i data-lucide="x" style="width:17px;height:17px;color:#93A0A3;stroke-width:2"></i></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:0 40px 60px;text-align:center">
+          <div style="width:88px;height:88px;border-radius:999px;background:#18262A;border:1px solid #243234;display:flex;align-items:center;justify-content:center"><i data-lucide="users" style="width:40px;height:40px;color:#46565A;stroke-width:1.5"></i></div>
+          <div>
+            <div style="font-size:17px;font-weight:600;color:#ECEFEF">No suppliers found</div>
+            <div style="font-size:14px;color:#93A0A3;margin-top:5px;line-height:1.5">Try a different search</div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · ADD SUPPLIER FORM · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Add Supplier form · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Add Supplier</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:8px 16px 14px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:8px 2px 8px">Identity</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Supplier Name <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="briefcase" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">RoadKing Auto Parts</span></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Contact Person</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="user" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">Marco Villanueva</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Contact</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Contact Number</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="phone" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">0917 555 2048</span></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Alternative Number</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="smartphone" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Alternative number</span></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Email</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="mail" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">sales@roadking.ph</span></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Address</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;min-height:64px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:13px"><i data-lucide="map-pin" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF;line-height:1.45">142 Banawe St, Quezon City</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Terms</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Payment Terms <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="credit-card" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">30 Days</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#93A0A3;stroke-width:1.75"></i></div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Notes</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;min-height:72px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:13px"><i data-lucide="list" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Optional notes…</span></div>
+          </div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.2"></i>Add Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · VALIDATION · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Validation · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Edit Supplier</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:8px 16px 14px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:8px 2px 8px">Identity</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#FF6B5E;margin:0 0 5px 2px">Supplier Name <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1.5px solid #FF6B5E;border-radius:14px;padding:0 13px"><i data-lucide="briefcase" style="width:18px;height:18px;color:#FF6B5E;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#6C797C">Supplier name</span></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#FF6B5E;margin:6px 0 0 4px"><i data-lucide="alert-circle" style="width:13px;height:13px;stroke-width:2"></i>This field is required</div>
+            <div style="font-size:12px;color:#93A0A3;margin:14px 0 5px 2px">Contact Person</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="user" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">Liza Tan</span></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Contact</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#FF6B5E;margin:0 0 5px 2px">Contact Number</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1.5px solid #FF6B5E;border-radius:14px;padding:0 13px"><i data-lucide="phone" style="width:18px;height:18px;color:#FF6B5E;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">12ab</span></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#FF6B5E;margin:6px 0 0 4px"><i data-lucide="alert-circle" style="width:13px;height:13px;stroke-width:2"></i>Enter a valid phone number</div>
+            <div style="font-size:12px;color:#FF6B5E;margin:14px 0 5px 2px">Email</div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1.5px solid #FF6B5E;border-radius:14px;padding:0 13px"><i data-lucide="mail" style="width:18px;height:18px;color:#FF6B5E;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">liza@@parts</span></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#FF6B5E;margin:6px 0 0 4px"><i data-lucide="alert-circle" style="width:13px;height:13px;stroke-width:2"></i>Enter a valid email</div>
+          </div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:#93A0A3;text-transform:uppercase;margin:18px 2px 8px">Terms</div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 5px 2px">Payment Terms <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:10px;min-height:46px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 13px"><i data-lucide="credit-card" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14px;color:#ECEFEF">60 Days</span><i data-lucide="chevron-down" style="width:16px;height:16px;color:#93A0A3;stroke-width:1.75"></i></div>
+          </div>
+          <div style="height:4px"></div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="save" style="width:18px;height:18px;stroke-width:2"></i>Update Supplier</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>

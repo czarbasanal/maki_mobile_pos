@@ -1,11 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 
 /// Admin CRUD editor for the mechanics list.
 ///
@@ -29,7 +30,7 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.settings),
         ),
         title: const Text('Mechanics'),
@@ -40,10 +41,8 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
         error: (e, _) =>
             Center(child: Text('Failed to load mechanics: $e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: SettingsAddFab(
         onPressed: () => _showMechanicDialog(context),
-        icon: const Icon(CupertinoIcons.add),
-        label: const Text('Add'),
       ),
     );
   }
@@ -53,21 +52,16 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
       return const _EmptyState();
     }
 
-    final theme = Theme.of(context);
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.xl * 2,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 90),
       itemCount: mechanics.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.xs),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final mechanic = mechanics[index];
-        return _MechanicRow(
-          mechanic: mechanic,
-          theme: theme,
+        return SettingsCrudRow(
+          name: mechanic.name,
+          isActive: mechanic.isActive,
+          leadingIcon: LucideIcons.wrench,
           onEdit: () => _showMechanicDialog(context, existing: mechanic),
           onToggleActive: () => _toggleActive(mechanic),
         );
@@ -105,73 +99,6 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
   }
 }
 
-class _MechanicRow extends StatelessWidget {
-  const _MechanicRow({
-    required this.mechanic,
-    required this.theme,
-    required this.onEdit,
-    required this.onToggleActive,
-  });
-
-  final MechanicEntity mechanic;
-  final ThemeData theme;
-  final VoidCallback onEdit;
-  final VoidCallback onToggleActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final muted = !mechanic.isActive;
-    final nameStyle = theme.textTheme.bodyLarge?.copyWith(
-      fontWeight: FontWeight.w500,
-      color: muted ? theme.colorScheme.onSurfaceVariant : null,
-      decoration: muted ? TextDecoration.lineThrough : null,
-    );
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: theme.dividerColor),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
-        ),
-        title: Text(mechanic.name, style: nameStyle),
-        subtitle: muted
-            ? Text(
-                'Inactive',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              )
-            : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              tooltip: 'Edit',
-              icon: const Icon(CupertinoIcons.pencil),
-              onPressed: onEdit,
-            ),
-            IconButton(
-              tooltip: muted ? 'Reactivate' : 'Deactivate',
-              icon: Icon(
-                muted
-                    ? CupertinoIcons.arrow_clockwise
-                    : CupertinoIcons.archivebox,
-              ),
-              onPressed: onToggleActive,
-            ),
-          ],
-        ),
-        onTap: onEdit,
-      ),
-    );
-  }
-}
-
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -185,7 +112,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              CupertinoIcons.wrench,
+              LucideIcons.wrench,
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -253,7 +180,7 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Name',
-                prefixIcon: Icon(CupertinoIcons.wrench),
+                prefixIcon: Icon(LucideIcons.wrench),
               ),
               autofocus: true,
               textCapitalization: TextCapitalization.words,

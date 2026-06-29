@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
-/// Widget for editing cost code mapping.
+/// Widget for editing cost code mapping. Mirrors the read-only display
+/// (recessed mono digit cells · `arrow-right` · slate/gold-outlined code
+/// cells) with the code cell swapped for an editable mono field.
 class CostCodeEditor extends StatefulWidget {
   final CostCodeEntity mapping;
   final ValueChanged<CostCodeEntity> onMappingChanged;
@@ -19,6 +23,8 @@ class CostCodeEditor extends StatefulWidget {
 }
 
 class _CostCodeEditorState extends State<CostCodeEditor> {
+  static const String _mono = AppTextStyles.monoFontFamily;
+
   late Map<String, TextEditingController> _controllers;
   late TextEditingController _doubleZeroController;
   late TextEditingController _tripleZeroController;
@@ -58,187 +64,126 @@ class _CostCodeEditorState extends State<CostCodeEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Header
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Digit',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 48),
-                Expanded(
-                  child: Text(
-                    'Letter',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(),
-
-            // Digit to letter mappings
-            ...List.generate(10, (index) {
-              final digit = index.toString();
-              return _buildMappingRow(theme, digit);
-            }),
-
-            const Divider(height: 32),
-
-            // Special codes
-            Text(
-              'Special Codes',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            _buildSpecialCodeRow(
-              theme,
-              '00',
-              _doubleZeroController,
-              'Double Zero',
-            ),
-            const SizedBox(height: 8),
-            _buildSpecialCodeRow(
-              theme,
-              '000',
-              _tripleZeroController,
-              'Triple Zero',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMappingRow(ThemeData theme, String digit) {
-    final controller = _controllers[digit]!;
-    final isDuplicate = _hasDuplicateLetter(digit, controller.text);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
+    return AppCard(
+      radius: 16,
+      padding: const EdgeInsets.all(14),
+      child: Column(
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                digit,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'monospace',
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Icon(
-              CupertinoIcons.forward,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              textAlign: TextAlign.center,
-              maxLength: 1,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
-                UpperCaseTextFormatter(),
-              ],
-              decoration: InputDecoration(
-                counterText: '',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: isDuplicate ? Colors.red : Colors.grey[300]!,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: isDuplicate ? Colors.red : Colors.grey[300]!,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: isDuplicate ? Colors.red : theme.colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-                filled: true,
-                fillColor: isDuplicate
-                    ? Colors.red[50]
-                    : theme.colorScheme.primary.withValues(alpha: 0.05),
-                errorText: isDuplicate ? 'Duplicate' : null,
-                errorStyle: const TextStyle(fontSize: 10),
-              ),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'monospace',
-                color: isDuplicate ? Colors.red : theme.colorScheme.primary,
-              ),
-              onChanged: (_) => _updateMapping(),
-            ),
-          ),
+          ...List.generate(10, (index) {
+            final digit = index.toString();
+            return Padding(
+              padding: EdgeInsets.only(top: index == 0 ? 0 : 9),
+              child: _buildMappingRow(theme, muted, digit),
+            );
+          }),
+          const SizedBox(height: 14),
+          _buildSpecialCodeRow(theme, muted, '00', _doubleZeroController,
+              'Double Zero'),
+          const SizedBox(height: 9),
+          _buildSpecialCodeRow(theme, muted, '000', _tripleZeroController,
+              'Triple Zero'),
         ],
       ),
     );
   }
 
+  Widget _digitCell(ThemeData theme, String text, {bool expand = true}) {
+    final dark = theme.brightness == Brightness.dark;
+    final fill = dark ? AppColors.darkCanvas : AppColors.lightSurfaceMuted;
+    final border = dark ? AppColors.darkInputBorder : AppColors.lightHairline;
+    final cell = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: _mono,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
+    );
+    return expand ? Expanded(child: cell) : cell;
+  }
+
+  Widget _buildMappingRow(ThemeData theme, Color muted, String digit) {
+    final controller = _controllers[digit]!;
+    final isDuplicate = _hasDuplicateLetter(digit, controller.text);
+    final accent = isDuplicate ? theme.colorScheme.error : theme.colorScheme.primary;
+
+    return Row(
+      children: [
+        _digitCell(theme, digit),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Icon(LucideIcons.arrowRight, size: 16, color: muted),
+        ),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+              UpperCaseTextFormatter(),
+            ],
+            decoration: InputDecoration(
+              counterText: '',
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 7),
+              filled: false,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: accent, width: 1.3),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: accent, width: 1.3),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: accent, width: 1.6),
+              ),
+              errorText: isDuplicate ? 'Dup' : null,
+              errorStyle: const TextStyle(fontSize: 10),
+            ),
+            style: TextStyle(
+              fontFamily: _mono,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: accent,
+            ),
+            onChanged: (_) => _updateMapping(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSpecialCodeRow(
     ThemeData theme,
+    Color muted,
     String digits,
     TextEditingController controller,
     String label,
   ) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            digits,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
-            ),
-          ),
+        _digitCell(theme, digits, expand: false),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Icon(LucideIcons.arrowRight, size: 16, color: muted),
         ),
-        const SizedBox(width: 12),
-        const Icon(CupertinoIcons.forward, color: Colors.grey, size: 16),
-        const SizedBox(width: 12),
         SizedBox(
-          width: 80,
+          width: 84,
           child: TextField(
             controller: controller,
             textAlign: TextAlign.center,
@@ -249,30 +194,31 @@ class _CostCodeEditorState extends State<CostCodeEditor> {
             ],
             decoration: InputDecoration(
               counterText: '',
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 7),
+              filled: false,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(10),
+                borderSide:
+                    BorderSide(color: theme.colorScheme.primary, width: 1.3),
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 8,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide:
+                    BorderSide(color: theme.colorScheme.primary, width: 1.3),
               ),
             ),
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
+              fontFamily: _mono,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
               color: theme.colorScheme.primary,
             ),
             onChanged: (_) => _updateMapping(),
           ),
         ),
         const Spacer(),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12.5, color: muted)),
       ],
     );
   }

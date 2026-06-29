@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/password_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/cost_code_editor.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
+
+const String _mono = AppTextStyles.monoFontFamily;
 
 /// Screen for viewing and editing cost code mapping.
 class CostCodeSettingsScreen extends ConsumerStatefulWidget {
@@ -34,7 +37,7 @@ class _CostCodeSettingsScreenState
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.settings),
         ),
         title: const Text('Cost Code Settings'),
@@ -46,7 +49,7 @@ class _CostCodeSettingsScreenState
             )
           else
             IconButton(
-              icon: const Icon(CupertinoIcons.pencil),
+              icon: const Icon(LucideIcons.squarePen),
               tooltip: 'Edit mapping',
               onPressed: () => _startEditing(mappingAsync.value),
             ),
@@ -65,31 +68,16 @@ class _CostCodeSettingsScreenState
     final displayMapping = _editedMapping ?? mapping;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Info card
           _buildInfoCard(theme),
 
-          const SizedBox(height: 24),
-
-          // Current mapping section
-          Text(
-            'Digit to Letter Mapping',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Each digit (0-9) is encoded as a letter to hide costs.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-
-          const SizedBox(height: 16),
+          _sectionHeading(theme, 'Digit to Letter Mapping'),
+          _sectionHelper(theme, 'Each digit (0–9) is encoded as a letter to hide costs.'),
+          const SizedBox(height: 12),
 
           // Mapping editor/display
           if (_isEditing)
@@ -102,217 +90,203 @@ class _CostCodeSettingsScreenState
           else
             _buildMappingDisplay(theme, displayMapping),
 
-          const SizedBox(height: 24),
-
-          // Special codes section
-          Text(
-            'Special Codes',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          _sectionHeading(theme, 'Special Codes'),
           const SizedBox(height: 8),
           _buildSpecialCodesCard(theme, displayMapping),
 
-          const SizedBox(height: 24),
-
-          // Test section
+          _sectionHeading(theme, 'Test Encoding'),
+          const SizedBox(height: 8),
           _buildTestSection(theme, displayMapping),
 
-          const SizedBox(height: 24),
-
           // Reset to default button (only when not editing)
-          if (!_isEditing)
-            Center(
+          if (!_isEditing) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
               child: OutlinedButton.icon(
                 onPressed: () => _resetToDefault(mapping),
-                icon: const Icon(CupertinoIcons.arrow_counterclockwise),
+                icon: const Icon(LucideIcons.rotateCcw, size: 17),
                 label: const Text('Reset to Default'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ),
-
-          const SizedBox(height: 32),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard(ThemeData theme) {
-    final muted = theme.colorScheme.onSurfaceVariant;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              CupertinoIcons.info_circle,
-              color: theme.colorScheme.primary,
-              size: 22,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'About Cost Codes',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Cost codes hide actual product costs from unauthorized users. '
-                    'Only admins can view or modify this mapping.',
-                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget _sectionHeading(ThemeData theme, String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 20, 2, 3),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: theme.colorScheme.onSurface,
         ),
       ),
     );
   }
 
-  Widget _buildMappingDisplay(ThemeData theme, CostCodeEntity mapping) {
+  Widget _sectionHelper(ThemeData theme, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(ThemeData theme) {
+    final dark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
-    final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    final mutedFill =
-        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: [
-            // Header row
-            Row(
+    final tileBg = dark ? const Color(0x24E8B84C) : const Color(0x12283E46);
+    return AppCard(
+      radius: 16,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              LucideIcons.info,
+              color: theme.colorScheme.primary,
+              size: 19,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    'Digit',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
-                      color: muted,
-                    ),
-                    textAlign: TextAlign.center,
+                Text(
+                  'About Cost Codes',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Icon(CupertinoIcons.forward, size: 14, color: muted),
-                Expanded(
-                  child: Text(
-                    'Code',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
-                      color: muted,
-                    ),
-                    textAlign: TextAlign.center,
+                const SizedBox(height: 3),
+                Text(
+                  'Cost codes hide actual product costs from unauthorized users. '
+                  'Only admins can view or modify this mapping.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.5,
+                    color: muted,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            const Divider(height: 1),
-            // Mapping rows
-            ...List.generate(10, (index) {
-              final digit = index.toString();
-              final letter = mapping.digitToLetter[digit] ?? '?';
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.sm,
-                        ),
-                        decoration: BoxDecoration(
-                          color: mutedFill,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: hairline),
-                        ),
-                        child: Text(
-                          digit,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'monospace',
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      child: Icon(
-                        CupertinoIcons.forward,
-                        size: 16,
-                        color: muted,
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.sm,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color: theme.colorScheme.primary,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Text(
-                          letter,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'monospace',
-                            color: theme.colorScheme.primary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Recessed mono cell (digit / special-code source).
+  Widget _digitCell(ThemeData theme, String text, {bool expand = true}) {
+    final dark = theme.brightness == Brightness.dark;
+    final fill = dark ? AppColors.darkCanvas : AppColors.lightSurfaceMuted;
+    final border = dark ? AppColors.darkInputBorder : AppColors.lightHairline;
+    final cell = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: _mono,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.onSurface,
         ),
+      ),
+    );
+    return expand ? Expanded(child: cell) : cell;
+  }
+
+  /// Slate/gold-outlined mono cell (encoded code).
+  Widget _codeCell(ThemeData theme, String text, {bool expand = true}) {
+    final cell = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: theme.colorScheme.primary, width: 1.3),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: _mono,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+    return expand ? Expanded(child: cell) : cell;
+  }
+
+  Widget _buildMappingDisplay(ThemeData theme, CostCodeEntity mapping) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return AppCard(
+      radius: 16,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        children: List.generate(10, (index) {
+          final digit = index.toString();
+          final letter = mapping.digitToLetter[digit] ?? '?';
+          return Padding(
+            padding: EdgeInsets.only(top: index == 0 ? 0 : 9),
+            child: Row(
+              children: [
+                _digitCell(theme, digit),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Icon(LucideIcons.arrowRight, size: 16, color: muted),
+                ),
+                _codeCell(theme, letter),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
 
   Widget _buildSpecialCodesCard(ThemeData theme, CostCodeEntity mapping) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildSpecialCodeRow(
-              theme,
-              '00',
-              mapping.doubleZeroCode,
-              'Double Zero',
-            ),
-            const Divider(),
-            _buildSpecialCodeRow(
-              theme,
-              '000',
-              mapping.tripleZeroCode,
-              'Triple Zero',
-            ),
-          ],
-        ),
+    return AppCard(
+      radius: 16,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        children: [
+          _buildSpecialCodeRow(theme, '00', mapping.doubleZeroCode, 'Double Zero'),
+          const SizedBox(height: 9),
+          _buildSpecialCodeRow(theme, '000', mapping.tripleZeroCode, 'Triple Zero'),
+        ],
       ),
     );
   }
@@ -324,133 +298,81 @@ class _CostCodeSettingsScreenState
     String label,
   ) {
     final muted = theme.colorScheme.onSurfaceVariant;
-    final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    final mutedFill =
-        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
+    return Row(
+      children: [
+        _digitCell(theme, digits, expand: false),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Icon(LucideIcons.arrowRight, size: 16, color: muted),
+        ),
+        _codeCell(theme, code, expand: false),
+        const Spacer(),
+        Text(label, style: TextStyle(fontSize: 12.5, color: muted)),
+      ],
+    );
+  }
+
+  Widget _buildTestSection(ThemeData theme, CostCodeEntity mapping) {
+    return AppCard(
+      radius: 16,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm + 4,
-              vertical: AppSpacing.xs + 2,
-            ),
-            decoration: BoxDecoration(
-              color: mutedFill,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: hairline),
-            ),
-            child: Text(
-              digits,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontFamily: 'monospace',
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Icon(CupertinoIcons.forward, color: muted, size: 14),
-          const SizedBox(width: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm + 4,
-              vertical: AppSpacing.xs + 2,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(
-                color: theme.colorScheme.primary,
-                width: 1.2,
-              ),
-            ),
-            child: Text(
-              code,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontFamily: 'monospace',
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-          const Spacer(),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(color: muted),
-          ),
+          _buildTestRow(theme, mapping, 125, '₱125'),
+          _buildTestRow(theme, mapping, 1000, '₱1,000'),
+          _buildTestRow(theme, mapping, 500, '₱500'),
+          _buildTestRow(theme, mapping, 99, '₱99'),
+          _buildTestRow(theme, mapping, 1234, '₱1,234'),
         ],
       ),
     );
   }
 
-  Widget _buildTestSection(ThemeData theme, CostCodeEntity mapping) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Test Encoding',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+  Widget _buildTestRow(
+    ThemeData theme,
+    CostCodeEntity mapping,
+    double cost,
+    String display,
+  ) {
+    final dark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final encoded = mapping.encode(cost);
+    final chipBorder = dark ? AppColors.success.withValues(alpha: 0.5) : AppColors.success;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 74,
+            child: Text(
+              display,
+              style: TextStyle(
+                fontFamily: _mono,
+                fontSize: 14,
+                color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 12),
-            _buildTestRow(mapping, 125, '₱125'),
-            _buildTestRow(mapping, 1000, '₱1,000'),
-            _buildTestRow(mapping, 500, '₱500'),
-            _buildTestRow(mapping, 99, '₱99'),
-            _buildTestRow(mapping, 1234, '₱1,234'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTestRow(CostCodeEntity mapping, double cost, String display) {
-    final encoded = mapping.encode(cost);
-    return Builder(
-      builder: (context) {
-        final theme = Theme.of(context);
-        final muted = theme.colorScheme.onSurfaceVariant;
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 80,
-                child: Text(
-                  display,
-                  style: const TextStyle(fontFamily: 'monospace'),
-                ),
-              ),
-              Icon(CupertinoIcons.forward, size: 14, color: muted),
-              const SizedBox(width: AppSpacing.md),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: AppColors.success),
-                ),
-                child: Text(
-                  encoded,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'monospace',
-                    color: AppColors.successDark,
-                  ),
-                ),
-              ),
-            ],
           ),
-        );
-      },
+          Icon(LucideIcons.arrowRight, size: 15, color: muted),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: chipBorder),
+            ),
+            child: Text(
+              encoded,
+              style: TextStyle(
+                fontFamily: _mono,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.successText(dark),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,11 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 
 /// Per-kind CRUD editor for an admin-managed name list.
 ///
@@ -34,7 +35,7 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.categorySettings),
         ),
         title: Text(_kind.pluralLabel.toTitleCase()),
@@ -42,6 +43,7 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
           if (defaults != null)
             PopupMenuButton<String>(
               tooltip: 'More',
+              icon: const Icon(LucideIcons.moreVertical),
               onSelected: (value) {
                 if (value == 'seed') _seedDefaults(_kind, defaults);
               },
@@ -60,10 +62,8 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
         error: (e, _) =>
             Center(child: Text('Failed to load ${_kind.pluralLabel}: $e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: SettingsAddFab(
         onPressed: () => _showCategoryDialog(context),
-        icon: const Icon(CupertinoIcons.add),
-        label: const Text('Add'),
       ),
     );
   }
@@ -117,21 +117,15 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
       return _EmptyState(kind: _kind);
     }
 
-    final theme = Theme.of(context);
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.xl * 2,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 90),
       itemCount: categories.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.xs),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final category = categories[index];
-        return _CategoryRow(
-          category: category,
-          theme: theme,
+        return SettingsCrudRow(
+          name: category.name,
+          isActive: category.isActive,
           onEdit: () => _showCategoryDialog(context, existing: category),
           onToggleActive: () => _toggleActive(category),
         );
@@ -237,68 +231,16 @@ extension on String {
           .join(' ');
 }
 
-class _CategoryRow extends StatelessWidget {
-  const _CategoryRow({
-    required this.category,
-    required this.theme,
-    required this.onEdit,
-    required this.onToggleActive,
-  });
-
-  final CategoryEntity category;
-  final ThemeData theme;
-  final VoidCallback onEdit;
-  final VoidCallback onToggleActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final muted = !category.isActive;
-    final nameStyle = theme.textTheme.bodyLarge?.copyWith(
-      fontWeight: FontWeight.w500,
-      color: muted ? theme.colorScheme.onSurfaceVariant : null,
-      decoration: muted ? TextDecoration.lineThrough : null,
-    );
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: theme.dividerColor),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
-        ),
-        title: Text(category.name, style: nameStyle),
-        subtitle: muted
-            ? Text(
-                'Inactive',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              )
-            : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              tooltip: 'Edit',
-              icon: const Icon(CupertinoIcons.pencil),
-              onPressed: onEdit,
-            ),
-            IconButton(
-              tooltip: muted ? 'Reactivate' : 'Deactivate',
-              icon: Icon(
-                muted ? CupertinoIcons.arrow_clockwise : CupertinoIcons.archivebox,
-              ),
-              onPressed: onToggleActive,
-            ),
-          ],
-        ),
-        onTap: onEdit,
-      ),
-    );
+IconData _kindIcon(CategoryKind kind) {
+  switch (kind) {
+    case CategoryKind.product:
+      return LucideIcons.package;
+    case CategoryKind.expense:
+      return LucideIcons.circleDollarSign;
+    case CategoryKind.unit:
+      return LucideIcons.ruler;
+    case CategoryKind.voidReason:
+      return LucideIcons.xCircle;
   }
 }
 
@@ -317,7 +259,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              CupertinoIcons.tag,
+              _kindIcon(kind),
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -388,7 +330,7 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Name',
-                prefixIcon: Icon(CupertinoIcons.tag),
+                prefixIcon: Icon(LucideIcons.tag),
               ),
               autofocus: true,
               textCapitalization: TextCapitalization.words,
