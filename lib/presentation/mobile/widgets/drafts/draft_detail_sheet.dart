@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_bottom_sheet.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/summary_row.dart';
@@ -31,9 +32,7 @@ class DraftDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
     final dark = theme.brightness == Brightness.dark;
-    final hairline = dark ? AppColors.darkHairline : AppColors.lightHairline;
     final dateFormat = DateFormat('EEEE, MMMM d, y • h:mm a');
 
     return DraggableScrollableSheet(
@@ -42,152 +41,73 @@ class DraftDetailSheet extends StatelessWidget {
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.scaffoldBackgroundColor,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-          ),
-          child: Column(
+        return AppBottomSheet(
+          leadingIcon: LucideIcons.fileText,
+          title: draft.name,
+          subtitle: dateFormat.format(draft.updatedAt ?? draft.createdAt),
+          onClose: () => Navigator.pop(context),
+          bodyExpands: true,
+          body: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(AppSpacing.lg - 4),
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: AppSpacing.sm + 4),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: hairline,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-              ),
-
-              // Header — neutral doc tile, title, long date, close
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg - 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: dark
-                            ? const Color(0x1F93A0A3)
-                            : const Color(0x0F283E46),
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child:
-                          Icon(LucideIcons.fileText, size: 20, color: muted),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            draft.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            dateFormat
-                                .format(draft.updatedAt ?? draft.createdAt),
-                            style: TextStyle(fontSize: 12, color: muted),
-                          ),
-                        ],
+              if (draft.hasDiscount) _buildDiscountTypeIndicator(theme, dark),
+              _SectionHeader('Items (${draft.items.length})'),
+              const SizedBox(height: AppSpacing.sm),
+              _buildItemsCard(theme),
+              const SizedBox(height: 18),
+              const _SectionHeader('Summary'),
+              const SizedBox(height: AppSpacing.sm),
+              _buildSummaryCard(context, dark),
+              const SizedBox(height: 18),
+              const _SectionHeader('Information'),
+              const SizedBox(height: AppSpacing.sm),
+              _buildInfoCard(theme),
+              if (draft.notes != null && draft.notes!.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const _SectionHeader('Notes'),
+                const SizedBox(height: AppSpacing.sm),
+                _buildNotesCard(theme, dark),
+              ],
+              const SizedBox(height: AppSpacing.md),
+            ],
+          ),
+          footer: Row(
+            children: [
+              if (onDelete != null) ...[
+                // Delete: icon-only error-outlined square (52×50).
+                SizedBox(
+                  width: 52,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: onDelete,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.costUp(dark),
+                      side: BorderSide(color: AppColors.costUp(dark)),
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.field),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.x),
-                      color: muted,
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+                    child: const Icon(LucideIcons.trash2, size: 20),
+                  ),
                 ),
-              ),
-
-              Divider(height: 1, color: hairline),
-
-              // Content
+                const SizedBox(width: 11),
+              ],
               Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(AppSpacing.lg - 4),
-                  children: [
-                    if (draft.hasDiscount)
-                      _buildDiscountTypeIndicator(theme, dark),
-                    _SectionHeader('Items (${draft.items.length})'),
-                    const SizedBox(height: AppSpacing.sm),
-                    _buildItemsCard(theme),
-                    const SizedBox(height: 18),
-                    const _SectionHeader('Summary'),
-                    const SizedBox(height: AppSpacing.sm),
-                    _buildSummaryCard(context, dark),
-                    const SizedBox(height: 18),
-                    const _SectionHeader('Information'),
-                    const SizedBox(height: AppSpacing.sm),
-                    _buildInfoCard(theme),
-                    if (draft.notes != null && draft.notes!.isNotEmpty) ...[
-                      const SizedBox(height: 18),
-                      const _SectionHeader('Notes'),
-                      const SizedBox(height: AppSpacing.sm),
-                      _buildNotesCard(theme, dark),
-                    ],
-                    const SizedBox(height: AppSpacing.xxl + 32),
-                  ],
-                ),
-              ),
-
-              // Action buttons — hairline-bordered bar instead of shadow
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.lg - 4),
-                decoration: BoxDecoration(
-                  color: theme.scaffoldBackgroundColor,
-                  border: Border(top: BorderSide(color: hairline)),
-                ),
-                child: SafeArea(
-                  child: Row(
-                    children: [
-                      if (onDelete != null) ...[
-                        // Delete: icon-only error-outlined square (52×50).
-                        SizedBox(
-                          width: 52,
-                          height: 50,
-                          child: OutlinedButton(
-                            onPressed: onDelete,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.costUp(dark),
-                              side: BorderSide(color: AppColors.costUp(dark)),
-                              padding: EdgeInsets.zero,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.field),
-                              ),
-                            ),
-                            child: const Icon(LucideIcons.trash2, size: 20),
-                          ),
-                        ),
-                        const SizedBox(width: 11),
-                      ],
-                      Expanded(
-                        child: SizedBox(
-                          height: 50,
-                          child: FilledButton.icon(
-                            onPressed: onLoad,
-                            icon: const Icon(LucideIcons.shoppingCart, size: 18),
-                            label: const Text(
-                              'Load into Cart',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpacing.md),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                child: SizedBox(
+                  height: 50,
+                  child: FilledButton.icon(
+                    onPressed: onLoad,
+                    icon: const Icon(LucideIcons.shoppingCart, size: 18),
+                    label: const Text(
+                      'Load into Cart',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: FilledButton.styleFrom(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    ),
                   ),
                 ),
               ),

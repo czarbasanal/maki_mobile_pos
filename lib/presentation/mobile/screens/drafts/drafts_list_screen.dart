@@ -103,6 +103,9 @@ class DraftsListScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: AppDialog.scrimColor(
+          Theme.of(context).brightness == Brightness.dark),
       builder: (context) => DraftDetailSheet(
         draft: draft,
         onLoad: () {
