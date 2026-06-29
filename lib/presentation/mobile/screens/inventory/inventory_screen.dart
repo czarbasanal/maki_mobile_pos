@@ -588,29 +588,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     BuildContext context,
     ProductEntity product,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Product?'),
-        content: Text(
-          'Delete "${product.name}"? This product will be hidden from POS '
+    final confirmed = await context.showConfirmDialog(
+      title: 'Delete Product?',
+      message: 'Delete "${product.name}"? This product will be hidden from POS '
           'and inventory lists. Past sales and receivings that reference '
           'it remain intact.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      confirmText: 'Delete',
+      icon: LucideIcons.trash2,
+      isDangerous: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
