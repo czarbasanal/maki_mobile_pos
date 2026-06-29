@@ -160,21 +160,29 @@ Widget appDialogCancel(BuildContext context, String label,
   );
 }
 
-/// Filled primary action (right).
+/// Filled primary action (right). Pass [loading] to show a spinner and
+/// disable the button (e.g. while a save is in flight).
 Widget appDialogPrimary(BuildContext context, String label,
-    {required VoidCallback onTap, Color? color}) {
+    {required VoidCallback onTap, Color? color, bool loading = false}) {
   final theme = Theme.of(context);
   final bg = color ?? theme.colorScheme.primary;
+  final fg = color != null ? Colors.white : theme.colorScheme.onPrimary;
   return FilledButton(
-    onPressed: onTap,
+    onPressed: loading ? null : onTap,
     style: FilledButton.styleFrom(
       backgroundColor: bg,
-      foregroundColor: theme.colorScheme.onPrimary,
+      foregroundColor: fg,
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
       textStyle: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
-    child: Text(label),
+    child: loading
+        ? SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2, color: fg),
+          )
+        : Text(label),
   );
 }
 

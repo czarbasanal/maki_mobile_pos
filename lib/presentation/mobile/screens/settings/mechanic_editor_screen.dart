@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
 /// Admin CRUD editor for the mechanics list.
 ///
@@ -90,6 +91,8 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
   }) async {
     final saved = await showDialog<bool>(
       context: context,
+      barrierColor: AppDialog.scrimColor(
+          Theme.of(context).brightness == Brightness.dark),
       builder: (dialogContext) => _MechanicFormDialog(existing: existing),
     );
     if (!context.mounted || saved != true) return;
@@ -169,8 +172,9 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(_isEdit ? 'Edit Mechanic' : 'New Mechanic'),
+    return AppDialog(
+      title: _isEdit ? 'Edit Mechanic' : 'New Mechanic',
+      leadingIcon: LucideIcons.wrench,
       content: Form(
         key: _formKey,
         child: Column(
@@ -212,20 +216,10 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _isSaving ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _isSaving ? null : _save,
-          child: _isSaving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(_isEdit ? 'Save' : 'Create'),
-        ),
+        appDialogCancel(context, 'Cancel',
+            onTap: _isSaving ? () {} : () => Navigator.pop(context)),
+        appDialogPrimary(context, _isEdit ? 'Save' : 'Create',
+            onTap: _save, loading: _isSaving),
       ],
     );
   }

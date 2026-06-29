@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
 /// Dialog for entering item-level discount.
 ///
@@ -92,27 +93,16 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
     // on the cart (50% vs ₱50). When other items already have a discount,
     // confirm before letting it reset them.
     if (widget.hasOtherDiscounts) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Change Discount Type?'),
-          content: const Text(
+      final confirmed = await showAppConfirmDialog(
+        context,
+        title: 'Change Discount Type?',
+        message:
             'Other cart items already have discounts in the current type. '
             'Switching will reset all item discounts to zero.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Switch'),
-            ),
-          ],
-        ),
+        confirmLabel: 'Switch',
+        icon: LucideIcons.refreshCw,
       );
-      if (confirmed != true) return;
+      if (!confirmed) return;
     }
 
     setState(() {
@@ -144,8 +134,9 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
 
-    return AlertDialog(
-      title: const Text('Apply Discount'),
+    return AppDialog(
+      title: 'Apply Discount',
+      leadingIcon: AppIcons.peso,
       // Wrap content in a scroll view so the soft keyboard never makes the
       // Column overflow when the dialog's max height shrinks.
       content: SingleChildScrollView(
@@ -173,7 +164,7 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
                 ButtonSegment(
                   value: DiscountType.percentage,
                   label: Text('Percent'),
-                  icon: Icon(CupertinoIcons.percent),
+                  icon: Icon(LucideIcons.percent),
                 ),
               ],
               selected: {_discountType},
@@ -223,15 +214,27 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
         if (widget.currentDiscount > 0)
           TextButton(
             onPressed: _removeDiscount,
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              textStyle: const TextStyle(
+                  fontSize: 14.5, fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
             child: const Text('Remove'),
           ),
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+        appDialogCancel(context, 'Cancel',
+            onTap: () => Navigator.pop(context)),
         FilledButton(
           onPressed: _errorText == null ? _applyDiscount : null,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            textStyle:
+                const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+          ),
           child: const Text('Apply'),
         ),
       ],

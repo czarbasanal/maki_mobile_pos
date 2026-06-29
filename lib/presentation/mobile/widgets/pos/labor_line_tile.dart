@@ -84,10 +84,13 @@ class LaborLineTile extends StatelessWidget {
     );
     final formKey = GlobalKey<FormState>();
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final saved = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Labor / Service'),
+      barrierColor: AppDialog.scrimColor(dark),
+      builder: (context) => AppDialog(
+        title: 'Labor / Service',
+        leadingIcon: LucideIcons.wrench,
         content: Form(
           key: formKey,
           child: Column(
@@ -129,18 +132,13 @@ class LaborLineTile extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('Save'),
-          ),
+          appDialogCancel(context, 'Cancel',
+              onTap: () => Navigator.pop(context, false)),
+          appDialogPrimary(context, 'Save', onTap: () {
+            if (formKey.currentState!.validate()) {
+              Navigator.pop(context, true);
+            }
+          }),
         ],
       ),
     );

@@ -421,8 +421,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Labor / Service'),
+      barrierColor: AppDialog.scrimColor(
+          Theme.of(context).brightness == Brightness.dark),
+      builder: (context) => AppDialog(
+        title: 'Add Labor / Service',
+        leadingIcon: LucideIcons.wrench,
         content: Form(
           key: formKey,
           child: Column(
@@ -463,21 +466,16 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              ref.read(cartProvider.notifier).addLaborLine(
-                    description: descController.text.trim(),
-                    fee: double.parse(feeController.text.trim()),
-                  );
-              Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          ),
+          appDialogCancel(context, 'Cancel',
+              onTap: () => Navigator.pop(context)),
+          appDialogPrimary(context, 'Add', onTap: () {
+            if (!formKey.currentState!.validate()) return;
+            ref.read(cartProvider.notifier).addLaborLine(
+                  description: descController.text.trim(),
+                  fee: double.parse(feeController.text.trim()),
+                );
+            Navigator.pop(context);
+          }),
         ],
       ),
     );
@@ -635,30 +633,15 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
   }
 
-  void _showClearCartDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Cart?'),
-        content: const Text('This will remove all items from the cart.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(cartProvider.notifier).reset();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
+  Future<void> _showClearCartDialog() async {
+    final ok = await context.showConfirmDialog(
+      title: 'Clear Cart?',
+      message: 'This will remove all items from the cart.',
+      confirmText: 'Clear',
+      icon: LucideIcons.trash2,
+      isDangerous: true,
     );
+    if (ok) ref.read(cartProvider.notifier).reset();
   }
 
   void _showSaveDraftDialog() {
@@ -675,8 +658,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final nameController = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Save as Draft'),
+      barrierColor: AppDialog.scrimColor(
+          Theme.of(context).brightness == Brightness.dark),
+      builder: (context) => AppDialog(
+        title: 'Save as Draft',
+        leadingIcon: LucideIcons.save,
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
@@ -687,22 +673,17 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           textCapitalization: TextCapitalization.words,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final name = nameController.text.trim();
-              if (name.isEmpty) {
-                context.showWarningSnackBar('Please enter a draft name');
-                return;
-              }
-              Navigator.pop(context);
-              _saveDraft(name);
-            },
-            child: const Text('Save'),
-          ),
+          appDialogCancel(context, 'Cancel',
+              onTap: () => Navigator.pop(context)),
+          appDialogPrimary(context, 'Save', onTap: () {
+            final name = nameController.text.trim();
+            if (name.isEmpty) {
+              context.showWarningSnackBar('Please enter a draft name');
+              return;
+            }
+            Navigator.pop(context);
+            _saveDraft(name);
+          }),
         ],
       ),
     );

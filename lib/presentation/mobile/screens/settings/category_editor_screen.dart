@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
 /// Per-kind CRUD editor for an admin-managed name list.
 ///
@@ -154,6 +155,8 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
   }) async {
     final saved = await showDialog<bool>(
       context: context,
+      barrierColor: AppDialog.scrimColor(
+          Theme.of(context).brightness == Brightness.dark),
       builder: (dialogContext) => _CategoryFormDialog(
         kind: _kind,
         existing: existing,
@@ -317,10 +320,11 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        _isEdit ? 'Edit ${widget.kind.singularLabel}' : 'New ${widget.kind.singularLabel}',
-      ),
+    return AppDialog(
+      title: _isEdit
+          ? 'Edit ${widget.kind.singularLabel}'
+          : 'New ${widget.kind.singularLabel}',
+      leadingIcon: LucideIcons.tag,
       content: Form(
         key: _formKey,
         child: Column(
@@ -362,20 +366,10 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _isSaving ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _isSaving ? null : _save,
-          child: _isSaving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(_isEdit ? 'Save' : 'Create'),
-        ),
+        appDialogCancel(context, 'Cancel',
+            onTap: _isSaving ? () {} : () => Navigator.pop(context)),
+        appDialogPrimary(context, _isEdit ? 'Save' : 'Create',
+            onTap: _save, loading: _isSaving),
       ],
     );
   }

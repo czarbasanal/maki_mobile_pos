@@ -69,6 +69,8 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       [LaborLineEntity? existing]) async {
     final result = await showDialog<LaborLineEntity>(
       context: context,
+      barrierColor: AppDialog.scrimColor(
+          Theme.of(context).brightness == Brightness.dark),
       builder: (_) => _LaborLineDialog(line: existing),
     );
     if (result == null) return;
@@ -672,8 +674,9 @@ class _LaborLineDialogState extends State<_LaborLineDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.line == null ? 'Add Labor' : 'Edit Labor'),
+    return AppDialog(
+      title: widget.line == null ? 'Add Labor' : 'Edit Labor',
+      leadingIcon: LucideIcons.wrench,
       content: Form(
         key: _formKey,
         child: Column(
@@ -710,14 +713,10 @@ class _LaborLineDialogState extends State<_LaborLineDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(widget.line == null ? 'Add' : 'Save'),
-        ),
+        appDialogCancel(context, 'Cancel',
+            onTap: () => Navigator.pop(context)),
+        appDialogPrimary(context, widget.line == null ? 'Add' : 'Save',
+            onTap: _submit),
       ],
     );
   }

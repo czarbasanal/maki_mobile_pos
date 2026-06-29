@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/utils/batch_import.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/import_preview.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
 /// Dialog for importing receiving items from a CSV into the current receiving
 /// form. Thin client of the shared batch-import pipeline: it parses with
@@ -123,14 +124,9 @@ class CsvImportDialogState extends ConsumerState<CsvImportDialog> {
     final classified = _classified;
     final canImport =
         classified != null && classified.isNotEmpty && !_isLoading;
-    return AlertDialog(
-      title: const Row(
-        children: [
-          Icon(LucideIcons.uploadCloud),
-          SizedBox(width: 12),
-          Text('Import from CSV'),
-        ],
-      ),
+    return AppDialog(
+      title: 'Import from CSV',
+      leadingIcon: LucideIcons.uploadCloud,
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
@@ -173,13 +169,18 @@ class CsvImportDialogState extends ConsumerState<CsvImportDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+        appDialogCancel(context, 'Cancel',
+            onTap: () => Navigator.pop(context)),
         if (classified != null && classified.isNotEmpty)
           FilledButton(
             onPressed: canImport ? _confirm : null,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              textStyle: const TextStyle(
+                  fontSize: 14.5, fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
             child: Text('Import ${classified.length} row(s)'),
           ),
       ],

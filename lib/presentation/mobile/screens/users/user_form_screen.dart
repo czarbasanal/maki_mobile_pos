@@ -438,30 +438,15 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
     }
   }
 
-  void _showResetPasswordDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: const Text(
-          'A password reset email will be sent to the user. '
+  Future<void> _showResetPasswordDialog() async {
+    final ok = await context.showConfirmDialog(
+      title: 'Reset Password',
+      message: 'A password reset email will be sent to the user. '
           'They can use the link to set a new password.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement password reset
-              context.showSuccessSnackBar('Password reset email sent');
-            },
-            child: const Text('Send Reset Email'),
-          ),
-        ],
-      ),
+      confirmText: 'Send Reset Email',
     );
+    if (!ok || !mounted) return;
+    // TODO: Implement password reset
+    context.showSuccessSnackBar('Password reset email sent');
   }
 }

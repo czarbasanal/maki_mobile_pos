@@ -11,6 +11,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_wdigets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
 /// Main settings screen with all configuration options.
 ///
@@ -125,10 +126,13 @@ class SettingsScreen extends ConsumerWidget {
     final controller = TextEditingController(text: user.displayName);
     final formKey = GlobalKey<FormState>();
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit Display Name'),
+      barrierColor: AppDialog.scrimColor(dark),
+      builder: (dialogContext) => AppDialog(
+        title: 'Edit Display Name',
+        leadingIcon: LucideIcons.user,
         content: Form(
           key: formKey,
           child: TextFormField(
@@ -150,12 +154,12 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
+          appDialogCancel(dialogContext, 'Cancel',
+              onTap: () => Navigator.pop(dialogContext)),
+          appDialogPrimary(
+            dialogContext,
+            'Save',
+            onTap: () async {
               if (!formKey.currentState!.validate()) return;
 
               final newName = controller.text.trim();
@@ -187,7 +191,6 @@ class SettingsScreen extends ConsumerWidget {
                 }
               }
             },
-            child: const Text('Save'),
           ),
         ],
       ),
@@ -202,11 +205,14 @@ class SettingsScreen extends ConsumerWidget {
     final formKey = GlobalKey<FormState>();
     bool isLoading = false;
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
+      barrierColor: AppDialog.scrimColor(dark),
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Change Password'),
+        builder: (context, setState) => AppDialog(
+          title: 'Change Password',
+          leadingIcon: LucideIcons.lock,
           content: Form(
             key: formKey,
             child: Column(
@@ -263,10 +269,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: isLoading ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
+            appDialogCancel(dialogContext, 'Cancel',
+                onTap: isLoading ? () {} : () => Navigator.pop(dialogContext)),
             FilledButton(
               onPressed: isLoading
                   ? null
@@ -300,6 +304,14 @@ class SettingsScreen extends ConsumerWidget {
                         }
                       }
                     },
+              style: FilledButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                textStyle: const TextStyle(
+                    fontSize: 14.5, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+              ),
               child: isLoading
                   ? const SizedBox(
                       width: 20,

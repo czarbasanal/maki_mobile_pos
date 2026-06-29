@@ -73,25 +73,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    final shouldSend = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset password'),
-        content: Text('Send password reset email to:\n$email'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Send'),
-          ),
-        ],
-      ),
+    final shouldSend = await context.showConfirmDialog(
+      title: 'Reset password',
+      message: 'Send password reset email to:\n$email',
+      confirmText: 'Send',
+      icon: LucideIcons.mail,
     );
 
-    if (shouldSend != true) return;
+    if (!shouldSend) return;
 
     setState(() => _isLoading = true);
 
