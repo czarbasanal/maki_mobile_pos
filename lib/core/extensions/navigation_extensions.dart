@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
 /// Navigation extension methods for BuildContext.
 extension NavigationExtensions on BuildContext {
@@ -71,7 +73,7 @@ extension NavigationExtensions on BuildContext {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.close, color: fg, size: 18),
+                icon: Icon(LucideIcons.x, color: fg, size: 18),
                 tooltip: 'Dismiss',
                 onPressed: messenger.hideCurrentSnackBar,
                 padding: EdgeInsets.zero,
@@ -85,69 +87,61 @@ extension NavigationExtensions on BuildContext {
       );
   }
 
-  /// Shows a success snackbar — green outline + solid light-green fill.
+  /// Shows a success snackbar — green outline + lightened fill, dark parity.
   void showSuccessSnackBar(String message) {
+    final dark = Theme.of(this).brightness == Brightness.dark;
     showSnackBar(
       message,
-      accent: AppColors.success,
-      textColor: AppColors.successDark,
-      background: AppColors.successLight,
-      icon: Icons.check_circle_outline,
+      accent: dark ? const Color(0x804CAF50) : AppColors.success,
+      textColor: dark ? AppColors.successOnDark : AppColors.successDark,
+      background:
+          dark ? const Color(0x294CAF50) : AppColors.successLight,
+      icon: LucideIcons.checkCircle2,
     );
   }
 
-  /// Shows a warning snackbar — amber outline + solid light-amber fill.
+  /// Shows a warning snackbar — amber outline + lightened fill, dark parity.
   void showWarningSnackBar(String message) {
+    final dark = Theme.of(this).brightness == Brightness.dark;
     showSnackBar(
       message,
-      accent: AppColors.warningDark,
-      textColor: AppColors.warningDark,
-      background: AppColors.warningLight,
-      icon: Icons.warning_amber_rounded,
+      accent: dark ? const Color(0x80F5B547) : const Color(0xFFF0A23C),
+      textColor: dark ? AppColors.warningOnDark : const Color(0xFFB5701A),
+      background:
+          dark ? const Color(0x29F5B547) : const Color(0xFFFFF4E0),
+      icon: LucideIcons.alertTriangle,
     );
   }
 
-  /// Shows an error snackbar — red outline + solid light-red fill.
+  /// Shows an error snackbar — red outline + lightened fill, dark parity.
   void showErrorSnackBar(String message) {
+    final dark = Theme.of(this).brightness == Brightness.dark;
     showSnackBar(
       message,
-      accent: AppColors.error,
-      textColor: AppColors.errorDark,
-      background: AppColors.errorLight,
-      icon: Icons.error_outline,
+      accent: dark ? const Color(0x80FF6B5E) : AppColors.error,
+      textColor: dark ? AppColors.errorOnDark : AppColors.errorDark,
+      background: dark ? const Color(0x29FF6B5E) : const Color(0xFFFDECEA),
+      icon: LucideIcons.alertCircle,
     );
   }
 
-  /// Shows a confirmation dialog.
+  /// Shows a confirmation dialog on the shared [AppDialog] shell.
   Future<bool> showConfirmDialog({
     required String title,
     required String message,
     String confirmText = 'Confirm',
     String cancelText = 'Cancel',
-    Color? confirmColor,
     bool isDangerous = false,
-  }) async {
-    final result = await showDialog<bool>(
-      context: this,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(cancelText),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor:
-                  confirmColor ?? (isDangerous ? Colors.red : null),
-            ),
-            child: Text(confirmText),
-          ),
-        ],
-      ),
+    IconData? icon,
+  }) {
+    return showAppConfirmDialog(
+      this,
+      title: title,
+      message: message,
+      confirmLabel: confirmText,
+      cancelLabel: cancelText,
+      destructive: isDangerous,
+      icon: icon,
     );
-    return result ?? false;
   }
 }
