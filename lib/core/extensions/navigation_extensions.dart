@@ -131,7 +131,6 @@ extension NavigationExtensions on BuildContext {
     required String message,
     String confirmText = 'Confirm',
     String cancelText = 'Cancel',
-    Color? confirmColor,
     bool isDangerous = false,
     IconData? icon,
   }) {

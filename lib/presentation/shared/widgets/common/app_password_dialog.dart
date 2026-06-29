@@ -105,12 +105,19 @@ class _AppPasswordDialogState extends State<_AppPasswordDialog> {
       Navigator.of(context).pop(true);
       return;
     }
+    // A thrown verification (e.g. flaky network) is surfaced but does NOT
+    // consume a lockout attempt — only a genuine wrong password does.
+    if (err != null) {
+      setState(() {
+        _busy = false;
+        _error = 'Verification failed: $err';
+      });
+      return;
+    }
     _attempts++;
     setState(() {
       _busy = false;
-      if (err != null) {
-        _error = 'Verification failed: $err';
-      } else if (_lockedOut) {
+      if (_lockedOut) {
         _error = 'Maximum attempts reached. Please try again later.';
       } else if (widget.maxAttempts != null) {
         _error =
