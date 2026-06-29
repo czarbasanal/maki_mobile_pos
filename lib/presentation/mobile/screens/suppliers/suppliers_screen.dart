@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -29,12 +29,12 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
       appBar: AppBar(
         title: const Text('Suppliers'),
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         actions: [
           IconButton(
-            icon: Icon(_showInactive ? CupertinoIcons.eye : CupertinoIcons.eye_slash),
+            icon: Icon(_showInactive ? LucideIcons.eye : LucideIcons.eyeOff),
             tooltip: _showInactive ? 'Hide inactive' : 'Show inactive',
             onPressed: () => setState(() => _showInactive = !_showInactive),
           ),
@@ -50,8 +50,8 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             ),
             child: TextField(
               decoration: const InputDecoration(
-                hintText: 'Search suppliers...',
-                prefixIcon: Icon(CupertinoIcons.search),
+                hintText: 'Search suppliers…',
+                prefixIcon: Icon(LucideIcons.search),
               ),
               onChanged: (value) => setState(() => _searchQuery = value),
             ),
@@ -76,7 +76,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
 
           if (filtered.isEmpty) {
             return EmptyStateView(
-              icon: CupertinoIcons.person_2,
+              icon: LucideIcons.users,
               title: _searchQuery.isNotEmpty
                   ? 'No suppliers found'
                   : 'No suppliers yet',
@@ -86,9 +86,10 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             );
           }
 
-          return ListView.builder(
+          return ListView.separated(
             itemCount: filtered.length,
-            padding: const EdgeInsets.only(bottom: 80),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final supplier = filtered[index];
               return _SupplierListTile(
@@ -109,10 +110,16 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: SizedBox(
           width: double.infinity,
+          height: 50,
           child: FilledButton.icon(
             onPressed: () => context.push(RoutePaths.supplierAdd),
-            icon: const Icon(CupertinoIcons.add),
+            icon: const Icon(LucideIcons.plus, size: 18),
             label: const Text('Add Supplier'),
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
           ),
         ),
       ),
@@ -132,38 +139,101 @@ class _SupplierListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-    return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      child: ListTile(
-        leading: Icon(
-          CupertinoIcons.briefcase,
-          color: muted,
-          size: 24,
-        ),
-        title: Text(
-          supplier.name,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            decoration: supplier.isActive ? null : TextDecoration.lineThrough,
-            color: supplier.isActive ? null : muted,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (supplier.contactPerson != null) Text(supplier.contactPerson!),
-            Text(
-              supplier.transactionType.displayName,
-              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+    final dark = theme.brightness == Brightness.dark;
+    final active = supplier.isActive;
+
+    final tileBg = dark ? const Color(0x0DFFFFFF) : const Color(0x12283E46);
+    final inactive = dark ? const Color(0xFF6C797C) : const Color(0xFF9AA0A3);
+    final glyphColor =
+        active ? (dark ? const Color(0xFF9FB0B0) : AppColors.brandSlate) : inactive;
+    final titleColor = active
+        ? theme.colorScheme.onSurface
+        : (dark ? const Color(0xFF6C797C) : const Color(0xFF8A9296));
+    final contactColor =
+        active ? (dark ? const Color(0xFFA9B4B5) : const Color(0xFF5A6468)) : inactive;
+    final chipColor =
+        active ? (dark ? const Color(0xFFC9D2D2) : AppColors.brandSlate) : inactive;
+    final chipBorder = active
+        ? (dark ? const Color(0xFF2C3C3E) : const Color(0xFFE2E2E2))
+        : (dark ? const Color(0xFF2C3C3E) : const Color(0xFFECECEC));
+    final chevron = dark ? const Color(0xFF6C797C) : const Color(0xFF9AA0A3);
+
+    return AppCard(
+      radius: 16,
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-        trailing: Icon(CupertinoIcons.chevron_right, color: muted, size: 18),
-        onTap: onTap,
+            child: Icon(LucideIcons.briefcase, size: 21, color: glyphColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  supplier.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    height: 1.25,
+                    color: titleColor,
+                    decoration: active ? null : TextDecoration.lineThrough,
+                    decorationColor: titleColor,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (supplier.contactPerson != null)
+                      Text(
+                        supplier.contactPerson!,
+                        style: TextStyle(fontSize: 13, color: contactColor),
+                      ),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: chipBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.creditCard, size: 12, color: chipColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            supplier.transactionType.displayName,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: chipColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(LucideIcons.chevronRight, size: 18, color: chevron),
+        ],
       ),
     );
   }

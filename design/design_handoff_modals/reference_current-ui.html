@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI · Modals & Bottom Sheets (cross-cutting)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --field:#FAFAFA; --input-border:#E2E2E2;
+    --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --error-dark:#C62828; --warning:#FFC107; --warning-dark:#F57C00;
+    --r-sm:10px; --r-md:14px; --r-field:16px; --r-lg:18px; --r-hero:22px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+    --scrim:rgba(17,28,29,.32);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1400px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0 0 8px;color:#5A6468;font-size:14px;max-width:1040px;line-height:1.55;}
+  code{font-family:'Roboto Mono',monospace;font-size:.9em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .sect{font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5A6468;margin:34px 2px 4px;width:100%;}
+  .frames{display:flex;gap:46px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:380px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;margin-top:30px;}
+  .frame .caption{position:absolute;top:-24px;left:6px;font-size:12px;font-weight:600;color:#5A6468;max-width:370px;}
+  .screen{height:840px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--canvas);min-height:52px;}
+  .appbar .title{flex:1;font-size:18px;font-weight:600;padding-left:6px;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;flex:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .body{flex:1;overflow:hidden;}
+  .body.dim{opacity:.45;filter:saturate(.9);}
+
+  /* faint underlying content so the modal reads as an overlay */
+  .ph{padding:14px 16px;}
+  .ph .bar{height:13px;border-radius:6px;background:#E4E2DE;margin:10px 0;}
+  .ph .bar.s{width:55%;} .ph .bar.m{width:78%;}
+  .ph .row{display:flex;gap:12px;align-items:center;margin:14px 0;}
+  .ph .row .sq{width:46px;height:46px;border-radius:12px;background:#E4E2DE;flex:none;}
+  .ph .row .lines{flex:1;}
+
+  /* ===== SCRIM + DIALOG SHELL (showDialog / AlertDialog) ===== */
+  .scrim{position:absolute;inset:0;background:var(--scrim);}
+  .dlgwrap{position:absolute;inset:0;background:var(--scrim);display:flex;align-items:center;justify-content:center;padding:24px;}
+  .dlg{width:100%;background:var(--card);border-radius:var(--r-xl);padding:20px 20px 14px;
+       box-shadow:0 20px 50px rgba(17,28,29,.25);}
+  .dlg .dh{font-size:18px;font-weight:600;margin:0 0 4px;display:flex;align-items:center;gap:10px;}
+  .dlg .dh i{width:22px;height:22px;}
+  .dlg .dsub{font-size:13.5px;color:var(--muted);margin:0 0 14px;line-height:1.5;}
+  .dlg .body-txt{font-size:14px;color:var(--ink);line-height:1.55;margin:0 0 6px;}
+  .dlg .fld{display:flex;align-items:center;gap:8px;min-height:50px;border:1px solid var(--input-border);
+            border-radius:var(--r-field);background:var(--field);padding:0 14px;font-size:14px;color:var(--hint);margin-top:6px;}
+  .dlg .fld i{width:18px;height:18px;color:var(--muted);}
+  .dlg .fld .grow{flex:1;}
+  .acts{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px;}
+  .acts .text{font-size:14px;font-weight:600;color:var(--muted);padding:10px 12px;}
+  .acts .out{font-size:14px;font-weight:600;color:var(--ink);border:1px solid var(--input-border);border-radius:var(--r-md);padding:9px 16px;}
+  .acts .fill{font-size:14px;font-weight:600;color:#fff;background:var(--slate);border-radius:var(--r-md);padding:10px 18px;}
+  .acts .fill.danger{background:var(--error);}
+  .acts .text.danger{color:var(--error);}
+  .acts.spread{justify-content:space-between;}
+
+  /* banners inside dialogs (current pattern: 1px colored border, no fill) */
+  .banner{display:flex;gap:10px;border-radius:var(--r-md);border:1px solid var(--error);padding:12px;margin:12px 0;}
+  .banner i{width:20px;height:20px;color:var(--error);flex:none;margin-top:1px;}
+  .banner .bt{font-weight:600;color:var(--error);font-size:13.5px;}
+  .banner .bs{color:var(--error);font-size:12px;margin-top:2px;line-height:1.45;}
+  .infobox{background:#E9F2F7;border:1px solid #C7DCE7;border-radius:8px;padding:10px;display:flex;gap:8px;align-items:center;margin-top:14px;}
+  .infobox i{width:16px;height:16px;color:#2E6C8A;flex:none;} .infobox span{font-size:12px;color:#2E6C8A;}
+
+  /* success dialog hero */
+  .succ-circle{width:84px;height:84px;border-radius:999px;background:var(--success-bg);display:flex;align-items:center;justify-content:center;margin:4px auto 14px;}
+  .succ-circle i{width:46px;height:46px;color:var(--success-dark);}
+  .succ-title{text-align:center;font-size:22px;font-weight:700;}
+  .pill-mono{display:inline-flex;margin:10px auto 0;padding:6px 14px;border-radius:var(--r-pill);background:var(--field);border:1px solid var(--hairline);
+             font-family:'Roboto Mono';font-size:13px;font-weight:600;color:var(--muted);}
+  .hero-amt{background:var(--success-bg);border-radius:var(--r-lg);padding:14px;text-align:center;margin:16px 0;}
+  .hero-amt .k{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--success-dark);}
+  .hero-amt .v{font-size:38px;font-weight:800;color:var(--success-dark);line-height:1.1;margin-top:2px;}
+  .amt-card{border:1px solid var(--hairline);background:var(--field);border-radius:var(--r-md);padding:12px;}
+  .amt-card .r{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;}
+  .amt-card .r .l{color:var(--muted);} .amt-card .r b{font-weight:600;}
+  .stack-btn{width:100%;height:48px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;}
+  .stack-btn.out{border:1px solid var(--input-border);color:var(--ink);background:#fff;}
+  .stack-btn.succ{background:var(--success);color:#fff;}
+  .stack-btn i{width:18px;height:18px;}
+
+  /* ===== BOTTOM SHEET SHELL (showModalBottomSheet / DraggableScrollableSheet) ===== */
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;
+         box-shadow:0 -8px 30px rgba(17,28,29,.18);display:flex;flex-direction:column;}
+  .sheet.tall{height:86%;} .sheet.mid{height:62%;} .sheet.auto{max-height:60%;}
+  .grab{width:40px;height:4px;border-radius:999px;background:var(--hairline);margin:12px auto 4px;}
+  .sheet .shead{display:flex;align-items:flex-start;gap:12px;padding:8px 16px 12px;}
+  .sheet .shead i.lead{width:26px;height:26px;color:var(--muted);flex:none;margin-top:2px;}
+  .sheet .shead .h{font-size:19px;font-weight:700;line-height:1.2;}
+  .sheet .shead .sub{font-size:13px;color:var(--muted);margin-top:3px;}
+  .sheet .shead .x{margin-left:auto;}
+  .sheet .sbody{flex:1;overflow:auto;border-top:1px solid var(--divider);padding:14px 16px;}
+  .sheet .sftr{display:flex;gap:12px;padding:14px 16px 18px;border-top:1px solid var(--divider);}
+  .btn-out{flex:none;height:48px;border:1px solid var(--error);color:var(--error);border-radius:var(--r-md);padding:0 16px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;background:#fff;}
+  .btn-out.neutral{border-color:var(--input-border);color:var(--ink);}
+  .btn-fill{flex:1;height:48px;border-radius:var(--r-md);background:var(--slate);color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-fill i{width:18px;height:18px;}
+
+  /* action-list sheet rows */
+  .lt{display:flex;align-items:center;gap:16px;padding:15px 18px;}
+  .lt i{width:23px;height:23px;color:var(--muted);}
+  .lt .t{font-size:15.5px;font-weight:500;}
+  .lt .radio{margin-left:auto;width:20px;height:20px;border-radius:999px;border:2px solid var(--input-border);}
+  .lt .radio.on{border-color:var(--slate);background:radial-gradient(circle,var(--slate) 0 5px,#fff 6px);}
+
+  /* sectioned content (draft / resolve) */
+  .sech{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:2px 0 8px;}
+  .itemrow{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--hairline);background:var(--field);border-radius:var(--r-md);padding:10px;margin-bottom:8px;}
+  .qb{border:1px solid var(--slate);color:var(--slate);border-radius:8px;padding:3px 7px;font-size:12px;font-weight:600;flex:none;}
+  .itemrow .mid{flex:1;min-width:0;} .itemrow .n{font-size:14px;font-weight:600;}
+  .itemrow .meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .itemrow .price{font-size:14px;font-weight:600;}
+  .sumcard{border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px;box-shadow:var(--shadow-card);}
+  .sumrow{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;}
+  .sumrow.tot{font-weight:700;border-top:1px solid var(--divider);margin-top:6px;padding-top:8px;}
+  .receipt-head{text-align:center;margin-bottom:10px;}
+  .receipt-head .rn{font-family:'Roboto Mono';font-size:13px;font-weight:600;}
+  .receipt-head .rd{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  /* form sheet fields */
+  .seg{display:flex;border:1px solid var(--input-border);border-radius:var(--r-pill);overflow:hidden;margin-bottom:14px;}
+  .seg div{flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:600;color:var(--muted);}
+  .seg div.on{background:var(--slate);color:#fff;}
+  .fld2{border:1px solid var(--input-border);border-radius:var(--r-field);background:var(--field);padding:13px 14px;font-size:14px;color:var(--hint);margin-bottom:12px;}
+
+  .note{font-size:12px;color:#7a8488;margin:34px 2px 0;line-height:1.6;max-width:1180px;}
+  .note b{color:#5A6468;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · Modals &amp; Bottom Sheets <span style="font-weight:500;color:#8A9296">(cross-cutting capture)</span></h1>
+    <p><b>This is not one screen — it is every <em>overlay surface</em> in the app.</b> The goal of this hand-off is to
+    design <b>ONE synchronized modal + bottom-sheet language</b> that all <code>showDialog</code>/<code>AlertDialog</code>
+    and all <code>showModalBottomSheet</code>/<code>DraggableScrollableSheet</code> surfaces share. Today these are a
+    patchwork: raw <code>AlertDialog</code>s that inherit the theme's 24px radius sit next to custom <code>Dialog</code>s
+    that pin their own radii and colors; bottom sheets each hand-roll their own grab handle, padding and footer; icons are
+    mostly Cupertino (one dialog already migrated to Lucide); there is no shared confirm / destructive / input component;
+    and the password dialog exists <b>twice</b>. The frames below group the live UI by <b>archetype</b> (not by screen) so
+    the designer can define a single shell + a small set of variants. Light theme is shown — <b>dark parity is required</b>
+    (both themes are defined in <code>app_theme.dart</code>). Mark up the redesign and hand back.
+    <i>(Icons here render in Lucide — the migration target — even though most live surfaces still ship Cupertino glyphs.)</i></p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary / light)</span>
+    <span><i class="swatch" style="background:#E8B84C"></i> gold (primary / dark)</span>
+    <span><i class="swatch" style="background:#F44336"></i> destructive (error)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> success</span>
+    <span><i class="swatch" style="background:#F57C00"></i> warning</span>
+    <span style="margin-left:auto">Light shown · dark parity target (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <!-- ===================================================================== -->
+  <div class="sect">A · Dialogs (showDialog / AlertDialog)</div>
+  <!-- ===================================================================== -->
+  <div class="frames">
+
+    <!-- 1 · 2-ACTION CONFIRM (NEUTRAL) -->
+    <div class="frame">
+      <div class="caption">1 · 2-action confirm (neutral) · context.showConfirmDialog + ~20 inline AlertDialogs</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Categories</div><button class="iconbtn"><i data-lucide="plus"></i></button></div>
+        <div class="body dim"><div class="ph"><div class="row"><div class="sq"></div><div class="lines"><div class="bar m"></div><div class="bar s"></div></div></div><div class="row"><div class="sq"></div><div class="lines"><div class="bar m"></div><div class="bar s"></div></div></div></div></div>
+        <div class="dlgwrap">
+          <div class="dlg">
+            <div class="dh">Replace cart?</div>
+            <p class="body-txt">Loading this draft will replace the items currently in your cart. Continue?</p>
+            <div class="acts">
+              <span class="text">Cancel</span>
+              <span class="fill">Replace</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 · DESTRUCTIVE CONFIRM -->
+    <div class="frame">
+      <div class="caption">2 · Destructive confirm (red primary) · delete category/user/expense · void_sale_dialog.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Sale Detail</div></div>
+        <div class="body dim"><div class="ph"><div class="bar m"></div><div class="bar s"></div><div class="row"><div class="sq"></div><div class="lines"><div class="bar m"></div><div class="bar s"></div></div></div></div></div>
+        <div class="dlgwrap">
+          <div class="dlg">
+            <div class="dh"><i data-lucide="x-circle" style="color:var(--error)"></i> Void Sale</div>
+            <div class="amt-card" style="margin:8px 0 0">
+              <div class="r"><b>SALE-20260627-3</b><b style="color:var(--slate)">₱980.00</b></div>
+              <div class="r"><span class="l">3 item(s) • Juan Dela Cruz</span></div>
+            </div>
+            <div class="banner">
+              <i data-lucide="alert-triangle"></i>
+              <div><div class="bt">This action cannot be undone</div><div class="bs">The sale will be marked as voided and recorded in the audit log.</div></div>
+            </div>
+            <div class="fld"><i data-lucide="tag"></i><span class="grow">Reason</span><i data-lucide="chevron-down"></i></div>
+            <div class="acts">
+              <span class="text">Cancel</span>
+              <span class="fill danger">Void Sale</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 · SINGLE-INPUT DIALOG -->
+    <div class="frame">
+      <div class="caption">3 · Single-input dialog · discount_input_dialog.dart · password_dialog.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Cart</div></div>
+        <div class="body dim"><div class="ph"><div class="row"><div class="sq"></div><div class="lines"><div class="bar m"></div><div class="bar s"></div></div></div></div></div>
+        <div class="dlgwrap" style="flex-direction:column;gap:14px;">
+          <!-- discount input -->
+          <div class="dlg">
+            <div class="dh">Apply Discount</div>
+            <p class="body-txt" style="font-weight:600;margin-bottom:10px">NGK Spark Plug CPR6EA-9</p>
+            <div class="seg"><div class="on">Amount</div><div>Percent</div></div>
+            <div class="fld"><span class="grow">₱ Discount Amount</span></div>
+            <div class="acts spread">
+              <span class="text danger">Remove</span>
+              <span style="display:flex;gap:6px"><span class="text">Cancel</span><span class="fill">Apply</span></span>
+            </div>
+          </div>
+          <!-- password confirm -->
+          <div class="dlg">
+            <div class="dh"><i data-lucide="lock-keyhole" style="color:var(--warning-dark)"></i> Confirm Void</div>
+            <p class="dsub">Enter your password to void this sale.</p>
+            <div class="fld"><i data-lucide="lock"></i><span class="grow">Password</span><i data-lucide="eye"></i></div>
+            <div class="infobox"><i data-lucide="info"></i><span>This action requires authentication for security.</span></div>
+            <div class="acts"><span class="text">Cancel</span><span class="fill danger">Verify &amp; Void</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 · ERROR DIALOG -->
+    <div class="frame">
+      <div class="caption">4 · Error feedback · inline error banners + showErrorSnackBar (no shared error_dialog — file is empty)</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Receiving</div></div>
+        <div class="body dim"><div class="ph"><div class="bar m"></div><div class="bar s"></div></div></div>
+        <div class="dlgwrap">
+          <div class="dlg">
+            <div class="dh"><i data-lucide="alert-circle" style="color:var(--error)"></i> Something went wrong</div>
+            <div class="banner">
+              <i data-lucide="alert-circle"></i>
+              <div><div class="bs" style="font-size:13.5px">Failed to complete receiving: a stock document was modified by another device. Please retry.</div></div>
+            </div>
+            <div class="acts"><span class="fill">OK</span></div>
+          </div>
+        </div>
+        <!-- snackbar note (adjacent, not a modal) -->
+        <div style="position:absolute;left:16px;right:16px;bottom:18px;background:var(--card);border:1.5px solid var(--error);border-radius:var(--r-md);padding:12px;display:flex;gap:8px;align-items:center;box-shadow:var(--shadow-card);">
+          <i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--error-dark)"></i>
+          <span style="font-size:13px;font-weight:500;color:var(--error-dark);flex:1">Could not read image. Please try again.</span>
+          <i data-lucide="x" style="width:16px;height:16px;color:var(--error-dark)"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 · SUCCESS DIALOG -->
+    <div class="frame">
+      <div class="caption">5 · Success dialog (animated) · checkout_success_dialog.dart — already Lucide</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><div class="title" style="padding-left:14px">Checkout</div></div>
+        <div class="body dim"></div>
+        <div class="dlgwrap">
+          <div class="dlg" style="padding:20px">
+            <div class="succ-circle"><i data-lucide="check"></i></div>
+            <div class="succ-title">Payment Successful!</div>
+            <div style="text-align:center"><span class="pill-mono">SALE-20260627-3</span></div>
+            <div class="hero-amt"><div class="k">CHANGE DUE</div><div class="v">₱20.00</div></div>
+            <div class="amt-card"><div class="r"><span class="l">Total</span><b>₱980.00</b></div><div class="r"><span class="l">Received</span><b>₱1,000.00</b></div></div>
+            <div style="margin-top:16px"><div class="stack-btn out"><i data-lucide="receipt"></i> Receipt</div></div>
+            <div style="margin-top:10px"><div class="stack-btn succ">Done</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================================================================== -->
+  <div class="sect">B · Bottom sheets (showModalBottomSheet / DraggableScrollableSheet)</div>
+  <!-- ===================================================================== -->
+  <div class="frames">
+
+    <!-- 6 · ACTION-LIST PICKER -->
+    <div class="frame">
+      <div class="caption">6 · Action-list picker · product_image_uploader.dart (source) · settings theme picker (radio)</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Edit Product</div></div>
+        <div class="body dim"><div class="ph"><div class="row"><div class="sq"></div><div class="lines"><div class="bar m"></div><div class="bar s"></div></div></div></div></div>
+        <div class="scrim"></div>
+        <div class="sheet auto">
+          <div class="grab"></div>
+          <div style="padding:6px 0 12px">
+            <div class="lt"><i data-lucide="camera"></i><div class="t">Take photo</div></div>
+            <div class="lt"><i data-lucide="image"></i><div class="t">Pick from gallery</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6b · RADIO PICKER (theme) -->
+    <div class="frame">
+      <div class="caption">6b · Radio picker variant · settings_screen.dart _showThemePicker (RadioGroup)</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Settings</div></div>
+        <div class="body dim"><div class="ph"><div class="bar m"></div><div class="bar s"></div></div></div>
+        <div class="scrim"></div>
+        <div class="sheet auto">
+          <div class="grab"></div>
+          <div style="padding:6px 0 12px">
+            <div class="lt"><i data-lucide="monitor"></i><div class="t">System default</div><span class="radio on"></span></div>
+            <div class="lt"><i data-lucide="sun"></i><div class="t">Light</div><span class="radio"></span></div>
+            <div class="lt"><i data-lucide="moon"></i><div class="t">Dark</div><span class="radio"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7 · DRAGGABLE SCROLLABLE — SECTIONED CONTENT + PINNED FOOTER -->
+    <div class="frame">
+      <div class="caption">7 · Draggable scrollable + pinned footer · draft_detail_sheet.dart · void_requests resolve sheet</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Drafts</div></div>
+        <div class="body dim"></div>
+        <div class="scrim"></div>
+        <div class="sheet tall">
+          <div class="grab"></div>
+          <div class="shead">
+            <i class="lead" data-lucide="file-text"></i>
+            <div><div class="h">Friday afternoon</div><div class="sub">Friday, June 27, 2026 • 2:14 PM</div></div>
+            <button class="iconbtn x"><i data-lucide="x"></i></button>
+          </div>
+          <div class="sbody">
+            <div class="sech">Items (2)</div>
+            <div class="itemrow"><span class="qb">×2</span><div class="mid"><div class="n">ASK Brake Shoe XRM 125</div><div class="meta">BRK-001 • ₱250.00 / pc</div></div><div class="price">₱500.00</div></div>
+            <div class="itemrow"><span class="qb">×1</span><div class="mid"><div class="n">NGK Spark Plug CPR6EA-9</div><div class="meta">SPK-009 • ₱200.00 / pc</div></div><div class="price">₱200.00</div></div>
+            <div class="sech" style="margin-top:16px">Summary</div>
+            <div class="sumcard">
+              <div class="sumrow"><span style="color:var(--muted)">Subtotal</span><span>₱700.00</span></div>
+              <div class="sumrow"><span style="color:var(--muted)">Labor</span><span>₱280.00</span></div>
+              <div class="sumrow tot"><span>Total</span><span>₱980.00</span></div>
+            </div>
+          </div>
+          <div class="sftr">
+            <div class="btn-out"><i data-lucide="trash-2" style="width:18px;height:18px"></i></div>
+            <div class="btn-fill"><i data-lucide="shopping-cart"></i> Load into Cart</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7b · RESOLVE SHEET (receipt breakdown) -->
+    <div class="frame">
+      <div class="caption">7b · Resolve sheet variant · void_requests_screen.dart (DraggableScrollableSheet 0.85)</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Void Requests</div></div>
+        <div class="body dim"></div>
+        <div class="scrim"></div>
+        <div class="sheet tall">
+          <div class="grab"></div>
+          <div class="shead">
+            <div><div class="h">Void SALE-20260627-3?</div><div class="sub">Requested by <b>Juan Dela Cruz</b> · Reason: Wrong item scanned</div></div>
+          </div>
+          <div class="sbody">
+            <div class="receipt-head"><div class="rn">SALE-20260627-3</div><div class="rd">Jun 27, 2026 • 11:48 AM • Juan Dela Cruz</div></div>
+            <div class="sumcard">
+              <div class="sumrow"><span>ASK Brake Shoe ×2</span><span>₱500.00</span></div>
+              <div class="sumrow"><span>NGK Spark Plug ×1</span><span>₱200.00</span></div>
+              <div class="sumrow"><span>Labor — brake service</span><span>₱280.00</span></div>
+              <div class="sumrow tot"><span>Total</span><span>₱980.00</span></div>
+            </div>
+          </div>
+          <div class="sftr">
+            <div class="btn-out neutral">Reject</div>
+            <div class="btn-fill">Approve</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8 · INPUT / FORM SHEET -->
+    <div class="frame">
+      <div class="caption">8 · Input / form sheet · stock_adjustment_dialog.dart (sheet, not dialog) — isScrollControlled + viewInsets</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar"><button class="iconbtn"><i data-lucide="chevron-left"></i></button><div class="title">Inventory</div></div>
+        <div class="body dim"><div class="ph"><div class="row"><div class="sq"></div><div class="lines"><div class="bar m"></div><div class="bar s"></div></div></div></div></div>
+        <div class="scrim"></div>
+        <div class="sheet mid">
+          <div class="grab"></div>
+          <div class="shead">
+            <i class="lead" data-lucide="package"></i>
+            <div><div class="h">Adjust Stock</div><div class="sub">ASK Brake Shoe XRM 125</div></div>
+          </div>
+          <div class="sbody">
+            <div class="seg"><div class="on">Add</div><div>Remove</div><div>Set</div></div>
+            <div class="fld2">Quantity</div>
+            <div class="fld2">Note (optional)</div>
+            <div class="sumcard"><div class="sumrow"><span style="color:var(--muted)">New quantity</span><b>+8 → 20</b></div></div>
+          </div>
+          <div class="sftr">
+            <div class="btn-out neutral" style="flex:1">Cancel</div>
+            <div class="btn-fill">Save</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">
+    <b>Token-accurate reconstruction of the CURRENT overlay surfaces, grouped by archetype.</b> Sources read for this
+    capture — <b>Dialogs:</b> <code>lib/core/extensions/navigation_extensions.dart</code> (<code>showConfirmDialog</code> +
+    <code>showSuccess/Warning/ErrorSnackBar</code>), <code>shared/widgets/common/discount_input_dialog.dart</code>,
+    <code>shared/widgets/common/password_dialog.dart</code> + <code>shared/widgets/auth/password_confirm_dialog.dart</code>
+    (<b>two near-duplicate password dialogs</b>), <code>mobile/widgets/pos/checkout_success_dialog.dart</code> (the only
+    Lucide-migrated one; custom <code>Dialog</code> with elastic scale-in), <code>mobile/widgets/pos/void_sale_dialog.dart</code>
+    + <code>request_void_dialog.dart</code>, <code>mobile/widgets/receiving/csv_import_dialog.dart</code> (heavy
+    <code>AlertDialog</code> with a hard-coded <code>width:420</code>), and <b>~20 inline <code>AlertDialog</code> 2-action
+    confirms</b> scattered across delete-category / delete-mechanic / delete-expense / delete-user / delete-supplier /
+    close-day / replace-cart etc. Note <code>shared/widgets/common/error_dialog.dart</code> is an <b>empty file</b> — there is
+    no shared error dialog; errors surface as inline banners or snackbars.
+    <b>Bottom sheets:</b> <code>mobile/widgets/drafts/draft_detail_sheet.dart</code> (<code>DraggableScrollableSheet</code>
+    0.7/0.5/0.95), <code>mobile/screens/sales/void_requests_screen.dart</code> resolve sheet
+    (<code>DraggableScrollableSheet</code> 0.85), <code>mobile/widgets/inventory/stock_adjustment_dialog.dart</code> (named
+    "dialog" but is a <code>showModalBottomSheet</code> form), <code>mobile/widgets/inventory/product_image_uploader.dart</code>
+    (image-source picker), <code>mobile/screens/settings/settings_screen.dart</code> (theme radio picker).
+    <br><br>
+    <b>Theme defaults</b> (<code>lib/core/theme/app_theme.dart</code> · light ~L259 / dark ~L597):
+    <code>dialogTheme</code> = bg <code>lightBackground #FFFFFF</code> / <code>darkCard</code>, elevation 1, shadow
+    <code>black12</code>/<code>black54</code>, surfaceTint transparent, shape radius <code>AppRadius.xl = 24</code>, title
+    <code>headingSmall</code>, content <code>bodyMedium</code>. <code>bottomSheetTheme</code> = same bg, elevation 1,
+    surfaceTint transparent, top radius <code>AppRadius.xl = 24</code>. <b>AppRadius tokens:</b> <code>sm 10</code> ·
+    <code>md 14</code> · <code>field 16</code> · <code>lg 18</code> · <code>hero 22</code> · <code>xl 24</code> ·
+    <code>pill 999</code>. <b>Open question for the designer:</b> dialogs &amp; sheets currently use <code>xl = 24</code>;
+    decide whether to keep 24 or move to <code>hero = 22</code> / <code>lg = 18</code> for parity with the redesigned
+    <code>AppCard</code> surfaces. Scrim ≈ <code>rgba(17,28,29,.32)</code>. Migration target = the global theme in
+    <code>design/handoff/maki-theme/</code> (Lucide, soft-shadow surfaces, <code>AppColors</code> status semantics with dark
+    parity). Snackbars (<code>showSuccess/Error/WarningSnackBar</code>) are <b>adjacent</b> feedback, not modals — keep that
+    pattern; do not fold it into the dialog shell.
+  </p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

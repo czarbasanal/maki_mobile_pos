@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+  @keyframes successPop{0%{transform:scale(.86)}55%{transform:scale(1.04)}100%{transform:scale(1)}}
+  @keyframes successCheck{0%{transform:scale(.5)}60%{transform:scale(1.14)}100%{transform:scale(1)}}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 76px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- ============ HEADER ============ -->
+  <div style="max-width:900px;margin:0 0 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Cross-cutting · Modals &amp; sheets
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">MAKI POS — modal &amp; sheet shells</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.6;max-width:70ch">The two base shells every overlay adopts — one <b>dialog</b> (<span style="font-family:'Roboto Mono';font-size:13px">showDialog · AlertDialog</span>) and one <b>bottom sheet</b> (<span style="font-family:'Roboto Mono';font-size:13px">showModalBottomSheet · DraggableScrollableSheet</span>) — on the elevated theme, Lucide icons, soft-shadow surfaces, full dark parity. Container radius stays <b>24</b>. Approve the shell language and I'll expand into the variants (destructive · single-input/password · error · success · action-list · radio · form sheet).</p>
+  </div>
+
+  <!-- ============ SHELL TOKEN STRIP ============ -->
+  <div style="max-width:900px;margin:0 0 50px;background:#fff;border-radius:22px;padding:22px 26px;box-shadow:0 10px 30px -14px rgba(17,28,29,.2),0 2px 6px rgba(17,28,29,.05);display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Radius</div>
+      <div style="display:flex;gap:14px;align-items:flex-end">
+        <div style="text-align:center"><div style="width:46px;height:46px;border-radius:24px;background:#F2F1EE;border:1px solid #E2E2E2"></div><div style="font-size:12px;font-weight:600;color:#16201F;margin-top:7px">24</div><div style="font-size:10px;color:#9AA0A3">dialog · sheet</div></div>
+        <div style="text-align:center"><div style="width:46px;height:46px;border-radius:16px;background:#F2F1EE;border:1px solid #E2E2E2"></div><div style="font-size:12px;font-weight:600;color:#16201F;margin-top:7px">16</div><div style="font-size:10px;color:#9AA0A3">button · field</div></div>
+        <div style="text-align:center"><div style="width:46px;height:30px;border-radius:999px;background:#F2F1EE;border:1px solid #E2E2E2;margin-bottom:16px"></div><div style="font-size:12px;font-weight:600;color:#16201F;margin-top:0">999</div><div style="font-size:10px;color:#9AA0A3">chips</div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Scrim</div>
+      <div style="display:flex;gap:14px">
+        <div style="text-align:center"><div style="width:58px;height:46px;border-radius:11px;background:#9aa19c;overflow:hidden;position:relative"><div style="position:absolute;inset:0;background:rgba(17,28,29,.32)"></div></div><div style="font-size:11px;color:#5A6468;margin-top:7px;font-family:'Roboto Mono'">.32</div><div style="font-size:10px;color:#9AA0A3">light</div></div>
+        <div style="text-align:center"><div style="width:58px;height:46px;border-radius:11px;background:#2b3133;overflow:hidden;position:relative"><div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div></div><div style="font-size:11px;color:#5A6468;margin-top:7px;font-family:'Roboto Mono'">.60</div><div style="font-size:10px;color:#9AA0A3">dark</div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Actions</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:300px">
+        <span style="font-size:13px;font-weight:600;color:#8A9296;padding:8px 12px">Cancel</span>
+        <span style="font-size:13px;font-weight:600;color:#16201F;border:1px solid #E2E2E2;border-radius:14px;padding:7px 14px;background:#fff">Secondary</span>
+        <span style="font-size:13px;font-weight:600;color:#fff;background:#283E46;border-radius:14px;padding:8px 16px">Primary</span>
+        <span style="font-size:13px;font-weight:600;color:#fff;background:#F44336;border-radius:14px;padding:8px 16px">Destructive</span>
+      </div>
+      <div style="font-size:10px;color:#9AA0A3;margin-top:10px">primary filled · right — secondary text/outlined · left</div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Icons · Lucide</div>
+      <div style="display:flex;gap:16px;color:#283E46">
+        <i data-lucide="x" style="width:22px;height:22px;stroke-width:1.75"></i>
+        <i data-lucide="lock" style="width:22px;height:22px;stroke-width:1.75"></i>
+        <i data-lucide="alert-triangle" style="width:22px;height:22px;stroke-width:1.75"></i>
+        <i data-lucide="trash-2" style="width:22px;height:22px;stroke-width:1.75"></i>
+        <i data-lucide="check" style="width:22px;height:22px;stroke-width:1.75"></i>
+      </div>
+      <div style="font-size:10px;color:#9AA0A3;font-family:'Roboto Mono';margin-top:10px">stroke 1.75 · rounded caps</div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- SECTION A · DIALOG SHELL -->
+  <!-- ============================================================= -->
+  <div style="display:flex;align-items:center;gap:10px;margin:0 0 22px 4px;width:1180px">
+    <i data-lucide="app-window" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:700;letter-spacing:.5px;color:#16201F;text-transform:uppercase">Dialog shell</span>
+    <span style="font-size:12px;color:#8A9296;font-family:'Roboto Mono'">showDialog · AlertDialog</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+
+  <div style="display:flex;gap:40px;align-items:flex-start;width:max-content;margin-bottom:56px">
+
+    <!-- ---- LIGHT · DIALOG ---- -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Light · neutral confirm</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Drafts</div></div>
+        <div style="padding:8px 18px">
+          <div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div>
+          <div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div>
+          <div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div>
+          <div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div>
+        </div>
+        <!-- scrim + dialog -->
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#fff;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(40,62,70,.09);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:22px;height:22px;color:#283E46;stroke-width:1.75"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;line-height:1.3;padding-top:4px">Replace cart?</div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#5A6468">Loading this draft will replace the <b style="color:#16201F;font-weight:600">3 items</b> currently in your cart.</p>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:22px">
+              <div style="font-size:14.5px;font-weight:600;color:#8A9296;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#fff;background:#283E46;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(40,62,70,.6)">Replace</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- DARK · DIALOG ---- -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dark · neutral confirm</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Drafts</div></div>
+        <div style="padding:8px 18px">
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div>
+        </div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(232,184,76,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:22px;height:22px;color:#E8B84C;stroke-width:1.75"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;line-height:1.3;padding-top:4px">Replace cart?</div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#93A0A3">Loading this draft will replace the <b style="color:#ECEFEF;font-weight:600">3 items</b> currently in your cart.</p>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:22px">
+              <div style="font-size:14.5px;font-weight:600;color:#93A0A3;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#121C1D;background:#E8B84C;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(232,184,76,.5)">Replace</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- ANATOMY · DIALOG ---- -->
+    <div style="flex:0 0 auto;width:320px;background:#fff;border-radius:22px;padding:24px 22px;box-shadow:0 10px 30px -14px rgba(17,28,29,.18),0 2px 6px rgba(17,28,29,.05);margin-top:30px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3">Anatomy</div>
+      <div style="font-size:17px;font-weight:700;color:#16201F;margin:6px 0 18px">Dialog shell</div>
+
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:15px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">1</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Surface</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">Radius 24, soft shadow, centered with 24px inset. White / <span style="font-family:'Roboto Mono';font-size:11.5px">#18262A</span> + hairline in dark.</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:15px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">2</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Header</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">Title (18/600) with an <b>optional</b> leading status glyph (tinted chip) and <b>optional</b> close.</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:15px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">3</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Content</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">Body copy, a field, a warning banner, or a hero — swapped per variant.</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:18px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">4</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Action row</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">Right-aligned. Cancel (text/outlined) left, primary filled right.</div></div>
+      </div>
+
+      <div style="height:1px;background:#F0F0F0;margin:0 0 16px"></div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:10px">Rules</div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">Primary always filled & right; never two filled buttons.</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">Destructive variant → red filled primary + warning line.</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">Leading glyph carries status color: slate/gold · red · green.</span></div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- SECTION B · BOTTOM-SHEET SHELL -->
+  <!-- ============================================================= -->
+  <div style="display:flex;align-items:center;gap:10px;margin:0 0 22px 4px;width:1180px">
+    <i data-lucide="panel-bottom" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:700;letter-spacing:.5px;color:#16201F;text-transform:uppercase">Bottom-sheet shell</span>
+    <span style="font-size:12px;color:#8A9296;font-family:'Roboto Mono'">showModalBottomSheet · DraggableScrollableSheet</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+
+  <div style="display:flex;gap:40px;align-items:flex-start;width:max-content">
+
+    <!-- ---- LIGHT · SHEET ---- -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Light · scrollable + pinned footer</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Drafts</div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <!-- scrim -->
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32)"></div>
+        <!-- sheet -->
+        <div style="position:absolute;left:0;right:0;bottom:0;height:74%;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(17,28,29,.16);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#E2E2E2;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:flex-start;gap:13px;padding:8px 18px 14px">
+            <i data-lucide="file-text" style="width:24px;height:24px;color:#8A9296;stroke-width:1.75;flex:none;margin-top:3px"></i>
+            <div style="flex:1;min-width:0"><div style="font-size:19px;font-weight:700;color:#16201F;line-height:1.2">Friday afternoon</div><div style="font-size:13px;color:#8A9296;margin-top:3px">Fri, Jun 27, 2026 · 2:14 PM</div></div>
+            <div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-2px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div>
+          </div>
+          <div style="flex:1;overflow:hidden;border-top:1px solid #F0F0F0;padding:16px 18px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#8A9296;margin-bottom:10px">Items (2)</div>
+            <div style="display:flex;gap:12px;align-items:center;border:1px solid #ECECEC;background:#FAFAFA;border-radius:14px;padding:10px 12px;margin-bottom:8px">
+              <span style="border:1px solid #283E46;color:#283E46;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600;font-family:'Roboto Mono';flex:none">×2</span>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ASK Brake Shoe XRM 125</div><div style="font-size:12px;color:#8A9296;margin-top:2px"><span style="font-family:'Roboto Mono'">BRK-001</span> · ₱250.00 / pc</div></div>
+              <div style="font-size:14px;font-weight:600;color:#16201F;font-family:'Roboto Mono';flex:none">₱500.00</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;border:1px solid #ECECEC;background:#FAFAFA;border-radius:14px;padding:10px 12px;margin-bottom:18px">
+              <span style="border:1px solid #283E46;color:#283E46;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600;font-family:'Roboto Mono';flex:none">×1</span>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">NGK Spark Plug CPR6EA-9</div><div style="font-size:12px;color:#8A9296;margin-top:2px"><span style="font-family:'Roboto Mono'">SPK-009</span> · ₱200.00 / pc</div></div>
+              <div style="font-size:14px;font-weight:600;color:#16201F;font-family:'Roboto Mono';flex:none">₱200.00</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#8A9296;margin-bottom:10px">Summary</div>
+            <div style="border:1px solid #ECECEC;border-radius:16px;padding:12px 14px;box-shadow:0 2px 8px rgba(17,28,29,.05)">
+              <div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#8A9296">Subtotal</span><span style="color:#16201F;font-family:'Roboto Mono'">₱700.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#8A9296">Labor</span><span style="color:#16201F;font-family:'Roboto Mono'">₱280.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px solid #F0F0F0;margin-top:6px;padding-top:8px"><span style="color:#16201F">Total</span><span style="color:#16201F;font-family:'Roboto Mono'">₱980.00</span></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;padding:14px 18px 20px;border-top:1px solid #F0F0F0">
+            <div style="width:50px;height:50px;border-radius:16px;border:1px solid #E2E2E2;display:flex;align-items:center;justify-content:center;flex:none;background:#fff"><i data-lucide="trash-2" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div>
+            <div style="flex:1;height:50px;border-radius:16px;background:#283E46;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;box-shadow:0 8px 18px -7px rgba(40,62,70,.55)"><i data-lucide="shopping-cart" style="width:18px;height:18px;stroke-width:1.75"></i>Load into Cart</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- DARK · SHEET ---- -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dark · scrollable + pinned footer</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Drafts</div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:74%;background:#18262A;border-top:1px solid #243234;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(0,0,0,.5);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#2C3C3E;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:flex-start;gap:13px;padding:8px 18px 14px">
+            <i data-lucide="file-text" style="width:24px;height:24px;color:#93A0A3;stroke-width:1.75;flex:none;margin-top:3px"></i>
+            <div style="flex:1;min-width:0"><div style="font-size:19px;font-weight:700;color:#ECEFEF;line-height:1.2">Friday afternoon</div><div style="font-size:13px;color:#93A0A3;margin-top:3px">Fri, Jun 27, 2026 · 2:14 PM</div></div>
+            <div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-2px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div>
+          </div>
+          <div style="flex:1;overflow:hidden;border-top:1px solid #243234;padding:16px 18px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#93A0A3;margin-bottom:10px">Items (2)</div>
+            <div style="display:flex;gap:12px;align-items:center;border:1px solid #243234;background:#121C1D;border-radius:14px;padding:10px 12px;margin-bottom:8px">
+              <span style="border:1px solid #E8B84C;color:#E8B84C;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600;font-family:'Roboto Mono';flex:none">×2</span>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ASK Brake Shoe XRM 125</div><div style="font-size:12px;color:#93A0A3;margin-top:2px"><span style="font-family:'Roboto Mono'">BRK-001</span> · ₱250.00 / pc</div></div>
+              <div style="font-size:14px;font-weight:600;color:#ECEFEF;font-family:'Roboto Mono';flex:none">₱500.00</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;border:1px solid #243234;background:#121C1D;border-radius:14px;padding:10px 12px;margin-bottom:18px">
+              <span style="border:1px solid #E8B84C;color:#E8B84C;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600;font-family:'Roboto Mono';flex:none">×1</span>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">NGK Spark Plug CPR6EA-9</div><div style="font-size:12px;color:#93A0A3;margin-top:2px"><span style="font-family:'Roboto Mono'">SPK-009</span> · ₱200.00 / pc</div></div>
+              <div style="font-size:14px;font-weight:600;color:#ECEFEF;font-family:'Roboto Mono';flex:none">₱200.00</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#93A0A3;margin-bottom:10px">Summary</div>
+            <div style="border:1px solid #243234;background:#121C1D;border-radius:16px;padding:12px 14px">
+              <div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#93A0A3">Subtotal</span><span style="color:#ECEFEF;font-family:'Roboto Mono'">₱700.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#93A0A3">Labor</span><span style="color:#ECEFEF;font-family:'Roboto Mono'">₱280.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px solid #243234;margin-top:6px;padding-top:8px"><span style="color:#ECEFEF">Total</span><span style="color:#ECEFEF;font-family:'Roboto Mono'">₱980.00</span></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;padding:14px 18px 20px;border-top:1px solid #243234">
+            <div style="width:50px;height:50px;border-radius:16px;border:1px solid #2C3C3E;display:flex;align-items:center;justify-content:center;flex:none;background:transparent"><i data-lucide="trash-2" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.75"></i></div>
+            <div style="flex:1;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;box-shadow:0 8px 18px -7px rgba(232,184,76,.5)"><i data-lucide="shopping-cart" style="width:18px;height:18px;stroke-width:1.75"></i>Load into Cart</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- ANATOMY · SHEET ---- -->
+    <div style="flex:0 0 auto;width:320px;background:#fff;border-radius:22px;padding:24px 22px;box-shadow:0 10px 30px -14px rgba(17,28,29,.18),0 2px 6px rgba(17,28,29,.05);margin-top:30px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3">Anatomy</div>
+      <div style="font-size:17px;font-weight:700;color:#16201F;margin:6px 0 18px">Bottom-sheet shell</div>
+
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:15px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">1</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Grab handle</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">40×4 hairline pill. Drag-to-resize — snaps 0.5 / 0.7 / 0.95.</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:15px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">2</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Header</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">Leading glyph + title (19/700) + sub + close, divider beneath.</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:15px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">3</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Body</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">Scrollable; uppercase section labels (11/700) group content.</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:18px">
+        <div style="width:23px;height:23px;border-radius:7px;background:#F2F1EE;color:#283E46;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">4</div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#16201F">Pinned footer</div><div style="font-size:12.5px;line-height:1.45;color:#8A9296;margin-top:2px">SafeArea inset, top divider. Secondary outlined + primary filled.</div></div>
+      </div>
+
+      <div style="height:1px;background:#F0F0F0;margin:0 0 16px"></div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:10px">Rules</div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">One handle / header / footer implementation, reused everywhere.</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">Footer respects keyboard insets (form sheets) + SafeArea.</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">Top corners radius 24, flush to screen edges.</span></div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- SECTION C · DIALOG VARIANTS -->
+  <!-- ============================================================= -->
+  <div style="display:flex;align-items:center;gap:10px;margin:56px 0 22px 4px;width:3400px">
+    <i data-lucide="layers" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:700;letter-spacing:.5px;color:#16201F;text-transform:uppercase">Dialog variants</span>
+    <span style="font-size:12px;color:#8A9296;font-family:'Roboto Mono'">composed from Shell 1</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+
+  <div style="display:flex;gap:40px;align-items:flex-start;width:max-content">
+
+    <!-- DESTRUCTIVE · LIGHT -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Destructive · light</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Categories</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="plus" style="width:22px;height:22px;stroke-width:1.75"></i></div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#fff;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="trash-2" style="width:22px;height:22px;color:#F44336;stroke-width:1.75"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;line-height:1.3;padding-top:4px">Delete category?</div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#5A6468"><b style="color:#16201F;font-weight:600">“Brake Parts”</b> will be removed. Its <b style="color:#16201F;font-weight:600">12 products</b> move to Uncategorized.</p>
+            <div style="display:flex;gap:10px;align-items:flex-start;background:rgba(244,67,54,.08);border-radius:12px;padding:11px 12px;margin-top:14px"><i data-lucide="alert-triangle" style="width:18px;height:18px;color:#F44336;stroke-width:1.9;flex:none;margin-top:1px"></i><span style="font-size:13px;line-height:1.45;color:#C62828">This can’t be undone.</span></div>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:20px">
+              <div style="font-size:14.5px;font-weight:600;color:#8A9296;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#fff;background:#F44336;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(244,67,54,.5)">Delete</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESTRUCTIVE · DARK -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Destructive · dark</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Categories</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="plus" style="width:22px;height:22px;stroke-width:1.75"></i></div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="trash-2" style="width:22px;height:22px;color:#FF6B5E;stroke-width:1.75"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;line-height:1.3;padding-top:4px">Delete category?</div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#93A0A3"><b style="color:#ECEFEF;font-weight:600">“Brake Parts”</b> will be removed. Its <b style="color:#ECEFEF;font-weight:600">12 products</b> move to Uncategorized.</p>
+            <div style="display:flex;gap:10px;align-items:flex-start;background:rgba(255,107,94,.12);border-radius:12px;padding:11px 12px;margin-top:14px"><i data-lucide="alert-triangle" style="width:18px;height:18px;color:#FF6B5E;stroke-width:1.9;flex:none;margin-top:1px"></i><span style="font-size:13px;line-height:1.45;color:#FF8B80">This can’t be undone.</span></div>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:20px">
+              <div style="font-size:14.5px;font-weight:600;color:#93A0A3;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#fff;background:#F44336;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(244,67,54,.5)">Delete</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSWORD · LIGHT -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Single-input · password · light</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Sale Detail</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="more-vertical" style="width:22px;height:22px;stroke-width:1.75"></i></div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#fff;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(40,62,70,.09);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="lock" style="width:22px;height:22px;color:#283E46;stroke-width:1.75"></i></div>
+              <div style="flex:1;padding-top:1px"><div style="font-size:18px;font-weight:600;color:#16201F;line-height:1.3">Confirm void</div><div style="font-size:13px;color:#8A9296;margin-top:3px;line-height:1.4">Enter your admin password to continue.</div></div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div>
+            </div>
+            <div style="font-size:12px;font-weight:500;color:#283E46;margin:16px 0 7px 2px">Admin password</div>
+            <div style="display:flex;align-items:center;gap:11px;height:50px;border:1.5px solid #283E46;border-radius:16px;background:#fff;padding:0 14px;box-shadow:0 0 0 4px rgba(40,62,70,.08)"><i data-lucide="lock" style="width:19px;height:19px;color:#283E46;stroke-width:1.75"></i><span style="flex:1;font-size:16px;letter-spacing:3px;color:#16201F">••••••••</span><i data-lucide="eye-off" style="width:19px;height:19px;color:#9AA0A3;stroke-width:1.75"></i></div>
+            <div style="display:flex;gap:8px;align-items:center;background:rgba(40,62,70,.06);border-radius:10px;padding:10px 12px;margin-top:12px"><i data-lucide="info" style="width:16px;height:16px;color:#5A6468;stroke-width:1.9;flex:none"></i><span style="font-size:12px;color:#5A6468;line-height:1.4">Re-authentication is required for this action.</span></div>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px">
+              <div style="font-size:14.5px;font-weight:600;color:#8A9296;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#fff;background:#283E46;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(40,62,70,.6)">Confirm</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSWORD · DARK -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Single-input · password · dark</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Sale Detail</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="more-vertical" style="width:22px;height:22px;stroke-width:1.75"></i></div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(232,184,76,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="lock" style="width:22px;height:22px;color:#E8B84C;stroke-width:1.75"></i></div>
+              <div style="flex:1;padding-top:1px"><div style="font-size:18px;font-weight:600;color:#ECEFEF;line-height:1.3">Confirm void</div><div style="font-size:13px;color:#93A0A3;margin-top:3px;line-height:1.4">Enter your admin password to continue.</div></div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div>
+            </div>
+            <div style="font-size:12px;font-weight:500;color:#E8B84C;margin:16px 0 7px 2px">Admin password</div>
+            <div style="display:flex;align-items:center;gap:11px;height:50px;border:1.5px solid #E8B84C;border-radius:16px;background:#121C1D;padding:0 14px;box-shadow:0 0 0 4px rgba(232,184,76,.12)"><i data-lucide="lock" style="width:19px;height:19px;color:#E8B84C;stroke-width:1.75"></i><span style="flex:1;font-size:16px;letter-spacing:3px;color:#ECEFEF">••••••••</span><i data-lucide="eye-off" style="width:19px;height:19px;color:#6C797C;stroke-width:1.75"></i></div>
+            <div style="display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 12px;margin-top:12px"><i data-lucide="info" style="width:16px;height:16px;color:#93A0A3;stroke-width:1.9;flex:none"></i><span style="font-size:12px;color:#93A0A3;line-height:1.4">Re-authentication is required for this action.</span></div>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px">
+              <div style="font-size:14.5px;font-weight:600;color:#93A0A3;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#121C1D;background:#E8B84C;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(232,184,76,.5)">Confirm</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR · LIGHT -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Error · light</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Receiving</div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#fff;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="alert-circle" style="width:22px;height:22px;color:#F44336;stroke-width:1.9"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;line-height:1.3;padding-top:4px">Couldn’t complete receiving</div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#5A6468">A stock document was changed on another device. Review the counts and try again.</p>
+            <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:20px">
+              <div style="font-size:14.5px;font-weight:600;color:#fff;background:#283E46;padding:12px 28px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(40,62,70,.6)">OK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR · DARK -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Error · dark</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Receiving</div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="alert-circle" style="width:22px;height:22px;color:#FF6B5E;stroke-width:1.9"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;line-height:1.3;padding-top:4px">Couldn’t complete receiving</div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#93A0A3">A stock document was changed on another device. Review the counts and try again.</p>
+            <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:20px">
+              <div style="font-size:14.5px;font-weight:600;color:#121C1D;background:#E8B84C;padding:12px 28px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(232,184,76,.5)">OK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS · LIGHT -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Success · light · elastic scale-in</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Checkout</div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#fff;border-radius:24px;padding:22px 22px 18px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07);animation:successPop .55s cubic-bezier(.2,.7,.3,1.25) both">
+            <div style="width:84px;height:84px;border-radius:999px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;margin:2px auto 14px;animation:successCheck .5s .12s cubic-bezier(.2,.7,.3,1.4) both"><i data-lucide="check" style="width:46px;height:46px;color:#2E7D32;stroke-width:2.4"></i></div>
+            <div style="text-align:center;font-size:22px;font-weight:700;color:#16201F">Payment successful</div>
+            <div style="text-align:center;margin-top:8px"><span style="display:inline-block;font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#8A9296;background:#FAFAFA;border:1px solid #ECECEC;border-radius:999px;padding:5px 14px">SALE-20260627-3</span></div>
+            <div style="background:#E8F5E9;border-radius:18px;padding:14px;text-align:center;margin:16px 0 12px"><div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:#2E7D32">CHANGE DUE</div><div style="font-size:38px;font-weight:800;color:#2E7D32;line-height:1.1;margin-top:2px;font-family:'Roboto Mono'">₱20.00</div></div>
+            <div style="border:1px solid #ECECEC;background:#FAFAFA;border-radius:16px;padding:11px 14px"><div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#8A9296">Total</span><span style="color:#16201F;font-family:'Roboto Mono'">₱980.00</span></div><div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#8A9296">Received</span><span style="color:#16201F;font-family:'Roboto Mono'">₱1,000.00</span></div></div>
+            <div style="margin-top:16px;height:48px;border-radius:16px;border:1px solid #E2E2E2;background:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#16201F"><i data-lucide="receipt" style="width:18px;height:18px;stroke-width:1.75"></i>Receipt</div>
+            <div style="margin-top:10px;height:48px;border-radius:16px;background:#283E46;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;box-shadow:0 8px 18px -7px rgba(40,62,70,.5)">Done</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS · DARK -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Success · dark · elastic scale-in</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Checkout</div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 22px 18px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78);animation:successPop .55s cubic-bezier(.2,.7,.3,1.25) both">
+            <div style="width:84px;height:84px;border-radius:999px;background:rgba(76,175,80,.18);display:flex;align-items:center;justify-content:center;margin:2px auto 14px;animation:successCheck .5s .12s cubic-bezier(.2,.7,.3,1.4) both"><i data-lucide="check" style="width:46px;height:46px;color:#8FE39A;stroke-width:2.4"></i></div>
+            <div style="text-align:center;font-size:22px;font-weight:700;color:#ECEFEF">Payment successful</div>
+            <div style="text-align:center;margin-top:8px"><span style="display:inline-block;font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#93A0A3;background:#121C1D;border:1px solid #243234;border-radius:999px;padding:5px 14px">SALE-20260627-3</span></div>
+            <div style="background:rgba(76,175,80,.18);border-radius:18px;padding:14px;text-align:center;margin:16px 0 12px"><div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:#8FE39A">CHANGE DUE</div><div style="font-size:38px;font-weight:800;color:#8FE39A;line-height:1.1;margin-top:2px;font-family:'Roboto Mono'">₱20.00</div></div>
+            <div style="border:1px solid #243234;background:#121C1D;border-radius:16px;padding:11px 14px"><div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#93A0A3">Total</span><span style="color:#ECEFEF;font-family:'Roboto Mono'">₱980.00</span></div><div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:#93A0A3">Received</span><span style="color:#ECEFEF;font-family:'Roboto Mono'">₱1,000.00</span></div></div>
+            <div style="margin-top:16px;height:48px;border-radius:16px;border:1px solid #2C3C3E;background:transparent;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#ECEFEF"><i data-lucide="receipt" style="width:18px;height:18px;stroke-width:1.75"></i>Receipt</div>
+            <div style="margin-top:10px;height:48px;border-radius:16px;background:#E8B84C;color:#121C1D;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;box-shadow:0 8px 18px -7px rgba(232,184,76,.5)">Done</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- SECTION D · SHEET VARIANTS -->
+  <!-- ============================================================= -->
+  <div style="display:flex;align-items:center;gap:10px;margin:56px 0 22px 4px;width:2540px">
+    <i data-lucide="layers" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:700;letter-spacing:.5px;color:#16201F;text-transform:uppercase">Sheet variants</span>
+    <span style="font-size:12px;color:#8A9296;font-family:'Roboto Mono'">composed from Shell 2</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+
+  <div style="display:flex;gap:40px;align-items:flex-start;width:max-content">
+
+    <!-- ACTION LIST · LIGHT -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Action list · light</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Edit Product</div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(17,28,29,.16);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#E2E2E2;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 18px 12px"><i data-lucide="image" style="width:22px;height:22px;color:#8A9296;stroke-width:1.75;flex:none"></i><div style="flex:1;font-size:17px;font-weight:700;color:#16201F">Add product photo</div><div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin-right:-4px"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <div style="border-top:1px solid #F0F0F0">
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 20px"><i data-lucide="camera" style="width:23px;height:23px;color:#5A6468;stroke-width:1.75"></i><div style="font-size:15.5px;font-weight:500;color:#16201F">Take photo</div></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-top:1px solid #F0F0F0"><i data-lucide="image" style="width:23px;height:23px;color:#5A6468;stroke-width:1.75"></i><div style="font-size:15.5px;font-weight:500;color:#16201F">Choose from gallery</div></div>
+          </div>
+          <div style="height:18px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTION LIST · DARK -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Action list · dark</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Edit Product</div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#18262A;border-top:1px solid #243234;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(0,0,0,.5);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#2C3C3E;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 18px 12px"><i data-lucide="image" style="width:22px;height:22px;color:#93A0A3;stroke-width:1.75;flex:none"></i><div style="flex:1;font-size:17px;font-weight:700;color:#ECEFEF">Add product photo</div><div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin-right:-4px"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div></div>
+          <div style="border-top:1px solid #243234">
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 20px"><i data-lucide="camera" style="width:23px;height:23px;color:#93A0A3;stroke-width:1.75"></i><div style="font-size:15.5px;font-weight:500;color:#ECEFEF">Take photo</div></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-top:1px solid #243234"><i data-lucide="image" style="width:23px;height:23px;color:#93A0A3;stroke-width:1.75"></i><div style="font-size:15.5px;font-weight:500;color:#ECEFEF">Choose from gallery</div></div>
+          </div>
+          <div style="height:18px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RADIO · LIGHT -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Radio picker · light</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Settings</div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(17,28,29,.16);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#E2E2E2;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 18px 12px"><i data-lucide="palette" style="width:22px;height:22px;color:#8A9296;stroke-width:1.75;flex:none"></i><div style="flex:1;font-size:17px;font-weight:700;color:#16201F">Appearance</div><div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin-right:-4px"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <div style="border-top:1px solid #F0F0F0">
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 20px"><i data-lucide="monitor" style="width:23px;height:23px;color:#5A6468;stroke-width:1.75"></i><div style="flex:1;font-size:15.5px;font-weight:500;color:#16201F">System default</div><span style="width:20px;height:20px;border-radius:999px;border:2px solid #D8D8D8;flex:none"></span></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 20px;border-top:1px solid #F0F0F0"><i data-lucide="sun" style="width:23px;height:23px;color:#283E46;stroke-width:1.75"></i><div style="flex:1;font-size:15.5px;font-weight:600;color:#16201F">Light</div><span style="width:20px;height:20px;border-radius:999px;border:2px solid #283E46;display:flex;align-items:center;justify-content:center;flex:none"><span style="width:9px;height:9px;border-radius:999px;background:#283E46"></span></span></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 20px;border-top:1px solid #F0F0F0"><i data-lucide="moon" style="width:23px;height:23px;color:#5A6468;stroke-width:1.75"></i><div style="flex:1;font-size:15.5px;font-weight:500;color:#16201F">Dark</div><span style="width:20px;height:20px;border-radius:999px;border:2px solid #D8D8D8;flex:none"></span></div>
+          </div>
+          <div style="height:18px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RADIO · DARK -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Radio picker · dark</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Settings</div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#18262A;border-top:1px solid #243234;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(0,0,0,.5);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#2C3C3E;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 18px 12px"><i data-lucide="palette" style="width:22px;height:22px;color:#93A0A3;stroke-width:1.75;flex:none"></i><div style="flex:1;font-size:17px;font-weight:700;color:#ECEFEF">Appearance</div><div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin-right:-4px"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div></div>
+          <div style="border-top:1px solid #243234">
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 20px"><i data-lucide="monitor" style="width:23px;height:23px;color:#93A0A3;stroke-width:1.75"></i><div style="flex:1;font-size:15.5px;font-weight:500;color:#ECEFEF">System default</div><span style="width:20px;height:20px;border-radius:999px;border:2px solid #3A4A4D;flex:none"></span></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 20px;border-top:1px solid #243234"><i data-lucide="sun" style="width:23px;height:23px;color:#93A0A3;stroke-width:1.75"></i><div style="flex:1;font-size:15.5px;font-weight:500;color:#ECEFEF">Light</div><span style="width:20px;height:20px;border-radius:999px;border:2px solid #3A4A4D;flex:none"></span></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 20px;border-top:1px solid #243234"><i data-lucide="moon" style="width:23px;height:23px;color:#E8B84C;stroke-width:1.75"></i><div style="flex:1;font-size:15.5px;font-weight:600;color:#ECEFEF">Dark</div><span style="width:20px;height:20px;border-radius:999px;border:2px solid #E8B84C;display:flex;align-items:center;justify-content:center;flex:none"><span style="width:9px;height:9px;border-radius:999px;background:#E8B84C"></span></span></div>
+          </div>
+          <div style="height:18px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM · LIGHT (keyboard-safe) -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Form · keyboard-safe · light</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Inventory</div></div>
+        <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:62px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32)"></div>
+        <div style="position:absolute;left:0;right:0;top:150px;bottom:236px;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(17,28,29,.16);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#E2E2E2;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:flex-start;gap:13px;padding:8px 18px 14px"><i data-lucide="package" style="width:24px;height:24px;color:#8A9296;stroke-width:1.75;flex:none;margin-top:3px"></i><div style="flex:1;min-width:0"><div style="font-size:19px;font-weight:700;color:#16201F;line-height:1.2">Adjust stock</div><div style="font-size:13px;color:#8A9296;margin-top:3px">ASK Brake Shoe XRM 125</div></div><div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-2px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <div style="flex:1;overflow:hidden;border-top:1px solid #F0F0F0;padding:16px 18px">
+            <div style="display:flex;background:#F0EFEC;border:1px solid #E2E2E2;border-radius:999px;padding:3px;margin-bottom:16px"><div style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;border-radius:999px;background:#283E46;color:#fff">Add</div><div style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;color:#8A9296">Remove</div><div style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;color:#8A9296">Set</div></div>
+            <div style="font-size:12px;font-weight:500;color:#283E46;margin:0 0 7px 2px">Quantity</div>
+            <div style="height:50px;border:1.5px solid #283E46;border-radius:16px;background:#fff;display:flex;align-items:center;padding:0 14px;box-shadow:0 0 0 4px rgba(40,62,70,.08);font-size:16px;color:#16201F;font-family:'Roboto Mono'">8<span style="width:2px;height:22px;background:#283E46;margin-left:2px;display:inline-block"></span></div>
+            <div style="border:1px solid #ECECEC;background:#FAFAFA;border-radius:16px;padding:11px 14px;margin-top:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#8A9296">New quantity</span><span style="font-size:15px;font-weight:700;color:#16201F;font-family:'Roboto Mono'">12 → 20</span></div>
+          </div>
+          <div style="display:flex;gap:12px;padding:12px 18px 14px;border-top:1px solid #F0F0F0"><div style="flex:1;height:50px;border-radius:16px;border:1px solid #E2E2E2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#16201F">Cancel</div><div style="flex:1;height:50px;border-radius:16px;background:#283E46;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;box-shadow:0 8px 18px -7px rgba(40,62,70,.5)">Save</div></div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:236px;background:#D7D9DD;padding:10px 6px 24px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;height:100%">
+          <div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">1</div><div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">2</div><div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">3</div>
+          <div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">4</div><div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">5</div><div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">6</div>
+          <div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">7</div><div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">8</div><div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">9</div>
+          <div></div><div style="background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#16201F;box-shadow:0 1px 0 rgba(0,0,0,.28)">0</div><div style="display:flex;align-items:center;justify-content:center"><i data-lucide="delete" style="width:26px;height:26px;color:#16201F;stroke-width:1.75"></i></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- FORM · DARK (keyboard-safe) -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Form · keyboard-safe · dark</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Inventory</div></div>
+        <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:62px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+        <div style="position:absolute;left:0;right:0;top:150px;bottom:236px;background:#18262A;border-top:1px solid #243234;border-radius:24px 24px 0 0;box-shadow:0 -10px 34px rgba(0,0,0,.5);display:flex;flex-direction:column">
+          <div style="width:40px;height:4px;border-radius:999px;background:#2C3C3E;margin:12px auto 6px"></div>
+          <div style="display:flex;align-items:flex-start;gap:13px;padding:8px 18px 14px"><i data-lucide="package" style="width:24px;height:24px;color:#93A0A3;stroke-width:1.75;flex:none;margin-top:3px"></i><div style="flex:1;min-width:0"><div style="font-size:19px;font-weight:700;color:#ECEFEF;line-height:1.2">Adjust stock</div><div style="font-size:13px;color:#93A0A3;margin-top:3px">ASK Brake Shoe XRM 125</div></div><div style="width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-2px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div></div>
+          <div style="flex:1;overflow:hidden;border-top:1px solid #243234;padding:16px 18px">
+            <div style="display:flex;background:#121C1D;border:1px solid #243234;border-radius:999px;padding:3px;margin-bottom:16px"><div style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;border-radius:999px;background:#E8B84C;color:#121C1D">Add</div><div style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;color:#93A0A3">Remove</div><div style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;color:#93A0A3">Set</div></div>
+            <div style="font-size:12px;font-weight:500;color:#E8B84C;margin:0 0 7px 2px">Quantity</div>
+            <div style="height:50px;border:1.5px solid #E8B84C;border-radius:16px;background:#121C1D;display:flex;align-items:center;padding:0 14px;box-shadow:0 0 0 4px rgba(232,184,76,.12);font-size:16px;color:#ECEFEF;font-family:'Roboto Mono'">8<span style="width:2px;height:22px;background:#E8B84C;margin-left:2px;display:inline-block"></span></div>
+            <div style="border:1px solid #243234;background:#121C1D;border-radius:16px;padding:11px 14px;margin-top:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#93A0A3">New quantity</span><span style="font-size:15px;font-weight:700;color:#ECEFEF;font-family:'Roboto Mono'">12 → 20</span></div>
+          </div>
+          <div style="display:flex;gap:12px;padding:12px 18px 14px;border-top:1px solid #243234"><div style="flex:1;height:50px;border-radius:16px;border:1px solid #2C3C3E;background:transparent;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#ECEFEF">Cancel</div><div style="flex:1;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;box-shadow:0 8px 18px -7px rgba(232,184,76,.5)">Save</div></div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:236px;background:#1C1C1E;padding:10px 6px 24px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;height:100%">
+          <div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">1</div><div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">2</div><div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">3</div>
+          <div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">4</div><div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">5</div><div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">6</div>
+          <div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">7</div><div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">8</div><div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">9</div>
+          <div></div><div style="background:#3A3A3C;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:23px;color:#fff">0</div><div style="display:flex;align-items:center;justify-content:center"><i data-lucide="delete" style="width:26px;height:26px;color:#fff;stroke-width:1.75"></i></div>
+        </div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- SECTION E · SNACKBARS -->
+  <!-- ============================================================= -->
+  <div style="display:flex;align-items:center;gap:10px;margin:56px 0 22px 4px;width:1200px">
+    <i data-lucide="bell-ring" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:700;letter-spacing:.5px;color:#16201F;text-transform:uppercase">Snackbars</span>
+    <span style="font-size:12px;color:#8A9296;font-family:'Roboto Mono'">adjacent feedback · not modal</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+
+  <div style="display:flex;gap:40px;align-items:flex-start;width:max-content">
+
+    <!-- SNACKBARS · LIGHT (over live content) -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Light · bottom-docked over live content</div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Inventory</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="search" style="width:22px;height:22px;stroke-width:1.75"></i></div></div>
+        <div style="padding:10px 16px 0">
+          <div style="display:flex;align-items:center;gap:10px;height:46px;border:1px solid #E2E2E2;background:#fff;border-radius:14px;padding:0 14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="search" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.75"></i><span style="font-size:14px;color:#9AA0A3">Search parts…</span></div>
+          <div style="background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 14px">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F0F0F0"><div style="width:44px;height:44px;border-radius:12px;background:repeating-linear-gradient(45deg,#EFEFEF,#EFEFEF 5px,#F7F7F7 5px,#F7F7F7 10px);flex:none"></div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ASK Brake Shoe XRM 125</div><div style="font-size:12px;color:#8A9296;margin-top:2px"><span style="font-family:'Roboto Mono'">BRK-001</span> · 20 in stock</div></div><div style="font-size:14px;font-weight:600;color:#16201F;font-family:'Roboto Mono'">₱250</div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F0F0F0"><div style="width:44px;height:44px;border-radius:12px;background:repeating-linear-gradient(45deg,#EFEFEF,#EFEFEF 5px,#F7F7F7 5px,#F7F7F7 10px);flex:none"></div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">NGK Spark Plug CPR6EA-9</div><div style="font-size:12px;color:#8A9296;margin-top:2px"><span style="font-family:'Roboto Mono'">SPK-009</span> · 4 in stock</div></div><div style="font-size:14px;font-weight:600;color:#16201F;font-family:'Roboto Mono'">₱200</div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0"><div style="width:44px;height:44px;border-radius:12px;background:repeating-linear-gradient(45deg,#EFEFEF,#EFEFEF 5px,#F7F7F7 5px,#F7F7F7 10px);flex:none"></div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shimano Brake Pad B01S</div><div style="font-size:12px;color:#8A9296;margin-top:2px"><span style="font-family:'Roboto Mono'">BRK-204</span> · 8 in stock</div></div><div style="font-size:14px;font-weight:600;color:#16201F;font-family:'Roboto Mono'">₱300</div></div>
+          </div>
+        </div>
+        <div style="position:absolute;left:14px;right:14px;bottom:20px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:center;background:#E8F5E9;border:1.5px solid #4CAF50;border-radius:14px;padding:11px 13px;box-shadow:0 8px 20px -10px rgba(17,28,29,.28)"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:#2E7D32;stroke-width:1.9;flex:none"></i><span style="flex:1;font-size:13px;font-weight:500;color:#2E7D32">Stock updated · +8 → 20.</span><i data-lucide="x" style="width:15px;height:15px;color:#2E7D32"></i></div>
+          <div style="display:flex;gap:10px;align-items:center;background:#FFF4E0;border:1.5px solid #F0A23C;border-radius:14px;padding:11px 13px;box-shadow:0 8px 20px -10px rgba(17,28,29,.28)"><i data-lucide="alert-triangle" style="width:18px;height:18px;color:#B5701A;stroke-width:1.9;flex:none"></i><span style="flex:1;font-size:13px;font-weight:500;color:#B5701A">Low stock on 2 items.</span><i data-lucide="x" style="width:15px;height:15px;color:#B5701A"></i></div>
+          <div style="display:flex;gap:10px;align-items:center;background:#FDECEA;border:1.5px solid #F44336;border-radius:14px;padding:11px 13px;box-shadow:0 8px 20px -10px rgba(17,28,29,.28)"><i data-lucide="alert-circle" style="width:18px;height:18px;color:#C62828;stroke-width:1.9;flex:none"></i><span style="flex:1;font-size:13px;font-weight:500;color:#C62828">Couldn’t reach the server.</span><i data-lucide="x" style="width:15px;height:15px;color:#C62828"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SNACKBARS · DARK -->
+    <div style="flex:0 0 auto">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dark · bottom-docked over live content</div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Inventory</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="search" style="width:22px;height:22px;stroke-width:1.75"></i></div></div>
+        <div style="padding:10px 16px 0">
+          <div style="display:flex;align-items:center;gap:10px;height:46px;border:1px solid #2C3C3E;background:#18262A;border-radius:14px;padding:0 14px;margin-bottom:14px"><i data-lucide="search" style="width:18px;height:18px;color:#6C797C;stroke-width:1.75"></i><span style="font-size:14px;color:#6C797C">Search parts…</span></div>
+          <div style="background:#18262A;border:1px solid #243234;border-radius:16px;padding:2px 14px">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #243234"><div style="width:44px;height:44px;border-radius:12px;background:repeating-linear-gradient(45deg,#1F2E31,#1F2E31 5px,#26373A 5px,#26373A 10px);flex:none"></div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ASK Brake Shoe XRM 125</div><div style="font-size:12px;color:#93A0A3;margin-top:2px"><span style="font-family:'Roboto Mono'">BRK-001</span> · 20 in stock</div></div><div style="font-size:14px;font-weight:600;color:#ECEFEF;font-family:'Roboto Mono'">₱250</div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #243234"><div style="width:44px;height:44px;border-radius:12px;background:repeating-linear-gradient(45deg,#1F2E31,#1F2E31 5px,#26373A 5px,#26373A 10px);flex:none"></div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">NGK Spark Plug CPR6EA-9</div><div style="font-size:12px;color:#93A0A3;margin-top:2px"><span style="font-family:'Roboto Mono'">SPK-009</span> · 4 in stock</div></div><div style="font-size:14px;font-weight:600;color:#ECEFEF;font-family:'Roboto Mono'">₱200</div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0"><div style="width:44px;height:44px;border-radius:12px;background:repeating-linear-gradient(45deg,#1F2E31,#1F2E31 5px,#26373A 5px,#26373A 10px);flex:none"></div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shimano Brake Pad B01S</div><div style="font-size:12px;color:#93A0A3;margin-top:2px"><span style="font-family:'Roboto Mono'">BRK-204</span> · 8 in stock</div></div><div style="font-size:14px;font-weight:600;color:#ECEFEF;font-family:'Roboto Mono'">₱300</div></div>
+          </div>
+        </div>
+        <div style="position:absolute;left:14px;right:14px;bottom:20px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:center;background:rgba(76,175,80,.16);border:1.5px solid rgba(76,175,80,.5);border-radius:14px;padding:11px 13px;box-shadow:0 10px 22px -10px rgba(0,0,0,.7)"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:#8FE39A;stroke-width:1.9;flex:none"></i><span style="flex:1;font-size:13px;font-weight:500;color:#8FE39A">Stock updated · +8 → 20.</span><i data-lucide="x" style="width:15px;height:15px;color:#8FE39A"></i></div>
+          <div style="display:flex;gap:10px;align-items:center;background:rgba(245,181,71,.14);border:1.5px solid rgba(245,181,71,.5);border-radius:14px;padding:11px 13px;box-shadow:0 10px 22px -10px rgba(0,0,0,.7)"><i data-lucide="alert-triangle" style="width:18px;height:18px;color:#F5B547;stroke-width:1.9;flex:none"></i><span style="flex:1;font-size:13px;font-weight:500;color:#F5B547">Low stock on 2 items.</span><i data-lucide="x" style="width:15px;height:15px;color:#F5B547"></i></div>
+          <div style="display:flex;gap:10px;align-items:center;background:rgba(255,107,94,.14);border:1.5px solid rgba(255,107,94,.5);border-radius:14px;padding:11px 13px;box-shadow:0 10px 22px -10px rgba(0,0,0,.7)"><i data-lucide="alert-circle" style="width:18px;height:18px;color:#FF6B5E;stroke-width:1.9;flex:none"></i><span style="flex:1;font-size:13px;font-weight:500;color:#FF6B5E">Couldn’t reach the server.</span><i data-lucide="x" style="width:15px;height:15px;color:#FF6B5E"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SNACKBARS · SPEC -->
+    <div style="flex:0 0 auto;width:340px;background:#fff;border-radius:22px;padding:24px 22px;box-shadow:0 10px 30px -14px rgba(17,28,29,.18),0 2px 6px rgba(17,28,29,.05);margin-top:30px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3">Spec</div>
+      <div style="font-size:17px;font-weight:700;color:#16201F;margin:6px 0 6px">A separate channel</div>
+      <p style="margin:0 0 18px;font-size:12.5px;line-height:1.5;color:#8A9296">A transient bar at the bottom — <b style="color:#5A6468;font-weight:600">1.5px status border + lightened fill</b>, dismissible. Stacked here for reference; in use it's <b style="color:#5A6468;font-weight:600">one at a time</b>. <code style="font-family:'Roboto Mono';font-size:11px">showSuccess / Warning / ErrorSnackBar</code> stay their own channel — never a replacement for a confirm dialog.</p>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="width:36px;height:24px;border-radius:8px;background:#E8F5E9;border:1.5px solid #4CAF50;flex:none"></span><div><div style="font-size:13px;font-weight:600;color:#16201F">Success</div><div style="font-size:10px;color:#8A9296;font-family:'Roboto Mono';margin-top:1px;white-space:nowrap">#E8F5E9 · #2E7D32 · OnDark #8FE39A</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="width:36px;height:24px;border-radius:8px;background:#FFF4E0;border:1.5px solid #F0A23C;flex:none"></span><div><div style="font-size:13px;font-weight:600;color:#16201F">Warning</div><div style="font-size:10px;color:#8A9296;font-family:'Roboto Mono';margin-top:1px;white-space:nowrap">#FFF4E0 · #B5701A · OnDark #F5B547</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><span style="width:36px;height:24px;border-radius:8px;background:#FDECEA;border:1.5px solid #F44336;flex:none"></span><div><div style="font-size:13px;font-weight:600;color:#16201F">Error</div><div style="font-size:10px;color:#8A9296;font-family:'Roboto Mono';margin-top:1px;white-space:nowrap">#FDECEA · #C62828 · OnDark #FF6B5E</div></div></div>
+
+      <div style="height:1px;background:#F0F0F0;margin:0 0 16px"></div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:10px">Rules</div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">Bottom-docked, above the SafeArea — never centered.</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">One at a time; newest replaces. Dismiss via × or swipe.</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><i data-lucide="dot" style="width:14px;height:14px;color:#283E46;flex:none;margin-top:2px"></i><span style="font-size:12.5px;line-height:1.45;color:#5A6468">Auto-hide ≈3.5s; radius 14, icon + text + close.</span></div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+      } else if (tries++ < 60) {
+        setTimeout(go, 50);
+      }
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>
