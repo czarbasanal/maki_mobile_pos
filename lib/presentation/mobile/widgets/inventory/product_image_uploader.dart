@@ -6,8 +6,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_bottom_sheet.dart';
 
 /// Square 96x96 product-image control. Renders the existing URL (or a
 /// freshly picked preview) and exposes pick/replace/remove actions.
@@ -60,25 +62,22 @@ class ProductImageUploader extends StatelessWidget {
   final bool enabled;
 
   Future<void> _pick(BuildContext context) async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(CupertinoIcons.photo_camera),
-              title: const Text('Take photo'),
-              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(CupertinoIcons.photo),
-              title: const Text('Pick from gallery'),
-              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
-            ),
-          ],
+    final source = await showAppActionSheet<ImageSource>(
+      context,
+      icon: LucideIcons.image,
+      title: 'Product image',
+      actions: const [
+        AppSheetAction(
+          icon: LucideIcons.camera,
+          label: 'Take photo',
+          value: ImageSource.camera,
         ),
-      ),
+        AppSheetAction(
+          icon: LucideIcons.image,
+          label: 'Pick from gallery',
+          value: ImageSource.gallery,
+        ),
+      ],
     );
     if (!context.mounted || source == null) return;
 

@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_wdigets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_bottom_sheet.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
@@ -344,142 +345,33 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showThemePicker(BuildContext context, WidgetRef ref) {
+  void _showThemePicker(BuildContext context, WidgetRef ref) async {
     final current = ref.read(themeModeProvider);
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final theme = Theme.of(sheetContext);
-        final dark = theme.brightness == Brightness.dark;
-        final sheetBg = dark ? AppColors.darkCard : Colors.white;
-        final hairline =
-            dark ? AppColors.darkHairline : const Color(0xFFF0F0F0);
-        final handleColor =
-            dark ? AppColors.darkHairline : const Color(0xFFD8D5CF);
-        final primary = theme.colorScheme.primary;
-
-        Widget radioRow(
-            ThemeMode mode, String label, IconData icon, bool selected) {
-          return InkWell(
-            onTap: () {
-              ref.read(themeModeProvider.notifier).set(mode);
-              Navigator.pop(sheetContext);
-            },
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 21,
-                    color: selected ? primary : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                  // Radio indicator
-                  selected
-                      ? Container(
-                          width: 21,
-                          height: 21,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: primary, width: 2),
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 11,
-                              height: 11,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: primary,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          width: 21,
-                          height: 21,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.fromBorderSide(
-                              BorderSide(color: Color(0xFFC2C8CA), width: 2),
-                            ),
-                          ),
-                        ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return SafeArea(
-          child: Container(
-            decoration: BoxDecoration(
-              color: sheetBg,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Grab handle
-                Container(
-                  margin: const EdgeInsets.only(top: 11, bottom: 4),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: handleColor,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-                // Title
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Theme',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
-                radioRow(ThemeMode.system, 'System default',
-                    LucideIcons.monitor, current == ThemeMode.system),
-                Container(
-                    height: 1,
-                    color: hairline,
-                    margin: const EdgeInsets.only(left: 55)),
-                radioRow(ThemeMode.light, 'Light', LucideIcons.sun,
-                    current == ThemeMode.light),
-                Container(
-                    height: 1,
-                    color: hairline,
-                    margin: const EdgeInsets.only(left: 55)),
-                radioRow(ThemeMode.dark, 'Dark', LucideIcons.moon,
-                    current == ThemeMode.dark),
-              ],
-            ),
-          ),
-        );
-      },
+    final picked = await showAppActionSheet<ThemeMode>(
+      context,
+      icon: LucideIcons.sunMoon,
+      title: 'Theme',
+      radio: true,
+      selected: current,
+      actions: const [
+        AppSheetAction(
+          icon: LucideIcons.monitor,
+          label: 'System default',
+          value: ThemeMode.system,
+        ),
+        AppSheetAction(
+          icon: LucideIcons.sun,
+          label: 'Light',
+          value: ThemeMode.light,
+        ),
+        AppSheetAction(
+          icon: LucideIcons.moon,
+          label: 'Dark',
+          value: ThemeMode.dark,
+        ),
+      ],
     );
+    if (picked != null) ref.read(themeModeProvider.notifier).set(picked);
   }
 
   void _showAboutDialog(BuildContext context) {

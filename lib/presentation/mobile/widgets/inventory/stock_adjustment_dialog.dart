@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_bottom_sheet.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
 /// Dialog for adjusting product stock.
 class StockAdjustmentDialog extends ConsumerStatefulWidget {
@@ -20,11 +22,9 @@ class StockAdjustmentDialog extends ConsumerStatefulWidget {
     required BuildContext context,
     required ProductEntity product,
   }) {
-    return showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => StockAdjustmentDialog(product: product),
+    return showAppBottomSheet<bool>(
+      context,
+      child: StockAdjustmentDialog(product: product),
     );
   }
 
@@ -63,83 +63,42 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg - 4),
-        child: Builder(builder: (context) {
-          final muted = theme.colorScheme.onSurfaceVariant;
-          final isDark = theme.brightness == Brightness.dark;
-          final hairline =
-              isDark ? AppColors.darkHairline : AppColors.lightHairline;
-          return Column(
+    return AppBottomSheet(
+      leadingIcon: LucideIcons.package,
+      title: 'Adjust Stock',
+      subtitle: widget.product.name,
+      onClose: _isProcessing ? null : () => Navigator.pop(context),
+      body: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: hairline,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg - 4),
-              // Header — outlined cube_box glyph
-              Row(
-                children: [
-                  Icon(CupertinoIcons.cube_box, color: muted, size: 24),
-                  const SizedBox(width: AppSpacing.sm + 4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Adjust Stock',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          widget.product.name,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(color: muted),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+              // Current vs New stock
+              AppCard(
+                radius: 16,
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStockColumn(
+                      'Current',
+                      '${widget.product.quantity}',
+                      theme.colorScheme.onSurface,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg - 4),
-              // Current vs New stock — themed Card with hairline
-              Card(
-                margin: EdgeInsets.zero,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStockColumn(
-                        'Current',
-                        '${widget.product.quantity}',
-                        theme.colorScheme.onSurface,
-                      ),
-                      Icon(CupertinoIcons.forward, color: muted, size: 18),
-                      _buildStockColumn(
-                        'New',
-                        '$_newQuantity',
-                        _getNewQuantityColor(),
-                      ),
-                    ],
-                  ),
+                    Icon(LucideIcons.arrowRight, color: muted, size: 18),
+                    _buildStockColumn(
+                      'New',
+                      '$_newQuantity',
+                      _getNewQuantityColor(),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpacing.lg - 4),
@@ -157,17 +116,17 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                   segments: const [
                     ButtonSegment(
                       value: AdjustmentType.add,
-                      icon: Icon(CupertinoIcons.add),
+                      icon: Icon(LucideIcons.plus),
                       label: Text('Add'),
                     ),
                     ButtonSegment(
                       value: AdjustmentType.remove,
-                      icon: Icon(CupertinoIcons.minus),
+                      icon: Icon(LucideIcons.minus),
                       label: Text('Remove'),
                     ),
                     ButtonSegment(
                       value: AdjustmentType.set,
-                      icon: Icon(CupertinoIcons.pencil),
+                      icon: Icon(LucideIcons.squarePen),
                       label: Text('Set To'),
                     ),
                   ],
@@ -180,90 +139,77 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                   },
                 ),
               ),
-
-            const SizedBox(height: 20),
-
-            // Quantity input
-            TextField(
-              controller: _quantityController,
-              decoration: InputDecoration(
-                labelText: _adjustmentType == AdjustmentType.set
-                    ? 'New Quantity'
-                    : 'Quantity',
-                hintText: 'Enter quantity',
-                prefixIcon: Icon(
-                  _adjustmentType == AdjustmentType.add
-                      ? CupertinoIcons.plus_circle
-                      : _adjustmentType == AdjustmentType.remove
-                          ? CupertinoIcons.minus_circle
-                          : CupertinoIcons.pencil,
-                ),
-                suffixText: widget.product.unit,
-                errorText: _errorMessage,
-              ),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onChanged: (_) {
-                setState(() {
-                  _errorMessage = null;
-                });
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // Quick quantity buttons
-            _buildQuickQuantityButtons(),
-
-            const SizedBox(height: 20),
-
-            // Note input
-            TextField(
-              controller: _noteController,
-              decoration: const InputDecoration(
-                labelText: 'Reason / Note (optional)',
-                hintText: 'e.g., Received shipment, Damaged items',
-                prefixIcon: Icon(CupertinoIcons.doc_text),
-              ),
-              maxLines: 2,
-            ),
-
-            const SizedBox(height: 24),
-
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed:
-                        _isProcessing ? null : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+              const SizedBox(height: 20),
+              // Quantity input
+              TextField(
+                controller: _quantityController,
+                decoration: InputDecoration(
+                  labelText: _adjustmentType == AdjustmentType.set
+                      ? 'New Quantity'
+                      : 'Quantity',
+                  hintText: 'Enter quantity',
+                  prefixIcon: Icon(
+                    _adjustmentType == AdjustmentType.add
+                        ? LucideIcons.plusCircle
+                        : _adjustmentType == AdjustmentType.remove
+                            ? LucideIcons.minusCircle
+                            : LucideIcons.squarePen,
                   ),
+                  suffixText: widget.product.unit,
+                  errorText: _errorMessage,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: _isProcessing ? null : _handleAdjustment,
-                    child: _isProcessing
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Apply Adjustment'),
-                  ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (_) {
+                  setState(() {
+                    _errorMessage = null;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              // Quick quantity buttons
+              _buildQuickQuantityButtons(),
+              const SizedBox(height: 20),
+              // Note input
+              TextField(
+                controller: _noteController,
+                decoration: const InputDecoration(
+                  labelText: 'Reason / Note (optional)',
+                  hintText: 'e.g., Received shipment, Damaged items',
+                  prefixIcon: Icon(LucideIcons.fileText),
                 ),
-              ],
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+      ),
+      footer: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _isProcessing ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-
-            const SizedBox(height: 8),
-          ],
-        );
-        }),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 2,
+            child: FilledButton(
+              onPressed: _isProcessing ? null : _handleAdjustment,
+              child: _isProcessing
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Apply Adjustment'),
+            ),
+          ),
+        ],
       ),
     );
   }
