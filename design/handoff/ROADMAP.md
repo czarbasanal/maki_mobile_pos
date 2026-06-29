@@ -24,12 +24,13 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 06a | **Reports (hub / lists)** | `sales_list_screen`, `sales_report_screen`, `profit_report_screen`, `top_selling_screen` (+ shared `date_range_picker`, `sales_summary_card`, `top_products_card`; new `payment_method_style`, `reports_warning_banner`; dead `reports_screen` deleted) | ✅ Merged to `main` |
 | 06b | **Closing** | `end_of_day_screen` (form + closed view), `daily_closing_history_screen` (+ new `variance_style`, `closing_widgets`) | ✅ Merged to `main` |
 | 07 | **Void Requests** | `void_requests_screen` + resolve sheet + approve/reject dialogs (+ new `void_status_style`) | ✅ Merged to `main` |
+| — | **Modals & Sheets sync** | shared `AppDialog` + `AppBottomSheet` shells + variants (foundation; call-site migration is a tracked follow-up) | ✅ Merged to `main` |
+| 08 | **Expenses** | `expenses_screen`, `expense_form_screen`, `expense_history_screen` (+ shared `ExpenseRow`; delete via the dialog shell) | ✅ Merged to `main` |
 
 ## 🔜 Remaining (proposed order)
 
 | # | Bundle | Screens in scope |
 |---|--------|------------------|
-| 08 | **Expenses** | `expenses_screen`, `expense_form_screen`, `expense_history_screen` |
 | 09 | **Drafts** | `drafts_list_screen`, `draft_edit_screen` |
 | 10 | **Settings** | `settings_screen`, `category_settings_screen`, `category_editor_screen`, `cost_code_settings_screen`, `mechanic_editor_screen`, `about_screen` |
 | 11 | **Suppliers** | `suppliers_screen`, `supplier_form_screen` |
