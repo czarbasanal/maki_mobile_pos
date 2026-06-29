@@ -21,12 +21,14 @@ class ExpenseRow extends StatelessWidget {
     required this.subtitle,
     required this.amount,
     this.onTap,
+    this.onLongPress,
   });
 
   final String description;
   final String subtitle;
   final double amount;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,7 @@ class ExpenseRow extends StatelessWidget {
     final dark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
 
-    return AppCard(
+    final card = AppCard(
       radius: AppRadius.field,
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       onTap: onTap,
@@ -80,5 +82,8 @@ class ExpenseRow extends StatelessWidget {
         ],
       ),
     );
+
+    if (onLongPress == null) return card;
+    return GestureDetector(onLongPress: onLongPress, child: card);
   }
 }

@@ -88,9 +88,6 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     required bool canEdit,
     required bool canDelete,
   }) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-
     // Apply the active category filter to the displayed list. Totals refresh
     // automatically because they are bound to ExpenseDateRangeParams that
     // include the same category.
@@ -162,8 +159,6 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         final expense = recent[index - headerItems.length];
         return _buildExpenseCard(
           expense,
-          theme: theme,
-          muted: muted,
           canEdit: canEdit,
           canDelete: canDelete,
         );
@@ -180,8 +175,6 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
 
   Widget _buildExpenseCard(
     ExpenseEntity expense, {
-    required ThemeData theme,
-    required Color muted,
     required bool canEdit,
     required bool canDelete,
   }) {
@@ -195,6 +188,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         onTap: canEdit
             ? () => context.push('${RoutePaths.expenses}/edit/${expense.id}')
             : null,
+        onLongPress:
+            canDelete ? () => _confirmAndDelete(context, ref, expense) : null,
       ),
     );
 
