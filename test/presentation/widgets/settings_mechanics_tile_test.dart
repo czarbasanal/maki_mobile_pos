@@ -32,7 +32,7 @@ void main() {
 
     expect(find.text('Mechanics'), findsOneWidget);
     expect(
-      find.text('Used to assign a mechanic to a service draft'),
+      find.text('Assign a mechanic to a service draft'),
       findsOneWidget,
     );
   });

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 07: Void Requests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --field:#FAFAFA; --input-border:#E2E2E2;
+    --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --warning:#FFC107; --warning-dark:#F57C00;
+    --r-sm:10px; --r-md:14px; --r-field:16px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+    --shadow-mat:0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1400px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:980px;line-height:1.55;}
+  code{font-family:'Roboto Mono',monospace;font-size:.9em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:46px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:380px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;margin-top:26px;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:840px;overflow:hidden;display:flex;flex-direction:column;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--canvas);min-height:52px;}
+  .appbar .title{flex:1;font-size:18px;font-weight:600;padding-left:6px;}
+  .appbar .act{font-size:13px;font-weight:600;color:var(--slate);padding:0 8px;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;flex:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .body{flex:1;overflow:auto;}
+  .body::-webkit-scrollbar{width:0;}
+
+  /* current list tile (Material ListTile + Divider) */
+  .tile{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;}
+  .tile + .tile{border-top:1px solid var(--divider);}
+  .tile .lead{width:24px;display:flex;justify-content:center;flex:none;margin-top:2px;}
+  .tile .lead i{width:23px;height:23px;color:var(--muted);}
+  .tile .mid{flex:1;min-width:0;}
+  .tile .t{font-size:15px;font-weight:600;}
+  .tile .s{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5;}
+  .tile .dot{width:10px;height:10px;border-radius:999px;background:var(--error);flex:none;margin-top:6px;}
+
+  /* bottom sheet */
+  .sheet{position:absolute;left:0;right:0;bottom:0;height:86%;background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -8px 30px rgba(17,28,29,.18);display:flex;flex-direction:column;}
+  .scrim{position:absolute;inset:0;background:rgba(17,28,29,.32);}
+  .grab{width:38px;height:4px;border-radius:999px;background:#D9D9D9;margin:10px auto 4px;}
+  .ctx{padding:14px 16px 10px;}
+  .ctx .h{font-size:20px;font-weight:700;}
+  .ctx .l{font-size:13.5px;color:var(--ink);margin-top:5px;}
+  .ctx .l b{font-weight:600;}
+  .receipt{flex:1;overflow:auto;padding:12px 16px;border-top:1px solid var(--divider);}
+  .rhead{text-align:center;margin-bottom:10px;}
+  .rhead .rn{font-family:'Roboto Mono';font-size:13px;font-weight:600;}
+  .rhead .rd{font-size:12px;color:var(--muted);margin-top:2px;}
+  .ritem{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
+  .ritem .q{color:var(--muted);}
+  .rtot{display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px dashed var(--input-border);margin-top:8px;padding-top:8px;}
+  .sheetftr{display:flex;gap:12px;padding:14px 16px 18px;border-top:1px solid var(--divider);}
+  .btn-out{flex:1;height:48px;border:1px solid var(--input-border);border-radius:var(--r-field);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;color:var(--ink);background:#fff;}
+  .btn-fill{flex:1;height:48px;border-radius:var(--r-field);background:var(--slate);color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;}
+
+  /* approve/reject dialog */
+  .dlgwrap{position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px;}
+  .dlg{width:100%;background:var(--card);border-radius:var(--r-xl);padding:20px;box-shadow:0 20px 50px rgba(17,28,29,.25);}
+  .dlg .dh{font-size:18px;font-weight:600;margin-bottom:14px;}
+  .dlg .fld{display:flex;align-items:center;min-height:50px;border:1px solid var(--input-border);border-radius:var(--r-field);background:var(--field);padding:0 14px;font-size:14px;color:var(--hint);}
+  .dlg .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+  .dlg .acts .cancel{font-size:14px;font-weight:600;color:var(--muted);padding:10px 12px;}
+  .dlg .acts .ok{font-size:14px;font-weight:600;color:#fff;background:var(--slate);border-radius:var(--r-md);padding:10px 18px;}
+
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:80px 24px;text-align:center;color:var(--muted);height:100%;}
+  .empty i{width:56px;height:56px;color:#C7CCCE;}
+  .empty .t{font-size:16px;font-weight:600;color:var(--muted);}
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.55;max-width:1150px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 07 · Void Requests</h1>
+    <p><b>Pre-redesign (raw Material).</b> The admin <b>Void Requests</b> queue (opened from the dashboard
+    notification bell) is plain Material: a <code>ListView</code> of <code>ListTile</code>s split by
+    <code>Divider</code>s, Cupertino icons, an unread red dot, and a <code>showModalBottomSheet</code> resolve
+    sheet (requester + reason + a receipt-style item breakdown + Reject/Approve), with password / reason
+    <code>AlertDialog</code>s. No <code>AppCard</code>, no Lucide, and status (pending / approved / rejected) has
+    <b>no color semantics</b>. This bundle migrates it onto the elevated theme — <b>Lucide + soft-shadow
+    <code>AppCard</code> rows + status color semantics</b> (pending = amber, approved = green, rejected = red) with
+    dark parity — and should pair visually with the shipped <b>Sale Detail</b> (bundle 03) for the receipt
+    breakdown. Currency renders grouped (<code>₱1,234.00</code>). Mark up the redesign you want and hand back.
+    <i>(Icons here render in Lucide — the migration target — even though the live screen still ships Cupertino.)</i></p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary)</span>
+    <span><i class="swatch" style="background:#FFC107"></i> pending (warning)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> approved (success)</span>
+    <span><i class="swatch" style="background:#F44336"></i> rejected / unread dot (error)</span>
+    <span style="margin-left:auto">Light shown · dark parity target (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ 1 · VOID REQUESTS LIST ============ -->
+    <div class="frame">
+      <div class="caption">1 · Void Requests — admin queue · void_requests_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Void Requests</div>
+          <span class="act">Mark all read</span>
+        </div>
+        <div class="body">
+          <div class="tile">
+            <div class="lead"><i data-lucide="clock"></i></div>
+            <div class="mid">
+              <div class="t">SALE-20260627-3 • ₱980.00</div>
+              <div class="s">Juan Dela Cruz • Wrong item scanned<br>Jun 27, 11:48 AM • pending</div>
+            </div>
+            <div class="dot"></div>
+          </div>
+          <div class="tile">
+            <div class="lead"><i data-lucide="clock"></i></div>
+            <div class="mid">
+              <div class="t">SALE-20260627-1 • ₱1,540.00</div>
+              <div class="s">Maria Santos • Customer changed mind<br>Jun 27, 9:12 AM • pending</div>
+            </div>
+            <div class="dot"></div>
+          </div>
+          <div class="tile">
+            <div class="lead"><i data-lucide="check-circle"></i></div>
+            <div class="mid">
+              <div class="t">SALE-20260626-8 • ₱430.00</div>
+              <div class="s">Juan Dela Cruz • Duplicate charge<br>Jun 26, 5:30 PM • approved</div>
+            </div>
+          </div>
+          <div class="tile">
+            <div class="lead"><i data-lucide="check-circle"></i></div>
+            <div class="mid">
+              <div class="t">SALE-20260626-2 • ₱2,100.00</div>
+              <div class="s">Maria Santos • Test transaction<br>Jun 26, 10:05 AM • rejected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2 · EMPTY STATE ============ -->
+    <div class="frame">
+      <div class="caption">2 · Empty — no requests · EmptyStateView</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Void Requests</div>
+          <span class="act">Mark all read</span>
+        </div>
+        <div class="body">
+          <div class="empty">
+            <i data-lucide="bell"></i>
+            <div class="t">No void requests</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3 · RESOLVE BOTTOM SHEET ============ -->
+    <div class="frame">
+      <div class="caption">3 · Resolve sheet (tap a pending row) · showModalBottomSheet</div>
+      <div class="screen" style="position:relative;">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Void Requests</div>
+          <span class="act">Mark all read</span>
+        </div>
+        <div class="body" style="filter:saturate(.9);opacity:.6;">
+          <div class="tile"><div class="lead"><i data-lucide="clock"></i></div><div class="mid"><div class="t">SALE-20260627-3 • ₱980.00</div><div class="s">Juan Dela Cruz • Wrong item scanned<br>Jun 27, 11:48 AM • pending</div></div></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="ctx">
+            <div class="h">Void SALE-20260627-3?</div>
+            <div class="l">Requested by <b>Juan Dela Cruz</b></div>
+            <div class="l">Reason: Wrong item scanned</div>
+          </div>
+          <div class="receipt">
+            <div class="rhead">
+              <div class="rn">SALE-20260627-3</div>
+              <div class="rd">Jun 27, 2026 • 11:48 AM • Juan Dela Cruz</div>
+            </div>
+            <div class="ritem"><span>ASK Brake Shoe XRM 125 <span class="q">×2</span></span><span>₱500.00</span></div>
+            <div class="ritem"><span>NGK Spark Plug CPR6EA-9 <span class="q">×1</span></span><span>₱200.00</span></div>
+            <div class="ritem"><span>Labor — brake service</span><span>₱280.00</span></div>
+            <div class="rtot"><span>Total</span><span>₱980.00</span></div>
+          </div>
+          <div class="sheetftr">
+            <div class="btn-out">Reject</div>
+            <div class="btn-fill">Approve</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4 · APPROVE / REJECT DIALOGS ============ -->
+    <div class="frame">
+      <div class="caption">4 · Approve (password) · Reject (reason) · AlertDialog</div>
+      <div class="screen" style="position:relative;">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Void Requests</div>
+          <span class="act">Mark all read</span>
+        </div>
+        <div class="body" style="opacity:.5;"></div>
+        <div class="dlgwrap" style="flex-direction:column;gap:16px;">
+          <div class="dlg">
+            <div class="dh">Confirm with password</div>
+            <div class="fld">Your password</div>
+            <div class="acts"><span class="cancel">Cancel</span><span class="ok">Approve</span></div>
+          </div>
+          <div class="dlg">
+            <div class="dh">Reject request</div>
+            <div class="fld">Reason</div>
+            <div class="acts"><span class="cancel">Cancel</span><span class="ok">Reject</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Token-accurate reconstruction of the <b>current</b> Void Requests surface. Source:
+  <code>lib/presentation/mobile/screens/sales/void_requests_screen.dart</code> (+ <code>ReceiptWidget</code> in the
+  resolve sheet, itself still Cupertino — restyled with Sale Detail, deferred). Entity:
+  <code>VoidRequestEntity</code> (status = <code>pending</code> / <code>approved</code> / <code>rejected</code>;
+  <code>read</code> flag drives the unread dot). Current state: Material <code>ListTile</code> + <code>Divider</code>
+  rows, Cupertino icons (<code>clock</code> pending / <code>check_mark_circled</code> resolved / <code>bell</code>
+  empty), no <code>AppCard</code>, no status color. Behavior to preserve: <b>Mark all read</b> app-bar action;
+  unread red dot; tap a row → mark read → if <b>pending</b>, open the resolve sheet (requester + reason + receipt
+  breakdown + Reject / Approve); <b>Approve</b> requires the admin's <b>password</b>; <b>Reject</b> captures a
+  <b>reason</b>; non-pending rows are read-only. Admin-only screen. Migration target = the global theme in
+  <code>design/handoff/maki-theme/</code> (Lucide, soft-shadow <code>AppCard</code>, status color semantics with
+  dark parity). Pairs with shipped Sale Detail (bundle 03).</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

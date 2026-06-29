@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -12,6 +12,7 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:uuid/uuid.dart';
 
@@ -129,9 +130,14 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       message: _isDeleting ? 'Deleting draft...' : 'Processing...',
       child: Scaffold(
         appBar: AppBar(
-          title: Text(draft.name),
+          title: Text(
+            draft.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+          ),
           leading: IconButton(
-            icon: const Icon(CupertinoIcons.back),
+            icon: const Icon(LucideIcons.chevronLeft),
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -141,9 +147,10 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             },
           ),
           actions: [
-            // Delete button
+            // Delete button (red)
             IconButton(
-              icon: const Icon(CupertinoIcons.trash),
+              icon: const Icon(LucideIcons.trash2),
+              color: AppColors.costUp(theme.brightness == Brightness.dark),
               onPressed: () => _confirmDelete(draft),
               tooltip: 'Delete Draft',
             ),
@@ -169,7 +176,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(CupertinoIcons.clock, size: 14, color: muted),
+                        Icon(LucideIcons.clock, size: 14, color: muted),
                         const SizedBox(width: AppSpacing.sm),
                         Text(
                           'Created ${dateFormat.format(draft.createdAt)}',
@@ -182,7 +189,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(CupertinoIcons.pencil, size: 14, color: muted),
+                          Icon(LucideIcons.edit, size: 14, color: muted),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
                             'Updated ${dateFormat.format(draft.updatedAt!)}',
@@ -232,7 +239,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(CupertinoIcons.cart, size: 56, color: muted),
+          Icon(LucideIcons.shoppingCart, size: 56, color: muted),
           const SizedBox(height: AppSpacing.md),
           Text(
             'No items in this draft',
@@ -247,67 +254,71 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
 
-    return Card(
+    return AppCard(
+      radius: AppRadius.md,
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
+        vertical: 6,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm + 4),
-        child: Row(
-          children: [
-            // Quantity badge — outlined, no fill
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+      child: Row(
+        children: [
+          // Quantity badge — outlined, no fill (1.4px, radius 10)
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(
+                color: theme.colorScheme.primary,
+                width: 1.4,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                '${item.quantity}x',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                   color: theme.colorScheme.primary,
-                  width: 1.2,
                 ),
               ),
-              child: Center(
-                child: Text(
-                  '${item.quantity}x',
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm + 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: const TextStyle(
+                      fontSize: 14.5, fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'SKU: ${item.sku}',
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
+                    fontFamily: AppTextStyles.monoFontFamily,
+                    fontSize: 11.5,
+                    color: muted,
                   ),
                 ),
-              ),
+                Text(
+                  '${item.unitPrice.toCurrency()} each',
+                  style: TextStyle(fontSize: 12, color: muted),
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm + 4),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.name,
-                    style: AppTextStyles.productName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'SKU: ${item.sku}',
-                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                  ),
-                  Text(
-                    '${item.unitPrice.toCurrency()} each',
-                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              item.grossAmount.toCurrency(),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            item.grossAmount.toCurrency(),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
@@ -332,7 +343,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         children: [
           Row(
             children: [
-              Icon(CupertinoIcons.wrench, size: 16, color: muted),
+              Icon(LucideIcons.wrench, size: 16, color: muted),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 'Labor & Service',
@@ -344,7 +355,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _addOrEditLabor(draft),
-                icon: const Icon(CupertinoIcons.add, size: 16),
+                icon: const Icon(LucideIcons.plus, size: 16),
                 label: const Text('Add Labor'),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
@@ -370,14 +381,17 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final muted = theme.colorScheme.onSurfaceVariant;
 
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xs),
-      child: Row(
-        children: [
-          Icon(CupertinoIcons.wrench, size: 14, color: muted),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: InkWell(
-              onTap: () => _addOrEditLabor(draft, line),
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: AppCard(
+        radius: AppRadius.md,
+        onTap: () => _addOrEditLabor(draft, line),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.sm + 4, AppSpacing.xs, AppSpacing.xs, AppSpacing.xs),
+        child: Row(
+          children: [
+            Icon(LucideIcons.wrench, size: 14, color: muted),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
               child: Text(
                 line.description,
                 style: theme.textTheme.bodyMedium,
@@ -385,20 +399,20 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
-          Text(
-            line.fee.toCurrency(),
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w500),
-          ),
-          IconButton(
-            icon: const Icon(CupertinoIcons.xmark, size: 16),
-            visualDensity: VisualDensity.compact,
-            color: muted,
-            onPressed: () => _removeLabor(draft, line.id),
-            tooltip: 'Remove labor line',
-          ),
-        ],
+            Text(
+              line.fee.toCurrency(),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            IconButton(
+              icon: const Icon(LucideIcons.x, size: 16),
+              visualDensity: VisualDensity.compact,
+              color: muted,
+              onPressed: () => _removeLabor(draft, line.id),
+              tooltip: 'Remove labor line',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -429,7 +443,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                 label: 'Discount',
                 value:
                     '-${draft.totalDiscount.toCurrency()}',
-                valueColor: AppColors.successDark,
+                valueColor: AppColors.successText(isDark),
               ),
             ],
             if (draft.laborLines.isNotEmpty) ...[
@@ -442,12 +456,54 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     draft.laborSubtotal.toCurrency(),
               ),
             ],
-            const Divider(height: AppSpacing.md),
-            SummaryRow(
-              label: 'Total (${draft.totalItemCount} items)',
-              value:
-                  draft.grandTotal.toCurrency(),
-              isTotal: true,
+            // Total row: "Total" 15/700 + "(n items)" 12.5/500 muted inline;
+            // value 18/700 in onSurface. Border-top replaces the generic Divider.
+            Container(
+              margin: const EdgeInsets.only(top: AppSpacing.sm),
+              padding: const EdgeInsets.only(top: 9),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? AppColors.darkHairline
+                        : const Color(0xFFE5E3DE),
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      text: 'Total ',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '(${draft.totalItemCount} items)',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    draft.grandTotal.toCurrency(),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
@@ -456,7 +512,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                   child: OutlinedButton.icon(
                     onPressed:
                         draft.items.isEmpty ? null : () => _editInPos(draft),
-                    icon: const Icon(CupertinoIcons.pencil),
+                    icon: const Icon(LucideIcons.edit),
                     label: const Text('Edit in POS'),
                   ),
                 ),
@@ -467,7 +523,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     onPressed: draft.items.isEmpty
                         ? null
                         : () => _proceedToCheckout(draft),
-                    icon: const Icon(CupertinoIcons.cart_badge_plus),
+                    icon: const Icon(LucideIcons.shoppingCart),
                     label: const Text('Checkout'),
                   ),
                 ),
@@ -540,33 +596,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   }
 
   Future<void> _confirmDelete(DraftEntity draft) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Draft?'),
-        content: Text(
-          'Are you sure you want to delete "${draft.name}"? '
-          'This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _deleteDraft(draft);
-    }
+    await showDeleteDraftDialog(context, draft, () => _deleteDraft(draft));
   }
 
   Future<void> _deleteDraft(DraftEntity draft) async {

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- HEADER -->
+  <div style="max-width:2126px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Handoff 08 · Expenses · migration
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Expenses — on the new language</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:96ch">The expense tracker migrated to the elevated system — the <b>dashboard</b> (category filter · three-up totals · Recent list), its <b>empty</b> state, the <b>add / edit</b> form, the <b>delete</b> confirm + swipe-to-delete reveal, and the grouped <b>history</b>. Material <span style="font-family:'Roboto Mono';font-size:13px">Card</span> + <span style="font-family:'Roboto Mono';font-size:13px">ListTile</span> rows become soft-shadow <span style="font-family:'Roboto Mono';font-size:13px">AppCard</span> rows; Cupertino glyphs → <b>Lucide</b>; the three totals keep the elevated <span style="font-family:'Roboto Mono';font-size:13px">SummaryCard</span> treatment. The <b>neutral-by-default discipline holds</b> — every expense reads with the same muted glyph (no per-category colors invented), so color is reserved for status and only the destructive delete path carries red. The delete confirm adopts the shared dialog shell. Currency renders grouped (<span style="font-family:'Roboto Mono';font-size:13px">₱1,234.00</span>), with full dark parity (gold leads).</p>
+  </div>
+
+  <!-- changes legend -->
+  <div style="max-width:2126px;margin:0 auto 30px;display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span><b style="font-weight:600">Lucide</b> — replaces Cupertino glyphs</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#E8B84C"></span><b style="font-weight:600">AppCard rows</b> — soft-shadow surfaces + SummaryCard totals</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:14px;height:14px;border-radius:5px;background:rgba(40,62,70,.10);display:inline-flex;align-items:center;justify-content:center"><span style="width:6px;height:6px;border-radius:999px;background:#8A9296"></span></span><b style="font-weight:600">Neutral by default</b> — no per-category color; red only on delete</div>
+  </div>
+
+  <!-- ============ LIGHT ============ -->
+  <div style="max-width:2126px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start;margin-bottom:56px">
+
+    <!-- ===== 1 · DASHBOARD · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Expenses dashboard · <span style="font-family:'Roboto Mono'">expenses_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Expenses</div></div>
+        <div style="flex:1;overflow:auto">
+          <!-- category filter -->
+          <div style="padding:8px 16px 6px"><div style="display:flex;align-items:center;gap:10px;min-height:50px;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:0 14px"><i data-lucide="tag" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#16201F">All categories</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <!-- totals -->
+          <div style="display:flex;gap:8px;padding:6px 16px 10px">
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="sun" style="width:18px;height:18px;color:#8A9296;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#16201F;line-height:1">₱340.00</div><div style="font-size:11px;color:#8A9296">Today</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="calendar" style="width:18px;height:18px;color:#8A9296;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#16201F;line-height:1">₱2,180.00</div><div style="font-size:11px;color:#8A9296">This Week</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:#8A9296;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#16201F;line-height:1">₱9,640.00</div><div style="font-size:11px;color:#8A9296">This Month</div></div>
+          </div>
+          <!-- recent header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px"><span style="font-size:15px;font-weight:700;color:#16201F">Recent</span><span style="display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:#283E46">View all<i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2"></i></span></div>
+          <!-- list -->
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px 8px">
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shop electricity</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 27, 2026 • 2:14 PM</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱340.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cleaning supplies</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 26, 2026 • 10:02 AM</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱215.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tricycle delivery fee</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 25, 2026 • 4:48 PM</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱120.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Internet bill</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 24, 2026 • 9:30 AM</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱1,499.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Engine oil restock</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 23, 2026 • 11:20 AM</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱880.00</div></div>
+          </div>
+        </div>
+        <!-- add expense -->
+        <div style="flex:none;padding:10px 16px 18px;background:#F6F5F3;border-top:1px solid #ECECEC"><div style="display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.5)"><i data-lucide="plus" style="width:19px;height:19px;stroke-width:2.2"></i>Add Expense</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · EMPTY · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Empty — no expenses · <span style="font-family:'Roboto Mono'">EmptyStateView</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Expenses</div></div>
+        <div style="flex:1;overflow:auto">
+          <div style="padding:8px 16px 6px"><div style="display:flex;align-items:center;gap:10px;min-height:50px;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:0 14px"><i data-lucide="tag" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#16201F">All categories</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <div style="display:flex;gap:8px;padding:6px 16px 10px">
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="sun" style="width:18px;height:18px;color:#8A9296;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#16201F;line-height:1">₱0.00</div><div style="font-size:11px;color:#8A9296">Today</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="calendar" style="width:18px;height:18px;color:#8A9296;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#16201F;line-height:1">₱0.00</div><div style="font-size:11px;color:#8A9296">This Week</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:#8A9296;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#16201F;line-height:1">₱0.00</div><div style="font-size:11px;color:#8A9296">This Month</div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px"><span style="font-size:15px;font-weight:700;color:#16201F">Recent</span><span style="display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:#B4B8BA">View all<i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2"></i></span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:56px 24px;text-align:center">
+            <div style="width:76px;height:76px;border-radius:22px;background:rgba(40,62,70,.05);display:flex;align-items:center;justify-content:center"><i data-lucide="file-text" style="width:34px;height:34px;color:#C2C8CA;stroke-width:1.5"></i></div>
+            <div style="font-size:16px;font-weight:600;color:#16201F;margin-top:2px">No Expenses</div>
+            <div style="font-size:13px;color:#9AA0A3;margin-top:-6px">Tap + to add an expense</div>
+          </div>
+        </div>
+        <div style="flex:none;padding:10px 16px 18px;background:#F6F5F3;border-top:1px solid #ECECEC"><div style="display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.5)"><i data-lucide="plus" style="width:19px;height:19px;stroke-width:2.2"></i>Add Expense</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · ADD / EDIT FORM · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Add / Edit expense · <span style="font-family:'Roboto Mono'">expense_form_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Edit Expense</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#F44336"><i data-lucide="trash-2" style="width:21px;height:21px;stroke-width:1.75"></i></div></div>
+        <div style="flex:1;overflow:auto;padding:6px 16px 20px">
+          <!-- Description (focused) -->
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#283E46;margin:0 0 6px 2px">Description <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#fff;border:1.5px solid #283E46;border-radius:14px;padding:0 14px;font-size:15px;color:#16201F;box-shadow:0 0 0 4px rgba(40,62,70,.07)">Shop electricity</div></div>
+          <!-- Amount -->
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Amount <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;font-size:15px;color:#16201F"><span style="color:#8A9296;margin-right:5px">₱</span>340.00</div></div>
+          <!-- Category -->
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Category <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;font-size:15px;color:#16201F"><span style="flex:1">Utilities</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <!-- Paid via -->
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Paid via <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;font-size:15px;color:#16201F"><span style="flex:1">Cash</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <!-- Date -->
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Date <span style="color:#F44336">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;font-size:15px;color:#16201F"><span style="flex:1">Jun 27, 2026</span><i data-lucide="calendar" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <!-- Notes -->
+          <div style="margin-bottom:18px"><div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Notes</div><div style="display:flex;align-items:flex-start;min-height:80px;background:#FAFAFA;border:1px solid #E2E2E2;border-radius:14px;padding:13px 14px;font-size:14px;color:#9AA0A3">Optional details…</div></div>
+          <!-- Submit -->
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.5)">Update Expense</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · DELETE CONFIRM + SWIPE · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Delete confirm + swipe reveal · <span style="font-family:'Roboto Mono'">Dismissible / Dialog</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Expenses</div></div>
+        <div style="flex:1;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px"><span style="font-size:15px;font-weight:700;color:#16201F">Recent</span><span style="display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:#283E46">View all<i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2"></i></span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px">
+            <!-- swipe reveal -->
+            <div style="position:relative;border-radius:16px">
+              <div style="position:absolute;inset:0;background:#F44336;border-radius:16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding-right:22px;color:#fff;font-weight:600;font-size:14px"><i data-lucide="trash-2" style="width:20px;height:20px;stroke-width:2"></i>Delete</div>
+              <div style="position:relative;z-index:2;transform:translateX(-94px);display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cleaning supplies</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 26, 2026 • 10:02 AM</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱215.00</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tricycle delivery fee</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 25, 2026 • 4:48 PM</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱120.00</div></div>
+          </div>
+        </div>
+        <!-- scrim + destructive dialog -->
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#fff;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="trash-2" style="width:22px;height:22px;color:#F44336;stroke-width:1.85"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;line-height:1.3;padding-top:4px">Delete expense?</div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#8A9296;stroke-width:1.75"></i></div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#5A6468"><b style="color:#16201F;font-weight:600">“Cleaning supplies”</b> will be permanently deleted. This action can’t be undone.</p>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:22px">
+              <div style="font-size:14.5px;font-weight:600;color:#8A9296;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#fff;background:#F44336;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(244,67,54,.55)">Delete</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · HISTORY · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Expense history (by month) · <span style="font-family:'Roboto Mono'">expense_history_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Expense History</div></div>
+        <div style="flex:1;overflow:auto">
+          <div style="padding:8px 16px 4px"><div style="display:flex;align-items:center;gap:10px;min-height:50px;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:0 14px"><i data-lucide="tag" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#16201F">All categories</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div></div>
+          <!-- June -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px 6px"><span style="font-size:13.5px;font-weight:600;color:#8A9296">June 2026</span><span style="font-size:12px;font-weight:600;color:#8A9296">4 • ₱2,174.00</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px">
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shop electricity</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 27, 2026 • Utilities</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱340.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cleaning supplies</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 26, 2026 • Supplies</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱215.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Internet bill</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 24, 2026 • Utilities</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱1,499.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tricycle delivery fee</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 25, 2026 • Transport</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱120.00</div></div>
+          </div>
+          <!-- May -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 6px"><span style="font-size:13.5px;font-weight:600;color:#8A9296">May 2026</span><span style="font-size:12px;font-weight:600;color:#8A9296">2 • ₱1,840.00</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px 14px">
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shop rent</div><div style="font-size:12px;color:#8A9296;margin-top:3px">May 30, 2026 • Rent</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱1,500.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#8A9296;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#16201F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Coffee for staff</div><div style="font-size:12px;color:#8A9296;margin-top:3px">May 18, 2026 • Misc</div></div><div style="font-size:15px;font-weight:600;color:#16201F;flex:none">₱340.00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--SF_LIGHT-->
+  </div>
+
+  <!-- ============ DARK ============ -->
+  <div style="max-width:2126px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+
+    <!-- ===== 1 · DASHBOARD · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Expenses dashboard · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Expenses</div></div>
+        <div style="flex:1;overflow:auto">
+          <div style="padding:8px 16px 6px"><div style="display:flex;align-items:center;gap:10px;min-height:50px;background:#18262A;border:1px solid #243234;border-radius:14px;padding:0 14px"><i data-lucide="tag" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#ECEFEF">All categories</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div></div>
+          <div style="display:flex;gap:8px;padding:6px 16px 10px">
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="sun" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#ECEFEF;line-height:1">₱340.00</div><div style="font-size:11px;color:#93A0A3">Today</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="calendar" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#ECEFEF;line-height:1">₱2,180.00</div><div style="font-size:11px;color:#93A0A3">This Week</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#ECEFEF;line-height:1">₱9,640.00</div><div style="font-size:11px;color:#93A0A3">This Month</div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px"><span style="font-size:15px;font-weight:700;color:#ECEFEF">Recent</span><span style="display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:#E8B84C">View all<i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2"></i></span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px 8px">
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shop electricity</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 27, 2026 • 2:14 PM</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱340.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cleaning supplies</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 26, 2026 • 10:02 AM</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱215.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tricycle delivery fee</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 25, 2026 • 4:48 PM</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱120.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Internet bill</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 24, 2026 • 9:30 AM</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱1,499.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Engine oil restock</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 23, 2026 • 11:20 AM</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱880.00</div></div>
+          </div>
+        </div>
+        <div style="flex:none;padding:10px 16px 18px;background:#0C1415;border-top:1px solid #243234"><div style="display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="plus" style="width:19px;height:19px;stroke-width:2.2"></i>Add Expense</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · EMPTY · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Empty — no expenses · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Expenses</div></div>
+        <div style="flex:1;overflow:auto">
+          <div style="padding:8px 16px 6px"><div style="display:flex;align-items:center;gap:10px;min-height:50px;background:#18262A;border:1px solid #243234;border-radius:14px;padding:0 14px"><i data-lucide="tag" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#ECEFEF">All categories</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div></div>
+          <div style="display:flex;gap:8px;padding:6px 16px 10px">
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="sun" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#ECEFEF;line-height:1">₱0.00</div><div style="font-size:11px;color:#93A0A3">Today</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="calendar" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#ECEFEF;line-height:1">₱0.00</div><div style="font-size:11px;color:#93A0A3">This Week</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:12px 12px;display:flex;flex-direction:column;gap:8px"><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.85"></i><div style="font-size:16px;font-weight:700;color:#ECEFEF;line-height:1">₱0.00</div><div style="font-size:11px;color:#93A0A3">This Month</div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px"><span style="font-size:15px;font-weight:700;color:#ECEFEF">Recent</span><span style="display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:#566163">View all<i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2"></i></span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:56px 24px;text-align:center">
+            <div style="width:76px;height:76px;border-radius:22px;background:rgba(147,160,163,.08);display:flex;align-items:center;justify-content:center"><i data-lucide="file-text" style="width:34px;height:34px;color:#54646A;stroke-width:1.5"></i></div>
+            <div style="font-size:16px;font-weight:600;color:#ECEFEF;margin-top:2px">No Expenses</div>
+            <div style="font-size:13px;color:#6C797C;margin-top:-6px">Tap + to add an expense</div>
+          </div>
+        </div>
+        <div style="flex:none;padding:10px 16px 18px;background:#0C1415;border-top:1px solid #243234"><div style="display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="plus" style="width:19px;height:19px;stroke-width:2.2"></i>Add Expense</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · ADD / EDIT FORM · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Add / Edit expense · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Edit Expense</div><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#FF6B5E"><i data-lucide="trash-2" style="width:21px;height:21px;stroke-width:1.75"></i></div></div>
+        <div style="flex:1;overflow:auto;padding:6px 16px 20px">
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#E8B84C;margin:0 0 6px 2px">Description <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#18262A;border:1.5px solid #E8B84C;border-radius:14px;padding:0 14px;font-size:15px;color:#ECEFEF;box-shadow:0 0 0 4px rgba(232,184,76,.12)">Shop electricity</div></div>
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Amount <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px;font-size:15px;color:#ECEFEF"><span style="color:#93A0A3;margin-right:5px">₱</span>340.00</div></div>
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Category <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px;font-size:15px;color:#ECEFEF"><span style="flex:1">Utilities</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div></div>
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Paid via <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px;font-size:15px;color:#ECEFEF"><span style="flex:1">Cash</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div></div>
+          <div style="margin-bottom:14px"><div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Date <span style="color:#FF6B5E">*</span></div><div style="display:flex;align-items:center;min-height:50px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px;font-size:15px;color:#ECEFEF"><span style="flex:1">Jun 27, 2026</span><i data-lucide="calendar" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div></div>
+          <div style="margin-bottom:18px"><div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Notes</div><div style="display:flex;align-items:flex-start;min-height:80px;background:#0C1415;border:1px solid #2C3C3E;border-radius:14px;padding:13px 14px;font-size:14px;color:#6C797C">Optional details…</div></div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)">Update Expense</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · DELETE CONFIRM + SWIPE · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Delete confirm + swipe reveal · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Expenses</div></div>
+        <div style="flex:1;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px"><span style="font-size:15px;font-weight:700;color:#ECEFEF">Recent</span><span style="display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:#E8B84C">View all<i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2"></i></span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px">
+            <div style="position:relative;border-radius:16px">
+              <div style="position:absolute;inset:0;background:#F44336;border-radius:16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding-right:22px;color:#fff;font-weight:600;font-size:14px"><i data-lucide="trash-2" style="width:20px;height:20px;stroke-width:2"></i>Delete</div>
+              <div style="position:relative;z-index:2;transform:translateX(-94px);display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cleaning supplies</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 26, 2026 • 10:02 AM</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱215.00</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tricycle delivery fee</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 25, 2026 • 4:48 PM</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱120.00</div></div>
+          </div>
+        </div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px 22px 16px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78)">
+            <div style="display:flex;align-items:flex-start;gap:13px">
+              <div style="width:42px;height:42px;border-radius:13px;background:rgba(244,67,54,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="trash-2" style="width:22px;height:22px;color:#FF6B5E;stroke-width:1.85"></i></div>
+              <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;line-height:1.3;padding-top:4px">Delete expense?</div>
+              <div style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;margin:-1px -4px 0 0"><i data-lucide="x" style="width:20px;height:20px;color:#6C797C;stroke-width:1.75"></i></div>
+            </div>
+            <p style="margin:14px 0 0;font-size:14.5px;line-height:1.55;color:#93A0A3"><b style="color:#ECEFEF;font-weight:600">“Cleaning supplies”</b> will be permanently deleted. This action can’t be undone.</p>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:22px">
+              <div style="font-size:14.5px;font-weight:600;color:#93A0A3;padding:11px 16px;border-radius:16px">Cancel</div>
+              <div style="font-size:14.5px;font-weight:600;color:#fff;background:#F44336;padding:12px 22px;border-radius:16px;box-shadow:0 8px 18px -7px rgba(244,67,54,.5)">Delete</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · HISTORY · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Expense history (by month) · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Expense History</div></div>
+        <div style="flex:1;overflow:auto">
+          <div style="padding:8px 16px 4px"><div style="display:flex;align-items:center;gap:10px;min-height:50px;background:#18262A;border:1px solid #243234;border-radius:14px;padding:0 14px"><i data-lucide="tag" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#ECEFEF">All categories</span><i data-lucide="chevron-down" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px 6px"><span style="font-size:13.5px;font-weight:600;color:#93A0A3">June 2026</span><span style="font-size:12px;font-weight:600;color:#93A0A3">4 • ₱2,174.00</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px">
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shop electricity</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 27, 2026 • Utilities</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱340.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cleaning supplies</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 26, 2026 • Supplies</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱215.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Internet bill</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 24, 2026 • Utilities</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱1,499.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tricycle delivery fee</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 25, 2026 • Transport</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱120.00</div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 6px"><span style="font-size:13.5px;font-weight:600;color:#93A0A3">May 2026</span><span style="font-size:12px;font-weight:600;color:#93A0A3">2 • ₱1,840.00</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px 14px">
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shop rent</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">May 30, 2026 • Rent</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱1,500.00</div></div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:11px 13px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(147,160,163,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="file-text" style="width:20px;height:20px;color:#93A0A3;stroke-width:1.85"></i></div><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;color:#ECEFEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Coffee for staff</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">May 18, 2026 • Misc</div></div><div style="font-size:15px;font-weight:600;color:#ECEFEF;flex:none">₱340.00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--SF_DARK-->
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>

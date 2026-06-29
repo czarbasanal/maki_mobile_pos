@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_wdigets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
 /// Main settings screen with all configuration options.
 ///
@@ -26,7 +27,7 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Settings'),
@@ -35,19 +36,20 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.only(bottom: AppSpacing.lg),
         children: [
           if (currentUser != null) ...[
-            const _SectionHeader('My Profile'),
+            const _SectionHeader('My Profile', isFirst: true),
             _SectionCard(
+              heroFirst: true,
               children: [
                 _ProfileHero(user: currentUser),
                 SettingsTile(
-                  icon: CupertinoIcons.person,
+                  icon: LucideIcons.user,
                   title: 'Display Name',
                   subtitle: currentUser.displayName,
                   onTap: () =>
                       _showEditDisplayNameDialog(context, ref, currentUser),
                 ),
                 SettingsTile(
-                  icon: CupertinoIcons.lock,
+                  icon: LucideIcons.lock,
                   title: 'Change Password',
                   subtitle: 'Update your login password',
                   onTap: () => _showChangePasswordDialog(context, ref),
@@ -60,33 +62,33 @@ class SettingsScreen extends ConsumerWidget {
             _SectionCard(
               children: [
                 SettingsTile(
-                  icon: CupertinoIcons.person_2,
+                  icon: LucideIcons.users,
                   title: 'User Management',
                   subtitle: 'Add, edit, and manage users',
                   onTap: () => context.push(RoutePaths.users),
                 ),
                 SettingsTile(
-                  icon: CupertinoIcons.clock,
+                  icon: LucideIcons.clock,
                   title: 'Activity Logs',
                   subtitle: 'View user activity and audit trail',
                   onTap: () => context.push(RoutePaths.userLogs),
                 ),
                 SettingsTile(
-                  icon: CupertinoIcons.chevron_left_slash_chevron_right,
+                  icon: LucideIcons.code,
                   title: 'Cost Code Settings',
                   subtitle: 'Configure cost encoding',
                   onTap: () => context.push(RoutePaths.costCodeSettings),
                 ),
                 SettingsTile(
-                  icon: CupertinoIcons.tag,
+                  icon: LucideIcons.tag,
                   title: 'Manage Lists',
                   subtitle: 'Product / expense categories and units',
                   onTap: () => context.push(RoutePaths.categorySettings),
                 ),
                 SettingsTile(
-                  icon: CupertinoIcons.wrench,
+                  icon: LucideIcons.wrench,
                   title: 'Mechanics',
-                  subtitle: 'Used to assign a mechanic to a service draft',
+                  subtitle: 'Assign a mechanic to a service draft',
                   onTap: () => context.push(RoutePaths.mechanics),
                 ),
               ],
@@ -97,7 +99,7 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               _buildThemeTile(context, ref),
               SettingsTile(
-                icon: Icons.store_outlined,
+                icon: LucideIcons.store,
                 title: 'Store Information',
                 subtitle: 'Business name and details',
                 onTap: () {
@@ -105,7 +107,7 @@ class SettingsScreen extends ConsumerWidget {
                 },
               ),
               SettingsTile(
-                icon: CupertinoIcons.info_circle,
+                icon: LucideIcons.info,
                 title: 'About',
                 subtitle: 'App version ${AppConstants.appVersion}',
                 onTap: () => _showAboutDialog(context),
@@ -133,7 +135,7 @@ class SettingsScreen extends ConsumerWidget {
             controller: controller,
             decoration: const InputDecoration(
               labelText: 'Display Name',
-              prefixIcon: Icon(CupertinoIcons.person),
+              prefixIcon: Icon(LucideIcons.user),
             ),
             autofocus: true,
             validator: (value) {
@@ -214,7 +216,7 @@ class SettingsScreen extends ConsumerWidget {
                   controller: currentPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'Current Password',
-                    prefixIcon: Icon(CupertinoIcons.lock),
+                    prefixIcon: Icon(LucideIcons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -229,7 +231,7 @@ class SettingsScreen extends ConsumerWidget {
                   controller: newPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'New Password',
-                    prefixIcon: Icon(CupertinoIcons.lock),
+                    prefixIcon: Icon(LucideIcons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -247,7 +249,7 @@ class SettingsScreen extends ConsumerWidget {
                   controller: confirmPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'Confirm New Password',
-                    prefixIcon: Icon(CupertinoIcons.lock),
+                    prefixIcon: Icon(LucideIcons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -315,9 +317,9 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildThemeTile(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final (label, icon) = switch (mode) {
-      ThemeMode.system => ('System', CupertinoIcons.brightness),
-      ThemeMode.light => ('Light', CupertinoIcons.sun_max),
-      ThemeMode.dark => ('Dark', CupertinoIcons.moon),
+      ThemeMode.system => ('System', LucideIcons.monitor),
+      ThemeMode.light => ('Light', LucideIcons.sun),
+      ThemeMode.dark => ('Dark', LucideIcons.moon),
     };
     return SettingsTile(
       icon: icon,
@@ -328,35 +330,135 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showThemePicker(BuildContext context, WidgetRef ref) {
+    final current = ref.read(themeModeProvider);
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        final current = ref.read(themeModeProvider);
-        return SafeArea(
-          child: RadioGroup<ThemeMode>(
-            groupValue: current,
-            onChanged: (mode) {
-              if (mode == null) return;
+        final theme = Theme.of(sheetContext);
+        final dark = theme.brightness == Brightness.dark;
+        final sheetBg = dark ? AppColors.darkCard : Colors.white;
+        final hairline =
+            dark ? AppColors.darkHairline : const Color(0xFFF0F0F0);
+        final handleColor =
+            dark ? AppColors.darkHairline : const Color(0xFFD8D5CF);
+        final primary = theme.colorScheme.primary;
+
+        Widget radioRow(
+            ThemeMode mode, String label, IconData icon, bool selected) {
+          return InkWell(
+            onTap: () {
               ref.read(themeModeProvider.notifier).set(mode);
               Navigator.pop(sheetContext);
             },
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 21,
+                    color: selected ? primary : theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.w400,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  // Radio indicator
+                  selected
+                      ? Container(
+                          width: 21,
+                          height: 21,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: primary, width: 2),
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 11,
+                              height: 11,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: primary,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          width: 21,
+                          height: 21,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.fromBorderSide(
+                              BorderSide(color: Color(0xFFC2C8CA), width: 2),
+                            ),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: Container(
+            decoration: BoxDecoration(
+              color: sheetBg,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final entry in const [
-                  (
-                    ThemeMode.system,
-                    'System default',
-                    CupertinoIcons.brightness
+                // Grab handle
+                Container(
+                  margin: const EdgeInsets.only(top: 11, bottom: 4),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: handleColor,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
-                  (ThemeMode.light, 'Light', CupertinoIcons.sun_max),
-                  (ThemeMode.dark, 'Dark', CupertinoIcons.moon),
-                ])
-                  RadioListTile<ThemeMode>(
-                    value: entry.$1,
-                    title: Text(entry.$2),
-                    secondary: Icon(entry.$3),
+                ),
+                // Title
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Theme',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
                   ),
+                ),
+                radioRow(ThemeMode.system, 'System default',
+                    LucideIcons.monitor, current == ThemeMode.system),
+                Container(
+                    height: 1,
+                    color: hairline,
+                    margin: const EdgeInsets.only(left: 55)),
+                radioRow(ThemeMode.light, 'Light', LucideIcons.sun,
+                    current == ThemeMode.light),
+                Container(
+                    height: 1,
+                    color: hairline,
+                    margin: const EdgeInsets.only(left: 55)),
+                radioRow(ThemeMode.dark, 'Dark', LucideIcons.moon,
+                    current == ThemeMode.dark),
               ],
             ),
           ),
@@ -379,25 +481,22 @@ class SettingsScreen extends ConsumerWidget {
 
 /// Small uppercase header that introduces a section card.
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
+  const _SectionHeader(this.title, {this.isFirst = false});
 
   final String title;
+  final bool isFirst;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md + AppSpacing.xs,
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.sm,
-      ),
+      padding: EdgeInsets.fromLTRB(18, isFirst ? 16 : 18, 18, 8),
       child: Text(
         title.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+        style: TextStyle(
+          fontSize: 11,
           fontWeight: FontWeight.w600,
+          color: theme.colorScheme.onSurfaceVariant,
           letterSpacing: 0.8,
         ),
       ),
@@ -405,37 +504,51 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Rounded card grouping a list of rows separated by hairline dividers.
+/// Rounded AppCard grouping a list of rows separated by hairline dividers.
 ///
-/// Hairlines are indented past the icon column so the divider lines up
-/// under the row text — the classic iOS-settings rhythm.
+/// When [heroFirst] is true, the first divider (between the profile hero and
+/// the first tile) is inset 16px on both sides. All other dividers are
+/// left-indented at 62px (past the icon tile).
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.children});
+  const _SectionCard({required this.children, this.heroFirst = false});
 
   final List<Widget> children;
+  final bool heroFirst;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: _withDividers(children),
-        ),
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final hairline =
+        dark ? AppColors.darkHairline : const Color(0xFFF0F0F0);
+
+    return AppCard(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        children: _withDividers(children, hairline),
       ),
     );
   }
 
-  List<Widget> _withDividers(List<Widget> items) {
+  List<Widget> _withDividers(List<Widget> items, Color hairline) {
     if (items.length <= 1) return items;
     final out = <Widget>[];
     for (var i = 0; i < items.length; i++) {
       if (i > 0) {
-        out.add(const Divider(
-          height: 1,
-          indent: AppSpacing.md + 22 + AppSpacing.md, // align under title
-        ));
+        final isHeroDivider = heroFirst && i == 1;
+        out.add(
+          isHeroDivider
+              ? Container(
+                  height: 1,
+                  color: hairline,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                )
+              : Container(
+                  height: 1,
+                  color: hairline,
+                  margin: const EdgeInsets.only(left: 62),
+                ),
+        );
       }
       out.add(items[i]);
     }
@@ -453,52 +566,63 @@ class _ProfileHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final roleColor = _roleColor(user.role);
+    final dark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final roleColor = _roleColor(user.role, dark);
+    final avatarBg = roleColor.withValues(alpha: dark ? 0.22 : 0.10);
+    final pillBg = roleColor.withValues(alpha: dark ? 0.22 : 0.10);
+
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: roleColor.withValues(alpha: 0.08),
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: avatarBg,
+              shape: BoxShape.circle,
+            ),
             child: Icon(
               _roleIcon(user.role),
               color: roleColor,
               size: 26,
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   user.displayName,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: TextStyle(
+                    fontSize: 17,
                     fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   user.email,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: TextStyle(fontSize: 12.5, color: muted),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 7),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 2,
+                    horizontal: 11,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: roleColor.withValues(alpha: 0.08),
+                    color: pillBg,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     user.role.displayName,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
                       color: roleColor,
                     ),
                   ),
@@ -511,25 +635,24 @@ class _ProfileHero extends StatelessWidget {
     );
   }
 
-  Color _roleColor(UserRole role) {
+  Color _roleColor(UserRole role, bool dark) {
     switch (role) {
       case UserRole.admin:
-        return Colors.red;
+        return dark ? const Color(0xFFFF6B5E) : const Color(0xFFF44336);
       case UserRole.staff:
-        return Colors.blue;
+        return dark ? const Color(0xFF7FB8F5) : const Color(0xFF2196F3);
       case UserRole.cashier:
-        return Colors.green;
+        return dark ? const Color(0xFF8FE39A) : const Color(0xFF4CAF50);
     }
   }
 
   IconData _roleIcon(UserRole role) {
     switch (role) {
       case UserRole.admin:
-        return CupertinoIcons.shield_lefthalf_fill;
+        return LucideIcons.shield;
       case UserRole.staff:
-        return CupertinoIcons.tag;
       case UserRole.cashier:
-        return CupertinoIcons.cart;
+        return LucideIcons.userCircle2;
     }
   }
 }

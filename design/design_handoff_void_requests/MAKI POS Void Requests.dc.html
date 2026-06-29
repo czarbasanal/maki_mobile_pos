@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- HEADER -->
+  <div style="max-width:1692px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Handoff 07 · Void Requests · migration
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Void Requests — on the new language</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:86ch">The admin void-approval queue migrated to the elevated system. A raw Material <span style="font-family:'Roboto Mono'">ListView</span> of <span style="font-family:'Roboto Mono'">ListTile</span>s split by dividers becomes soft-shadow <span style="font-family:'Roboto Mono'">AppCard</span> rows; Cupertino → <b>Lucide</b>; and the status that currently ships all-neutral gains <b>color semantics</b> — <b>pending</b> amber, <b>approved</b> green, <b>rejected</b> red — with dark parity. The unread red dot, "Mark all read", tap-to-resolve flow, and the password/reason dialogs are all preserved; the resolve sheet's receipt breakdown matches the shipped <b>Sale Detail</b> (bundle 03). <b>Admin-only.</b></p>
+  </div>
+
+  <!-- legend -->
+  <div style="max-width:1692px;margin:0 auto 30px;display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span><b style="font-weight:600">Lucide</b> — replaces Cupertino glyphs</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#E8B84C"></span><b style="font-weight:600">AppCard</b> — soft-shadow rows replace Material tiles + dividers</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="display:flex;gap:3px"><span style="width:7px;height:7px;border-radius:999px;background:#F57C00"></span><span style="width:7px;height:7px;border-radius:999px;background:#4CAF50"></span><span style="width:7px;height:7px;border-radius:999px;background:#F44336"></span></span><b style="font-weight:600">Status color added</b> — pending · approved · rejected</div>
+  </div>
+
+  <!-- ============ LIGHT ============ -->
+  <div style="max-width:1692px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start;margin-bottom:56px">
+    <!-- ===== 1 · VOID REQUESTS LIST · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Void Requests · admin queue · <span style="font-family:'Roboto Mono'">void_requests_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px 8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Void Requests</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#283E46;padding:8px 6px"><i data-lucide="check-check" style="width:16px;height:16px;stroke-width:1.9"></i>Mark all read</span>
+        </div>
+        <div style="flex:1;overflow:auto;padding:12px 16px 20px">
+          <!-- count caption -->
+          <div style="display:flex;align-items:center;gap:7px;margin:0 2px 12px"><span style="font-size:12px;font-weight:700;color:#C8881A;background:rgba(245,124,0,.12);border-radius:999px;padding:3px 9px;white-space:nowrap;flex:none">2 pending</span><span style="font-size:12px;color:#9AA0A3">· 4 total</span></div>
+          <!-- pending · unread -->
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:14px 14px;margin-bottom:10px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(245,124,0,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="clock" style="width:20px;height:20px;color:#C8881A;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#16201F">SALE-20260627-3</span><span style="font-size:13.5px;font-weight:700;color:#16201F;margin-left:auto">₱980.00</span></div>
+              <div style="font-size:12.5px;color:#8A9296;margin-top:4px;line-height:1.45">Juan Dela Cruz · Wrong item scanned</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#C8881A;background:rgba(245,124,0,.12);border-radius:999px;padding:2px 8px"><i data-lucide="clock" style="width:11px;height:11px;stroke-width:2.2"></i>Pending</span><span style="font-size:11.5px;color:#9AA0A3">Jun 27, 11:48 AM</span></div>
+            </div>
+            <div style="width:9px;height:9px;border-radius:999px;background:#F44336;flex:none;margin-top:3px"></div>
+          </div>
+          <!-- pending · unread -->
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:14px 14px;margin-bottom:10px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(245,124,0,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="clock" style="width:20px;height:20px;color:#C8881A;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#16201F">SALE-20260627-1</span><span style="font-size:13.5px;font-weight:700;color:#16201F;margin-left:auto">₱1,540.00</span></div>
+              <div style="font-size:12.5px;color:#8A9296;margin-top:4px;line-height:1.45">Maria Santos · Customer changed mind</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#C8881A;background:rgba(245,124,0,.12);border-radius:999px;padding:2px 8px"><i data-lucide="clock" style="width:11px;height:11px;stroke-width:2.2"></i>Pending</span><span style="font-size:11.5px;color:#9AA0A3">Jun 27, 9:12 AM</span></div>
+            </div>
+            <div style="width:9px;height:9px;border-radius:999px;background:#F44336;flex:none;margin-top:3px"></div>
+          </div>
+          <!-- approved · read -->
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:14px 14px;margin-bottom:10px">
+            <div style="width:40px;height:40px;border-radius:11px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="check-circle-2" style="width:20px;height:20px;color:#2E7D32;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#16201F">SALE-20260626-8</span><span style="font-size:13.5px;font-weight:700;color:#16201F;margin-left:auto">₱430.00</span></div>
+              <div style="font-size:12.5px;color:#8A9296;margin-top:4px;line-height:1.45">Juan Dela Cruz · Duplicate charge</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#2E7D32;background:#E8F5E9;border-radius:999px;padding:2px 8px"><i data-lucide="check" style="width:11px;height:11px;stroke-width:2.6"></i>Approved</span><span style="font-size:11.5px;color:#9AA0A3">Jun 26, 5:30 PM</span></div>
+            </div>
+          </div>
+          <!-- rejected · read -->
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:14px 14px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:20px;height:20px;color:#F44336;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#16201F">SALE-20260626-2</span><span style="font-size:13.5px;font-weight:700;color:#16201F;margin-left:auto">₱2,100.00</span></div>
+              <div style="font-size:12.5px;color:#8A9296;margin-top:4px;line-height:1.45">Maria Santos · Test transaction</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#F44336;background:rgba(244,67,54,.10);border-radius:999px;padding:2px 8px"><i data-lucide="x" style="width:11px;height:11px;stroke-width:2.6"></i>Rejected</span><span style="font-size:11.5px;color:#9AA0A3">Jun 26, 10:05 AM</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · EMPTY STATE · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Empty · no requests · <span style="font-family:'Roboto Mono'">EmptyStateView</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px 8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Void Requests</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#B7BDC0;padding:8px 6px"><i data-lucide="check-check" style="width:16px;height:16px;stroke-width:1.9"></i>Mark all read</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:30px 40px 80px;text-align:center">
+          <div style="width:80px;height:80px;border-radius:999px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center"><i data-lucide="bell" style="width:34px;height:34px;color:#9AA0A3;stroke-width:1.6"></i></div>
+          <div style="font-size:16px;font-weight:700;color:#16201F;margin-top:6px">No void requests</div>
+          <div style="font-size:13px;color:#9AA0A3;line-height:1.45">When a cashier requests a void, it appears here for your review.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · RESOLVE SHEET · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Resolve sheet · tap a pending row · <span style="font-family:'Roboto Mono'">showModalBottomSheet</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px 8px 10px;min-height:52px;flex:none;opacity:.5">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Void Requests</div>
+        </div>
+        <div style="flex:1;position:relative;overflow:hidden">
+          <!-- scrim -->
+          <div style="position:absolute;inset:0;background:rgba(17,28,29,.36)"></div>
+          <!-- sheet -->
+          <div style="position:absolute;left:0;right:0;bottom:0;top:42px;background:#fff;border-radius:26px 26px 0 0;box-shadow:0 -10px 36px rgba(17,28,29,.22);display:flex;flex-direction:column;overflow:hidden">
+            <div style="width:38px;height:4px;border-radius:999px;background:#E2E2E2;margin:10px auto 2px;flex:none"></div>
+            <!-- context header -->
+            <div style="padding:12px 18px 14px;flex:none">
+              <div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(245,124,0,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="clock" style="width:20px;height:20px;color:#C8881A;stroke-width:1.9"></i></div><div style="flex:1;min-width:0"><div style="font-size:18px;font-weight:700;color:#16201F;letter-spacing:-.2px">Void this sale?</div><div style="font-size:12.5px;color:#8A9296;margin-top:2px">Requested by <b style="color:#16201F;font-weight:600">Juan Dela Cruz</b></div></div></div>
+              <div style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(245,124,0,.08)"><i data-lucide="message-square-quote" style="width:15px;height:15px;color:#C8881A;stroke-width:1.85;flex:none;margin-top:1px"></i><div style="font-size:12.5px;color:#8A5E12;line-height:1.4"><b style="font-weight:700">Reason</b> · Wrong item scanned</div></div>
+            </div>
+            <!-- receipt (matches Sale Detail) -->
+            <div style="flex:1;overflow:auto;padding:14px 18px 8px;border-top:1px solid #F0F0F0">
+              <div style="text-align:center;margin-bottom:12px"><div style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#283E46;letter-spacing:.3px">SALE-20260627-3</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Jun 27, 2026 · 11:48 AM · Juan Dela Cruz</div></div>
+              <div style="background:#FAFAFA;border-radius:16px;overflow:hidden;border:1px solid #F0F0F0">
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 13px;border-bottom:1px solid #F0F0F0"><span style="background:#283E46;color:#fff;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap;flex:none">×2</span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#16201F">ASK Brake Shoe XRM 125</div><div style="font-size:12px;color:#8A9296;margin-top:2px">ask-001 · ₱250.00/pc</div></div><div style="font-weight:700;font-size:13.5px;color:#16201F">₱500.00</div></div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 13px;border-bottom:1px solid #F0F0F0"><span style="background:#283E46;color:#fff;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap;flex:none">×1</span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#16201F">NGK Spark Plug CPR6EA-9</div><div style="font-size:12px;color:#8A9296;margin-top:2px">ngk-014 · ₱200.00/pc</div></div><div style="font-weight:700;font-size:13.5px;color:#16201F">₱200.00</div></div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 13px"><span style="background:rgba(40,62,70,.10);color:#283E46;font-size:11px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap;flex:none">Labor</span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#16201F">Brake service</div><div style="font-size:12px;color:#8A9296;margin-top:2px">Juan Dela Cruz</div></div><div style="font-weight:700;font-size:13.5px;color:#16201F">₱280.00</div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:0 4px"><span style="font-size:14px;font-weight:600;color:#16201F">Total to void</span><span style="font-size:18px;font-weight:700;color:#16201F;letter-spacing:-.3px">₱980.00</span></div>
+            </div>
+            <!-- footer -->
+            <div style="display:flex;gap:12px;padding:14px 18px 20px;border-top:1px solid #F0F0F0;flex:none">
+              <div style="flex:1;height:50px;border:1.5px solid #F44336;border-radius:15px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:600;font-size:15px;color:#F44336"><i data-lucide="x" style="width:17px;height:17px;stroke-width:2.2"></i>Reject</div>
+              <div style="flex:1;height:50px;border-radius:15px;background:#283E46;color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 8px 20px -8px rgba(40,62,70,.5)"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.4"></i>Approve</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · APPROVE / REJECT DIALOGS · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Approve (password) · Reject (reason) · <span style="font-family:'Roboto Mono'">AlertDialog</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="flex:1;position:relative;overflow:hidden">
+          <div style="position:absolute;inset:0;background:rgba(17,28,29,.40)"></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px">
+            <!-- Approve dialog -->
+            <div style="width:100%;background:#fff;border-radius:24px;padding:20px;box-shadow:0 24px 60px rgba(17,28,29,.28)">
+              <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px"><div style="width:40px;height:40px;border-radius:11px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-check" style="width:21px;height:21px;color:#2E7D32;stroke-width:1.9"></i></div><div><div style="font-size:17px;font-weight:700;color:#16201F">Approve void</div><div style="font-size:12.5px;color:#8A9296;margin-top:1px">Confirm with your admin password</div></div></div>
+              <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Password</div>
+              <div style="display:flex;align-items:center;gap:10px;min-height:50px;border:1.5px solid #283E46;border-radius:15px;background:#fff;padding:0 14px;box-shadow:0 0 0 4px rgba(40,62,70,.07)"><i data-lucide="lock" style="width:17px;height:17px;color:#283E46;stroke-width:1.85"></i><span style="flex:1;letter-spacing:3px;color:#16201F;font-size:16px">••••••••</span><i data-lucide="eye-off" style="width:17px;height:17px;color:#9AA0A3;stroke-width:1.85"></i></div>
+              <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px"><span style="font-size:14px;font-weight:600;color:#8A9296;padding:11px 14px">Cancel</span><span style="font-size:14px;font-weight:600;color:#fff;background:#4CAF50;border-radius:13px;padding:11px 20px;box-shadow:0 8px 18px -6px rgba(76,175,80,.5)">Approve</span></div>
+            </div>
+            <!-- Reject dialog -->
+            <div style="width:100%;background:#fff;border-radius:24px;padding:20px;box-shadow:0 24px 60px rgba(17,28,29,.28)">
+              <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:21px;height:21px;color:#F44336;stroke-width:1.9"></i></div><div><div style="font-size:17px;font-weight:700;color:#16201F">Reject request</div><div style="font-size:12.5px;color:#8A9296;margin-top:1px">Tell the cashier why</div></div></div>
+              <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Reason</div>
+              <div style="display:flex;align-items:flex-start;min-height:64px;border:1px solid #E2E2E2;border-radius:15px;background:#FAFAFA;padding:13px 14px;font-size:14px;color:#9AA0A3">Add a short reason…</div>
+              <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px"><span style="font-size:14px;font-weight:600;color:#8A9296;padding:11px 14px">Cancel</span><span style="font-size:14px;font-weight:600;color:#fff;background:#F44336;border-radius:13px;padding:11px 20px;box-shadow:0 8px 18px -6px rgba(244,67,54,.5)">Reject</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--SF_LIGHT-->
+  </div>
+
+  <!-- ============ DARK ============ -->
+  <div style="max-width:1692px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+    <!-- ===== 1 · VOID REQUESTS LIST · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Void Requests · admin queue · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px 8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Void Requests</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#E8B84C;padding:8px 6px"><i data-lucide="check-check" style="width:16px;height:16px;stroke-width:1.9"></i>Mark all read</span>
+        </div>
+        <div style="flex:1;overflow:auto;padding:12px 16px 20px">
+          <div style="display:flex;align-items:center;gap:7px;margin:0 2px 12px"><span style="font-size:12px;font-weight:700;color:#F5B547;background:rgba(245,181,71,.14);border-radius:999px;padding:3px 9px;white-space:nowrap;flex:none">2 pending</span><span style="font-size:12px;color:#6C797C">· 4 total</span></div>
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px 14px;margin-bottom:10px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(245,181,71,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="clock" style="width:20px;height:20px;color:#F5B547;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#ECEFEF">SALE-20260627-3</span><span style="font-size:13.5px;font-weight:700;color:#ECEFEF;margin-left:auto">₱980.00</span></div>
+              <div style="font-size:12.5px;color:#93A0A3;margin-top:4px;line-height:1.45">Juan Dela Cruz · Wrong item scanned</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#F5B547;background:rgba(245,181,71,.14);border-radius:999px;padding:2px 8px"><i data-lucide="clock" style="width:11px;height:11px;stroke-width:2.2"></i>Pending</span><span style="font-size:11.5px;color:#6C797C">Jun 27, 11:48 AM</span></div>
+            </div>
+            <div style="width:9px;height:9px;border-radius:999px;background:#FF6B5E;flex:none;margin-top:3px"></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px 14px;margin-bottom:10px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(245,181,71,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="clock" style="width:20px;height:20px;color:#F5B547;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#ECEFEF">SALE-20260627-1</span><span style="font-size:13.5px;font-weight:700;color:#ECEFEF;margin-left:auto">₱1,540.00</span></div>
+              <div style="font-size:12.5px;color:#93A0A3;margin-top:4px;line-height:1.45">Maria Santos · Customer changed mind</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#F5B547;background:rgba(245,181,71,.14);border-radius:999px;padding:2px 8px"><i data-lucide="clock" style="width:11px;height:11px;stroke-width:2.2"></i>Pending</span><span style="font-size:11.5px;color:#6C797C">Jun 27, 9:12 AM</span></div>
+            </div>
+            <div style="width:9px;height:9px;border-radius:999px;background:#FF6B5E;flex:none;margin-top:3px"></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px 14px;margin-bottom:10px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="check-circle-2" style="width:20px;height:20px;color:#5FC86A;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#ECEFEF">SALE-20260626-8</span><span style="font-size:13.5px;font-weight:700;color:#ECEFEF;margin-left:auto">₱430.00</span></div>
+              <div style="font-size:12.5px;color:#93A0A3;margin-top:4px;line-height:1.45">Juan Dela Cruz · Duplicate charge</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#8FE39A;background:rgba(76,175,80,.16);border-radius:999px;padding:2px 8px"><i data-lucide="check" style="width:11px;height:11px;stroke-width:2.6"></i>Approved</span><span style="font-size:11.5px;color:#6C797C">Jun 26, 5:30 PM</span></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:14px 14px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:20px;height:20px;color:#FF6B5E;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#ECEFEF">SALE-20260626-2</span><span style="font-size:13.5px;font-weight:700;color:#ECEFEF;margin-left:auto">₱2,100.00</span></div>
+              <div style="font-size:12.5px;color:#93A0A3;margin-top:4px;line-height:1.45">Maria Santos · Test transaction</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.3px;color:#FF6B5E;background:rgba(255,107,94,.14);border-radius:999px;padding:2px 8px"><i data-lucide="x" style="width:11px;height:11px;stroke-width:2.6"></i>Rejected</span><span style="font-size:11.5px;color:#6C797C">Jun 26, 10:05 AM</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · EMPTY STATE · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Empty · no requests · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px 8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Void Requests</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#4A5A5E;padding:8px 6px"><i data-lucide="check-check" style="width:16px;height:16px;stroke-width:1.9"></i>Mark all read</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:30px 40px 80px;text-align:center">
+          <div style="width:80px;height:80px;border-radius:999px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center"><i data-lucide="bell" style="width:34px;height:34px;color:#6C797C;stroke-width:1.6"></i></div>
+          <div style="font-size:16px;font-weight:700;color:#ECEFEF;margin-top:6px">No void requests</div>
+          <div style="font-size:13px;color:#6C797C;line-height:1.45">When a cashier requests a void, it appears here for your review.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · RESOLVE SHEET · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Resolve sheet · tap a pending row · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px 8px 10px;min-height:52px;flex:none;opacity:.5">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Void Requests</div>
+        </div>
+        <div style="flex:1;position:relative;overflow:hidden">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;top:42px;background:#18262A;border:1px solid #243234;border-bottom:none;border-radius:26px 26px 0 0;box-shadow:0 -10px 36px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden">
+            <div style="width:38px;height:4px;border-radius:999px;background:#2C3C3E;margin:10px auto 2px;flex:none"></div>
+            <div style="padding:12px 18px 14px;flex:none">
+              <div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(245,181,71,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="clock" style="width:20px;height:20px;color:#F5B547;stroke-width:1.9"></i></div><div style="flex:1;min-width:0"><div style="font-size:18px;font-weight:700;color:#ECEFEF;letter-spacing:-.2px">Void this sale?</div><div style="font-size:12.5px;color:#93A0A3;margin-top:2px">Requested by <b style="color:#ECEFEF;font-weight:600">Juan Dela Cruz</b></div></div></div>
+              <div style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(245,181,71,.10)"><i data-lucide="message-square-quote" style="width:15px;height:15px;color:#F5B547;stroke-width:1.85;flex:none;margin-top:1px"></i><div style="font-size:12.5px;color:#F5B547;line-height:1.4"><b style="font-weight:700;color:#F8C96A">Reason</b> · Wrong item scanned</div></div>
+            </div>
+            <div style="flex:1;overflow:auto;padding:14px 18px 8px;border-top:1px solid #243234">
+              <div style="text-align:center;margin-bottom:12px"><div style="font-family:'Roboto Mono';font-size:13px;font-weight:600;color:#E8B84C;letter-spacing:.3px">SALE-20260627-3</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Jun 27, 2026 · 11:48 AM · Juan Dela Cruz</div></div>
+              <div style="background:#0C1415;border-radius:16px;overflow:hidden;border:1px solid #243234">
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 13px;border-bottom:1px solid #243234"><span style="background:#E8B84C;color:#121C1D;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap;flex:none">×2</span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#ECEFEF">ASK Brake Shoe XRM 125</div><div style="font-size:12px;color:#93A0A3;margin-top:2px">ask-001 · ₱250.00/pc</div></div><div style="font-weight:700;font-size:13.5px;color:#ECEFEF">₱500.00</div></div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 13px;border-bottom:1px solid #243234"><span style="background:#E8B84C;color:#121C1D;font-size:12px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap;flex:none">×1</span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#ECEFEF">NGK Spark Plug CPR6EA-9</div><div style="font-size:12px;color:#93A0A3;margin-top:2px">ngk-014 · ₱200.00/pc</div></div><div style="font-weight:700;font-size:13.5px;color:#ECEFEF">₱200.00</div></div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 13px"><span style="background:rgba(232,184,76,.18);color:#E8B84C;font-size:11px;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap;flex:none">Labor</span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#ECEFEF">Brake service</div><div style="font-size:12px;color:#93A0A3;margin-top:2px">Juan Dela Cruz</div></div><div style="font-weight:700;font-size:13.5px;color:#ECEFEF">₱280.00</div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:0 4px"><span style="font-size:14px;font-weight:600;color:#ECEFEF">Total to void</span><span style="font-size:18px;font-weight:700;color:#ECEFEF;letter-spacing:-.3px">₱980.00</span></div>
+            </div>
+            <div style="display:flex;gap:12px;padding:14px 18px 20px;border-top:1px solid #243234;flex:none">
+              <div style="flex:1;height:50px;border:1.5px solid #FF6B5E;border-radius:15px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:600;font-size:15px;color:#FF6B5E"><i data-lucide="x" style="width:17px;height:17px;stroke-width:2.2"></i>Reject</div>
+              <div style="flex:1;height:50px;border-radius:15px;background:#E8B84C;color:#121C1D;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 8px 20px -8px rgba(232,184,76,.5)"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.4"></i>Approve</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · APPROVE / REJECT DIALOGS · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Approve (password) · Reject (reason) · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="flex:1;position:relative;overflow:hidden">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.55)"></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px">
+            <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.55)">
+              <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-check" style="width:21px;height:21px;color:#5FC86A;stroke-width:1.9"></i></div><div><div style="font-size:17px;font-weight:700;color:#ECEFEF">Approve void</div><div style="font-size:12.5px;color:#93A0A3;margin-top:1px">Confirm with your admin password</div></div></div>
+              <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Password</div>
+              <div style="display:flex;align-items:center;gap:10px;min-height:50px;border:1.5px solid #E8B84C;border-radius:15px;background:#18262A;padding:0 14px;box-shadow:0 0 0 4px rgba(232,184,76,.12)"><i data-lucide="lock" style="width:17px;height:17px;color:#E8B84C;stroke-width:1.85"></i><span style="flex:1;letter-spacing:3px;color:#ECEFEF;font-size:16px">••••••••</span><i data-lucide="eye-off" style="width:17px;height:17px;color:#6C797C;stroke-width:1.85"></i></div>
+              <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px"><span style="font-size:14px;font-weight:600;color:#93A0A3;padding:11px 14px">Cancel</span><span style="font-size:14px;font-weight:600;color:#0C1415;background:#5FC86A;border-radius:13px;padding:11px 20px;box-shadow:0 8px 18px -6px rgba(76,175,80,.45)">Approve</span></div>
+            </div>
+            <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.55)">
+              <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:21px;height:21px;color:#FF6B5E;stroke-width:1.9"></i></div><div><div style="font-size:17px;font-weight:700;color:#ECEFEF">Reject request</div><div style="font-size:12.5px;color:#93A0A3;margin-top:1px">Tell the cashier why</div></div></div>
+              <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Reason</div>
+              <div style="display:flex;align-items:flex-start;min-height:64px;border:1px solid #2C3C3E;border-radius:15px;background:#0C1415;padding:13px 14px;font-size:14px;color:#6C797C">Add a short reason…</div>
+              <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px"><span style="font-size:14px;font-weight:600;color:#93A0A3;padding:11px 14px">Cancel</span><span style="font-size:14px;font-weight:600;color:#fff;background:#F44336;border-radius:13px;padding:11px 20px;box-shadow:0 8px 18px -6px rgba(244,67,54,.45)">Reject</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--SF_DARK-->
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>

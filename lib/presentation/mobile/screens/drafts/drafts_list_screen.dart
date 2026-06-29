@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
-import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_detail_sheet.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_list_tile.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -23,14 +22,14 @@ class DraftsListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.pos),
         ),
         title: const Text('Saved Drafts'),
         actions: [
           // Refresh button
           IconButton(
-            icon: const Icon(CupertinoIcons.refresh),
+            icon: const Icon(LucideIcons.refreshCw),
             tooltip: 'Refresh',
             onPressed: () => ref.invalidate(activeDraftsProvider),
           ),
@@ -54,12 +53,12 @@ class DraftsListScreen extends ConsumerWidget {
   ) {
     if (drafts.isEmpty) {
       return EmptyStateView(
-        icon: CupertinoIcons.envelope,
+        icon: LucideIcons.mail,
         title: 'No Saved Drafts',
         subtitle: 'Drafts you save from the POS screen will appear here.',
         action: FilledButton.icon(
           onPressed: () => context.go(RoutePaths.pos),
-          icon: const Icon(CupertinoIcons.cart),
+          icon: const Icon(LucideIcons.shoppingCart),
           label: const Text('Go to POS'),
         ),
       );
@@ -97,6 +96,9 @@ class DraftsListScreen extends ConsumerWidget {
     WidgetRef ref,
     DraftEntity draft,
   ) {
+    final user = ref.read(currentUserProvider).valueOrNull;
+    final canDelete =
+        user != null && (user.isAdmin || draft.createdBy == user.id);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -107,10 +109,12 @@ class DraftsListScreen extends ConsumerWidget {
           Navigator.pop(context);
           _loadDraftIntoCart(context, ref, draft);
         },
-        onDelete: () {
-          Navigator.pop(context);
-          _confirmDeleteDraft(context, ref, draft);
-        },
+        onDelete: canDelete
+            ? () {
+                Navigator.pop(context);
+                _confirmDeleteDraft(context, ref, draft);
+              }
+            : null,
       ),
     );
   }
@@ -124,30 +128,29 @@ class DraftsListScreen extends ConsumerWidget {
 
     // Check if cart has items
     if (cart.isNotEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Replace Cart?'),
-          content: Text(
-            'Your current cart has ${cart.totalItemCount} item(s). '
-            'Loading this draft will replace them.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performLoadDraft(context, ref, draft);
-              },
-              child: const Text('Replace'),
-            ),
-          ],
-        ),
-      );
+      _confirmReplaceCart(context, ref, draft, cart.totalItemCount);
     } else {
+      _performLoadDraft(context, ref, draft);
+    }
+  }
+
+  Future<void> _confirmReplaceCart(
+    BuildContext context,
+    WidgetRef ref,
+    DraftEntity draft,
+    int cartCount,
+  ) async {
+    // Non-destructive primary action: slate/gold filled, never red.
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Replace cart?',
+      message:
+          'Your current cart has $cartCount item${cartCount == 1 ? '' : 's'}. '
+          'Loading this draft will replace them.',
+      confirmLabel: 'Replace',
+      icon: LucideIcons.refreshCw,
+    );
+    if (confirmed && context.mounted) {
       _performLoadDraft(context, ref, draft);
     }
   }
@@ -184,73 +187,9 @@ class DraftsListScreen extends ConsumerWidget {
     WidgetRef ref,
     DraftEntity draft,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final theme = Theme.of(context);
-        final muted = theme.colorScheme.onSurfaceVariant;
-        final isDark = theme.brightness == Brightness.dark;
-        final hairline =
-            isDark ? AppColors.darkHairline : AppColors.lightHairline;
-        final mutedFill =
-            isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
-        return AlertDialog(
-          title: const Text('Delete Draft?'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Are you sure you want to delete "${draft.name}"?'),
-              const SizedBox(height: AppSpacing.sm + 4),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm + 4),
-                decoration: BoxDecoration(
-                  color: mutedFill,
-                  border: Border.all(color: hairline),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${draft.totalItemCount} item(s)',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      'Total: ${draft.grandTotal.toCurrency()}',
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm + 4),
-              Text(
-                'This action cannot be undone.',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.error,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performDeleteDraft(context, ref, draft);
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
+    showDeleteDraftDialog(context, draft, () {
+      _performDeleteDraft(context, ref, draft);
+    });
   }
 
   Future<void> _performDeleteDraft(

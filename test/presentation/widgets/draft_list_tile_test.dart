@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -94,7 +94,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byIcon(CupertinoIcons.trash));
+      await tester.tap(find.byIcon(LucideIcons.trash2));
       await tester.pump();
 
       expect(deleteTapped, true);

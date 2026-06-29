@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:intl/intl.dart';
 
-/// Displays a single draft in the list.
+/// Displays a single draft in the list, on the elevated theme.
+///
+/// Neutral-by-default: every draft reads with the same muted `file-text` glyph
+/// in a neutral tile — no status/category color is invented. Color is reserved
+/// for the slate/gold primary (total, qty, Service-job badge, Load) and the red
+/// destructive delete.
 class DraftListTile extends StatelessWidget {
   final DraftEntity draft;
   final VoidCallback onTap;
@@ -25,115 +31,117 @@ class DraftListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
     final dateFormat = DateFormat('MMM d, h:mm a');
     final updatedAt = draft.updatedAt ?? draft.createdAt;
 
-    return Card(
+    return AppCard(
+      radius: AppRadius.lg,
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
+        vertical: 6,
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Head: neutral doc tile + name/date + total/count
+          Row(
             children: [
-              // Header: outlined doc icon + name/date + total
-              Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.doc_text,
-                    color: muted,
-                    size: 22,
-                  ),
-                  const SizedBox(width: AppSpacing.sm + 4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          draft.name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          dateFormat.format(updatedAt),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        draft.grandTotal.toCurrency(),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      Text(
-                        draft.totalItemCount == 1
-                            ? '1 item'
-                            : '${draft.totalItemCount} items',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: dark
+                      ? const Color(0x1F93A0A3)
+                      : const Color(0x0F283E46),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(LucideIcons.fileText, size: 20, color: muted),
               ),
-              const SizedBox(height: AppSpacing.sm + 4),
-              _buildItemsPreview(context),
-              const SizedBox(height: AppSpacing.sm + 4),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'By ${draft.createdByName}',
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              const SizedBox(width: AppSpacing.sm + 4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      draft.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  if (onDeleteTap != null) ...[
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.trash),
-                      onPressed: onDeleteTap,
-                      tooltip: 'Delete draft',
-                      visualDensity: VisualDensity.compact,
-                      color: muted,
+                    const SizedBox(height: 2),
+                    Text(
+                      dateFormat.format(updatedAt),
+                      style: TextStyle(fontSize: 12, color: muted),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
                   ],
-                  FilledButton.icon(
-                    onPressed: onLoadTap,
-                    icon: const Icon(CupertinoIcons.cart_badge_plus, size: 18),
-                    label: const Text('Load'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    draft.grandTotal.toCurrency(),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
                     ),
+                  ),
+                  Text(
+                    draft.totalItemCount == 1
+                        ? '1 item'
+                        : '${draft.totalItemCount} items',
+                    style: TextStyle(fontSize: 12, color: muted),
                   ),
                 ],
               ),
             ],
           ),
-        ),
+          const SizedBox(height: AppSpacing.sm + 4),
+          _buildItemsPreview(context),
+          const SizedBox(height: AppSpacing.sm + 4),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'By ${draft.createdByName}',
+                  style: TextStyle(fontSize: 12, color: muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (onDeleteTap != null) ...[
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2),
+                  onPressed: onDeleteTap,
+                  tooltip: 'Delete draft',
+                  visualDensity: VisualDensity.compact,
+                  color: AppColors.costUp(dark),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              FilledButton.icon(
+                onPressed: onLoadTap,
+                icon: const Icon(LucideIcons.shoppingCart, size: 18),
+                label: const Text('Load'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -143,9 +151,9 @@ class DraftListTile extends StatelessWidget {
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
     final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+        isDark ? AppColors.darkInputBorder : AppColors.lightHairline;
     final mutedFill =
-        isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
+        isDark ? AppColors.darkCanvas : AppColors.lightSurfaceMuted;
 
     final previewItems = draft.items.take(3).toList();
     final remainingCount = draft.items.length - previewItems.length;
@@ -176,14 +184,15 @@ class DraftListTile extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      CupertinoIcons.wrench,
+                      LucideIcons.wrench,
                       size: 12,
                       color: theme.colorScheme.primary,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Service job',
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: TextStyle(
+                        fontSize: 11,
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -200,19 +209,20 @@ class DraftListTile extends StatelessWidget {
                     Expanded(
                       child: Text(
                         item.name,
-                        style: AppTextStyles.productName,
-                        maxLines: 2,
+                        style: const TextStyle(fontSize: 13),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
                       '×${item.quantity}',
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                      style: TextStyle(fontSize: 13, color: muted),
                     ),
                     const SizedBox(width: AppSpacing.sm + 4),
                     Text(
                       item.grossAmount.toCurrency(),
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -224,7 +234,8 @@ class DraftListTile extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 '+$remainingCount more item${remainingCount > 1 ? 's' : ''}',
-                style: theme.textTheme.bodySmall?.copyWith(
+                style: TextStyle(
+                  fontSize: 12,
                   color: muted,
                   fontStyle: FontStyle.italic,
                 ),

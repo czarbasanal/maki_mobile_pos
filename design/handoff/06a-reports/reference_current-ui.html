@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 06a: Reports (hub / lists)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --field:#FAFAFA; --input-border:#E2E2E2; --panel:#FAFAFA;
+    --info:#2196F3; --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --warning:#FFC107; --warning-dark:#F57C00;
+    /* medal idiom (top-selling rank) — intentionally kept */
+    --amber:#FFC107; --silver:#607D8B; --bronze:#8D6E63;
+    --r-sm:10px; --r-md:14px; --r-field:16px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+    --shadow-mat:0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1700px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:980px;line-height:1.55;}
+  code{font-family:'Roboto Mono',monospace;font-size:.9em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:46px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:380px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;margin-top:26px;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:880px;overflow:hidden;display:flex;flex-direction:column;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--canvas);min-height:52px;}
+  .appbar .title{flex:1;}
+  .appbar .title .t{font-size:18px;font-weight:600;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;flex:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .body{flex:1;overflow:auto;}
+  .body::-webkit-scrollbar{width:0;}
+
+  /* ---- DateRangePicker (current: two outlined slate-bordered controls) ---- */
+  .drp{display:flex;gap:8px;padding:16px;border-bottom:1px solid var(--hairline);background:var(--canvas);}
+  .drp .ctl{flex:1;height:48px;border:1px solid var(--slate);border-radius:var(--r-md);display:flex;align-items:center;gap:6px;padding:0 12px;color:var(--slate);font-size:14px;font-weight:500;min-width:0;}
+  .drp .ctl i{width:16px;height:16px;flex:none;color:var(--slate);}
+  .drp .ctl .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* ---- sales-list date group header (flat, hairline top+bottom) ---- */
+  .grouphdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);}
+  .grouphdr .d{font-size:14px;font-weight:600;}
+  .grouphdr .c{font-size:12px;color:var(--muted);margin-top:1px;}
+  .grouphdr .tot{font-size:16px;font-weight:600;color:var(--slate);}
+
+  /* ---- sale ListTile (current: Material ListTile, outlined leading glyph) ---- */
+  .sale{display:flex;align-items:center;gap:14px;padding:10px 16px;}
+  .sale .lead{width:24px;display:flex;justify-content:center;flex:none;}
+  .sale .lead i{width:23px;height:23px;color:var(--muted);}
+  .sale .lead.void i{color:var(--error);}
+  .sale .mid{flex:1;min-width:0;}
+  .sale .num{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .sale .num.void{color:var(--muted);text-decoration:line-through;}
+  .voidbadge{font-size:10px;font-weight:600;letter-spacing:.6px;color:var(--error);border:1px solid var(--error);border-radius:var(--r-sm);padding:1px 5px;text-decoration:none;}
+  .sale .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .sale .trail{display:flex;flex-direction:column;align-items:flex-end;flex:none;}
+  .sale .amt{font-size:16px;font-weight:600;}
+  .sale .amt.void{color:var(--muted);text-decoration:line-through;}
+  .sale .pm{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);margin-top:1px;}
+  .sale .pm i{width:14px;height:14px;}
+
+  /* ---- Material Card surface (current: NOT AppCard — flat Material elevation) ---- */
+  .mcard{background:var(--card);border-radius:var(--r-md);box-shadow:var(--shadow-mat);margin:16px;padding:16px;}
+  .mcard.tight{margin:0 16px 16px;}
+  .cardhead{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .cardhead i{width:22px;height:22px;color:var(--slate);}
+  .cardhead .t{font-size:16px;font-weight:600;}
+  .cardhead .right{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600;}
+
+  /* outlined metric cards (2-col grid) */
+  .mgrid{display:flex;gap:12px;margin-bottom:12px;}
+  .metric{flex:1;border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px;min-width:0;}
+  .metric.success{border-color:var(--success);}
+  .metric.error{border-color:var(--error);}
+  .metric .mh{display:flex;align-items:center;gap:4px;}
+  .metric .mh i{width:16px;height:16px;color:var(--muted);}
+  .metric .mh .l{font-size:11px;font-weight:500;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .metric.success .mh i,.metric.error .mh i{color:inherit;}
+  .metric.success{color:var(--success);} .metric.error{color:var(--error);}
+  .metric .v{font-size:16px;font-weight:600;color:var(--ink);margin-top:8px;}
+  .metric.success .v{color:var(--success-dark);} .metric.error .v{color:var(--error);}
+  .metric .vs{font-size:10px;color:var(--muted);margin-top:2px;}
+
+  /* net-sales accent panel (outlined primary border) */
+  .netpanel{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--slate);border-radius:var(--r-md);padding:16px;}
+  .netpanel .l{font-size:16px;font-weight:600;}
+  .netpanel .v{font-size:20px;font-weight:600;color:var(--slate);}
+  .divline{height:1px;background:var(--divider);margin:16px 0;}
+  .avgpill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--hairline);border-radius:var(--r-pill);padding:6px 12px;font-size:11px;font-weight:600;color:var(--muted);margin:12px 0;}
+  .avgpill i{width:14px;height:14px;}
+
+  /* top-products rows */
+  .trow{margin-bottom:12px;}
+  .trow .top{display:flex;align-items:center;gap:12px;}
+  .rank{width:28px;height:28px;border-radius:50%;border:1px solid var(--hairline);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--muted);flex:none;}
+  .rank.g1{border-color:var(--amber);color:var(--amber);border-width:1.5px;}
+  .rank.g2{border-color:var(--silver);color:var(--silver);border-width:1.5px;}
+  .rank.g3{border-color:var(--bronze);color:var(--bronze);border-width:1.5px;}
+  .trow .info{flex:1;min-width:0;}
+  .trow .pn{font-size:14px;font-weight:600;line-height:1.2;}
+  .trow .psku{font-size:12px;color:var(--muted);margin-top:1px;font-family:'Roboto Mono';}
+  .trow .qt{text-align:right;flex:none;}
+  .trow .qt .q{font-size:14px;font-weight:600;}
+  .trow .qt .r{font-size:12px;color:var(--muted);}
+  .trow .bar{display:flex;align-items:center;gap:12px;margin-top:8px;}
+  .trow .bar .sp{width:28px;flex:none;}
+  .progress{flex:1;height:6px;border-radius:var(--r-sm);background:var(--hairline);overflow:hidden;}
+  .progress > span{display:block;height:100%;background:var(--slate);}
+  .progress > span.g1{background:var(--amber);}
+  .progress > span.g2{background:var(--silver);}
+  .progress > span.g3{background:var(--bronze);}
+  .profitbadge{font-size:11px;font-weight:600;color:var(--success-dark);border:1px solid var(--success);border-radius:var(--r-sm);padding:2px 6px;flex:none;}
+
+  /* payment breakdown */
+  .pmrow{margin-bottom:12px;}
+  .pmrow .ph{display:flex;justify-content:space-between;font-size:14px;}
+  .pmrow .ph b{font-weight:600;}
+  .pmrow .pbar{height:8px;border-radius:var(--r-sm);background:var(--hairline);overflow:hidden;margin-top:4px;}
+  .pmrow .pbar > span{display:block;height:100%;background:var(--slate);}
+
+  /* EOD link tile (Material Card + ListTile) */
+  .linktile{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:var(--r-md);box-shadow:var(--shadow-mat);margin:0 16px;padding:14px 16px;}
+  .linktile > i{width:22px;height:22px;color:var(--slate);flex:none;}
+  .linktile .lt{flex:1;}
+  .linktile .lt .t{font-size:15px;font-weight:500;}
+  .linktile .lt .s{font-size:12px;color:var(--muted);margin-top:1px;}
+  .linktile .chev{width:18px;height:18px;color:var(--muted);flex:none;}
+
+  /* profit-report date strip */
+  .datestrip{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--hairline);}
+  .datestrip i{width:18px;height:18px;color:var(--muted);}
+  .datestrip .r{font-size:14px;font-weight:500;flex:1;}
+  .datestrip .ch{font-size:14px;font-weight:600;color:var(--slate);}
+
+  /* section header inline */
+  .sech{display:flex;align-items:center;padding:0 16px;margin:8px 0;}
+  .sech .t{font-size:16px;font-weight:600;}
+  .sech .link{margin-left:auto;font-size:14px;font-weight:600;color:var(--slate);}
+
+  /* warning banner (daily-only role) */
+  .warnbox{display:flex;align-items:center;gap:8px;margin:16px;padding:12px;border:1px solid var(--warning);border-radius:var(--r-md);color:var(--warning-dark);font-size:13px;}
+  .warnbox i{width:20px;height:20px;flex:none;}
+
+  /* empty state */
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:60px 24px;text-align:center;color:var(--muted);}
+  .empty i{width:56px;height:56px;color:var(--muted);}
+  .empty .t{font-size:16px;font-weight:600;}
+  .empty .s{font-size:13px;color:var(--hint);}
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.55;max-width:1200px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 06a · Reports (hub / lists)</h1>
+    <p><b>Pre-redesign (mixed).</b> The Reports family — <b>Sales History</b> list, <b>Sales Report</b> dashboard,
+    <b>Profit Report</b>, and <b>Top Selling</b> — is <b>partly</b> on the redesigned language already: it uses
+    theme-aware <code>colorScheme</code>, dark-hairline parity, outlined metric/rank cards, semantic accents
+    (success-green profit, error-red voids) and the medal idiom for top-3 ranks. What's <b>not migrated</b>:
+    icons are still <b>Cupertino</b>, container surfaces are Material <code>Card</code> (flat <code>shadow-mat</code>
+    elevation) rather than the soft-shadow <code>AppCard</code>, and there are no Lucide glyphs. Currency renders
+    grouped (<code>₱1,234.00</code>) from the app-wide formatter. This bundle migrates all four surfaces to
+    <b>Lucide + <code>AppCard</code></b> while preserving the existing color discipline + dark parity — same pass
+    done for POS / Checkout / Sale-Detail / Inventory / Receiving. Mark up the redesign you want and hand back.
+    <i>(Icons here render in Lucide — the migration target — even though the live screens still ship Cupertino.)</i></p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> success (profit)</span>
+    <span><i class="swatch" style="background:#F44336"></i> error (void)</span>
+    <span><i class="swatch" style="background:#FFC107"></i> amber · <i class="swatch" style="background:#607D8B"></i> silver · <i class="swatch" style="background:#8D6E63"></i> bronze (rank medals)</span>
+    <span style="margin-left:auto">Light shown · dark parity target (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ 1 · SALES HISTORY (list) ============ -->
+    <div class="frame">
+      <div class="caption">1 · Sales History — admin · sales_list_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Sales History</div></div>
+          <button class="iconbtn" title="Reports"><i data-lucide="bar-chart-3"></i></button>
+        </div>
+        <div class="body">
+          <div class="drp">
+            <div class="ctl"><i data-lucide="calendar-days"></i><span class="lbl">Today</span><i data-lucide="chevron-down"></i></div>
+            <div class="ctl"><i data-lucide="calendar"></i><span class="lbl">Jun 27, 2026</span><i data-lucide="chevron-down"></i></div>
+          </div>
+
+          <div class="grouphdr">
+            <div><div class="d">Today</div><div class="c">5 sales</div></div>
+            <div class="tot">₱8,420.00</div>
+          </div>
+          <div class="sale">
+            <div class="lead"><i data-lucide="file-text"></i></div>
+            <div class="mid"><div class="num">SALE-20260627-5</div><div class="sub">2:14 PM • Maria • 3 items</div></div>
+            <div class="trail"><div class="amt">₱1,250.00</div><div class="pm"><i data-lucide="banknote"></i>Cash</div></div>
+          </div>
+          <div class="sale">
+            <div class="lead"><i data-lucide="file-text"></i></div>
+            <div class="mid"><div class="num">SALE-20260627-4</div><div class="sub">1:02 PM • Maria • 1 item</div></div>
+            <div class="trail"><div class="amt">₱340.00</div><div class="pm"><i data-lucide="smartphone"></i>GCash</div></div>
+          </div>
+          <div class="sale">
+            <div class="lead void"><i data-lucide="x-circle"></i></div>
+            <div class="mid"><div class="num void">SALE-20260627-3 <span class="voidbadge">VOID</span></div><div class="sub">11:48 AM • Juan • 2 items</div></div>
+            <div class="trail"><div class="amt void">₱980.00</div><div class="pm"><i data-lucide="credit-card"></i>Maya</div></div>
+          </div>
+          <div class="sale">
+            <div class="lead"><i data-lucide="file-text"></i></div>
+            <div class="mid"><div class="num">SALE-20260627-2</div><div class="sub">10:20 AM • Juan • 6 items</div></div>
+            <div class="trail"><div class="amt">₱4,600.00</div><div class="pm"><i data-lucide="columns-2"></i>Mixed</div></div>
+          </div>
+
+          <div class="grouphdr">
+            <div><div class="d">Thursday, June 26, 2026</div><div class="c">11 sales</div></div>
+            <div class="tot">₱22,180.00</div>
+          </div>
+          <div class="sale">
+            <div class="lead"><i data-lucide="file-text"></i></div>
+            <div class="mid"><div class="num">SALE-20260626-11</div><div class="sub">6:30 PM • Maria • 4 items</div></div>
+            <div class="trail"><div class="amt">₱2,100.00</div><div class="pm"><i data-lucide="banknote"></i>Cash</div></div>
+          </div>
+          <div class="sale">
+            <div class="lead"><i data-lucide="file-text"></i></div>
+            <div class="mid"><div class="num">SALE-20260626-10</div><div class="sub">5:55 PM • Maria • 2 items</div></div>
+            <div class="trail"><div class="amt">₱880.00</div><div class="pm"><i data-lucide="calendar"></i>Salmon</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2 · SALES REPORT (dashboard) ============ -->
+    <div class="frame">
+      <div class="caption">2 · Sales Report — admin · sales_report_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Sales Report</div></div>
+        </div>
+        <div class="body">
+          <div class="drp">
+            <div class="ctl"><i data-lucide="calendar-days"></i><span class="lbl">This Month</span><i data-lucide="chevron-down"></i></div>
+            <div class="ctl"><i data-lucide="calendar"></i><span class="lbl">Jun 1 – 27, 2026</span><i data-lucide="chevron-down"></i></div>
+          </div>
+
+          <!-- Sales Summary card -->
+          <div class="mcard">
+            <div class="cardhead"><i data-lucide="bar-chart-3"></i><span class="t">Sales Summary</span></div>
+            <div class="mgrid">
+              <div class="metric"><div class="mh"><i data-lucide="file-text"></i><span class="l">Total Sales</span></div><div class="v">142</div></div>
+              <div class="metric error"><div class="mh"><i data-lucide="x-circle"></i><span class="l">Voided</span></div><div class="v">3</div></div>
+            </div>
+            <div class="mgrid">
+              <div class="metric"><div class="mh"><i data-lucide="banknote"></i><span class="l">Gross Sales</span></div><div class="v">₱248,900.00</div><div class="vs">Before discounts</div></div>
+              <div class="metric"><div class="mh"><i data-lucide="tag"></i><span class="l">Discounts</span></div><div class="v">-₱4,120.00</div></div>
+            </div>
+            <div class="divline"></div>
+            <div class="netpanel"><span class="l">Net Sales</span><span class="v">₱244,780.00</span></div>
+            <!-- admin-only -->
+            <div class="avgpill"><i data-lucide="arrow-right"></i>Avg: ₱1,723.80</div>
+            <div class="mgrid">
+              <div class="metric"><div class="mh"><i data-lucide="package"></i><span class="l">Total Cost</span></div><div class="v">₱168,400.00</div></div>
+              <div class="metric success"><div class="mh"><i data-lucide="trending-up"></i><span class="l">Gross Profit</span></div><div class="v">₱76,380.00</div><div class="vs">31.2% margin</div></div>
+            </div>
+            <div class="mgrid" style="margin-bottom:0">
+              <div class="metric"><div class="mh"><i data-lucide="wrench"></i><span class="l">Service Revenue</span></div><div class="v">₱12,300.00</div><div class="vs">Labor (no COGS)</div></div>
+              <div class="metric success"><div class="mh"><i data-lucide="trending-up"></i><span class="l">Service Profit</span></div><div class="v">₱12,300.00</div></div>
+            </div>
+          </div>
+
+          <!-- Top products card -->
+          <div class="mcard tight">
+            <div class="cardhead"><i data-lucide="star"></i><span class="t">Top Selling Products</span><span class="right">Top 10</span></div>
+            <div class="trow">
+              <div class="top">
+                <div class="rank g1">1</div>
+                <div class="info"><div class="pn">NGK Spark Plug CPR6EA-9</div><div class="psku">ngk-014</div></div>
+                <div class="qt"><div class="q">86 sold</div><div class="r">₱17,200.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span class="g1" style="width:100%"></span></div><span class="profitbadge">+₱5,160</span></div>
+            </div>
+            <div class="trow">
+              <div class="top">
+                <div class="rank g2">2</div>
+                <div class="info"><div class="pn">ASK Brake Shoe XRM 125</div><div class="psku">ask-001</div></div>
+                <div class="qt"><div class="q">64 sold</div><div class="r">₱16,000.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span class="g2" style="width:74%"></span></div><span class="profitbadge">+₱4,480</span></div>
+            </div>
+            <div class="trow" style="margin-bottom:0">
+              <div class="top">
+                <div class="rank g3">3</div>
+                <div class="info"><div class="pn">Motul 10W-40 Engine Oil 1L</div><div class="psku">mot-101</div></div>
+                <div class="qt"><div class="q">51 sold</div><div class="r">₱16,830.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span class="g3" style="width:59%"></span></div><span class="profitbadge">+₱3,570</span></div>
+            </div>
+          </div>
+
+          <!-- Payment methods card -->
+          <div class="mcard tight">
+            <div class="cardhead"><span class="t">Payment Methods</span></div>
+            <div class="pmrow"><div class="ph"><span>Cash</span><b>₱132,400.00 (54.1%)</b></div><div class="pbar"><span style="width:54%"></span></div></div>
+            <div class="pmrow"><div class="ph"><span>GCash</span><b>₱68,900.00 (28.1%)</b></div><div class="pbar"><span style="width:28%"></span></div></div>
+            <div class="pmrow" style="margin-bottom:0"><div class="ph"><span>Maya</span><b>₱43,480.00 (17.8%)</b></div><div class="pbar"><span style="width:18%"></span></div></div>
+          </div>
+
+          <!-- EOD closing link -->
+          <div class="linktile">
+            <i data-lucide="circle-dollar-sign"></i>
+            <div class="lt"><div class="t">End-of-Day Closing</div><div class="s">Reconcile the cash drawer</div></div>
+            <i class="chev" data-lucide="chevron-right"></i>
+          </div>
+          <div style="height:24px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3 · PROFIT REPORT ============ -->
+    <div class="frame">
+      <div class="caption">3 · Profit Report — admin · profit_report_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Profit Report</div></div>
+          <button class="iconbtn" title="Pick range"><i data-lucide="calendar"></i></button>
+        </div>
+        <div class="body">
+          <div class="datestrip">
+            <i data-lucide="calendar"></i>
+            <span class="r">May 28, 2026 - Jun 27, 2026</span>
+            <span class="ch">Change</span>
+          </div>
+          <div style="padding:16px;">
+            <div class="mgrid">
+              <div class="metric"><div class="mh"><i data-lucide="banknote"></i><span class="l">Total Revenue</span></div><div class="v">₱0.00</div></div>
+              <div class="metric"><div class="mh"><i data-lucide="wallet"></i><span class="l">Total Cost</span></div><div class="v">₱0.00</div></div>
+            </div>
+            <div class="mgrid" style="margin-bottom:0">
+              <div class="metric success"><div class="mh"><i data-lucide="trending-up"></i><span class="l">Gross Profit</span></div><div class="v">₱0.00</div></div>
+              <div class="metric success"><div class="mh"><i data-lucide="percent"></i><span class="l">Profit Margin</span></div><div class="v">0.0%</div></div>
+            </div>
+          </div>
+          <div class="sech"><span class="t">Profit by Product</span><span class="link">View All</span></div>
+          <div class="empty" style="flex:1">
+            <i data-lucide="trending-up"></i>
+            <div class="t">No profit data available</div>
+            <div class="s">Make some sales to see profit reports</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4 · TOP SELLING (drill-down, limit 20) ============ -->
+    <div class="frame">
+      <div class="caption">4 · Top Selling — admin · top_selling_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title"><div class="t">Top Selling</div></div>
+        </div>
+        <div class="body">
+          <div class="drp">
+            <div class="ctl"><i data-lucide="calendar-days"></i><span class="lbl">This Month</span><i data-lucide="chevron-down"></i></div>
+            <div class="ctl"><i data-lucide="calendar"></i><span class="lbl">Jun 1 – 27, 2026</span><i data-lucide="chevron-down"></i></div>
+          </div>
+          <div class="mcard">
+            <div class="cardhead"><i data-lucide="star"></i><span class="t">Top Selling Products</span><span class="right">Top 20</span></div>
+            <div class="trow">
+              <div class="top">
+                <div class="rank g1">1</div>
+                <div class="info"><div class="pn">NGK Spark Plug CPR6EA-9</div><div class="psku">ngk-014</div></div>
+                <div class="qt"><div class="q">86 sold</div><div class="r">₱17,200.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span class="g1" style="width:100%"></span></div><span class="profitbadge">+₱5,160</span></div>
+            </div>
+            <div class="trow">
+              <div class="top">
+                <div class="rank g2">2</div>
+                <div class="info"><div class="pn">ASK Brake Shoe XRM 125</div><div class="psku">ask-001</div></div>
+                <div class="qt"><div class="q">64 sold</div><div class="r">₱16,000.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span class="g2" style="width:74%"></span></div><span class="profitbadge">+₱4,480</span></div>
+            </div>
+            <div class="trow">
+              <div class="top">
+                <div class="rank g3">3</div>
+                <div class="info"><div class="pn">Motul 10W-40 Engine Oil 1L</div><div class="psku">mot-101</div></div>
+                <div class="qt"><div class="q">51 sold</div><div class="r">₱16,830.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span class="g3" style="width:59%"></span></div><span class="profitbadge">+₱3,570</span></div>
+            </div>
+            <div class="trow">
+              <div class="top">
+                <div class="rank">4</div>
+                <div class="info"><div class="pn">Yamaha Drive Chain 428</div><div class="psku">yam-228</div></div>
+                <div class="qt"><div class="q">37 sold</div><div class="r">₱11,100.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span style="width:43%"></span></div><span class="profitbadge">+₱2,590</span></div>
+            </div>
+            <div class="trow" style="margin-bottom:0">
+              <div class="top">
+                <div class="rank">5</div>
+                <div class="info"><div class="pn">Bendix Brake Pad XRM</div><div class="psku">ben-330</div></div>
+                <div class="qt"><div class="q">29 sold</div><div class="r">₱8,700.00</div></div>
+              </div>
+              <div class="bar"><div class="sp"></div><div class="progress"><span style="width:34%"></span></div><span class="profitbadge">+₱2,030</span></div>
+            </div>
+          </div>
+          <div style="height:24px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Token-accurate reconstruction of the <b>current</b> Reports (hub / lists) surfaces. Sources:
+  <code>lib/presentation/mobile/screens/reports/{sales_list,sales_report,profit_report,top_selling}_screen.dart</code> +
+  <code>lib/presentation/mobile/widgets/reports/{date_range_picker,sales_summary_card,top_products_card}.dart</code>.
+  Current state: Cupertino icons, Material <code>Card</code> surfaces (flat elevation, no <code>AppCard</code>);
+  <b>already</b> theme-aware (dark-hairline parity, outlined metric/rank cards, success/error accents, amber/silver/bronze
+  medals). Role gating to preserve: the <code>DateRangePicker</code> is replaced by a "today only" warning banner for
+  daily-reports-only roles; <code>Total Cost / Gross Profit / Service</code> metrics + the green per-row profit badge are
+  <b>admin-only</b> (cashiers/staff don't see cost or profit). Migration target = the global theme in
+  <code>design/handoff/maki-theme/</code> (Lucide, soft-shadow <code>AppCard</code>) — keep the existing color discipline
+  + dark parity. 06b (End-of-Day + Daily Closing History) ships separately.</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>
