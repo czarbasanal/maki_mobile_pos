@@ -36,10 +36,13 @@ Surface: Flutter mobile app — `lib/presentation/mobile/screens/`.
 | 12 | **Users** | `users_screen`, `user_form_screen` |
 | 13 | **Logs** | `activity_logs_screen` (⚠️ `user_logs_screen` is a 0-byte stub — `/logs` mounts `ActivityLogsScreen`; effectively one screen) |
 
-**⚙️ Sequencing (updated 2026-06-28):** 07 shipped first (user call). The cross-cutting
-**modals + bottom-sheets sync** (`design/handoff/modals-bottomsheets/`) is next — it defines shared
-dialog + bottom-sheet shells that 08–13 (and a future refactor of 07's sheet/dialogs) consume.
-Order now: **modals sync → 08 → 09 → …**. All await their redesign hand-off files.
+**⚙️ Sequencing (updated 2026-06-29):** 07 shipped, then the cross-cutting **modals + bottom-sheets
+sync — FOUNDATION shipped** ✅ (merged to `main`): shared `AppDialog` + `AppBottomSheet` shells +
+variants (confirm/destructive/error/password/action-radio), real `error_dialog`, `showConfirmDialog`
+→ shell, Lucide + dark-parity snackbars, dead `PasswordConfirmDialog` removed. **Follow-up (tracked):**
+migrate the ~32 inline `AlertDialog` confirms + 8 bottom-sheet sites + `checkout_success` + 07's
+bespoke sheet/dialogs onto the shells. Order now: **modals migration (follow-up) → 08 → 09 → …**.
+08–13 await their redesign hand-off files.
 
 **Current-UI capture packages are ready for every remaining bundle** (07–13):
 `design/handoff/<NN-name>/{reference_current-ui.html, README.md}`. Hand each to Claude
