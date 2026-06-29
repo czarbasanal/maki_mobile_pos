@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/expense_filters.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/expenses/expense_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Full expense history grouped by month and year.
@@ -29,10 +30,6 @@ class ExpenseHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
-  static final _currencyFormat = NumberFormat.currency(
-    symbol: AppConstants.currencySymbol,
-    decimalDigits: 2,
-  );
   static final _dateFormat = DateFormat('MMM d, y');
   static final _monthHeaderFormat = DateFormat('MMMM y');
 
@@ -51,7 +48,7 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.expenses),
         ),
         title: const Text('Expense History'),
@@ -93,7 +90,7 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
           SliverFillRemaining(
             hasScrollBody: false,
             child: EmptyStateView(
-              icon: CupertinoIcons.doc_text,
+              icon: LucideIcons.fileText,
               title: _selectedCategory == null ? 'No Expenses' : 'No matches',
               subtitle: _selectedCategory == null
                   ? 'Recorded expenses will appear here.'
@@ -111,11 +108,18 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
             ),
             SliverList.builder(
               itemCount: group.items.length,
-              itemBuilder: (context, i) => _ExpenseHistoryItem(
-                expense: group.items[i],
-                dateFormat: _dateFormat,
-                currencyFormat: _currencyFormat,
-              ),
+              itemBuilder: (context, i) {
+                final e = group.items[i];
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md, AppSpacing.xs, AppSpacing.md, AppSpacing.xs),
+                  child: ExpenseRow(
+                    description: e.description,
+                    subtitle: '${_dateFormat.format(e.date)} • ${e.category}',
+                    amount: e.amount,
+                  ),
+                );
+              },
             ),
           ],
         const SliverPadding(padding: EdgeInsets.only(bottom: AppSpacing.md)),
@@ -162,53 +166,6 @@ class _MonthHeader extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ExpenseHistoryItem extends StatelessWidget {
-  const _ExpenseHistoryItem({
-    required this.expense,
-    required this.dateFormat,
-    required this.currencyFormat,
-  });
-
-  final ExpenseEntity expense;
-  final DateFormat dateFormat;
-  final NumberFormat currencyFormat;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-    return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      child: ListTile(
-        leading: Icon(
-          CupertinoIcons.doc_plaintext,
-          color: muted,
-          size: 24,
-        ),
-        title: Text(
-          expense.description,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          '${dateFormat.format(expense.date)} • ${expense.category}',
-          style: theme.textTheme.bodySmall?.copyWith(color: muted),
-        ),
-        trailing: Text(
-          currencyFormat.format(expense.amount),
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ),
     );
   }
@@ -266,7 +223,7 @@ class _HistoryCategoryFilter extends ConsumerWidget {
           initialValue: selectedCategory,
           decoration: const InputDecoration(
             labelText: 'Category',
-            prefixIcon: Icon(CupertinoIcons.tag),
+            prefixIcon: Icon(LucideIcons.tag),
           ),
           items: items,
           onChanged: onChanged,

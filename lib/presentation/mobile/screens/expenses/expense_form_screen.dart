@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -86,13 +86,13 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Expense' : 'Add Expense'),
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.expenses),
         ),
         actions: [
           if (widget.isEditing && canDelete)
             IconButton(
-              icon: const Icon(CupertinoIcons.delete),
+              icon: const Icon(LucideIcons.trash2),
               tooltip: 'Delete expense',
               color: AppColors.error,
               onPressed:
@@ -112,9 +112,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               // Description
               TextFormField(
                 controller: _descriptionController,
+                autofocus: !widget.isEditing,
                 decoration: const InputDecoration(
                   labelText: 'Description *',
-                  prefixIcon: Icon(CupertinoIcons.doc_text),
                 ),
                 validator: (value) =>
                     value?.isEmpty == true ? 'Description is required' : null,
@@ -127,7 +127,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 controller: _amountController,
                 decoration: const InputDecoration(
                   labelText: 'Amount *',
-                  prefixIcon: Icon(AppIcons.peso),
+                  prefixText: '₱ ',
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -156,7 +156,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 initialValue: _paidVia,
                 decoration: const InputDecoration(
                   labelText: 'Paid via *',
-                  prefixIcon: Icon(CupertinoIcons.creditcard),
                 ),
                 items: PaymentMethod.values
                     .map(
@@ -178,8 +177,8 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 child: InputDecorator(
                   decoration: const InputDecoration(
                     labelText: 'Date *',
-                    prefixIcon: Icon(CupertinoIcons.calendar),
-                    ),
+                    suffixIcon: Icon(LucideIcons.calendar),
+                  ),
                   child: Text(
                     '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
                   ),
@@ -192,7 +191,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 controller: _notesController,
                 decoration: const InputDecoration(
                   labelText: 'Notes',
-                  prefixIcon: Icon(CupertinoIcons.list_bullet),
+                  hintText: 'Optional details…',
                 ),
                 maxLines: 3,
                 textCapitalization: TextCapitalization.sentences,
@@ -303,29 +302,18 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   }
 
   Future<void> _handleDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Expense'),
-        content: Text(
-          _descriptionController.text.trim().isEmpty
-              ? 'Delete this expense?'
-              : 'Delete "${_descriptionController.text.trim()}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final desc = _descriptionController.text.trim();
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete expense?',
+      message: desc.isEmpty
+          ? 'This expense will be permanently deleted.'
+          : '"$desc" will be permanently deleted.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      icon: LucideIcons.trash2,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     setState(() => _isDeleting = true);
     try {
@@ -383,7 +371,6 @@ class _ExpenseCategoryDropdown extends ConsumerWidget {
           return InputDecorator(
             decoration: const InputDecoration(
               labelText: 'Category *',
-              prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
               errorText: 'No categories defined — ask admin to add some.',
             ),
             child: Text(
@@ -399,7 +386,6 @@ class _ExpenseCategoryDropdown extends ConsumerWidget {
           initialValue: selected,
           decoration: const InputDecoration(
             labelText: 'Category *',
-            prefixIcon: Icon(CupertinoIcons.square_grid_2x2),
           ),
           items: [
             ...activeNames.map(

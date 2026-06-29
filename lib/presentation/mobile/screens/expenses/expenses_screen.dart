@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/expenses/expense_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
 import 'package:intl/intl.dart';
@@ -33,10 +34,6 @@ class ExpensesScreen extends ConsumerStatefulWidget {
 class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
   static const int _recentLimit = 5;
 
-  static final _currencyFormat = NumberFormat.currency(
-    symbol: AppConstants.currencySymbol,
-    decimalDigits: 2,
-  );
   static final _dateFormat = DateFormat('MMM d, y • h:mm a');
 
   /// Selected category filter; `null` means "All" (no filter).
@@ -57,7 +54,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Expenses'),
@@ -77,7 +74,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: () => context.push(RoutePaths.expenseAdd),
-                  icon: const Icon(CupertinoIcons.add),
+                  icon: const Icon(LucideIcons.plus),
                   label: const Text('Add Expense'),
                 ),
               ),
@@ -91,9 +88,6 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     required bool canEdit,
     required bool canDelete,
   }) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-
     // Apply the active category filter to the displayed list. Totals refresh
     // automatically because they are bound to ExpenseDateRangeParams that
     // include the same category.
@@ -144,7 +138,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: EmptyStateView(
-              icon: CupertinoIcons.doc_text,
+              icon: LucideIcons.fileText,
               title: _selectedCategory == null ? 'No Expenses' : 'No matches',
               subtitle: _selectedCategory == null
                   ? 'Tap + to add an expense'
@@ -165,8 +159,6 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         final expense = recent[index - headerItems.length];
         return _buildExpenseCard(
           expense,
-          theme: theme,
-          muted: muted,
           canEdit: canEdit,
           canDelete: canDelete,
         );
@@ -183,53 +175,32 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
 
   Widget _buildExpenseCard(
     ExpenseEntity expense, {
-    required ThemeData theme,
-    required Color muted,
     required bool canEdit,
     required bool canDelete,
   }) {
-    final card = Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      child: ListTile(
-        leading: Icon(
-          CupertinoIcons.doc_plaintext,
-          color: muted,
-          size: 24,
-        ),
-        title: Text(
-          expense.description,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(
-          _dateFormat.format(expense.createdAt),
-          style: theme.textTheme.bodySmall?.copyWith(color: muted),
-        ),
-        trailing: Text(
-          _currencyFormat.format(expense.amount),
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+    final row = Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.xs, AppSpacing.md, AppSpacing.xs),
+      child: ExpenseRow(
+        description: expense.description,
+        subtitle: _dateFormat.format(expense.createdAt),
+        amount: expense.amount,
         onTap: canEdit
             ? () => context.push('${RoutePaths.expenses}/edit/${expense.id}')
             : null,
-        onLongPress: canDelete
-            ? () => _confirmAndDelete(context, ref, expense)
-            : null,
+        onLongPress:
+            canDelete ? () => _confirmAndDelete(context, ref, expense) : null,
       ),
     );
 
-    if (!canDelete) return card;
+    if (!canDelete) return row;
 
     return Dismissible(
       key: ValueKey('expense-${expense.id}'),
       direction: DismissDirection.endToStart,
       background: _buildDismissBackground(),
       confirmDismiss: (_) => _confirmAndDelete(context, ref, expense),
-      child: card,
+      child: row,
     );
   }
 
@@ -243,12 +214,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
       alignment: Alignment.centerRight,
       decoration: BoxDecoration(
         color: AppColors.error,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.field),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(CupertinoIcons.delete, color: Colors.white),
+          Icon(LucideIcons.trash2, color: Colors.white, size: 20),
           SizedBox(width: AppSpacing.sm),
           Text(
             'Delete',
@@ -264,25 +235,15 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
 
   Future<bool> _confirmAndDelete(
       BuildContext context, WidgetRef ref, ExpenseEntity expense) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Expense'),
-        content: Text('Delete "${expense.description}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete expense?',
+      message: '"${expense.description}" will be permanently deleted.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      icon: LucideIcons.trash2,
     );
-    if (confirmed != true) return false;
+    if (!confirmed) return false;
 
     try {
       final ok = await ref
@@ -344,7 +305,7 @@ class _ExpenseTotalsRow extends ConsumerWidget {
           Expanded(
             child: _TotalCard(
               title: 'Today',
-              icon: CupertinoIcons.sun_max,
+              icon: LucideIcons.sun,
               params: todayParams,
             ),
           ),
@@ -352,7 +313,7 @@ class _ExpenseTotalsRow extends ConsumerWidget {
           Expanded(
             child: _TotalCard(
               title: 'This Week',
-              icon: CupertinoIcons.calendar,
+              icon: LucideIcons.calendar,
               params: weekParams,
             ),
           ),
@@ -360,7 +321,7 @@ class _ExpenseTotalsRow extends ConsumerWidget {
           Expanded(
             child: _TotalCard(
               title: 'This Month',
-              icon: CupertinoIcons.chart_bar,
+              icon: LucideIcons.barChart3,
               params: monthParams,
             ),
           ),
@@ -452,7 +413,7 @@ class _CategoryFilterDropdown extends ConsumerWidget {
           initialValue: selectedCategory,
           decoration: const InputDecoration(
             labelText: 'Category',
-            prefixIcon: Icon(CupertinoIcons.tag),
+            prefixIcon: Icon(LucideIcons.tag),
           ),
           items: items,
           onChanged: onChanged,
@@ -495,7 +456,7 @@ class _RecentSectionHeader extends StatelessWidget {
             children: [
               Text('View all'),
               SizedBox(width: 4),
-              Icon(CupertinoIcons.chevron_right, size: 14),
+              Icon(LucideIcons.chevronRight, size: 14),
             ],
           ),
         ),
