@@ -298,12 +298,13 @@ class _EmptyState extends StatelessWidget {
 
 void _showResolveSheet(
     BuildContext screenContext, WidgetRef ref, VoidRequestEntity r) {
+  final dark = Theme.of(screenContext).brightness == Brightness.dark;
   showModalBottomSheet(
     context: screenContext,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
-    barrierColor: const Color(0x5C111C1D),
+    barrierColor: AppDialog.scrimColor(dark),
     builder: (sheetContext) => _ResolveSheet(request: r, parentRef: ref),
   );
 }
@@ -317,8 +318,6 @@ class _ResolveSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
-    final hairline = AppColors.hairline(dark);
-    final muted = theme.colorScheme.onSurfaceVariant;
     final s = VoidStatusStyle.of(VoidRequestStatus.pending, dark: dark);
 
     return DraggableScrollableSheet(
@@ -326,176 +325,92 @@ class _ResolveSheet extends StatelessWidget {
       minChildSize: 0.5,
       maxChildSize: 0.95,
       expand: false,
-      builder: (sheetContext, scrollController) => Container(
-        decoration: BoxDecoration(
-          color: dark ? AppColors.darkCard : AppColors.lightCard,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-          border: dark ? Border.all(color: AppColors.darkHairline) : null,
-          boxShadow: [
-            BoxShadow(
-              color: dark ? const Color(0x80000000) : const Color(0x38111C1D),
-              blurRadius: 36,
-              offset: const Offset(0, -10),
-            ),
-          ],
-        ),
-        child: Column(
+      builder: (sheetContext, scrollController) => AppBottomSheet(
+        leadingIcon: LucideIcons.clock,
+        title: 'Void this sale?',
+        subtitle: 'Requested by ${request.requestedByName}',
+        onClose: () => Navigator.pop(sheetContext),
+        bodyExpands: true,
+        body: Column(
           children: [
-            Container(
-              width: 38,
-              height: 4,
-              margin: const EdgeInsets.only(top: 10, bottom: 2),
-              decoration: BoxDecoration(
-                color: dark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-            // Context header
+            // Reason box (status-tinted) — kept as body content.
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: s.tint,
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: Icon(LucideIcons.clock,
-                            size: 20, color: s.iconColor),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: s.tint,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(LucideIcons.quote, size: 15, color: s.textColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                              fontSize: 12.5, height: 1.4, color: s.textColor),
                           children: [
-                            Text('Void this sale?',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 18,
-                                    letterSpacing: -0.2)),
-                            const SizedBox(height: 2),
-                            Text.rich(
-                              TextSpan(
-                                style:
-                                    TextStyle(fontSize: 12.5, color: muted),
-                                children: [
-                                  const TextSpan(text: 'Requested by '),
-                                  TextSpan(
-                                    text: request.requestedByName,
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: theme.colorScheme.onSurface),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            const TextSpan(
+                                text: 'Reason',
+                                style: TextStyle(fontWeight: FontWeight.w700)),
+                            TextSpan(text: ' · ${request.reason}'),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: s.tint,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(LucideIcons.quote,
-                            size: 15, color: s.textColor),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              style: TextStyle(
-                                  fontSize: 12.5,
-                                  height: 1.4,
-                                  color: s.textColor),
-                              children: [
-                                const TextSpan(
-                                    text: 'Reason',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.w700)),
-                                TextSpan(text: ' · ${request.reason}'),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Receipt
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: hairline)),
-                ),
-                child: Consumer(
-                  builder: (ctx, ref, _) {
-                    final saleAsync = ref.watch(saleByIdProvider(request.saleId));
-                    return saleAsync.when(
-                      loading: () => const LoadingView(),
-                      error: (e, _) => ErrorStateView(message: 'Error: $e'),
-                      data: (sale) => sale == null
-                          ? const EmptyStateView(
-                              icon: LucideIcons.fileText,
-                              title: 'Sale not found',
-                            )
-                          : _Receipt(sale: sale, controller: scrollController),
-                    );
-                  },
-                ),
-              ),
-            ),
-            // Footer
-            SafeArea(
-              top: false,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: hairline)),
-                ),
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _SheetButton(
-                        label: 'Reject',
-                        icon: LucideIcons.x,
-                        outlined: true,
-                        color: dark ? AppColors.errorOnDark : AppColors.error,
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          _rejectDialog(screenContextOf(context), parentRef, request);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SheetButton(
-                        label: 'Approve',
-                        icon: LucideIcons.check,
-                        outlined: false,
-                        color: theme.colorScheme.primary,
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          _approveDialog(screenContextOf(context), parentRef, request);
-                        },
                       ),
                     ),
                   ],
                 ),
+              ),
+            ),
+            // Receipt
+            Expanded(
+              child: Consumer(
+                builder: (ctx, ref, _) {
+                  final saleAsync = ref.watch(saleByIdProvider(request.saleId));
+                  return saleAsync.when(
+                    loading: () => const LoadingView(),
+                    error: (e, _) => ErrorStateView(message: 'Error: $e'),
+                    data: (sale) => sale == null
+                        ? const EmptyStateView(
+                            icon: LucideIcons.fileText,
+                            title: 'Sale not found',
+                          )
+                        : _Receipt(sale: sale, controller: scrollController),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        footer: Row(
+          children: [
+            Expanded(
+              child: _SheetButton(
+                label: 'Reject',
+                icon: LucideIcons.x,
+                outlined: true,
+                color: dark ? AppColors.errorOnDark : AppColors.error,
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _rejectDialog(screenContextOf(context), parentRef, request);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _SheetButton(
+                label: 'Approve',
+                icon: LucideIcons.check,
+                outlined: false,
+                color: theme.colorScheme.primary,
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _approveDialog(screenContextOf(context), parentRef, request);
+                },
               ),
             ),
           ],

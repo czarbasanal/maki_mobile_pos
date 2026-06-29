@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_bottom_sheet.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -34,103 +35,80 @@ class ReceiptWidget extends ConsumerWidget {
     final theme = Theme.of(context);
     final costMapping = ref.watch(costCodeMappingProvider).valueOrNull ??
         CostCodeEntity.defaultMapping();
-    final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
+    final hasActions = onShare != null || onPrint != null;
+    return AppBottomSheet(
+      leadingIcon: LucideIcons.receipt,
+      title: 'Receipt',
+      onClose: () => Navigator.pop(context),
+      bodyExpands: true,
+      body: SingleChildScrollView(
+        controller: scrollController,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: AppColors.lightHairline),
+          ),
+          child: Column(
+            children: [
+              _buildStoreHeader(theme),
+              const SizedBox(height: AppSpacing.md),
+              _buildDottedDivider(),
+              const SizedBox(height: AppSpacing.md),
+              _buildTransactionInfo(theme, dateFormat),
+              const SizedBox(height: AppSpacing.md),
+              _buildDottedDivider(),
+              const SizedBox(height: AppSpacing.md),
+              _buildItemsSection(theme, costMapping),
+              const SizedBox(height: AppSpacing.md),
+              _buildDottedDivider(),
+              const SizedBox(height: AppSpacing.md),
+              _buildTotalsSection(theme),
+              const SizedBox(height: AppSpacing.md),
+              _buildDottedDivider(),
+              const SizedBox(height: AppSpacing.md),
+              _buildPaymentSection(theme),
+              const SizedBox(height: AppSpacing.lg),
+              _buildFooter(theme),
+            ],
+          ),
         ),
       ),
-      child: Column(
-        children: [
-          // Drag handle — hairline color, theme-aware
-          Container(
-            margin: const EdgeInsets.only(top: AppSpacing.sm + 4),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: hairline,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-          ),
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
+      footer: hasActions
+          ? Row(
               children: [
-                Text(
-                  'Receipt',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
                 if (onShare != null)
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.share),
-                    onPressed: onShare,
-                    tooltip: 'Share',
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        onPressed: onShare,
+                        icon: const Icon(LucideIcons.share2, size: 18),
+                        label: const Text('Share'),
+                      ),
+                    ),
                   ),
+                if (onShare != null && onPrint != null)
+                  const SizedBox(width: 12),
                 if (onPrint != null)
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.printer),
-                    onPressed: onPrint,
-                    tooltip: 'Print',
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: FilledButton.icon(
+                        onPressed: onPrint,
+                        icon: const Icon(LucideIcons.printer, size: 18),
+                        label: const Text('Print'),
+                      ),
+                    ),
                   ),
-                IconButton(
-                  icon: const Icon(CupertinoIcons.xmark),
-                  onPressed: () => Navigator.pop(context),
-                ),
               ],
-            ),
-          ),
-          const Divider(height: 1),
-          // Receipt body — paper-like, white background, hairline border
-          Expanded(
-            child: SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.lightHairline),
-                ),
-                child: Column(
-                  children: [
-                    _buildStoreHeader(theme),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildDottedDivider(),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildTransactionInfo(theme, dateFormat),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildDottedDivider(),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildItemsSection(theme, costMapping),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildDottedDivider(),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildTotalsSection(theme),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildDottedDivider(),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildPaymentSection(theme),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildFooter(theme),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+            )
+          : null,
     );
   }
 
@@ -504,7 +482,7 @@ class ReceiptWidget extends ConsumerWidget {
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: const Icon(
-            CupertinoIcons.qrcode,
+            LucideIcons.qrCode,
             size: 60,
             color: _ReceiptColors.label,
           ),
