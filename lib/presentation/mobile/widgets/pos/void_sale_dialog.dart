@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -26,9 +26,11 @@ class VoidSaleDialog extends ConsumerStatefulWidget {
     required SaleEntity sale,
     required VoidCallback onVoided,
   }) async {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
+      barrierColor: AppDialog.scrimColor(dark),
       builder: (context) => VoidSaleDialog(
         sale: sale,
         onVoided: onVoided,
@@ -65,19 +67,10 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AlertDialog(
-      title: const Row(
-        children: [
-          Icon(CupertinoIcons.xmark_circle, color: AppColors.error),
-          SizedBox(width: AppSpacing.sm + 4),
-          Expanded(
-            child: Text(
-              'Void Sale',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
+    return AppDialog(
+      title: 'Void Sale',
+      leadingIcon: LucideIcons.xCircle,
+      intent: AppDialogIntent.destructive,
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -106,7 +99,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
                   decoration: const InputDecoration(
                     labelText: 'Reason details',
                     hintText: 'Enter detailed reason...',
-                    prefixIcon: Icon(CupertinoIcons.square_pencil),
+                    prefixIcon: Icon(LucideIcons.squarePen),
                   ),
                   maxLines: 2,
                   maxLength: 200,
@@ -149,14 +142,21 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _isProcessing ? null : () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+        appDialogCancel(
+          context,
+          'Cancel',
+          onTap: _isProcessing ? () {} : () => Navigator.pop(context, false),
         ),
         FilledButton(
           onPressed: _isProcessing ? null : _handleVoid,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.error,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            textStyle:
+                const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: _isProcessing
               ? const SizedBox(
@@ -228,7 +228,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
       child: const Row(
         children: [
           Icon(
-            CupertinoIcons.exclamationmark_triangle,
+            LucideIcons.alertTriangle,
             color: AppColors.error,
           ),
           SizedBox(width: AppSpacing.sm + 4),
@@ -283,7 +283,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
           initialValue: currentValue,
           decoration: const InputDecoration(
             labelText: 'Reason',
-            prefixIcon: Icon(CupertinoIcons.tag),
+            prefixIcon: Icon(LucideIcons.tag),
           ),
           items: uniqueNames
               .map(
@@ -326,7 +326,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
       child: Row(
         children: [
           const Icon(
-            CupertinoIcons.exclamationmark_circle,
+            LucideIcons.alertCircle,
             color: AppColors.error,
             size: 20,
           ),

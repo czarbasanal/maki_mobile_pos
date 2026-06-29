@@ -678,13 +678,16 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
     final changes = await _resolvePriceChanges();
     if (!mounted) return;
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        final theme = Theme.of(context);
+      barrierColor: AppDialog.scrimColor(dark),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
         final muted = theme.colorScheme.onSurfaceVariant;
-        return AlertDialog(
-          title: const Text('Complete Receiving?'),
+        return AppDialog(
+          title: 'Complete Receiving?',
+          leadingIcon: LucideIcons.packageCheck,
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -711,14 +714,10 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Post Receiving'),
-            ),
+            appDialogCancel(ctx, 'Cancel',
+                onTap: () => Navigator.of(ctx).pop(false)),
+            appDialogPrimary(ctx, 'Post Receiving',
+                onTap: () => Navigator.of(ctx).pop(true)),
           ],
         );
       },

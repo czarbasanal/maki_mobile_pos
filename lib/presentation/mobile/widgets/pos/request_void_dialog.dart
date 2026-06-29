@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Collects a reason from a cashier/staff and submits a void request for an
 /// admin to approve. No password — that gate lives on the admin's approval.
@@ -20,8 +23,10 @@ class RequestVoidDialog extends ConsumerStatefulWidget {
     required SaleEntity sale,
     required VoidCallback onRequested,
   }) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return showDialog(
       context: context,
+      barrierColor: AppDialog.scrimColor(dark),
       builder: (_) => RequestVoidDialog(sale: sale, onRequested: onRequested),
     );
   }
@@ -69,14 +74,19 @@ class _RequestVoidDialogState extends ConsumerState<RequestVoidDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Request Void'),
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    return AppDialog(
+      title: 'Request Void',
+      leadingIcon: LucideIcons.send,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Sale ${widget.sale.saleNumber} will be sent to an admin for approval.',
+            style: TextStyle(
+                fontSize: 14.5, height: 1.55, color: appDialogBodyColor(dark)),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -89,18 +99,24 @@ class _RequestVoidDialogState extends ConsumerState<RequestVoidDialog> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(
+              _error!,
+              style: TextStyle(
+                  color: dark ? AppColors.errorOnDark : AppColors.error),
+            ),
           ],
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: _submitting ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+        appDialogCancel(
+          context,
+          'Cancel',
+          onTap: _submitting ? () {} : () => Navigator.pop(context),
         ),
-        FilledButton(
-          onPressed: _submitting ? null : _submit,
-          child: Text(_submitting ? 'Sending…' : 'Send Request'),
+        appDialogPrimary(
+          context,
+          _submitting ? 'Sending…' : 'Send Request',
+          onTap: _submitting ? () {} : _submit,
         ),
       ],
     );

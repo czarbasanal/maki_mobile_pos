@@ -831,39 +831,46 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     required String newSku,
     required int variationCount,
   }) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final body = appDialogBodyColor(dark);
     return showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Change SKU?'),
+      barrierColor: AppDialog.scrimColor(dark),
+      builder: (ctx) => AppDialog(
+        title: 'Change SKU?',
+        leadingIcon: LucideIcons.squarePen,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '$oldSku  →  $newSku',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(ctx).colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
+            Text(
               '• Past sales and receiving records keep their original SKU.',
+              style: TextStyle(fontSize: 14.5, height: 1.55, color: body),
             ),
-            const Text('• The old SKU stays scannable (added to barcodes).'),
+            Text(
+              '• The old SKU stays scannable (added to barcodes).',
+              style: TextStyle(fontSize: 14.5, height: 1.55, color: body),
+            ),
             if (variationCount > 0)
               Text(
                 '• $variationCount linked variation(s) will be re-pointed to '
                 'the new SKU.',
+                style: TextStyle(fontSize: 14.5, height: 1.55, color: body),
               ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Change SKU'),
-          ),
+          appDialogCancel(ctx, 'Cancel', onTap: () => Navigator.pop(ctx, false)),
+          appDialogPrimary(ctx, 'Change SKU',
+              onTap: () => Navigator.pop(ctx, true)),
         ],
       ),
     );
@@ -873,29 +880,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final product = _existingProduct;
     if (product == null) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Product?'),
-        content: Text(
-          'Delete "${product.name}"? This product will be hidden from POS '
+    final confirmed = await context.showConfirmDialog(
+      title: 'Delete Product?',
+      message: 'Delete "${product.name}"? This product will be hidden from POS '
           'and inventory lists. Past sales and receivings that reference '
           'it remain intact.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      confirmText: 'Delete',
+      icon: LucideIcons.trash2,
+      isDangerous: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
