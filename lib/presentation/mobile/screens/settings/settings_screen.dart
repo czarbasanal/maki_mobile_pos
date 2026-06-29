@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -316,8 +316,11 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildThemeTile(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
+    // Subtitle reflects the selected mode; the glyph is `sun` everywhere except
+    // Dark, which shows `moon` (per the 10a spec — the hub row uses sun/moon
+    // only, while the picker rows use monitor/sun/moon).
     final (label, icon) = switch (mode) {
-      ThemeMode.system => ('System', LucideIcons.monitor),
+      ThemeMode.system => ('System', LucideIcons.sun),
       ThemeMode.light => ('Light', LucideIcons.sun),
       ThemeMode.dark => ('Dark', LucideIcons.moon),
     };
@@ -649,10 +652,10 @@ class _ProfileHero extends StatelessWidget {
   IconData _roleIcon(UserRole role) {
     switch (role) {
       case UserRole.admin:
-        return LucideIcons.shield;
+        return LucideIcons.shieldHalf;
       case UserRole.staff:
       case UserRole.cashier:
-        return LucideIcons.userCircle2;
+        return LucideIcons.userRound;
     }
   }
 }

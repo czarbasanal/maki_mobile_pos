@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/domain/entities/void_request_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_style.dart';
 
