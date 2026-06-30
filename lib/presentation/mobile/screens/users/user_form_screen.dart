@@ -39,9 +39,18 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
   bool _obscureConfirmPassword = true;
   String? _errorMessage;
 
+  /// Snapshot of the editable fields at load — the Update button stays
+  /// disabled until display name or role diverges (edit mode; email is locked).
+  String _initialSig = '';
+  String _sig() => '${_displayNameController.text.trim()}|${_selectedRole.name}';
+  bool get _isDirty => _sig() != _initialSig;
+
   @override
   void initState() {
     super.initState();
+    _displayNameController.addListener(() {
+      if (mounted) setState(() {});
+    });
     if (widget.user != null) {
       _initFromUser(widget.user!);
     } else if (widget.userId != null) {
@@ -61,7 +70,10 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
   void _initFromUser(UserEntity user) {
     _emailController.text = user.email;
     _displayNameController.text = user.displayName;
-    setState(() => _selectedRole = user.role);
+    setState(() {
+      _selectedRole = user.role;
+      _initialSig = _sig();
+    });
   }
 
   @override
@@ -350,7 +362,9 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
             width: double.infinity,
             height: 50,
             child: FilledButton.icon(
-              onPressed: _isProcessing ? null : _handleSubmit,
+              onPressed: (_isProcessing || (widget.isEditing && !_isDirty))
+                  ? null
+                  : _handleSubmit,
               icon: _isProcessing
                   ? const SizedBox(
                       width: 20,

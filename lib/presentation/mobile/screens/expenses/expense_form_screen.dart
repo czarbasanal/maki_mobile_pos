@@ -36,12 +36,40 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   bool _isSaving = false;
   bool _isDeleting = false;
 
+  /// Snapshot of the form's values at load. The Update button stays disabled
+  /// until the current values diverge from this (edit mode only).
+  String _initialSig = '';
+
+  String _sig() => [
+        _descriptionController.text.trim(),
+        _amountController.text.trim(),
+        _selectedCategory ?? '',
+        _paidVia.name,
+        _selectedDate.toIso8601String(),
+        _notesController.text.trim(),
+      ].join('|');
+
+  bool get _isDirty => _sig() != _initialSig;
+
   @override
   void initState() {
     super.initState();
+    for (final c in [
+      _descriptionController,
+      _amountController,
+      _notesController
+    ]) {
+      c.addListener(_onFormChanged);
+    }
     if (widget.isEditing) {
       _loadExpense();
+    } else {
+      _initialSig = _sig();
     }
+  }
+
+  void _onFormChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadExpense() async {
@@ -62,6 +90,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       _selectedCategory = expense.category;
       _paidVia = expense.paidVia;
       _selectedDate = expense.date;
+      _initialSig = _sig();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -202,7 +231,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _isSaving ? null : _handleSubmit,
+                  onPressed: (_isSaving || (widget.isEditing && !_isDirty))
+                      ? null
+                      : _handleSubmit,
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

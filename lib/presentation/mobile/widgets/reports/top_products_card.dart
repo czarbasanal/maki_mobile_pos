@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
@@ -158,7 +160,10 @@ class _RankRow extends StatelessWidget {
         maxQuantity > 0 ? product.quantitySold / maxQuantity : 0.0;
     final medal = _rankColors(index, isDark);
 
-    return Column(
+    return InkWell(
+      onTap: () => context.push('${RoutePaths.inventory}/${product.productId}'),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -263,6 +268,7 @@ class _RankRow extends StatelessWidget {
           ],
         ),
       ],
+      ),
     );
   }
 

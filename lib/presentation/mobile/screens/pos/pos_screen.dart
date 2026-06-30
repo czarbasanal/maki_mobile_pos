@@ -481,11 +481,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
   }
 
-  /// Action buttons stacked vertically — both span the full viewport
-  /// width, share the same 64px height, and use the same lg corner
-  /// radius as the Confirm Payment button on the checkout screen.
-  /// Proceed-to-Checkout sits on top as the primary action; Save as
-  /// Draft sits below as the secondary path.
+  /// Action buttons side by side — Save Draft (secondary, left) and
+  /// Checkout (primary, right) share the same 50px height and lg corner
+  /// radius. Both are gated on a non-empty, not-processing cart.
   Widget _buildActionButtons(CartState cart) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -504,37 +502,39 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
+          child: Row(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  boxShadow: canProceed
-                      ? (isDark
-                          ? AppShadows.primaryButtonGold
-                          : AppShadows.primaryButton)
-                      : null,
-                ),
+              Expanded(
                 child: SizedBox(
-                  width: double.infinity,
                   height: 50,
-                  child: FilledButton.icon(
-                    onPressed: canProceed ? _proceedToCheckout : null,
-                    icon: const Icon(LucideIcons.arrowRight),
-                    label: const Text('Proceed to Checkout'),
-                    style: FilledButton.styleFrom(shape: shape),
+                  child: OutlinedButton.icon(
+                    onPressed: canProceed ? _showSaveDraftDialog : null,
+                    icon: const Icon(LucideIcons.save, size: 18),
+                    label: const Text('Save Draft'),
+                    style: OutlinedButton.styleFrom(shape: shape),
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm + 4),
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: OutlinedButton.icon(
-                  onPressed: canProceed ? _showSaveDraftDialog : null,
-                  icon: const Icon(LucideIcons.save),
-                  label: const Text('Save as Draft'),
-                  style: OutlinedButton.styleFrom(shape: shape),
+              const SizedBox(width: AppSpacing.sm + 4),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    boxShadow: canProceed
+                        ? (isDark
+                            ? AppShadows.primaryButtonGold
+                            : AppShadows.primaryButton)
+                        : null,
+                  ),
+                  child: SizedBox(
+                    height: 50,
+                    child: FilledButton.icon(
+                      onPressed: canProceed ? _proceedToCheckout : null,
+                      icon: const Icon(LucideIcons.arrowRight, size: 18),
+                      label: const Text('Checkout'),
+                      style: FilledButton.styleFrom(shape: shape),
+                    ),
+                  ),
                 ),
               ),
             ],

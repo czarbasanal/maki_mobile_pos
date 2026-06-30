@@ -155,12 +155,16 @@ class ReceivingItemRow extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(
-                      item.sku,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: muted,
-                        fontFamily: 'RobotoMono',
+                    Flexible(
+                      child: Text(
+                        item.sku,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: muted,
+                          fontFamily: 'RobotoMono',
+                        ),
                       ),
                     ),
                     if (item.isNewVariation) ...[
