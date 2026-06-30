@@ -447,6 +447,10 @@ class _RecentSectionHeader extends StatelessWidget {
         TextButton(
           onPressed: onViewAll,
           style: TextButton.styleFrom(
+            textStyle: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             minimumSize: const Size(0, 36),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
