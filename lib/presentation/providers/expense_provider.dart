@@ -57,7 +57,7 @@ final expenseByIdProvider =
 
 /// Provides expenses filtered by date range.
 final expensesByDateRangeProvider =
-    FutureProvider.family<List<ExpenseEntity>, ExpenseDateRangeParams>(
+    FutureProvider.autoDispose.family<List<ExpenseEntity>, ExpenseDateRangeParams>(
         (ref, params) async {
   final repository = ref.watch(expenseRepositoryProvider);
   return repository.getExpenses(
