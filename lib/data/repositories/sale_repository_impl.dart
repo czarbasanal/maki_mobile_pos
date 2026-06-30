@@ -186,19 +186,6 @@ class SaleRepositoryImpl implements SaleRepository {
   }
 
   @override
-  Future<List<SaleEntity>> getTodaysSales({
-    SaleStatus? status,
-    String? cashierId,
-  }) async {
-    final today = DateTime.now();
-    return getSalesForDay(
-      date: today,
-      status: status,
-      cashierId: cashierId,
-    );
-  }
-
-  @override
   Future<List<SaleEntity>> getRecentSales({
     int limit = 20,
     String? startAfterSaleId,

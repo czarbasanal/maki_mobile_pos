@@ -15,9 +15,6 @@ abstract class SupplierRepository {
   /// Gets a supplier by ID.
   Future<SupplierEntity?> getSupplierById(String supplierId);
 
-  /// Gets all active suppliers.
-  Future<List<SupplierEntity>> getSuppliers({int limit = 100});
-
   /// Gets all suppliers including inactive ones.
   Future<List<SupplierEntity>> getAllSuppliers({
     bool includeInactive = false,

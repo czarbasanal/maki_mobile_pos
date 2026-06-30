@@ -72,17 +72,6 @@ abstract class SaleRepository {
     String? cashierId,
   });
 
-  /// Retrieves today's sales.
-  ///
-  /// [status] - Optional filter by sale status
-  /// [cashierId] - Optional filter by cashier
-  ///
-  /// Returns list of today's sales.
-  Future<List<SaleEntity>> getTodaysSales({
-    SaleStatus? status,
-    String? cashierId,
-  });
-
   /// Retrieves recent sales with pagination.
   ///
   /// [limit] - Number of sales to retrieve

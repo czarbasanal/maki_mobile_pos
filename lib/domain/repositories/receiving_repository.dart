@@ -12,15 +12,6 @@ abstract class ReceivingRepository {
   /// Gets a receiving by ID.
   Future<ReceivingEntity?> getReceivingById(String receivingId);
 
-  /// Gets all receiving records with optional filters.
-  Future<List<ReceivingEntity>> getReceivings({
-    ReceivingStatus? status,
-    String? supplierId,
-    DateTime? startDate,
-    DateTime? endDate,
-    int limit = 50,
-  });
-
   /// Gets recent receiving records.
   Future<List<ReceivingEntity>> getRecentReceivings({int limit = 20});
 
