@@ -38,6 +38,11 @@ abstract class AppTheme {
       // Scaffold — warm canvas; cards/app bar stay white and lift off it.
       scaffoldBackgroundColor: AppColors.lightCanvas,
 
+      // Tap feedback — soften the InkWell splash/highlight (cards, dropdowns,
+      // list tiles) to a faint slate wash instead of the heavier default ink.
+      splashColor: AppColors.brandSlate.withValues(alpha: 0.05),
+      highlightColor: AppColors.brandSlate.withValues(alpha: 0.03),
+
       // AppBar
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.lightBackground,
@@ -384,6 +389,11 @@ abstract class AppTheme {
 
       // Scaffold — deepest canvas; app bar / cards lift off it.
       scaffoldBackgroundColor: AppColors.darkCanvas,
+
+      // Tap feedback — soften the InkWell splash/highlight to a faint light
+      // wash on the dark canvas instead of the heavier default ink.
+      splashColor: Colors.white.withValues(alpha: 0.05),
+      highlightColor: Colors.white.withValues(alpha: 0.03),
 
       // AppBar
       appBarTheme: const AppBarTheme(
