@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
 DailyClosingEntity _closing({
   required String id,
@@ -70,6 +71,7 @@ void main() {
   testWidgets('empty state', (tester) async {
     await tester.pumpWidget(_harness([]));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('No closings yet.'), findsOneWidget);
+    expect(find.byType(EmptyStateView), findsOneWidget);
+    expect(find.text('No closings yet'), findsOneWidget);
   });
 }

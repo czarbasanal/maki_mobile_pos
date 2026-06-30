@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 import 'package:maki_mobile_pos/core/utils/price_history_view.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
     show PriceHistoryEntry;
@@ -44,12 +46,11 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
       ),
       body: historyAsync.when(
         data: (entries) => _buildBody(context, entries),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(
-          child: Padding(
-            padding: EdgeInsets.all(AppSpacing.lg),
-            child: Text('Could not load price history'),
-          ),
+        loading: () => const ListSkeleton(),
+        error: (_, __) => ErrorStateView(
+          message: 'Could not load price history',
+          onRetry: () =>
+              ref.invalidate(priceHistoryProvider(widget.productId)),
         ),
       ),
     );
@@ -57,7 +58,11 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
 
   Widget _buildBody(BuildContext context, List<PriceHistoryEntry> entries) {
     if (entries.isEmpty) {
-      return const Center(child: Text('No price changes yet.'));
+      return const EmptyStateView(
+        icon: LucideIcons.trendingUp,
+        title: 'No price changes yet',
+        subtitle: 'Cost and price updates will show up here.',
+      );
     }
     final rows = buildPriceHistoryRows(entries, _metric);
     final theme = Theme.of(context);

@@ -11,6 +11,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/price_hist
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
 PriceHistoryEntry _e(String id, double price, double cost, DateTime at,
         {String? reason}) =>
@@ -53,7 +54,8 @@ Future<void> _pump(
 void main() {
   testWidgets('shows empty state when there is no history', (tester) async {
     await _pump(tester, const []);
-    expect(find.text('No price changes yet.'), findsOneWidget);
+    expect(find.byType(EmptyStateView), findsOneWidget);
+    expect(find.text('No price changes yet'), findsOneWidget);
     expect(find.byType(LineChart), findsNothing);
   });
 

@@ -224,6 +224,10 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
   ) : super(const CurrentReceivingState());
 
   /// Initializes a new receiving.
+  ///
+  /// Intentionally lets a reference-number failure propagate: the primary
+  /// caller (`_startNewReceiving`) catches it to show a snackbar and abort
+  /// navigation. Swallowing it here would make that guard dead code.
   Future<void> initNewReceiving() async {
     final refNumber = await _repository.generateReferenceNumber();
     state = CurrentReceivingState(referenceNumber: refNumber);
@@ -234,20 +238,29 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
     // Flag loading up front so the screen shows a skeleton instead of the
     // empty form while the fetch is in flight (or any stale state lingers).
     state = state.copyWith(isLoading: true, clearError: true);
-    final receiving = await _repository.getReceivingById(receivingId);
-    if (receiving != null) {
-      state = CurrentReceivingState(
-        id: receiving.id,
-        referenceNumber: receiving.referenceNumber,
-        supplierId: receiving.supplierId,
-        supplierName: receiving.supplierName,
-        items: receiving.items,
-        notes: receiving.notes,
-        status: receiving.status,
-        completedAt: receiving.completedAt,
-      );
-    } else {
-      state = state.copyWith(isLoading: false);
+    try {
+      final receiving = await _repository.getReceivingById(receivingId);
+      if (receiving != null) {
+        state = CurrentReceivingState(
+          id: receiving.id,
+          referenceNumber: receiving.referenceNumber,
+          supplierId: receiving.supplierId,
+          supplierName: receiving.supplierName,
+          items: receiving.items,
+          notes: receiving.notes,
+          status: receiving.status,
+          completedAt: receiving.completedAt,
+        );
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
+    } catch (e) {
+      // Reset to a fresh (editable, non-read-only) state carrying only the
+      // error. Two reasons: (1) without clearing isLoading the skeleton
+      // would be pinned forever; (2) copyWith would preserve a previously
+      // loaded *completed* receiving — its read-only status hides the error
+      // banner (gated on !isReadOnly) and shows stale data on a failed load.
+      state = CurrentReceivingState(errorMessage: e.toString());
     }
   }
 
