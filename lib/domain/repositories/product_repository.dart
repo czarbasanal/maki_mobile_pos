@@ -39,17 +39,6 @@ abstract class ProductRepository {
   /// Returns null if not found.
   Future<ProductEntity?> getProductByBarcode(String barcode);
 
-  /// Retrieves all active products.
-  ///
-  /// [limit] - Maximum number of products to return
-  /// [startAfterProductId] - For pagination
-  ///
-  /// Returns list of products ordered by name.
-  Future<List<ProductEntity>> getProducts({
-    int limit = 50,
-    String? startAfterProductId,
-  });
-
   /// Retrieves all products including inactive ones.
   ///
   /// [includeInactive] - Whether to include inactive products

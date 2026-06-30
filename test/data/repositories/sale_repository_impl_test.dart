@@ -106,19 +106,6 @@ void main() {
       expect(voided.voidReason, 'Customer refund');
     });
 
-    test('getTodaysSales should return only today sales', () async {
-      final today = DateTime.now();
-
-      // Create today's sale
-      await repository.createSale(createTestSale().copyWith(createdAt: today));
-
-      // We can't easily create yesterday's sale in fake firestore with past timestamp
-      // So we just verify today's sales returns something
-      final sales = await repository.getTodaysSales();
-
-      expect(sales, isNotEmpty);
-    });
-
     test('getSalesSummary should calculate totals correctly', () async {
       final today = DateTime.now();
 

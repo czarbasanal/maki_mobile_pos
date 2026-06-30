@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/data/repositories/draft_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -11,7 +12,7 @@ import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 
 /// Provides the DraftRepository instance.
 final draftRepositoryProvider = Provider<DraftRepository>((ref) {
-  return DraftRepositoryImpl();
+  return DraftRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
 // ==================== DRAFT QUERIES ====================

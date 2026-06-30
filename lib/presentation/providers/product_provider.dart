@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/data/repositories/product_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
@@ -12,7 +13,7 @@ import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Provides the ProductRepository instance.
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
-  return ProductRepositoryImpl();
+  return ProductRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
 // ==================== PRODUCT QUERIES ====================

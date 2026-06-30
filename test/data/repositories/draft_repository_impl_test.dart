@@ -107,16 +107,6 @@ void main() {
       expect(retrieved, isNull);
     });
 
-    test('draftNameExists should check for duplicates', () async {
-      await repository.createDraft(createTestDraft(name: 'Unique Name'));
-
-      final exists = await repository.draftNameExists(name: 'Unique Name');
-      final notExists = await repository.draftNameExists(name: 'Other Name');
-
-      expect(exists, true);
-      expect(notExists, false);
-    });
-
     test('getActiveDraftCount should return correct count', () async {
       await repository.createDraft(createTestDraft(name: 'Draft 1'));
       await repository.createDraft(createTestDraft(name: 'Draft 2'));

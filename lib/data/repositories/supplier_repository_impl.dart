@@ -63,11 +63,6 @@ class SupplierRepositoryImpl implements SupplierRepository {
   }
 
   @override
-  Future<List<SupplierEntity>> getSuppliers({int limit = 100}) async {
-    return getAllSuppliers(includeInactive: false, limit: limit);
-  }
-
-  @override
   Future<List<SupplierEntity>> getAllSuppliers({
     bool includeInactive = false,
     int limit = 100,

@@ -55,8 +55,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
     }
   }
 
-  @override
-  Future<List<ReceivingEntity>> getReceivings({
+  Future<List<ReceivingEntity>> _getReceivings({
     ReceivingStatus? status,
     String? supplierId,
     DateTime? startDate,
@@ -100,12 +99,12 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
 
   @override
   Future<List<ReceivingEntity>> getRecentReceivings({int limit = 20}) async {
-    return getReceivings(limit: limit);
+    return _getReceivings(limit: limit);
   }
 
   @override
   Future<List<ReceivingEntity>> getDraftReceivings() async {
-    return getReceivings(status: ReceivingStatus.draft);
+    return _getReceivings(status: ReceivingStatus.draft);
   }
 
   @override

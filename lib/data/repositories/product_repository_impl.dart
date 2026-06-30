@@ -207,37 +207,6 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<List<ProductEntity>> getProducts({
-    int limit = 50,
-    String? startAfterProductId,
-  }) async {
-    try {
-      Query<Map<String, dynamic>> query = _productsRef
-          .where('isActive', isEqualTo: true)
-          .orderBy('name')
-          .limit(limit);
-
-      if (startAfterProductId != null) {
-        final startAfterDoc = await _productsRef.doc(startAfterProductId).get();
-        if (startAfterDoc.exists) {
-          query = query.startAfterDocument(startAfterDoc);
-        }
-      }
-
-      final snapshot = await query.get();
-      return snapshot.docs
-          .map((doc) => ProductModel.fromFirestore(doc).toEntity())
-          .toList();
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to get products: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
-
-  @override
   Future<List<ProductEntity>> getAllProducts({
     bool includeInactive = false,
     int limit = 100,

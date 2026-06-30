@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/data/repositories/cost_code_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/cost_code_repository.dart';
@@ -8,7 +9,7 @@ import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 
 /// Provides the CostCodeRepository instance.
 final costCodeRepositoryProvider = Provider<CostCodeRepository>((ref) {
-  return CostCodeRepositoryImpl();
+  return CostCodeRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
 // ==================== COST CODE QUERIES ====================

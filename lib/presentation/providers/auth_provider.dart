@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -10,7 +11,7 @@ import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Provider for the AuthRepository instance.
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepositoryImpl();
+  return AuthRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
 /// Provider for the current authenticated user.

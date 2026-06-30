@@ -1,4 +1,6 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/receiving_filters.dart';
 import 'package:maki_mobile_pos/data/repositories/receiving_repository_impl.dart';
@@ -15,7 +17,10 @@ import 'package:uuid/uuid.dart';
 
 final receivingRepositoryProvider = Provider<ReceivingRepository>((ref) {
   final productRepo = ref.watch(productRepositoryProvider);
-  return ReceivingRepositoryImpl(productRepository: productRepo);
+  return ReceivingRepositoryImpl(
+    firestore: ref.watch(firestoreProvider),
+    productRepository: productRepo,
+  );
 });
 
 // ==================== USE-CASE PROVIDERS ====================
@@ -128,7 +133,7 @@ final currentWeekReceivingsProvider =
 // ==================== CURRENT RECEIVING STATE ====================
 
 /// State for the current receiving being created/edited.
-class CurrentReceivingState {
+class CurrentReceivingState extends Equatable {
   final String? id;
   final String referenceNumber;
   final String? supplierId;
@@ -208,6 +213,21 @@ class CurrentReceivingState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
+
+  @override
+  List<Object?> get props => [
+        id,
+        referenceNumber,
+        supplierId,
+        supplierName,
+        items,
+        notes,
+        status,
+        completedAt,
+        isProcessing,
+        isLoading,
+        errorMessage,
+      ];
 }
 
 /// Notifier for current receiving state.

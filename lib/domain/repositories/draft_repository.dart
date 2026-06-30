@@ -177,17 +177,6 @@ abstract class DraftRepository {
 
   // ==================== UTILITY ====================
 
-  /// Checks if a draft with the given name already exists.
-  ///
-  /// [name] - The draft name to check
-  /// [excludeDraftId] - Optional draft ID to exclude from check (for updates)
-  ///
-  /// Returns true if a draft with that name exists.
-  Future<bool> draftNameExists({
-    required String name,
-    String? excludeDraftId,
-  });
-
   /// Gets the count of active (non-converted) drafts.
   ///
   /// [createdBy] - Optional filter by creator

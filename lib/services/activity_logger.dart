@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/data/repositories/activity_log_repository_impl.dart';
@@ -309,7 +310,7 @@ class ActivityLogger {
 
 /// Provider for ActivityLogRepository.
 final activityLogRepositoryProvider = Provider<ActivityLogRepository>((ref) {
-  return ActivityLogRepositoryImpl();
+  return ActivityLogRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
 /// Provider for ActivityLogger service.

@@ -403,33 +403,6 @@ class DraftRepositoryImpl implements DraftRepository {
   // ==================== UTILITY ====================
 
   @override
-  Future<bool> draftNameExists({
-    required String name,
-    String? excludeDraftId,
-  }) async {
-    try {
-      final snapshot = await _draftsRef
-          .where('name', isEqualTo: name)
-          .where('isConverted', isEqualTo: false)
-          .limit(2) // We need to check if there's another besides excluded
-          .get();
-
-      if (excludeDraftId == null) {
-        return snapshot.docs.isNotEmpty;
-      }
-
-      // Check if any returned draft is not the excluded one
-      return snapshot.docs.any((doc) => doc.id != excludeDraftId);
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to check draft name: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
-
-  @override
   Future<int> getActiveDraftCount({String? createdBy}) async {
     try {
       Query<Map<String, dynamic>> query =

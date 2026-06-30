@@ -52,9 +52,16 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
           .read(currentReceivingProvider.notifier)
           .loadReceiving(widget.receivingId!);
     } else {
-      // Initialize new receiving
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(currentReceivingProvider.notifier).initNewReceiving();
+      // Initialize a new receiving. Mirror _startNewReceiving's guard so a
+      // reference-number failure surfaces to the user instead of failing
+      // silently. (Stays on the screen; the app-bar back button remains.)
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          await ref.read(currentReceivingProvider.notifier).initNewReceiving();
+        } catch (e) {
+          if (!mounted) return;
+          context.showErrorSnackBar('Could not start a new receiving: $e');
+        }
       });
     }
   }

@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -6,7 +7,7 @@ import 'package:uuid/uuid.dart';
 // ==================== CART STATE ====================
 
 /// Represents the current state of the shopping cart.
-class CartState {
+class CartState extends Equatable {
   /// Items in the cart
   final List<SaleItemEntity> items;
 
@@ -72,6 +73,24 @@ class CartState {
     this.isProcessing = false,
     this.errorMessage,
   });
+
+  @override
+  List<Object?> get props => [
+        items,
+        discountType,
+        paymentMethod,
+        amountReceived,
+        secondaryMethod,
+        splitAmount,
+        notes,
+        sourceDraftId,
+        draftName,
+        laborLines,
+        mechanicId,
+        mechanicName,
+        isProcessing,
+        errorMessage,
+      ];
 
   // ==================== COMPUTED PROPERTIES ====================
 

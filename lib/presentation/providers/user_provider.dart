@@ -1,4 +1,6 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/data/repositories/user_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -12,7 +14,7 @@ import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Provides the UserRepository instance.
 final userRepositoryProvider = Provider<UserRepository>((ref) {
-  return UserRepositoryImpl();
+  return UserRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
 // ==================== USE CASE PROVIDERS ====================
@@ -73,7 +75,7 @@ final userCountProvider = FutureProvider<int>((ref) async {
 // ==================== USER OPERATIONS ====================
 
 /// State for user operations.
-class UserOperationsState {
+class UserOperationsState extends Equatable {
   final bool isLoading;
   final String? errorMessage;
 
@@ -92,6 +94,9 @@ class UserOperationsState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
+
+  @override
+  List<Object?> get props => [isLoading, errorMessage];
 }
 
 /// Notifier for user operations.
