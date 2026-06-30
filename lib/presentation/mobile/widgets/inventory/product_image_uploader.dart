@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crop_your_image/crop_your_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
@@ -148,9 +147,9 @@ class ProductImageUploader extends StatelessWidget {
                 existingUrl!,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
-                    Icon(CupertinoIcons.cube_box, color: muted, size: 32),
+                    Icon(LucideIcons.package, color: muted, size: 32),
               )
-            : Icon(CupertinoIcons.camera, color: muted, size: 28));
+            : Icon(LucideIcons.camera, color: muted, size: 28));
 
     return Row(
       children: [
@@ -204,7 +203,7 @@ class ProductImageUploader extends StatelessWidget {
                       minimumSize: const Size(0, 32),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    icon: const Icon(CupertinoIcons.delete, size: 14),
+                    icon: const Icon(LucideIcons.trash2, size: 14),
                     label: const Text('Remove'),
                   ),
                 ),
@@ -256,7 +255,7 @@ class _CropImageScreenState extends State<_CropImageScreen> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.xmark),
+          icon: const Icon(LucideIcons.x),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text('Crop image'),

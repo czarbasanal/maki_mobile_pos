@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 /// Card displaying a summary metric on the dashboard.
@@ -63,7 +63,7 @@ class SummaryCard extends StatelessWidget {
                   const Spacer(),
                   if (onTap != null)
                     Icon(
-                      CupertinoIcons.chevron_right,
+                      LucideIcons.chevronRight,
                       color: muted,
                       size: 16,
                     ),
