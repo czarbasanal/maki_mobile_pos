@@ -539,7 +539,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         );
       },
-      loading: () => const LoadingView(),
+      loading: () => const ListSkeleton(),
       error: (error, _) => ErrorStateView(
         message: 'Error: $error',
         onRetry: () => ref.invalidate(productsProvider),

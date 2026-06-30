@@ -55,7 +55,7 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
       ),
       body: expensesAsync.when(
         data: (expenses) => _buildBody(expenses),
-        loading: () => const LoadingView(),
+        loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
           message: 'Error: $error',
           onRetry: () => ref.invalidate(expensesProvider),

@@ -122,7 +122,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           ),
         );
       },
-      loading: () => const LoadingView(),
+      loading: () => const ListSkeleton(),
       error: (error, _) => ErrorStateView(
         message: 'Failed to load sales\n$error',
         onRetry: () => ref.invalidate(salesByDateRangeProvider(params)),

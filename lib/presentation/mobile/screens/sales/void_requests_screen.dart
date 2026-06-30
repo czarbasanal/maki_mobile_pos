@@ -30,7 +30,7 @@ class VoidRequestsScreen extends ConsumerWidget {
         actions: [_MarkAllReadAction(enabled: unread > 0)],
       ),
       body: async.when(
-        loading: () => const LoadingView(),
+        loading: () => const ListSkeleton(),
         error: (e, _) => ErrorStateView(message: 'Error: $e'),
         data: (list) {
           if (list.isEmpty) return const _EmptyState();

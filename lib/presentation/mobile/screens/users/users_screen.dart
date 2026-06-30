@@ -96,7 +96,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           Expanded(
             child: usersAsync.when(
               data: (users) => _buildUsersList(users, currentUser!),
-              loading: () => const LoadingView(),
+              loading: () => const ListSkeleton(),
               error: (error, _) => ErrorStateView(
                 message: 'Error: $error',
                 onRetry: () => ref.invalidate(allUsersProvider),

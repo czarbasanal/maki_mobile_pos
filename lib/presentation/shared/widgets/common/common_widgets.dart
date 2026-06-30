@@ -10,6 +10,7 @@ export 'app_bottom_sheet.dart';
 export 'app_button.dart';
 export 'app_card.dart';
 export 'app_dialog.dart';
+export 'app_skeleton.dart';
 export 'app_dropdown.dart';
 export 'app_password_dialog.dart';
 export 'app_scaffold.dart';

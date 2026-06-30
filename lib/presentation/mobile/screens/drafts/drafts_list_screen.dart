@@ -29,7 +29,7 @@ class DraftsListScreen extends ConsumerWidget {
       ),
       body: draftsAsync.when(
         data: (drafts) => _buildDraftsList(context, ref, drafts),
-        loading: () => const LoadingView(),
+        loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
           message: 'Failed to load drafts\n$error',
           onRetry: () => ref.invalidate(activeDraftsProvider),
