@@ -33,7 +33,14 @@ class VoidRequestsScreen extends ConsumerWidget {
         loading: () => const ListSkeleton(),
         error: (e, _) => ErrorStateView(message: 'Error: $e'),
         data: (list) {
-          if (list.isEmpty) return const _EmptyState();
+          if (list.isEmpty) {
+            return const EmptyStateView(
+              icon: LucideIcons.bell,
+              title: 'No void requests',
+              subtitle:
+                  'When a cashier requests a void, it appears here for your review.',
+            );
+          }
           final sorted = [...list]
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           final pending = sorted.where((r) => r.isPending).length;
@@ -250,47 +257,6 @@ class _StatusPill extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final hint = dark ? AppColors.darkTextHint : AppColors.lightTextHint;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(40, 30, 40, 80),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color:
-                    dark ? const Color(0x0DFFFFFF) : const Color(0x0F283E46),
-              ),
-              child: Icon(LucideIcons.bell, size: 34, color: hint),
-            ),
-            const SizedBox(height: 16),
-            Text('No void requests',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
-            const SizedBox(height: 6),
-            Text(
-              'When a cashier requests a void, it appears here for your review.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, height: 1.45, color: hint),
-            ),
-          ],
-        ),
       ),
     );
   }

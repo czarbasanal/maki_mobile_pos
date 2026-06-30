@@ -8,7 +8,9 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
 /// Per-kind CRUD editor for an admin-managed name list.
 ///
@@ -60,9 +62,11 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
       ),
       body: categoriesAsync.when(
         data: (categories) => _buildList(context, categories),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) =>
-            Center(child: Text('Failed to load ${_kind.pluralLabel}: $e')),
+        loading: () => const ListSkeleton(),
+        error: (e, _) => ErrorStateView(
+          message: 'Failed to load ${_kind.pluralLabel}: $e',
+          onRetry: () => ref.invalidate(allCategoriesProvider(_kind)),
+        ),
       ),
       floatingActionButton: SettingsAddFab(
         onPressed: () => _showCategoryDialog(context),
@@ -116,7 +120,11 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
 
   Widget _buildList(BuildContext context, List<CategoryEntity> categories) {
     if (categories.isEmpty) {
-      return _EmptyState(kind: _kind);
+      return EmptyStateView(
+        icon: _kindIcon(_kind),
+        title: 'No ${_kind.pluralLabel} yet',
+        subtitle: 'Tap Add to create one.',
+      );
     }
 
     return ListView.separated(
@@ -248,44 +256,6 @@ IconData _kindIcon(CategoryKind kind) {
       return LucideIcons.ruler;
     case CategoryKind.voidReason:
       return LucideIcons.xCircle;
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.kind});
-
-  final CategoryKind kind;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _kindIcon(kind),
-              size: 48,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'No ${kind.pluralLabel} yet',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Tap Add to create one.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

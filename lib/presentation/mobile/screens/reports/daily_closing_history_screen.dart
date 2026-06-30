@@ -30,11 +30,18 @@ class DailyClosingHistoryScreen extends ConsumerWidget {
         title: const Text('Closing History'),
       ),
       body: historyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const ListSkeleton(),
+        error: (e, _) => ErrorStateView(
+          message: 'Error: $e',
+          onRetry: () => ref.invalidate(dailyClosingHistoryProvider),
+        ),
         data: (closings) {
           if (closings.isEmpty) {
-            return const Center(child: Text('No closings yet.'));
+            return const EmptyStateView(
+              icon: LucideIcons.history,
+              title: 'No closings yet',
+              subtitle: 'Closed days will show up here.',
+            );
           }
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),

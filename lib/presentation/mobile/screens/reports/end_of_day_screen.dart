@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// End-of-day review + close flow for the current business day.
 ///
@@ -74,7 +75,10 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
       ),
       body: existingAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorStateView(
+          message: 'Error: $e',
+          onRetry: () => ref.invalidate(dailyClosingForDateProvider(_today)),
+        ),
         data: (existing) => existing != null
             ? _ClosedView(closing: existing, date: _today)
             : _buildReview(),
@@ -86,7 +90,10 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     final draftAsync = ref.watch(dailyClosingDraftProvider(_today));
     return draftAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => ErrorStateView(
+        message: 'Error: $e',
+        onRetry: () => ref.invalidate(dailyClosingDraftProvider(_today)),
+      ),
       data: (draft) {
         final expected = draft.expectedCashFor(
           _float,

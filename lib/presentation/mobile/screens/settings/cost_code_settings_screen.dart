@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/password_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/cost_code_editor.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
@@ -59,7 +60,10 @@ class _CostCodeSettingsScreenState
       body: mappingAsync.when(
         data: (mapping) => _buildContent(theme, mapping),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        error: (error, _) => ErrorStateView(
+          message: 'Error: $error',
+          onRetry: () => ref.invalidate(costCodeMappingProvider),
+        ),
       ),
       bottomNavigationBar: _isEditing ? _buildBottomBar(theme) : null,
     );

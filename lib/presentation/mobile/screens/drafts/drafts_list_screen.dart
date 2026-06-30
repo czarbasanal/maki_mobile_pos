@@ -98,15 +98,23 @@ class DraftsListScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       barrierColor: AppDialog.scrimColor(
           Theme.of(context).brightness == Brightness.dark),
-      builder: (context) => DraftDetailSheet(
+      // Use `sheetContext` only to pop the sheet; hand the stable *screen*
+      // `context` to the async handlers. The sheet's context unmounts once it
+      // pops, which (now that the handlers await) would drop the post-await
+      // navigation / error snackbar.
+      // Use `sheetContext` only to pop the sheet; hand the stable *screen*
+      // `context` to the async handlers. The sheet's context unmounts once it
+      // pops, which (now that the handlers await) would drop the post-await
+      // navigation / error snackbar.
+      builder: (sheetContext) => DraftDetailSheet(
         draft: draft,
         onLoad: () {
-          Navigator.pop(context);
+          Navigator.pop(sheetContext);
           _loadDraftIntoCart(context, ref, draft);
         },
         onDelete: canDelete
             ? () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 _confirmDeleteDraft(context, ref, draft);
               }
             : null,
@@ -150,31 +158,40 @@ class DraftsListScreen extends ConsumerWidget {
     }
   }
 
-  void _performLoadDraft(
+  Future<void> _performLoadDraft(
     BuildContext context,
     WidgetRef ref,
     DraftEntity draft,
-  ) {
-    // Load draft into cart and immediately drop it from the saved-drafts
-    // collection. Loading consumes the draft — if the user cancels and
-    // saves again, a new entry is created. The activeDraftCountProvider
-    // stream picks up the deletion and decrements the badge.
+  ) async {
+    // Load draft into cart and drop it from the saved-drafts collection.
+    // Loading consumes the draft — if the user cancels and saves again, a
+    // new entry is created.
     ref.read(cartProvider.notifier).loadFromDraft(draft);
     ref.read(selectedDraftProvider.notifier).state = null;
 
     final actor = ref.read(currentUserProvider).valueOrNull;
     if (actor != null) {
-      // Fire-and-forget; UI already moved on. Errors surface via the
-      // operations notifier's AsyncValue.error if we ever wire them up.
-      ref
+      // Await the delete so a failure is observed rather than silently
+      // dropped (which would leave the consumed draft lingering in the list).
+      final deleted = await ref
           .read(draftOperationsProvider.notifier)
           .deleteDraft(actor: actor, draftId: draft.id);
+      if (!deleted) {
+        // Stay on the drafts screen so the snackbar survives — navigating to
+        // POS first would tear it down (the reason the old success toast was
+        // dropped). The draft is still listed, so the user can retry.
+        if (context.mounted) {
+          context.showErrorSnackBar(
+            "Couldn't remove the saved draft. Please try again.",
+          );
+        }
+        return;
+      }
     }
 
     // Navigate back to POS — visual feedback (cart populated + draft gone
-    // from the list) is sufficient; previous toast didn't reliably dismiss
-    // through the route transition.
-    context.go(RoutePaths.pos);
+    // from the list) is sufficient.
+    if (context.mounted) context.go(RoutePaths.pos);
   }
 
   void _confirmDeleteDraft(

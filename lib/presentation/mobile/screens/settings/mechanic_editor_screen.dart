@@ -8,7 +8,9 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
 /// Admin CRUD editor for the mechanics list.
 ///
@@ -39,9 +41,11 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
       ),
       body: mechanicsAsync.when(
         data: (mechanics) => _buildList(context, mechanics),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) =>
-            Center(child: Text('Failed to load mechanics: $e')),
+        loading: () => const ListSkeleton(),
+        error: (e, _) => ErrorStateView(
+          message: 'Failed to load mechanics: $e',
+          onRetry: () => ref.invalidate(allMechanicsProvider),
+        ),
       ),
       floatingActionButton: SettingsAddFab(
         onPressed: () => _showMechanicDialog(context),
@@ -51,7 +55,11 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
 
   Widget _buildList(BuildContext context, List<MechanicEntity> mechanics) {
     if (mechanics.isEmpty) {
-      return const _EmptyState();
+      return const EmptyStateView(
+        icon: LucideIcons.wrench,
+        title: 'No mechanics yet',
+        subtitle: 'Tap Add to create one.',
+      );
     }
 
     return ListView.separated(
@@ -102,42 +110,6 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
     if (!context.mounted || saved != true) return;
     context.showSuccessSnackBar(
       existing == null ? 'Mechanic created' : 'Mechanic updated',
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.wrench,
-              size: 48,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'No mechanics yet',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Tap Add to create one.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
