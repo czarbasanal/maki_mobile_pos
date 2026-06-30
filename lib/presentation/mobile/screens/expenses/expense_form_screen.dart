@@ -298,7 +298,11 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           notes: notes.isEmpty ? null : notes,
           clearNotes: notes.isEmpty,
         );
-        final saved = await notifier.updateExpense(expense: updated);
+        if (!mounted) return;
+        final saved = await context.runWithWaiting(
+          () => notifier.updateExpense(expense: updated),
+          message: 'Updating…',
+        );
         if (saved == null) throw _readOperationError();
       } else {
         final draft = ExpenseEntity(
@@ -313,7 +317,10 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           createdBy: '',
           createdByName: '',
         );
-        final saved = await notifier.createExpense(expense: draft);
+        final saved = await context.runWithWaiting(
+          () => notifier.createExpense(expense: draft),
+          message: 'Saving…',
+        );
         if (saved == null) throw _readOperationError();
       }
 
@@ -346,11 +353,15 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     );
     if (!confirmed) return;
 
+    if (!mounted) return;
     setState(() => _isDeleting = true);
     try {
-      final ok = await ref
-          .read(expenseOperationsProvider.notifier)
-          .deleteExpense(widget.expenseId!);
+      final ok = await context.runWithWaiting(
+        () => ref
+            .read(expenseOperationsProvider.notifier)
+            .deleteExpense(widget.expenseId!),
+        message: 'Deleting…',
+      );
       if (!ok) throw _readOperationError();
       if (mounted) {
         context.showSuccessSnackBar('Expense deleted');

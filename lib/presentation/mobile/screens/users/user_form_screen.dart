@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/utils/validators.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/users/role_style.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 
 /// Screen for creating or editing a user.
 class UserFormScreen extends ConsumerStatefulWidget {
@@ -405,28 +406,32 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
       // notifier) handles permission checks, business guards (last-admin,
       // self-demote, self-deactivate), and the activity-log writes.
       if (widget.isEditing) {
-        final updated =
-            await ref.read(userOperationsProvider.notifier).updateUser(
-                  actor: currentUser,
-                  user: widget.user!.copyWith(
-                    displayName: _displayNameController.text.trim(),
-                    role: _selectedRole,
-                  ),
-                );
+        final updated = await context.runWithWaiting(
+          () => ref.read(userOperationsProvider.notifier).updateUser(
+                actor: currentUser,
+                user: widget.user!.copyWith(
+                  displayName: _displayNameController.text.trim(),
+                  role: _selectedRole,
+                ),
+              ),
+          message: 'Updating…',
+        );
 
         if (updated != null && mounted) {
           context.showSuccessSnackBar('User updated successfully');
           context.goBackOr(RoutePaths.users);
         }
       } else {
-        final created =
-            await ref.read(userOperationsProvider.notifier).createUser(
-                  actor: currentUser,
-                  email: _emailController.text.trim(),
-                  password: _passwordController.text,
-                  displayName: _displayNameController.text.trim(),
-                  role: _selectedRole,
-                );
+        final created = await context.runWithWaiting(
+          () => ref.read(userOperationsProvider.notifier).createUser(
+                actor: currentUser,
+                email: _emailController.text.trim(),
+                password: _passwordController.text,
+                displayName: _displayNameController.text.trim(),
+                role: _selectedRole,
+              ),
+          message: 'Saving…',
+        );
 
         if (created != null && mounted) {
           context.showSuccessSnackBar('User created successfully');

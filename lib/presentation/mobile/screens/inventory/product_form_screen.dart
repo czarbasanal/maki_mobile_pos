@@ -931,10 +931,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
 
+    if (!mounted) return;
     setState(() => _isSaving = true);
-    final ok = await ref
-        .read(productOperationsProvider.notifier)
-        .deactivateProduct(actor: currentUser, productId: product.id);
+    final ok = await context.runWithWaiting(
+      () => ref
+          .read(productOperationsProvider.notifier)
+          .deactivateProduct(actor: currentUser, productId: product.id),
+      message: 'Deleting…',
+    );
 
     if (!mounted) return;
     if (ok) {
@@ -1059,9 +1063,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           );
 
           final productOps = ref.read(productOperationsProvider.notifier);
-          final result = await productOps.updateProduct(
-            actor: currentUser,
-            product: product,
+          if (!mounted) return;
+          final result = await context.runWithWaiting(
+            () => productOps.updateProduct(actor: currentUser, product: product),
+            message: 'Updating…',
           );
           if (result == null) throw Exception('Failed to update product');
         } else if (userRole == UserRole.staff) {
@@ -1091,9 +1096,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           );
 
           final productOps = ref.read(productOperationsProvider.notifier);
-          final result = await productOps.updateProduct(
-            actor: currentUser,
-            product: product,
+          if (!mounted) return;
+          final result = await context.runWithWaiting(
+            () => productOps.updateProduct(actor: currentUser, product: product),
+            message: 'Updating…',
           );
           if (result == null) throw Exception('Failed to update product');
         } else if (userRole == UserRole.cashier) {
@@ -1141,9 +1147,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             clearImageUrl: clearImage,
           );
           final productOps = ref.read(productOperationsProvider.notifier);
-          final result = await productOps.updateProduct(
-            actor: currentUser,
-            product: product,
+          if (!mounted) return;
+          final result = await context.runWithWaiting(
+            () => productOps.updateProduct(actor: currentUser, product: product),
+            message: 'Updating…',
           );
           if (result == null) throw Exception('Failed to update product');
         }
@@ -1180,9 +1187,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         );
 
         final productOps = ref.read(productOperationsProvider.notifier);
-        final created = await productOps.createProduct(
-          actor: currentUser,
-          product: product,
+        final created = await context.runWithWaiting(
+          () => productOps.createProduct(actor: currentUser, product: product),
+          message: 'Saving…',
         );
         if (created == null) throw Exception('Failed to create product');
 
@@ -1249,9 +1256,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         );
 
         final productOps = ref.read(productOperationsProvider.notifier);
-        final created = await productOps.createProduct(
-          actor: currentUser,
-          product: product,
+        final created = await context.runWithWaiting(
+          () => productOps.createProduct(actor: currentUser, product: product),
+          message: 'Saving…',
         );
         if (created == null) throw Exception('Failed to create product');
 
