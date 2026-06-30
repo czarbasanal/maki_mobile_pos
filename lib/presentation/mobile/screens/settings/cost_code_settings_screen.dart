@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/password_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/cost_code_editor.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
@@ -468,12 +469,15 @@ class _CostCodeSettingsScreenState
     try {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not logged in');
+      if (!mounted) return;
 
-      final success =
-          await ref.read(costCodeOperationsProvider.notifier).updateMapping(
-                mapping: _editedMapping!,
-                updatedBy: currentUser.id,
-              );
+      final success = await context.runWithWaiting(
+        () => ref.read(costCodeOperationsProvider.notifier).updateMapping(
+              mapping: _editedMapping!,
+              updatedBy: currentUser.id,
+            ),
+        message: 'Saving…',
+      );
 
       if (success) {
         // Log activity
@@ -558,11 +562,13 @@ class _CostCodeSettingsScreenState
       },
     );
 
-    if (verified != true) return;
+    if (verified != true || !mounted) return;
 
     try {
-      final success =
-          await ref.read(costCodeOperationsProvider.notifier).resetToDefault();
+      final success = await context.runWithWaiting(
+        () => ref.read(costCodeOperationsProvider.notifier).resetToDefault(),
+        message: 'Resetting…',
+      );
 
       if (success && mounted) {
         final currentUser = ref.read(currentUserProvider).value;

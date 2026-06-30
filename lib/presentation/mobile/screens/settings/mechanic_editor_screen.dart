@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 
 /// Admin CRUD editor for the mechanics list.
 ///
@@ -72,9 +73,12 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
 
   Future<void> _toggleActive(MechanicEntity mechanic) async {
     final ops = ref.read(mechanicOperationsProvider.notifier);
-    final ok = mechanic.isActive
-        ? await ops.deactivate(mechanic.id)
-        : await ops.reactivate(mechanic.id);
+    final ok = await context.runWithWaiting(
+      () => mechanic.isActive
+          ? ops.deactivate(mechanic.id)
+          : ops.reactivate(mechanic.id),
+      message: 'Updating…',
+    );
     if (!mounted) return;
     if (ok) {
       context.showSuccessSnackBar(
@@ -237,21 +241,24 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
     setState(() => _isSaving = true);
 
     final existing = widget.existing;
-    MechanicEntity? result;
-    if (existing == null) {
-      result = await ops.create(
-        mechanic: MechanicEntity(
-          id: '',
-          name: name,
-          isActive: true,
-          createdAt: DateTime.now(),
-        ),
-      );
-    } else {
-      result = await ops.update(
-        mechanic: existing.copyWith(name: name, isActive: _isActive),
-      );
-    }
+    final result = await context.runWithWaiting(
+      () async {
+        if (existing == null) {
+          return ops.create(
+            mechanic: MechanicEntity(
+              id: '',
+              name: name,
+              isActive: true,
+              createdAt: DateTime.now(),
+            ),
+          );
+        }
+        return ops.update(
+          mechanic: existing.copyWith(name: name, isActive: _isActive),
+        );
+      },
+      message: existing == null ? 'Saving…' : 'Updating…',
+    );
 
     if (!mounted) return;
 

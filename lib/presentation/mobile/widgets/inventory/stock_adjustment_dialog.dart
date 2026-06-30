@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_bottom_sheet.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 
 /// Dialog for adjusting product stock.
 class StockAdjustmentDialog extends ConsumerStatefulWidget {
@@ -302,26 +303,29 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
 
       final productOps = ref.read(productOperationsProvider.notifier);
 
-      ProductEntity? result;
-      if (_adjustmentType == AdjustmentType.set) {
-        // Use setStock for exact value
-        result = await ref.read(productRepositoryProvider).setStock(
-              productId: widget.product.id,
-              newQuantity: quantity,
-              updatedBy: currentUser.id,
-              updatedByName: currentUser.displayName,
-            );
-      } else {
-        // Use updateStock for add/remove
-        final change =
-            _adjustmentType == AdjustmentType.add ? quantity : -quantity;
-        result = await productOps.updateStock(
-          productId: widget.product.id,
-          quantityChange: change,
-          updatedBy: currentUser.id,
-          updatedByName: currentUser.displayName,
-        );
-      }
+      final result = await context.runWithWaiting(
+        () async {
+          if (_adjustmentType == AdjustmentType.set) {
+            // Use setStock for exact value
+            return ref.read(productRepositoryProvider).setStock(
+                  productId: widget.product.id,
+                  newQuantity: quantity,
+                  updatedBy: currentUser.id,
+                  updatedByName: currentUser.displayName,
+                );
+          }
+          // Use updateStock for add/remove
+          final change =
+              _adjustmentType == AdjustmentType.add ? quantity : -quantity;
+          return productOps.updateStock(
+            productId: widget.product.id,
+            quantityChange: change,
+            updatedBy: currentUser.id,
+            updatedByName: currentUser.displayName,
+          );
+        },
+        message: 'Updating…',
+      );
 
       if (result != null && mounted) {
         final newQty = _newQuantity;

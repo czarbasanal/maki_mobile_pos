@@ -344,7 +344,9 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not logged in');
 
-      if (widget.isEditing && _existingSupplier != null) {
+      await context.runWithWaiting(
+        () async {
+          if (widget.isEditing && _existingSupplier != null) {
         await ref.read(supplierOperationsProvider.notifier).updateSupplier(
               supplier: _existingSupplier!.copyWith(
                 name: _nameController.text.trim(),
@@ -400,7 +402,10 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                 createdAt: DateTime.now(),
               ),
             );
-      }
+          }
+        },
+        message: widget.isEditing ? 'Updating…' : 'Saving…',
+      );
 
       if (mounted) {
         context.showSuccessSnackBar(

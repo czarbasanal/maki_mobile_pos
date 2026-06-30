@@ -325,19 +325,20 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
     if (confirmed) {
       final currentUser = ref.read(currentUserProvider).value;
-      if (currentUser == null) return;
+      if (currentUser == null || !mounted) return;
 
-      if (user.isActive) {
-        await ref.read(userOperationsProvider.notifier).deactivateUser(
-              actor: currentUser,
-              user: user,
-            );
-      } else {
-        await ref.read(userOperationsProvider.notifier).reactivateUser(
-              actor: currentUser,
-              user: user,
-            );
-      }
+      await context.runWithWaiting(
+        () => user.isActive
+            ? ref.read(userOperationsProvider.notifier).deactivateUser(
+                  actor: currentUser,
+                  user: user,
+                )
+            : ref.read(userOperationsProvider.notifier).reactivateUser(
+                  actor: currentUser,
+                  user: user,
+                ),
+        message: 'Updating…',
+      );
 
       if (mounted) {
         if (user.isActive) {

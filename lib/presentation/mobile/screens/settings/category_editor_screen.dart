@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 
 /// Per-kind CRUD editor for an admin-managed name list.
 ///
@@ -136,9 +137,12 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
 
   Future<void> _toggleActive(CategoryEntity category) async {
     final ops = ref.read(categoryOperationsProvider(_kind).notifier);
-    final ok = category.isActive
-        ? await ops.deactivate(category.id)
-        : await ops.reactivate(category.id);
+    final ok = await context.runWithWaiting(
+      () => category.isActive
+          ? ops.deactivate(category.id)
+          : ops.reactivate(category.id),
+      message: 'Updating…',
+    );
     if (!mounted) return;
     if (ok) {
       context.showSuccessSnackBar(
@@ -387,21 +391,24 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
     setState(() => _isSaving = true);
 
     final existing = widget.existing;
-    CategoryEntity? result;
-    if (existing == null) {
-      result = await ops.create(
-        category: CategoryEntity(
-          id: '',
-          name: name,
-          isActive: true,
-          createdAt: DateTime.now(),
-        ),
-      );
-    } else {
-      result = await ops.update(
-        category: existing.copyWith(name: name, isActive: _isActive),
-      );
-    }
+    final result = await context.runWithWaiting(
+      () async {
+        if (existing == null) {
+          return ops.create(
+            category: CategoryEntity(
+              id: '',
+              name: name,
+              isActive: true,
+              createdAt: DateTime.now(),
+            ),
+          );
+        }
+        return ops.update(
+          category: existing.copyWith(name: name, isActive: _isActive),
+        );
+      },
+      message: existing == null ? 'Saving…' : 'Updating…',
+    );
 
     if (!mounted) return;
 
