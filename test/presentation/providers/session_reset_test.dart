@@ -65,7 +65,8 @@ void main() {
     expect(container.read(selectedDraftProvider), isNull);
   });
 
-  test('does NOT reset on initial sign-in (null -> user)', () async {
+  test('does NOT reset across a signed-out-at-boot -> sign-in transition',
+      () async {
     final auth = StreamController<UserEntity?>();
     final container = ProviderContainer(
       overrides: [currentUserProvider.overrideWith((ref) => auth.stream)],
@@ -77,10 +78,14 @@ void main() {
     container.listen(currentUserProvider, (_, __) {});
 
     container.read(cartProvider.notifier).addItem(_item); // cart built pre-auth
-    auth.add(_admin());
+
+    auth.add(null); // signed out at boot (AsyncData(null), not just loading)
+    await Future<void>.delayed(Duration.zero);
+    auth.add(_admin()); // then signs in
     await Future<void>.delayed(Duration.zero);
 
-    // Signing IN must not wipe a cart.
+    // Neither the loading->null nor the null->user transition is a sign-out,
+    // so the cart must survive both.
     expect(container.read(cartProvider).isNotEmpty, isTrue);
   });
 }
