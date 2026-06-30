@@ -494,9 +494,20 @@ class CartNotifier extends StateNotifier<CartState> {
 
   /// Sets the payment method, resetting the split inputs.
   void setPaymentMethod(PaymentMethod method) {
+    // Seed the split-tender methods with the same default the PaymentSection
+    // renders pre-selected (Mixed → GCash digital portion, Salmon → Cash
+    // downpayment). Without this the segment *looks* selected but state's
+    // secondaryMethod stays null, so isPaymentValid is false and the
+    // Confirm Payment button never enables until the user re-taps the segment.
+    final PaymentMethod? secondary = switch (method) {
+      PaymentMethod.mixed => PaymentMethod.gcash,
+      PaymentMethod.salmon => PaymentMethod.cash,
+      _ => null,
+    };
     state = state.copyWith(
       paymentMethod: method,
-      clearSecondaryMethod: true,
+      secondaryMethod: secondary,
+      clearSecondaryMethod: secondary == null,
       splitAmount: 0,
       clearErrorMessage: true,
     );
