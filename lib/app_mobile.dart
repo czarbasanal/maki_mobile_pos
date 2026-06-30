@@ -10,6 +10,7 @@ class MAKIPOSMobileApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(sessionResetProvider); // clears session state on sign-out
     final router = ref.watch(mobileRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
 
