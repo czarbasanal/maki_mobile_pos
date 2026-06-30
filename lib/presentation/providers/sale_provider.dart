@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/top_selling.dart';
@@ -15,7 +16,7 @@ import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 
 /// Provides the SaleRepository instance.
 final saleRepositoryProvider = Provider<SaleRepository>((ref) {
-  return SaleRepositoryImpl();
+  return SaleRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
 // ==================== SALE QUERIES ====================

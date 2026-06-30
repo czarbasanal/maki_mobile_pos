@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/receiving_filters.dart';
 import 'package:maki_mobile_pos/data/repositories/receiving_repository_impl.dart';
@@ -16,7 +17,10 @@ import 'package:uuid/uuid.dart';
 
 final receivingRepositoryProvider = Provider<ReceivingRepository>((ref) {
   final productRepo = ref.watch(productRepositoryProvider);
-  return ReceivingRepositoryImpl(productRepository: productRepo);
+  return ReceivingRepositoryImpl(
+    firestore: ref.watch(firestoreProvider),
+    productRepository: productRepo,
+  );
 });
 
 // ==================== USE-CASE PROVIDERS ====================
