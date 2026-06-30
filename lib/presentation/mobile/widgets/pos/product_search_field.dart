@@ -65,27 +65,22 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
       return;
     }
 
+    // Rebuild the field (e.g. the clear button) and ensure the dropdown is
+    // present — but do NOT tear it down and re-insert it on every keystroke.
     setState(() {
       _showResults = widget.focusNode.hasFocus;
     });
+    if (_showResults) _ensureOverlay();
 
-    // Debounce the search query to avoid excessive rebuilds
+    // Debounce only the query the results provider watches; the overlay is
+    // rebuilt in place (markNeedsBuild) rather than recreated, so typing stays
+    // smooth and the list doesn't flicker.
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        setState(() {
-          _debouncedQuery = query;
-        });
-        if (_showResults) {
-          _showOverlay();
-        }
-      }
+      if (!mounted || query != widget.controller.text.trim()) return;
+      _debouncedQuery = query;
+      _overlayEntry?.markNeedsBuild();
     });
-
-    // Show overlay immediately (with previous results or loading)
-    if (_showResults) {
-      _showOverlay();
-    }
   }
 
   void _onFocusChanged() {
@@ -97,12 +92,17 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
         }
       });
     } else if (widget.controller.text.isNotEmpty) {
-      _showOverlay();
+      _ensureOverlay();
     }
   }
 
-  void _showOverlay() {
-    _removeOverlay();
+  /// Inserts the results dropdown once; if it already exists, rebuilds it in
+  /// place instead of recreating it (avoids per-keystroke flicker).
+  void _ensureOverlay() {
+    if (_overlayEntry != null) {
+      _overlayEntry!.markNeedsBuild();
+      return;
+    }
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
@@ -215,7 +215,15 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
 
   Widget _buildSearchResults() {
     if (_debouncedQuery.isEmpty) {
-      return const SizedBox.shrink();
+      // Nothing typed → no dropdown. Typed but debounce still pending → a brief
+      // loader rather than an empty box.
+      if (widget.controller.text.trim().isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return const Padding(
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
 
     final searchResults = ref.watch(localProductSearchProvider(_debouncedQuery));
