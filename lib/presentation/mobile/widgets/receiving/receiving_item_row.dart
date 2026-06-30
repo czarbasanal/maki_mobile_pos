@@ -241,9 +241,30 @@ class ReceivingItemRow extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // Quantity controls (left) + line total (right).
+          // Line total (left) + quantity controls (right) — the editor sits on
+          // the thumb side for easier one-handed reach.
           Row(
             children: [
+              // Total — peso amount admin-only; staff just sees the qty.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isAdmin)
+                    Text(
+                      item.totalCost.toCurrency(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  Text(
+                    '${item.quantity} ${item.unit}',
+                    style: TextStyle(fontSize: 11, color: muted),
+                  ),
+                ],
+              ),
+              const Spacer(),
               if (readOnly)
                 Text(
                   '×${item.quantity}',
@@ -325,26 +346,6 @@ class ReceivingItemRow extends ConsumerWidget {
                     ),
                   ],
                 ),
-              const Spacer(),
-              // Total — peso amount admin-only; staff just sees the qty.
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (isAdmin)
-                    Text(
-                      item.totalCost.toCurrency(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  Text(
-                    '${item.quantity} ${item.unit}',
-                    style: TextStyle(fontSize: 11, color: muted),
-                  ),
-                ],
-              ),
             ],
           ),
         ],
