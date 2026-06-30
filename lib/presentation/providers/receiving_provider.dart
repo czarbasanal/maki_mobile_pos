@@ -138,6 +138,10 @@ class CurrentReceivingState {
   final ReceivingStatus status;
   final DateTime? completedAt;
   final bool isProcessing;
+
+  /// True while an existing receiving is being fetched (detail / draft load),
+  /// so consumers can show a loading state instead of the empty form.
+  final bool isLoading;
   final String? errorMessage;
 
   const CurrentReceivingState({
@@ -150,6 +154,7 @@ class CurrentReceivingState {
     this.status = ReceivingStatus.draft,
     this.completedAt,
     this.isProcessing = false,
+    this.isLoading = false,
     this.errorMessage,
   });
 
@@ -178,6 +183,7 @@ class CurrentReceivingState {
     ReceivingStatus? status,
     DateTime? completedAt,
     bool? isProcessing,
+    bool? isLoading,
     String? errorMessage,
     bool clearId = false,
     bool clearSupplierId = false,
@@ -198,6 +204,7 @@ class CurrentReceivingState {
       completedAt:
           clearCompletedAt ? null : (completedAt ?? this.completedAt),
       isProcessing: isProcessing ?? this.isProcessing,
+      isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -224,6 +231,9 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
 
   /// Loads an existing receiving for editing.
   Future<void> loadReceiving(String receivingId) async {
+    // Flag loading up front so the screen shows a skeleton instead of the
+    // empty form while the fetch is in flight (or any stale state lingers).
+    state = state.copyWith(isLoading: true, clearError: true);
     final receiving = await _repository.getReceivingById(receivingId);
     if (receiving != null) {
       state = CurrentReceivingState(
@@ -236,6 +246,8 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
         status: receiving.status,
         completedAt: receiving.completedAt,
       );
+    } else {
+      state = state.copyWith(isLoading: false);
     }
   }
 

@@ -39,10 +39,6 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   final _costController = TextEditingController();
   ProductEntity? _selectedProduct;
 
-  /// True while an existing receiving is being fetched (detail view), so the
-  /// screen shows a skeleton instead of flashing the empty new-receiving form.
-  bool _loading = false;
-
   bool get _isAdmin =>
       ref.watch(currentUserProvider).valueOrNull?.role == UserRole.admin;
 
@@ -50,14 +46,11 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   void initState() {
     super.initState();
     if (widget.receivingId != null) {
-      // Load existing receiving — show a skeleton until it arrives.
-      _loading = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await ref
-            .read(currentReceivingProvider.notifier)
-            .loadReceiving(widget.receivingId!);
-        if (mounted) setState(() => _loading = false);
-      });
+      // Load existing receiving — loadReceiving flips isLoading on the provider
+      // synchronously, so the first build already shows the skeleton.
+      ref
+          .read(currentReceivingProvider.notifier)
+          .loadReceiving(widget.receivingId!);
     } else {
       // Initialize new receiving
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,10 +71,11 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final receivingState = ref.watch(currentReceivingProvider);
 
-    // Detail view still fetching — show a skeleton instead of flashing the
+    // Detail / draft still fetching — show a skeleton instead of flashing the
     // empty new-receiving form before the data lands.
-    if (_loading) {
+    if (receivingState.isLoading) {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -93,8 +87,6 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
         body: const ListSkeleton(),
       );
     }
-
-    final receivingState = ref.watch(currentReceivingProvider);
 
     final isReadOnly = receivingState.isReadOnly;
 
