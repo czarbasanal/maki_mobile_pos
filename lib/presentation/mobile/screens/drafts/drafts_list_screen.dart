@@ -26,14 +26,6 @@ class DraftsListScreen extends ConsumerWidget {
           onPressed: () => context.goBackOr(RoutePaths.pos),
         ),
         title: const Text('Saved Drafts'),
-        actions: [
-          // Refresh button
-          IconButton(
-            icon: const Icon(LucideIcons.refreshCw),
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(activeDraftsProvider),
-          ),
-        ],
       ),
       body: draftsAsync.when(
         data: (drafts) => _buildDraftsList(context, ref, drafts),
