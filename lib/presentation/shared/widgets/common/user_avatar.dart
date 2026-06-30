@@ -24,20 +24,14 @@ class UserAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: _getRoleColor(user.role),
+        color: _getRoleColor(
+            user.role, Theme.of(context).brightness == Brightness.dark),
         border: showBorder
             ? Border.all(
                 color: Colors.white,
                 width: 2,
               )
             : null,
-        boxShadow: [
-          BoxShadow(
-            color: _getRoleColor(user.role).withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: user.photoUrl != null
           ? ClipOval(
@@ -76,14 +70,14 @@ class UserAvatar extends StatelessWidget {
     return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
   }
 
-  Color _getRoleColor(UserRole role) {
+  Color _getRoleColor(UserRole role, bool dark) {
     switch (role) {
       case UserRole.admin:
-        return AppColors.roleAdmin;
+        return dark ? AppColors.roleAdminOnDark : AppColors.roleAdmin;
       case UserRole.staff:
-        return AppColors.roleStaff;
+        return dark ? AppColors.roleStaffOnDark : AppColors.roleStaff;
       case UserRole.cashier:
-        return AppColors.roleCashier;
+        return dark ? AppColors.roleCashierOnDark : AppColors.roleCashier;
     }
   }
 }
@@ -101,22 +95,24 @@ class RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final color = _getRoleColor(role, dark);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: small ? 8 : 12,
         vertical: small ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: _getRoleColor(role).withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _getRoleColor(role).withValues(alpha: 0.3),
+          color: color.withValues(alpha: 0.3),
         ),
       ),
       child: Text(
         role.displayName,
         style: TextStyle(
-          color: _getRoleColor(role),
+          color: color,
           fontSize: small ? 11 : 13,
           fontWeight: FontWeight.w600,
         ),
@@ -124,14 +120,14 @@ class RoleBadge extends StatelessWidget {
     );
   }
 
-  Color _getRoleColor(UserRole role) {
+  Color _getRoleColor(UserRole role, bool dark) {
     switch (role) {
       case UserRole.admin:
-        return AppColors.roleAdmin;
+        return dark ? AppColors.roleAdminOnDark : AppColors.roleAdmin;
       case UserRole.staff:
-        return AppColors.roleStaff;
+        return dark ? AppColors.roleStaffOnDark : AppColors.roleStaff;
       case UserRole.cashier:
-        return AppColors.roleCashier;
+        return dark ? AppColors.roleCashierOnDark : AppColors.roleCashier;
     }
   }
 }
@@ -199,8 +195,8 @@ class UserInfoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 5,
               offset: const Offset(0, 2),
             ),
           ],

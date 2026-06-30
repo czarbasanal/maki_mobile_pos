@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- HEADER -->
+  <div style="max-width:2150px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Handoff 12 · Users · migration
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Users — on the new language</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:84ch">The admin-only User Management surface migrated to the elevated system. The biggest fix is color: the hard-coded Material role swatches duplicated across the tile and the form — <b>admin red, staff green, cashier orange</b> — are lifted into <b>theme-aware role/status tokens</b> with <span style="font-family:'Roboto Mono'">*OnDark</span> parity variants. Material <span style="font-family:'Roboto Mono'">Card</span>s become soft-shadow <span style="font-family:'Roboto Mono'">AppCard</span>s, the role picker becomes selectable <span style="font-family:'Roboto Mono'">AppCard</span> rows, Cupertino → <b>Lucide</b>. Neutral-by-default: color is reserved for the role badge, the You / Inactive tags, and the destructive action.</p>
+  </div>
+
+  <!-- changes legend -->
+  <div style="max-width:2150px;margin:0 auto 30px;display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span><b style="font-weight:600">AppCard surfaces</b> — Card → soft shadow, selectable role rows</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="display:inline-flex;gap:3px"><span style="width:7px;height:7px;border-radius:999px;background:#D32F2F"></span><span style="width:7px;height:7px;border-radius:999px;background:#4CAF50"></span><span style="width:7px;height:7px;border-radius:999px;background:#FF9800"></span></span><b style="font-weight:600">Role tokens</b> — Material swatches → theme-aware + dark parity</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#E8B84C"></span><b style="font-weight:600">Lucide</b> — replaces Cupertino</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#8A9296"></span><b style="font-weight:600">Neutral discipline</b> — color only for role / status / destructive</div>
+  </div>
+
+  <!-- ============ LIGHT ============ -->
+  <div style="max-width:2150px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start;margin-bottom:56px">
+
+    <!-- ===== 1 · USERS LIST · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · User Management · admin · <span style="font-family:'Roboto Mono'">users_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">User Management</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="sliders-horizontal" style="width:20px;height:20px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+          <!-- summary stats -->
+          <div style="display:flex;gap:8px;padding:6px 16px 12px">
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="users" style="width:19px;height:19px;color:#2196F3;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#16201F;line-height:1">5</div><div style="font-size:10px;color:#8A9296">Total</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="shield-half" style="width:19px;height:19px;color:#D32F2F;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#16201F;line-height:1">1</div><div style="font-size:10px;color:#8A9296">Admins</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="tag" style="width:19px;height:19px;color:#3E9E44;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#16201F;line-height:1">2</div><div style="font-size:10px;color:#8A9296">Staff</div></div>
+            <div style="flex:1;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="shopping-cart" style="width:19px;height:19px;color:#D17A00;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#16201F;line-height:1">2</div><div style="font-size:10px;color:#8A9296">Cashiers</div></div>
+          </div>
+          <!-- rows -->
+          <div style="padding:0 16px 6px;display:flex;flex-direction:column;gap:8px">
+            <!-- admin / current user -->
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 14px">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(211,47,47,.11);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-half" style="width:23px;height:23px;color:#D32F2F;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#16201F">Czar Basanal</span><span style="font-size:10px;font-weight:700;letter-spacing:.3px;color:#1565C0;background:rgba(33,150,243,.13);border-radius:6px;padding:2px 7px">YOU</span></div>
+                <div style="font-size:12.5px;color:#8A9296;margin-top:2px">czar@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#D32F2F;background:rgba(211,47,47,.10);border:1px solid rgba(211,47,47,.30);border-radius:999px;padding:3px 9px"><i data-lucide="shield-half" style="width:12px;height:12px;stroke-width:2"></i>Admin</span><span style="margin-left:auto;font-size:11px;color:#9AA0A3">Since Jan 8, 2026</span></div>
+              </div>
+              <i data-lucide="chevron-right" style="width:20px;height:20px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+            </div>
+            <!-- staff -->
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 14px">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(76,175,80,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:23px;height:23px;color:#3E9E44;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#16201F">Maria Santos</span></div>
+                <div style="font-size:12.5px;color:#8A9296;margin-top:2px">maria@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2E7D32;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.30);border-radius:999px;padding:3px 9px"><i data-lucide="tag" style="width:12px;height:12px;stroke-width:2"></i>Staff</span><span style="margin-left:auto;font-size:11px;color:#9AA0A3">Since Feb 14, 2026</span></div>
+              </div>
+              <i data-lucide="more-vertical" style="width:20px;height:20px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+            </div>
+            <!-- cashier -->
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 14px">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(255,152,0,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:23px;height:23px;color:#D17A00;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#16201F">Juan Dela Cruz</span></div>
+                <div style="font-size:12.5px;color:#8A9296;margin-top:2px">juan@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C76E00;background:rgba(255,152,0,.13);border:1px solid rgba(255,152,0,.34);border-radius:999px;padding:3px 9px"><i data-lucide="shopping-cart" style="width:12px;height:12px;stroke-width:2"></i>Cashier</span><span style="margin-left:auto;font-size:11px;color:#9AA0A3">Since Mar 2, 2026</span></div>
+              </div>
+              <i data-lucide="more-vertical" style="width:20px;height:20px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+            </div>
+            <!-- inactive cashier -->
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 14px;opacity:.6">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(255,152,0,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:23px;height:23px;color:#D17A00;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#16201F;text-decoration:line-through">Pedro Reyes</span></div>
+                <div style="font-size:12.5px;color:#8A9296;margin-top:2px">pedro@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:7px;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#C76E00;background:rgba(255,152,0,.13);border:1px solid rgba(255,152,0,.34);border-radius:999px;padding:3px 9px"><i data-lucide="shopping-cart" style="width:12px;height:12px;stroke-width:2"></i>Cashier</span><span style="font-size:10px;font-weight:700;letter-spacing:.3px;color:#C62828;background:rgba(244,67,54,.12);border-radius:6px;padding:2px 7px">INACTIVE</span></div>
+              </div>
+              <i data-lucide="more-vertical" style="width:20px;height:20px;color:#9AA0A3;stroke-width:1.9;flex:none"></i>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="user-plus" style="width:19px;height:19px;stroke-width:2"></i>Add User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · FILTERED + EMPTY · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Active filters + empty · <span style="font-family:'Roboto Mono'">EmptyStateView</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">User Management</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#283E46;background:rgba(40,62,70,.08)"><i data-lucide="sliders-horizontal" style="width:20px;height:20px;stroke-width:1.85"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#283E46;background:rgba(40,62,70,.08)"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 16px 8px;flex:none">
+          <i data-lucide="sliders-horizontal" style="width:15px;height:15px;color:#8A9296;stroke-width:1.85;flex:none"></i>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #ECECEC;box-shadow:0 1px 3px rgba(17,28,29,.05);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#D32F2F"></span>Admin<i data-lucide="x" style="width:13px;height:13px;color:#8A9296;stroke-width:2"></i></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #ECECEC;box-shadow:0 1px 3px rgba(17,28,29,.05);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:500;color:#16201F">Showing inactive<i data-lucide="x" style="width:13px;height:13px;color:#8A9296;stroke-width:2"></i></span>
+          <span style="margin-left:auto;font-size:13px;font-weight:600;color:#283E46;white-space:nowrap">Clear all</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:0 40px 70px;text-align:center">
+          <div style="width:88px;height:88px;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(17,28,29,.06);display:flex;align-items:center;justify-content:center"><i data-lucide="users" style="width:40px;height:40px;color:#C7CCCE;stroke-width:1.5"></i></div>
+          <div>
+            <div style="font-size:17px;font-weight:600;color:#16201F">No users found</div>
+            <div style="font-size:14px;color:#8A9296;margin-top:5px;line-height:1.5">No admins match — try clearing a filter</div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="user-plus" style="width:19px;height:19px;stroke-width:2"></i>Add User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · CREATE USER · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Create User · role + password · <span style="font-family:'Roboto Mono'">user_form_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Create User</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:6px 16px 14px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:9px;margin:6px 0 20px">
+            <div style="width:92px;height:92px;border-radius:999px;background:rgba(76,175,80,.14);display:flex;align-items:center;justify-content:center"><i data-lucide="tag" style="width:42px;height:42px;color:#3E9E44;stroke-width:1.8"></i></div>
+            <div style="font-size:16px;font-weight:700;color:#2E7D32">Staff</div>
+          </div>
+
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Email <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#fff;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="mail" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#9AA0A3">name@maki.ph</span></div>
+          </div>
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Display Name <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#fff;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="user" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#9AA0A3">Full name</span></div>
+          </div>
+
+          <div style="font-size:12px;color:#8A9296;margin:18px 0 8px 2px">Role <span style="color:#F44336">*</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #ECECEC;border-radius:16px;padding:13px;box-shadow:0 2px 8px rgba(17,28,29,.06);margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,152,0,.13);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:22px;height:22px;color:#D17A00;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#16201F">Cashier</div><div style="font-size:12.5px;color:#8A9296;margin-top:2px;line-height:1.4">POS operations only</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:rgba(76,175,80,.07);border:2px solid #4CAF50;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(17,28,29,.06);margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(76,175,80,.18);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:22px;height:22px;color:#3E9E44;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#2E7D32">Staff</div><div style="font-size:12.5px;color:#5A6468;margin-top:2px;line-height:1.4">POS, inventory, and receiving (no cost visibility)</div></div>
+            <i data-lucide="check-circle" style="width:22px;height:22px;color:#2E7D32;stroke-width:2;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #ECECEC;border-radius:16px;padding:13px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(211,47,47,.12);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-half" style="width:22px;height:22px;color:#D32F2F;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#16201F">Admin</div><div style="font-size:12.5px;color:#8A9296;margin-top:2px;line-height:1.4">Full access to all features including user management</div></div>
+          </div>
+
+          <div style="margin:20px 0 13px">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Password <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#fff;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="lock" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:16px;letter-spacing:3px;color:#16201F">••••••••</span><i data-lucide="eye-off" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div>
+          </div>
+          <div style="margin-bottom:6px">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Confirm Password <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#fff;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="lock" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:16px;letter-spacing:3px;color:#16201F">••••••••</span><i data-lucide="eye-off" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i></div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="user-plus" style="width:19px;height:19px;stroke-width:2"></i>Create User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · EDIT USER · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Edit User · email locked + reset · <span style="font-family:'Roboto Mono'">user_form_screen.dart</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F">Edit User</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:6px 16px 14px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:9px;margin:6px 0 20px">
+            <div style="width:92px;height:92px;border-radius:999px;background:rgba(211,47,47,.12);display:flex;align-items:center;justify-content:center"><i data-lucide="shield-half" style="width:42px;height:42px;color:#D32F2F;stroke-width:1.8"></i></div>
+            <div style="font-size:16px;font-weight:700;color:#D32F2F">Admin</div>
+          </div>
+
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Email</div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#F1F0ED;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px"><i data-lucide="mail" style="width:18px;height:18px;color:#9AA0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#9AA0A3">maria@maki.ph</span><i data-lucide="lock" style="width:15px;height:15px;color:#9AA0A3;stroke-width:1.9"></i></div>
+          </div>
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#8A9296;margin:0 0 6px 2px">Display Name <span style="color:#F44336">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#fff;border:1px solid #E2E2E2;border-radius:14px;padding:0 14px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="user" style="width:18px;height:18px;color:#8A9296;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#16201F">Maria Santos</span></div>
+          </div>
+
+          <div style="font-size:12px;color:#8A9296;margin:18px 0 8px 2px">Role <span style="color:#F44336">*</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:rgba(211,47,47,.07);border:2px solid #D32F2F;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(17,28,29,.06);margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(211,47,47,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-half" style="width:22px;height:22px;color:#D32F2F;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#D32F2F">Admin</div><div style="font-size:12.5px;color:#5A6468;margin-top:2px;line-height:1.4">Full access to all features including user management</div></div>
+            <i data-lucide="check-circle" style="width:22px;height:22px;color:#D32F2F;stroke-width:2;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #ECECEC;border-radius:16px;padding:13px;box-shadow:0 2px 8px rgba(17,28,29,.06);margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(76,175,80,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:22px;height:22px;color:#3E9E44;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#16201F">Staff</div><div style="font-size:12.5px;color:#8A9296;margin-top:2px;line-height:1.4">POS, inventory, and receiving (no cost visibility)</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #ECECEC;border-radius:16px;padding:13px;box-shadow:0 2px 8px rgba(17,28,29,.06)">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,152,0,.13);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:22px;height:22px;color:#D17A00;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#16201F">Cashier</div><div style="font-size:12.5px;color:#8A9296;margin-top:2px;line-height:1.4">POS operations only</div></div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:14px;background:#fff;border:1px solid #E2E2E2;color:#283E46;font-size:14px;font-weight:600;margin-top:18px;box-shadow:0 1px 3px rgba(17,28,29,.05)"><i data-lucide="key-round" style="width:17px;height:17px;stroke-width:1.85"></i>Reset Password</div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#F6F5F3;box-shadow:0 -4px 16px rgba(17,28,29,.05);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#283E46;color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(40,62,70,.55)"><i data-lucide="save" style="width:18px;height:18px;stroke-width:2"></i>Update User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · DEACTIVATE DIALOG · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Overflow → Deactivate confirm · <span style="font-family:'Roboto Mono'">AlertDialog</span></div>
+      <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">User Management</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="sliders-horizontal" style="width:20px;height:20px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;padding:6px 16px;filter:blur(.5px);opacity:.55">
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:12px 14px;margin-top:6px">
+            <div style="width:48px;height:48px;border-radius:999px;background:rgba(76,175,80,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:23px;height:23px;color:#3E9E44;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#16201F">Maria Santos</div>
+              <div style="font-size:12.5px;color:#8A9296;margin-top:2px">maria@maki.ph</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2E7D32;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.30);border-radius:999px;padding:3px 9px"><i data-lucide="tag" style="width:12px;height:12px;stroke-width:2"></i>Staff</span></div>
+            </div>
+            <i data-lucide="more-vertical" style="width:20px;height:20px;color:#283E46;stroke-width:2;flex:none"></i>
+          </div>
+        </div>
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.42);display:flex;align-items:center;justify-content:center;padding:26px">
+          <div style="width:100%;background:#fff;border-radius:24px;padding:22px;box-shadow:0 24px 60px rgba(17,28,29,.35)">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px"><div style="width:42px;height:42px;border-radius:12px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="user-x" style="width:22px;height:22px;color:#F44336;stroke-width:1.9"></i></div><div style="font-size:18px;font-weight:700;color:#16201F">Deactivate user?</div></div>
+            <div style="font-size:14px;color:#5A6468;line-height:1.55"><b style="color:#16201F;font-weight:600">Maria Santos</b> will no longer be able to log in.</div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;align-items:center"><span style="font-size:14px;font-weight:600;color:#8A9296;padding:11px 14px">Cancel</span><span style="display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:#fff;background:#F44336;border-radius:13px;padding:11px 18px;box-shadow:0 8px 18px -6px rgba(244,67,54,.55)"><i data-lucide="user-x" style="width:16px;height:16px;stroke-width:2"></i>Deactivate</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ DARK ============ -->
+  <div style="max-width:2150px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+
+    <!-- ===== 1 · USERS LIST · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · User Management · admin · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">User Management</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="sliders-horizontal" style="width:20px;height:20px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+          <div style="display:flex;gap:8px;padding:6px 16px 12px">
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="users" style="width:19px;height:19px;color:#5AA9F0;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#ECEFEF;line-height:1">5</div><div style="font-size:10px;color:#93A0A3">Total</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="shield-half" style="width:19px;height:19px;color:#F2756B;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#ECEFEF;line-height:1">1</div><div style="font-size:10px;color:#93A0A3">Admins</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="tag" style="width:19px;height:19px;color:#6FD47B;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#ECEFEF;line-height:1">2</div><div style="font-size:10px;color:#93A0A3">Staff</div></div>
+            <div style="flex:1;background:#18262A;border:1px solid #243234;border-radius:14px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:4px"><i data-lucide="shopping-cart" style="width:19px;height:19px;color:#F5B547;stroke-width:1.9"></i><div style="font-size:18px;font-weight:700;color:#ECEFEF;line-height:1">2</div><div style="font-size:10px;color:#93A0A3">Cashiers</div></div>
+          </div>
+          <div style="padding:0 16px 6px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px 14px">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(242,117,107,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-half" style="width:23px;height:23px;color:#F2756B;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#ECEFEF">Czar Basanal</span><span style="font-size:10px;font-weight:700;letter-spacing:.3px;color:#7CB8F2;background:rgba(124,184,242,.16);border-radius:6px;padding:2px 7px">YOU</span></div>
+                <div style="font-size:12.5px;color:#93A0A3;margin-top:2px">czar@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#F2756B;background:rgba(242,117,107,.16);border:1px solid rgba(242,117,107,.34);border-radius:999px;padding:3px 9px"><i data-lucide="shield-half" style="width:12px;height:12px;stroke-width:2"></i>Admin</span><span style="margin-left:auto;font-size:11px;color:#6C797C">Since Jan 8, 2026</span></div>
+              </div>
+              <i data-lucide="chevron-right" style="width:20px;height:20px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px 14px">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(111,212,123,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:23px;height:23px;color:#6FD47B;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#ECEFEF">Maria Santos</span></div>
+                <div style="font-size:12.5px;color:#93A0A3;margin-top:2px">maria@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#6FD47B;background:rgba(111,212,123,.14);border:1px solid rgba(111,212,123,.32);border-radius:999px;padding:3px 9px"><i data-lucide="tag" style="width:12px;height:12px;stroke-width:2"></i>Staff</span><span style="margin-left:auto;font-size:11px;color:#6C797C">Since Feb 14, 2026</span></div>
+              </div>
+              <i data-lucide="more-vertical" style="width:20px;height:20px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px 14px">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(245,181,71,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:23px;height:23px;color:#F5B547;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#ECEFEF">Juan Dela Cruz</span></div>
+                <div style="font-size:12.5px;color:#93A0A3;margin-top:2px">juan@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#F5B547;background:rgba(245,181,71,.14);border:1px solid rgba(245,181,71,.32);border-radius:999px;padding:3px 9px"><i data-lucide="shopping-cart" style="width:12px;height:12px;stroke-width:2"></i>Cashier</span><span style="margin-left:auto;font-size:11px;color:#6C797C">Since Mar 2, 2026</span></div>
+              </div>
+              <i data-lucide="more-vertical" style="width:20px;height:20px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px 14px;opacity:.6">
+              <div style="width:48px;height:48px;border-radius:999px;background:rgba(245,181,71,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:23px;height:23px;color:#F5B547;stroke-width:1.9"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px"><span style="font-size:15px;font-weight:600;color:#ECEFEF;text-decoration:line-through">Pedro Reyes</span></div>
+                <div style="font-size:12.5px;color:#93A0A3;margin-top:2px">pedro@maki.ph</div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:7px;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#F5B547;background:rgba(245,181,71,.14);border:1px solid rgba(245,181,71,.32);border-radius:999px;padding:3px 9px"><i data-lucide="shopping-cart" style="width:12px;height:12px;stroke-width:2"></i>Cashier</span><span style="font-size:10px;font-weight:700;letter-spacing:.3px;color:#FF8A7E;background:rgba(244,67,54,.18);border-radius:6px;padding:2px 7px">INACTIVE</span></div>
+              </div>
+              <i data-lucide="more-vertical" style="width:20px;height:20px;color:#6C797C;stroke-width:1.9;flex:none"></i>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="user-plus" style="width:19px;height:19px;stroke-width:2"></i>Add User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · FILTERED + EMPTY · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Active filters + empty · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">User Management</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#E8B84C;background:rgba(232,184,76,.12)"><i data-lucide="sliders-horizontal" style="width:20px;height:20px;stroke-width:1.85"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#E8B84C;background:rgba(232,184,76,.12)"><i data-lucide="eye" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 16px 8px;flex:none">
+          <i data-lucide="sliders-horizontal" style="width:15px;height:15px;color:#93A0A3;stroke-width:1.85;flex:none"></i>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#18262A;border:1px solid #2C3C3E;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;color:#ECEFEF"><span style="width:7px;height:7px;border-radius:999px;background:#F2756B"></span>Admin<i data-lucide="x" style="width:13px;height:13px;color:#93A0A3;stroke-width:2"></i></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#18262A;border:1px solid #2C3C3E;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:500;color:#ECEFEF">Showing inactive<i data-lucide="x" style="width:13px;height:13px;color:#93A0A3;stroke-width:2"></i></span>
+          <span style="margin-left:auto;font-size:13px;font-weight:600;color:#E8B84C;white-space:nowrap">Clear all</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:0 40px 70px;text-align:center">
+          <div style="width:88px;height:88px;border-radius:999px;background:#18262A;border:1px solid #243234;display:flex;align-items:center;justify-content:center"><i data-lucide="users" style="width:40px;height:40px;color:#46565A;stroke-width:1.5"></i></div>
+          <div>
+            <div style="font-size:17px;font-weight:600;color:#ECEFEF">No users found</div>
+            <div style="font-size:14px;color:#93A0A3;margin-top:5px;line-height:1.5">No admins match — try clearing a filter</div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="user-plus" style="width:19px;height:19px;stroke-width:2"></i>Add User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · CREATE USER · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Create User · role + password · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Create User</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:6px 16px 14px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:9px;margin:6px 0 20px">
+            <div style="width:92px;height:92px;border-radius:999px;background:rgba(111,212,123,.15);display:flex;align-items:center;justify-content:center"><i data-lucide="tag" style="width:42px;height:42px;color:#6FD47B;stroke-width:1.8"></i></div>
+            <div style="font-size:16px;font-weight:700;color:#6FD47B">Staff</div>
+          </div>
+
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Email <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#18262A;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px"><i data-lucide="mail" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#6C797C">name@maki.ph</span></div>
+          </div>
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Display Name <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#18262A;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px"><i data-lucide="user" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#6C797C">Full name</span></div>
+          </div>
+
+          <div style="font-size:12px;color:#93A0A3;margin:18px 0 8px 2px">Role <span style="color:#FF6B5E">*</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:#18262A;border:1px solid #2C3C3E;border-radius:16px;padding:13px;margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,181,71,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:22px;height:22px;color:#F5B547;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#ECEFEF">Cashier</div><div style="font-size:12.5px;color:#93A0A3;margin-top:2px;line-height:1.4">POS operations only</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:rgba(111,212,123,.09);border:2px solid #6FD47B;border-radius:16px;padding:12px;margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(111,212,123,.2);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:22px;height:22px;color:#6FD47B;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#6FD47B">Staff</div><div style="font-size:12.5px;color:#A9B4B5;margin-top:2px;line-height:1.4">POS, inventory, and receiving (no cost visibility)</div></div>
+            <i data-lucide="check-circle" style="width:22px;height:22px;color:#6FD47B;stroke-width:2;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:#18262A;border:1px solid #2C3C3E;border-radius:16px;padding:13px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(242,117,107,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-half" style="width:22px;height:22px;color:#F2756B;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#ECEFEF">Admin</div><div style="font-size:12.5px;color:#93A0A3;margin-top:2px;line-height:1.4">Full access to all features including user management</div></div>
+          </div>
+
+          <div style="margin:20px 0 13px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Password <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#18262A;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px"><i data-lucide="lock" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:16px;letter-spacing:3px;color:#ECEFEF">••••••••</span><i data-lucide="eye-off" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div>
+          </div>
+          <div style="margin-bottom:6px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Confirm Password <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#18262A;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px"><i data-lucide="lock" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:16px;letter-spacing:3px;color:#ECEFEF">••••••••</span><i data-lucide="eye-off" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i></div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="user-plus" style="width:19px;height:19px;stroke-width:2"></i>Create User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · EDIT USER · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Edit User · email locked + reset · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF">Edit User</div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:6px 16px 14px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:9px;margin:6px 0 20px">
+            <div style="width:92px;height:92px;border-radius:999px;background:rgba(242,117,107,.16);display:flex;align-items:center;justify-content:center"><i data-lucide="shield-half" style="width:42px;height:42px;color:#F2756B;stroke-width:1.8"></i></div>
+            <div style="font-size:16px;font-weight:700;color:#F2756B">Admin</div>
+          </div>
+
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Email</div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#131E20;border:1px solid #243234;border-radius:14px;padding:0 14px"><i data-lucide="mail" style="width:18px;height:18px;color:#6C797C;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#6C797C">maria@maki.ph</span><i data-lucide="lock" style="width:15px;height:15px;color:#6C797C;stroke-width:1.9"></i></div>
+          </div>
+          <div style="margin-bottom:13px">
+            <div style="font-size:12px;color:#93A0A3;margin:0 0 6px 2px">Display Name <span style="color:#FF6B5E">*</span></div>
+            <div style="display:flex;align-items:center;gap:11px;min-height:52px;background:#18262A;border:1px solid #2C3C3E;border-radius:14px;padding:0 14px"><i data-lucide="user" style="width:18px;height:18px;color:#93A0A3;stroke-width:1.75"></i><span style="flex:1;font-size:14.5px;color:#ECEFEF">Maria Santos</span></div>
+          </div>
+
+          <div style="font-size:12px;color:#93A0A3;margin:18px 0 8px 2px">Role <span style="color:#FF6B5E">*</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:rgba(242,117,107,.10);border:2px solid #F2756B;border-radius:16px;padding:12px;margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(242,117,107,.20);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-half" style="width:22px;height:22px;color:#F2756B;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#F2756B">Admin</div><div style="font-size:12.5px;color:#A9B4B5;margin-top:2px;line-height:1.4">Full access to all features including user management</div></div>
+            <i data-lucide="check-circle" style="width:22px;height:22px;color:#F2756B;stroke-width:2;flex:none"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:#18262A;border:1px solid #2C3C3E;border-radius:16px;padding:13px;margin-bottom:9px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(111,212,123,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:22px;height:22px;color:#6FD47B;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#ECEFEF">Staff</div><div style="font-size:12.5px;color:#93A0A3;margin-top:2px;line-height:1.4">POS, inventory, and receiving (no cost visibility)</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;background:#18262A;border:1px solid #2C3C3E;border-radius:16px;padding:13px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,181,71,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:22px;height:22px;color:#F5B547;stroke-width:1.85"></i></div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#ECEFEF">Cashier</div><div style="font-size:12.5px;color:#93A0A3;margin-top:2px;line-height:1.4">POS operations only</div></div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:14px;background:#18262A;border:1px solid #2C3C3E;color:#E8B84C;font-size:14px;font-weight:600;margin-top:18px"><i data-lucide="key-round" style="width:17px;height:17px;stroke-width:1.85"></i>Reset Password</div>
+        </div>
+        <div style="padding:12px 16px 16px;background:#0C1415;box-shadow:0 -4px 16px rgba(0,0,0,.4);flex:none">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:#E8B84C;color:#121C1D;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(232,184,76,.45)"><i data-lucide="save" style="width:18px;height:18px;stroke-width:2"></i>Update User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · DEACTIVATE DIALOG · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Overflow → Deactivate confirm · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:2px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">User Management</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="sliders-horizontal" style="width:20px;height:20px;stroke-width:1.75"></i></div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="eye-off" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;padding:6px 16px;filter:blur(.5px);opacity:.5">
+          <div style="display:flex;align-items:center;gap:12px;background:#18262A;border:1px solid #243234;border-radius:16px;padding:12px 14px;margin-top:6px">
+            <div style="width:48px;height:48px;border-radius:999px;background:rgba(111,212,123,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="tag" style="width:23px;height:23px;color:#6FD47B;stroke-width:1.9"></i></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:#ECEFEF">Maria Santos</div>
+              <div style="font-size:12.5px;color:#93A0A3;margin-top:2px">maria@maki.ph</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#6FD47B;background:rgba(111,212,123,.14);border:1px solid rgba(111,212,123,.32);border-radius:999px;padding:3px 9px"><i data-lucide="tag" style="width:12px;height:12px;stroke-width:2"></i>Staff</span></div>
+            </div>
+            <i data-lucide="more-vertical" style="width:20px;height:20px;color:#E8B84C;stroke-width:2;flex:none"></i>
+          </div>
+        </div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:26px">
+          <div style="width:100%;background:#18262A;border:1px solid #243234;border-radius:24px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.6)">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px"><div style="width:42px;height:42px;border-radius:12px;background:rgba(244,67,54,.18);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="user-x" style="width:22px;height:22px;color:#FF6B5E;stroke-width:1.9"></i></div><div style="font-size:18px;font-weight:700;color:#ECEFEF">Deactivate user?</div></div>
+            <div style="font-size:14px;color:#A9B4B5;line-height:1.55"><b style="color:#ECEFEF;font-weight:600">Maria Santos</b> will no longer be able to log in.</div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;align-items:center"><span style="font-size:14px;font-weight:600;color:#93A0A3;padding:11px 14px">Cancel</span><span style="display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:#fff;background:#E5453B;border-radius:13px;padding:11px 18px;box-shadow:0 8px 18px -6px rgba(229,69,59,.6)"><i data-lucide="user-x" style="width:16px;height:16px;stroke-width:2"></i>Deactivate</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>

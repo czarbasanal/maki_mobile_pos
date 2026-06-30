@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:maki_mobile_pos/core/enums/enums.dart';
-import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/users/role_style.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
-/// List tile for displaying a user in the users list.
+/// Soft-shadow [AppCard] row for a user in the management list (bundle 12).
+///
+/// Role-tinted avatar + name/email + role badge + "Since" date, with a blue
+/// "You" tag on the current user and a 0.6-opacity / strikethrough / red
+/// "Inactive" treatment for deactivated users. Trailing overflow menu
+/// (Deactivate / Reactivate) for other users; a chevron for the current user.
 class UserListTile extends StatelessWidget {
   final UserEntity user;
   final bool isCurrentUser;
@@ -22,198 +29,196 @@ class UserListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final role = RoleStyle.of(user.role, dark: dark);
     final dateFormat = DateFormat('MMM d, y');
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: AppCard(
+        radius: AppRadius.field,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
         child: Opacity(
           opacity: user.isActive ? 1.0 : 0.6,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                // Avatar
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
-                  child: Icon(
-                    _getRoleIcon(user.role),
-                    color: _getRoleColor(user.role),
-                  ),
+          child: Row(
+            children: [
+              // Role-tinted avatar
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: role.tileTint,
                 ),
+                alignment: Alignment.center,
+                child: Icon(role.icon, color: role.color, size: 23),
+              ),
+              const SizedBox(width: 12),
 
-                const SizedBox(width: 12),
-
-                // User info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
+              // Name / email / role + date
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            user.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              decoration: user.isActive
+                                  ? null
+                                  : TextDecoration.lineThrough,
+                            ),
+                          ),
+                        ),
+                        if (isCurrentUser) ...[
+                          const SizedBox(width: 7),
+                          _Tag(
+                            label: 'You',
+                            color: AppColors.infoBadgeText(dark),
+                            bg: AppColors.info.withValues(alpha: 0.13),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user.email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(fontSize: 12.5, color: muted),
+                    ),
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        _RoleBadge(role: role),
+                        const SizedBox(width: 8),
+                        if (!user.isActive)
+                          _Tag(
+                            label: 'Inactive',
+                            color: AppColors.errorText(dark),
+                            bg: AppColors.error.withValues(alpha: 0.12),
+                          )
+                        else
                           Expanded(
                             child: Text(
-                              user.displayName,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                decoration: user.isActive
-                                    ? null
-                                    : TextDecoration.lineThrough,
+                              'Since ${dateFormat.format(user.createdAt)}',
+                              textAlign: TextAlign.right,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 11,
+                                color: muted,
                               ),
                             ),
                           ),
-                          if (isCurrentUser)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue[100],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'You',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue[700],
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        user.email,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          _buildRoleBadge(user.role),
-                          const SizedBox(width: 8),
-                          if (!user.isActive)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.red[100],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Inactive',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.red[700],
-                                ),
-                              ),
-                            ),
-                          const Spacer(),
-                          Text(
-                            'Since ${dateFormat.format(user.createdAt)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[500],
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
 
-                // Actions
-                if (onToggleActive != null) ...[
-                  const SizedBox(width: 8),
-                  PopupMenuButton<String>(
-                    icon: const Icon(CupertinoIcons.ellipsis_vertical),
-                    onSelected: (action) {
-                      if (action == 'toggle') {
-                        onToggleActive?.call();
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'toggle',
-                        child: ListTile(
-                          leading: Icon(
-                            user.isActive ? CupertinoIcons.nosign : CupertinoIcons.checkmark_circle,
-                            color: user.isActive ? Colors.red : Colors.green,
+              // Trailing action
+              if (onToggleActive != null)
+                PopupMenuButton<String>(
+                  icon: Icon(LucideIcons.moreVertical, color: muted, size: 20),
+                  onSelected: (action) {
+                    if (action == 'toggle') onToggleActive?.call();
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'toggle',
+                      child: Row(
+                        children: [
+                          Icon(
+                            user.isActive
+                                ? LucideIcons.userX
+                                : LucideIcons.userCheck,
+                            size: 18,
+                            color: user.isActive
+                                ? AppColors.errorText(dark)
+                                : AppColors.successText(dark),
                           ),
-                          title:
-                              Text(user.isActive ? 'Deactivate' : 'Reactivate'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                          const SizedBox(width: 12),
+                          Text(user.isActive ? 'Deactivate' : 'Reactivate'),
+                        ],
                       ),
-                    ],
-                  ),
-                ] else
-                  const Icon(CupertinoIcons.chevron_right, color: Colors.grey),
-              ],
-            ),
+                    ),
+                  ],
+                )
+              else
+                Icon(LucideIcons.chevronRight, color: muted, size: 20),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildRoleBadge(UserRole role) {
+/// Role badge pill — role icon + label on a role-tinted, role-bordered fill.
+class _RoleBadge extends StatelessWidget {
+  const _RoleBadge({required this.role});
+  final RoleStyle role;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: _getRoleColor(role).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getRoleColor(role).withValues(alpha: 0.3)),
+        color: role.badgeBg,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: role.badgeBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _getRoleIcon(role),
-            size: 12,
-            color: _getRoleColor(role),
-          ),
+          Icon(role.icon, size: 12, color: role.badgeTextColor),
           const SizedBox(width: 4),
           Text(
-            role.displayName,
+            role.label,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: _getRoleColor(role),
+              color: role.badgeTextColor,
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Color _getRoleColor(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return Colors.purple;
-      case UserRole.staff:
-        return Colors.green;
-      case UserRole.cashier:
-        return Colors.orange;
-    }
-  }
+/// Small status tag (You / Inactive) — tinted pill with bold caption text.
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label, required this.color, required this.bg});
+  final String label;
+  final Color color;
+  final Color bg;
 
-  IconData _getRoleIcon(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return CupertinoIcons.shield_lefthalf_fill;
-      case UserRole.staff:
-        return CupertinoIcons.tag;
-      case UserRole.cashier:
-        return CupertinoIcons.cart;
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
+          color: color,
+        ),
+      ),
+    );
   }
 }

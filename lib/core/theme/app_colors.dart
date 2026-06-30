@@ -193,15 +193,30 @@ abstract class AppColors {
   static const Color inStock = Color(0xFF4CAF50);
 
   // ==================== ROLE COLORS ====================
+  // Canonical user-role hues (bundle 12 redesign): admin RED, staff GREEN,
+  // cashier ORANGE — each with an *OnDark lighter variant for dark-mode parity
+  // (the light hues read muddy on the dark canvas). The previous
+  // purple/blue/green values were out of sync with the live UI. Consumed via
+  // the shared RoleStyle helper (widgets/users/role_style.dart).
 
-  /// Color for admin role badge
-  static const Color roleAdmin = Color(0xFF9C27B0);
+  /// Color for admin role badge (light).
+  static const Color roleAdmin = Color(0xFFD32F2F);
 
-  /// Color for staff role badge
-  static const Color roleStaff = Color(0xFF2196F3);
+  /// Color for staff role badge (light). Badge *text* uses [roleStaffText].
+  static const Color roleStaff = Color(0xFF3E9E44);
 
-  /// Color for cashier role badge
-  static const Color roleCashier = Color(0xFF4CAF50);
+  /// Color for cashier role badge (light). Badge *text* uses [roleCashierText].
+  static const Color roleCashier = Color(0xFFD17A00);
+
+  /// Dark-mode parity variants.
+  static const Color roleAdminOnDark = Color(0xFFF2756B);
+  static const Color roleStaffOnDark = Color(0xFF6FD47B);
+  static const Color roleCashierOnDark = Color(0xFFF5B547);
+
+  /// Slightly deeper text shades for the green/orange badges in light mode
+  /// (the fill hues are too light for legible 11px badge text).
+  static const Color roleStaffText = Color(0xFF2E7D32);
+  static const Color roleCashierText = Color(0xFFC76E00);
 
   // ==================== UTILITY METHODS ====================
 

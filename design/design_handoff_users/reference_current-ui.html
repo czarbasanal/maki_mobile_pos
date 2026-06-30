@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI 12: Users</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --canvas:#F6F5F3; --card:#FFFFFF; --ink:#16201F; --muted:#8A9296; --hint:#9AA0A3;
+    --slate:#283E46; --gold:#E8B84C; --hairline:#ECECEC; --divider:#F0F0F0;
+    --field:#FAFAFA; --input-border:#E2E2E2;
+    --success:#4CAF50; --success-dark:#2E7D32; --success-bg:#E8F5E9;
+    --error:#F44336; --warning:#FFC107; --warning-dark:#F57C00;
+    --admin:#9C27B0; --staff:#4CAF50; --cashier:#FF9800; --info:#2196F3;
+    --r-sm:10px; --r-md:14px; --r-field:16px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+    --shadow-mat:0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:var(--ink);font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1500px;margin:0 auto;padding:28px 20px 64px;}
+  header.intro h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  header.intro p{margin:0;color:#5A6468;font-size:14px;max-width:1040px;line-height:1.55;}
+  code{font-family:'Roboto Mono',monospace;font-size:.9em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 26px;font-size:12px;color:#5A6468;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.08);}
+  .frames{display:flex;gap:46px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:380px;background:var(--canvas);border-radius:30px;border:1px solid #d8d6d2;
+         box-shadow:0 18px 50px -20px rgba(17,28,29,.35);overflow:hidden;position:relative;margin-top:26px;}
+  .frame .caption{position:absolute;top:-22px;left:6px;font-size:12px;font-weight:600;color:#5A6468;}
+  .screen{height:840px;overflow:hidden;display:flex;flex-direction:column;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+             font-size:12px;font-weight:600;color:var(--ink);background:var(--canvas);}
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar i{width:14px;height:14px;}
+  .appbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--canvas);min-height:52px;}
+  .appbar .title{flex:1;font-size:18px;font-weight:600;padding-left:6px;}
+  .appbar .act{font-size:13px;font-weight:600;color:var(--slate);padding:0 8px;}
+  .iconbtn{width:38px;height:38px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;border:none;flex:none;}
+  .iconbtn i{width:21px;height:21px;}
+  .body{flex:1;overflow:auto;}
+  .body::-webkit-scrollbar{width:0;}
+
+  /* summary cards row (tinted boxes) */
+  .summary{display:flex;gap:8px;padding:16px;}
+  .scard{flex:1;border-radius:8px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;}
+  .scard i{width:20px;height:20px;}
+  .scard .v{font-size:18px;font-weight:700;}
+  .scard .l{font-size:10px;color:#6b7378;}
+
+  /* active filter chip row */
+  .filters{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:12px;}
+  .filters .fi{width:16px;height:16px;color:var(--muted);}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:#ECECEC;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:500;}
+  .chip i{width:14px;height:14px;color:#6b7378;}
+  .filters .clr{margin-left:auto;font-size:13px;font-weight:600;color:var(--slate);}
+
+  /* user card (Material Card + InkWell) */
+  .ucard{margin:4px 16px;background:var(--card);border-radius:12px;box-shadow:var(--shadow-mat);padding:12px;display:flex;align-items:center;gap:12px;}
+  .ucard.inactive{opacity:.6;}
+  .avatar{width:48px;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .avatar i{width:24px;height:24px;}
+  .uinfo{flex:1;min-width:0;}
+  .urow1{display:flex;align-items:center;gap:8px;}
+  .uname{font-size:16px;font-weight:600;}
+  .uname.struck{text-decoration:line-through;}
+  .youtag{font-size:10px;font-weight:700;color:#1565C0;background:#BBDEFB;border-radius:4px;padding:2px 6px;}
+  .uemail{font-size:12.5px;color:#6b7378;margin-top:2px;}
+  .urow3{display:flex;align-items:center;gap:8px;margin-top:5px;}
+  .rolebadge{display:inline-flex;align-items:center;gap:4px;border-radius:12px;padding:3px 8px;font-size:11px;font-weight:600;}
+  .rolebadge i{width:12px;height:12px;}
+  .inactivetag{font-size:10px;color:#C62828;background:#FFCDD2;border-radius:4px;padding:2px 6px;}
+  .since{margin-left:auto;font-size:11px;color:#9aa0a3;}
+  .ucard .more{width:24px;height:24px;color:var(--muted);flex:none;}
+  .ucard .chev{width:22px;height:22px;color:var(--muted);flex:none;}
+
+  /* bottom add button */
+  .bottombar{padding:8px 16px 16px;background:var(--canvas);}
+  .addbtn{height:50px;border-radius:var(--r-field);background:var(--slate);color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .addbtn i{width:20px;height:20px;}
+
+  /* form */
+  .form{padding:16px;}
+  .favwrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:28px;}
+  .favatar{width:100px;height:100px;border-radius:999px;display:flex;align-items:center;justify-content:center;}
+  .favatar i{width:50px;height:50px;}
+  .frole{font-weight:700;}
+  .field{margin-bottom:16px;}
+  .input{display:flex;align-items:center;gap:10px;min-height:56px;border:1px solid var(--input-border);border-radius:4px;padding:0 12px;background:var(--card);}
+  .input i{width:20px;height:20px;color:var(--muted);flex:none;}
+  .input .ph{flex:1;font-size:15px;color:var(--ink);}
+  .input .ph.dim{color:var(--hint);}
+  .input .lbl{position:relative;top:-1px;}
+  .input.disabled{background:#F2F2F2;}
+  .flabel{font-size:13px;font-weight:600;margin:0 0 8px;}
+  .roleopt{display:flex;align-items:center;gap:16px;border-radius:12px;padding:16px;margin-bottom:8px;border:1px solid #D8D8D8;background:#F4F4F4;}
+  .roleopt.sel{border-width:2px;}
+  .roleopt .ricon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .roleopt .ricon i{width:22px;height:22px;}
+  .roleopt .rmid{flex:1;}
+  .roleopt .rt{font-weight:700;}
+  .roleopt .rd{font-size:12px;color:#6b7378;margin-top:2px;line-height:1.4;}
+  .roleopt .rcheck{width:22px;height:22px;flex:none;}
+  .submit{height:54px;border-radius:4px;background:var(--slate);color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;margin-top:16px;}
+  .resetpw{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--slate);font-weight:600;font-size:14px;margin-top:16px;}
+  .resetpw i{width:18px;height:18px;}
+
+  /* dialog */
+  .dlgwrap{position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px;}
+  .dlg{width:100%;background:var(--card);border-radius:var(--r-xl);padding:20px;box-shadow:0 20px 50px rgba(17,28,29,.25);}
+  .dlg .dh{font-size:18px;font-weight:600;margin-bottom:10px;}
+  .dlg .dbody{font-size:14px;color:#5A6468;line-height:1.5;}
+  .dlg .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;align-items:center;}
+  .dlg .acts .cancel{font-size:14px;font-weight:600;color:var(--muted);padding:10px 12px;}
+  .dlg .acts .ok{font-size:14px;font-weight:600;color:#fff;border-radius:var(--r-md);padding:10px 18px;}
+
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:80px 24px;text-align:center;color:var(--muted);height:100%;}
+  .empty i{width:56px;height:56px;color:#C7CCCE;}
+  .empty .t{font-size:16px;font-weight:600;color:var(--muted);}
+  .note{font-size:12px;color:#7a8488;margin:30px 2px 0;line-height:1.55;max-width:1200px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <h1>MAKI POS — Current UI · 12 · Users</h1>
+    <p><b>Pre-redesign (raw Material).</b> The admin <b>User Management</b> surface is plain Material: a
+    summary row of tinted boxes, an app-bar role filter (<code>PopupMenuButton</code>) + show/hide-inactive toggle,
+    a <code>ListView</code> of Material <code>Card</code>s (one per user) with a tinted <code>CircleAvatar</code>,
+    a pill <b>role badge</b>, a <b>You</b> tag for the current user, an <b>Inactive</b> tag + strikethrough + 0.6
+    opacity for deactivated users, and a 3-dot overflow menu (Deactivate / Reactivate). The create/edit form is a
+    <code>TextFormField</code> stack with a big role-tinted avatar, a custom radio-style <b>role picker</b> (3 cards),
+    and (create-only) two obscured password fields. Cupertino icons throughout, no <code>AppCard</code>, no Lucide.
+    Role colors are hard-coded Material swatches: <b>admin = purple</b>, <b>staff = green</b>, <b>cashier = orange</b>
+    (not theme tokens). This bundle migrates it onto the elevated theme — <b>Lucide + soft-shadow <code>AppCard</code>
+    + theme-aware role/status colors with dark parity</b>.
+    <i>(Icons here render in Lucide — the migration target — even though the live screen still ships Cupertino.)</i></p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#283E46"></i> slate (primary)</span>
+    <span><i class="swatch" style="background:#9C27B0"></i> admin (purple)</span>
+    <span><i class="swatch" style="background:#4CAF50"></i> staff (green)</span>
+    <span><i class="swatch" style="background:#FF9800"></i> cashier (orange)</span>
+    <span><i class="swatch" style="background:#2196F3"></i> "You" tag (blue)</span>
+    <span><i class="swatch" style="background:#F44336"></i> inactive / deactivate (error)</span>
+    <span style="margin-left:auto">Light shown · dark parity target (canvas <code>#0C1415</code>, card <code>#18262A</code>, gold primary)</span>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============ 1 · USERS LIST ============ -->
+    <div class="frame">
+      <div class="caption">1 · User Management — list · users_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">User Management</div>
+          <button class="iconbtn"><i data-lucide="sliders-horizontal"></i></button>
+          <button class="iconbtn"><i data-lucide="eye-off"></i></button>
+        </div>
+        <div class="body">
+          <div class="summary">
+            <div class="scard" style="background:rgba(33,150,243,.1);border:1px solid rgba(33,150,243,.3);color:var(--info)">
+              <i data-lucide="users"></i><div class="v">5</div><div class="l">Total</div>
+            </div>
+            <div class="scard" style="background:rgba(156,39,176,.1);border:1px solid rgba(156,39,176,.3);color:var(--admin)">
+              <i data-lucide="shield-half"></i><div class="v">1</div><div class="l">Admins</div>
+            </div>
+            <div class="scard" style="background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.3);color:var(--staff)">
+              <i data-lucide="tag"></i><div class="v">2</div><div class="l">Staff</div>
+            </div>
+            <div class="scard" style="background:rgba(255,152,0,.1);border:1px solid rgba(255,152,0,.3);color:var(--cashier)">
+              <i data-lucide="shopping-cart"></i><div class="v">2</div><div class="l">Cashiers</div>
+            </div>
+          </div>
+
+          <!-- admin (current user) -->
+          <div class="ucard">
+            <div class="avatar" style="background:rgba(156,39,176,.2);color:var(--admin)"><i data-lucide="shield-half"></i></div>
+            <div class="uinfo">
+              <div class="urow1"><span class="uname">Czar Basanal</span><span class="youtag">You</span></div>
+              <div class="uemail">czar@maki.ph</div>
+              <div class="urow3">
+                <span class="rolebadge" style="background:rgba(156,39,176,.1);border:1px solid rgba(156,39,176,.3);color:var(--admin)"><i data-lucide="shield-half"></i>Admin</span>
+                <span class="since">Since Jan 8, 2026</span>
+              </div>
+            </div>
+            <i class="chev" data-lucide="chevron-right"></i>
+          </div>
+
+          <!-- staff -->
+          <div class="ucard">
+            <div class="avatar" style="background:rgba(76,175,80,.2);color:var(--staff)"><i data-lucide="tag"></i></div>
+            <div class="uinfo">
+              <div class="urow1"><span class="uname">Maria Santos</span></div>
+              <div class="uemail">maria@maki.ph</div>
+              <div class="urow3">
+                <span class="rolebadge" style="background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.3);color:var(--staff)"><i data-lucide="tag"></i>Staff</span>
+                <span class="since">Since Feb 14, 2026</span>
+              </div>
+            </div>
+            <i class="more" data-lucide="more-vertical"></i>
+          </div>
+
+          <!-- cashier -->
+          <div class="ucard">
+            <div class="avatar" style="background:rgba(255,152,0,.2);color:var(--cashier)"><i data-lucide="shopping-cart"></i></div>
+            <div class="uinfo">
+              <div class="urow1"><span class="uname">Juan Dela Cruz</span></div>
+              <div class="uemail">juan@maki.ph</div>
+              <div class="urow3">
+                <span class="rolebadge" style="background:rgba(255,152,0,.1);border:1px solid rgba(255,152,0,.3);color:var(--cashier)"><i data-lucide="shopping-cart"></i>Cashier</span>
+                <span class="since">Since Mar 2, 2026</span>
+              </div>
+            </div>
+            <i class="more" data-lucide="more-vertical"></i>
+          </div>
+
+          <!-- inactive cashier -->
+          <div class="ucard inactive">
+            <div class="avatar" style="background:rgba(255,152,0,.2);color:var(--cashier)"><i data-lucide="shopping-cart"></i></div>
+            <div class="uinfo">
+              <div class="urow1"><span class="uname struck">Pedro Reyes</span></div>
+              <div class="uemail">pedro@maki.ph</div>
+              <div class="urow3">
+                <span class="rolebadge" style="background:rgba(255,152,0,.1);border:1px solid rgba(255,152,0,.3);color:var(--cashier)"><i data-lucide="shopping-cart"></i>Cashier</span>
+                <span class="inactivetag">Inactive</span>
+                <span class="since">Since Apr 9, 2026</span>
+              </div>
+            </div>
+            <i class="more" data-lucide="more-vertical"></i>
+          </div>
+        </div>
+        <div class="bottombar">
+          <div class="addbtn"><i data-lucide="user-plus"></i> Add User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2 · FILTERED + EMPTY ============ -->
+    <div class="frame">
+      <div class="caption">2 · Active filter chips + empty result · EmptyStateView</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">User Management</div>
+          <button class="iconbtn"><i data-lucide="sliders-horizontal"></i></button>
+          <button class="iconbtn"><i data-lucide="eye"></i></button>
+        </div>
+        <div class="body">
+          <div class="filters">
+            <i class="fi" data-lucide="sliders-horizontal"></i>
+            <span class="chip">Admin <i data-lucide="x"></i></span>
+            <span class="chip">Showing inactive <i data-lucide="x"></i></span>
+            <span class="clr">Clear all</span>
+          </div>
+          <div class="empty">
+            <i data-lucide="users"></i>
+            <div class="t">No users found</div>
+          </div>
+        </div>
+        <div class="bottombar">
+          <div class="addbtn"><i data-lucide="user-plus"></i> Add User</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3 · CREATE FORM ============ -->
+    <div class="frame">
+      <div class="caption">3 · Create User (role picker + password) · user_form_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Create User</div>
+        </div>
+        <div class="body">
+          <div class="form">
+            <div class="favwrap">
+              <div class="favatar" style="background:rgba(76,175,80,.2);color:var(--staff)"><i data-lucide="tag"></i></div>
+              <div class="frole" style="color:var(--staff)">Staff</div>
+            </div>
+
+            <div class="field"><div class="input"><i data-lucide="mail"></i><span class="ph dim lbl">Email *</span></div></div>
+            <div class="field"><div class="input"><i data-lucide="user"></i><span class="ph dim lbl">Display Name *</span></div></div>
+
+            <div class="flabel">Role *</div>
+            <div class="roleopt">
+              <div class="ricon" style="background:rgba(255,152,0,.2);color:var(--cashier)"><i data-lucide="shopping-cart"></i></div>
+              <div class="rmid"><div class="rt">Cashier</div><div class="rd">POS operations only</div></div>
+            </div>
+            <div class="roleopt sel" style="border-color:var(--staff);background:rgba(76,175,80,.1)">
+              <div class="ricon" style="background:rgba(76,175,80,.2);color:var(--staff)"><i data-lucide="tag"></i></div>
+              <div class="rmid"><div class="rt" style="color:var(--staff)">Staff</div><div class="rd">POS, inventory, and receiving (no cost visibility)</div></div>
+              <i class="rcheck" data-lucide="check-circle" style="color:var(--staff)"></i>
+            </div>
+            <div class="roleopt">
+              <div class="ricon" style="background:rgba(156,39,176,.2);color:var(--admin)"><i data-lucide="shield-half"></i></div>
+              <div class="rmid"><div class="rt">Admin</div><div class="rd">Full access to all features including user management</div></div>
+            </div>
+
+            <div class="field" style="margin-top:24px"><div class="input"><i data-lucide="lock"></i><span class="ph dim lbl">Password *</span><i data-lucide="eye"></i></div></div>
+            <div class="field"><div class="input"><i data-lucide="lock"></i><span class="ph dim lbl">Confirm Password *</span><i data-lucide="eye"></i></div></div>
+
+            <div class="submit">Create User</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4 · EDIT FORM ============ -->
+    <div class="frame">
+      <div class="caption">4 · Edit User (email locked, no password, reset link) · user_form_screen.dart</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">Edit User</div>
+        </div>
+        <div class="body">
+          <div class="form">
+            <div class="favwrap">
+              <div class="favatar" style="background:rgba(156,39,176,.2);color:var(--admin)"><i data-lucide="shield-half"></i></div>
+              <div class="frole" style="color:var(--admin)">Admin</div>
+            </div>
+
+            <div class="field"><div class="input disabled"><i data-lucide="mail"></i><span class="ph" style="color:#9aa0a3">maria@maki.ph</span></div></div>
+            <div class="field"><div class="input"><i data-lucide="user"></i><span class="ph">Maria Santos</span></div></div>
+
+            <div class="flabel">Role *</div>
+            <div class="roleopt sel" style="border-color:var(--admin);background:rgba(156,39,176,.1)">
+              <div class="ricon" style="background:rgba(156,39,176,.2);color:var(--admin)"><i data-lucide="shield-half"></i></div>
+              <div class="rmid"><div class="rt" style="color:var(--admin)">Admin</div><div class="rd">Full access to all features including user management</div></div>
+              <i class="rcheck" data-lucide="check-circle" style="color:var(--admin)"></i>
+            </div>
+            <div class="roleopt">
+              <div class="ricon" style="background:rgba(76,175,80,.2);color:var(--staff)"><i data-lucide="tag"></i></div>
+              <div class="rmid"><div class="rt">Staff</div><div class="rd">POS, inventory, and receiving (no cost visibility)</div></div>
+            </div>
+
+            <div class="submit">Update User</div>
+            <div class="resetpw"><i data-lucide="key-round"></i> Reset Password</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 5 · OVERFLOW + DEACTIVATE DIALOG ============ -->
+    <div class="frame">
+      <div class="caption">5 · Overflow action + Deactivate confirm · AlertDialog</div>
+      <div class="screen" style="position:relative;">
+        <div class="statusbar"><span>9:41</span><span class="right"><i data-lucide="signal-high"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <div class="appbar">
+          <button class="iconbtn"><i data-lucide="chevron-left"></i></button>
+          <div class="title">User Management</div>
+          <button class="iconbtn"><i data-lucide="sliders-horizontal"></i></button>
+          <button class="iconbtn"><i data-lucide="eye-off"></i></button>
+        </div>
+        <div class="body" style="opacity:.5;">
+          <div class="ucard" style="margin-top:16px">
+            <div class="avatar" style="background:rgba(76,175,80,.2);color:var(--staff)"><i data-lucide="tag"></i></div>
+            <div class="uinfo">
+              <div class="urow1"><span class="uname">Maria Santos</span></div>
+              <div class="uemail">maria@maki.ph</div>
+              <div class="urow3"><span class="rolebadge" style="background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.3);color:var(--staff)"><i data-lucide="tag"></i>Staff</span></div>
+            </div>
+            <i class="more" data-lucide="more-vertical"></i>
+          </div>
+        </div>
+        <div class="dlgwrap">
+          <div class="dlg">
+            <div class="dh">Deactivate User?</div>
+            <div class="dbody">Maria Santos will no longer be able to log in.</div>
+            <div class="acts"><span class="cancel">Cancel</span><span class="ok" style="background:var(--error)">Deactivate</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Token-accurate reconstruction of the <b>current</b> Users surface. Sources:
+  <code>lib/presentation/mobile/screens/users/users_screen.dart</code>,
+  <code>lib/presentation/mobile/screens/users/user_form_screen.dart</code>,
+  <code>lib/presentation/mobile/widgets/users/user_list_tile.dart</code>; entity
+  <code>UserEntity</code>; enum <code>UserRole</code> (<code>cashier</code> &lt; <code>staff</code> &lt; <code>admin</code>,
+  each with a <code>displayName</code>). Current state: Material <code>Card</code> + <code>CircleAvatar</code> + pill
+  role badge per user; Cupertino icons (<code>shield_lefthalf_fill</code> admin / <code>tag</code> staff /
+  <code>cart</code> cashier; <code>person_2</code> empty; <code>ellipsis_vertical</code> overflow); <b>no
+  <code>AppCard</code>, no Lucide</b>. Role colors are <b>hard-coded Material swatches</b> (admin purple, staff green,
+  <b>cashier orange</b>) duplicated in both the tile and the form — not theme tokens. Behavior to preserve:
+  <b>admin-only</b> screen (non-admins see "Access denied"); summary cards (tap Admins/Staff/Cashiers to filter);
+  app-bar <b>role filter</b> (<code>PopupMenuButton</code>) + <b>show/hide inactive</b> toggle, with removable filter
+  chips + "Clear all"; sort = active first, then by name; <b>You</b> tag on the current user; deactivated users get
+  strikethrough + <b>Inactive</b> tag + 0.6 opacity; the <b>overflow menu is hidden for the current user</b>
+  (self-row shows a chevron, no Deactivate); Deactivate/Reactivate goes through an <code>AlertDialog</code> confirm
+  (red / green button) then a warning / success snackbar. Form: role-tinted avatar + label; <b>email is locked when
+  editing</b>; <b>password fields appear only on create</b> (with obscure toggles + confirm-match validation); editing
+  shows a <b>Reset Password</b> link instead. Business guards (last-admin, self-demote, self-deactivate) are enforced
+  in the use-case layer and surfaced as the inline error box / snackbars. Migration target = the global theme in
+  <code>design/handoff/maki-theme/</code> (Lucide, soft-shadow <code>AppCard</code>, theme-aware role/status colors
+  with dark parity, neutral-by-default discipline).</p>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

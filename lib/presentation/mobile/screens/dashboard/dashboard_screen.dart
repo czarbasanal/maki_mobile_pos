@@ -106,7 +106,6 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       message: 'Are you sure you want to sign out?',
       confirmText: 'Sign Out',
       icon: LucideIcons.logOut,
-      isDangerous: true,
     );
 
     if (!shouldSignOut) return;
