@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/receiving_filters.dart';
@@ -128,7 +129,7 @@ final currentWeekReceivingsProvider =
 // ==================== CURRENT RECEIVING STATE ====================
 
 /// State for the current receiving being created/edited.
-class CurrentReceivingState {
+class CurrentReceivingState extends Equatable {
   final String? id;
   final String referenceNumber;
   final String? supplierId;
@@ -208,6 +209,21 @@ class CurrentReceivingState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
+
+  @override
+  List<Object?> get props => [
+        id,
+        referenceNumber,
+        supplierId,
+        supplierName,
+        items,
+        notes,
+        status,
+        completedAt,
+        isProcessing,
+        isLoading,
+        errorMessage,
+      ];
 }
 
 /// Notifier for current receiving state.

@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -5,7 +6,7 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 // ==================== INVENTORY STATE ====================
 
 /// State for inventory screen filters and settings.
-class InventoryState {
+class InventoryState extends Equatable {
   final String searchQuery;
   final String? categoryFilter;
   final StockFilter stockFilter;
@@ -41,6 +42,10 @@ class InventoryState {
       sortAscending: sortAscending ?? this.sortAscending,
     );
   }
+
+  @override
+  List<Object?> get props =>
+      [searchQuery, categoryFilter, stockFilter, showCost, sortOption, sortAscending];
 }
 
 /// Stock level filter options.
