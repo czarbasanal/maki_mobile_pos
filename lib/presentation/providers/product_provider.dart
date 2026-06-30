@@ -319,17 +319,6 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Checks if SKU exists.
-  Future<bool> skuExists(String sku, {String? excludeProductId}) async {
-    try {
-      return await _repository.skuExists(
-        sku: sku,
-        excludeProductId: excludeProductId,
-      );
-    } catch (e) {
-      return false;
-    }
-  }
 
   void _invalidateProductProviders() {
     _ref.invalidate(productsProvider);

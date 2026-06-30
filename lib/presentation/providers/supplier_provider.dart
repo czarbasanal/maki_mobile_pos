@@ -186,17 +186,6 @@ class SupplierOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Checks if supplier name exists. Read-only — no permission check needed.
-  Future<bool> nameExists(String name, {String? excludeSupplierId}) async {
-    try {
-      return await _ref.read(supplierRepositoryProvider).nameExists(
-            name: name,
-            excludeSupplierId: excludeSupplierId,
-          );
-    } catch (e) {
-      return false;
-    }
-  }
 
   void _invalidate() {
     _ref.invalidate(suppliersProvider);
