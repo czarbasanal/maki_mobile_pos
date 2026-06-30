@@ -149,40 +149,44 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
                 _buildWarningsCard(theme),
               ],
               const SizedBox(height: AppSpacing.lg),
-              // Stacked actions — Receipt on top, Done at the bottom
-              // (Done is the primary close action, so it anchors the
-              // dialog's bottom edge). Both pinned to the same 48px
-              // height and lg corner radius so the secondary
-              // OutlinedButton.icon and the primary FilledButton
-              // render identically.
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: widget.onPrintReceipt,
-                  icon: const Icon(LucideIcons.receipt),
-                  label: const Text('Receipt'),
-                  style: OutlinedButton.styleFrom(shape: _kButtonShape),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm + 4),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed: widget.onDone,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    shape: _kButtonShape,
-                  ),
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+              // Side-by-side actions — Receipt (secondary) left, Done
+              // (primary close) right. Both pinned to the same 48px height
+              // and lg corner radius so the OutlinedButton.icon and the
+              // FilledButton render identically.
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: widget.onPrintReceipt,
+                        icon: const Icon(LucideIcons.receipt, size: 18),
+                        label: const Text('Receipt'),
+                        style: OutlinedButton.styleFrom(shape: _kButtonShape),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: AppSpacing.sm + 4),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        onPressed: widget.onDone,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                          shape: _kButtonShape,
+                        ),
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
