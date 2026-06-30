@@ -558,7 +558,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         icon: Badge(
           isLabelVisible: count > 0,
           label: Text('$count'),
-          child: const Icon(LucideIcons.inbox),
+          child: const Icon(LucideIcons.shoppingCart),
         ),
         onPressed: _navigateToDrafts,
       ),
