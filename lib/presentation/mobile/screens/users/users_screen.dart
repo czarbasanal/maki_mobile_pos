@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/users/role_style.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/users/user_list_tile.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
 
 /// Screen displaying list of all users (admin only).
 class UsersScreen extends ConsumerStatefulWidget {
@@ -32,7 +35,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(CupertinoIcons.back),
+            icon: const Icon(LucideIcons.chevronLeft),
             onPressed: () => context.goBackOr(RoutePaths.dashboard),
           ),
           title: const Text('Users'),
@@ -46,14 +49,14 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('User Management'),
         actions: [
           // Filter by role
           PopupMenuButton<UserRole?>(
-            icon: const Icon(CupertinoIcons.line_horizontal_3_decrease),
+            icon: const Icon(LucideIcons.slidersHorizontal),
             tooltip: 'Filter by role',
             onSelected: (role) {
               setState(() => _roleFilter = role);
@@ -72,7 +75,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           // Toggle inactive
           IconButton(
             icon: Icon(
-              _showInactive ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+              _showInactive ? LucideIcons.eye : LucideIcons.eyeOff,
             ),
             tooltip: _showInactive ? 'Hide inactive' : 'Show inactive',
             onPressed: () {
@@ -102,23 +105,14 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: () => _navigateToCreateUser(context),
-            icon: const Icon(CupertinoIcons.person_add),
-            label: const Text('Add User'),
-          ),
-        ),
-      ),
+      bottomNavigationBar: _buildAddUserFooter(context),
     );
   }
 
   Widget _buildSummaryCards(AsyncValue<List<UserEntity>> usersAsync) {
     return usersAsync.when(
       data: (users) {
+        final dark = Theme.of(context).brightness == Brightness.dark;
         final activeUsers = users.where((u) => u.isActive).toList();
         final admins =
             activeUsers.where((u) => u.role == UserRole.admin).length;
@@ -126,45 +120,53 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
         final cashiers =
             activeUsers.where((u) => u.role == UserRole.cashier).length;
 
-        return Container(
-          padding: const EdgeInsets.all(16),
+        final adminStyle = RoleStyle.of(UserRole.admin, dark: dark);
+        final staffStyle = RoleStyle.of(UserRole.staff, dark: dark);
+        final cashierStyle = RoleStyle.of(UserRole.cashier, dark: dark);
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
           child: Row(
             children: [
               Expanded(
-                child: _buildSummaryCard(
-                  'Total',
-                  '${activeUsers.length}',
-                  CupertinoIcons.person_2,
-                  Colors.blue,
+                child: SummaryCard(
+                  compact: true,
+                  title: 'Total',
+                  value: '${activeUsers.length}',
+                  icon: LucideIcons.users,
+                  iconColor: AppColors.infoIcon(dark),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildSummaryCard(
-                  'Admins',
-                  '$admins',
-                  CupertinoIcons.shield_lefthalf_fill,
-                  Colors.purple,
+                child: SummaryCard(
+                  compact: true,
+                  title: 'Admins',
+                  value: '$admins',
+                  icon: adminStyle.icon,
+                  iconColor: adminStyle.color,
                   onTap: () => setState(() => _roleFilter = UserRole.admin),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildSummaryCard(
-                  'Staff',
-                  '$staff',
-                  CupertinoIcons.tag,
-                  Colors.green,
+                child: SummaryCard(
+                  compact: true,
+                  title: 'Staff',
+                  value: '$staff',
+                  icon: staffStyle.icon,
+                  iconColor: staffStyle.color,
                   onTap: () => setState(() => _roleFilter = UserRole.staff),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildSummaryCard(
-                  'Cashiers',
-                  '$cashiers',
-                  CupertinoIcons.cart,
-                  Colors.orange,
+                child: SummaryCard(
+                  compact: true,
+                  title: 'Cashiers',
+                  value: '$cashiers',
+                  icon: cashierStyle.icon,
+                  iconColor: cashierStyle.color,
                   onTap: () => setState(() => _roleFilter = UserRole.cashier),
                 ),
               ),
@@ -177,72 +179,28 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     );
   }
 
-  Widget _buildSummaryCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color, {
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildActiveFilters() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Row(
         children: [
-          const Icon(CupertinoIcons.line_horizontal_3_decrease,
-              size: 16, color: Colors.grey),
+          Icon(LucideIcons.slidersHorizontal, size: 15, color: muted),
           const SizedBox(width: 8),
           if (_roleFilter != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: Chip(
-                label: Text(_roleFilter!.displayName),
-                deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
-                onDeleted: () => setState(() => _roleFilter = null),
-                visualDensity: VisualDensity.compact,
+              child: _FilterChip(
+                label: _roleFilter!.displayName,
+                dotColor: RoleStyle.of(_roleFilter!, dark: dark).color,
+                onRemove: () => setState(() => _roleFilter = null),
               ),
             ),
           if (_showInactive)
-            Chip(
-              label: const Text('Showing inactive'),
-              deleteIcon: const Icon(CupertinoIcons.xmark, size: 16),
-              onDeleted: () => setState(() => _showInactive = false),
-              visualDensity: VisualDensity.compact,
+            _FilterChip(
+              label: 'Showing inactive',
+              onRemove: () => setState(() => _showInactive = false),
             ),
           const Spacer(),
           TextButton(
@@ -282,8 +240,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
     if (filteredUsers.isEmpty) {
       return const EmptyStateView(
-        icon: CupertinoIcons.person_2,
+        icon: LucideIcons.users,
         title: 'No users found',
+        subtitle: 'Try clearing a filter.',
       );
     }
 
@@ -293,7 +252,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       },
       child: ListView.builder(
         itemCount: filteredUsers.length,
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
         itemBuilder: (context, index) {
           final user = filteredUsers[index];
           return UserListTile(
@@ -309,6 +268,42 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     );
   }
 
+  Widget _buildAddUserFooter(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.field),
+            boxShadow:
+                isDark ? AppShadows.primaryButtonGold : AppShadows.primaryButton,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: FilledButton.icon(
+              onPressed: () => _navigateToCreateUser(context),
+              icon: const Icon(LucideIcons.userPlus, size: 19),
+              label: const Text('Add User'),
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.field),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _navigateToCreateUser(BuildContext context) {
     context.push(RoutePaths.userAdd);
   }
@@ -319,11 +314,12 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
   Future<void> _toggleUserActive(UserEntity user) async {
     final confirmed = await context.showConfirmDialog(
-      title: user.isActive ? 'Deactivate User?' : 'Reactivate User?',
+      title: user.isActive ? 'Deactivate user?' : 'Reactivate user?',
       message: user.isActive
           ? '${user.displayName} will no longer be able to log in.'
           : '${user.displayName} will be able to log in again.',
       confirmText: user.isActive ? 'Deactivate' : 'Reactivate',
+      icon: user.isActive ? LucideIcons.userX : LucideIcons.userCheck,
       isDangerous: user.isActive,
     );
 
@@ -351,5 +347,60 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
         }
       }
     }
+  }
+}
+
+/// Removable filter pill — optional colored role dot + label + close icon.
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.onRemove,
+    this.dotColor,
+  });
+
+  final String label;
+  final VoidCallback onRemove;
+  final Color? dotColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Material(
+      color: dark ? AppColors.darkCard : Colors.white,
+      shape: StadiumBorder(side: BorderSide(color: AppColors.hairline(dark))),
+      child: InkWell(
+        onTap: onRemove,
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (dotColor != null) ...[
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration:
+                      BoxDecoration(shape: BoxShape.circle, color: dotColor),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(LucideIcons.x, size: 13, color: muted),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
