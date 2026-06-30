@@ -135,209 +135,218 @@ class ReceivingItemRow extends ConsumerWidget {
       radius: AppRadius.field,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(12),
-      child: Row(
+      // Stacked layout (mirrors the POS cart card): name owns the top row, so
+      // a long name no longer competes with the qty stepper + total.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          // Name + trailing action (Remove in edit mode; Adjust-stock pencil
+          // on a completed line with a product).
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   item.name,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     height: 1.25,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        item.sku,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: muted,
-                          fontFamily: 'RobotoMono',
-                        ),
-                      ),
-                    ),
-                    if (item.isNewVariation) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.info
-                              .withValues(alpha: isDark ? 0.20 : 0.13),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'New Variant',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: AppColors.infoBadgeText(isDark),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+              ),
+              if (!readOnly)
+                IconButton(
+                  icon: Icon(LucideIcons.x, size: 20, color: muted),
+                  onPressed: onRemove,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                )
+              else if (onAdjustStock != null)
+                IconButton(
+                  icon: Icon(LucideIcons.edit, size: 20, color: accent),
+                  tooltip: 'Adjust stock',
+                  onPressed: onAdjustStock,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _buildSubtitle(
-                          isAdmin: isAdmin,
-                          sellingPrice: product?.price,
-                        ),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.brandMutedText(isDark),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (costDiffBadge != null) ...[
-                      const SizedBox(width: 6),
-                      costDiffBadge,
-                    ],
-                  ],
-                ),
-              ],
-            ),
+            ],
           ),
-
-          // Quantity controls — steppers + inline input in edit mode,
-          // or the static received quantity when read-only.
-          if (readOnly)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                '×${item.quantity}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: theme.colorScheme.onSurface,
+          // SKU + New Variant badge.
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  item.sku,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: muted,
+                    fontFamily: 'RobotoMono',
+                  ),
                 ),
               ),
-            )
-          else
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(LucideIcons.minusCircle, size: 22, color: accent),
-                  onPressed: item.quantity > 1
-                      ? () => onQuantityChanged(item.quantity - 1)
-                      : null,
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                ),
-                SizedBox(
-                  width: 46,
-                  child: TextField(
-                    controller: TextEditingController(text: '${item.quantity}'),
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    style: const TextStyle(
-                      fontSize: 14,
+              if (item.isNewVariation) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.info
+                        .withValues(alpha: isDark ? 0.20 : 0.13),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'New Variant',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: AppColors.infoBadgeText(isDark),
                       fontWeight: FontWeight.w600,
                     ),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: isDark
-                          ? AppColors.darkCanvas
-                          : AppColors.lightSurfaceMuted,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      isDense: true,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? AppColors.darkInputBorder
-                              : AppColors.lightInputBorder,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(color: accent),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                    ),
-                    onSubmitted: (value) {
-                      final qty = int.tryParse(value);
-                      if (qty != null && qty > 0) {
-                        onQuantityChanged(qty);
-                      }
-                    },
                   ),
                 ),
-                IconButton(
-                  icon: Icon(LucideIcons.plusCircle, size: 22, color: accent),
-                  onPressed: () => onQuantityChanged(item.quantity + 1),
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                ),
               ],
-            ),
-
-          // Total — peso amount admin-only; staff just sees the qty.
-          SizedBox(
-            width: 80,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (isAdmin)
-                  Text(
-                    item.totalCost.toCurrency(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                Text(
-                  '${item.quantity} ${item.unit}',
-                  style: TextStyle(fontSize: 11, color: muted),
-                ),
-              ],
-            ),
+            ],
           ),
-
-          // Trailing action — Remove (X) in edit mode; Adjust stock
-          // (pencil) on a completed line when a productId is available.
-          if (!readOnly)
-            IconButton(
-              icon: Icon(LucideIcons.x, color: muted),
-              onPressed: onRemove,
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.only(left: 4),
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            )
-          else if (onAdjustStock != null)
-            IconButton(
-              icon: Icon(LucideIcons.edit, color: accent),
-              tooltip: 'Adjust stock',
-              onPressed: onAdjustStock,
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.only(left: 4),
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            ),
+          const SizedBox(height: 4),
+          // Pricing subtitle + cost-diff badge.
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  _buildSubtitle(
+                    isAdmin: isAdmin,
+                    sellingPrice: product?.price,
+                  ),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.brandMutedText(isDark),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (costDiffBadge != null) ...[
+                const SizedBox(width: 6),
+                costDiffBadge,
+              ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Quantity controls (left) + line total (right).
+          Row(
+            children: [
+              if (readOnly)
+                Text(
+                  '×${item.quantity}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                )
+              else
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(LucideIcons.minusCircle,
+                          size: 22, color: accent),
+                      onPressed: item.quantity > 1
+                          ? () => onQuantityChanged(item.quantity - 1)
+                          : null,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 34, minHeight: 34),
+                    ),
+                    SizedBox(
+                      width: 46,
+                      child: TextField(
+                        controller:
+                            TextEditingController(text: '${item.quantity}'),
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: isDark
+                              ? AppColors.darkCanvas
+                              : AppColors.lightSurfaceMuted,
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 8),
+                          isDense: true,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? AppColors.darkInputBorder
+                                  : AppColors.lightInputBorder,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(color: accent),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                        ),
+                        onSubmitted: (value) {
+                          final qty = int.tryParse(value);
+                          if (qty != null && qty > 0) {
+                            onQuantityChanged(qty);
+                          }
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(LucideIcons.plusCircle,
+                          size: 22, color: accent),
+                      onPressed: () => onQuantityChanged(item.quantity + 1),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 34, minHeight: 34),
+                    ),
+                  ],
+                ),
+              const Spacer(),
+              // Total — peso amount admin-only; staff just sees the qty.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (isAdmin)
+                    Text(
+                      item.totalCost.toCurrency(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  Text(
+                    '${item.quantity} ${item.unit}',
+                    style: TextStyle(fontSize: 11, color: muted),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );
