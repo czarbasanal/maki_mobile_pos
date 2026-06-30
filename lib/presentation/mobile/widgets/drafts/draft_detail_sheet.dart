@@ -42,7 +42,7 @@ class DraftDetailSheet extends StatelessWidget {
       expand: false,
       builder: (context, scrollController) {
         return AppBottomSheet(
-          leadingIcon: LucideIcons.fileText,
+          leadingIcon: LucideIcons.shoppingCart,
           title: draft.name,
           subtitle: dateFormat.format(draft.updatedAt ?? draft.createdAt),
           onClose: () => Navigator.pop(context),

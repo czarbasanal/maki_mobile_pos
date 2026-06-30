@@ -45,7 +45,7 @@ class DraftsListScreen extends ConsumerWidget {
   ) {
     if (drafts.isEmpty) {
       return EmptyStateView(
-        icon: LucideIcons.mail,
+        icon: LucideIcons.shoppingCart,
         title: 'No Saved Drafts',
         subtitle: 'Drafts you save from the POS screen will appear here.',
         action: FilledButton.icon(

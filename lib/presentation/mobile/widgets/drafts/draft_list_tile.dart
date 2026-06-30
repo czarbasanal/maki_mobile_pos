@@ -59,7 +59,7 @@ class DraftListTile extends StatelessWidget {
                       : const Color(0x0F283E46),
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(LucideIcons.fileText, size: 20, color: muted),
+                child: Icon(LucideIcons.shoppingCart, size: 20, color: muted),
               ),
               const SizedBox(width: AppSpacing.sm + 4),
               Expanded(
