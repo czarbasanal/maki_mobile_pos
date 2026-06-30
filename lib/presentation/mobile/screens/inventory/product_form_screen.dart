@@ -78,6 +78,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Uint8List? _pendingImageBytes;
   bool _imageMarkedForRemoval = false;
 
+  /// Snapshot of the editable fields at load — the Update button stays
+  /// disabled until something diverges (edit mode only).
+  String _initialSig = '';
+
+  String _sig() => [
+        _skuController.text.trim(),
+        _nameController.text.trim(),
+        _priceController.text.trim(),
+        _costController.text.trim(),
+        _quantityController.text.trim(),
+        _reorderLevelController.text.trim(),
+        _unitController.text.trim(),
+        _categoryController.text.trim(),
+        _notesController.text.trim(),
+        _selectedSupplierId ?? '',
+        _barcodes.join(','),
+        // image dirtiness: a pending replacement or an explicit removal
+        (_pendingImageBytes != null || _imageMarkedForRemoval).toString(),
+      ].join('|');
+
+  bool get _isDirty => _sig() != _initialSig;
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +110,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     // price/cost fields are edited.
     _priceController.addListener(_onPriceOrCostChanged);
     _costController.addListener(_onPriceOrCostChanged);
+    // Re-evaluate the dirty state as the remaining fields change.
+    for (final c in [
+      _skuController,
+      _nameController,
+      _quantityController,
+      _reorderLevelController,
+      _unitController,
+      _categoryController,
+      _notesController,
+    ]) {
+      c.addListener(_onPriceOrCostChanged);
+    }
 
     if (widget.productId != null) {
       _loadProduct();
@@ -379,7 +413,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             height: 50,
             child: FilledButton.icon(
               key: const Key('product-form-submit'),
-              onPressed: _isSaving ? null : _handleSubmit,
+              onPressed: (_isSaving || (widget.isEditing && !_isDirty))
+                  ? null
+                  : _handleSubmit,
               icon: _isSaving
                   ? const SizedBox(
                       width: 20,
@@ -440,6 +476,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _categoryController.text = product.category ?? '';
         _notesController.text = product.notes ?? '';
         _selectedSupplierId = product.supplierId;
+        _initialSig = _sig();
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
