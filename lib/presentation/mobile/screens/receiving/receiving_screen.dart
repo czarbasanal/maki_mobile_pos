@@ -371,7 +371,7 @@ class _SectionHeader extends StatelessWidget {
               foregroundColor:
                   isDark ? AppColors.primaryAccent : AppColors.brandSlate,
               textStyle: const TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w600,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 8),

@@ -328,6 +328,12 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 trailing: _canViewReports
                     ? TextButton(
                         onPressed: () => context.push(RoutePaths.topSelling),
+                        style: TextButton.styleFrom(
+                          textStyle: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         child: const Text('View All'),
                       )
                     : null,
@@ -342,6 +348,12 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 trailing: _canViewReports
                     ? TextButton(
                         onPressed: () => context.go(RoutePaths.reports),
+                        style: TextButton.styleFrom(
+                          textStyle: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         child: const Text('View All'),
                       )
                     : null,

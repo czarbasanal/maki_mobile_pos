@@ -138,7 +138,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
                 Text(
                   'View All',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.primary,
                   ),
