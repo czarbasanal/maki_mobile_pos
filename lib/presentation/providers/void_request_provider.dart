@@ -84,38 +84,62 @@ class VoidRequestOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     return user;
   }
 
+  String _messageFor(Object error) =>
+      error is AppException ? error.message : error.toString();
+
   /// Returns null on success, or an error message.
+  ///
+  /// `_requireUser()` throws on an auth-transition race (null user); each
+  /// method catches so the failure comes back through the returned
+  /// message rather than as a rejected Future the dialog never observes.
   Future<String?> requestVoid({
     required SaleEntity sale,
     required String reason,
   }) async {
-    final result = await _ref.read(requestVoidSaleUseCaseProvider).execute(
-        actor: _requireUser(), sale: sale, reason: reason);
-    _ref.invalidate(voidRequestsProvider);
-    return result.success ? null : (result.errorMessage ?? 'Failed');
+    try {
+      final actor = _requireUser();
+      final result = await _ref
+          .read(requestVoidSaleUseCaseProvider)
+          .execute(actor: actor, sale: sale, reason: reason);
+      _ref.invalidate(voidRequestsProvider);
+      return result.success ? null : (result.errorMessage ?? 'Failed');
+    } catch (e) {
+      return _messageFor(e);
+    }
   }
 
   Future<String?> approve({
     required VoidRequestEntity request,
     required String password,
   }) async {
-    final result = await _ref.read(approveVoidRequestUseCaseProvider).execute(
-        actor: _requireUser(), request: request, password: password);
-    _ref.invalidate(voidRequestsProvider);
-    _ref.invalidate(todaysSalesProvider);
-    return result.success ? null : (result.errorMessage ?? 'Failed');
+    try {
+      final actor = _requireUser();
+      final result = await _ref
+          .read(approveVoidRequestUseCaseProvider)
+          .execute(actor: actor, request: request, password: password);
+      _ref.invalidate(voidRequestsProvider);
+      _ref.invalidate(todaysSalesProvider);
+      return result.success ? null : (result.errorMessage ?? 'Failed');
+    } catch (e) {
+      return _messageFor(e);
+    }
   }
 
   Future<String?> reject({
     required VoidRequestEntity request,
     required String rejectionReason,
   }) async {
-    final result = await _ref.read(rejectVoidRequestUseCaseProvider).execute(
-        actor: _requireUser(),
-        request: request,
-        rejectionReason: rejectionReason);
-    _ref.invalidate(voidRequestsProvider);
-    return result.success ? null : (result.errorMessage ?? 'Failed');
+    try {
+      final actor = _requireUser();
+      final result = await _ref.read(rejectVoidRequestUseCaseProvider).execute(
+          actor: actor,
+          request: request,
+          rejectionReason: rejectionReason);
+      _ref.invalidate(voidRequestsProvider);
+      return result.success ? null : (result.errorMessage ?? 'Failed');
+    } catch (e) {
+      return _messageFor(e);
+    }
   }
 
   Future<void> markAllRead() async {
