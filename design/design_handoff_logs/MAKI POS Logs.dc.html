@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+  @keyframes makiPulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 72px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- HEADER -->
+  <div style="max-width:2126px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Handoff 13 · Logs · migration
+    </div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Activity Logs — on the new language</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.55;max-width:90ch">The admin-only audit trail migrated to the elevated system. Flat Material <span style="font-family:'Roboto Mono'">Container</span> rows with hairline dividers become soft-shadow <span style="font-family:'Roboto Mono'">AppCard</span> day groups; the leading <b>emoji glyph</b> becomes a <b>semantic per-type Lucide icon</b> in a tinted tile. The color discipline is formalized, not loosened — color is reserved for audit-meaningful events only: <b>security</b> (login · access · user &amp; role changes · password) reads <b>red</b>, <b>financial</b> (sale · void · refund) reads <b>green</b>, everything else stays neutral — with full dark parity. Date grouping, the app-bar type filter, the active-filter chip, and the <b>read-only</b> trail are all preserved.</p>
+  </div>
+
+  <!-- legend -->
+  <div style="max-width:2126px;margin:0 auto 30px;display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span><b style="font-weight:600">Lucide</b> — semantic per-type icons replace Cupertino + emoji glyphs</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="width:7px;height:7px;border-radius:999px;background:#E8B84C"></span><b style="font-weight:600">AppCard</b> — soft-shadow day groups replace flat Container rows</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><span style="display:flex;gap:3px"><span style="width:7px;height:7px;border-radius:999px;background:#F44336"></span><span style="width:7px;height:7px;border-radius:999px;background:#4CAF50"></span><span style="width:7px;height:7px;border-radius:999px;background:#283E46"></span></span><b style="font-weight:600">Color reserved</b> — security · financial · neutral</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(17,28,29,.07);font-size:13px;color:#16201F"><i data-lucide="lock" style="width:14px;height:14px;color:#8A9296;stroke-width:2"></i><b style="font-weight:600">Read-only · admin-only</b> — immutable trail, <span style="font-family:'Roboto Mono'">viewUserLogs</span></div>
+  </div>
+
+  <!-- ============ LIGHT ============ -->
+  <div style="max-width:2126px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="sun" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Light theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start;margin-bottom:56px">
+
+    <!-- ===== 1 · FEED · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Activity Logs · feed · <span style="font-family:'Roboto Mono'">activity_logs_screen.dart</span></div>
+      <div data-screen-label="13.1 Logs feed · light" style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto">
+          <!-- group: Today -->
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:12px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#8A9296;text-transform:uppercase">Today</span><span style="font-size:11.5px;font-weight:500;color:#AEB3B5">5 events</span></div>
+          <div style="margin:0 16px 16px;background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 16px">
+            <!-- sale (financial) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #F0F0F0">
+              <div style="width:38px;height:38px;border-radius:11px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:19px;height:19px;color:#2E7D32;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Sale completed</div><div style="font-size:12px;color:#9AA0A3;flex:none">11:48 AM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260628-3</span> · ₱980.00 · Cash</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Juan Dela Cruz</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#8A9296;border:1px solid #E4E4E2;border-radius:7px;padding:1px 7px">cashier</span></div>
+              </div>
+            </div>
+            <!-- void (financial) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #F0F0F0">
+              <div style="width:38px;height:38px;border-radius:11px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:19px;height:19px;color:#2E7D32;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Voided sale</div><div style="font-size:12px;color:#9AA0A3;flex:none">11:20 AM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260628-1</span> · wrong item scanned</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#5A6468;border:1px solid #D7DBD9;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+            <!-- role changed (security) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #F0F0F0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="user-cog" style="width:19px;height:19px;color:#E5392B;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Role changed</div><div style="font-size:12px;color:#9AA0A3;flex:none">10:40 AM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45">Juan Dela Cruz set to <b style="color:#5A6468;font-weight:600">cashier</b></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#5A6468;border:1px solid #D7DBD9;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+            <!-- received (neutral) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #F0F0F0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="truck" style="width:19px;height:19px;color:#283E46;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Received stock</div><div style="font-size:12px;color:#9AA0A3;flex:none">10:05 AM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">RCV-20260628-2</span> · 14 items · Yamaha Parts Co.</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Juan Dela Cruz</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#8A9296;border:1px solid #E4E4E2;border-radius:7px;padding:1px 7px">cashier</span></div>
+              </div>
+            </div>
+            <!-- login (security) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="log-in" style="width:19px;height:19px;color:#E5392B;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Logged in</div><div style="font-size:12px;color:#9AA0A3;flex:none">8:02 AM</div></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:6px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#5A6468;border:1px solid #D7DBD9;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- group: Yesterday -->
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:4px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#8A9296;text-transform:uppercase">Yesterday</span><span style="font-size:11.5px;font-weight:500;color:#AEB3B5">3 events</span></div>
+          <div style="margin:0 16px 16px;background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 16px">
+            <!-- cost viewed (neutral) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #F0F0F0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="eye" style="width:19px;height:19px;color:#283E46;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Cost viewed</div><div style="font-size:12px;color:#9AA0A3;flex:none">4:31 PM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45">NGK Spark Plug CPR6EA-9</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#5A6468;border:1px solid #D7DBD9;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+            <!-- password failed (security) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #F0F0F0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-x" style="width:19px;height:19px;color:#E5392B;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Password failed</div><div style="font-size:12px;color:#9AA0A3;flex:none">2:14 PM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45">3 failed attempts on cost reveal</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Juan Dela Cruz</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#8A9296;border:1px solid #E4E4E2;border-radius:7px;padding:1px 7px">cashier</span></div>
+              </div>
+            </div>
+            <!-- settings (neutral) -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(40,62,70,.07);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="settings" style="width:19px;height:19px;color:#283E46;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Settings updated</div><div style="font-size:12px;color:#9AA0A3;flex:none">9:50 AM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45">Receipt footer text</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#5A6468;border:1px solid #D7DBD9;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 16px 22px;color:#AEB3B5;font-size:11.5px"><i data-lucide="history" style="width:13px;height:13px;stroke-width:1.9"></i>Showing the 100 most recent events</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · FILTER MENU · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Filter by type · app-bar menu · <span style="font-family:'Roboto Mono'">PopupMenuButton</span></div>
+      <div data-screen-label="13.2 Filter menu · light" style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#283E46;background:rgba(40,62,70,.09)"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.9"></i></div>
+        </div>
+        <!-- dimmed feed behind -->
+        <div style="flex:1;overflow:hidden;opacity:.4">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:12px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#8A9296;text-transform:uppercase">Today</span></div>
+          <div style="margin:0 16px 16px;background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #F0F0F0"><div style="width:38px;height:38px;border-radius:11px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:19px;height:19px;color:#2E7D32;stroke-width:1.85"></i></div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#16201F">Sale completed</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Juan Dela Cruz · cashier</div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0"><div style="width:38px;height:38px;border-radius:11px;background:rgba(244,67,54,.10);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="log-in" style="width:19px;height:19px;color:#E5392B;stroke-width:1.85"></i></div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#16201F">Logged in</div><div style="font-size:12px;color:#8A9296;margin-top:3px">Maria Santos · admin</div></div></div>
+          </div>
+        </div>
+        <!-- scrim -->
+        <div style="position:absolute;inset:0;background:rgba(17,28,29,.14)"></div>
+        <!-- menu -->
+        <div style="position:absolute;top:90px;right:14px;width:232px;background:#fff;border-radius:15px;box-shadow:0 16px 40px -8px rgba(17,28,29,.30),0 2px 6px rgba(17,28,29,.06);padding:6px;border:1px solid rgba(0,0,0,.04)">
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;font-size:13.5px;font-weight:600;color:#16201F;background:rgba(40,62,70,.08)"><i data-lucide="list" style="width:17px;height:17px;color:#283E46;stroke-width:1.9"></i><span style="flex:1">All Activities</span><i data-lucide="check" style="width:16px;height:16px;color:#283E46;stroke-width:2.4"></i></div>
+          <div style="height:1px;background:#F0F0F0;margin:5px 8px"></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="log-in" style="width:17px;height:17px;color:#E5392B;stroke-width:1.9"></i>Login</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="log-out" style="width:17px;height:17px;color:#E5392B;stroke-width:1.9"></i>Logout</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="shopping-cart" style="width:17px;height:17px;color:#2E7D32;stroke-width:1.9"></i>Sale</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="x-circle" style="width:17px;height:17px;color:#2E7D32;stroke-width:1.9"></i>Void Sale</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="sliders-horizontal" style="width:17px;height:17px;color:#5A6468;stroke-width:1.9"></i>Stock Adjustment</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="truck" style="width:17px;height:17px;color:#5A6468;stroke-width:1.9"></i>Receiving</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="user-plus" style="width:17px;height:17px;color:#E5392B;stroke-width:1.9"></i>User Created</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="user-pen" style="width:17px;height:17px;color:#E5392B;stroke-width:1.9"></i>User Updated</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="user-cog" style="width:17px;height:17px;color:#E5392B;stroke-width:1.9"></i>Role Changed</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="shield-check" style="width:17px;height:17px;color:#E5392B;stroke-width:1.9"></i>Password Verified</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="shield-x" style="width:17px;height:17px;color:#E5392B;stroke-width:1.9"></i>Password Failed</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#283E46"><i data-lucide="eye" style="width:17px;height:17px;color:#5A6468;stroke-width:1.9"></i>Cost Viewed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · FILTER APPLIED · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Filter applied · Void Sale · <span style="font-family:'Roboto Mono'">active-filter chip</span></div>
+      <div data-screen-label="13.3 Filter applied · light" style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#283E46;background:rgba(40,62,70,.09)"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.9"></i></div>
+        </div>
+        <!-- chip strip (flat on canvas) -->
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 16px 12px;flex:none;border-bottom:1px solid rgba(17,28,29,.05)">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.4px;color:#9AA0A3;text-transform:uppercase">Filtered</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;padding:5px 5px 5px 11px;border-radius:999px;background:rgba(40,62,70,.07);font-size:12.5px;font-weight:600;color:#16201F"><i data-lucide="x-circle" style="width:14px;height:14px;color:#2E7D32;stroke-width:2.1"></i>Void Sale<span style="width:19px;height:19px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:rgba(17,28,29,.07)"><i data-lucide="x" style="width:11px;height:11px;color:#5A6468;stroke-width:2.6"></i></span></span>
+        </div>
+        <div style="flex:1;overflow:auto">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:14px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#8A9296;text-transform:uppercase">Today</span><span style="font-size:11.5px;font-weight:500;color:#AEB3B5">1 event</span></div>
+          <div style="margin:0 16px 16px;background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:19px;height:19px;color:#2E7D32;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Voided sale</div><div style="font-size:12px;color:#9AA0A3;flex:none">11:20 AM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260628-1</span> · wrong item scanned</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#5A6468;border:1px solid #D7DBD9;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:4px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#8A9296;text-transform:uppercase">Yesterday</span><span style="font-size:11.5px;font-weight:500;color:#AEB3B5">1 event</span></div>
+          <div style="margin:0 16px 16px;background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:19px;height:19px;color:#2E7D32;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#16201F">Voided sale</div><div style="font-size:12px;color:#9AA0A3;flex:none">5:30 PM</div></div>
+                <div style="font-size:12px;color:#8A9296;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260627-8</span> · duplicate charge</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#9AA0A3;stroke-width:1.9"></i><span style="font-size:12px;color:#8A9296">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#5A6468;border:1px solid #D7DBD9;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · EMPTY · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Empty · no logs · <span style="font-family:'Roboto Mono'">EmptyStateView</span></div>
+      <div data-screen-label="13.4 Empty · light" style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#B7BDC0"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:30px 44px 90px;text-align:center">
+          <div style="width:80px;height:80px;border-radius:999px;background:rgba(40,62,70,.06);display:flex;align-items:center;justify-content:center"><i data-lucide="clock" style="width:34px;height:34px;color:#9AA0A3;stroke-width:1.6"></i></div>
+          <div style="font-size:16px;font-weight:700;color:#16201F;margin-top:6px">No activity logs found</div>
+          <div style="font-size:13px;color:#9AA0A3;line-height:1.45">Actions taken across the store will appear here as an audit trail.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · LOADING · LIGHT ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Loading · skeleton · <span style="font-family:'Roboto Mono'">LoadingView</span></div>
+      <div data-screen-label="13.5 Loading · light" style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:hidden">
+          <div style="padding:12px 18px 8px"><div style="width:64px;height:11px;border-radius:6px;background:#E2E0DB;animation:makiPulse 1.4s ease-in-out infinite"></div></div>
+          <div style="margin:0 16px 16px;background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #F0F0F0"><div style="width:38px;height:38px;border-radius:11px;background:#ECEAE6;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:55%;height:11px;border-radius:6px;background:#ECEAE6;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:78%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:40%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #F0F0F0"><div style="width:38px;height:38px;border-radius:11px;background:#ECEAE6;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:48%;height:11px;border-radius:6px;background:#ECEAE6;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:70%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:38%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0"><div style="width:38px;height:38px;border-radius:11px;background:#ECEAE6;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:52%;height:11px;border-radius:6px;background:#ECEAE6;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:66%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:42%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+          </div>
+          <div style="padding:4px 18px 8px"><div style="width:84px;height:11px;border-radius:6px;background:#E2E0DB;animation:makiPulse 1.4s ease-in-out infinite"></div></div>
+          <div style="margin:0 16px 16px;background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(17,28,29,.06);padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #F0F0F0"><div style="width:38px;height:38px;border-radius:11px;background:#ECEAE6;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:50%;height:11px;border-radius:6px;background:#ECEAE6;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:72%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0"><div style="width:38px;height:38px;border-radius:11px;background:#ECEAE6;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:46%;height:11px;border-radius:6px;background:#ECEAE6;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:64%;height:9px;border-radius:6px;background:#F0EEE9;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ DARK ============ -->
+  <div style="max-width:2126px;margin:0 auto 14px;display:flex;align-items:center;gap:10px">
+    <i data-lucide="moon" style="width:18px;height:18px;color:#E8B84C;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:600;letter-spacing:.4px;color:#16201F;text-transform:uppercase">Dark theme</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+
+    <!-- ===== 1 · FEED · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">1 · Activity Logs · feed · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div data-screen-label="13.1 Logs feed · dark" style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:auto">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:12px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#93A0A3;text-transform:uppercase">Today</span><span style="font-size:11.5px;font-weight:500;color:#6C797C">5 events</span></div>
+          <div style="margin:0 16px 16px;background:#18262A;border:1px solid #243234;border-radius:18px;padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #243234">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:19px;height:19px;color:#5FC86A;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Sale completed</div><div style="font-size:12px;color:#6C797C;flex:none">11:48 AM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260628-3</span> · ₱980.00 · Cash</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Juan Dela Cruz</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:7px;padding:1px 7px">cashier</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #243234">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:19px;height:19px;color:#5FC86A;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Voided sale</div><div style="font-size:12px;color:#6C797C;flex:none">11:20 AM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260628-1</span> · wrong item scanned</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#B7C2C4;border:1px solid #33464A;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #243234">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="user-cog" style="width:19px;height:19px;color:#FF6B5E;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Role changed</div><div style="font-size:12px;color:#6C797C;flex:none">10:40 AM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45">Juan Dela Cruz set to <b style="color:#B7C2C4;font-weight:600">cashier</b></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#B7C2C4;border:1px solid #33464A;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #243234">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="truck" style="width:19px;height:19px;color:#9FB0B0;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Received stock</div><div style="font-size:12px;color:#6C797C;flex:none">10:05 AM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">RCV-20260628-2</span> · 14 items · Yamaha Parts Co.</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Juan Dela Cruz</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:7px;padding:1px 7px">cashier</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="log-in" style="width:19px;height:19px;color:#FF6B5E;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Logged in</div><div style="font-size:12px;color:#6C797C;flex:none">8:02 AM</div></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:6px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#B7C2C4;border:1px solid #33464A;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:4px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#93A0A3;text-transform:uppercase">Yesterday</span><span style="font-size:11.5px;font-weight:500;color:#6C797C">3 events</span></div>
+          <div style="margin:0 16px 16px;background:#18262A;border:1px solid #243234;border-radius:18px;padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #243234">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="eye" style="width:19px;height:19px;color:#9FB0B0;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Cost viewed</div><div style="font-size:12px;color:#6C797C;flex:none">4:31 PM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45">NGK Spark Plug CPR6EA-9</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#B7C2C4;border:1px solid #33464A;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #243234">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shield-x" style="width:19px;height:19px;color:#FF6B5E;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Password failed</div><div style="font-size:12px;color:#6C797C;flex:none">2:14 PM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45">3 failed attempts on cost reveal</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Juan Dela Cruz</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#93A0A3;border:1px solid #2C3C3E;border-radius:7px;padding:1px 7px">cashier</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="settings" style="width:19px;height:19px;color:#9FB0B0;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Settings updated</div><div style="font-size:12px;color:#6C797C;flex:none">9:50 AM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45">Receipt footer text</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#B7C2C4;border:1px solid #33464A;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 16px 22px;color:#566163;font-size:11.5px"><i data-lucide="history" style="width:13px;height:13px;stroke-width:1.9"></i>Showing the 100 most recent events</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2 · FILTER MENU · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">2 · Filter by type · app-bar menu · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div data-screen-label="13.2 Filter menu · dark" style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#E8B84C;background:rgba(232,184,76,.16)"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.9"></i></div>
+        </div>
+        <div style="flex:1;overflow:hidden;opacity:.38">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:12px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#93A0A3;text-transform:uppercase">Today</span></div>
+          <div style="margin:0 16px 16px;background:#18262A;border:1px solid #243234;border-radius:18px;padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #243234"><div style="width:38px;height:38px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="shopping-cart" style="width:19px;height:19px;color:#5FC86A;stroke-width:1.85"></i></div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#ECEFEF">Sale completed</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Juan Dela Cruz · cashier</div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0"><div style="width:38px;height:38px;border-radius:11px;background:rgba(255,107,94,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="log-in" style="width:19px;height:19px;color:#FF6B5E;stroke-width:1.85"></i></div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#ECEFEF">Logged in</div><div style="font-size:12px;color:#93A0A3;margin-top:3px">Maria Santos · admin</div></div></div>
+          </div>
+        </div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.32)"></div>
+        <div style="position:absolute;top:90px;right:14px;width:232px;background:#18262A;border-radius:15px;box-shadow:0 16px 40px -8px rgba(0,0,0,.6);padding:6px;border:1px solid #2C3C3E">
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;font-size:13.5px;font-weight:600;color:#ECEFEF;background:rgba(232,184,76,.14)"><i data-lucide="list" style="width:17px;height:17px;color:#E8B84C;stroke-width:1.9"></i><span style="flex:1">All Activities</span><i data-lucide="check" style="width:16px;height:16px;color:#E8B84C;stroke-width:2.4"></i></div>
+          <div style="height:1px;background:#243234;margin:5px 8px"></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="log-in" style="width:17px;height:17px;color:#FF6B5E;stroke-width:1.9"></i>Login</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="log-out" style="width:17px;height:17px;color:#FF6B5E;stroke-width:1.9"></i>Logout</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="shopping-cart" style="width:17px;height:17px;color:#5FC86A;stroke-width:1.9"></i>Sale</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="x-circle" style="width:17px;height:17px;color:#5FC86A;stroke-width:1.9"></i>Void Sale</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="sliders-horizontal" style="width:17px;height:17px;color:#9FB0B0;stroke-width:1.9"></i>Stock Adjustment</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="truck" style="width:17px;height:17px;color:#9FB0B0;stroke-width:1.9"></i>Receiving</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="user-plus" style="width:17px;height:17px;color:#FF6B5E;stroke-width:1.9"></i>User Created</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="user-pen" style="width:17px;height:17px;color:#FF6B5E;stroke-width:1.9"></i>User Updated</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="user-cog" style="width:17px;height:17px;color:#FF6B5E;stroke-width:1.9"></i>Role Changed</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="shield-check" style="width:17px;height:17px;color:#FF6B5E;stroke-width:1.9"></i>Password Verified</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="shield-x" style="width:17px;height:17px;color:#FF6B5E;stroke-width:1.9"></i>Password Failed</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;font-size:13.5px;color:#C7D0D2"><i data-lucide="eye" style="width:17px;height:17px;color:#9FB0B0;stroke-width:1.9"></i>Cost Viewed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3 · FILTER APPLIED · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">3 · Filter applied · Void Sale · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div data-screen-label="13.3 Filter applied · dark" style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#E8B84C;background:rgba(232,184,76,.16)"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.9"></i></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 16px 12px;flex:none;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.4px;color:#6C797C;text-transform:uppercase">Filtered</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;padding:5px 5px 5px 11px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12.5px;font-weight:600;color:#ECEFEF"><i data-lucide="x-circle" style="width:14px;height:14px;color:#5FC86A;stroke-width:2.1"></i>Void Sale<span style="width:19px;height:19px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.09)"><i data-lucide="x" style="width:11px;height:11px;color:#93A0A3;stroke-width:2.6"></i></span></span>
+        </div>
+        <div style="flex:1;overflow:auto">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:14px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#93A0A3;text-transform:uppercase">Today</span><span style="font-size:11.5px;font-weight:500;color:#6C797C">1 event</span></div>
+          <div style="margin:0 16px 16px;background:#18262A;border:1px solid #243234;border-radius:18px;padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:19px;height:19px;color:#5FC86A;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Voided sale</div><div style="font-size:12px;color:#6C797C;flex:none">11:20 AM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260628-1</span> · wrong item scanned</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#B7C2C4;border:1px solid #33464A;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:4px 18px 8px"><span style="font-size:11.5px;font-weight:700;letter-spacing:.9px;color:#93A0A3;text-transform:uppercase">Yesterday</span><span style="font-size:11.5px;font-weight:500;color:#6C797C">1 event</span></div>
+          <div style="margin:0 16px 16px;background:#18262A;border:1px solid #243234;border-radius:18px;padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(76,175,80,.16);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="x-circle" style="width:19px;height:19px;color:#5FC86A;stroke-width:1.85"></i></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600;color:#ECEFEF">Voided sale</div><div style="font-size:12px;color:#6C797C;flex:none">5:30 PM</div></div>
+                <div style="font-size:12px;color:#93A0A3;margin-top:3px;line-height:1.45"><span style="font-family:'Roboto Mono';font-size:11.5px">SALE-20260627-8</span> · duplicate charge</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:7px"><i data-lucide="user" style="width:13px;height:13px;color:#6C797C;stroke-width:1.9"></i><span style="font-size:12px;color:#93A0A3">Maria Santos</span><span style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#B7C2C4;border:1px solid #33464A;border-radius:7px;padding:1px 7px">admin</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4 · EMPTY · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">4 · Empty · no logs · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div data-screen-label="13.4 Empty · dark" style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#4A5A5E"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:30px 44px 90px;text-align:center">
+          <div style="width:80px;height:80px;border-radius:999px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center"><i data-lucide="clock" style="width:34px;height:34px;color:#6C797C;stroke-width:1.6"></i></div>
+          <div style="font-size:16px;font-weight:700;color:#ECEFEF;margin-top:6px">No activity logs found</div>
+          <div style="font-size:13px;color:#6C797C;line-height:1.45">Actions taken across the store will appear here as an audit trail.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5 · LOADING · DARK ===== -->
+    <div style="width:390px;flex:none">
+      <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">5 · Loading · skeleton · <span style="font-family:'Roboto Mono'">dark</span></div>
+      <div data-screen-label="13.5 Loading · dark" style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7);display:flex;flex-direction:column">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+        <div style="display:flex;align-items:center;gap:4px;padding:8px 10px;min-height:52px;flex:none">
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div>
+          <div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Activity Logs</div>
+          <div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="sliders-horizontal" style="width:21px;height:21px;stroke-width:1.75"></i></div>
+        </div>
+        <div style="flex:1;overflow:hidden">
+          <div style="padding:12px 18px 8px"><div style="width:64px;height:11px;border-radius:6px;background:#243234;animation:makiPulse 1.4s ease-in-out infinite"></div></div>
+          <div style="margin:0 16px 16px;background:#18262A;border:1px solid #243234;border-radius:18px;padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #243234"><div style="width:38px;height:38px;border-radius:11px;background:#22323A;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:55%;height:11px;border-radius:6px;background:#22323A;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:78%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:40%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #243234"><div style="width:38px;height:38px;border-radius:11px;background:#22323A;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:48%;height:11px;border-radius:6px;background:#22323A;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:70%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:38%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0"><div style="width:38px;height:38px;border-radius:11px;background:#22323A;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:52%;height:11px;border-radius:6px;background:#22323A;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:66%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:42%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+          </div>
+          <div style="padding:4px 18px 8px"><div style="width:84px;height:11px;border-radius:6px;background:#243234;animation:makiPulse 1.4s ease-in-out infinite"></div></div>
+          <div style="margin:0 16px 16px;background:#18262A;border:1px solid #243234;border-radius:18px;padding:2px 16px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #243234"><div style="width:38px;height:38px;border-radius:11px;background:#22323A;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:50%;height:11px;border-radius:6px;background:#22323A;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:72%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0"><div style="width:38px;height:38px;border-radius:11px;background:#22323A;flex:none;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="flex:1"><div style="width:46%;height:11px;border-radius:6px;background:#22323A;animation:makiPulse 1.4s ease-in-out infinite"></div><div style="width:64%;height:9px;border-radius:6px;background:#1E2C30;margin-top:9px;animation:makiPulse 1.4s ease-in-out infinite"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>
