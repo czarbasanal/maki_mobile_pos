@@ -78,7 +78,7 @@ class ReceivingHistoryScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const LoadingView(),
+        loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
           message: 'Error: $error',
           onRetry: () => ref.invalidate(recentReceivingsProvider),

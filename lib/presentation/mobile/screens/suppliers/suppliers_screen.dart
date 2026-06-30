@@ -100,7 +100,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             },
           );
         },
-        loading: () => const LoadingView(),
+        loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
           message: 'Error: $error',
           onRetry: () => ref.invalidate(suppliersProvider),

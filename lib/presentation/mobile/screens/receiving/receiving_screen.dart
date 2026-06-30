@@ -57,7 +57,7 @@ class ReceivingScreen extends ConsumerWidget {
             child: weeklyAsync.when(
               data: (receivings) =>
                   _buildReceivingsList(context, ref, receivings),
-              loading: () => const LoadingView(),
+              loading: () => const ListSkeleton(),
               error: (error, _) => ErrorStateView(
                 message: 'Error: $error',
                 onRetry: () => ref.invalidate(recentReceivingsProvider),

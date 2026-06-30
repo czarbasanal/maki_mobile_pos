@@ -92,7 +92,7 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
           Expanded(
             child: logsAsync.when(
               data: (logs) => _buildLogsList(logs, isDark),
-              loading: () => const LoadingView(),
+              loading: () => const ListSkeleton(),
               error: (error, _) => ErrorStateView(
                 message: 'Error: $error',
                 onRetry: () =>
