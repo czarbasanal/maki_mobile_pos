@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,7 +89,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byIcon(CupertinoIcons.lock), findsOneWidget);
+      expect(find.byIcon(LucideIcons.lock), findsOneWidget);
       // cost 60 -> "ZS" under the default mapping (6->Z, 0->S).
       expect(find.text(mapping.encode(testProduct.cost)), findsOneWidget);
     });

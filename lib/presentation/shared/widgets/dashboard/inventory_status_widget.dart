@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -28,7 +28,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'Total',
                 value: '${summary.totalProducts}',
-                icon: CupertinoIcons.cube_box,
+                icon: LucideIcons.package,
                 iconColor: AppColors.info,
                 compact: true,
               ),
@@ -38,7 +38,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'In Stock',
                 value: '${summary.inStockCount}',
-                icon: CupertinoIcons.checkmark_circle,
+                icon: LucideIcons.circleCheck,
                 iconColor: AppColors.success,
                 compact: true,
               ),
@@ -48,7 +48,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'Low',
                 value: '${summary.lowStockCount}',
-                icon: CupertinoIcons.exclamationmark_triangle,
+                icon: LucideIcons.triangleAlert,
                 iconColor: AppColors.warning,
                 compact: true,
                 highlighted: hasLow,
@@ -59,7 +59,7 @@ class InventoryStatusWidget extends ConsumerWidget {
               child: SummaryCard(
                 title: 'Out',
                 value: '${summary.outOfStockCount}',
-                icon: CupertinoIcons.exclamationmark_circle,
+                icon: LucideIcons.circleAlert,
                 iconColor: AppColors.error,
                 compact: true,
                 highlighted: hasOut,

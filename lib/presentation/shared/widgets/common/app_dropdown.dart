@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Project-wide dropdown wrapper.
 ///
@@ -172,8 +172,8 @@ class _AppDropdownButtonState<T> extends State<_AppDropdownButton<T>> {
               ),
               Icon(
                 _menuOpen
-                    ? CupertinoIcons.chevron_up
-                    : CupertinoIcons.chevron_down,
+                    ? LucideIcons.chevronUp
+                    : LucideIcons.chevronDown,
                 size: 16,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
