@@ -215,20 +215,6 @@ class DraftOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Checks if a draft name already exists.
-  Future<bool> draftNameExists({
-    required String name,
-    String? excludeDraftId,
-  }) async {
-    try {
-      return await _repository.draftNameExists(
-        name: name,
-        excludeDraftId: excludeDraftId,
-      );
-    } catch (e) {
-      return false;
-    }
-  }
 
   /// Deletes old converted drafts.
   Future<int> deleteOldConvertedDrafts(DateTime olderThan) async {

@@ -65,7 +65,8 @@ final productVariationChildrenCountProvider =
 
 /// Provides product search results (Firestore query).
 final productSearchProvider =
-    FutureProvider.family<List<ProductEntity>, String>((ref, query) async {
+    FutureProvider.autoDispose.family<List<ProductEntity>, String>(
+        (ref, query) async {
   if (query.trim().isEmpty) return [];
 
   final repository = ref.watch(productRepositoryProvider);
@@ -75,7 +76,8 @@ final productSearchProvider =
 /// Provides instant product search from in-memory data.
 /// Falls back to Firestore search if products stream hasn't loaded yet.
 final localProductSearchProvider =
-    Provider.family<AsyncValue<List<ProductEntity>>, String>((ref, query) {
+    Provider.autoDispose.family<AsyncValue<List<ProductEntity>>, String>(
+        (ref, query) {
   if (query.trim().isEmpty) return const AsyncValue.data([]);
 
   final productsAsync = ref.watch(productsProvider);
@@ -317,17 +319,6 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Checks if SKU exists.
-  Future<bool> skuExists(String sku, {String? excludeProductId}) async {
-    try {
-      return await _repository.skuExists(
-        sku: sku,
-        excludeProductId: excludeProductId,
-      );
-    } catch (e) {
-      return false;
-    }
-  }
 
   void _invalidateProductProviders() {
     _ref.invalidate(productsProvider);

@@ -191,14 +191,6 @@ class UserOperationsNotifier extends StateNotifier<UserOperationsState> {
     return updated != null;
   }
 
-  /// Checks if email exists.
-  Future<bool> emailExists(String email) async {
-    try {
-      return await _ref.read(userRepositoryProvider).emailExists(email);
-    } catch (e) {
-      return false;
-    }
-  }
 
   void clearError() {
     state = state.copyWith(clearError: true);

@@ -63,7 +63,8 @@ final unreadVoidRequestCountProvider = Provider<int>((ref) {
 
 /// Pending requests for a sale (sale-detail indicator).
 final pendingVoidRequestForSaleProvider =
-    StreamProvider.family<List<VoidRequestEntity>, String>((ref, saleId) {
+    StreamProvider.autoDispose.family<List<VoidRequestEntity>, String>(
+        (ref, saleId) {
   return authGatedStream(ref, (_) {
     return ref
         .watch(voidRequestRepositoryProvider)

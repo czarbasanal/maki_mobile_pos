@@ -172,16 +172,6 @@ class CategoryOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> nameExists(String name, {String? excludeCategoryId}) async {
-    try {
-      return await _repository.nameExists(
-        name: name,
-        excludeCategoryId: excludeCategoryId,
-      );
-    } catch (_) {
-      return false;
-    }
-  }
 }
 
 final categoryOperationsProvider = StateNotifierProvider.family<

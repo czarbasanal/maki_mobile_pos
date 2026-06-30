@@ -43,7 +43,7 @@ class ActivityLogParams {
 
 /// Provides activity logs based on parameters.
 final activityLogsProvider =
-    FutureProvider.family<List<ActivityLogEntity>, ActivityLogParams>(
+    FutureProvider.autoDispose.family<List<ActivityLogEntity>, ActivityLogParams>(
   (ref, params) async {
     final repository = ref.watch(activityLogRepositoryProvider);
     return repository.getActivityLogs(

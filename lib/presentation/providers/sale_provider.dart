@@ -45,7 +45,7 @@ final salesForDateProvider =
 
 /// Provides sales for a date range.
 final salesByDateRangeProvider =
-    FutureProvider.family<List<SaleEntity>, DateRangeParams>(
+    FutureProvider.autoDispose.family<List<SaleEntity>, DateRangeParams>(
         (ref, params) async {
   final repository = ref.watch(saleRepositoryProvider);
   return repository.getSalesByDateRange(

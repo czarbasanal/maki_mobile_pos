@@ -112,16 +112,6 @@ class MechanicOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> nameExists(String name, {String? excludeMechanicId}) async {
-    try {
-      return await _repository.nameExists(
-        name: name,
-        excludeMechanicId: excludeMechanicId,
-      );
-    } catch (_) {
-      return false;
-    }
-  }
 }
 
 final mechanicOperationsProvider =
