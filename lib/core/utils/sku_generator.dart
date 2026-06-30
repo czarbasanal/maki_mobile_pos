@@ -130,8 +130,8 @@ abstract class SkuGenerator {
 
     for (final sku in existingSkus) {
       if (sku == cleanBase) {
-        // Original SKU exists, so variation starts at 1
-        if (maxVariation < 1) maxVariation = 0;
+        // The base SKU itself isn't a numbered variation — it never raises
+        // the max (numbered variations start at 1).
         continue;
       }
 
