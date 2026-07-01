@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChartBarIcon, ArrowTrendingUpIcon, WrenchIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, ArrowTrendingUpIcon, WrenchIcon, TagIcon } from '@heroicons/react/24/outline';
 import { RoutePaths } from '@/presentation/router/routePaths';
 
 const cards = [
@@ -21,6 +21,12 @@ const cards = [
     title: 'Labor report',
     description: 'Service revenue and a per-mechanic breakdown of labor.',
     icon: WrenchIcon,
+  },
+  {
+    to: RoutePaths.priceChangeReport,
+    title: 'Price changes',
+    description: 'Price/cost changes across products over a date range.',
+    icon: TagIcon,
   },
 ];
 

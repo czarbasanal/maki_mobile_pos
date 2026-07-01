@@ -39,6 +39,7 @@ export const RoutePaths = {
   salesReport: '/reports/sales',
   profitReport: '/reports/profit',
   laborReport: '/reports/labor',
+  priceChangeReport: '/reports/price-changes',
   saleDetail: '/reports/sale/:id',
 
   users: '/users',
