@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/report_csv.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -60,6 +63,13 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         title: const Text('Sales Report'),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.download),
+            tooltip: 'Export CSV',
+            onPressed: _exportCsv,
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -114,29 +124,16 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
                 child: _buildPaymentBreakdown(),
               ),
 
-              // More reports — historical, so only for non-daily-only roles.
-              if (user != null && !dailyOnly) ...[
-                if (RolePermissions.hasPermission(
-                    user.role, Permission.viewProfitReports))
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: _ReportNavTile(
-                      icon: LucideIcons.trendingUp,
-                      title: 'Profit Report',
-                      subtitle: 'Cost, gross profit, and margin',
-                      onTap: () => context.pushNamed(RouteNames.profitReport),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: _ReportNavTile(
-                    icon: LucideIcons.wrench,
-                    title: 'Labor Report',
-                    subtitle: 'Service revenue by mechanic',
-                    onTap: () => context.pushNamed(RouteNames.laborReport),
-                  ),
+              // View the full transaction list (moved off the /reports index).
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: _ReportNavTile(
+                  icon: LucideIcons.receipt,
+                  title: 'View transactions',
+                  subtitle: 'Full sales history list',
+                  onTap: () => context.pushNamed(RouteNames.salesHistory),
                 ),
-              ],
+              ),
 
               // End-of-day closing entry
               Padding(
@@ -292,6 +289,20 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
       _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
       _selectedPreset = DateRangePreset.custom;
     });
+  }
+
+  Future<void> _exportCsv() async {
+    final params = DateRangeParams(startDate: _startDate, endDate: _endDate);
+    final sales = await ref.read(salesByDateRangeProvider(params).future);
+    if (!mounted) return;
+    if (sales.where((s) => !s.isVoided).isEmpty) {
+      context.showSnackBar('No sales to export in this range');
+      return;
+    }
+    final d = DateFormat('yyyy-MM-dd');
+    final name = 'sales_${d.format(_startDate)}_to_${d.format(_endDate)}.csv';
+    if (!mounted) return;
+    await saveReportCsv(context, buildSalesReportCsv(sales), name);
   }
 }
 
