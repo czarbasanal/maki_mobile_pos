@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
+import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/core/utils/report_csv.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -101,6 +102,35 @@ void main() {
       expect(lines.first, 'Mechanic,Jobs,Labor Total');
       expect(lines.length, 4); // header + 2 + totals
       expect(lines.last, 'TOTAL,3,500.00');
+    });
+  });
+
+  group('buildPriceChangeReportCsv', () {
+    test('header + one row per change with signed deltas + product label', () {
+      final rows = priceChangeRowsInRange([
+        PriceChangeEntry(
+            id: 'a',
+            productId: 'p1',
+            price: 120,
+            cost: 70,
+            changedAt: DateTime(2026, 6, 10, 9),
+            changedBy: 'u1',
+            reason: 'receiving'),
+        PriceChangeEntry(
+            id: 'b',
+            productId: 'p1',
+            price: 100,
+            cost: 60,
+            changedAt: DateTime(2026, 6, 1, 9),
+            changedBy: 'u1'),
+      ]);
+      final csv = buildPriceChangeReportCsv(rows, {'p1': 'Widget (SKU-1)'});
+      final lines = csv.trim().split('\n');
+      expect(lines.first,
+          'Date,Product,SKU,New Price,Price Delta,New Cost,Cost Delta,Reason,Changed By');
+      expect(lines.length, 3); // header + 2 changes
+      expect(lines[1], contains('Widget (SKU-1)'));
+      expect(lines[1], contains('+20.00')); // newest row's price delta
     });
   });
 }
