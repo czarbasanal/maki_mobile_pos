@@ -4,6 +4,7 @@
 import {
   addDoc,
   collection,
+  collectionGroup,
   deleteField,
   doc,
   getDoc,
@@ -15,6 +16,7 @@ import {
   query,
   runTransaction,
   serverTimestamp,
+  Timestamp,
   updateDoc,
   where,
   type Firestore,
@@ -30,6 +32,7 @@ import { normalizeSku, normalizeBarcode, isClaimableBarcode } from '@/domain/pro
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
 import { buildProductWrites, newProductId } from '@/data/products/productWrites';
 import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
+import type { PriceChangeEntry } from '@/domain/products/priceChangeReport';
 import type {
   PriceHistoryEntry,
   ProductCreateInput,
@@ -353,6 +356,31 @@ export class FirestoreProductRepository implements ProductRepository {
         reason: (data.reason as string | null) ?? null,
         note: (data.note as string | null) ?? null,
       };
+    });
+  }
+
+  async listPriceChangesInRange(start: Date, end: Date, max = 500): Promise<PriceChangeEntry[]> {
+    const snap = await getDocs(
+      query(
+        collectionGroup(this.db, Subcollections.priceHistory),
+        where('changedAt', '>=', Timestamp.fromDate(start)),
+        where('changedAt', '<=', Timestamp.fromDate(end)),
+        orderBy('changedAt', 'desc'),
+        limit(max),
+      ),
+    );
+    return snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        productId: d.ref.parent.parent!.id,
+        price: (data.price as number) ?? 0,
+        cost: (data.cost as number) ?? 0,
+        changedAt: toDate(data.changedAt) ?? new Date(0),
+        changedBy: (data.changedBy as string) ?? '',
+        reason: (data.reason as string | null) ?? null,
+        note: (data.note as string | null) ?? null,
+      } satisfies PriceChangeEntry;
     });
   }
 }
