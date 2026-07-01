@@ -5,8 +5,12 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/report_csv.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -21,28 +25,30 @@ class ProfitReportScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
-  DateTimeRange _dateRange = DateTimeRange(
-    start: DateTime.now().subtract(const Duration(days: 30)),
-    end: DateTime.now(),
-  );
+  late DateTime _startDate;
+  late DateTime _endDate;
+  DateRangePreset _selectedPreset = DateRangePreset.today;
 
-  DateRangeParams get _params => DateRangeParams(
-        startDate: DateTime(_dateRange.start.year, _dateRange.start.month,
-            _dateRange.start.day),
-        endDate: DateTime(_dateRange.end.year, _dateRange.end.month,
-            _dateRange.end.day, 23, 59, 59),
-      );
+  @override
+  void initState() {
+    super.initState();
+    final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+    _startDate = r.start;
+    _endDate = r.end;
+  }
+
+  DateRangeParams get _params =>
+      DateRangeParams(startDate: _startDate, endDate: _endDate);
 
   TopSellingParams get _topParams => TopSellingParams(
-        startDate: _params.startDate,
-        endDate: _params.endDate,
+        startDate: _startDate,
+        endDate: _endDate,
         limit: 50,
       );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MMM d, y');
     final profitAsync = ref.watch(profitReportProvider(_params));
     final topAsync = ref.watch(topSellingProductsProvider(_topParams));
 
@@ -55,8 +61,9 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.calendar),
-            onPressed: _selectDateRange,
+            icon: const Icon(LucideIcons.download),
+            tooltip: 'Export CSV',
+            onPressed: _exportCsv,
           ),
         ],
       ),
@@ -67,33 +74,26 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
         },
         child: ListView(
           children: [
-            // Date strip with a Change pill.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-              child: AppCard(
-                radius: AppRadius.md,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: SizedBox(
-                  height: 48,
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.calendar,
-                          size: 18, color: theme.colorScheme.primary),
-                      const SizedBox(width: 11),
-                      Expanded(
-                        child: Text(
-                          '${dateFormat.format(_dateRange.start)} – ${dateFormat.format(_dateRange.end)}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                      ),
-                      _ChangeButton(onTap: _selectDateRange),
-                    ],
-                  ),
-                ),
-              ),
+            DateRangePicker(
+              startDate: _startDate,
+              endDate: _endDate,
+              selectedPreset: _selectedPreset,
+              onPresetChanged: (preset) {
+                if (preset == DateRangePreset.custom) return;
+                final r = dateRangeForPreset(preset, DateTime.now());
+                setState(() {
+                  _startDate = r.start;
+                  _endDate = r.end;
+                  _selectedPreset = preset;
+                });
+              },
+              onCustomRangeSelected: (start, end) {
+                setState(() {
+                  _startDate = start;
+                  _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
+                  _selectedPreset = DateRangePreset.custom;
+                });
+              },
             ),
             // Summary cards.
             profitAsync.when(
@@ -232,16 +232,18 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
     );
   }
 
-  Future<void> _selectDateRange() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      initialDateRange: _dateRange,
-    );
-    if (picked != null) {
-      setState(() => _dateRange = picked);
+  Future<void> _exportCsv() async {
+    final products =
+        await ref.read(topSellingProductsProvider(_topParams).future);
+    if (!mounted) return;
+    if (products.isEmpty) {
+      context.showSnackBar('No profit data to export in this range');
+      return;
     }
+    final d = DateFormat('yyyy-MM-dd');
+    final name = 'profit_${d.format(_startDate)}_to_${d.format(_endDate)}.csv';
+    if (!mounted) return;
+    await saveReportCsv(context, buildProfitReportCsv(products), name);
   }
 }
 
@@ -295,46 +297,6 @@ class _ProductProfitRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Small outlined "Change" pill in the date strip.
-class _ChangeButton extends StatelessWidget {
-  const _ChangeButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final border =
-        dark ? AppColors.darkInputBorder : const Color(0xFFD9DEDD);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.pencil, size: 12, color: theme.colorScheme.primary),
-            const SizedBox(width: 4),
-            Text(
-              'Change',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
