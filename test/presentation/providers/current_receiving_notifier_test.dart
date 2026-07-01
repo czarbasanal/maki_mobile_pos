@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -214,6 +216,79 @@ void main() {
           reason: 'stale completed status would hide the error banner');
       expect(state.items, isEmpty);
       expect(state.id, isNull);
+    });
+  });
+
+  group('CurrentReceivingNotifier.loadReceiving — success', () {
+    test('a successful fetch clears isLoading and populates the receiving',
+        () async {
+      final repo = _MockReceivingRepository();
+      final draft = ReceivingEntity(
+        id: 'r-1',
+        referenceNumber: 'RCV-042',
+        items: [_line(productId: 'p1', quantity: 2, unitCost: 50, id: 'li-1')],
+        totalCost: 100,
+        totalQuantity: 2,
+        status: ReceivingStatus.draft,
+        createdAt: DateTime(2026, 1, 1),
+        createdBy: 'u-admin',
+        createdByName: 'admin user',
+      );
+      when(() => repo.getReceivingById('r-1'))
+          .thenAnswer((_) async => draft);
+
+      final c = ProviderContainer(
+        overrides: [
+          receivingRepositoryProvider.overrideWith((ref) => repo),
+          productRepositoryProvider
+              .overrideWith((ref) => _MockProductRepository()),
+        ],
+      );
+      addTearDown(c.dispose);
+      final n = c.read(currentReceivingProvider.notifier);
+
+      await n.loadReceiving('r-1');
+
+      final state = c.read(currentReceivingProvider);
+      expect(state.isLoading, isFalse,
+          reason: 'skeleton must clear once the data lands');
+      expect(state.id, 'r-1');
+      expect(state.referenceNumber, 'RCV-042');
+      expect(state.items, hasLength(1));
+      expect(state.errorMessage, isNull);
+    });
+
+    test(
+        'a fetch that never returns times out, clears isLoading and surfaces '
+        'a recoverable error instead of pinning the skeleton forever',
+        () async {
+      final repo = _MockReceivingRepository();
+      // A future that never completes — models a stuck network read.
+      final stuck = Completer<ReceivingEntity?>();
+      addTearDown(() {
+        if (!stuck.isCompleted) stuck.complete(null);
+      });
+      when(() => repo.getReceivingById('r-hang'))
+          .thenAnswer((_) => stuck.future);
+
+      final c = ProviderContainer(
+        overrides: [
+          receivingRepositoryProvider.overrideWith((ref) => repo),
+          productRepositoryProvider
+              .overrideWith((ref) => _MockProductRepository()),
+          receivingLoadTimeoutProvider
+              .overrideWithValue(const Duration(milliseconds: 50)),
+        ],
+      );
+      addTearDown(c.dispose);
+      final n = c.read(currentReceivingProvider.notifier);
+
+      await n.loadReceiving('r-hang');
+
+      final state = c.read(currentReceivingProvider);
+      expect(state.isLoading, isFalse);
+      expect(state.errorMessage, isNotNull);
+      expect(state.errorMessage, contains('timed out'));
     });
   });
 }
