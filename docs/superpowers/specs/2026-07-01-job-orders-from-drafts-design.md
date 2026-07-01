@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-01
 **Surface:** Mobile (Flutter) only — v1
-**Status:** Approved design, pending spec review → implementation plan
+**Status:** Design revised after code-recon (in-ticket parts + safe bill-out added); pending final spec review → implementation plan
 
 ---
 
@@ -13,8 +13,9 @@ hold an open job while parts and labor pile up over the hour. This turns the exi
 **Drafts** feature into **Job Orders**: the cashier opens a job order for a bike,
 labels it (customer / plate), picks the motorcycle model, and — once a mechanic takes
 it — assigns the mechanic. Parts and labor get added to that job order while the
-service runs. When the bike is done, the cashier **bills out** the job order and it
-becomes a normal sale, exactly as a draft checkout does today.
+service runs — right on the ticket, without tying up the register, so walk-in buyers can
+still be rung up in parallel. When the bike is done, the cashier **bills out** the job
+order: it becomes a normal sale and the ticket is marked done.
 
 Walk-in buyers who just grab an item are **unaffected** — they keep using the normal
 quick checkout with no job order, no bike, no mechanic.
@@ -26,10 +27,16 @@ Two new owner reports answer the questions that motivated this:
 ## Why this shape
 
 The current `DraftEntity` already stores `items`, `laborLines`, `mechanicId`/
-`mechanicName`, and converts into a `SaleEntity` that carries mechanic + labor +
-`draftId`. A draft is already ~90% of a service ticket. The only genuinely new pieces
-are: the **motorcycle model** field, the **reporting**, and the **rename/reframe**.
-So this is a small, additive change layered on proven plumbing — not a new module.
+`mechanicName`, so the *data* is most of a service ticket, and adding/updating **labor +
+mechanic** on an open draft already persists in place. New work falls in three areas:
+the **motorcycle model** field, the **reporting**, and — the part code-recon surfaced —
+making a ticket **hold parts safely over time**. Today the only way to add parts to a
+saved draft is "Edit in POS," which loads it into the one shared register cart and
+**deletes the saved draft** until re-save; that both ties up the register (blocking
+parallel walk-in sales) and opens a data-loss window. Since parts get added "a mix of
+both" — incrementally and at bill-out — v1 adds in-ticket part editing and a
+non-destructive bill-out (see "Ticket persistence" below). Still additive, no new
+module — but Phase C is larger than a pure rename.
 
 ---
 
@@ -46,6 +53,9 @@ So this is a small, additive change layered on proven plumbing — not a new mod
 | 7 | Scope | **Mobile only** (v1). Web keeps generic drafts; parity is a future follow-up. |
 | 8 | Report data source | **Completed, non-voided sales** for the selected period (realized work), reusing the shared preset date filter. |
 | 9 | Report visibility | **Owner/admin only** — gated like the Profit report (both new reports). Cashiers don't see them. |
+| 10 | Parts on an open ticket | **Edited in-ticket** — product search/scan appends parts to the ticket (plus editable qty / remove), saved in place; the shared register cart is never used to accumulate a ticket. |
+| 11 | Creating a ticket | A cart-independent **"New Job Order"** entry (label + model + mechanic; parts optional) so a bike arriving mid-walk-in never fights the one shared cart. POS "Save as Job Order" stays as a secondary path (turn the current cart into a ticket). |
+| 12 | Bill-out | **Non-destructive** — billing out marks the ticket **converted** only on a *successful* sale (reusing the existing, currently-dead `_reconcileDraft` / `markDraftAsConverted` path); no delete-on-load. Sale carries the ticket's `draftId` + `motorcycleModel`. Drops the destructive "Edit in POS". |
 
 ## Goals
 
@@ -60,6 +70,8 @@ So this is a small, additive change layered on proven plumbing — not a new mod
 - No rename of the `drafts` Firestore collection or the Dart `Draft*` code symbols
   (see "Rename is skin-deep" below).
 - No structured plate / customer-contact fields (parked; the single label field covers it).
+- No separate/cart-independent payment UI for bill-out — it reuses the existing checkout
+  screen via the register cart (guarded when the cart is busy).
 - No model prompt on walk-in / no-ticket service sales (they simply won't appear in the
   Models report — acceptable; revisit later if needed).
 - No mechanic time-in/out, downpayment, or delivery fees (roadmap §24/§27, still parked).
@@ -98,9 +110,11 @@ Optional everywhere at the data layer → old drafts, old sales, and web-created
 keep deserializing (missing field → `null`). The value stored is the **canonical model
 name** (the normalized display name from the `motorcycle_models` list).
 
-The model must travel **Draft → cart → Sale** at bill-out. The cart already carries
-`mechanicId`/`mechanicName`; add `motorcycleModel` alongside it (loaded when a Job Order
-is resumed, editable at checkout, written onto the sale).
+The model must travel **Draft → cart → Sale** at bill-out. `loadFromDraft` carries it
+into `CartState` (alongside `mechanicId`/`mechanicName` and a now-set `sourceDraftId`),
+and `toSale` writes it onto the `SaleEntity`. The bill-out **gate lives in the ticket
+editor**: the draft's `motorcycleModel` must be set before bill-out (walk-in checkout,
+which has no ticket, never hits the gate).
 
 ### 2. New `motorcycle_models` managed collection
 
@@ -150,24 +164,64 @@ This is a `firestore.rules` change → **production-affecting; confirm with owne
 
 ---
 
+## Ticket persistence & the shared register cart
+
+**The problem (from code-recon).** The app has **one** register cart (`cartProvider`).
+A draft's labor/mechanic can be edited in place, but its **items are read-only** in the
+draft editor — the only way to add parts is "Edit in POS," which `loadFromDraft` into the
+shared cart and then **immediately deletes the draft** (all three resume paths do this).
+Also `CartState.sourceDraftId` is never set, so `isFromDraft` is dead, sales never carry a
+`draftId`, and the built-but-unused `markDraftAsConverted` conversion never runs. Net
+effect for a service shop: you can't add parts to a ticket without commandeering the
+register (so you can't ring a walk-in at the same time), and an interrupted edit loses the
+ticket.
+
+**The resolution (v1).**
+- **In-ticket parts.** The Job Order editor gains an "Add parts" action (reuse the POS
+  product search + barcode scan) plus editable quantity / remove, persisted to the draft
+  via the existing full `updateDraft` path. The register cart is not involved.
+- **Cart-independent creation.** A "New Job Order" action creates the ticket (label +
+  model + mechanic; parts optional) and opens the editor — no cart needed.
+- **Non-destructive bill-out.** "Bill out" sets `sourceDraftId` on the loaded cart (so the
+  sale carries `draftId`) and does **not** delete on load; the existing `_reconcileDraft`
+  marks the ticket **converted** only after the atomic sale write succeeds. An abandoned
+  bill-out leaves the ticket intact. Converted tickets drop off the active list (filtered
+  by `isConverted == false`) and remain as an audit link.
+- **Cart-busy guard.** If the register cart already holds an unfinished walk-in sale,
+  bill-out warns before loading the ticket (so it never silently clobbers a sale in
+  progress).
+- **Remove "Edit in POS."** Redundant once parts are editable in-ticket; removing it
+  deletes the destructive path entirely.
+
+**Idempotency note.** Resurrecting `sourceDraftId` + a `draftId` on the sale rides the
+existing checkout-id idempotency (the sale write is already guarded); conversion is
+best-effort *after* the guarded write, exactly as `_reconcileDraft` was designed. We do
+**not** change the sale-write transaction.
+
+---
+
 ## Job Order flow (mobile)
 
-1. **Open / save a Job Order** — from the POS cart, "Save job order" opens a dialog
-   capturing: **Customer / plate** (required label, the existing `name`), **Motorcycle
-   model** (pick-or-add; optional at this step), **Mechanic** (optional; existing picker),
-   plus the current items + labor. Saves to `drafts` with `motorcycleModel` set.
+1. **New Job Order** — a "New Job Order" action (FAB on the Job Orders list) opens a
+   create dialog capturing **Customer / plate** (required label), **Motorcycle model**
+   (pick-or-add; optional here), and **Mechanic** (optional), then opens the ticket
+   editor. No register cart involved. (Secondary path: from the POS cart, "Save as Job
+   Order" turns the current cart into a ticket, as today.)
 2. **List** — the Job Orders list (old drafts list) shows label, model, mechanic, item
-   count, total. Resume loads it back into the cart.
-3. **Edit while service runs** — add/remove parts + labor, assign/update mechanic, set
-   model. Same edit surfaces as drafts today.
-4. **Bill out** — resume → checkout. **Gate:** if this checkout is a Job Order bill-out
-   and `motorcycleModel` is empty, block with a clear prompt ("Pick the motorcycle model
-   to bill out"). Walk-in sales (no Job Order) skip this gate entirely. On success the
-   model is written onto the `SaleEntity`, and the existing atomic
-   draft→sale conversion runs unchanged (draft marked converted; sale carries `draftId`).
+   count, and total; excludes converted tickets.
+3. **Work the ticket (editor)** — add parts (search/scan → appended to the ticket), edit
+   quantity / remove, add/edit labor, assign/update mechanic, set the motorcycle model and
+   label. Every change persists in place via `updateDraft`. The register stays free for
+   walk-ins throughout.
+4. **Bill out** — "Bill out" from the editor. **Gate:** the ticket's `motorcycleModel`
+   must be set (block with a clear prompt otherwise). The ticket loads into the cart with
+   `sourceDraftId` set and goes to the existing checkout/payment screen; on a successful
+   sale the model is written onto the `SaleEntity`, the sale carries `draftId`, and
+   `_reconcileDraft` marks the ticket converted. Walk-in sales (no ticket) are unaffected
+   and never see the model gate.
 
-**Existing rule preserved:** labor still requires a mechanic (labor-only is blocked).
-Model requiredness is independent and applies only at Job Order bill-out.
+**Existing rule preserved:** labor still requires a mechanic (labor-only blocked). The
+model gate is independent and applies only to Job Order bill-out.
 
 ---
 
@@ -227,8 +281,13 @@ Gating a mobile screen touches three places (nav/hub card + `route_names`/`app_r
   update/deactivate.
 - **Normalization + dedup:** "  nmax " and "Nmax" resolve to the same canonical model;
   new name creates one doc.
-- **Bill-out gate:** Job Order checkout with empty model is blocked; walk-in checkout is
-  not; model reaches the written sale.
+- **In-ticket parts:** adding a part appends to the draft and persists (`updateDraft`);
+  editing qty / removing persists; the register cart is untouched.
+- **Bill-out gate:** bill-out with an empty `motorcycleModel` is blocked; with it set, the
+  model + `draftId` reach the written sale; walk-in checkout has no gate.
+- **Non-destructive convert:** a successful bill-out marks the ticket `isConverted` (via
+  `_reconcileDraft`) and drops it from the active list; a failed/abandoned bill-out leaves
+  the ticket intact and unconverted.
 - **Aggregations:** `motorcycleModelReportFromSales` (job-count sort, Unspecified bucket,
   voided excluded) and `mechanicPerformanceReportFromSales` (total-revenue sort, no-
   mechanic excluded, voided excluded), including CSV row shaping.
@@ -256,6 +315,12 @@ Run `flutter test` + `flutter analyze` and confirm green before "done"
   *Open:* is that separation clear enough, or should Labor eventually fold in?
 - **Cashier-created model docs** are a minor abuse surface (spam), same trust level as
   creating drafts/sales; normalization limits accidental dupes. Acceptable.
+- **Persistence change** (destructive resume → in-ticket parts + convert-on-success)
+  touches the draft/cart flow, not the guarded sale-write transaction. Risk is contained
+  to the ticket editor + bill-out handler; covered by the convert/abandon tests above.
+- **Bill-out still uses the shared cart** for payment (reusing the checkout screen). The
+  cart-busy guard prevents clobbering an active walk-in; a fully cart-independent payment
+  UI is deliberately out of scope for v1.
 - **Model-less service sales:** quick services without a Job Order won't carry a model
   and won't appear in the Models report. Acceptable for v1; a future option is an optional
   model field on POS service sales.
