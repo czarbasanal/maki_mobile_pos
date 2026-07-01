@@ -226,5 +226,15 @@
         }
       ]
     }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "price_history",
+      "fieldPath": "changedAt",
+      "indexes": [
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" },
+        { "queryScope": "COLLECTION_GROUP", "order": "DESCENDING" }
+      ]
+    }
   ]
 }

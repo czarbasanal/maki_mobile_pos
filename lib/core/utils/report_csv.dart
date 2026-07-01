@@ -1,6 +1,7 @@
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
+import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 
@@ -90,4 +91,37 @@ String buildLaborReportCsv(LaborReportData report) {
     report.totalLabor.toStringAsFixed(2),
   ]);
   return _converter.convert(rows);
+}
+
+String _signed(double v) => (v >= 0 ? '+' : '') + v.toStringAsFixed(2);
+
+/// Change log: one row per price/cost change, newest-first (as [rows] arrive).
+/// [productLabelById] maps productId -> "Name (SKU)"; a missing product falls
+/// back to the id. No TOTAL row (a change log has no meaningful column totals).
+String buildPriceChangeReportCsv(
+  List<PriceChangeRow> rows,
+  Map<String, String> productLabelById,
+) {
+  final fmt = DateFormat('yyyy-MM-dd HH:mm');
+  final out = <List<dynamic>>[
+    [
+      'Date', 'Product', 'SKU', 'New Price', 'Price Delta', 'New Cost',
+      'Cost Delta', 'Reason', 'Changed By',
+    ],
+  ];
+  for (final r in rows) {
+    final e = r.entry;
+    out.add([
+      fmt.format(e.changedAt),
+      productLabelById[e.productId] ?? e.productId,
+      '',
+      e.price.toStringAsFixed(2),
+      r.hasPrior ? _signed(r.priceDelta) : '',
+      e.cost.toStringAsFixed(2),
+      r.hasPrior ? _signed(r.costDelta) : '',
+      e.reason ?? '',
+      e.changedBy,
+    ]);
+  }
+  return _converter.convert(out);
 }

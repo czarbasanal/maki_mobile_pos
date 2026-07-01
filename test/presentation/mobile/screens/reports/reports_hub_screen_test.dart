@@ -29,6 +29,7 @@ void main() {
     expect(find.text('Sales'), findsOneWidget);
     expect(find.text('Profit'), findsOneWidget);
     expect(find.text('Labor'), findsOneWidget);
+    expect(find.text('Price Changes'), findsOneWidget);
   });
 
   testWidgets('non-admin does not see Profit', (tester) async {
@@ -37,5 +38,6 @@ void main() {
     expect(find.text('Sales'), findsOneWidget);
     expect(find.text('Profit'), findsNothing);
     expect(find.text('Labor'), findsOneWidget);
+    expect(find.text('Price Changes'), findsNothing);
   });
 }

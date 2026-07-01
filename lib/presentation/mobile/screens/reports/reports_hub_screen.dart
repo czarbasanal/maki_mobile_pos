@@ -18,6 +18,8 @@ class ReportsHubScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider).valueOrNull;
     final canProfit = user != null &&
         RolePermissions.hasPermission(user.role, Permission.viewProfitReports);
+    final canCost = user != null &&
+        RolePermissions.hasPermission(user.role, Permission.viewProductCost);
 
     return Scaffold(
       appBar: AppBar(
@@ -52,6 +54,15 @@ class ReportsHubScreen extends ConsumerWidget {
             subtitle: 'Service revenue by mechanic',
             onTap: () => context.pushNamed(RouteNames.laborReport),
           ),
+          if (canCost) ...[
+            const SizedBox(height: 10),
+            _ReportCard(
+              icon: LucideIcons.tag,
+              title: 'Price Changes',
+              subtitle: 'Price/cost changes across products',
+              onTap: () => context.pushNamed(RouteNames.priceChangeReport),
+            ),
+          ],
         ],
       ),
     );

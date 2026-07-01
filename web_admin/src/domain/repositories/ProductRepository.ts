@@ -3,6 +3,7 @@
 
 import type { Product } from '../entities';
 import type { Unsubscribe } from './AuthRepository';
+import type { PriceChangeEntry } from '@/domain/products/priceChangeReport';
 
 export interface ProductCreateInput
   extends Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'searchKeywords'> {
@@ -40,6 +41,9 @@ export interface ProductRepository {
   reactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
   recordPriceChange(productId: string, entry: Omit<PriceHistoryEntry, 'changedAt'>): Promise<void>;
   listPriceHistory(productId: string): Promise<PriceHistoryEntry[]>;
+  /** Cross-product price/cost changes in the range, newest-first (admin-only;
+   *  needs the collection-group index on price_history.changedAt). */
+  listPriceChangesInRange(start: Date, end: Date, limit?: number): Promise<PriceChangeEntry[]>;
   skuExists(sku: string, excludeId?: string): Promise<boolean>;
   countSkuVariations(baseSku: string): Promise<number>;
   updateProductWithClaims(
