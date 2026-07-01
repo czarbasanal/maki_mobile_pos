@@ -30,6 +30,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/reports_hub_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/labor_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/price_change_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/top_selling_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
@@ -335,6 +336,11 @@ List<RouteBase> featureRoutes() => [
             path: 'labor',
             name: RouteNames.laborReport,
             builder: (context, state) => const LaborReportScreen(),
+          ),
+          GoRoute(
+            path: 'price-changes',
+            name: RouteNames.priceChangeReport,
+            builder: (context, state) => const PriceChangeReportScreen(),
           ),
           GoRoute(
             path: 'top-selling',
