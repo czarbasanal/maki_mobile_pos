@@ -235,9 +235,9 @@ Reports hub's existing preset date filter and sales loader). All grouping is cli
 ### Aggregation helpers (mirror `lib/core/utils/labor_report.dart`)
 
 - **`motorcycleModelReportFromSales(sales)`** → per-model rows: `jobCount` (primary sort,
-  desc), `totalRevenue` (Σ `grandTotal`), `laborTotal`. Sales with no `motorcycleModel`
-  fall into an **"Unspecified"** bucket (transitional — historical/pre-feature sales).
-  Ties broken by model name asc.
+  desc), `totalRevenue` (Σ `grandTotal`), `laborTotal`. Sales with **no** `motorcycleModel`
+  (walk-ins) are **excluded** — post-feature, sales-with-a-model are exactly the billed-out
+  Job Orders, which is what "frequent models" means. Ties broken by model name asc.
 - **`mechanicPerformanceReportFromSales(sales)`** → per-mechanic rows: `totalRevenue`
   (Σ `grandTotal`, **primary sort, desc** — decision #6), `jobCount`, `laborTotal`.
   Only sales with a `mechanicId` are included; ties broken by name asc. (This is distinct
@@ -267,8 +267,8 @@ Gating a mobile screen touches three places (nav/hub card + `route_names`/`app_r
   mobile tolerates a null model. Web ignores the extra `motorcycleModel` field on drafts/
   sales (converters read named fields). *Verify* the web Draft/Sale converters don't
   choke on an unknown field (they shouldn't).
-- Historical completed sales have no model → they show under "Unspecified" in the Models
-  report and are simply absent of a bike; mechanic report includes any historical sale
+- Historical completed sales have no model → they are **excluded** from the Models report
+  (only sales carrying a model appear); the mechanic report includes any historical sale
   that already had a mechanic.
 
 ---
