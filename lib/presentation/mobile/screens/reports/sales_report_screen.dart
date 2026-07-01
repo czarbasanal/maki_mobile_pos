@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -276,54 +277,11 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
   }
 
   void _handlePresetChange(DateRangePreset preset) {
-    final now = DateTime.now();
-    DateTime start;
-    DateTime end = DateTime(now.year, now.month, now.day, 23, 59, 59);
-
-    switch (preset) {
-      case DateRangePreset.today:
-        start = DateTime(now.year, now.month, now.day);
-        break;
-      case DateRangePreset.yesterday:
-        final yesterday = now.subtract(const Duration(days: 1));
-        start = DateTime(yesterday.year, yesterday.month, yesterday.day);
-        end = DateTime(
-            yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
-        break;
-      case DateRangePreset.thisWeek:
-        final weekStart = now.subtract(Duration(days: now.weekday - 1));
-        start = DateTime(weekStart.year, weekStart.month, weekStart.day);
-        break;
-      case DateRangePreset.lastWeek:
-        final lastWeekStart = now.subtract(Duration(days: now.weekday + 6));
-        final lastWeekEnd = now.subtract(Duration(days: now.weekday));
-        start = DateTime(
-            lastWeekStart.year, lastWeekStart.month, lastWeekStart.day);
-        end = DateTime(
-            lastWeekEnd.year, lastWeekEnd.month, lastWeekEnd.day, 23, 59, 59);
-        break;
-      case DateRangePreset.thisMonth:
-        start = DateTime(now.year, now.month, 1);
-        break;
-      case DateRangePreset.lastMonth:
-        final lastMonth = DateTime(now.year, now.month - 1, 1);
-        start = lastMonth;
-        end = DateTime(now.year, now.month, 0, 23, 59, 59);
-        break;
-      case DateRangePreset.thisQuarter:
-        final firstMonth = ((now.month - 1) ~/ 3) * 3 + 1;
-        start = DateTime(now.year, firstMonth, 1);
-        break;
-      case DateRangePreset.thisYear:
-        start = DateTime(now.year, 1, 1);
-        break;
-      case DateRangePreset.custom:
-        return;
-    }
-
+    if (preset == DateRangePreset.custom) return; // dropdown never emits custom
+    final range = dateRangeForPreset(preset, DateTime.now());
     setState(() {
-      _startDate = start;
-      _endDate = end;
+      _startDate = range.start;
+      _endDate = range.end;
       _selectedPreset = preset;
     });
   }
