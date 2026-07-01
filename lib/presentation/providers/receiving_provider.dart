@@ -266,11 +266,18 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
   }
 
   /// Loads an existing receiving for editing.
+  ///
+  /// The `isLoading` flag is flipped INSIDE the try: assigning `state` can throw
+  /// if this is ever invoked during a widget build/lifecycle (Riverpod forbids
+  /// mutating a provider then). Guarding it means such a failure surfaces as an
+  /// error rather than pinning the loading skeleton forever. Callers must still
+  /// invoke this off the build phase (the detail screen defers via a
+  /// post-frame callback).
   Future<void> loadReceiving(String receivingId) async {
-    // Flag loading up front so the screen shows a skeleton instead of the
-    // empty form while the fetch is in flight (or any stale state lingers).
-    state = state.copyWith(isLoading: true, clearError: true);
     try {
+      // Flag loading up front so the screen shows a skeleton instead of the
+      // empty form while the fetch is in flight (or any stale state lingers).
+      state = state.copyWith(isLoading: true, clearError: true);
       final receiving = await _repository
           .getReceivingById(receivingId)
           .timeout(_ref.read(receivingLoadTimeoutProvider));
