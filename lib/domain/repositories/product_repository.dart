@@ -227,6 +227,15 @@ abstract class ProductRepository {
     int limit = 50,
   });
 
+  /// All price/cost changes across every product in the range, newest-first.
+  /// Admin-only (price_history is admin-only). Requires the collection-group
+  /// index on price_history.changedAt.
+  Future<List<PriceChangeEntry>> getPriceChangesInRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    int limit = 500,
+  });
+
   // ==================== UTILITY ====================
 
   /// Checks if a SKU already exists.
@@ -271,6 +280,30 @@ class PriceHistoryEntry {
 
   const PriceHistoryEntry({
     required this.id,
+    required this.price,
+    required this.cost,
+    required this.changedAt,
+    required this.changedBy,
+    this.reason,
+    this.note,
+  });
+}
+
+/// A price/cost change plus the product it belongs to — the cross-product form
+/// of [PriceHistoryEntry] used by the price-change report.
+class PriceChangeEntry {
+  final String id;
+  final String productId;
+  final double price;
+  final double cost;
+  final DateTime changedAt;
+  final String changedBy;
+  final String? reason;
+  final String? note;
+
+  const PriceChangeEntry({
+    required this.id,
+    required this.productId,
     required this.price,
     required this.cost,
     required this.changedAt,

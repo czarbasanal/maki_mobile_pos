@@ -797,6 +797,45 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
+  @override
+  Future<List<PriceChangeEntry>> getPriceChangesInRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    int limit = 500,
+  }) async {
+    try {
+      final snapshot = await _firestore
+          .collectionGroup(FirestoreCollections.priceHistory)
+          .where('changedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('changedAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .orderBy('changedAt', descending: true)
+          .limit(limit)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return PriceChangeEntry(
+          id: doc.id,
+          productId: doc.reference.parent.parent!.id,
+          price: (data['price'] as num?)?.toDouble() ?? 0,
+          cost: (data['cost'] as num?)?.toDouble() ?? 0,
+          changedAt:
+              (data['changedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          changedBy: data['changedBy'] as String? ?? '',
+          reason: data['reason'] as String?,
+          note: data['note'] as String?,
+        );
+      }).toList();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to load price changes: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
   // ==================== UTILITY ====================
 
   @override
