@@ -26,8 +26,7 @@ void main() {
       expect(find.text('Today'), findsOneWidget);
 
       // Open the dropdown — the other presets become reachable.
-      await tester
-          .tap(find.byType(DropdownButtonFormField<DateRangePreset>));
+      await tester.tap(find.byType(PopupMenuButton<DateRangePreset>));
       await tester.pumpAndSettle();
 
       expect(find.text('Yesterday'), findsWidgets);
@@ -53,8 +52,7 @@ void main() {
         ),
       );
 
-      await tester
-          .tap(find.byType(DropdownButtonFormField<DateRangePreset>));
+      await tester.tap(find.byType(PopupMenuButton<DateRangePreset>));
       await tester.pumpAndSettle();
 
       // Multiple matches can exist (closed-state label + menu item) — pick
@@ -63,6 +61,36 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(selectedPreset, DateRangePreset.yesterday);
+    });
+
+    testWidgets(
+        'the whole preset pill is tappable — tapping the calendar icon '
+        '(a former dead zone) opens the menu', (tester) async {
+      DateRangePreset? selectedPreset;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DateRangePicker(
+              startDate: DateTime(2025, 2, 5),
+              endDate: DateTime(2025, 2, 5),
+              selectedPreset: DateRangePreset.today,
+              onPresetChanged: (preset) => selectedPreset = preset,
+              onCustomRangeSelected: (_, __) {},
+            ),
+          ),
+        ),
+      );
+
+      // Tap the leading calendar icon — previously outside the dropdown's
+      // hit area. It must now open the preset menu.
+      await tester.tap(find.byIcon(LucideIcons.calendarDays));
+      await tester.pumpAndSettle();
+      expect(find.text('This Quarter'), findsWidgets);
+
+      // And selecting from that menu still fires the callback.
+      await tester.tap(find.text('This Month').last);
+      await tester.pumpAndSettle();
+      expect(selectedPreset, DateRangePreset.thisMonth);
     });
 
     testWidgets('displays selected date range', (tester) async {

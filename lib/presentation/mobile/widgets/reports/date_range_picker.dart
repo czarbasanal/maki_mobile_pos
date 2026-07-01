@@ -63,60 +63,52 @@ class DateRangePicker extends StatelessWidget {
   Widget _buildPresetDropdown(BuildContext context, ThemeData theme) {
     final primary = theme.colorScheme.primary;
     final muted = theme.colorScheme.onSurfaceVariant;
+    // PopupMenuButton (not a bare DropdownButton) so the ENTIRE pill — icon,
+    // label, chevron and padding — is the tap target, not just the label text.
     return AppCard(
       radius: AppRadius.md,
-      padding: const EdgeInsets.symmetric(horizontal: 13),
-      child: SizedBox(
-        height: _controlHeight,
-        child: Row(
-          children: [
-            Icon(LucideIcons.calendarDays, size: 17, color: primary),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: DropdownButtonHideUnderline(
-                child: DropdownButtonFormField<DateRangePreset>(
-                  initialValue: selectedPreset,
-                  // Forces a fresh rebuild when the parent's selectedPreset
-                  // changes (e.g. user picks a custom range via the date pill,
-                  // which sets preset to .custom externally).
-                  key: ValueKey('preset:${selectedPreset.name}'),
-                  isDense: true,
-                  isExpanded: true,
-                  icon: const SizedBox.shrink(),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 14,
+      padding: EdgeInsets.zero,
+      child: PopupMenuButton<DateRangePreset>(
+        initialValue: selectedPreset,
+        tooltip: 'Change date range',
+        position: PopupMenuPosition.under,
+        padding: EdgeInsets.zero,
+        onSelected: (preset) {
+          if (preset == DateRangePreset.custom) {
+            _showCustomDatePicker(context);
+          } else {
+            onPresetChanged(preset);
+          }
+        },
+        itemBuilder: (context) => DateRangePreset.values
+            .map((p) => PopupMenuItem<DateRangePreset>(
+                  value: p,
+                  child: Text(p.label),
+                ))
+            .toList(),
+        child: SizedBox(
+          height: _controlHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 13),
+            child: Row(
+              children: [
+                Icon(LucideIcons.calendarDays, size: 17, color: primary),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    selectedPreset.label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 14,
+                    ),
                   ),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                  ),
-                  items: DateRangePreset.values
-                      .map((p) => DropdownMenuItem<DateRangePreset>(
-                            value: p,
-                            child: Text(
-                              p.label,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (preset) {
-                    if (preset == null) return;
-                    if (preset == DateRangePreset.custom) {
-                      _showCustomDatePicker(context);
-                    } else {
-                      onPresetChanged(preset);
-                    }
-                  },
                 ),
-              ),
+                Icon(LucideIcons.chevronDown, size: 16, color: muted),
+              ],
             ),
-            Icon(LucideIcons.chevronDown, size: 16, color: muted),
-          ],
+          ),
         ),
       ),
     );
