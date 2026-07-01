@@ -62,6 +62,55 @@ void main() {
       expect(docs.docs.length, 1);
     });
 
+    test('createSale with decrementStock subtracts stock atomically', () async {
+      await fakeFirestore.collection('products').doc('prod-1').set({'quantity': 10});
+      final sale = createTestSale(); // one line: prod-1 x2
+
+      await repository.createSale(sale, id: 'k1', decrementStock: true);
+
+      final prod = await fakeFirestore.collection('products').doc('prod-1').get();
+      expect(prod.data()!['quantity'], 8);
+    });
+
+    test('a duplicate sale does not subtract stock twice', () async {
+      await fakeFirestore.collection('products').doc('prod-1').set({'quantity': 10});
+      final sale = createTestSale();
+      await repository.createSale(sale, id: 'k2', decrementStock: true);
+
+      expect(
+        () => repository.createSale(sale, id: 'k2', decrementStock: true),
+        throwsA(isA<DuplicateSaleException>()),
+      );
+
+      final prod = await fakeFirestore.collection('products').doc('prod-1').get();
+      expect(prod.data()!['quantity'], 8); // decremented once, not twice
+    });
+
+    test('decrementStock:false leaves stock untouched', () async {
+      await fakeFirestore.collection('products').doc('prod-1').set({'quantity': 10});
+      final sale = createTestSale();
+
+      await repository.createSale(sale, id: 'k3');
+
+      final prod = await fakeFirestore.collection('products').doc('prod-1').get();
+      expect(prod.data()!['quantity'], 10);
+    });
+
+    test('decrementStock ignores labor lines (only product items move stock)',
+        () async {
+      await fakeFirestore.collection('products').doc('prod-1').set({'quantity': 10});
+      final sale = createTestSale().copyWith(
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 450),
+        ],
+      );
+
+      await repository.createSale(sale, id: 'k4', decrementStock: true);
+
+      final prod = await fakeFirestore.collection('products').doc('prod-1').get();
+      expect(prod.data()!['quantity'], 8); // only the product line moved
+    });
+
     test('createSale should create sale with generated ID', () async {
       final sale = createTestSale();
 

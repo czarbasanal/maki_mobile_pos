@@ -75,7 +75,7 @@ void main() {
         'stock', () async {
       final sale = createTestSale();
       final existing = sale.copyWith(id: 'chk-1', saleNumber: 'SALE-001');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
           .thenThrow(const DuplicateSaleException());
       when(() => mockSaleRepo.getSaleById('chk-1'))
           .thenAnswer((_) async => existing);
@@ -97,7 +97,7 @@ void main() {
     test('a duplicate whose sale cannot be reloaded fails safely (no phantom '
         'success)', () async {
       final sale = createTestSale();
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
           .thenThrow(const DuplicateSaleException());
       when(() => mockSaleRepo.getSaleById(any()))
           .thenThrow(Exception('read failed'));
@@ -114,7 +114,7 @@ void main() {
         () async {
       final sale = createTestSale().copyWith(draftId: 'draft-9');
       final existing = sale.copyWith(id: 'chk-3', saleNumber: 'SALE-003');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
           .thenThrow(const DuplicateSaleException());
       when(() => mockSaleRepo.getSaleById('chk-3'))
           .thenAnswer((_) async => existing);
@@ -140,7 +140,7 @@ void main() {
 
       when(() => mockSaleRepo.generateSaleNumber(any()))
           .thenAnswer((_) async => 'SALE-001');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
           .thenAnswer((_) async => createdSale);
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => ProductEntity(
@@ -156,39 +156,16 @@ void main() {
                 isActive: true,
                 createdAt: DateTime.now(),
               ));
-      when(() => mockProductRepo.updateStock(
-            productId: any(named: 'productId'),
-            quantityChange: any(named: 'quantityChange'),
-            updatedBy: any(named: 'updatedBy'),
-            updatedByName: any(named: 'updatedByName'),
-          )).thenAnswer((_) async => ProductEntity(
-            id: 'prod-1',
-            sku: 'SKU-001',
-            name: 'Test Product',
-            costCode: 'NBF',
-            cost: 60,
-            price: 100,
-            quantity: 98,
-            reorderLevel: 10,
-            unit: 'pcs',
-            isActive: true,
-            createdAt: DateTime.now(),
-          ));
-
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true);
       expect(result.sale, isNotNull);
       expect(result.sale!.saleNumber, 'SALE-001');
 
-      // Stock must be DECREMENTED by exactly the qty sold (negative change).
-      // A regression that increments on sale would otherwise pass.
-      verify(() => mockProductRepo.updateStock(
-            productId: 'prod-1',
-            quantityChange: -2,
-            updatedBy: any(named: 'updatedBy'),
-            updatedByName: any(named: 'updatedByName'),
-          )).called(1);
+      // Stock is subtracted inside createSale's transaction now
+      // (decrementStock true), not via a separate updateStock call.
+      verify(() => mockSaleRepo.createSale(any(),
+          id: any(named: 'id'), decrementStock: true)).called(1);
     });
 
     test('should fail when cart is empty', () async {
@@ -225,7 +202,7 @@ void main() {
 
       when(() => mockSaleRepo.generateSaleNumber(any()))
           .thenAnswer((_) async => 'SALE-002');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
           .thenAnswer((inv) async =>
               (inv.positionalArguments.first as SaleEntity)
                   .copyWith(id: 'sale-200', saleNumber: 'SALE-002'));
@@ -243,41 +220,15 @@ void main() {
                 isActive: true,
                 createdAt: DateTime.now(),
               ));
-      when(() => mockProductRepo.updateStock(
-            productId: any(named: 'productId'),
-            quantityChange: any(named: 'quantityChange'),
-            updatedBy: any(named: 'updatedBy'),
-            updatedByName: any(named: 'updatedByName'),
-          )).thenAnswer((_) async => ProductEntity(
-            id: 'prod-1',
-            sku: 'SKU-001',
-            name: 'Test Product',
-            costCode: 'NBF',
-            cost: 60,
-            price: 100,
-            quantity: 98,
-            reorderLevel: 10,
-            unit: 'pcs',
-            isActive: true,
-            createdAt: DateTime.now(),
-          ));
-
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true, reason: result.errorMessage);
       expect(result.sale!.laborSubtotal, 450);
       expect(result.sale!.grandTotal, 650);
 
-      // The single part (qty 2) must be decremented exactly once.
-      // Labor has no productId — it must never touch updateStock.
-      verify(() => mockProductRepo.updateStock(
-            productId: 'prod-1',
-            quantityChange: -2,
-            updatedBy: any(named: 'updatedBy'),
-            updatedByName: any(named: 'updatedByName'),
-          )).called(1);
-      // Note: getProductById is also called (inventory availability check),
-      // so verifyNoMoreInteractions is intentionally omitted here.
+      // "Labor never moves stock" is now verified at the repo layer
+      // (createSale iterates sale.items only); here we just confirm the sale
+      // succeeds with labor priced in.
     });
   });
 }

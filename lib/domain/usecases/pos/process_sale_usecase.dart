@@ -6,10 +6,9 @@ import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 ///
 /// This orchestrates:
 /// 1. Validate cart and payment
-/// 2. Generate sale number
-/// 3. Create sale record
-/// 4. Update product inventory
-/// 5. Mark draft as converted (if applicable)
+/// 2. Create the sale — the sale number, sale doc, items, and the per-item
+///    stock decrement are one atomic transaction in the repository (createSale)
+/// 3. Mark the source draft converted (if applicable)
 class ProcessSaleUseCase {
   final SaleRepository _saleRepository;
   final ProductRepository _productRepository;
@@ -60,23 +59,14 @@ class ProcessSaleUseCase {
         createdSale = await _saleRepository.createSale(
           sale.copyWith(saleNumber: ''),
           id: checkoutId,
+          decrementStock: updateInventory,
         );
       } on DuplicateSaleException {
         // Already recorded — a retry of a checkout that had actually committed.
         return _handleAlreadyRecorded(sale, checkoutId);
       }
 
-      // 4. Update inventory
-      if (updateInventory) {
-        final stockWarnings = await _updateInventory(
-          sale.items,
-          createdSale.cashierId,
-          updatedByName: createdSale.cashierName,
-        );
-        warnings.addAll(stockWarnings);
-      }
-
-      // 5. Mark the source draft converted (if any)
+      // 4. Mark the source draft converted (if any)
       await _reconcileDraft(sale, createdSale.id, warnings);
 
       return ProcessSaleResult(
@@ -198,29 +188,6 @@ class ProcessSaleUseCase {
     }
 
     return issues;
-  }
-
-  /// Updates inventory for all items in the sale.
-  /// Returns a list of warnings for any items that failed to update.
-  Future<List<String>> _updateInventory(
-    List<SaleItemEntity> items,
-    String updatedBy, {
-    String? updatedByName,
-  }) async {
-    final warnings = <String>[];
-    for (final item in items) {
-      try {
-        await _productRepository.updateStock(
-          productId: item.productId,
-          quantityChange: -item.quantity, // Negative to reduce stock
-          updatedBy: updatedBy,
-          updatedByName: updatedByName,
-        );
-      } catch (e) {
-        warnings.add('Stock update failed for ${item.sku}: $e');
-      }
-    }
-    return warnings;
   }
 }
 

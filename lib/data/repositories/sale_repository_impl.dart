@@ -26,10 +26,15 @@ class SaleRepositoryImpl implements SaleRepository {
   CollectionReference<Map<String, dynamic>> get _settingsRef =>
       _firestore.collection(FirestoreCollections.settings);
 
+  /// Reference to the products collection (for atomic stock decrement).
+  CollectionReference<Map<String, dynamic>> get _productsRef =>
+      _firestore.collection(FirestoreCollections.products);
+
   // ==================== CREATE ====================
 
   @override
-  Future<SaleEntity> createSale(SaleEntity sale, {String? id}) async {
+  Future<SaleEntity> createSale(SaleEntity sale,
+      {String? id, bool decrementStock = false}) async {
     try {
       // Use a transaction to ensure atomic creation of sale + items
       return await _firestore.runTransaction<SaleEntity>((transaction) async {
@@ -67,6 +72,22 @@ class SaleRepositoryImpl implements SaleRepository {
           final itemDocRef = itemsRef.doc();
           final itemWithId = item.copyWith(id: itemDocRef.id);
           transaction.set(itemDocRef, itemWithId.toMap());
+        }
+
+        // Atomically subtract stock for each product line. Labor lines are not
+        // in sale.items and never touch stock. Blind increment — overselling
+        // stays allowed (stock may go negative), matching prior behavior. A
+        // missing product doc aborts the whole sale (all-or-nothing); safe
+        // because products are soft-deleted (isActive:false), never removed.
+        if (decrementStock) {
+          for (final item in sale.items) {
+            transaction.update(_productsRef.doc(item.productId), {
+              'quantity': FieldValue.increment(-item.quantity),
+              'updatedAt': FieldValue.serverTimestamp(),
+              'updatedBy': sale.cashierId,
+              'updatedByName': sale.cashierName,
+            });
+          }
         }
 
         // Return the created sale entity
