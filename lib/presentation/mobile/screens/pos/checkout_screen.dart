@@ -419,6 +419,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Future<void> _processCheckout(CartState cart) async {
+    // Re-entry guard: a same-frame double-tap can fire this twice before the
+    // button rebuilds disabled. Bail if a checkout is already in flight so we
+    // never write two sales (the sale write is not idempotent).
+    if (_isProcessing) return;
     setState(() {
       _isProcessing = true;
       _errorMessage = null;
