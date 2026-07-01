@@ -27,6 +27,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expense_for
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expense_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_list_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/reports_hub_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/labor_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/top_selling_screen.dart';
@@ -313,12 +314,17 @@ List<RouteBase> featureRoutes() => [
       GoRoute(
         path: RoutePaths.reports,
         name: RouteNames.reports,
-        builder: (context, state) => const SalesListScreen(),
+        builder: (context, state) => const ReportsHubScreen(),
         routes: [
           GoRoute(
             path: 'sales',
             name: RouteNames.salesReport,
             builder: (context, state) => const SalesReportScreen(),
+          ),
+          GoRoute(
+            path: 'history',
+            name: RouteNames.salesHistory,
+            builder: (context, state) => const SalesListScreen(),
           ),
           GoRoute(
             path: 'profit',
