@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
+import 'package:maki_mobile_pos/core/utils/report_csv.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -21,22 +26,34 @@ class LaborReportScreen extends ConsumerStatefulWidget {
 }
 
 class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
-  DateTimeRange _dateRange = DateTimeRange(
-    start: DateTime.now().subtract(const Duration(days: 30)),
-    end: DateTime.now(),
-  );
+  late DateTime _startDate;
+  late DateTime _endDate;
+  DateRangePreset _selectedPreset = DateRangePreset.today;
 
-  DateRangeParams get _params => DateRangeParams(
-        startDate: DateTime(_dateRange.start.year, _dateRange.start.month,
-            _dateRange.start.day),
-        endDate: DateTime(_dateRange.end.year, _dateRange.end.month,
-            _dateRange.end.day, 23, 59, 59),
-      );
+  @override
+  void initState() {
+    super.initState();
+    final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+    _startDate = r.start;
+    _endDate = r.end;
+  }
+
+  DateRangeParams get _params =>
+      DateRangeParams(startDate: _startDate, endDate: _endDate);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MMM d, y');
+    final user = ref.watch(currentUserProvider).valueOrNull;
+    final dailyOnly =
+        user != null && RolePermissions.isDailyReportsOnly(user.role);
+    if (dailyOnly) {
+      // Non-admin roles can only see today; force it regardless of prior state.
+      final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+      _startDate = r.start;
+      _endDate = r.end;
+      _selectedPreset = DateRangePreset.today;
+    }
     final reportAsync = ref.watch(laborReportProvider(_params));
 
     return Scaffold(
@@ -48,8 +65,9 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.calendar),
-            onPressed: _selectDateRange,
+            icon: const Icon(LucideIcons.download),
+            tooltip: 'Export CSV',
+            onPressed: _exportCsv,
           ),
         ],
       ),
@@ -57,33 +75,35 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
         onRefresh: () async => ref.invalidate(laborReportProvider(_params)),
         child: ListView(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-              child: AppCard(
-                radius: AppRadius.md,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: SizedBox(
-                  height: 48,
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.calendar,
-                          size: 18, color: theme.colorScheme.primary),
-                      const SizedBox(width: 11),
-                      Expanded(
-                        child: Text(
-                          '${dateFormat.format(_dateRange.start)} – ${dateFormat.format(_dateRange.end)}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                      ),
-                      _LaborChangeButton(onTap: _selectDateRange),
-                    ],
-                  ),
-                ),
+            if (dailyOnly)
+              const ReportsWarningBanner(
+                icon: LucideIcons.lock,
+                title: "Showing today's labor only. "
+                    'Contact an admin for historical reports.',
+              )
+            else
+              DateRangePicker(
+                startDate: _startDate,
+                endDate: _endDate,
+                selectedPreset: _selectedPreset,
+                onPresetChanged: (preset) {
+                  if (preset == DateRangePreset.custom) return;
+                  final r = dateRangeForPreset(preset, DateTime.now());
+                  setState(() {
+                    _startDate = r.start;
+                    _endDate = r.end;
+                    _selectedPreset = preset;
+                  });
+                },
+                onCustomRangeSelected: (start, end) {
+                  setState(() {
+                    _startDate = start;
+                    _endDate =
+                        DateTime(end.year, end.month, end.day, 23, 59, 59);
+                    _selectedPreset = DateRangePreset.custom;
+                  });
+                },
               ),
-            ),
             reportAsync.when(
               loading: () => const Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -170,16 +190,17 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
     );
   }
 
-  Future<void> _selectDateRange() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      initialDateRange: _dateRange,
-    );
-    if (picked != null) {
-      setState(() => _dateRange = picked);
+  Future<void> _exportCsv() async {
+    final report = await ref.read(laborReportProvider(_params).future);
+    if (!mounted) return;
+    if (report.byMechanic.isEmpty) {
+      context.showSnackBar('No labor to export in this range');
+      return;
     }
+    final d = DateFormat('yyyy-MM-dd');
+    final name = 'labor_${d.format(_startDate)}_to_${d.format(_endDate)}.csv';
+    if (!mounted) return;
+    await saveReportCsv(context, buildLaborReportCsv(report), name);
   }
 }
 
@@ -232,44 +253,6 @@ class _MechanicLaborRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _LaborChangeButton extends StatelessWidget {
-  const _LaborChangeButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final border = dark ? AppColors.darkInputBorder : const Color(0xFFD9DEDD);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.pencil, size: 12, color: theme.colorScheme.primary),
-            const SizedBox(width: 4),
-            Text(
-              'Change',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
