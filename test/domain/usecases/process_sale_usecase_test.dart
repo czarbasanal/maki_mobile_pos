@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 
 class MockSaleRepository extends Mock implements SaleRepository {}
 
@@ -33,6 +34,9 @@ void main() {
       productRepository: mockProductRepo,
       draftRepository: mockDraftRepo,
     );
+    // Idempotency pre-check defaults to "no existing sale" unless a test
+    // overrides it for a specific checkout id.
+    when(() => mockSaleRepo.getSaleById(any())).thenAnswer((_) async => null);
   });
 
   SaleEntity createTestSale({
@@ -67,13 +71,59 @@ void main() {
   }
 
   group('ProcessSaleUseCase', () {
+    test('short-circuits when a sale already exists for the checkout id',
+        () async {
+      final sale = createTestSale();
+      final existing = sale.copyWith(id: 'chk-1', saleNumber: 'SALE-001');
+      when(() => mockSaleRepo.getSaleById('chk-1'))
+          .thenAnswer((_) async => existing);
+
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-1');
+
+      expect(result.success, isTrue);
+      expect(result.sale!.id, 'chk-1');
+      verifyNever(() => mockSaleRepo.createSale(any(), id: any(named: 'id')));
+      verifyNever(() => mockProductRepo.updateStock(
+            productId: any(named: 'productId'),
+            quantityChange: any(named: 'quantityChange'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          ));
+    });
+
+    test('DuplicateSaleException from createSale returns the existing sale',
+        () async {
+      final sale = createTestSale();
+      final existing = sale.copyWith(id: 'chk-2', saleNumber: 'SALE-002');
+      var getCalls = 0;
+      when(() => mockSaleRepo.getSaleById('chk-2')).thenAnswer((_) async {
+        getCalls++;
+        return getCalls == 1 ? null : existing; // pre-check null, catch → existing
+      });
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+          .thenThrow(const DuplicateSaleException());
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-2');
+
+      expect(result.success, isTrue);
+      expect(result.sale!.id, 'chk-2');
+      verifyNever(() => mockProductRepo.updateStock(
+            productId: any(named: 'productId'),
+            quantityChange: any(named: 'quantityChange'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          ));
+    });
+
     test('should return success when sale is valid', () async {
       final sale = createTestSale();
       final createdSale = sale.copyWith(id: 'sale-123', saleNumber: 'SALE-001');
 
       when(() => mockSaleRepo.generateSaleNumber(any()))
           .thenAnswer((_) async => 'SALE-001');
-      when(() => mockSaleRepo.createSale(any()))
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
           .thenAnswer((_) async => createdSale);
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => ProductEntity(
@@ -108,7 +158,7 @@ void main() {
             createdAt: DateTime.now(),
           ));
 
-      final result = await useCase.execute(sale: sale);
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true);
       expect(result.sale, isNotNull);
@@ -127,7 +177,7 @@ void main() {
     test('should fail when cart is empty', () async {
       final sale = createTestSale(items: []);
 
-      final result = await useCase.execute(sale: sale);
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, false);
       expect(result.errorMessage, contains('empty'));
@@ -138,7 +188,7 @@ void main() {
       final sale = createTestSale()
           .copyWith(tenders: const {PaymentMethod.cash: 100});
 
-      final result = await useCase.execute(sale: sale);
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, false);
       expect(result.errorMessage, contains('Payment'));
@@ -158,7 +208,7 @@ void main() {
 
       when(() => mockSaleRepo.generateSaleNumber(any()))
           .thenAnswer((_) async => 'SALE-002');
-      when(() => mockSaleRepo.createSale(any()))
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
           .thenAnswer((inv) async =>
               (inv.positionalArguments.first as SaleEntity)
                   .copyWith(id: 'sale-200', saleNumber: 'SALE-002'));
@@ -195,7 +245,7 @@ void main() {
             createdAt: DateTime.now(),
           ));
 
-      final result = await useCase.execute(sale: sale);
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true, reason: result.errorMessage);
       expect(result.sale!.laborSubtotal, 450);

@@ -32,6 +32,7 @@ class ProcessSaleUseCase {
   /// Throws [ProcessSaleException] on failure.
   Future<ProcessSaleResult> execute({
     required SaleEntity sale,
+    required String checkoutId,
     bool updateInventory = true,
   }) async {
     final warnings = <String>[];
@@ -40,7 +41,24 @@ class ProcessSaleUseCase {
       // 1. Validate sale
       _validateSale(sale);
 
-      // 2. Check inventory availability
+      // 2. Idempotency pre-check. If a sale already exists under this checkout
+      //    id it was already recorded — return it and apply no side-effects.
+      //    A read failure must not block a real sale; fall through to the
+      //    transaction guard in createSale.
+      try {
+        final existing = await _saleRepository.getSaleById(checkoutId);
+        if (existing != null) {
+          return ProcessSaleResult(
+            success: true,
+            sale: existing,
+            warnings: const ['This sale was already recorded.'],
+          );
+        }
+      } catch (_) {
+        // ignore — createSale's transaction guard is authoritative
+      }
+
+      // 3. Check inventory availability
       if (updateInventory) {
         final stockIssues = await _checkInventoryAvailability(sale.items);
         if (stockIssues.isNotEmpty) {
@@ -49,15 +67,23 @@ class ProcessSaleUseCase {
         }
       }
 
-      // 3. Generate sale number if not provided
-      String saleNumber = sale.saleNumber;
-      if (saleNumber.isEmpty) {
-        saleNumber = await _saleRepository.generateSaleNumber(DateTime.now());
+      // 4. Create the sale under the checkout id. The sale number is generated
+      //    inside createSale's transaction. A concurrent write under the same
+      //    id throws DuplicateSaleException — treat it as "already recorded".
+      final SaleEntity createdSale;
+      try {
+        createdSale = await _saleRepository.createSale(
+          sale.copyWith(saleNumber: ''),
+          id: checkoutId,
+        );
+      } on DuplicateSaleException {
+        final existing = await _saleRepository.getSaleById(checkoutId);
+        return ProcessSaleResult(
+          success: true,
+          sale: existing ?? sale,
+          warnings: const ['This sale was already recorded.'],
+        );
       }
-
-      // 4. Create sale with updated sale number
-      final saleToCreate = sale.copyWith(saleNumber: saleNumber);
-      final createdSale = await _saleRepository.createSale(saleToCreate);
 
       // 5. Update inventory
       if (updateInventory) {
