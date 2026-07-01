@@ -5,22 +5,22 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
-import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/core/utils/labor_report.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
-/// Screen displaying profit reports (admin-only). Wires the profit summary and
-/// a profit-ranked product list off [profitReportProvider] /
-/// [topSellingProductsProvider] for the selected range.
-class ProfitReportScreen extends ConsumerStatefulWidget {
-  const ProfitReportScreen({super.key});
+/// Labor (service) report — total labor revenue and a per-mechanic breakdown
+/// for the selected range. Reads [laborReportProvider], which derives the
+/// figures from the raw sales in range.
+class LaborReportScreen extends ConsumerStatefulWidget {
+  const LaborReportScreen({super.key});
 
   @override
-  ConsumerState<ProfitReportScreen> createState() => _ProfitReportScreenState();
+  ConsumerState<LaborReportScreen> createState() => _LaborReportScreenState();
 }
 
-class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
+class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
   DateTimeRange _dateRange = DateTimeRange(
     start: DateTime.now().subtract(const Duration(days: 30)),
     end: DateTime.now(),
@@ -33,22 +33,15 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
             _dateRange.end.day, 23, 59, 59),
       );
 
-  TopSellingParams get _topParams => TopSellingParams(
-        startDate: _params.startDate,
-        endDate: _params.endDate,
-        limit: 50,
-      );
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, y');
-    final profitAsync = ref.watch(profitReportProvider(_params));
-    final topAsync = ref.watch(topSellingProductsProvider(_topParams));
+    final reportAsync = ref.watch(laborReportProvider(_params));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profit Report'),
+        title: const Text('Labor Report'),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.reports),
@@ -61,13 +54,9 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(profitReportProvider(_params));
-          ref.invalidate(topSellingProductsProvider(_topParams));
-        },
+        onRefresh: () async => ref.invalidate(laborReportProvider(_params)),
         child: ListView(
           children: [
-            // Date strip with a Change pill.
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
               child: AppCard(
@@ -89,52 +78,25 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
                           ),
                         ),
                       ),
-                      _ChangeButton(onTap: _selectDateRange),
+                      _LaborChangeButton(onTap: _selectDateRange),
                     ],
                   ),
                 ),
               ),
             ),
-            // Summary cards.
-            profitAsync.when(
+            reportAsync.when(
               loading: () => const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: SizedBox(height: 180, child: ListSkeleton(count: 2)),
-              ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: ErrorStateView(
-                  message: 'Failed to load profit: $e',
-                  onRetry: () => ref.invalidate(profitReportProvider(_params)),
-                ),
-              ),
-              data: _buildMetrics,
-            ),
-            // Profit by product.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 6),
-              child: Text(
-                'Profit by Product',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-            topAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: SizedBox(height: 300, child: ListSkeleton()),
               ),
               error: (e, _) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: ErrorStateView(
-                  message: 'Failed to load products: $e',
-                  onRetry: () =>
-                      ref.invalidate(topSellingProductsProvider(_topParams)),
+                  message: 'Failed to load labor report: $e',
+                  onRetry: () => ref.invalidate(laborReportProvider(_params)),
                 ),
               ),
-              data: _buildProductList,
+              data: (report) => _buildBody(theme, report),
             ),
             const SizedBox(height: 24),
           ],
@@ -143,92 +105,68 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
     );
   }
 
-  Widget _buildMetrics(SalesSummary s) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Column(
-        children: [
-          Row(
+  Widget _buildBody(ThemeData theme, LaborReportData report) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Row(
             children: [
               Expanded(
-                child: _ProfitMetricCard(
-                  title: 'Total Revenue',
-                  value: s.netAmount.toCurrency(),
-                  icon: LucideIcons.banknote,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ProfitMetricCard(
-                  title: 'Total Cost',
-                  value: s.totalCost.toCurrency(),
-                  icon: LucideIcons.wallet,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _ProfitMetricCard(
-                  title: 'Gross Profit',
-                  value: s.totalProfit.toCurrency(),
-                  icon: LucideIcons.trendingUp,
+                child: _LaborMetricCard(
+                  title: 'Total Labor',
+                  value: report.totalLabor.toCurrency(),
+                  icon: LucideIcons.wrench,
                   accent: AppColors.success,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _ProfitMetricCard(
-                  title: 'Profit Margin',
-                  value: '${s.profitMargin.toStringAsFixed(1)}%',
-                  icon: LucideIcons.percent,
-                  accent: AppColors.success,
+                child: _LaborMetricCard(
+                  title: 'Service Sales',
+                  value: '${report.serviceSaleCount}',
+                  icon: LucideIcons.receipt,
                 ),
               ),
             ],
           ),
-          if (s.laborProfit > 0) ...[
-            const SizedBox(height: 10),
-            _ProfitMetricCard(
-              title: 'Service / Labor Profit (tracked separately)',
-              value: s.laborProfit.toCurrency(),
-              icon: LucideIcons.wrench,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductList(List<ProductSalesData> products) {
-    final theme = Theme.of(context);
-    if (products.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-        child: EmptyStateView(
-          icon: LucideIcons.trendingUp,
-          title: 'No profit data available',
-          subtitle: 'Make some sales in this range to see profit by product.',
         ),
-      );
-    }
-    // Rank by profit — the report's lens (provider ranks by units sold).
-    final ranked = [...products]
-      ..sort((a, b) => b.totalProfit.compareTo(a.totalProfit));
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          for (final p in ranked)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _ProductProfitRow(product: p, theme: theme),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 6),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Labor by Mechanic',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
             ),
-        ],
-      ),
+          ),
+        ),
+        if (report.byMechanic.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+            child: EmptyStateView(
+              icon: LucideIcons.wrench,
+              title: 'No labor recorded',
+              subtitle: 'Service sales with labor will appear here.',
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                for (final m in report.byMechanic)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _MechanicLaborRow(entry: m, theme: theme),
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -245,11 +183,10 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
   }
 }
 
-/// One product row in the profit-by-product list.
-class _ProductProfitRow extends StatelessWidget {
-  const _ProductProfitRow({required this.product, required this.theme});
+class _MechanicLaborRow extends StatelessWidget {
+  const _MechanicLaborRow({required this.entry, required this.theme});
 
-  final ProductSalesData product;
+  final LaborByMechanic entry;
   final ThemeData theme;
 
   @override
@@ -266,7 +203,7 @@ class _ProductProfitRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product.name,
+                  entry.mechanicName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -276,7 +213,7 @@ class _ProductProfitRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${product.quantitySold} sold · ${product.totalRevenue.toCurrency()} rev · ${product.totalCost.toCurrency()} cost',
+                  '${entry.jobCount} ${entry.jobCount == 1 ? 'job' : 'jobs'}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: muted,
                     fontSize: 11.5,
@@ -287,7 +224,7 @@ class _ProductProfitRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Text(
-            '+${product.totalProfit.toCurrency()}',
+            entry.laborTotal.toCurrency(),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               fontSize: 14,
@@ -300,17 +237,15 @@ class _ProductProfitRow extends StatelessWidget {
   }
 }
 
-/// Small outlined "Change" pill in the date strip.
-class _ChangeButton extends StatelessWidget {
-  const _ChangeButton({required this.onTap});
+class _LaborChangeButton extends StatelessWidget {
+  const _LaborChangeButton({required this.onTap});
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
-    final border =
-        dark ? AppColors.darkInputBorder : const Color(0xFFD9DEDD);
+    final border = dark ? AppColors.darkInputBorder : const Color(0xFFD9DEDD);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -340,9 +275,8 @@ class _ChangeButton extends StatelessWidget {
   }
 }
 
-/// Outlined metric card for the Profit Report (matches Sales Summary metrics).
-class _ProfitMetricCard extends StatelessWidget {
-  const _ProfitMetricCard({
+class _LaborMetricCard extends StatelessWidget {
+  const _LaborMetricCard({
     required this.title,
     required this.value,
     required this.icon,

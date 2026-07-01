@@ -104,6 +104,9 @@ abstract class RouteNames {
   /// Profit report route
   static const String profitReport = 'profitReport';
 
+  /// Labor report route
+  static const String laborReport = 'laborReport';
+
   /// Top selling drill-down route
   static const String topSelling = 'topSelling';
 
@@ -211,6 +214,7 @@ abstract class RoutePaths {
   static const String reports = '/reports';
   static const String salesReport = '/reports/sales';
   static const String profitReport = '/reports/profit';
+  static const String laborReport = '/reports/labor';
   static const String topSelling = '/reports/top-selling';
   static const String saleDetail = '/reports/sale/:id';
   static const String endOfDay = '/reports/end-of-day';

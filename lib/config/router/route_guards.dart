@@ -44,6 +44,7 @@ abstract class RouteGuards {
     '/reports': Permission.viewSalesReports,
     '/reports/sales': Permission.viewSalesReports,
     '/reports/profit': Permission.viewProfitReports,
+    '/reports/labor': Permission.viewSalesReports,
     '/reports/top-selling': Permission.viewSalesReports,
     '/reports/end-of-day': Permission.viewEndOfDay,
     '/reports/end-of-day/history': Permission.viewEndOfDay,

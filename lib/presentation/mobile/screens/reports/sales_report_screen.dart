@@ -113,6 +113,30 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
                 child: _buildPaymentBreakdown(),
               ),
 
+              // More reports — historical, so only for non-daily-only roles.
+              if (user != null && !dailyOnly) ...[
+                if (RolePermissions.hasPermission(
+                    user.role, Permission.viewProfitReports))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: _ReportNavTile(
+                      icon: LucideIcons.trendingUp,
+                      title: 'Profit Report',
+                      subtitle: 'Cost, gross profit, and margin',
+                      onTap: () => context.pushNamed(RouteNames.profitReport),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: _ReportNavTile(
+                    icon: LucideIcons.wrench,
+                    title: 'Labor Report',
+                    subtitle: 'Service revenue by mechanic',
+                    onTap: () => context.pushNamed(RouteNames.laborReport),
+                  ),
+                ),
+              ],
+
               // End-of-day closing entry
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -314,6 +338,68 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 }
 
 /// End-of-Day closing entry tile.
+/// A tappable navigation tile linking to a sub-report (profit / labor).
+class _ReportNavTile extends StatelessWidget {
+  const _ReportNavTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final dark = theme.brightness == Brightness.dark;
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: dark ? const Color(0x1FE8B84C) : const Color(0x12283E46),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, size: 21, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: muted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Icon(LucideIcons.chevronRight, size: 18, color: muted),
+        ],
+      ),
+    );
+  }
+}
+
 class _EodTile extends StatelessWidget {
   const _EodTile({required this.onTap});
   final VoidCallback onTap;
