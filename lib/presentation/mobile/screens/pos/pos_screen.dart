@@ -695,7 +695,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
     final cartNotifier = ref.read(cartProvider.notifier);
     final draftOps = ref.read(draftOperationsProvider.notifier);
-    final cart = ref.read(cartProvider);
+    final isUpdate = ref.read(cartProvider).isFromDraft;
 
     final draft = cartNotifier.toDraft(
       name: name,
@@ -703,14 +703,17 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       createdByName: currentUser.displayName,
     );
 
-    final result = cart.isFromDraft
-        ? await draftOps.updateDraft(actor: currentUser, draft: draft)
-        : await draftOps.createDraft(actor: currentUser, draft: draft);
+    // Block the UI while the write runs so a second tap can't fire a
+    // duplicate save — createDraft writes a new auto-id doc on every call.
+    final result = await context.runWithWaiting(
+      () => isUpdate
+          ? draftOps.updateDraft(actor: currentUser, draft: draft)
+          : draftOps.createDraft(actor: currentUser, draft: draft),
+      message: isUpdate ? 'Updating…' : 'Saving…',
+    );
 
     if (result != null && mounted) {
-      context.showSuccessSnackBar(
-        cart.isFromDraft ? 'Draft updated' : 'Draft saved',
-      );
+      context.showSuccessSnackBar(isUpdate ? 'Draft updated' : 'Draft saved');
       cartNotifier.reset();
     }
   }
