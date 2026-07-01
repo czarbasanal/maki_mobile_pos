@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -30,11 +29,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   late final TextEditingController _amountReceivedController;
   late final TextEditingController _splitController;
   bool _isProcessing = false;
-
-  // One stable id per checkout attempt. Reused across retries on this screen
-  // (so a retry returns the existing sale instead of writing a duplicate); a
-  // new checkout is a new screen instance and gets a fresh id.
-  late final String _checkoutId = const Uuid().v4();
   String? _errorMessage;
 
   @override
@@ -453,7 +447,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         cashierName: currentUser.displayName,
       );
 
-      final result = await useCase.execute(sale: sale, checkoutId: _checkoutId);
+      final checkoutId = ref.read(cartProvider.notifier).ensureCheckoutId();
+      final result = await useCase.execute(sale: sale, checkoutId: checkoutId);
 
       if (result.success && result.sale != null) {
         cartNotifier.resetAfterCheckout();

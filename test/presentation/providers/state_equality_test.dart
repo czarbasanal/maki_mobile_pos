@@ -58,6 +58,13 @@ void main() {
       final b = CartState(amountReceived: 20);
       expect(a, isNot(equals(b)));
     });
+    test('differing checkoutId compares unequal', () {
+      // ignore: prefer_const_constructors
+      final a = CartState(checkoutId: 'a');
+      // ignore: prefer_const_constructors
+      final b = CartState(checkoutId: 'b');
+      expect(a, isNot(equals(b)));
+    });
   });
 
   group('CurrentReceivingState value equality', () {

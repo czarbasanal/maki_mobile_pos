@@ -521,4 +521,20 @@ void main() {
       expect(container.read(cartGrandTotalProvider), 200);
     });
   });
+
+  group('checkout id', () {
+    test('ensureCheckoutId mints once and is stable', () {
+      final first = cartNotifier.ensureCheckoutId();
+      final second = cartNotifier.ensureCheckoutId();
+      expect(first, isNotEmpty);
+      expect(second, first);
+    });
+
+    test('reset clears the checkout id so the next one differs', () {
+      final first = cartNotifier.ensureCheckoutId();
+      cartNotifier.reset();
+      final next = cartNotifier.ensureCheckoutId();
+      expect(next, isNot(first));
+    });
+  });
 }

@@ -57,6 +57,10 @@ class CartState extends Equatable {
   /// Error message if any
   final String? errorMessage;
 
+  /// Stable idempotency id for this cart's checkout attempt. Empty until the
+  /// first checkout mints one; cleared when the cart is reset.
+  final String checkoutId;
+
   const CartState({
     this.items = const [],
     this.discountType = DiscountType.amount,
@@ -72,6 +76,7 @@ class CartState extends Equatable {
     this.mechanicName,
     this.isProcessing = false,
     this.errorMessage,
+    this.checkoutId = '',
   });
 
   @override
@@ -90,6 +95,7 @@ class CartState extends Equatable {
         mechanicName,
         isProcessing,
         errorMessage,
+        checkoutId,
       ];
 
   // ==================== COMPUTED PROPERTIES ====================
@@ -264,6 +270,7 @@ class CartState extends Equatable {
     String? mechanicName,
     bool? isProcessing,
     String? errorMessage,
+    String? checkoutId,
     bool clearNotes = false,
     bool clearSourceDraftId = false,
     bool clearDraftName = false,
@@ -289,6 +296,7 @@ class CartState extends Equatable {
       isProcessing: isProcessing ?? this.isProcessing,
       errorMessage:
           clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      checkoutId: checkoutId ?? this.checkoutId,
     );
   }
 }
@@ -652,6 +660,16 @@ class CartNotifier extends StateNotifier<CartState> {
       clearErrorMessage: error == null || error.isEmpty,
       isProcessing: false,
     );
+  }
+
+  /// Returns this cart's checkout id, minting one on first call. Stable for the
+  /// life of the cart (survives checkout-screen re-entry); cleared by reset() /
+  /// resetAfterCheckout() so the next order gets a fresh id.
+  String ensureCheckoutId() {
+    if (state.checkoutId.isEmpty) {
+      state = state.copyWith(checkoutId: _uuid.v4());
+    }
+    return state.checkoutId;
   }
 
   /// Resets the cart to initial state.
