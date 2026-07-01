@@ -113,7 +113,15 @@ service cloud.firestore {
         allow write: if isAdmin() && isActiveUser();
       }
     }
-    
+
+    // The price-change report reads price_history via a collection-group query.
+    // The nested products/*/price_history rule above governs writes and
+    // per-product reads; this recursive-wildcard rule authorizes the group
+    // query. Admin-only, matching the nested rule.
+    match /{path=**}/price_history/{historyId} {
+      allow read: if isAdmin() && isActiveUser();
+    }
+
     // ==================== SUPPLIERS COLLECTION ====================
     
     match /suppliers/{supplierId} {
