@@ -32,6 +32,7 @@ class ProcessSaleUseCase {
   /// Throws [ProcessSaleException] on failure.
   Future<ProcessSaleResult> execute({
     required SaleEntity sale,
+    required String checkoutId,
     bool updateInventory = true,
   }) async {
     final warnings = <String>[];
@@ -49,17 +50,23 @@ class ProcessSaleUseCase {
         }
       }
 
-      // 3. Generate sale number if not provided
-      String saleNumber = sale.saleNumber;
-      if (saleNumber.isEmpty) {
-        saleNumber = await _saleRepository.generateSaleNumber(DateTime.now());
+      // 3. Create the sale under the checkout id (the idempotency key). The
+      //    sale number is generated inside createSale's transaction; a repeat
+      //    write under the same id throws DuplicateSaleException. That
+      //    transaction guard is authoritative, so there is no separate
+      //    pre-check read on the happy path.
+      final SaleEntity createdSale;
+      try {
+        createdSale = await _saleRepository.createSale(
+          sale.copyWith(saleNumber: ''),
+          id: checkoutId,
+        );
+      } on DuplicateSaleException {
+        // Already recorded — a retry of a checkout that had actually committed.
+        return _handleAlreadyRecorded(sale, checkoutId);
       }
 
-      // 4. Create sale with updated sale number
-      final saleToCreate = sale.copyWith(saleNumber: saleNumber);
-      final createdSale = await _saleRepository.createSale(saleToCreate);
-
-      // 5. Update inventory
+      // 4. Update inventory
       if (updateInventory) {
         final stockWarnings = await _updateInventory(
           sale.items,
@@ -69,18 +76,8 @@ class ProcessSaleUseCase {
         warnings.addAll(stockWarnings);
       }
 
-      // 6. Mark draft as converted if applicable
-      if (sale.draftId != null && sale.draftId!.isNotEmpty) {
-        try {
-          await _draftRepository.markDraftAsConverted(
-            draftId: sale.draftId!,
-            saleId: createdSale.id,
-          );
-        } catch (e) {
-          // Don't fail the sale if draft update fails
-          warnings.add('Draft conversion failed: $e');
-        }
-      }
+      // 5. Mark the source draft converted (if any)
+      await _reconcileDraft(sale, createdSale.id, warnings);
 
       return ProcessSaleResult(
         success: true,
@@ -99,6 +96,58 @@ class ProcessSaleUseCase {
         errorMessage: 'Failed to process sale: $e',
         errors: ['Unexpected error: $e'],
       );
+    }
+  }
+
+  /// Handles a checkout whose sale was already recorded under [checkoutId]
+  /// (the idempotency guard fired). Returns the existing sale and reconciles
+  /// the source draft — but never fabricates a success it cannot back with a
+  /// real, reloadable sale.
+  Future<ProcessSaleResult> _handleAlreadyRecorded(
+    SaleEntity sale,
+    String checkoutId,
+  ) async {
+    SaleEntity? existing;
+    try {
+      existing = await _saleRepository.getSaleById(checkoutId);
+    } catch (_) {
+      existing = null;
+    }
+
+    if (existing == null) {
+      // The sale exists (createSale's guard saw it) but we could not reload it.
+      // Do not fake a receipt or clear the cart — have the cashier verify.
+      return ProcessSaleResult(
+        success: false,
+        errorMessage:
+            'This sale may already be recorded. Check Sales before charging again.',
+        errors: const ['Duplicate sale could not be reloaded.'],
+      );
+    }
+
+    final warnings = <String>['This sale was already recorded.'];
+    await _reconcileDraft(sale, existing.id, warnings);
+    return ProcessSaleResult(success: true, sale: existing, warnings: warnings);
+  }
+
+  /// Marks the source draft (if any) converted. Best-effort and safe to repeat
+  /// on a replayed checkout — a draft-conversion failure is a warning, not a
+  /// sale failure.
+  Future<void> _reconcileDraft(
+    SaleEntity sale,
+    String saleId,
+    List<String> warnings,
+  ) async {
+    if (sale.draftId != null && sale.draftId!.isNotEmpty) {
+      try {
+        await _draftRepository.markDraftAsConverted(
+          draftId: sale.draftId!,
+          saleId: saleId,
+        );
+      } catch (e) {
+        // Don't fail the sale if draft update fails
+        warnings.add('Draft conversion failed: $e');
+      }
     }
   }
 

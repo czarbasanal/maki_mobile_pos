@@ -49,14 +49,17 @@ void main() {
     );
     when(() => sales.generateSaleNumber(any()))
         .thenAnswer((_) async => 'SALE-1');
-    when(() => sales.createSale(any())).thenAnswer((inv) async =>
-        (inv.positionalArguments.first as SaleEntity).copyWith(id: 'sale-1'));
+    when(() => sales.createSale(any(), id: any(named: 'id'))).thenAnswer(
+        (inv) async =>
+            (inv.positionalArguments.first as SaleEntity).copyWith(id: 'sale-1'));
     when(() => products.getProductById(any())).thenAnswer((_) async => null);
+    when(() => sales.getSaleById(any())).thenAnswer((_) async => null);
   });
 
   test('salmon sale (collected < grandTotal) is accepted', () async {
     final result = await useCase.execute(
       sale: _salmonSale(),
+      checkoutId: 'chk-test',
       updateInventory: false,
     );
     expect(result.success, true, reason: result.errorMessage);
@@ -66,7 +69,7 @@ void main() {
     final bad = _salmonSale().copyWith(
       tenders: const {PaymentMethod.cash: 400, PaymentMethod.salmon: 100},
     );
-    final result = await useCase.execute(sale: bad, updateInventory: false);
+    final result = await useCase.execute(sale: bad, checkoutId: 'chk-test', updateInventory: false);
     expect(result.success, false);
   });
 }
