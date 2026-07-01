@@ -71,18 +71,21 @@ void main() {
   }
 
   group('ProcessSaleUseCase', () {
-    test('short-circuits when a sale already exists for the checkout id',
-        () async {
+    test('a duplicate checkout returns the existing sale without re-subtracting '
+        'stock', () async {
       final sale = createTestSale();
       final existing = sale.copyWith(id: 'chk-1', saleNumber: 'SALE-001');
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+          .thenThrow(const DuplicateSaleException());
       when(() => mockSaleRepo.getSaleById('chk-1'))
           .thenAnswer((_) async => existing);
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
 
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-1');
 
       expect(result.success, isTrue);
       expect(result.sale!.id, 'chk-1');
-      verifyNever(() => mockSaleRepo.createSale(any(), id: any(named: 'id')));
       verifyNever(() => mockProductRepo.updateStock(
             productId: any(named: 'productId'),
             quantityChange: any(named: 'quantityChange'),
@@ -91,30 +94,44 @@ void main() {
           ));
     });
 
-    test('DuplicateSaleException from createSale returns the existing sale',
-        () async {
+    test('a duplicate whose sale cannot be reloaded fails safely (no phantom '
+        'success)', () async {
       final sale = createTestSale();
-      final existing = sale.copyWith(id: 'chk-2', saleNumber: 'SALE-002');
-      var getCalls = 0;
-      when(() => mockSaleRepo.getSaleById('chk-2')).thenAnswer((_) async {
-        getCalls++;
-        return getCalls == 1 ? null : existing; // pre-check null, catch → existing
-      });
       when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
           .thenThrow(const DuplicateSaleException());
+      when(() => mockSaleRepo.getSaleById(any()))
+          .thenThrow(Exception('read failed'));
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => null);
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-2');
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-x');
+
+      expect(result.success, isFalse);
+      expect(result.sale, isNull);
+    });
+
+    test('a duplicate draft-sourced checkout still marks the draft converted',
+        () async {
+      final sale = createTestSale().copyWith(draftId: 'draft-9');
+      final existing = sale.copyWith(id: 'chk-3', saleNumber: 'SALE-003');
+      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id')))
+          .thenThrow(const DuplicateSaleException());
+      when(() => mockSaleRepo.getSaleById('chk-3'))
+          .thenAnswer((_) async => existing);
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+      when(() => mockDraftRepo.markDraftAsConverted(
+            draftId: any(named: 'draftId'),
+            saleId: any(named: 'saleId'),
+          )).thenThrow(Exception('ignored')); // caught; we verify the attempt
+
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-3');
 
       expect(result.success, isTrue);
-      expect(result.sale!.id, 'chk-2');
-      verifyNever(() => mockProductRepo.updateStock(
-            productId: any(named: 'productId'),
-            quantityChange: any(named: 'quantityChange'),
-            updatedBy: any(named: 'updatedBy'),
-            updatedByName: any(named: 'updatedByName'),
-          ));
+      verify(() => mockDraftRepo.markDraftAsConverted(
+            draftId: 'draft-9',
+            saleId: 'chk-3',
+          )).called(1);
     });
 
     test('should return success when sale is valid', () async {

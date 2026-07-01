@@ -41,24 +41,7 @@ class ProcessSaleUseCase {
       // 1. Validate sale
       _validateSale(sale);
 
-      // 2. Idempotency pre-check. If a sale already exists under this checkout
-      //    id it was already recorded — return it and apply no side-effects.
-      //    A read failure must not block a real sale; fall through to the
-      //    transaction guard in createSale.
-      try {
-        final existing = await _saleRepository.getSaleById(checkoutId);
-        if (existing != null) {
-          return ProcessSaleResult(
-            success: true,
-            sale: existing,
-            warnings: const ['This sale was already recorded.'],
-          );
-        }
-      } catch (_) {
-        // ignore — createSale's transaction guard is authoritative
-      }
-
-      // 3. Check inventory availability
+      // 2. Check inventory availability
       if (updateInventory) {
         final stockIssues = await _checkInventoryAvailability(sale.items);
         if (stockIssues.isNotEmpty) {
@@ -67,9 +50,11 @@ class ProcessSaleUseCase {
         }
       }
 
-      // 4. Create the sale under the checkout id. The sale number is generated
-      //    inside createSale's transaction. A concurrent write under the same
-      //    id throws DuplicateSaleException — treat it as "already recorded".
+      // 3. Create the sale under the checkout id (the idempotency key). The
+      //    sale number is generated inside createSale's transaction; a repeat
+      //    write under the same id throws DuplicateSaleException. That
+      //    transaction guard is authoritative, so there is no separate
+      //    pre-check read on the happy path.
       final SaleEntity createdSale;
       try {
         createdSale = await _saleRepository.createSale(
@@ -77,15 +62,11 @@ class ProcessSaleUseCase {
           id: checkoutId,
         );
       } on DuplicateSaleException {
-        final existing = await _saleRepository.getSaleById(checkoutId);
-        return ProcessSaleResult(
-          success: true,
-          sale: existing ?? sale,
-          warnings: const ['This sale was already recorded.'],
-        );
+        // Already recorded — a retry of a checkout that had actually committed.
+        return _handleAlreadyRecorded(sale, checkoutId);
       }
 
-      // 5. Update inventory
+      // 4. Update inventory
       if (updateInventory) {
         final stockWarnings = await _updateInventory(
           sale.items,
@@ -95,18 +76,8 @@ class ProcessSaleUseCase {
         warnings.addAll(stockWarnings);
       }
 
-      // 6. Mark draft as converted if applicable
-      if (sale.draftId != null && sale.draftId!.isNotEmpty) {
-        try {
-          await _draftRepository.markDraftAsConverted(
-            draftId: sale.draftId!,
-            saleId: createdSale.id,
-          );
-        } catch (e) {
-          // Don't fail the sale if draft update fails
-          warnings.add('Draft conversion failed: $e');
-        }
-      }
+      // 5. Mark the source draft converted (if any)
+      await _reconcileDraft(sale, createdSale.id, warnings);
 
       return ProcessSaleResult(
         success: true,
@@ -125,6 +96,58 @@ class ProcessSaleUseCase {
         errorMessage: 'Failed to process sale: $e',
         errors: ['Unexpected error: $e'],
       );
+    }
+  }
+
+  /// Handles a checkout whose sale was already recorded under [checkoutId]
+  /// (the idempotency guard fired). Returns the existing sale and reconciles
+  /// the source draft — but never fabricates a success it cannot back with a
+  /// real, reloadable sale.
+  Future<ProcessSaleResult> _handleAlreadyRecorded(
+    SaleEntity sale,
+    String checkoutId,
+  ) async {
+    SaleEntity? existing;
+    try {
+      existing = await _saleRepository.getSaleById(checkoutId);
+    } catch (_) {
+      existing = null;
+    }
+
+    if (existing == null) {
+      // The sale exists (createSale's guard saw it) but we could not reload it.
+      // Do not fake a receipt or clear the cart — have the cashier verify.
+      return ProcessSaleResult(
+        success: false,
+        errorMessage:
+            'This sale may already be recorded. Check Sales before charging again.',
+        errors: const ['Duplicate sale could not be reloaded.'],
+      );
+    }
+
+    final warnings = <String>['This sale was already recorded.'];
+    await _reconcileDraft(sale, existing.id, warnings);
+    return ProcessSaleResult(success: true, sale: existing, warnings: warnings);
+  }
+
+  /// Marks the source draft (if any) converted. Best-effort and safe to repeat
+  /// on a replayed checkout — a draft-conversion failure is a warning, not a
+  /// sale failure.
+  Future<void> _reconcileDraft(
+    SaleEntity sale,
+    String saleId,
+    List<String> warnings,
+  ) async {
+    if (sale.draftId != null && sale.draftId!.isNotEmpty) {
+      try {
+        await _draftRepository.markDraftAsConverted(
+          draftId: sale.draftId!,
+          saleId: saleId,
+        );
+      } catch (e) {
+        // Don't fail the sale if draft update fails
+        warnings.add('Draft conversion failed: $e');
+      }
     }
   }
 
