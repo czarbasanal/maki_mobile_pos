@@ -13,6 +13,8 @@ export const mechanicConverter: FirestoreDataConverter<Mechanic> = {
     return {
       name: m.name,
       isActive: m.isActive,
+      address: m.address,
+      contactNumber: m.contactNumber,
       createdBy: m.createdBy,
       updatedBy: m.updatedBy,
     };
@@ -23,6 +25,8 @@ export const mechanicConverter: FirestoreDataConverter<Mechanic> = {
       id: snapshot.id,
       name: d.name ?? '',
       isActive: d.isActive ?? true,
+      address: d.address ?? null,
+      contactNumber: d.contactNumber ?? null,
       createdAt: requireDate(d.createdAt, 'createdAt'),
       updatedAt: toDate(d.updatedAt),
       createdBy: d.createdBy ?? null,

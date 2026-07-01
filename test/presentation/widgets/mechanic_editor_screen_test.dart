@@ -62,4 +62,55 @@ void main() {
     expect(find.text('Juan Dela Cruz'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
   });
+
+  testWidgets('creating a mechanic persists contact number + address',
+      (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    // Open the add dialog.
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    // Fields render in order: name, contact number, address.
+    final fields = find.byType(TextField);
+    expect(fields, findsNWidgets(3));
+    await tester.enterText(fields.at(0), 'Pedro Penduko');
+    await tester.enterText(fields.at(1), '0917 123 4567');
+    await tester.enterText(fields.at(2), '123 Rizal St, Cebu');
+
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    final saved = await repo.watchAll().first;
+    expect(saved, hasLength(1));
+    expect(saved.first.name, 'Pedro Penduko');
+    expect(saved.first.contactNumber, '0917 123 4567');
+    expect(saved.first.address, '123 Rizal St, Cebu');
+  });
+
+  testWidgets('edit dialog pre-fills contact + address from the mechanic',
+      (tester) async {
+    await repo.createMechanic(
+      mechanic: MechanicEntity(
+        id: '',
+        name: 'Juan Dela Cruz',
+        isActive: true,
+        address: '456 Mabini St',
+        contactNumber: '0999 000 1111',
+        createdAt: DateTime(2026, 5, 30),
+      ),
+      createdBy: 'admin-1',
+    );
+
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    // Tap the row to open the edit dialog.
+    await tester.tap(find.text('Juan Dela Cruz'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('456 Mabini St'), findsOneWidget);
+    expect(find.text('0999 000 1111'), findsOneWidget);
+  });
 }

@@ -127,6 +127,8 @@ class _MechanicFormDialog extends ConsumerStatefulWidget {
 class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _contactController;
   late bool _isActive;
   bool _isSaving = false;
 
@@ -135,12 +137,17 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
     super.initState();
     final existing = widget.existing;
     _nameController = TextEditingController(text: existing?.name ?? '');
+    _addressController = TextEditingController(text: existing?.address ?? '');
+    _contactController =
+        TextEditingController(text: existing?.contactNumber ?? '');
     _isActive = existing?.isActive ?? true;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _addressController.dispose();
+    _contactController.dispose();
     super.dispose();
   }
 
@@ -173,6 +180,26 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
                 return null;
               },
             ),
+            const SizedBox(height: AppSpacing.sm),
+            TextFormField(
+              controller: _contactController,
+              decoration: const InputDecoration(
+                labelText: 'Contact number (optional)',
+                prefixIcon: Icon(LucideIcons.phone),
+              ),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextFormField(
+              controller: _addressController,
+              decoration: const InputDecoration(
+                labelText: 'Address (optional)',
+                prefixIcon: Icon(LucideIcons.mapPin),
+              ),
+              textCapitalization: TextCapitalization.words,
+              minLines: 1,
+              maxLines: 3,
+            ),
             if (_isEdit) ...[
               const SizedBox(height: AppSpacing.sm),
               SwitchListTile(
@@ -204,6 +231,10 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
+    // Optional fields: blank collapses to null so we don't persist empty
+    // strings (and clearing a previously-set value nulls it out).
+    final address = _addressController.text.trim();
+    final contact = _contactController.text.trim();
     final ops = ref.read(mechanicOperationsProvider.notifier);
 
     // Capture the navigator before any await: pop must not reach for
@@ -221,12 +252,21 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
               id: '',
               name: name,
               isActive: true,
+              address: address.isEmpty ? null : address,
+              contactNumber: contact.isEmpty ? null : contact,
               createdAt: DateTime.now(),
             ),
           );
         }
         return ops.update(
-          mechanic: existing.copyWith(name: name, isActive: _isActive),
+          mechanic: existing.copyWith(
+            name: name,
+            isActive: _isActive,
+            address: address.isEmpty ? null : address,
+            contactNumber: contact.isEmpty ? null : contact,
+            clearAddress: address.isEmpty,
+            clearContactNumber: contact.isEmpty,
+          ),
         );
       },
       message: existing == null ? 'Saving…' : 'Updating…',

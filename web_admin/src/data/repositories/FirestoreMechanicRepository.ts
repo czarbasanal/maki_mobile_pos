@@ -9,6 +9,7 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import type {
+  MechanicCreateInput,
   MechanicRepository,
   MechanicUpdateInput,
 } from '@/domain/repositories/MechanicRepository';
@@ -37,10 +38,12 @@ export class FirestoreMechanicRepository implements MechanicRepository {
     });
   }
 
-  async create(name: string, actorId: string): Promise<Mechanic> {
+  async create(input: MechanicCreateInput, actorId: string): Promise<Mechanic> {
     const ref = await addDoc(collection(this.db, FirestoreCollections.mechanics), {
-      name,
+      name: input.name,
       isActive: true,
+      address: input.address ?? null,
+      contactNumber: input.contactNumber ?? null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       createdBy: actorId,
@@ -59,6 +62,8 @@ export class FirestoreMechanicRepository implements MechanicRepository {
     };
     if (input.name !== undefined) data.name = input.name;
     if (input.isActive !== undefined) data.isActive = input.isActive;
+    if (input.address !== undefined) data.address = input.address;
+    if (input.contactNumber !== undefined) data.contactNumber = input.contactNumber;
     await updateDoc(doc(this.db, FirestoreCollections.mechanics, id), data);
   }
 }

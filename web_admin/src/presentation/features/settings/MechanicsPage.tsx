@@ -19,6 +19,8 @@ export function MechanicsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Mechanic | null>(null);
   const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [active, setActive] = useState(true);
 
   const create = useCreateMechanic();
@@ -28,12 +30,16 @@ export function MechanicsPage() {
   const openAdd = () => {
     setEditing(null);
     setName('');
+    setAddress('');
+    setContactNumber('');
     setActive(true);
     setDialogOpen(true);
   };
   const openEdit = (m: Mechanic) => {
     setEditing(m);
     setName(m.name);
+    setAddress(m.address ?? '');
+    setContactNumber(m.contactNumber ?? '');
     setActive(m.isActive);
     setDialogOpen(true);
   };
@@ -41,10 +47,20 @@ export function MechanicsPage() {
   const onSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
+    // Optional fields: blank collapses to null so we don't persist empty
+    // strings (and clearing a previously-set value nulls it out).
+    const addr = address.trim() || null;
+    const contact = contactNumber.trim() || null;
     if (editing) {
-      await update.mutateAsync({ id: editing.id, name: trimmed, isActive: active });
+      await update.mutateAsync({
+        id: editing.id,
+        name: trimmed,
+        isActive: active,
+        address: addr,
+        contactNumber: contact,
+      });
     } else {
-      await create.mutateAsync({ name: trimmed });
+      await create.mutateAsync({ name: trimmed, address: addr, contactNumber: contact });
     }
     setDialogOpen(false);
   };
@@ -82,16 +98,23 @@ export function MechanicsPage() {
           <ul className="divide-y divide-light-hairline">
             {mechanics.map((m) => (
               <li key={m.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm">
-                <span
-                  className={cn(
-                    'text-bodySmall',
-                    m.isActive ? 'text-light-text' : 'text-light-text-hint line-through',
-                  )}
-                >
-                  {m.name}
-                  {m.isActive ? '' : ' (inactive)'}
-                </span>
-                <span className="flex items-center gap-tk-xs">
+                <div className="min-w-0">
+                  <span
+                    className={cn(
+                      'block truncate text-bodySmall',
+                      m.isActive ? 'text-light-text' : 'text-light-text-hint line-through',
+                    )}
+                  >
+                    {m.name}
+                    {m.isActive ? '' : ' (inactive)'}
+                  </span>
+                  {m.contactNumber || m.address ? (
+                    <span className="mt-0.5 block truncate text-xs text-light-text-secondary">
+                      {[m.contactNumber, m.address].filter(Boolean).join(' · ')}
+                    </span>
+                  ) : null}
+                </div>
+                <span className="flex shrink-0 items-center gap-tk-xs">
                   <button
                     type="button"
                     onClick={() => openEdit(m)}
@@ -133,6 +156,28 @@ export function MechanicsPage() {
               onChange={(e) => setName(e.target.value)}
               autoFocus
               className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+            />
+          </div>
+          <div>
+            <label className="mb-tk-xs block text-bodySmall text-light-text-secondary">
+              Contact number <span className="text-light-text-hint">(optional)</span>
+            </label>
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(e) => setContactNumber(e.target.value)}
+              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+            />
+          </div>
+          <div>
+            <label className="mb-tk-xs block text-bodySmall text-light-text-secondary">
+              Address <span className="text-light-text-hint">(optional)</span>
+            </label>
+            <textarea
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={2}
+              className="w-full resize-none rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
             />
           </div>
           {editing ? (
