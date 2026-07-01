@@ -261,6 +261,16 @@ class DuplicateSkuException extends DuplicateEntryException {
   }) : super(field: 'sku', value: sku);
 }
 
+/// Exception thrown when a sale already exists for a given checkout id
+/// (idempotency guard on the sale write).
+class DuplicateSaleException extends DuplicateEntryException {
+  const DuplicateSaleException({
+    String saleId = '',
+    super.message = 'This sale was already recorded',
+    super.code = 'duplicate-sale',
+  }) : super(field: 'saleId', value: saleId);
+}
+
 /// Exception thrown when a barcode is already claimed by another product.
 class DuplicateBarcodeException extends DuplicateEntryException {
   const DuplicateBarcodeException({

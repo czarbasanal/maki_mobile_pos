@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -44,6 +45,22 @@ void main() {
         createdAt: DateTime.now(),
       );
     }
+
+    test('createSale with an id is idempotent (second call throws)', () async {
+      final sale = createTestSale();
+
+      final first = await repository.createSale(sale, id: 'checkout-1');
+      expect(first.id, 'checkout-1');
+      expect(first.saleNumber, startsWith('SALE-'));
+
+      expect(
+        () => repository.createSale(sale, id: 'checkout-1'),
+        throwsA(isA<DuplicateSaleException>()),
+      );
+
+      final docs = await fakeFirestore.collection('sales').get();
+      expect(docs.docs.length, 1);
+    });
 
     test('createSale should create sale with generated ID', () async {
       final sale = createTestSale();

@@ -29,11 +29,21 @@ class SaleRepositoryImpl implements SaleRepository {
   // ==================== CREATE ====================
 
   @override
-  Future<SaleEntity> createSale(SaleEntity sale) async {
+  Future<SaleEntity> createSale(SaleEntity sale, {String? id}) async {
     try {
       // Use a transaction to ensure atomic creation of sale + items
       return await _firestore.runTransaction<SaleEntity>((transaction) async {
-        // Generate sale number if not provided
+        // Deterministic doc id (idempotency key) when provided, else auto-id.
+        final saleDocRef = id != null ? _salesRef.doc(id) : _salesRef.doc();
+
+        // Guard (reads-before-writes): refuse a second write under the same id.
+        final existing = await transaction.get(saleDocRef);
+        if (existing.exists) {
+          throw const DuplicateSaleException();
+        }
+
+        // Generate the sale number inside the transaction, so the counter
+        // increment is atomic with the sale write and covered by the guard.
         String saleNumber = sale.saleNumber;
         if (saleNumber.isEmpty) {
           saleNumber = await _generateSaleNumberInTransaction(
@@ -41,9 +51,6 @@ class SaleRepositoryImpl implements SaleRepository {
             sale.createdAt,
           );
         }
-
-        // Create the sale document reference
-        final saleDocRef = _salesRef.doc();
 
         // Prepare sale model
         final saleModel = SaleModel.fromEntity(sale.copyWith(
@@ -68,6 +75,8 @@ class SaleRepositoryImpl implements SaleRepository {
           saleNumber: saleNumber,
         );
       });
+    } on DuplicateSaleException {
+      rethrow; // don't let the generic catch convert this to DatabaseException
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to create sale: ${e.message}',

@@ -22,7 +22,7 @@ abstract class SaleRepository {
   ///
   /// Returns the created sale with populated ID and server timestamps.
   /// Throws [SaleException] if creation fails.
-  Future<SaleEntity> createSale(SaleEntity sale);
+  Future<SaleEntity> createSale(SaleEntity sale, {String? id});
 
   // ==================== READ ====================
 
