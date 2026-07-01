@@ -10,6 +10,8 @@ void main() {
         {
           'name': 'Juan Dela Cruz',
           'isActive': false,
+          'address': '123 Rizal St, Cebu',
+          'contactNumber': '0917 123 4567',
           'createdAt': Timestamp.fromDate(DateTime(2026, 5, 30)),
           'createdBy': 'admin-1',
         },
@@ -18,6 +20,8 @@ void main() {
       expect(model.id, 'mech-1');
       expect(model.name, 'Juan Dela Cruz');
       expect(model.isActive, false);
+      expect(model.address, '123 Rizal St, Cebu');
+      expect(model.contactNumber, '0917 123 4567');
       expect(model.createdAt, DateTime(2026, 5, 30));
       expect(model.createdBy, 'admin-1');
       expect(model.updatedAt, isNull);
@@ -27,21 +31,40 @@ void main() {
       final model = MechanicModel.fromMap(<String, dynamic>{}, 'mech-x');
       expect(model.name, '');
       expect(model.isActive, true);
+      expect(model.address, isNull);
+      expect(model.contactNumber, isNull);
     });
 
-    test('toMap (plain) emits name + isActive + createdAt', () {
+    test('toMap (plain) emits name + isActive + address + contact', () {
       final model = MechanicModel(
         id: 'mech-1',
         name: 'Pedro',
         isActive: true,
+        address: '456 Mabini St',
+        contactNumber: '0999 000 1111',
         createdAt: DateTime(2026, 5, 30),
         createdBy: 'admin-1',
       );
       final map = model.toMap();
       expect(map['name'], 'Pedro');
       expect(map['isActive'], true);
+      expect(map['address'], '456 Mabini St');
+      expect(map['contactNumber'], '0999 000 1111');
       expect(map['createdAt'], isA<Timestamp>());
       expect(map['createdBy'], 'admin-1');
+    });
+
+    test('toMap emits null address/contact when unset (clears the field)', () {
+      final model = MechanicModel(
+        id: 'mech-1',
+        name: 'Pedro',
+        isActive: true,
+        createdAt: DateTime(2026, 5, 30),
+      );
+      final map = model.toMap();
+      expect(map.containsKey('address'), isTrue);
+      expect(map['address'], isNull);
+      expect(map['contactNumber'], isNull);
     });
 
     test('toCreateMap stamps server timestamps + createdBy', () {
@@ -62,6 +85,8 @@ void main() {
         id: 'mech-1',
         name: 'Juan',
         isActive: true,
+        address: '123 Rizal St, Cebu',
+        contactNumber: '0917 123 4567',
         createdAt: DateTime(2026, 5, 30),
         createdBy: 'admin-1',
       );

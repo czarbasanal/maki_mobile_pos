@@ -14,6 +14,8 @@ describe('mechanicConverter.fromFirestore', () => {
       snap('m1', {
         name: 'Juan',
         isActive: true,
+        address: '123 Rizal St, Cebu',
+        contactNumber: '0917 123 4567',
         createdAt: created,
         updatedAt: updated,
         createdBy: 'u1',
@@ -24,6 +26,8 @@ describe('mechanicConverter.fromFirestore', () => {
       id: 'm1',
       name: 'Juan',
       isActive: true,
+      address: '123 Rizal St, Cebu',
+      contactNumber: '0917 123 4567',
       createdAt: created.toDate(),
       updatedAt: updated.toDate(),
       createdBy: 'u1',
@@ -36,6 +40,8 @@ describe('mechanicConverter.fromFirestore', () => {
     const m = mechanicConverter.fromFirestore(snap('m2', { createdAt: created }));
     expect(m.name).toBe('');
     expect(m.isActive).toBe(true);
+    expect(m.address).toBeNull();
+    expect(m.contactNumber).toBeNull();
     expect(m.updatedAt).toBeNull();
     expect(m.createdBy).toBeNull();
     expect(m.updatedBy).toBeNull();

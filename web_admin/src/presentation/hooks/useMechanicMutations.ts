@@ -6,10 +6,14 @@ import type { Mechanic } from '@/domain/entities';
 export function useCreateMechanic() {
   const repo = useMechanicRepo();
   const actor = useAuthStore((s) => s.user);
-  return useMutation<Mechanic, Error, { name: string }>({
-    mutationFn: async ({ name }) => {
+  return useMutation<
+    Mechanic,
+    Error,
+    { name: string; address?: string | null; contactNumber?: string | null }
+  >({
+    mutationFn: async (input) => {
       if (!actor) throw new Error('Not signed in');
-      return repo.create(name, actor.id);
+      return repo.create(input, actor.id);
     },
   });
 }
@@ -17,7 +21,17 @@ export function useCreateMechanic() {
 export function useUpdateMechanic() {
   const repo = useMechanicRepo();
   const actor = useAuthStore((s) => s.user);
-  return useMutation<void, Error, { id: string; name?: string; isActive?: boolean }>({
+  return useMutation<
+    void,
+    Error,
+    {
+      id: string;
+      name?: string;
+      isActive?: boolean;
+      address?: string | null;
+      contactNumber?: string | null;
+    }
+  >({
     mutationFn: async ({ id, ...patch }) => {
       if (!actor) throw new Error('Not signed in');
       await repo.update(id, patch, actor.id);

@@ -162,6 +162,15 @@ class UserOperationsNotifier extends StateNotifier<UserOperationsState> {
       state = state.copyWith(isLoading: false);
       _invalidateProviders();
       _ref.invalidate(userByIdProvider(user.id));
+      // If the edited user is the signed-in user, refresh currentUserProvider
+      // so screens bound to it (e.g. the dashboard header) reflect the change.
+      // That provider is fed by FirebaseAuth.authStateChanges, which does not
+      // re-emit on a Firestore profile edit; invalidating it re-subscribes and
+      // re-fetches the profile doc. Guarded on identity so editing another user
+      // doesn't needlessly reload the current session.
+      if (_ref.read(currentUserProvider).valueOrNull?.id == user.id) {
+        _ref.invalidate(currentUserProvider);
+      }
       return result.data;
     } else {
       state = state.copyWith(

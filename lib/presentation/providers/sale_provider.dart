@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/labor_report.dart';
 import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/core/utils/week_range.dart';
 import 'package:maki_mobile_pos/data/repositories/sale_repository_impl.dart';
@@ -55,6 +56,17 @@ final salesByDateRangeProvider =
     status: params.status,
     cashierId: params.cashierId,
   );
+});
+
+/// Labor (service) report for a date range, grouped by mechanic. Derived from
+/// the raw sales in range (via [salesByDateRangeProvider]) so it needs no extra
+/// Firestore round-trip. Labor exposes no cost, so this is gated at the same
+/// level as the sales report (staff + admin) via the route guard.
+final laborReportProvider =
+    FutureProvider.autoDispose.family<LaborReportData, DateRangeParams>(
+        (ref, params) async {
+  final sales = await ref.watch(salesByDateRangeProvider(params).future);
+  return laborReportFromSales(sales);
 });
 
 /// Provides a single sale by ID.

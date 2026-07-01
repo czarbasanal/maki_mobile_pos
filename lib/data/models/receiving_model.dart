@@ -89,7 +89,15 @@ class ReceivingModel {
     }
 
     if (forUpdate) {
-      if (status == ReceivingStatus.completed && completedAt == null) {
+      // Persist the completion timestamp on update. Completion sets
+      // completedAt to a concrete DateTime, so write it through; only fall
+      // back to a server timestamp when the status is completed but no time
+      // was supplied. (Previously this only fired when completedAt was null,
+      // so a normal completion never wrote the field — the read-only banner
+      // then showed no date.)
+      if (completedAt != null) {
+        map['completedAt'] = Timestamp.fromDate(completedAt!);
+      } else if (status == ReceivingStatus.completed) {
         map['completedAt'] = FieldValue.serverTimestamp();
       }
     }

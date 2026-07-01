@@ -6,6 +6,8 @@ class MechanicModel {
   final String id;
   final String name;
   final bool isActive;
+  final String? address;
+  final String? contactNumber;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final String? createdBy;
@@ -16,6 +18,8 @@ class MechanicModel {
     required this.name,
     required this.isActive,
     required this.createdAt,
+    this.address,
+    this.contactNumber,
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
@@ -33,6 +37,8 @@ class MechanicModel {
       id: documentId,
       name: map['name'] as String? ?? '',
       isActive: map['isActive'] as bool? ?? true,
+      address: map['address'] as String?,
+      contactNumber: map['contactNumber'] as String?,
       createdAt: _parseTimestamp(map['createdAt']) ?? DateTime.now(),
       updatedAt: _parseTimestamp(map['updatedAt']),
       createdBy: map['createdBy'] as String?,
@@ -47,6 +53,8 @@ class MechanicModel {
     final map = <String, dynamic>{
       'name': name,
       'isActive': isActive,
+      'address': address,
+      'contactNumber': contactNumber,
     };
 
     if (forCreate) {
@@ -82,6 +90,8 @@ class MechanicModel {
       id: id,
       name: name,
       isActive: isActive,
+      address: address,
+      contactNumber: contactNumber,
       createdAt: createdAt,
       updatedAt: updatedAt,
       createdBy: createdBy,
@@ -94,6 +104,8 @@ class MechanicModel {
       id: entity.id,
       name: entity.name,
       isActive: entity.isActive,
+      address: entity.address,
+      contactNumber: entity.contactNumber,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       createdBy: entity.createdBy,
@@ -105,6 +117,8 @@ class MechanicModel {
     String? id,
     String? name,
     bool? isActive,
+    String? address,
+    String? contactNumber,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createdBy,
@@ -114,6 +128,8 @@ class MechanicModel {
       id: id ?? this.id,
       name: name ?? this.name,
       isActive: isActive ?? this.isActive,
+      address: address ?? this.address,
+      contactNumber: contactNumber ?? this.contactNumber,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,

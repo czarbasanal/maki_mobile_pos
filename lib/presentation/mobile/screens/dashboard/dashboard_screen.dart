@@ -347,7 +347,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 'Recent Transactions',
                 trailing: _canViewReports
                     ? TextButton(
-                        onPressed: () => context.go(RoutePaths.reports),
+                        onPressed: () => context.go(RoutePaths.salesHistory),
                         style: TextButton.styleFrom(
                           textStyle: const TextStyle(
                             fontSize: 12.5,

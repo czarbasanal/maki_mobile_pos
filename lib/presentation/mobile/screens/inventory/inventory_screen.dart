@@ -1,10 +1,5 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +9,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/inventory_export.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
@@ -638,33 +634,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       }
 
       final csv = buildInventoryCsv(products);
-      final bytes = Uint8List.fromList(utf8.encode(csv));
       final fileName =
           'inventory_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.csv';
-
-      final path = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save inventory CSV',
-        fileName: fileName,
-        type: FileType.custom,
-        allowedExtensions: ['csv'],
-        bytes: bytes,
-      );
-
       if (!mounted) return;
-      if (path == null) {
-        context.showSnackBar('Export cancelled');
-        return;
-      }
-
-      // On mobile, saveFile(bytes:) already wrote the file (path may be a
-      // content URI). On desktop, saveFile only returns the chosen path, so
-      // write the bytes ourselves.
-      if (!Platform.isAndroid && !Platform.isIOS) {
-        await File(path).writeAsBytes(bytes);
-      }
-
-      if (!mounted) return;
-      context.showSuccessSnackBar('Inventory exported');
+      await saveReportCsv(context, csv, fileName);
     } catch (e) {
       if (mounted) context.showErrorSnackBar('Export failed: $e');
     }

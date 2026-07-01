@@ -1,3 +1,7 @@
+// Prefixed: core/errors/exceptions.dart also defines a `TimeoutException`
+// (a NetworkException), so `dart:async`'s must be referenced qualified.
+import 'dart:async' as async;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
@@ -12,6 +16,14 @@ import 'package:maki_mobile_pos/domain/usecases/receiving/receiving_import_resol
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:uuid/uuid.dart';
+
+// ==================== CONFIG ====================
+
+/// Upper bound on a single receiving-detail fetch. A stuck read (flaky network,
+/// token refresh stall) must not pin the loading skeleton forever — past this
+/// the load surfaces a recoverable error instead. Overridable in tests.
+final receivingLoadTimeoutProvider =
+    Provider<Duration>((ref) => const Duration(seconds: 20));
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -254,12 +266,21 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
   }
 
   /// Loads an existing receiving for editing.
+  ///
+  /// The `isLoading` flag is flipped INSIDE the try: assigning `state` can throw
+  /// if this is ever invoked during a widget build/lifecycle (Riverpod forbids
+  /// mutating a provider then). Guarding it means such a failure surfaces as an
+  /// error rather than pinning the loading skeleton forever. Callers must still
+  /// invoke this off the build phase (the detail screen defers via a
+  /// post-frame callback).
   Future<void> loadReceiving(String receivingId) async {
-    // Flag loading up front so the screen shows a skeleton instead of the
-    // empty form while the fetch is in flight (or any stale state lingers).
-    state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final receiving = await _repository.getReceivingById(receivingId);
+      // Flag loading up front so the screen shows a skeleton instead of the
+      // empty form while the fetch is in flight (or any stale state lingers).
+      state = state.copyWith(isLoading: true, clearError: true);
+      final receiving = await _repository
+          .getReceivingById(receivingId)
+          .timeout(_ref.read(receivingLoadTimeoutProvider));
       if (receiving != null) {
         state = CurrentReceivingState(
           id: receiving.id,
@@ -274,6 +295,12 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
       } else {
         state = state.copyWith(isLoading: false);
       }
+    } on async.TimeoutException {
+      // The fetch stalled past the budget. Clear the skeleton and show a
+      // recoverable message — re-entering the screen retries the load.
+      state = const CurrentReceivingState(
+        errorMessage: 'Loading timed out. Check your connection and try again.',
+      );
     } catch (e) {
       // Reset to a fresh (editable, non-read-only) state carrying only the
       // error. Two reasons: (1) without clearing isLoading the skeleton

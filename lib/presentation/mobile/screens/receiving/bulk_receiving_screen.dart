@@ -46,11 +46,18 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
   void initState() {
     super.initState();
     if (widget.receivingId != null) {
-      // Load existing receiving — loadReceiving flips isLoading on the provider
-      // synchronously, so the first build already shows the skeleton.
-      ref
-          .read(currentReceivingProvider.notifier)
-          .loadReceiving(widget.receivingId!);
+      // Load an existing receiving AFTER the first frame. loadReceiving mutates
+      // the provider (flips isLoading), and mutating a provider during
+      // initState/build throws "Tried to modify a provider while the widget
+      // tree was building". That exception, uncaught in this fire-and-forget
+      // call, used to pin the loading skeleton forever. Deferring keeps the
+      // mutation out of the build phase (mirrors the new-receiving branch).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref
+            .read(currentReceivingProvider.notifier)
+            .loadReceiving(widget.receivingId!);
+      });
     } else {
       // Initialize a new receiving. Mirror _startNewReceiving's guard so a
       // reference-number failure surfaces to the user instead of failing

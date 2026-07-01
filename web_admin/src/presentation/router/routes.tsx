@@ -18,6 +18,7 @@ import { ActivityLogsPage } from '@/presentation/features/logs/ActivityLogsPage'
 import { ReportsHubPage } from '@/presentation/features/reports/ReportsHubPage';
 import { SalesReportPage } from '@/presentation/features/reports/SalesReportPage';
 import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPage';
+import { LaborReportPage } from '@/presentation/features/reports/LaborReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
 import { ReceivingDashboardPage } from '@/presentation/features/receiving/ReceivingDashboardPage';
@@ -85,6 +86,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.reports, element: <ReportsHubPage /> },
         { path: RoutePaths.salesReport, element: <SalesReportPage /> },
         { path: RoutePaths.profitReport, element: <ProfitReportPage /> },
+        { path: RoutePaths.laborReport, element: <LaborReportPage /> },
         { path: RoutePaths.saleDetail, element: <SaleDetailPage /> },
         { path: RoutePaths.users, element: <UsersListPage /> },
         { path: RoutePaths.userAdd, element: <UserFormPage /> },

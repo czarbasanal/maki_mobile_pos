@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/report_csv.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -59,6 +63,13 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
         title: const Text('Sales Report'),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.download),
+            tooltip: 'Export CSV',
+            onPressed: _exportCsv,
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -111,6 +122,17 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: _buildPaymentBreakdown(),
+              ),
+
+              // View the full transaction list (moved off the /reports index).
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: _ReportNavTile(
+                  icon: LucideIcons.receipt,
+                  title: 'View transactions',
+                  subtitle: 'Full sales history list',
+                  onTap: () => context.pushNamed(RouteNames.salesHistory),
+                ),
               ),
 
               // End-of-day closing entry
@@ -252,54 +274,11 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
   }
 
   void _handlePresetChange(DateRangePreset preset) {
-    final now = DateTime.now();
-    DateTime start;
-    DateTime end = DateTime(now.year, now.month, now.day, 23, 59, 59);
-
-    switch (preset) {
-      case DateRangePreset.today:
-        start = DateTime(now.year, now.month, now.day);
-        break;
-      case DateRangePreset.yesterday:
-        final yesterday = now.subtract(const Duration(days: 1));
-        start = DateTime(yesterday.year, yesterday.month, yesterday.day);
-        end = DateTime(
-            yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
-        break;
-      case DateRangePreset.thisWeek:
-        final weekStart = now.subtract(Duration(days: now.weekday - 1));
-        start = DateTime(weekStart.year, weekStart.month, weekStart.day);
-        break;
-      case DateRangePreset.lastWeek:
-        final lastWeekStart = now.subtract(Duration(days: now.weekday + 6));
-        final lastWeekEnd = now.subtract(Duration(days: now.weekday));
-        start = DateTime(
-            lastWeekStart.year, lastWeekStart.month, lastWeekStart.day);
-        end = DateTime(
-            lastWeekEnd.year, lastWeekEnd.month, lastWeekEnd.day, 23, 59, 59);
-        break;
-      case DateRangePreset.thisMonth:
-        start = DateTime(now.year, now.month, 1);
-        break;
-      case DateRangePreset.lastMonth:
-        final lastMonth = DateTime(now.year, now.month - 1, 1);
-        start = lastMonth;
-        end = DateTime(now.year, now.month, 0, 23, 59, 59);
-        break;
-      case DateRangePreset.thisQuarter:
-        final firstMonth = ((now.month - 1) ~/ 3) * 3 + 1;
-        start = DateTime(now.year, firstMonth, 1);
-        break;
-      case DateRangePreset.thisYear:
-        start = DateTime(now.year, 1, 1);
-        break;
-      case DateRangePreset.custom:
-        return;
-    }
-
+    if (preset == DateRangePreset.custom) return; // dropdown never emits custom
+    final range = dateRangeForPreset(preset, DateTime.now());
     setState(() {
-      _startDate = start;
-      _endDate = end;
+      _startDate = range.start;
+      _endDate = range.end;
       _selectedPreset = preset;
     });
   }
@@ -311,9 +290,85 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
       _selectedPreset = DateRangePreset.custom;
     });
   }
+
+  Future<void> _exportCsv() async {
+    final params = DateRangeParams(startDate: _startDate, endDate: _endDate);
+    final sales = await ref.read(salesByDateRangeProvider(params).future);
+    if (!mounted) return;
+    if (sales.where((s) => !s.isVoided).isEmpty) {
+      context.showSnackBar('No sales to export in this range');
+      return;
+    }
+    final d = DateFormat('yyyy-MM-dd');
+    final name = 'sales_${d.format(_startDate)}_to_${d.format(_endDate)}.csv';
+    if (!mounted) return;
+    await saveReportCsv(context, buildSalesReportCsv(sales), name);
+  }
 }
 
 /// End-of-Day closing entry tile.
+/// A tappable navigation tile linking to a sub-report (profit / labor).
+class _ReportNavTile extends StatelessWidget {
+  const _ReportNavTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final dark = theme.brightness == Brightness.dark;
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: dark ? const Color(0x1FE8B84C) : const Color(0x12283E46),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, size: 21, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: muted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Icon(LucideIcons.chevronRight, size: 18, color: muted),
+        ],
+      ),
+    );
+  }
+}
+
 class _EodTile extends StatelessWidget {
   const _EodTile({required this.onTap});
   final VoidCallback onTap;

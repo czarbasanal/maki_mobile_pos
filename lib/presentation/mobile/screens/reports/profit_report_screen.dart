@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/report_csv.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
+import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
-/// Screen displaying profit reports.
+/// Screen displaying profit reports (admin-only). Wires the profit summary and
+/// a profit-ranked product list off [profitReportProvider] /
+/// [topSellingProductsProvider] for the selected range.
 class ProfitReportScreen extends ConsumerStatefulWidget {
   const ProfitReportScreen({super.key});
 
@@ -17,17 +25,32 @@ class ProfitReportScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
-  DateTimeRange _dateRange = DateTimeRange(
-    start: DateTime.now().subtract(const Duration(days: 30)),
-    end: DateTime.now(),
-  );
+  late DateTime _startDate;
+  late DateTime _endDate;
+  DateRangePreset _selectedPreset = DateRangePreset.today;
+
+  @override
+  void initState() {
+    super.initState();
+    final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+    _startDate = r.start;
+    _endDate = r.end;
+  }
+
+  DateRangeParams get _params =>
+      DateRangeParams(startDate: _startDate, endDate: _endDate);
+
+  TopSellingParams get _topParams => TopSellingParams(
+        startDate: _startDate,
+        endDate: _endDate,
+        limit: 50,
+      );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-    final isDark = theme.brightness == Brightness.dark;
-    final dateFormat = DateFormat('MMM d, y');
+    final profitAsync = ref.watch(profitReportProvider(_params));
+    final topAsync = ref.watch(topSellingProductsProvider(_topParams));
 
     return Scaffold(
       appBar: AppBar(
@@ -38,202 +61,242 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.calendar),
-            onPressed: _selectDateRange,
+            icon: const Icon(LucideIcons.download),
+            tooltip: 'Export CSV',
+            onPressed: _exportCsv,
           ),
         ],
       ),
-      body: Column(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(profitReportProvider(_params));
+          ref.invalidate(topSellingProductsProvider(_topParams));
+        },
+        child: ListView(
+          children: [
+            DateRangePicker(
+              startDate: _startDate,
+              endDate: _endDate,
+              selectedPreset: _selectedPreset,
+              onPresetChanged: (preset) {
+                if (preset == DateRangePreset.custom) return;
+                final r = dateRangeForPreset(preset, DateTime.now());
+                setState(() {
+                  _startDate = r.start;
+                  _endDate = r.end;
+                  _selectedPreset = preset;
+                });
+              },
+              onCustomRangeSelected: (start, end) {
+                setState(() {
+                  _startDate = start;
+                  _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
+                  _selectedPreset = DateRangePreset.custom;
+                });
+              },
+            ),
+            // Summary cards.
+            profitAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: SizedBox(height: 180, child: ListSkeleton(count: 2)),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: ErrorStateView(
+                  message: 'Failed to load profit: $e',
+                  onRetry: () => ref.invalidate(profitReportProvider(_params)),
+                ),
+              ),
+              data: _buildMetrics,
+            ),
+            // Profit by product.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 6),
+              child: Text(
+                'Profit by Product',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            topAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(height: 300, child: ListSkeleton()),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ErrorStateView(
+                  message: 'Failed to load products: $e',
+                  onRetry: () =>
+                      ref.invalidate(topSellingProductsProvider(_topParams)),
+                ),
+              ),
+              data: _buildProductList,
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetrics(SalesSummary s) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Column(
         children: [
-          // Date strip with a Change pill.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-            child: AppCard(
-              radius: AppRadius.md,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: SizedBox(
-                height: 48,
-                child: Row(
-                  children: [
-                    Icon(LucideIcons.calendar,
-                        size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 11),
-                    Expanded(
-                      child: Text(
-                        '${dateFormat.format(_dateRange.start)} – ${dateFormat.format(_dateRange.end)}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13.5,
-                        ),
-                      ),
-                    ),
-                    _ChangeButton(onTap: _selectDateRange),
-                  ],
+          Row(
+            children: [
+              Expanded(
+                child: _ProfitMetricCard(
+                  title: 'Total Revenue',
+                  value: s.netAmount.toCurrency(),
+                  icon: LucideIcons.banknote,
                 ),
               ),
-            ),
-          ),
-          // Summary cards — profit + margin keep success accent.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ProfitMetricCard(
-                        title: 'Total Revenue',
-                        value: '${AppConstants.currencySymbol}0.00',
-                        icon: LucideIcons.banknote,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ProfitMetricCard(
-                        title: 'Total Cost',
-                        value: '${AppConstants.currencySymbol}0.00',
-                        icon: LucideIcons.wallet,
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ProfitMetricCard(
+                  title: 'Total Cost',
+                  value: s.totalCost.toCurrency(),
+                  icon: LucideIcons.wallet,
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ProfitMetricCard(
-                        title: 'Gross Profit',
-                        value: '${AppConstants.currencySymbol}0.00',
-                        icon: LucideIcons.trendingUp,
-                        accent: AppColors.success,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ProfitMetricCard(
-                        title: 'Profit Margin',
-                        value: '0.0%',
-                        icon: LucideIcons.percent,
-                        accent: AppColors.success,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Profit by product header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 6),
-            child: Row(
-              children: [
-                Text(
-                  'Profit by Product',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  'View All',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Empty state
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 66,
-                    height: 66,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark
-                          ? const Color(0x0DFFFFFF)
-                          : const Color(0x0F283E46),
-                    ),
-                    child: Icon(LucideIcons.trendingUp,
-                        size: 30, color: theme.colorScheme.outline),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'No profit data available',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Make some sales to see profit reports',
-                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                  ),
-                ],
               ),
-            ),
+            ],
           ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _ProfitMetricCard(
+                  title: 'Gross Profit',
+                  value: s.totalProfit.toCurrency(),
+                  icon: LucideIcons.trendingUp,
+                  accent: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ProfitMetricCard(
+                  title: 'Profit Margin',
+                  value: '${s.profitMargin.toStringAsFixed(1)}%',
+                  icon: LucideIcons.percent,
+                  accent: AppColors.success,
+                ),
+              ),
+            ],
+          ),
+          if (s.laborProfit > 0) ...[
+            const SizedBox(height: 10),
+            _ProfitMetricCard(
+              title: 'Service / Labor Profit (tracked separately)',
+              value: s.laborProfit.toCurrency(),
+              icon: LucideIcons.wrench,
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Future<void> _selectDateRange() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      initialDateRange: _dateRange,
-    );
-    if (picked != null) {
-      setState(() => _dateRange = picked);
+  Widget _buildProductList(List<ProductSalesData> products) {
+    final theme = Theme.of(context);
+    if (products.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+        child: EmptyStateView(
+          icon: LucideIcons.trendingUp,
+          title: 'No profit data available',
+          subtitle: 'Make some sales in this range to see profit by product.',
+        ),
+      );
     }
+    // Rank by profit — the report's lens (provider ranks by units sold).
+    final ranked = [...products]
+      ..sort((a, b) => b.totalProfit.compareTo(a.totalProfit));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          for (final p in ranked)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _ProductProfitRow(product: p, theme: theme),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportCsv() async {
+    final products =
+        await ref.read(topSellingProductsProvider(_topParams).future);
+    if (!mounted) return;
+    if (products.isEmpty) {
+      context.showSnackBar('No profit data to export in this range');
+      return;
+    }
+    final d = DateFormat('yyyy-MM-dd');
+    final name = 'profit_${d.format(_startDate)}_to_${d.format(_endDate)}.csv';
+    if (!mounted) return;
+    await saveReportCsv(context, buildProfitReportCsv(products), name);
   }
 }
 
-/// Small outlined "Change" pill in the date strip.
-class _ChangeButton extends StatelessWidget {
-  const _ChangeButton({required this.onTap});
-  final VoidCallback onTap;
+/// One product row in the profit-by-product list.
+class _ProductProfitRow extends StatelessWidget {
+  const _ProductProfitRow({required this.product, required this.theme});
+
+  final ProductSalesData product;
+  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final border =
-        dark ? AppColors.darkInputBorder : const Color(0xFFD9DEDD);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.pencil, size: 12, color: theme.colorScheme.primary),
-            const SizedBox(width: 4),
-            Text(
-              'Change',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
+    final isDark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return AppCard(
+      radius: 12,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${product.quantitySold} sold · ${product.totalRevenue.toCurrency()} rev · ${product.totalCost.toCurrency()} cost',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: muted,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '+${product.totalProfit.toCurrency()}',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: AppColors.successText(isDark),
+            ),
+          ),
+        ],
       ),
     );
   }

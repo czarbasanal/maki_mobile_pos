@@ -16,6 +16,12 @@ class MechanicEntity extends Equatable {
   /// collection so historical records keep matching.
   final bool isActive;
 
+  /// Optional street/shop address. Null when not provided.
+  final String? address;
+
+  /// Optional contact number (free-text — formats vary). Null when not provided.
+  final String? contactNumber;
+
   final DateTime createdAt;
   final DateTime? updatedAt;
   final String? createdBy;
@@ -26,6 +32,8 @@ class MechanicEntity extends Equatable {
     required this.name,
     required this.isActive,
     required this.createdAt,
+    this.address,
+    this.contactNumber,
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
@@ -35,15 +43,22 @@ class MechanicEntity extends Equatable {
     String? id,
     String? name,
     bool? isActive,
+    String? address,
+    String? contactNumber,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createdBy,
     String? updatedBy,
+    bool clearAddress = false,
+    bool clearContactNumber = false,
   }) {
     return MechanicEntity(
       id: id ?? this.id,
       name: name ?? this.name,
       isActive: isActive ?? this.isActive,
+      address: clearAddress ? null : (address ?? this.address),
+      contactNumber:
+          clearContactNumber ? null : (contactNumber ?? this.contactNumber),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
@@ -65,6 +80,8 @@ class MechanicEntity extends Equatable {
         id,
         name,
         isActive,
+        address,
+        contactNumber,
         createdAt,
         updatedAt,
         createdBy,
