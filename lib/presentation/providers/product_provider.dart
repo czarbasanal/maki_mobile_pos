@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
+import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/data/repositories/product_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
+import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/create_product_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/deactivate_product_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/product/update_product_usecase.dart';
@@ -14,6 +16,18 @@ import 'package:maki_mobile_pos/services/activity_logger.dart';
 /// Provides the ProductRepository instance.
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
   return ProductRepositoryImpl(firestore: ref.watch(firestoreProvider));
+});
+
+/// Admin-only cross-product price-change report for a date range: the raw
+/// changes (collection-group query) mapped to delta rows, newest-first.
+final priceChangeReportProvider = FutureProvider.autoDispose
+    .family<List<PriceChangeRow>, DateRangeParams>((ref, params) async {
+  final repo = ref.watch(productRepositoryProvider);
+  final changes = await repo.getPriceChangesInRange(
+    startDate: params.startDate,
+    endDate: params.endDate,
+  );
+  return priceChangeRowsInRange(changes);
 });
 
 // ==================== PRODUCT QUERIES ====================
