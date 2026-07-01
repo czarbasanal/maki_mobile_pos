@@ -76,7 +76,9 @@ class SaleRepositoryImpl implements SaleRepository {
 
         // Atomically subtract stock for each product line. Labor lines are not
         // in sale.items and never touch stock. Blind increment — overselling
-        // stays allowed (stock may go negative), matching prior behavior.
+        // stays allowed (stock may go negative), matching prior behavior. A
+        // missing product doc aborts the whole sale (all-or-nothing); safe
+        // because products are soft-deleted (isActive:false), never removed.
         if (decrementStock) {
           for (final item in sale.items) {
             transaction.update(_productsRef.doc(item.productId), {

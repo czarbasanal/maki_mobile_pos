@@ -156,25 +156,6 @@ void main() {
                 isActive: true,
                 createdAt: DateTime.now(),
               ));
-      when(() => mockProductRepo.updateStock(
-            productId: any(named: 'productId'),
-            quantityChange: any(named: 'quantityChange'),
-            updatedBy: any(named: 'updatedBy'),
-            updatedByName: any(named: 'updatedByName'),
-          )).thenAnswer((_) async => ProductEntity(
-            id: 'prod-1',
-            sku: 'SKU-001',
-            name: 'Test Product',
-            costCode: 'NBF',
-            cost: 60,
-            price: 100,
-            quantity: 98,
-            reorderLevel: 10,
-            unit: 'pcs',
-            isActive: true,
-            createdAt: DateTime.now(),
-          ));
-
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true);
@@ -239,25 +220,6 @@ void main() {
                 isActive: true,
                 createdAt: DateTime.now(),
               ));
-      when(() => mockProductRepo.updateStock(
-            productId: any(named: 'productId'),
-            quantityChange: any(named: 'quantityChange'),
-            updatedBy: any(named: 'updatedBy'),
-            updatedByName: any(named: 'updatedByName'),
-          )).thenAnswer((_) async => ProductEntity(
-            id: 'prod-1',
-            sku: 'SKU-001',
-            name: 'Test Product',
-            costCode: 'NBF',
-            cost: 60,
-            price: 100,
-            quantity: 98,
-            reorderLevel: 10,
-            unit: 'pcs',
-            isActive: true,
-            createdAt: DateTime.now(),
-          ));
-
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true, reason: result.errorMessage);

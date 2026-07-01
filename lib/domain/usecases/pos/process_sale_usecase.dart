@@ -6,10 +6,9 @@ import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 ///
 /// This orchestrates:
 /// 1. Validate cart and payment
-/// 2. Generate sale number
-/// 3. Create sale record
-/// 4. Update product inventory
-/// 5. Mark draft as converted (if applicable)
+/// 2. Create the sale — the sale number, sale doc, items, and the per-item
+///    stock decrement are one atomic transaction in the repository (createSale)
+/// 3. Mark the source draft converted (if applicable)
 class ProcessSaleUseCase {
   final SaleRepository _saleRepository;
   final ProductRepository _productRepository;
@@ -190,7 +189,6 @@ class ProcessSaleUseCase {
 
     return issues;
   }
-
 }
 
 /// Result of processing a sale.
