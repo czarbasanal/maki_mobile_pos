@@ -60,23 +60,14 @@ class ProcessSaleUseCase {
         createdSale = await _saleRepository.createSale(
           sale.copyWith(saleNumber: ''),
           id: checkoutId,
+          decrementStock: updateInventory,
         );
       } on DuplicateSaleException {
         // Already recorded — a retry of a checkout that had actually committed.
         return _handleAlreadyRecorded(sale, checkoutId);
       }
 
-      // 4. Update inventory
-      if (updateInventory) {
-        final stockWarnings = await _updateInventory(
-          sale.items,
-          createdSale.cashierId,
-          updatedByName: createdSale.cashierName,
-        );
-        warnings.addAll(stockWarnings);
-      }
-
-      // 5. Mark the source draft converted (if any)
+      // 4. Mark the source draft converted (if any)
       await _reconcileDraft(sale, createdSale.id, warnings);
 
       return ProcessSaleResult(
@@ -200,28 +191,6 @@ class ProcessSaleUseCase {
     return issues;
   }
 
-  /// Updates inventory for all items in the sale.
-  /// Returns a list of warnings for any items that failed to update.
-  Future<List<String>> _updateInventory(
-    List<SaleItemEntity> items,
-    String updatedBy, {
-    String? updatedByName,
-  }) async {
-    final warnings = <String>[];
-    for (final item in items) {
-      try {
-        await _productRepository.updateStock(
-          productId: item.productId,
-          quantityChange: -item.quantity, // Negative to reduce stock
-          updatedBy: updatedBy,
-          updatedByName: updatedByName,
-        );
-      } catch (e) {
-        warnings.add('Stock update failed for ${item.sku}: $e');
-      }
-    }
-    return warnings;
-  }
 }
 
 /// Result of processing a sale.

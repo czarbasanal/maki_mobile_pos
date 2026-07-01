@@ -49,7 +49,7 @@ void main() {
     );
     when(() => sales.generateSaleNumber(any()))
         .thenAnswer((_) async => 'SALE-1');
-    when(() => sales.createSale(any(), id: any(named: 'id'))).thenAnswer(
+    when(() => sales.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock'))).thenAnswer(
         (inv) async =>
             (inv.positionalArguments.first as SaleEntity).copyWith(id: 'sale-1'));
     when(() => products.getProductById(any())).thenAnswer((_) async => null);
