@@ -598,9 +598,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   ? null
                                   : _existingProduct?.imageUrl,
                               pendingBytes: _pendingImageBytes,
+                              // Every role that can open this form may manage
+                              // the image: admin + staff (create AND edit),
+                              // cashier (name+image tier).
                               enabled: userRole == UserRole.admin ||
-                                  isNameOnly ||
-                                  (userRole == UserRole.staff && isCreating),
+                                  userRole == UserRole.staff ||
+                                  isNameOnly,
                               onChanged: (bytes, {required removed}) {
                                 setState(() {
                                   if (removed) {
@@ -1081,6 +1084,33 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         } else if (userRole == UserRole.staff) {
           // Staff: update everything EXCEPT price, cost, costCode, supplierId
           // Keep original price, cost, costCode, and supplier
+          // Image: same upload-then-write flow as the admin branch.
+          String? newImageUrl;
+          var clearImage = false;
+          if (_pendingImageBytes != null) {
+            try {
+              final storage = ref.read(productImageStorageServiceProvider);
+              newImageUrl = await storage.upload(
+                productId: _existingProduct!.id,
+                bytes: _pendingImageBytes!,
+              );
+            } catch (_) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Image upload failed — product saved without image.',
+                    ),
+                  ),
+                );
+              }
+            }
+          } else if (_imageMarkedForRemoval) {
+            final storage = ref.read(productImageStorageServiceProvider);
+            await storage.delete(productId: _existingProduct!.id);
+            clearImage = true;
+          }
+
           final product = _existingProduct!.copyWith(
             name: _nameController.text.trim(),
             // Preserve original price, cost, costCode
@@ -1102,6 +1132,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
+            imageUrl: newImageUrl,
+            clearImageUrl: clearImage,
           );
 
           final productOps = ref.read(productOperationsProvider.notifier);

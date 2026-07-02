@@ -11,6 +11,7 @@ import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/product_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_image_uploader.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cost_code_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
@@ -123,6 +124,30 @@ void main() {
     testWidgets('cashier CANNOT edit the SKU', (tester) async {
       await pumpForm(tester, UserRole.cashier);
       expect(skuField(tester).enabled, isFalse);
+    });
+  });
+
+  group('ProductFormScreen — image uploader gating', () {
+    ProductImageUploader uploader(WidgetTester tester) =>
+        tester.widget<ProductImageUploader>(
+            find.byType(ProductImageUploader));
+
+    // Regression (2026-07-02): staff editing an existing product had the
+    // uploader disabled ("cannot attach or capture image"), even though the
+    // rules allow staff imageUrl updates.
+    testWidgets('staff CAN manage the image when editing', (tester) async {
+      await pumpForm(tester, UserRole.staff);
+      expect(uploader(tester).enabled, isTrue);
+    });
+
+    testWidgets('cashier CAN manage the image when editing', (tester) async {
+      await pumpForm(tester, UserRole.cashier);
+      expect(uploader(tester).enabled, isTrue);
+    });
+
+    testWidgets('admin CAN manage the image when editing', (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      expect(uploader(tester).enabled, isTrue);
     });
   });
 
