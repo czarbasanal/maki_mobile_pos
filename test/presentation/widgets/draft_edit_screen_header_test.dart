@@ -2,12 +2,12 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/data/repositories/draft_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/draft_edit_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 
 void main() {
   UserEntity admin() => UserEntity(
@@ -19,7 +19,7 @@ void main() {
         createdAt: DateTime(2026, 7, 1),
       );
 
-  DraftEntity buildDraft() => DraftEntity(
+  DraftEntity buildDraft({String? model, DateTime? updatedAt}) => DraftEntity(
         id: 'draft-1',
         name: 'Plate ABC-123',
         items: const [
@@ -30,9 +30,11 @@ void main() {
             name: 'Brake Pad',
             unitPrice: 100.0,
             unitCost: 60.0,
-            quantity: 1,
+            quantity: 2,
           ),
         ],
+        motorcycleModel: model,
+        updatedAt: updatedAt,
         createdBy: 'cashier-1',
         createdByName: 'John Doe',
         createdAt: DateTime(2026, 5, 30),
@@ -50,38 +52,30 @@ void main() {
         child: const MaterialApp(home: DraftEditScreen(draftId: 'draft-1')),
       );
 
-  testWidgets('editor has Add parts and no longer has Edit in POS',
-      (tester) async {
+  Future<void> pump(WidgetTester tester, DraftEntity draft) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
-
-    await tester.pumpWidget(harness(buildDraft()));
+    await tester.pumpWidget(harness(draft));
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
+  }
 
-    expect(find.text('Add parts'), findsOneWidget);
-    expect(find.text('Edit in POS'), findsNothing);
+  testWidgets('info header shows the motorcycle model when set',
+      (tester) async {
+    await pump(tester, buildDraft(model: 'Yamaha Nmax'));
+    expect(find.text('Yamaha Nmax'), findsOneWidget);
+    expect(find.byIcon(LucideIcons.bike), findsOneWidget);
   });
 
-  testWidgets('tapping Add parts opens the product-search sheet',
+  testWidgets('info header hides the model line when no model is set',
       (tester) async {
-    tester.view.physicalSize = const Size(1200, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
+    await pump(tester, buildDraft());
+    expect(find.byIcon(LucideIcons.bike), findsNothing);
+  });
 
-    await tester.pumpWidget(harness(buildDraft()));
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump(const Duration(seconds: 1));
-
-    await tester.tap(find.text('Add parts'));
-    await tester.pumpAndSettle();
-    expect(find.byType(ProductSearchField), findsOneWidget);
-
-    // Sheet closes via the X in its upper-right corner (no Done button).
-    expect(find.text('Done'), findsNothing);
-    await tester.tap(find.byTooltip('Close'));
-    await tester.pumpAndSettle();
-    expect(find.byType(ProductSearchField), findsNothing);
+  testWidgets('Updated line uses the square-pen glyph', (tester) async {
+    await pump(tester, buildDraft(updatedAt: DateTime(2026, 6, 1)));
+    expect(find.byIcon(LucideIcons.squarePen), findsOneWidget);
   });
 }

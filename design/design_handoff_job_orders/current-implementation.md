@@ -8,6 +8,8 @@ Job Orders are motorcycle-service tickets. The feature **repurposes the old Draf
 
 Original design spec: `docs/superpowers/specs/2026-07-01-job-orders-from-drafts-design.md`.
 
+**Visual preview:** `reference_current-ui.html` (this folder) — a self-contained HTML reproduction of all 8 surfaces (POS entry point, list, empty state, New dialog, editor, add-parts sheet, delete dialog, reports), built from the real theme tokens (slate `#283E46`, canvas `#F6F5F3`, Figtree, card radius 18/14, flat buttons, Lucide icons). Open it in a browser or render it as an artifact to see the current UI before redesigning.
+
 ## Entry points & routes
 
 | Entry point | Where | Goes to |

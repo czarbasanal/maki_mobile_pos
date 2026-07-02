@@ -8,14 +8,21 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/pos/barcode_scanner_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/common/product_thumb.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Search field for finding products by name, SKU, or barcode.
+///
+/// Results render as a floating dropdown by default (POS register). With
+/// [inlineResults] the panel renders in-flow below the field instead — used
+/// by the add-parts sheet, whose fixed height gives results room to scroll.
 class ProductSearchField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final ValueChanged<ProductEntity> onProductSelected;
   final ValueChanged<String> onBarcodeScanned;
+  final bool inlineResults;
+  final String hintText;
 
   const ProductSearchField({
     super.key,
@@ -23,6 +30,8 @@ class ProductSearchField extends ConsumerStatefulWidget {
     required this.focusNode,
     required this.onProductSelected,
     required this.onBarcodeScanned,
+    this.inlineResults = false,
+    this.hintText = 'Search products or scan barcode...',
   });
 
   @override
@@ -30,7 +39,6 @@ class ProductSearchField extends ConsumerStatefulWidget {
 }
 
 class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
-  bool _showResults = false;
   final _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   Timer? _debounceTimer;
@@ -57,20 +65,15 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
 
     if (query.isEmpty) {
       _debounceTimer?.cancel();
-      setState(() {
-        _showResults = false;
-        _debouncedQuery = '';
-      });
+      setState(() => _debouncedQuery = '');
       _removeOverlay();
       return;
     }
 
     // Rebuild the field (e.g. the clear button) and ensure the dropdown is
     // present — but do NOT tear it down and re-insert it on every keystroke.
-    setState(() {
-      _showResults = widget.focusNode.hasFocus;
-    });
-    if (_showResults) _ensureOverlay();
+    setState(() {});
+    if (!widget.inlineResults && widget.focusNode.hasFocus) _ensureOverlay();
 
     // Debounce only the query the results provider watches; the overlay is
     // rebuilt in place (markNeedsBuild) rather than recreated, so typing stays
@@ -78,12 +81,17 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       if (!mounted || query != widget.controller.text.trim()) return;
-      _debouncedQuery = query;
-      _overlayEntry?.markNeedsBuild();
+      if (widget.inlineResults) {
+        setState(() => _debouncedQuery = query);
+      } else {
+        _debouncedQuery = query;
+        _overlayEntry?.markNeedsBuild();
+      }
     });
   }
 
   void _onFocusChanged() {
+    if (widget.inlineResults) return;
     if (!widget.focusNode.hasFocus) {
       // Delay to allow tap on result
       Future.delayed(const Duration(milliseconds: 200), () {
@@ -146,6 +154,22 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.inlineResults) {
+      // NOTE: inline mode requires a bounded-height parent (the add-parts
+      // sheet's fixed height) — the results panel is an Expanded scrollable.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildField(context),
+          const SizedBox(height: AppSpacing.sm + 2),
+          Expanded(child: _buildSearchResults()),
+        ],
+      );
+    }
+    return _buildField(context);
+  }
+
+  Widget _buildField(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     return CompositedTransformTarget(
@@ -161,8 +185,8 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
               child: TextField(
                 controller: widget.controller,
                 focusNode: widget.focusNode,
-                decoration: const InputDecoration(
-                  hintText: 'Search products or scan barcode...',
+                decoration: InputDecoration(
+                  hintText: widget.hintText,
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -226,10 +250,12 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
       );
     }
 
-    final searchResults = ref.watch(localProductSearchProvider(_debouncedQuery));
+    final searchResults =
+        ref.watch(localProductSearchProvider(_debouncedQuery));
 
     return Container(
-      constraints: const BoxConstraints(maxHeight: 300),
+      constraints:
+          widget.inlineResults ? null : const BoxConstraints(maxHeight: 300),
       child: searchResults.when(
         data: (products) {
           if (products.isEmpty) {
@@ -242,67 +268,14 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
             );
           }
 
-          final theme = Theme.of(context);
-          final muted = theme.colorScheme.onSurfaceVariant;
+          // Overlay: compact dropdown capped at 10. Inline: the sheet's
+          // full-height panel scrolls through every match (no silent cap).
           return ListView.builder(
-            shrinkWrap: true,
-            itemCount: products.length > 10 ? 10 : products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              final stockColor = product.isOutOfStock
-                  ? AppColors.error
-                  : product.isLowStock
-                      ? AppColors.warning
-                      : AppColors.success;
-              return ListTile(
-                leading: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: stockColor, width: 1.2),
-                  ),
-                  child: Center(
-                    child: Text(
-                      product.name[0].toUpperCase(),
-                      style: TextStyle(
-                        color: stockColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                title: Text(
-                  product.name,
-                  style: AppTextStyles.productName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  '${product.sku} • ${AppConstants.currencySymbol}'
-                  '${product.price.toStringAsFixed(2)}',
-                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                ),
-                trailing: Text(
-                  'Stock: ${product.quantity}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: product.isLowStock || product.isOutOfStock
-                        ? stockColor
-                        : muted,
-                    fontWeight: product.isLowStock || product.isOutOfStock
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
-                ),
-                enabled: !product.isOutOfStock,
-                onTap: product.isOutOfStock
-                    ? null
-                    : () {
-                        widget.onProductSelected(product);
-                        _removeOverlay();
-                      },
-              );
-            },
+            shrinkWrap: !widget.inlineResults,
+            itemCount: widget.inlineResults
+                ? products.length
+                : (products.length > 10 ? 10 : products.length),
+            itemBuilder: (context, index) => _buildResultRow(products[index]),
           );
         },
         loading: () => const Padding(
@@ -315,6 +288,95 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
             color: AppColors.error,
           ),
           title: Text('Error: $error'),
+        ),
+      ),
+    );
+  }
+
+  /// Elevated-theme result row: thumbnail · name + mono "SKU · N in stock" ·
+  /// price · filled + add button. Row tap and + both add the product.
+  Widget _buildResultRow(ProductEntity product) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final disabled = product.isOutOfStock;
+
+    void select() {
+      widget.onProductSelected(product);
+      if (!widget.inlineResults) _removeOverlay();
+    }
+
+    return Opacity(
+      opacity: disabled ? 0.45 : 1,
+      child: InkWell(
+        onTap: disabled ? null : select,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm + 4,
+            vertical: AppSpacing.sm + 2,
+          ),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: hairline)),
+          ),
+          child: Row(
+            children: [
+              ProductThumb(name: product.name, imageUrl: product.imageUrl),
+              const SizedBox(width: AppSpacing.sm + 4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                          fontSize: 14.5, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${product.sku} · ${product.quantity} in stock',
+                      style: TextStyle(
+                        fontFamily: AppTextStyles.monoFontFamily,
+                        fontSize: 11,
+                        color: muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                '${AppConstants.currencySymbol}'
+                '${product.price.toStringAsFixed(2)}',
+                style: const TextStyle(
+                    fontSize: 14.5, fontWeight: FontWeight.w700),
+              ),
+              // 30px rounded-square add button per the mock; hidden on
+              // out-of-stock rows so nothing dead reads as tappable.
+              if (!disabled) ...[
+                const SizedBox(width: AppSpacing.sm + 2),
+                InkWell(
+                  onTap: select,
+                  borderRadius: BorderRadius.circular(9),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(
+                      LucideIcons.plus,
+                      size: 16,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

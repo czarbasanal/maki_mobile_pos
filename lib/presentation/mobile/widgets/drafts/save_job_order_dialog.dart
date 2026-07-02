@@ -6,9 +6,9 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
 
-/// Details collected when opening a new Job Order (cart-independent).
-class NewJobOrderInput {
-  const NewJobOrderInput({
+/// Details collected when saving the register cart as a Job Order.
+class SaveJobOrderInput {
+  const SaveJobOrderInput({
     required this.label,
     this.model,
     this.mechanicId,
@@ -20,28 +20,48 @@ class NewJobOrderInput {
   final String? mechanicName;
 }
 
-/// Prompts for a new Job Order's label + motorcycle model + mechanic. Returns
-/// the input, or null if cancelled. Does not touch the register cart.
-Future<NewJobOrderInput?> showNewJobOrderDialog(BuildContext context) {
-  return showDialog<NewJobOrderInput>(
+/// Prompts for the ticket label + motorcycle model + mechanic when saving a
+/// cart as a Job Order. [initialModel]/[initialMechanicId] prefill from the
+/// cart so choices made in the Labor & Service section carry over. Returns
+/// the input, or null if cancelled.
+Future<SaveJobOrderInput?> showSaveJobOrderDialog(
+  BuildContext context, {
+  String? initialModel,
+  String? initialMechanicId,
+  String? initialMechanicName,
+}) {
+  return showDialog<SaveJobOrderInput>(
     context: context,
-    barrierColor: AppDialog.scrimColor(
-        Theme.of(context).brightness == Brightness.dark),
-    builder: (_) => const _NewJobOrderDialog(),
+    barrierColor:
+        AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
+    builder: (_) => _SaveJobOrderDialog(
+      initialModel: initialModel,
+      initialMechanicId: initialMechanicId,
+      initialMechanicName: initialMechanicName,
+    ),
   );
 }
 
-class _NewJobOrderDialog extends ConsumerStatefulWidget {
-  const _NewJobOrderDialog();
+class _SaveJobOrderDialog extends ConsumerStatefulWidget {
+  const _SaveJobOrderDialog({
+    this.initialModel,
+    this.initialMechanicId,
+    this.initialMechanicName,
+  });
+  final String? initialModel;
+  final String? initialMechanicId;
+  final String? initialMechanicName;
+
   @override
-  ConsumerState<_NewJobOrderDialog> createState() => _NewJobOrderDialogState();
+  ConsumerState<_SaveJobOrderDialog> createState() =>
+      _SaveJobOrderDialogState();
 }
 
-class _NewJobOrderDialogState extends ConsumerState<_NewJobOrderDialog> {
+class _SaveJobOrderDialogState extends ConsumerState<_SaveJobOrderDialog> {
   final _labelController = TextEditingController();
-  String? _model;
-  String? _mechanicId;
-  String? _mechanicName;
+  late String? _model = widget.initialModel;
+  late String? _mechanicId = widget.initialMechanicId;
+  late String? _mechanicName = widget.initialMechanicName;
 
   @override
   void dispose() {
@@ -52,8 +72,8 @@ class _NewJobOrderDialogState extends ConsumerState<_NewJobOrderDialog> {
   @override
   Widget build(BuildContext context) {
     return AppDialog(
-      title: 'New Job Order',
-      leadingIcon: LucideIcons.clipboardList,
+      title: 'Save as Job Order',
+      leadingIcon: LucideIcons.clipboardPlus,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -84,7 +104,7 @@ class _NewJobOrderDialogState extends ConsumerState<_NewJobOrderDialog> {
       ),
       actions: [
         appDialogCancel(context, 'Cancel', onTap: () => Navigator.pop(context)),
-        appDialogPrimary(context, 'Create', onTap: () {
+        appDialogPrimary(context, 'Save', onTap: () {
           final label = _labelController.text.trim();
           if (label.isEmpty) {
             context.showWarningSnackBar('Enter a customer or plate label');
@@ -92,7 +112,7 @@ class _NewJobOrderDialogState extends ConsumerState<_NewJobOrderDialog> {
           }
           Navigator.pop(
             context,
-            NewJobOrderInput(
+            SaveJobOrderInput(
               label: label,
               model: _model,
               mechanicId: _mechanicId,

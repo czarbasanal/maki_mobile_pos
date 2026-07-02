@@ -40,6 +40,15 @@ void main() {
   }
 
   group('CartNotifier', () {
+    test('setMotorcycleModel(null) clears the model', () {
+      final notifier = container.read(cartProvider.notifier);
+      notifier.setMotorcycleModel('Nmax');
+      expect(container.read(cartProvider).motorcycleModel, 'Nmax');
+
+      notifier.setMotorcycleModel(null);
+      expect(container.read(cartProvider).motorcycleModel, isNull);
+    });
+
     test('initial state should be empty', () {
       final state = container.read(cartProvider);
 

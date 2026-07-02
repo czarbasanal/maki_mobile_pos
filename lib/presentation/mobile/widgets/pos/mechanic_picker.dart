@@ -16,13 +16,17 @@ class MechanicPicker extends ConsumerWidget {
     super.key,
     this.selectedMechanicId,
     required this.onChanged,
+    this.nonePlaceholder = '— None —',
   });
 
   /// Currently-assigned mechanic id (null = none).
   final String? selectedMechanicId;
 
-  /// Reports the chosen mechanic; null means "— None —" was picked.
+  /// Reports the chosen mechanic; null means the placeholder was picked.
   final void Function(MechanicEntity? mechanic) onChanged;
+
+  /// Label for the no-mechanic option (e.g. "— Optional —" at create).
+  final String nonePlaceholder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,9 +46,9 @@ class MechanicPicker extends ConsumerWidget {
             prefixIcon: Icon(LucideIcons.wrench),
           ),
           items: [
-            const DropdownMenuItem<String>(
+            DropdownMenuItem<String>(
               value: null,
-              child: Text('— None —'),
+              child: Text(nonePlaceholder),
             ),
             for (final m in mechanics)
               DropdownMenuItem<String>(value: m.id, child: Text(m.name)),

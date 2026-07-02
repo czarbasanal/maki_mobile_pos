@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
+import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/motorcycle_model_provider.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
@@ -56,6 +59,10 @@ void main() {
         overrides: [
           activeDraftsProvider.overrideWith((ref) => Stream.value([draft()])),
           currentUserProvider.overrideWith((ref) => Stream.value(admin())),
+          activeMotorcycleModelsProvider
+              .overrideWith((ref) => Stream.value(const [])),
+          activeMechanicsProvider
+              .overrideWith((ref) => Stream.value(const [])),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -63,10 +70,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('shows the Job Orders title and a New Job Order FAB',
+  testWidgets('shows the Job Orders title with app-bar create only, no FAB',
       (tester) async {
     await pump(tester);
     expect(find.text('Job Orders'), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byIcon(LucideIcons.plus), findsOneWidget);
+    expect(find.byIcon(LucideIcons.refreshCw), findsNothing);
+  });
+
+  testWidgets('app-bar plus opens the New Job Order dialog', (tester) async {
+    await pump(tester);
+    await tester.tap(find.byIcon(LucideIcons.plus));
+    await tester.pumpAndSettle();
     expect(find.text('New Job Order'), findsOneWidget);
   });
 

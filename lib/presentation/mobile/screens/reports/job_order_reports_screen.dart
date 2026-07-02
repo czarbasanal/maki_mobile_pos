@@ -89,12 +89,33 @@ class _JobOrderReportsScreenState extends ConsumerState<JobOrderReportsScreen> {
             child: SegmentedButton<_JobOrderView>(
               segments: const [
                 ButtonSegment(
-                    value: _JobOrderView.models, label: Text('Models')),
+                  value: _JobOrderView.models,
+                  icon: Icon(LucideIcons.bike, size: 16),
+                  label: Text('Models'),
+                ),
                 ButtonSegment(
-                    value: _JobOrderView.mechanics, label: Text('Mechanics')),
+                  value: _JobOrderView.mechanics,
+                  icon: Icon(LucideIcons.wrench, size: 16),
+                  label: Text('Mechanics'),
+                ),
               ],
               selected: {_view},
               onSelectionChanged: (s) => setState(() => _view = s.first),
+              // Keep the segment glyphs (mock shows bike/wrench, no check).
+              showSelectedIcon: false,
+              // Per the job-orders handoff mock: this screen's selected
+              // segment is primary-tinted (slate@10% light / gold@16% dark).
+              // The app-wide green segmented theme is untouched — it remains
+              // the selected style on payment/stock/discount dialogs.
+              style: SegmentedButton.styleFrom(
+                selectedBackgroundColor:
+                    Theme.of(context).colorScheme.primary.withValues(
+                          alpha: Theme.of(context).brightness == Brightness.dark
+                              ? 0.16
+                              : 0.10,
+                        ),
+                selectedForegroundColor: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
           if (_view == _JobOrderView.models)
@@ -118,8 +139,7 @@ class _JobOrderReportsScreenState extends ConsumerState<JobOrderReportsScreen> {
         padding: const EdgeInsets.all(16),
         child: ErrorStateView(
           message: 'Failed to load: $e',
-          onRetry: () =>
-              ref.invalidate(motorcycleModelReportProvider(_params)),
+          onRetry: () => ref.invalidate(motorcycleModelReportProvider(_params)),
         ),
       ),
       data: (r) => r.byModel.isEmpty
@@ -130,7 +150,7 @@ class _JobOrderReportsScreenState extends ConsumerState<JobOrderReportsScreen> {
           : Column(
               children: [
                 for (final m in r.byModel)
-                  _row(m.model, '${m.jobCount} jobs',
+                  _row(LucideIcons.bike, m.model, '${m.jobCount} jobs',
                       m.totalRevenue.toCurrency()),
               ],
             ),
@@ -160,40 +180,65 @@ class _JobOrderReportsScreenState extends ConsumerState<JobOrderReportsScreen> {
           : Column(
               children: [
                 for (final m in r.byMechanic)
-                  _row(m.mechanicName, '${m.jobCount} jobs',
+                  _row(LucideIcons.wrench, m.mechanicName, '${m.jobCount} jobs',
                       m.totalRevenue.toCurrency()),
               ],
             ),
     );
   }
 
-  Widget _row(String title, String sub, String value) => AppCard(
-        radius: AppRadius.md,
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(
-                    sub,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+  Widget _row(IconData glyph, String title, String sub, String value) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return AppCard(
+      radius: AppRadius.field,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.neutralTileFill(isDark),
+              borderRadius: BorderRadius.circular(11),
             ),
-            Text(value,
-                style: const TextStyle(fontWeight: FontWeight.w700)),
-          ],
-        ),
-      );
+            child: Icon(glyph,
+                size: 18, color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(
+                  sub,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _exportCsv() async {
     final d = DateFormat('yyyy-MM-dd');

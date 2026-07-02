@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
 import 'package:maki_mobile_pos/core/utils/motorcycle_model_report.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -41,5 +42,10 @@ void main() {
     expect(find.text('Models'), findsWidgets); // segment label
     expect(find.text('Mechanics'), findsWidgets); // segment label
     expect(find.text('Nmax'), findsOneWidget); // a model row
+
+    // Elevated redesign: segments carry icons, and each row leads with a
+    // glyph tile (bike segment + bike row glyph → at least two).
+    expect(find.byIcon(LucideIcons.bike), findsNWidgets(2));
+    expect(find.byIcon(LucideIcons.wrench), findsOneWidget); // segment icon
   });
 }
