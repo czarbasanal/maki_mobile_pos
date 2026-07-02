@@ -16,6 +16,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.d
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 
 /// Main POS screen for processing sales.
@@ -656,35 +657,49 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     }
 
     final nameController = TextEditingController();
+    String? pickedModel;
     showDialog(
       context: context,
       barrierColor: AppDialog.scrimColor(
           Theme.of(context).brightness == Brightness.dark),
-      builder: (context) => AppDialog(
-        title: 'Save as Draft',
-        leadingIcon: LucideIcons.save,
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Draft Name',
-            hintText: 'e.g., Table 5, Customer waiting',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setLocal) => AppDialog(
+          title: 'Save as Job Order',
+          leadingIcon: LucideIcons.save,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Customer / plate',
+                  hintText: 'e.g. Juan / ABC-123',
+                ),
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 12),
+              MotorcycleModelPicker(
+                selectedModel: pickedModel,
+                onChanged: (m) => setLocal(() => pickedModel = m),
+              ),
+            ],
           ),
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
+          actions: [
+            appDialogCancel(context, 'Cancel',
+                onTap: () => Navigator.pop(context)),
+            appDialogPrimary(context, 'Save', onTap: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) {
+                context.showWarningSnackBar('Enter a customer or plate label');
+                return;
+              }
+              ref.read(cartProvider.notifier).setMotorcycleModel(pickedModel);
+              Navigator.pop(context);
+              _saveDraft(name);
+            }),
+          ],
         ),
-        actions: [
-          appDialogCancel(context, 'Cancel',
-              onTap: () => Navigator.pop(context)),
-          appDialogPrimary(context, 'Save', onTap: () {
-            final name = nameController.text.trim();
-            if (name.isEmpty) {
-              context.showWarningSnackBar('Please enter a draft name');
-              return;
-            }
-            Navigator.pop(context);
-            _saveDraft(name);
-          }),
-        ],
       ),
     );
   }
@@ -713,7 +728,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
 
     if (result != null && mounted) {
-      context.showSuccessSnackBar(isUpdate ? 'Draft updated' : 'Draft saved');
+      context.showSuccessSnackBar(isUpdate ? 'Job order updated' : 'Job order saved');
       cartNotifier.reset();
     }
   }

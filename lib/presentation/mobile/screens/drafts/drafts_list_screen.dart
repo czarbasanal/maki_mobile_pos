@@ -9,6 +9,8 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_detail_sheet.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_list_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/new_job_order_dialog.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen displaying all active drafts.
@@ -35,7 +37,40 @@ class DraftsListScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(activeDraftsProvider),
         ),
       ),
+      floatingActionButton: SettingsAddFab(
+        label: 'New Job Order',
+        onPressed: () => _createJobOrder(context, ref),
+      ),
     );
+  }
+
+  Future<void> _createJobOrder(BuildContext context, WidgetRef ref) async {
+    final input = await showNewJobOrderDialog(context);
+    if (input == null) return;
+    final user = ref.read(currentUserProvider).valueOrNull;
+    if (user == null) return;
+    final draft = DraftEntity(
+      id: '',
+      name: input.label,
+      items: const [],
+      motorcycleModel: input.model,
+      mechanicId: input.mechanicId,
+      mechanicName: input.mechanicName,
+      createdBy: user.id,
+      createdByName: user.displayName,
+      createdAt: DateTime.now(),
+    );
+    if (!context.mounted) return;
+    final created = await context.runWithWaiting(
+      () => ref
+          .read(draftOperationsProvider.notifier)
+          .createDraft(actor: user, draft: draft),
+      message: 'Creating…',
+    );
+    if (created != null && context.mounted) {
+      context.pushNamed(RouteNames.draftEdit,
+          pathParameters: {'id': created.id});
+    }
   }
 
   Widget _buildDraftsList(
