@@ -61,17 +61,11 @@ final allDraftsProvider =
   );
 });
 
-/// Provides active draft count.
-final activeDraftCountProvider = FutureProvider<int>((ref) async {
-  final repository = ref.watch(draftRepositoryProvider);
-  return repository.getActiveDraftCount();
-});
-
-/// Provides active draft count for a specific user.
-final userActiveDraftCountProvider =
-    FutureProvider.family<int, String>((ref, userId) async {
-  final repository = ref.watch(draftRepositoryProvider);
-  return repository.getActiveDraftCount(createdBy: userId);
+/// Open job-order count for the POS badge, derived from the live
+/// [activeDraftsProvider] stream so it can never go stale (a one-shot
+/// fetch here previously kept showing billed-out tickets until restart).
+final activeDraftCountProvider = Provider<AsyncValue<int>>((ref) {
+  return ref.watch(activeDraftsProvider).whenData((drafts) => drafts.length);
 });
 
 // ==================== USE CASE PROVIDERS ====================
@@ -229,8 +223,8 @@ class DraftOperationsNotifier extends StateNotifier<AsyncValue<void>> {
   }
 
   void _invalidateDraftProviders() {
+    // The badge count derives from this stream, so it refreshes too.
     _ref.invalidate(activeDraftsProvider);
-    _ref.invalidate(activeDraftCountProvider);
   }
 }
 

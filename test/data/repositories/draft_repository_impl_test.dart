@@ -107,15 +107,6 @@ void main() {
       expect(retrieved, isNull);
     });
 
-    test('getActiveDraftCount should return correct count', () async {
-      await repository.createDraft(createTestDraft(name: 'Draft 1'));
-      await repository.createDraft(createTestDraft(name: 'Draft 2'));
-
-      final count = await repository.getActiveDraftCount();
-
-      expect(count, 2);
-    });
-
     // ==================== LABOR + MECHANIC ROUND-TRIP ====================
 
     DraftEntity createServiceDraft() {

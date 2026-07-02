@@ -174,20 +174,4 @@ abstract class DraftRepository {
   /// Returns the number of drafts deleted.
   /// Use for cleanup of old converted drafts.
   Future<int> deleteOldConvertedDrafts(DateTime olderThan);
-
-  // ==================== UTILITY ====================
-
-  /// Gets the count of active (non-converted) drafts.
-  ///
-  /// [createdBy] - Optional filter by creator
-  ///
-  /// Returns the count of active drafts.
-  Future<int> getActiveDraftCount({String? createdBy});
-
-  /// Gets the count of all drafts.
-  ///
-  /// [includeConverted] - Whether to include converted drafts
-  ///
-  /// Returns the total draft count.
-  Future<int> getTotalDraftCount({bool includeConverted = false});
 }
