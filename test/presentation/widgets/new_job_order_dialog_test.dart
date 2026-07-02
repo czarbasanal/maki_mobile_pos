@@ -33,6 +33,9 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
+    // Mechanic is optional at create — the picker says so.
+    expect(find.text('— Optional —'), findsOneWidget);
+
     // Empty label → blocked (dialog stays open, no result yet).
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();

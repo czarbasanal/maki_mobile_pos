@@ -13,7 +13,9 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 import 'package:uuid/uuid.dart';
@@ -50,10 +52,18 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   Future<void> _persist(DraftEntity next) async {
     setState(() => _working = next);
     final actor = ref.read(currentUserProvider).valueOrNull;
-    if (actor == null) return;
-    await ref
-        .read(draftOperationsProvider.notifier)
-        .updateDraft(actor: actor, draft: next);
+    final updated = actor == null
+        ? null
+        : await ref
+            .read(draftOperationsProvider.notifier)
+            .updateDraft(actor: actor, draft: next);
+    // The edit rendered optimistically; if the write failed, resync to the
+    // server copy instead of letting the screen lie about the ticket.
+    if (updated == null && mounted) {
+      setState(() => _working = null);
+      ref.invalidate(draftByIdProvider(widget.draftId));
+      context.showErrorSnackBar('Failed to save changes — ticket reloaded');
+    }
   }
 
   void _onMechanicChanged(String? id, String? name) {
@@ -70,8 +80,8 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       [LaborLineEntity? existing]) async {
     final result = await showDialog<LaborLineEntity>(
       context: context,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
+      barrierColor:
+          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
       builder: (_) => _LaborLineDialog(line: existing),
     );
     if (result == null) return;
@@ -84,9 +94,6 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   Future<void> _removeLabor(DraftEntity draft, String lineId) async {
     await _persist(draft.removeLaborLine(lineId));
   }
-
-  Future<void> _changeQty(DraftEntity draft, SaleItemEntity item, int delta) =>
-      _persist(draft.updateItemQuantity(item.id, item.quantity + delta));
 
   Future<void> _removeItem(DraftEntity draft, String itemId) =>
       _persist(draft.removeItem(itemId));
@@ -200,9 +207,8 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             Builder(builder: (context) {
               final muted = theme.colorScheme.onSurfaceVariant;
               final isDark = theme.brightness == Brightness.dark;
-              final hairline = isDark
-                  ? AppColors.darkHairline
-                  : AppColors.lightHairline;
+              final hairline =
+                  isDark ? AppColors.darkHairline : AppColors.lightHairline;
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.md),
@@ -212,14 +218,38 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Motorcycle model — the bill-out gate, so it leads the
+                    // header in primary color.
+                    if (draft.motorcycleModel?.isNotEmpty ?? false) ...[
+                      Row(
+                        children: [
+                          Icon(LucideIcons.bike,
+                              size: 15, color: theme.colorScheme.primary),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              draft.motorcycleModel!,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     Row(
                       children: [
                         Icon(LucideIcons.clock, size: 14, color: muted),
                         const SizedBox(width: AppSpacing.sm),
                         Text(
                           'Created ${dateFormat.format(draft.createdAt)}',
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: muted),
+                          style:
+                              theme.textTheme.bodySmall?.copyWith(color: muted),
                         ),
                       ],
                     ),
@@ -227,7 +257,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(LucideIcons.edit, size: 14, color: muted),
+                          Icon(LucideIcons.squarePen, size: 14, color: muted),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
                             'Updated ${dateFormat.format(draft.updatedAt!)}',
@@ -316,93 +346,37 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     );
   }
 
+  /// Parts render with the same card as the POS cart (name/✕, SKU · price,
+  /// cost pill, qty stepper, per-item discount, swipe-to-delete) — one card
+  /// language wherever parts are edited.
   Widget _buildDraftItem(DraftEntity draft, SaleItemEntity item) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
+    return CartItemTile(
+      item: item,
+      discountType: draft.discountType,
+      onQuantityChanged: (qty) =>
+          _persist(draft.updateItemQuantity(item.id, qty)),
+      onDiscountTap: () => _showItemDiscountDialog(draft, item),
+      onRemove: () => _removeItem(draft, item.id),
+    );
+  }
 
-    return AppCard(
-      radius: AppRadius.md,
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: 6,
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm + 4),
-      child: Row(
-        children: [
-          // Quantity badge — outlined, no fill (1.4px, radius 10)
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(
-                color: theme.colorScheme.primary,
-                width: 1.4,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                '${item.quantity}x',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm + 4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                      fontSize: 14.5, fontWeight: FontWeight.w600),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'SKU: ${item.sku}',
-                  style: TextStyle(
-                    fontFamily: AppTextStyles.monoFontFamily,
-                    fontSize: 11.5,
-                    color: muted,
-                  ),
-                ),
-                Text(
-                  '${item.unitPrice.toCurrency()} each',
-                  style: TextStyle(fontSize: 12, color: muted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            item.grossAmount.toCurrency(),
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-          ),
-          IconButton(
-            icon: const Icon(LucideIcons.minus, size: 16),
-            visualDensity: VisualDensity.compact,
-            tooltip: 'Decrease quantity',
-            onPressed: () => _changeQty(draft, item, -1),
-          ),
-          IconButton(
-            icon: const Icon(LucideIcons.plus, size: 16),
-            visualDensity: VisualDensity.compact,
-            tooltip: 'Increase quantity',
-            onPressed: () => _changeQty(draft, item, 1),
-          ),
-          IconButton(
-            icon: const Icon(LucideIcons.x, size: 16),
-            visualDensity: VisualDensity.compact,
-            tooltip: 'Remove part',
-            onPressed: () => _removeItem(draft, item.id),
-          ),
-        ],
+  void _showItemDiscountDialog(DraftEntity draft, SaleItemEntity item) {
+    // Same construction as the POS register's discount flow; writes go
+    // through the ticket's persist path instead of the cart.
+    final hasOtherDiscounts =
+        draft.items.any((other) => other.id != item.id && other.hasDiscount);
+    showDialog(
+      context: context,
+      builder: (context) => DiscountInputDialog(
+        itemName: item.name,
+        currentDiscount: item.discountValue,
+        discountType: draft.discountType,
+        maxAmount: item.grossAmount,
+        hasOtherDiscounts: hasOtherDiscounts,
+        onApply: (value) =>
+            _persist((_working ?? draft).applyItemDiscount(item.id, value)),
+        onTypeChanged: (type) =>
+            _persist((_working ?? draft).changeDiscountType(type)),
       ),
     );
   }
@@ -410,8 +384,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   Widget _buildLaborSection(DraftEntity draft) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final muted = theme.colorScheme.onSurfaceVariant;
 
     return Container(
@@ -504,8 +477,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   Widget _buildSummarySection(DraftEntity draft) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -518,15 +490,13 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           children: [
             SummaryRow(
               label: 'Subtotal',
-              value:
-                  draft.subtotal.toCurrency(),
+              value: draft.subtotal.toCurrency(),
             ),
             if (draft.totalDiscount > 0) ...[
               const SizedBox(height: 4),
               SummaryRow(
                 label: 'Discount',
-                value:
-                    '-${draft.totalDiscount.toCurrency()}',
+                value: '-${draft.totalDiscount.toCurrency()}',
                 valueColor: AppColors.successText(isDark),
               ),
             ],
@@ -536,8 +506,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                 label: draft.laborLines.length == 1
                     ? 'Labor (1 service)'
                     : 'Labor (${draft.laborLines.length} services)',
-                value:
-                    draft.laborSubtotal.toCurrency(),
+                value: draft.laborSubtotal.toCurrency(),
               ),
             ],
             // Total row: "Total" 15/700 + "(n items)" 12.5/500 muted inline;
@@ -593,8 +562,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed:
-                    draft.items.isEmpty ? null : () => _billOut(draft),
+                onPressed: draft.items.isEmpty ? null : () => _billOut(draft),
                 icon: const Icon(LucideIcons.shoppingCart),
                 label: const Text('Bill out'),
               ),
@@ -689,52 +657,88 @@ class _AddPartsSheetState extends ConsumerState<_AddPartsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final screenHeight = MediaQuery.of(context).size.height;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    // Fixed-height sheet with a scrollable in-flow results panel, so results
+    // always have room and "Done" stays pinned at the bottom. Clamped so the
+    // sheet + keyboard never exceed the screen on short devices.
+    final sheetHeight = (screenHeight * 0.62)
+        .clamp(0.0, screenHeight - bottomInset - 120)
+        .toDouble();
+
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md + bottomInset,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+      // Keyboard inset applied once, outside the fixed-height content.
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SizedBox(
+        height: sheetHeight,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm + 2,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Add parts',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              const Spacer(),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Done'),
+              const SizedBox(height: AppSpacing.sm + 6),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Add parts',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.x, size: 20),
+                    tooltip: 'Close',
+                    visualDensity: VisualDensity.compact,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: ProductSearchField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  inlineResults: true,
+                  hintText: 'Search name, SKU, or scan barcode',
+                  onProductSelected: (p) {
+                    widget.onProduct(p);
+                    _controller.clear();
+                    _focusNode.requestFocus();
+                  },
+                  onBarcodeScanned: (barcode) async {
+                    final p = await ref
+                        .read(productByBarcodeProvider(barcode).future);
+                    if (!context.mounted) return;
+                    if (p != null) {
+                      widget.onProduct(p);
+                    } else {
+                      context
+                          .showWarningSnackBar('Product not found: $barcode');
+                    }
+                  },
+                ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          ProductSearchField(
-            controller: _controller,
-            focusNode: _focusNode,
-            onProductSelected: (p) {
-              widget.onProduct(p);
-              _controller.clear();
-              _focusNode.requestFocus();
-            },
-            onBarcodeScanned: (barcode) async {
-              final p =
-                  await ref.read(productByBarcodeProvider(barcode).future);
-              if (!context.mounted) return;
-              if (p != null) {
-                widget.onProduct(p);
-              } else {
-                context.showWarningSnackBar('Product not found: $barcode');
-              }
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -826,8 +830,7 @@ class _LaborLineDialogState extends State<_LaborLineDialog> {
         ),
       ),
       actions: [
-        appDialogCancel(context, 'Cancel',
-            onTap: () => Navigator.pop(context)),
+        appDialogCancel(context, 'Cancel', onTap: () => Navigator.pop(context)),
         appDialogPrimary(context, widget.line == null ? 'Add' : 'Save',
             onTap: _submit),
       ],

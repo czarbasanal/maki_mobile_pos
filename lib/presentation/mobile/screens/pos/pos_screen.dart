@@ -13,6 +13,8 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/save_job_order_dialog.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/job_order_badge_button.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
@@ -61,7 +63,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             title: const Text('Point of Sale'),
             actions: [
               // Drafts button with badge
-              _buildDraftsButton(),
+              JobOrderBadgeButton(onPressed: _navigateToDrafts),
               // Clear cart button
               if (cart.isNotEmpty)
                 IconButton(
@@ -332,13 +334,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         subtitle: cart.laborLines.isEmpty
             ? Text(
                 'Optional — add mechanic labor',
-                style:
-                    theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 12),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: muted, fontSize: 12),
               )
             : Text(
                 '${cart.laborLines.length} service(s) · ${cart.laborSubtotal.toCurrency()}',
-                style:
-                    theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 12),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: muted, fontSize: 12),
               ),
         // Top inset gives the mechanic dropdown's floating "Mechanic" label
         // room above the field — at top:0 it was clipped (cut off).
@@ -349,6 +351,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           AppSpacing.md,
         ),
         children: [
+          MotorcycleModelPicker(
+            selectedModel: cart.motorcycleModel,
+            onChanged: (m) =>
+                ref.read(cartProvider.notifier).setMotorcycleModel(m),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           MechanicPicker(
             selectedMechanicId: cart.mechanicId,
             onChanged: (m) {
@@ -422,8 +430,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
     showDialog(
       context: context,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
+      barrierColor:
+          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
       builder: (context) => AppDialog(
         title: 'Add Labor / Service',
         leadingIcon: LucideIcons.wrench,
@@ -510,8 +518,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                   height: 50,
                   child: OutlinedButton.icon(
                     onPressed: canProceed ? _showSaveDraftDialog : null,
-                    icon: const Icon(LucideIcons.save, size: 18),
-                    label: const Text('Save Job Order'),
+                    icon: const Icon(LucideIcons.clipboardPlus, size: 18),
+                    // Scale down instead of wrapping — the label was cutting
+                    // off to two lines on narrow screens.
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Save Job Order', maxLines: 1),
+                    ),
                     style: OutlinedButton.styleFrom(shape: shape),
                   ),
                 ),
@@ -541,35 +554,6 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Drafts button with badge showing count.
-  ///
-  /// The Badge wraps the Icon (not the IconButton), so the count anchors
-  /// to the 24×24 icon corner instead of the 48×48 hit target — keeps the
-  /// number visually attached to the drafts glyph.
-  Widget _buildDraftsButton() {
-    final draftCount = ref.watch(activeDraftCountProvider);
-
-    return draftCount.when(
-      data: (count) => IconButton(
-        tooltip: 'Job Orders',
-        icon: Badge(
-          isLabelVisible: count > 0,
-          label: Text('$count'),
-          child: const Icon(LucideIcons.shoppingCart),
-        ),
-        onPressed: _navigateToDrafts,
-      ),
-      loading: () => IconButton(
-        icon: const Icon(LucideIcons.inbox),
-        onPressed: _navigateToDrafts,
-      ),
-      error: (_, __) => IconButton(
-        icon: const Icon(LucideIcons.inbox),
-        onPressed: _navigateToDrafts,
       ),
     );
   }
@@ -645,7 +629,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     if (ok) ref.read(cartProvider.notifier).reset();
   }
 
-  void _showSaveDraftDialog() {
+  Future<void> _showSaveDraftDialog() async {
     final cart = ref.read(cartProvider);
 
     // Cart was loaded from a draft — reuse the original title and skip
@@ -656,52 +640,23 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       return;
     }
 
-    final nameController = TextEditingController();
-    String? pickedModel;
-    showDialog(
-      context: context,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setLocal) => AppDialog(
-          title: 'Save as Job Order',
-          leadingIcon: LucideIcons.save,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Customer / plate',
-                  hintText: 'e.g. Juan / ABC-123',
-                ),
-                autofocus: true,
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              MotorcycleModelPicker(
-                selectedModel: pickedModel,
-                onChanged: (m) => setLocal(() => pickedModel = m),
-              ),
-            ],
-          ),
-          actions: [
-            appDialogCancel(context, 'Cancel',
-                onTap: () => Navigator.pop(context)),
-            appDialogPrimary(context, 'Save', onTap: () {
-              final name = nameController.text.trim();
-              if (name.isEmpty) {
-                context.showWarningSnackBar('Enter a customer or plate label');
-                return;
-              }
-              ref.read(cartProvider.notifier).setMotorcycleModel(pickedModel);
-              Navigator.pop(context);
-              _saveDraft(name);
-            }),
-          ],
-        ),
-      ),
+    // Prefilled from the cart so choices made in Labor & Service carry over.
+    final input = await showSaveJobOrderDialog(
+      context,
+      initialModel: cart.motorcycleModel,
+      initialMechanicId: cart.mechanicId,
+      initialMechanicName: cart.mechanicName,
     );
+    if (input == null || !mounted) return;
+
+    final notifier = ref.read(cartProvider.notifier);
+    notifier.setMotorcycleModel(input.model);
+    if (input.mechanicId == null) {
+      notifier.clearMechanic();
+    } else {
+      notifier.setMechanic(input.mechanicId!, input.mechanicName ?? '');
+    }
+    _saveDraft(input.label);
   }
 
   Future<void> _saveDraft(String name) async {
@@ -728,7 +683,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
 
     if (result != null && mounted) {
-      context.showSuccessSnackBar(isUpdate ? 'Job order updated' : 'Job order saved');
+      context.showSuccessSnackBar(
+          isUpdate ? 'Job order updated' : 'Job order saved');
       cartNotifier.reset();
     }
   }

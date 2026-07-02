@@ -8,10 +8,10 @@ import 'package:intl/intl.dart';
 
 /// Displays a single draft in the list, on the elevated theme.
 ///
-/// Neutral-by-default: every draft reads with the same muted `file-text` glyph
-/// in a neutral tile — no status/category color is invented. Color is reserved
-/// for the slate/gold primary (total, qty, Service-job badge, Load) and the red
-/// destructive delete.
+/// Neutral-by-default: every draft reads with the same muted `clipboard-list`
+/// glyph in a neutral tile — no status/category color is invented. Color is
+/// reserved for the slate/gold primary (total, qty, Service-job badge, Open)
+/// and the red destructive delete. The model chip stays neutral.
 class DraftListTile extends StatelessWidget {
   final DraftEntity draft;
   final VoidCallback onTap;
@@ -54,12 +54,10 @@ class DraftListTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: dark
-                      ? const Color(0x1F93A0A3)
-                      : const Color(0x0F283E46),
+                  color: AppColors.neutralTileFill(dark),
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(LucideIcons.shoppingCart, size: 20, color: muted),
+                child: Icon(LucideIcons.clipboardList, size: 20, color: muted),
               ),
               const SizedBox(width: AppSpacing.sm + 4),
               Expanded(
@@ -137,9 +135,51 @@ class DraftListTile extends StatelessWidget {
                     horizontal: AppSpacing.md,
                     vertical: AppSpacing.sm,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    Color? border,
+    Color? fill,
+  }) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(8),
+        border: border != null ? Border.all(color: border) : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          // Flexible: model names are free-form text and must ellipsize
+          // instead of overflowing the tile.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -168,40 +208,31 @@ class DraftListTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (draft.laborLines.isNotEmpty) ...[
+          if (draft.laborLines.isNotEmpty ||
+              (draft.motorcycleModel?.isNotEmpty ?? false))
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: theme.colorScheme.primary),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      LucideIcons.wrench,
-                      size: 12,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (draft.laborLines.isNotEmpty)
+                    _chip(
+                      icon: LucideIcons.wrench,
+                      label: 'Service job',
                       color: theme.colorScheme.primary,
+                      border: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Service job',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  if (draft.motorcycleModel?.isNotEmpty ?? false)
+                    _chip(
+                      icon: LucideIcons.bike,
+                      label: draft.motorcycleModel!,
+                      color: muted,
+                      fill: AppColors.neutralTileFill(isDark),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
-          ],
           ...previewItems.map((item) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
@@ -220,7 +251,13 @@ class DraftListTile extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.sm + 4),
                     Text(
-                      item.grossAmount.toCurrency(),
+                      // Net, so preview lines sum to the tile's total even
+                      // when a part carries a per-item discount.
+                      item
+                          .calculateNetAmount(
+                            isPercentage: draft.isPercentageDiscount,
+                          )
+                          .toCurrency(),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

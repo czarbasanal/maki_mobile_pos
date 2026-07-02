@@ -13,12 +13,17 @@ class EmptyStateView extends StatelessWidget {
   final String? subtitle;
   final Widget? action;
 
+  /// Renders the icon inside an 86px soft rounded square (elevated-theme
+  /// treatment) instead of the bare 64px glyph.
+  final bool tiled;
+
   const EmptyStateView({
     super.key,
     required this.icon,
     required this.title,
     this.subtitle,
     this.action,
+    this.tiled = false,
   });
 
   @override
@@ -30,7 +35,22 @@ class EmptyStateView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: theme.colorScheme.outline),
+            if (tiled)
+              Container(
+                width: 86,
+                height: 86,
+                decoration: BoxDecoration(
+                  // Neutral in both themes (mock: slate@5% light, grey@8%
+                  // dark) — never the gold dark primary.
+                  color: theme.brightness == Brightness.dark
+                      ? const Color(0x1493A0A3)
+                      : const Color(0x0D283E46),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Icon(icon, size: 40, color: theme.colorScheme.outline),
+              )
+            else
+              Icon(icon, size: 64, color: theme.colorScheme.outline),
             const SizedBox(height: AppSpacing.md),
             Text(
               title,

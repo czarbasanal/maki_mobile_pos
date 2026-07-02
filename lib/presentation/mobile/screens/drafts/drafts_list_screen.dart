@@ -9,7 +9,6 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_list_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/new_job_order_dialog.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Screen listing active Job Orders (open service tickets).
@@ -27,6 +26,13 @@ class DraftsListScreen extends ConsumerWidget {
           onPressed: () => context.goBackOr(RoutePaths.pos),
         ),
         title: const Text('Job Orders'),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.plus),
+            tooltip: 'New Job Order',
+            onPressed: () => _createJobOrder(context, ref),
+          ),
+        ],
       ),
       body: draftsAsync.when(
         data: (drafts) => _buildDraftsList(context, ref, drafts),
@@ -35,10 +41,6 @@ class DraftsListScreen extends ConsumerWidget {
           message: 'Failed to load job orders\n$error',
           onRetry: () => ref.invalidate(activeDraftsProvider),
         ),
-      ),
-      floatingActionButton: SettingsAddFab(
-        label: 'New Job Order',
-        onPressed: () => _createJobOrder(context, ref),
       ),
     );
   }
@@ -80,6 +82,7 @@ class DraftsListScreen extends ConsumerWidget {
     if (drafts.isEmpty) {
       return EmptyStateView(
         icon: LucideIcons.clipboardList,
+        tiled: true,
         title: 'No job orders yet',
         subtitle:
             'Tap New Job Order to open a ticket for a bike being serviced.',

@@ -169,6 +169,11 @@ abstract class AppColors {
   static Color emphasisTint(bool dark) =>
       dark ? const Color(0x1AE8B84C) : const Color(0x0F283E46);
 
+  /// Neutral fill for the 40px glyph tiles / chips (stays grey in dark —
+  /// unlike [emphasisTint], which goes gold).
+  static Color neutralTileFill(bool dark) =>
+      dark ? const Color(0x1F93A0A3) : const Color(0x0F283E46);
+
   // ==================== POS SPECIFIC COLORS ====================
 
   /// Color for cash payments

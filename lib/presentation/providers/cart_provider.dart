@@ -281,6 +281,7 @@ class CartState extends Equatable {
     bool clearSourceDraftId = false,
     bool clearDraftName = false,
     bool clearMechanic = false,
+    bool clearMotorcycleModel = false,
     bool clearErrorMessage = false,
   }) {
     return CartState(
@@ -299,7 +300,9 @@ class CartState extends Equatable {
       laborLines: laborLines ?? this.laborLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
-      motorcycleModel: motorcycleModel ?? this.motorcycleModel,
+      motorcycleModel: clearMotorcycleModel
+          ? null
+          : (motorcycleModel ?? this.motorcycleModel),
       isProcessing: isProcessing ?? this.isProcessing,
       errorMessage:
           clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
@@ -524,9 +527,11 @@ class CartNotifier extends StateNotifier<CartState> {
     state = state.copyWith(clearMechanic: true, clearErrorMessage: true);
   }
 
-  /// Sets the motorcycle model on this ticket (canonical name).
+  /// Sets the motorcycle model on this ticket (canonical name); null clears.
   void setMotorcycleModel(String? model) {
-    state = state.copyWith(motorcycleModel: model, clearErrorMessage: true);
+    state = model == null
+        ? state.copyWith(clearMotorcycleModel: true, clearErrorMessage: true)
+        : state.copyWith(motorcycleModel: model, clearErrorMessage: true);
   }
 
   // ==================== PAYMENT OPERATIONS ====================

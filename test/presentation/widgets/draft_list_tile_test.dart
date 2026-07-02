@@ -179,6 +179,95 @@ void main() {
       expect(find.text('Service job'), findsNothing);
     });
 
+    testWidgets('shows a model chip when the draft has a motorcycle model',
+        (tester) async {
+      final modelDraft = DraftEntity(
+        id: 'draft-3',
+        name: 'Juan / ABC-123',
+        items: testDraft.items,
+        motorcycleModel: 'Nmax',
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+        createdAt: DateTime(2025, 2, 5, 10, 30),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DraftListTile(
+              draft: modelDraft,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Nmax'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.bike), findsOneWidget);
+    });
+
+    testWidgets('hides the model chip when the draft has no motorcycle model',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DraftListTile(
+              draft: testDraft,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(LucideIcons.bike), findsNothing);
+    });
+
+    testWidgets('preview lines show the discounted net amount', (tester) async {
+      // 2 × 100 gross = 200, minus 50 discount → line shows 150 so the
+      // preview sums to the tile's (net) total.
+      final discounted = DraftEntity(
+        id: 'draft-d',
+        name: 'Discounted',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Brake Pad',
+            unitPrice: 100.0,
+            unitCost: 60.0,
+            quantity: 2,
+            discountValue: 50.0,
+          ),
+        ],
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+        createdAt: DateTime(2025, 2, 5, 10, 30),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DraftListTile(
+              draft: discounted,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('₱150.00'), findsWidgets); // line + total agree
+      expect(find.text('₱200.00'), findsNothing);
+    });
+
     testWidgets('displays labor-inclusive grandTotal in header total',
         (tester) async {
       // parts: 500 × 2 = 1000; labor: 450 → grandTotal = 1450
