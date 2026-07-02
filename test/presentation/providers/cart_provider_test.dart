@@ -224,14 +224,12 @@ void main() {
       final state = container.read(cartProvider);
       expect(state.items.length, 1);
       expect(state.notes, 'Draft notes');
-      // Loading is destructive: callers delete the source draft right
-      // after, so the cart deliberately does not retain a sourceDraftId.
-      // That ensures a follow-up "Save as Draft" creates a new entry
-      // rather than failing to update a draft that no longer exists.
-      expect(state.sourceDraftId, isNull);
-      expect(state.isFromDraft, false);
-      // The name IS retained so a follow-up "Save as Draft" can reuse
-      // the original title without prompting the user again.
+      // Bill-out is non-destructive: the cart retains sourceDraftId so the
+      // resulting sale carries a draftId and the source ticket is marked
+      // converted on success (it is NOT deleted on load).
+      expect(state.sourceDraftId, 'draft-1');
+      expect(state.isFromDraft, true);
+      // The name is retained so a follow-up "Save as Job Order" reuses the title.
       expect(state.draftName, 'Test Draft');
     });
 
@@ -535,6 +533,57 @@ void main() {
       cartNotifier.reset();
       final next = cartNotifier.ensureCheckoutId();
       expect(next, isNot(first));
+    });
+  });
+
+  group('motorcycleModel + sourceDraftId threading', () {
+    test('loadFromDraft carries model and sets sourceDraftId', () {
+      cartNotifier.loadFromDraft(DraftEntity(
+        id: 'draft-9',
+        name: 'ABC-123',
+        items: const [],
+        motorcycleModel: 'Nmax',
+        mechanicId: 'm1',
+        mechanicName: 'Jun',
+        createdBy: 'u',
+        createdByName: 'C',
+        createdAt: DateTime(2026, 7, 1),
+      ));
+      final s = container.read(cartProvider);
+      expect(s.motorcycleModel, 'Nmax');
+      expect(s.sourceDraftId, 'draft-9');
+      expect(s.draftName, 'ABC-123');
+    });
+
+    test('setMotorcycleModel updates state', () {
+      cartNotifier.setMotorcycleModel('Aerox');
+      expect(container.read(cartProvider).motorcycleModel, 'Aerox');
+    });
+
+    test('toSale carries motorcycleModel and draftId from a resumed ticket', () {
+      cartNotifier.loadFromDraft(DraftEntity(
+        id: 'draft-9',
+        name: 'ABC-123',
+        items: const [
+          SaleItemEntity(
+            id: 'i1',
+            productId: 'p1',
+            sku: 'S1',
+            name: 'Part',
+            unitPrice: 100,
+            unitCost: 60,
+            quantity: 1,
+          ),
+        ],
+        motorcycleModel: 'Nmax',
+        createdBy: 'u',
+        createdByName: 'C',
+        createdAt: DateTime(2026, 7, 1),
+      ));
+      final sale = cartNotifier.toSale(
+          saleNumber: '', cashierId: 'u', cashierName: 'C');
+      expect(sale.motorcycleModel, 'Nmax');
+      expect(sale.draftId, 'draft-9');
     });
   });
 }
