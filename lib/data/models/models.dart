@@ -21,4 +21,5 @@ export 'receiving_model.dart';
 export 'activity_log_model.dart';
 export 'category_model.dart';
 export 'mechanic_model.dart';
+export 'motorcycle_model_model.dart';
 export 'void_request_model.dart';
