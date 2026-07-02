@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -28,6 +29,7 @@ class _PriceChangeReportScreenState
   late DateTime _startDate;
   late DateTime _endDate;
   DateRangePreset _selectedPreset = DateRangePreset.thisMonth;
+  PriceChangeSort _sort = PriceChangeSort.latest;
 
   @override
   void initState() {
@@ -47,7 +49,7 @@ class _PriceChangeReportScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final reportAsync = ref.watch(priceChangeReportProvider(_params));
+    final reportAsync = ref.watch(priceChangeSummariesProvider(_params));
     final products = ref.watch(productsProvider).valueOrNull ?? const [];
     final labels = _labels(products);
 
@@ -68,7 +70,7 @@ class _PriceChangeReportScreenState
       ),
       body: RefreshIndicator(
         onRefresh: () async =>
-            ref.invalidate(priceChangeReportProvider(_params)),
+            ref.invalidate(priceChangeSummariesProvider(_params)),
         child: ListView(
           children: [
             DateRangePicker(
@@ -102,10 +104,10 @@ class _PriceChangeReportScreenState
                 child: ErrorStateView(
                   message: 'Failed to load price changes: $e',
                   onRetry: () =>
-                      ref.invalidate(priceChangeReportProvider(_params)),
+                      ref.invalidate(priceChangeSummariesProvider(_params)),
                 ),
               ),
-              data: (rows) => _buildList(theme, rows, labels),
+              data: (summaries) => _buildList(theme, summaries, labels),
             ),
             const SizedBox(height: 24),
           ],
@@ -114,9 +116,9 @@ class _PriceChangeReportScreenState
     );
   }
 
-  Widget _buildList(
-      ThemeData theme, List<PriceChangeRow> rows, Map<String, String> labels) {
-    if (rows.isEmpty) {
+  Widget _buildList(ThemeData theme, List<ProductPriceChangeSummary> summaries,
+      Map<String, String> labels) {
+    if (summaries.isEmpty) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
         child: EmptyStateView(
@@ -126,17 +128,25 @@ class _PriceChangeReportScreenState
         ),
       );
     }
+    final sorted = sortPriceChangeSummaries(summaries, _sort);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          for (final row in rows)
+          const SizedBox(height: 12),
+          _SortFilter(
+            selected: _sort,
+            onChanged: (s) => setState(() => _sort = s),
+          ),
+          for (final summary in sorted)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: _PriceChangeRowCard(
-                row: row,
-                label: labels[row.entry.productId] ?? row.entry.productId,
+              child: _ProductChangeCard(
+                summary: summary,
+                label: labels[summary.productId] ?? summary.productId,
                 theme: theme,
+                onTap: () => context
+                    .push('${RoutePaths.inventory}/${summary.productId}'),
               ),
             ),
         ],
@@ -159,50 +169,127 @@ class _PriceChangeReportScreenState
   }
 }
 
-class _PriceChangeRowCard extends StatelessWidget {
-  const _PriceChangeRowCard(
-      {required this.row, required this.label, required this.theme});
-  final PriceChangeRow row;
+/// Segmented Latest / Cost / SRP / Both sort — pill on an [AppCard], selected
+/// segment filled, mirroring the price-history metric filter.
+class _SortFilter extends StatelessWidget {
+  const _SortFilter({required this.selected, required this.onChanged});
+  final PriceChangeSort selected;
+  final ValueChanged<PriceChangeSort> onChanged;
+
+  static const _labels = {
+    PriceChangeSort.latest: 'Latest',
+    PriceChangeSort.cost: 'Cost',
+    PriceChangeSort.price: 'SRP',
+    PriceChangeSort.both: 'Both',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      key: const Key('price-change-sort'),
+      radius: AppRadius.pill,
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          for (final s in PriceChangeSort.values)
+            Expanded(child: _segment(context, s)),
+        ],
+      ),
+    );
+  }
+
+  Widget _segment(BuildContext context, PriceChangeSort s) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isSel = s == selected;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onChanged(s),
+      child: Container(
+        key: Key('sort-seg-${s.name}'),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: isSel
+              ? (isDark ? AppColors.primaryAccent : AppColors.brandSlate)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Text(
+          _labels[s]!,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
+            color: isSel
+                ? (isDark ? AppColors.primaryDark : Colors.white)
+                : theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductChangeCard extends StatelessWidget {
+  const _ProductChangeCard({
+    required this.summary,
+    required this.label,
+    required this.theme,
+    required this.onTap,
+  });
+  final ProductPriceChangeSummary summary;
   final String label;
   final ThemeData theme;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final muted = theme.colorScheme.onSurfaceVariant;
-    final e = row.entry;
-    final when = DateFormat('MMM d, y • h:mm a').format(e.changedAt);
+    final last = DateFormat('MMM d, y').format(summary.lastChangedAt);
+    final n = summary.changeCount;
     return AppCard(
       radius: 12,
+      onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w600, fontSize: 13.5)),
-          const SizedBox(height: 4),
           Row(
             children: [
-              _MoneyDelta(
-                  label: 'Price',
-                  value: e.price,
-                  delta: row.priceDelta,
-                  hasPrior: row.hasPrior,
-                  theme: theme),
-              const SizedBox(width: 16),
-              _MoneyDelta(
-                  label: 'Cost',
-                  value: e.cost,
-                  delta: row.costDelta,
-                  hasPrior: row.hasPrior,
-                  theme: theme),
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600, fontSize: 13.5)),
+              ),
+              if (summary.isNew) ...[
+                const SizedBox(width: 6),
+                Text('New',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: muted, fontSize: 11)),
+              ],
+              const SizedBox(width: 4),
+              Icon(LucideIcons.chevronRight, size: 15, color: muted),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
+          _PrevCurrRow(
+              label: 'Cost',
+              prev: summary.prevCost,
+              curr: summary.currCost,
+              diff: summary.costDiff,
+              theme: theme),
+          const SizedBox(height: 3),
+          _PrevCurrRow(
+              label: 'SRP',
+              prev: summary.prevPrice,
+              curr: summary.currPrice,
+              diff: summary.priceDiff,
+              theme: theme),
+          const SizedBox(height: 6),
           Text(
-            '${e.reason ?? 'change'} · $when',
+            '$n change${n == 1 ? '' : 's'} · last $last',
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: muted, fontSize: 11.5),
           ),
@@ -212,42 +299,59 @@ class _PriceChangeRowCard extends StatelessWidget {
   }
 }
 
-class _MoneyDelta extends StatelessWidget {
-  const _MoneyDelta(
-      {required this.label,
-      required this.value,
-      required this.delta,
-      required this.hasPrior,
-      required this.theme});
+class _PrevCurrRow extends StatelessWidget {
+  const _PrevCurrRow({
+    required this.label,
+    required this.prev,
+    required this.curr,
+    required this.diff,
+    required this.theme,
+  });
   final String label;
-  final double value;
-  final double delta;
-  final bool hasPrior;
+  final double prev;
+  final double curr;
+  final double diff;
   final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
-    final up = delta > 0;
+    final up = diff > 0;
     final deltaColor =
         up ? AppColors.costUp(isDark) : AppColors.costDown(isDark);
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text('$label ',
+        SizedBox(
+          width: 34,
+          child: Text(label,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: muted, fontSize: 11.5)),
+        ),
+        Text(prev.toCurrency(),
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: muted, fontSize: 11.5)),
-        Text(value.toCurrency(),
+                ?.copyWith(color: muted, fontSize: 12)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Icon(LucideIcons.arrowRight, size: 11, color: muted),
+        ),
+        Text(curr.toCurrency(),
             style: theme.textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12.5)),
-        if (hasPrior && delta != 0) ...[
-          const SizedBox(width: 4),
+        const Spacer(),
+        if (diff == 0)
+          Text('—',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: muted, fontSize: 11.5))
+        else ...[
           Icon(up ? LucideIcons.arrowUpRight : LucideIcons.arrowDownRight,
               size: 12, color: deltaColor),
-          Text(delta.abs().toCurrency(),
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: deltaColor, fontSize: 11)),
+          const SizedBox(width: 2),
+          Text(diff.abs().toCurrency(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                  color: deltaColor,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600)),
         ],
       ],
     );

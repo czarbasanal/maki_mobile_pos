@@ -30,6 +30,28 @@ final priceChangeReportProvider = FutureProvider.autoDispose
   return priceChangeRowsInRange(changes);
 });
 
+/// Per-product price-change summaries for the report range: in-range changes
+/// (collection-group) + a one-doc baseline per product (last change before the
+/// range), newest last-change first. Sorting is applied in the screen.
+final priceChangeSummariesProvider = FutureProvider.autoDispose
+    .family<List<ProductPriceChangeSummary>, DateRangeParams>(
+        (ref, params) async {
+  final repo = ref.watch(productRepositoryProvider);
+  final changes = await repo.getPriceChangesInRange(
+    startDate: params.startDate,
+    endDate: params.endDate,
+  );
+  final ids = changes.map((c) => c.productId).toSet();
+  final baselines = <String, PriceHistoryEntry?>{};
+  await Future.wait(ids.map((id) async {
+    baselines[id] = await repo.getPriceHistoryBaseline(
+      productId: id,
+      before: params.startDate,
+    );
+  }));
+  return priceChangeProductSummaries(changes, baselines);
+});
+
 // ==================== PRODUCT QUERIES ====================
 
 /// Provides all active products as a real-time stream.
