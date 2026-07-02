@@ -84,14 +84,26 @@ void main() {
     verifyNever(() => repo.createRequest(any()));
   });
 
-  test('short reason is rejected', () async {
+  test('empty reason is rejected', () async {
     final result = await useCase.execute(
       actor: _user(UserRole.cashier),
       sale: _sale(),
-      reason: 'no',
+      reason: '   ',
     );
     expect(result.success, isFalse);
+    expect(result.errorCode, 'reason-required');
     verifyNever(() => repo.createRequest(any()));
+  });
+
+  test('short admin-managed reason names are accepted', () async {
+    // The dropdown submits admin-curated names which can legitimately be
+    // short (e.g. 'Typo'); min-length only applies to free text in the form.
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      sale: _sale(),
+      reason: 'Typo',
+    );
+    expect(result.success, isTrue);
   });
 
   test('duplicate pending request is rejected', () async {

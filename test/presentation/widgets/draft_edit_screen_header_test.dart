@@ -44,6 +44,8 @@ void main() {
         overrides: [
           draftByIdProvider('draft-1').overrideWith((ref) async => draft),
           activeMechanicsProvider.overrideWith((ref) => Stream.value(const [])),
+          activeMotorcycleModelsProvider
+              .overrideWith((ref) => Stream.value(const [])),
           currentUserProvider.overrideWith((ref) => Stream.value(admin())),
           draftRepositoryProvider.overrideWithValue(
             DraftRepositoryImpl(firestore: FakeFirebaseFirestore()),
@@ -61,17 +63,20 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
-  testWidgets('info header shows the motorcycle model when set',
+  testWidgets('info header shows the motorcycle model in the picker when set',
       (tester) async {
     await pump(tester, buildDraft(model: 'Yamaha Nmax'));
+    // The model renders as the picker's selected value (editable in place).
     expect(find.text('Yamaha Nmax'), findsOneWidget);
     expect(find.byIcon(LucideIcons.bike), findsOneWidget);
   });
 
-  testWidgets('info header hides the model line when no model is set',
+  testWidgets('info header shows an empty model picker when no model is set',
       (tester) async {
     await pump(tester, buildDraft());
-    expect(find.byIcon(LucideIcons.bike), findsNothing);
+    // Picker is always present (its bike prefix icon), just with no value.
+    expect(find.byIcon(LucideIcons.bike), findsOneWidget);
+    expect(find.text('Motorcycle model'), findsOneWidget);
   });
 
   testWidgets('Updated line uses the square-pen glyph', (tester) async {

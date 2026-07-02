@@ -78,13 +78,16 @@ void main() {
       expect(result.success, true);
     });
 
-    test('non-owner cashier cannot update someone elses draft', () async {
+    // Ticket edits stay creator-or-admin (user decision 2026-07-02). Bill-out
+    // conversion by any active user is a rules-level exception that bypasses
+    // this use case (ProcessSaleUseCase calls the repository directly).
+    test('non-owner cashier cannot update someone elses job order', () async {
       final draft = _draft(createdBy: 'u-other');
       when(() => repo.getDraftById('d-1')).thenAnswer((_) async => draft);
 
       final result = await useCase.execute(
         actor: _user(UserRole.cashier, id: 'u-cashier'),
-        draft: draft.copyWith(name: 'Hacked'),
+        draft: draft.copyWith(name: 'Renamed by cashier'),
       );
 
       expect(result.success, false);
@@ -95,7 +98,7 @@ void main() {
           ));
     });
 
-    test('staff cannot update another user\'s draft', () async {
+    test('staff cannot update another user\'s job order', () async {
       final draft = _draft(createdBy: 'u-cashier');
       when(() => repo.getDraftById('d-1')).thenAnswer((_) async => draft);
 
@@ -106,6 +109,24 @@ void main() {
 
       expect(result.success, false);
       expect(result.errorCode, 'forbidden-not-owner');
+    });
+
+    test('rejects updates to a converted (billed-out) ticket', () async {
+      final draft = _draft(createdBy: 'u-cashier');
+      when(() => repo.getDraftById('d-1')).thenAnswer(
+          (_) async => draft.copyWith(isConverted: true));
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        draft: draft.copyWith(name: 'Stale edit'),
+      );
+
+      expect(result.success, false);
+      expect(result.errorCode, 'already-converted');
+      verifyNever(() => repo.updateDraft(
+            draft: any(named: 'draft'),
+            updatedBy: any(named: 'updatedBy'),
+          ));
     });
 
     test('returns not-found for missing draft', () async {

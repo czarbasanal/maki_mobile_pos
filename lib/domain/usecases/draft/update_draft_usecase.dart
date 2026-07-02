@@ -7,12 +7,15 @@ import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/draft_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
 
-/// Updates an existing draft.
+/// Updates an existing draft (Job Order).
 ///
 /// Permission: [Permission.editDraft]. Additionally, only the original
-/// creator OR an admin may update the draft (mirrors the firestore.rules
-/// owner-or-admin rule). Returns `not-found` if the draft is gone and
-/// `forbidden-not-owner` if the actor isn't the creator and isn't admin.
+/// creator OR an admin may edit a ticket (mirrors the firestore.rules
+/// owner-or-admin rule; the rules carry one extra exception this use case
+/// doesn't need — bill-out marks any ticket converted via the repository
+/// directly). A converted ticket is frozen. Returns `not-found` if the
+/// draft is gone, `forbidden-not-owner` for non-owner non-admin edits, and
+/// `already-converted` for edits to a billed-out ticket.
 class UpdateDraftUseCase {
   final DraftRepository _repository;
 
@@ -34,11 +37,22 @@ class UpdateDraftUseCase {
         );
       }
 
+      // A billed-out ticket is frozen (mirrors the firestore.rules guard).
+      // Without this, an editor holding a stale copy could write
+      // isConverted:false back over a converted ticket and let it be billed
+      // out a second time.
+      if (original.isConverted) {
+        return const UseCaseResult.failure(
+          message: 'This job order was already billed out',
+          code: 'already-converted',
+        );
+      }
+
       final isOwner = original.createdBy == actor.id;
       final isAdmin = actor.role == UserRole.admin;
       if (!isOwner && !isAdmin) {
         return const UseCaseResult.failure(
-          message: 'You can only edit drafts you created',
+          message: 'You can only edit job orders you created',
           code: 'forbidden-not-owner',
         );
       }

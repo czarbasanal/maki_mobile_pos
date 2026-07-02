@@ -20,12 +20,14 @@ class RequestVoidSaleUseCase {
     try {
       assertPermission(actor, Permission.requestVoidSale);
 
+      // The reason is usually an admin-managed dropdown name, which can
+      // legitimately be short — the min-length rule for free text lives on
+      // the form's "Other" detail field, not here.
       final trimmed = reason.trim();
-      if (trimmed.length < 5) {
+      if (trimmed.isEmpty) {
         return const UseCaseResult.failure(
-          message:
-              'Please provide a more detailed reason (at least 5 characters)',
-          code: 'reason-too-short',
+          message: 'Please provide a reason',
+          code: 'reason-required',
         );
       }
 

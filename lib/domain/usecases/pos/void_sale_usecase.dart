@@ -120,18 +120,13 @@ class VoidSaleUseCase {
     required String reason,
     required String voidedBy,
   }) {
+    // The reason is usually an admin-managed dropdown name, which can
+    // legitimately be short — the min-length rule for free text lives on
+    // the form's "Other" detail field, not here.
     if (reason.trim().isEmpty) {
       throw const VoidSaleException(
         message: 'Void reason is required',
         code: 'reason-required',
-      );
-    }
-
-    if (reason.trim().length < 5) {
-      throw const VoidSaleException(
-        message:
-            'Please provide a more detailed reason (at least 5 characters)',
-        code: 'reason-too-short',
       );
     }
 

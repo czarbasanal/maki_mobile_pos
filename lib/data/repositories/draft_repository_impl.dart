@@ -329,6 +329,14 @@ class DraftRepositoryImpl implements DraftRepository {
     required String saleId,
   }) async {
     try {
+      // Idempotent: a replayed checkout re-reconciles its draft, but the
+      // rules freeze a converted ticket — skip the write instead of tripping
+      // permission-denied on the second pass.
+      final current = await getDraftById(draftId);
+      if (current != null && current.isConverted) {
+        return current;
+      }
+
       await _draftsRef.doc(draftId).update(
             DraftModel.empty().toConvertedMap(saleId),
           );

@@ -303,6 +303,7 @@ class DraftEntity extends Equatable {
     bool clearNotes = false,
     bool clearConversionInfo = false,
     bool clearMechanic = false,
+    bool clearMotorcycleModel = false,
   }) {
     return DraftEntity(
       id: id ?? this.id,
@@ -311,7 +312,8 @@ class DraftEntity extends Equatable {
       laborLines: laborLines ?? this.laborLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
-      motorcycleModel: motorcycleModel ?? this.motorcycleModel,
+      motorcycleModel:
+          clearMotorcycleModel ? null : (motorcycleModel ?? this.motorcycleModel),
       discountType: discountType ?? this.discountType,
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,
