@@ -281,27 +281,21 @@ class _HistoryRow extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              if (showPrice)
-                Expanded(
-                  child: _MetricLine(
-                    label: 'Price',
-                    value: entry.price,
-                    delta: row.hasPrior ? row.priceDelta : 0,
-                  ),
-                ),
-              if (showPrice && showCost) const SizedBox(width: AppSpacing.md),
-              if (showCost)
-                Expanded(
-                  child: _MetricLine(
-                    label: 'Cost',
-                    value: entry.cost,
-                    delta: row.hasPrior ? row.costDelta : 0,
-                  ),
-                ),
-            ],
-          ),
+          // Stacked full-width lines: big peso values keep their normal text
+          // size instead of being squeezed into half-width columns.
+          if (showPrice)
+            _MetricLine(
+              label: 'Price',
+              value: entry.price,
+              delta: row.hasPrior ? row.priceDelta : 0,
+            ),
+          if (showPrice && showCost) const SizedBox(height: 3),
+          if (showCost)
+            _MetricLine(
+              label: 'Cost',
+              value: entry.cost,
+              delta: row.hasPrior ? row.costDelta : 0,
+            ),
           const SizedBox(height: 6),
           Wrap(
             spacing: AppSpacing.sm,
@@ -352,29 +346,39 @@ class _MetricLine extends StatelessWidget {
     final up = delta > 0;
     final arrowColor =
         !changed ? muted : (up ? AppColors.successDark : AppColors.errorDark);
-    // The whole line shrinks to its half-card slot instead of overflowing —
-    // 'Price ₱7,500.00 ↑₱1,718.71' won't fit at natural size on a narrow phone.
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('$label ',
+    return Row(
+      children: [
+        // Fixed label slot so the Price/Cost amounts align across lines.
+        SizedBox(
+          width: 40,
+          child: Text(label,
               style: theme.textTheme.bodySmall?.copyWith(color: muted)),
-          Text(value.toCurrencyCompact(),
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
-          if (changed) ...[
-            const SizedBox(width: 4),
-            Icon(up ? LucideIcons.arrowUp : LucideIcons.arrowDown,
-                size: 12, color: arrowColor),
-            Text(delta.abs().toCurrencyCompact(),
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: arrowColor, fontWeight: FontWeight.w500)),
-          ],
-        ],
-      ),
+        ),
+        // Full-width line fits at natural size; the FittedBox is only a
+        // backstop for extreme values on very narrow phones.
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(value.toCurrencyCompact(),
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600)),
+                if (changed) ...[
+                  const SizedBox(width: 4),
+                  Icon(up ? LucideIcons.arrowUp : LucideIcons.arrowDown,
+                      size: 12, color: arrowColor),
+                  Text(delta.abs().toCurrencyCompact(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: arrowColor, fontWeight: FontWeight.w500)),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
