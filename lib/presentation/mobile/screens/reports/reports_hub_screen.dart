@@ -20,6 +20,9 @@ class ReportsHubScreen extends ConsumerWidget {
         RolePermissions.hasPermission(user.role, Permission.viewProfitReports);
     final canCost = user != null &&
         RolePermissions.hasPermission(user.role, Permission.viewProductCost);
+    final canJobOrders = user != null &&
+        RolePermissions.hasPermission(
+            user.role, Permission.viewJobOrderReports);
 
     return Scaffold(
       appBar: AppBar(
@@ -54,6 +57,15 @@ class ReportsHubScreen extends ConsumerWidget {
             subtitle: 'Service revenue by mechanic',
             onTap: () => context.pushNamed(RouteNames.laborReport),
           ),
+          if (canJobOrders) ...[
+            const SizedBox(height: 10),
+            _ReportCard(
+              icon: LucideIcons.clipboardList,
+              title: 'Job Orders',
+              subtitle: 'Models serviced + mechanic performance',
+              onTap: () => context.pushNamed(RouteNames.jobOrderReports),
+            ),
+          ],
           if (canCost) ...[
             const SizedBox(height: 10),
             _ReportCard(
