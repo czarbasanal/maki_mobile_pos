@@ -130,8 +130,8 @@ class DraftListTile extends StatelessWidget {
               ],
               FilledButton.icon(
                 onPressed: onLoadTap,
-                icon: const Icon(LucideIcons.shoppingCart, size: 18),
-                label: const Text('Load'),
+                icon: const Icon(LucideIcons.arrowRight, size: 18),
+                label: const Text('Open'),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,

@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/job_order_bill_out.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -31,7 +32,6 @@ class DraftEditScreen extends ConsumerStatefulWidget {
 }
 
 class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
-  bool _isLoading = false;
   bool _isDeleting = false;
 
   /// Local working copy so labor/mechanic edits render instantly; each edit is
@@ -164,7 +164,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
     return LoadingOverlay(
-      isLoading: _isLoading || _isDeleting,
+      isLoading: _isDeleting,
       message: _isDeleting ? 'Deleting…' : 'Processing...',
       child: Scaffold(
         appBar: AppBar(
@@ -593,11 +593,10 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: draft.items.isEmpty
-                    ? null
-                    : () => _proceedToCheckout(draft),
+                onPressed:
+                    draft.items.isEmpty ? null : () => _billOut(draft),
                 icon: const Icon(LucideIcons.shoppingCart),
-                label: const Text('Checkout'),
+                label: const Text('Bill out'),
               ),
             ),
           ],
@@ -606,34 +605,33 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     );
   }
 
-  Future<void> _proceedToCheckout(DraftEntity draft) async {
-    setState(() => _isLoading = true);
-
-    try {
-      // Load draft into cart and consume it — see drafts_list_screen for
-      // the rationale on destructive load.
-      ref.read(cartProvider.notifier).loadFromDraft(draft);
-      ref.read(selectedDraftProvider.notifier).state = null;
-      final actor = ref.read(currentUserProvider).valueOrNull;
-      if (actor != null) {
-        ref
-            .read(draftOperationsProvider.notifier)
-            .deleteDraft(actor: actor, draftId: draft.id);
-      }
-
-      if (mounted) {
-        // Navigate to checkout
-        context.go(RoutePaths.checkout);
-      }
-    } catch (e) {
-      if (mounted) {
-        context.showErrorSnackBar('Error loading job order: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+  /// Bills out the ticket. Non-destructive: loads it into the register cart
+  /// (setting sourceDraftId so the sale carries a draftId) WITHOUT deleting it.
+  /// A successful sale marks the ticket converted (ProcessSaleUseCase
+  /// `_reconcileDraft`); an abandoned checkout leaves the ticket intact.
+  Future<void> _billOut(DraftEntity draft) async {
+    if (!jobOrderReadyToBillOut(draft)) {
+      context.showWarningSnackBar('Set the motorcycle model to bill out');
+      return;
     }
+
+    // Guard: don't clobber an unfinished walk-in sale sitting in the register.
+    final cart = ref.read(cartProvider);
+    if (cart.isNotEmpty) {
+      final proceed = await showAppConfirmDialog(
+        context,
+        title: 'Register in use',
+        message: 'There is an unfinished sale in the register. Bill out this '
+            'job order anyway? The current sale will be cleared.',
+        confirmLabel: 'Bill out',
+        icon: LucideIcons.refreshCw,
+      );
+      if (!proceed || !mounted) return;
+    }
+
+    ref.read(cartProvider.notifier).loadFromDraft(draft);
+    ref.read(selectedDraftProvider.notifier).state = null;
+    if (mounted) context.go(RoutePaths.checkout);
   }
 
   Future<void> _confirmDelete(DraftEntity draft) async {
