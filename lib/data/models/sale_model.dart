@@ -18,6 +18,7 @@ class SaleModel {
   final List<LaborLineModel> laborLines;
   final String? mechanicId;
   final String? mechanicName;
+  final String? motorcycleModel;
   final DiscountType discountType;
   final PaymentMethod paymentMethod;
   final Map<PaymentMethod, double> tenders;
@@ -42,6 +43,7 @@ class SaleModel {
     this.laborLines = const [],
     this.mechanicId,
     this.mechanicName,
+    this.motorcycleModel,
     this.discountType = DiscountType.amount,
     required this.paymentMethod,
     this.tenders = const {},
@@ -86,6 +88,7 @@ class SaleModel {
       laborLines: laborList,
       mechanicId: map['mechanicId'] as String?,
       mechanicName: map['mechanicName'] as String?,
+      motorcycleModel: map['motorcycleModel'] as String?,
       discountType: DiscountType.fromString(map['discountType'] as String?),
       paymentMethod: PaymentMethod.fromString(map['paymentMethod'] as String?),
       tenders: _parseTenders(map['tenders']),
@@ -125,6 +128,7 @@ class SaleModel {
           laborLines.map((l) => l.toMap(includeId: true)).toList(),
       'mechanicId': mechanicId,
       'mechanicName': mechanicName,
+      'motorcycleModel': motorcycleModel,
       'discountType': discountType.value,
       'paymentMethod': paymentMethod.value,
       'amountReceived': amountReceived,
@@ -200,6 +204,7 @@ class SaleModel {
       laborLines: laborLines.map((l) => l.toEntity()).toList(),
       mechanicId: mechanicId,
       mechanicName: mechanicName,
+      motorcycleModel: motorcycleModel,
       discountType: discountType,
       paymentMethod: paymentMethod,
       tenders: tenders,
@@ -231,6 +236,7 @@ class SaleModel {
           .toList(),
       mechanicId: entity.mechanicId,
       mechanicName: entity.mechanicName,
+      motorcycleModel: entity.motorcycleModel,
       discountType: entity.discountType,
       paymentMethod: entity.paymentMethod,
       tenders: entity.tenders,
@@ -353,6 +359,7 @@ class SaleModel {
     List<LaborLineModel>? laborLines,
     String? mechanicId,
     String? mechanicName,
+    String? motorcycleModel,
     bool clearMechanic = false,
     DiscountType? discountType,
     PaymentMethod? paymentMethod,
@@ -379,6 +386,7 @@ class SaleModel {
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName:
           clearMechanic ? null : (mechanicName ?? this.mechanicName),
+      motorcycleModel: motorcycleModel ?? this.motorcycleModel,
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       tenders: tenders ?? this.tenders,
