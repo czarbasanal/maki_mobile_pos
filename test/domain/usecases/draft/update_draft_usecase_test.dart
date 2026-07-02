@@ -78,11 +78,10 @@ void main() {
       expect(result.success, true);
     });
 
-    // Job Orders are shared shop tickets: any active user may update any
-    // ticket (bill-out conversion, parts, labor, mechanic, motorcycle model),
-    // matching the firestore.rules /drafts update rule. Delete stays
-    // owner-or-admin (see delete_draft_usecase_test).
-    test('non-owner cashier can update someone elses job order', () async {
+    // Ticket edits stay creator-or-admin (user decision 2026-07-02). Bill-out
+    // conversion by any active user is a rules-level exception that bypasses
+    // this use case (ProcessSaleUseCase calls the repository directly).
+    test('non-owner cashier cannot update someone elses job order', () async {
       final draft = _draft(createdBy: 'u-other');
       when(() => repo.getDraftById('d-1')).thenAnswer((_) async => draft);
 
@@ -91,11 +90,15 @@ void main() {
         draft: draft.copyWith(name: 'Renamed by cashier'),
       );
 
-      expect(result.success, true);
-      expect(result.data?.name, 'Renamed by cashier');
+      expect(result.success, false);
+      expect(result.errorCode, 'forbidden-not-owner');
+      verifyNever(() => repo.updateDraft(
+            draft: any(named: 'draft'),
+            updatedBy: any(named: 'updatedBy'),
+          ));
     });
 
-    test('staff can update another user\'s job order', () async {
+    test('staff cannot update another user\'s job order', () async {
       final draft = _draft(createdBy: 'u-cashier');
       when(() => repo.getDraftById('d-1')).thenAnswer((_) async => draft);
 
@@ -104,7 +107,8 @@ void main() {
         draft: draft.copyWith(name: 'Renamed'),
       );
 
-      expect(result.success, true);
+      expect(result.success, false);
+      expect(result.errorCode, 'forbidden-not-owner');
     });
 
     test('rejects updates to a converted (billed-out) ticket', () async {

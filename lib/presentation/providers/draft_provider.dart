@@ -87,10 +87,10 @@ final deleteDraftUseCaseProvider = Provider<DeleteDraftUseCase>((ref) {
 /// Notifier for draft operations.
 ///
 /// Mutations (save / update / delete) flow through use cases that own the
-/// guards: updates are shared-ticket (any active user, but never on a
-/// converted ticket); deletes stay owner-or-admin. Convenience methods
-/// (updateDraftItems, updateDraftName) construct the desired DraftEntity
-/// and route through [updateDraft] so guards apply uniformly.
+/// guards: updates and deletes are owner-or-admin, and a converted ticket
+/// is frozen. Convenience methods (updateDraftItems, updateDraftName)
+/// construct the desired DraftEntity and route through [updateDraft] so
+/// guards apply uniformly.
 /// `markAsConverted` stays a direct repo call — it's invoked from
 /// [ProcessSaleUseCase] which has already gated the operation.
 class DraftOperationsNotifier extends StateNotifier<AsyncValue<void>> {

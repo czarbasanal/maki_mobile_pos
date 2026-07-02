@@ -1,4 +1,5 @@
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
+import 'package:maki_mobile_pos/core/enums/user_role.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
 import 'package:maki_mobile_pos/domain/entities/draft_entity.dart';
@@ -8,11 +9,13 @@ import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
 
 /// Updates an existing draft (Job Order).
 ///
-/// Permission: [Permission.editDraft]. Job Orders are shared shop tickets:
-/// any active user may update any ticket — bill-out conversion, parts, labor,
-/// mechanic, motorcycle model (mirrors the firestore.rules /drafts update
-/// rule). Deleting stays owner-or-admin (see DeleteDraftUseCase). Returns
-/// `not-found` if the draft is gone.
+/// Permission: [Permission.editDraft]. Additionally, only the original
+/// creator OR an admin may edit a ticket (mirrors the firestore.rules
+/// owner-or-admin rule; the rules carry one extra exception this use case
+/// doesn't need — bill-out marks any ticket converted via the repository
+/// directly). A converted ticket is frozen. Returns `not-found` if the
+/// draft is gone, `forbidden-not-owner` for non-owner non-admin edits, and
+/// `already-converted` for edits to a billed-out ticket.
 class UpdateDraftUseCase {
   final DraftRepository _repository;
 
@@ -42,6 +45,15 @@ class UpdateDraftUseCase {
         return const UseCaseResult.failure(
           message: 'This job order was already billed out',
           code: 'already-converted',
+        );
+      }
+
+      final isOwner = original.createdBy == actor.id;
+      final isAdmin = actor.role == UserRole.admin;
+      if (!isOwner && !isAdmin) {
+        return const UseCaseResult.failure(
+          message: 'You can only edit job orders you created',
+          code: 'forbidden-not-owner',
         );
       }
 

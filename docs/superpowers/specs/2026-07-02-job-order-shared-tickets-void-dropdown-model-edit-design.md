@@ -1,7 +1,8 @@
 # Job orders as shared tickets, void-reason dropdown for requests, editable motorcycle model
 
 Date: 2026-07-02
-Status: Approved design (user AFK — recommended option chosen; rules deploy still gated on user confirmation)
+Status: Approved (user confirmed 2026-07-02: edits stay owner-only, bill-out
+exception only; rules deploy still gated on user confirmation)
 
 ## Problems
 
@@ -19,25 +20,35 @@ Status: Approved design (user AFK — recommended option chosen; rules deploy st
 3. **Motorcycle model is set-once.** The JO edit screen displays it read-only;
    there is no way to change the model being serviced after creation.
 
-## Decision 1 — Job orders are shared shop tickets
+## Decision 1 — Owner-only edits, bill-out exception (user decision 2026-07-02)
 
-Any active valid user (cashier/staff/admin) may **update** any job order.
-**Delete** stays creator-or-admin. **Create** unchanged (creator = auth uid).
+Ticket **edits stay creator-or-admin** (user chose this over shared-ticket
+editing). The one exception: **any active user may mark any ticket
+converted** — that is exactly what bill-out writes — so a cashier can ring
+up a ticket created by staff/admin. **Delete** stays creator-or-admin.
+**Create** unchanged (creator = auth uid).
+
+Consequence for Decision 3: the motorcycle-model dropdown (like parts,
+labor, and mechanic edits) only saves for the ticket's creator or an admin.
 
 Changes:
 - `firestore.rules` `/drafts/{draftId}`: split the combined
-  `update, delete` rule — `update` for any `isValidUser() && isActiveUser()`,
-  **with two invariants pinned server-side** (added after code review):
-  `createdBy` is immutable (otherwise the delete guard could be laundered by
-  rewriting `createdBy` first), and a converted ticket is frozen
-  (`resource.data.get('isConverted', false) == false`) so a stale editor can
-  never resurrect a billed-out ticket into a second billing. `delete` keeps
-  the owner-or-admin condition.
+  `update, delete` rule — `update` allows owner-or-admin, OR any active user
+  whose write's `affectedKeys` is exactly the conversion set
+  (`isConverted/convertedToSaleId/convertedAt/updatedAt`) with
+  `isConverted == true`. **Two invariants pinned server-side** (added after
+  code review): `createdBy` is immutable (otherwise the creator-or-admin
+  rules could be laundered by rewriting `createdBy` first), and a converted
+  ticket is frozen (`resource.data.get('isConverted', false) == false`) so a
+  stale editor can never resurrect a billed-out ticket into a second
+  billing. `delete` keeps the owner-or-admin condition.
   ⚠️ Production-affecting; **do not deploy without user confirmation**. The
   bug is only fixed in production once these rules deploy.
-- `UpdateDraftUseCase`: drop the owner-or-admin guard (keep
-  `Permission.editDraft` assert and the not-found check); add an
-  `already-converted` rejection mirroring the rules freeze.
+- `UpdateDraftUseCase`: keeps the owner-or-admin guard; adds an
+  `already-converted` rejection mirroring the rules freeze. (Bill-out
+  conversion bypasses this use case — ProcessSaleUseCase calls
+  `markDraftAsConverted` on the repository directly, covered by the rules
+  exception.)
 - `DeleteDraftUseCase`: untouched (owner-or-admin stays). The JO edit screen
   now surfaces a delete rejection with a snackbar instead of a silent no-op.
 - `markDraftAsConverted`: made idempotent (skip the write when the ticket is

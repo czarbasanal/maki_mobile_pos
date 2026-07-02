@@ -163,17 +163,23 @@ service cloud.firestore {
       allow create: if isValidUser() && isActiveUser() &&
         request.resource.data.createdBy == request.auth.uid;
 
-      // Job Orders are shared shop tickets: any active user may update any
-      // ticket — bill-out marks it converted from whichever cashier rings it
-      // up, and parts/labor/mechanic/model edits happen across roles.
+      // Ticket edits stay creator-or-admin. One narrow exception: whoever
+      // rings the ticket up at the register may mark it converted — bill-out
+      // writes exactly the conversion fields — regardless of who created it.
       // Two invariants stay pinned server-side:
-      // - createdBy is immutable, otherwise the creator-or-admin delete rule
-      //   below could be laundered by rewriting createdBy first;
+      // - createdBy is immutable, otherwise the creator-or-admin rules could
+      //   be laundered by rewriting createdBy first;
       // - a converted (billed-out) ticket is frozen, so a stale editor can
       //   never flip isConverted back and let the ticket be billed twice.
       allow update: if isValidUser() && isActiveUser() &&
         request.resource.data.createdBy == resource.data.createdBy &&
-        resource.data.get('isConverted', false) == false;
+        resource.data.get('isConverted', false) == false &&
+        (
+          resource.data.createdBy == request.auth.uid || isAdmin() ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+            ['isConverted', 'convertedToSaleId', 'convertedAt', 'updatedAt']
+          ) && request.resource.data.isConverted == true)
+        );
 
       // Deleting a ticket stays creator-or-admin.
       allow delete: if isValidUser() && isActiveUser() &&
