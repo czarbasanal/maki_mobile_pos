@@ -46,7 +46,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     return _working!;
   }
 
-  Future<void> _persistLabor(DraftEntity next) async {
+  Future<void> _persist(DraftEntity next) async {
     setState(() => _working = next);
     final actor = ref.read(currentUserProvider).valueOrNull;
     if (actor == null) return;
@@ -62,7 +62,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         ? base.copyWith(clearMechanic: true, updatedAt: DateTime.now())
         : base.copyWith(
             mechanicId: id, mechanicName: name, updatedAt: DateTime.now());
-    _persistLabor(next);
+    _persist(next);
   }
 
   Future<void> _addOrEditLabor(DraftEntity draft,
@@ -77,12 +77,18 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final next = existing == null
         ? draft.addLaborLine(result)
         : draft.updateLaborLine(result);
-    await _persistLabor(next);
+    await _persist(next);
   }
 
   Future<void> _removeLabor(DraftEntity draft, String lineId) async {
-    await _persistLabor(draft.removeLaborLine(lineId));
+    await _persist(draft.removeLaborLine(lineId));
   }
+
+  Future<void> _changeQty(DraftEntity draft, SaleItemEntity item, int delta) =>
+      _persist(draft.updateItemQuantity(item.id, item.quantity + delta));
+
+  Future<void> _removeItem(DraftEntity draft, String itemId) =>
+      _persist(draft.removeItem(itemId));
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +224,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                       itemCount: draft.items.length,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemBuilder: (context, index) {
-                        return _buildDraftItem(draft.items[index]);
+                        return _buildDraftItem(draft, draft.items[index]);
                       },
                     ),
             ),
@@ -252,7 +258,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     );
   }
 
-  Widget _buildDraftItem(SaleItemEntity item) {
+  Widget _buildDraftItem(DraftEntity draft, SaleItemEntity item) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
 
@@ -319,6 +325,24 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           Text(
             item.grossAmount.toCurrency(),
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.minus, size: 16),
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Decrease quantity',
+            onPressed: () => _changeQty(draft, item, -1),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.plus, size: 16),
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Increase quantity',
+            onPressed: () => _changeQty(draft, item, 1),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.x, size: 16),
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Remove part',
+            onPressed: () => _removeItem(draft, item.id),
           ),
         ],
       ),
