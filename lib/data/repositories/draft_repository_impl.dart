@@ -400,46 +400,4 @@ class DraftRepositoryImpl implements DraftRepository {
     }
   }
 
-  // ==================== UTILITY ====================
-
-  @override
-  Future<int> getActiveDraftCount({String? createdBy}) async {
-    try {
-      Query<Map<String, dynamic>> query =
-          _draftsRef.where('isConverted', isEqualTo: false);
-
-      if (createdBy != null) {
-        query = query.where('createdBy', isEqualTo: createdBy);
-      }
-
-      final snapshot = await query.count().get();
-      return snapshot.count ?? 0;
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to get active draft count: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
-
-  @override
-  Future<int> getTotalDraftCount({bool includeConverted = false}) async {
-    try {
-      Query<Map<String, dynamic>> query = _draftsRef;
-
-      if (!includeConverted) {
-        query = query.where('isConverted', isEqualTo: false);
-      }
-
-      final snapshot = await query.count().get();
-      return snapshot.count ?? 0;
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to get total draft count: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
 }
