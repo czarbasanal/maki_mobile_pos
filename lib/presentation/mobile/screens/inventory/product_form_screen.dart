@@ -1261,6 +1261,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             await productOps.updateProduct(
               actor: currentUser,
               product: created.copyWith(imageUrl: url),
+              // This follow-up only attaches the image URL — a sale rung up
+              // during the upload must not be un-sold by a stale quantity.
+              quantityEdited: false,
             );
           } catch (_) {
             if (mounted) {
@@ -1332,6 +1335,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             await productOps.updateProduct(
               actor: currentUser,
               product: created.copyWith(imageUrl: url),
+              // This follow-up only attaches the image URL — a sale rung up
+              // during the upload must not be un-sold by a stale quantity.
+              quantityEdited: false,
             );
           } catch (_) {
             if (mounted) {
