@@ -180,7 +180,6 @@ class _TrendHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
@@ -189,9 +188,18 @@ class _TrendHeader extends StatelessWidget {
           style: theme.textTheme.labelSmall
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
-        Text(
-          '${from.toCurrencyCompact()} → ${to.toCurrencyCompact()}',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        const SizedBox(width: 8),
+        // Long from→to ranges (₱5,781.29 → ₱7,500.00) shrink instead of
+        // overflowing on narrow phones.
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${from.toCurrencyCompact()} → ${to.toCurrencyCompact()}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
         ),
       ],
     );
@@ -344,23 +352,29 @@ class _MetricLine extends StatelessWidget {
     final up = delta > 0;
     final arrowColor =
         !changed ? muted : (up ? AppColors.successDark : AppColors.errorDark);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('$label ',
-            style: theme.textTheme.bodySmall?.copyWith(color: muted)),
-        Text(value.toCurrencyCompact(),
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600)),
-        if (changed) ...[
-          const SizedBox(width: 4),
-          Icon(up ? LucideIcons.arrowUp : LucideIcons.arrowDown,
-              size: 12, color: arrowColor),
-          Text(delta.abs().toCurrencyCompact(),
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: arrowColor, fontWeight: FontWeight.w500)),
+    // The whole line shrinks to its half-card slot instead of overflowing —
+    // 'Price ₱7,500.00 ↑₱1,718.71' won't fit at natural size on a narrow phone.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$label ',
+              style: theme.textTheme.bodySmall?.copyWith(color: muted)),
+          Text(value.toCurrencyCompact(),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w600)),
+          if (changed) ...[
+            const SizedBox(width: 4),
+            Icon(up ? LucideIcons.arrowUp : LucideIcons.arrowDown,
+                size: 12, color: arrowColor),
+            Text(delta.abs().toCurrencyCompact(),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: arrowColor, fontWeight: FontWeight.w500)),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

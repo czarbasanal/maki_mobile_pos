@@ -310,17 +310,29 @@ class _PrevCurrRow extends StatelessWidget {
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: muted, fontSize: 11.5)),
         ),
-        Text(prev.toCurrency(),
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: muted, fontSize: 12)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Icon(LucideIcons.arrowRight, size: 11, color: muted),
+        // Long peso values (₱5,781.29 → ₱7,500.00) must shrink, not overflow.
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(prev.toCurrency(),
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: muted, fontSize: 12)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(LucideIcons.arrowRight, size: 11, color: muted),
+                ),
+                Text(curr.toCurrency(),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600, fontSize: 12.5)),
+              ],
+            ),
+          ),
         ),
-        Text(curr.toCurrency(),
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12.5)),
-        const Spacer(),
+        const SizedBox(width: 8),
         if (diff == 0)
           Text('—',
               style: theme.textTheme.bodySmall
