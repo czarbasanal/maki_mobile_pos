@@ -265,6 +265,73 @@ void main() {
       expect(saved.price, 25);
     });
 
+    // Regression (2026-07-02): the form writes the quantity it loaded at
+    // open. A sale mid-edit decrements stock; saving the form with an
+    // untouched quantity field must NOT write the stale count back
+    // (silently un-selling the item). quantityEdited=false → keep fresh.
+    test(
+        'admin save with untouched quantity keeps the fresh count '
+        '(concurrent sale not un-sold)', () async {
+      final freshDoc = _product(quantity: 16); // sale happened mid-edit
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => freshDoc);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        product: _product(quantity: 17, name: 'Renamed'), // stale snapshot
+        quantityEdited: false,
+      );
+
+      expect(result.success, true);
+      final captured = verify(() => repo.updateProduct(
+            product: captureAny(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).captured;
+      final saved = captured.single as ProductEntity;
+      expect(saved.quantity, 16);
+      expect(saved.name, 'Renamed');
+    });
+
+    test('admin deliberate quantity edit still writes the absolute value',
+        () async {
+      final freshDoc = _product(quantity: 16);
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => freshDoc);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        product: _product(quantity: 40), // physical count correction
+        quantityEdited: true,
+      );
+
+      expect(result.success, true);
+      final captured = verify(() => repo.updateProduct(
+            product: captureAny(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).captured;
+      expect((captured.single as ProductEntity).quantity, 40);
+    });
+
+    test('staff save with untouched quantity keeps the fresh count',
+        () async {
+      final freshDoc = _product(quantity: 16);
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => freshDoc);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.staff),
+        product: _product(quantity: 17, name: 'Renamed'),
+        quantityEdited: false,
+      );
+
+      expect(result.success, true);
+      final captured = verify(() => repo.updateProduct(
+            product: captureAny(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).captured;
+      expect((captured.single as ProductEntity).quantity, 16);
+    });
+
     test('staff CANNOT change sku', () async {
       final original = _product();
       when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);

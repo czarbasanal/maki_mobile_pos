@@ -36,9 +36,14 @@ class UpdateProductUseCase {
   })  : _repository = repository,
         _logger = logger;
 
+  /// [quantityEdited] — whether the actor deliberately changed the quantity
+  /// field. When false (an untouched form field), the freshly-read doc's
+  /// quantity is kept: the submitted value is a snapshot from form-open, and
+  /// writing it back would silently un-sell anything rung up mid-edit.
   Future<UseCaseResult<ProductEntity>> execute({
     required UserEntity actor,
     required ProductEntity product,
+    bool quantityEdited = true,
   }) async {
     try {
       final hasFullEdit = actor.hasPermission(Permission.editProduct);
@@ -124,6 +129,13 @@ class UpdateProductUseCase {
         final group = await _repository.getSkuVariations(original.sku);
         relinkedVariations =
             group.where((p) => p.baseSku == original.sku).length;
+      }
+
+      // Untouched quantity field → keep the live count (see [execute] doc).
+      // Placed after the SKU block, which rebuilds productToSave from the
+      // submitted product.
+      if (!quantityEdited) {
+        productToSave = productToSave.copyWith(quantity: original.quantity);
       }
 
       final updated = await _repository.updateProduct(

@@ -291,9 +291,14 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
   Future<ProductEntity?> updateProduct({
     required UserEntity actor,
     required ProductEntity product,
+    bool quantityEdited = true,
   }) async {
     state = const AsyncValue.loading();
-    final result = await _updateUseCase.execute(actor: actor, product: product);
+    final result = await _updateUseCase.execute(
+      actor: actor,
+      product: product,
+      quantityEdited: quantityEdited,
+    );
     if (result.success) {
       state = const AsyncValue.data(null);
       _invalidateProductProviders();
