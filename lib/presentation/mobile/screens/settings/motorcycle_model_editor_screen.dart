@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -149,6 +150,7 @@ class _ModelFormDialogState extends ConsumerState<_ModelFormDialog> {
       content: Form(
         key: _formKey,
         child: TextFormField(
+          style: AppTextStyles.fieldInput,
           controller: _nameController,
           autofocus: true,
           textCapitalization: TextCapitalization.words,

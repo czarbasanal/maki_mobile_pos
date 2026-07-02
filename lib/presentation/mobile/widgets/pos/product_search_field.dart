@@ -183,6 +183,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: TextField(
+                style: AppTextStyles.fieldInput,
                 controller: widget.controller,
                 focusNode: widget.focusNode,
                 decoration: InputDecoration(

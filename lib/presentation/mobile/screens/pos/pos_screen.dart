@@ -441,6 +441,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
+                style: AppTextStyles.fieldInput,
                 controller: descController,
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
@@ -453,6 +454,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               TextFormField(
+                style: AppTextStyles.fieldInput,
                 controller: feeController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),

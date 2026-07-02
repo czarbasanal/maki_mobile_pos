@@ -140,6 +140,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
             children: [
               // Description
               TextFormField(
+                style: AppTextStyles.fieldInput,
                 controller: _descriptionController,
                 autofocus: !widget.isEditing,
                 decoration: const InputDecoration(
@@ -153,6 +154,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
               // Amount
               TextFormField(
+                style: AppTextStyles.fieldInput,
                 controller: _amountController,
                 decoration: const InputDecoration(
                   labelText: 'Amount *',
@@ -217,6 +219,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
               // Notes
               TextFormField(
+                style: AppTextStyles.fieldInput,
                 controller: _notesController,
                 decoration: const InputDecoration(
                   labelText: 'Notes',

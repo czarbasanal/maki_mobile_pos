@@ -118,7 +118,7 @@ class _AppTextFieldState extends State<AppTextField> {
       onFieldSubmitted: widget.onSubmitted,
       onTap: widget.onTap,
       focusNode: _node,
-      style: TextStyle(
+      style: AppTextStyles.fieldInput.copyWith(
         color: widget.enabled
             ? Theme.of(context).textTheme.bodyLarge?.color
             : Colors.grey,

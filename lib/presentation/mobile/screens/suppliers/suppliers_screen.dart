@@ -49,6 +49,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
               AppSpacing.sm + 4,
             ),
             child: TextField(
+              style: AppTextStyles.fieldInput,
               decoration: const InputDecoration(
                 hintText: 'Search suppliers…',
                 prefixIcon: Icon(LucideIcons.search),

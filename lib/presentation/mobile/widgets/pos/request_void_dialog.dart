@@ -90,6 +90,7 @@ class _RequestVoidDialogState extends ConsumerState<RequestVoidDialog> {
           ),
           const SizedBox(height: 12),
           TextField(
+            style: AppTextStyles.fieldInput,
             controller: _reasonController,
             maxLines: 3,
             decoration: const InputDecoration(

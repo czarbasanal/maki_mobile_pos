@@ -323,6 +323,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             radius: AppRadius.field,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: TextField(
+              style: AppTextStyles.fieldInput,
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search by name, SKU, or barcode...',

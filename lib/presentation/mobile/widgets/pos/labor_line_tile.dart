@@ -97,6 +97,7 @@ class LaborLineTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
+                style: AppTextStyles.fieldInput,
                 key: const Key('labor-desc-field'),
                 controller: descController,
                 textCapitalization: TextCapitalization.sentences,
@@ -109,6 +110,7 @@ class LaborLineTile extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               TextFormField(
+                style: AppTextStyles.fieldInput,
                 key: const Key('labor-fee-field'),
                 controller: feeController,
                 keyboardType:

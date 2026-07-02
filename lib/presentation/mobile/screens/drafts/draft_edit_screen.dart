@@ -800,6 +800,7 @@ class _LaborLineDialogState extends State<_LaborLineDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
+              style: AppTextStyles.fieldInput,
               controller: _descCtrl,
               autofocus: true,
               decoration: const InputDecoration(
@@ -812,6 +813,7 @@ class _LaborLineDialogState extends State<_LaborLineDialog> {
             ),
             const SizedBox(height: AppSpacing.sm),
             TextFormField(
+              style: AppTextStyles.fieldInput,
               controller: _feeCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),

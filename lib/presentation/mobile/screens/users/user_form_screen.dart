@@ -139,6 +139,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
 
                     // Email — editable on create, locked on edit
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _emailController,
                       decoration: InputDecoration(
                         labelText: widget.isEditing ? 'Email' : 'Email *',
@@ -155,6 +156,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
 
                     // Display name
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _displayNameController,
                       decoration: const InputDecoration(
                         labelText: 'Display Name *',
@@ -183,6 +185,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                     if (!widget.isEditing) ...[
                       const SizedBox(height: 8),
                       TextFormField(
+                        style: AppTextStyles.fieldInput,
                         controller: _passwordController,
                         decoration: InputDecoration(
                           labelText: 'Password *',
@@ -203,6 +206,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
+                        style: AppTextStyles.fieldInput,
                         controller: _confirmPasswordController,
                         decoration: InputDecoration(
                           labelText: 'Confirm Password *',

@@ -305,6 +305,7 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
+              style: AppTextStyles.fieldInput,
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Name',

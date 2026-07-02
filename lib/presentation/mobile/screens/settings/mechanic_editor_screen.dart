@@ -164,6 +164,7 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
+              style: AppTextStyles.fieldInput,
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Name',
@@ -182,6 +183,7 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
             ),
             const SizedBox(height: AppSpacing.sm),
             TextFormField(
+              style: AppTextStyles.fieldInput,
               controller: _contactController,
               decoration: const InputDecoration(
                 labelText: 'Contact number (optional)',
@@ -191,6 +193,7 @@ class _MechanicFormDialogState extends ConsumerState<_MechanicFormDialog> {
             ),
             const SizedBox(height: AppSpacing.sm),
             TextFormField(
+              style: AppTextStyles.fieldInput,
               controller: _addressController,
               decoration: const InputDecoration(
                 labelText: 'Address (optional)',

@@ -123,6 +123,11 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w600,
   );
 
+  /// Text typed into form inputs (TextField/TextFormField). 14px — denser
+  /// than Material's 16px default and matching AppDropdown's inherited
+  /// bodyMedium, so forms read at one size. Labels/hints follow automatically.
+  static const TextStyle fieldInput = TextStyle(fontSize: 14);
+
   /// Code/SKU display - monospace
   static const TextStyle code = TextStyle(
     fontSize: 14,

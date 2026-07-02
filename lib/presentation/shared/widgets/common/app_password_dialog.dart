@@ -160,6 +160,7 @@ class _AppPasswordDialogState extends State<_AppPasswordDialog> {
                     color: theme.colorScheme.primary)),
           ),
           TextField(
+            style: AppTextStyles.fieldInput,
             controller: _controller,
             focusNode: _focusNode,
             obscureText: _obscure,

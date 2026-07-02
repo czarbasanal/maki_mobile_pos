@@ -143,6 +143,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
               const SizedBox(height: 20),
               // Quantity input
               TextField(
+                style: AppTextStyles.fieldInput,
                 controller: _quantityController,
                 decoration: InputDecoration(
                   labelText: _adjustmentType == AdjustmentType.set
@@ -173,6 +174,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
               const SizedBox(height: 20),
               // Note input
               TextField(
+                style: AppTextStyles.fieldInput,
                 controller: _noteController,
                 decoration: const InputDecoration(
                   labelText: 'Reason / Note (optional)',

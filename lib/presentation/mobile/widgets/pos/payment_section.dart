@@ -192,6 +192,7 @@ class PaymentSection extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.md),
       TextField(
+        style: AppTextStyles.fieldInput,
         controller: splitController,
         decoration: InputDecoration(
           labelText: '${digital.displayName} amount',
@@ -227,6 +228,7 @@ class PaymentSection extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.md),
       TextField(
+        style: AppTextStyles.fieldInput,
         controller: splitController,
         decoration: InputDecoration(
           labelText: 'Downpayment',

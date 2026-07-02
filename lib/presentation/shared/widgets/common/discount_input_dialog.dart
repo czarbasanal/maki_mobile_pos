@@ -178,6 +178,7 @@ class _DiscountInputDialogState extends State<DiscountInputDialog> {
           const SizedBox(height: AppSpacing.md),
           // Discount input
           TextField(
+            style: AppTextStyles.fieldInput,
             controller: _controller,
             autofocus: true,
             decoration: InputDecoration(

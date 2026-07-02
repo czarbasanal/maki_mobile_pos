@@ -143,6 +143,7 @@ class SettingsScreen extends ConsumerWidget {
         content: Form(
           key: formKey,
           child: TextFormField(
+            style: AppTextStyles.fieldInput,
             controller: controller,
             decoration: const InputDecoration(
               labelText: 'Display Name',
@@ -226,6 +227,7 @@ class SettingsScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
+                  style: AppTextStyles.fieldInput,
                   controller: currentPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'Current Password',
@@ -241,6 +243,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
+                  style: AppTextStyles.fieldInput,
                   controller: newPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'New Password',
@@ -259,6 +262,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
+                  style: AppTextStyles.fieldInput,
                   controller: confirmPasswordController,
                   decoration: const InputDecoration(
                     labelText: 'Confirm New Password',

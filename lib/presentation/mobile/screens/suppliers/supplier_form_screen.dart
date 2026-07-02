@@ -101,6 +101,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                   children: [
                     // Name
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _nameController,
                       decoration: const InputDecoration(
                         labelText: 'Supplier Name *',
@@ -113,6 +114,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
                     // Contact Person
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _contactPersonController,
                       decoration: const InputDecoration(
                         labelText: 'Contact Person',
@@ -124,6 +126,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
                     // Contact Number
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _contactNumberController,
                       decoration: const InputDecoration(
                         labelText: 'Contact Number',
@@ -136,6 +139,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
                     // Alternative Number
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _alternativeNumberController,
                       decoration: const InputDecoration(
                         labelText: 'Alternative Number',
@@ -147,6 +151,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
                     // Email
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _emailController,
                       decoration: const InputDecoration(
                         labelText: 'Email',
@@ -162,6 +167,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
                     // Address
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _addressController,
                       decoration: const InputDecoration(
                         labelText: 'Address',
@@ -195,6 +201,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
                     // Notes
                     TextFormField(
+                      style: AppTextStyles.fieldInput,
                       controller: _notesController,
                       decoration: const InputDecoration(
                         labelText: 'Notes',

@@ -289,6 +289,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             displayStringForOption: (product) => product.name,
             fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
               return TextField(
+                style: AppTextStyles.fieldInput,
                 controller: controller,
                 focusNode: focusNode,
                 decoration: InputDecoration(
@@ -357,6 +358,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
               children: [
                 Expanded(
                   child: TextField(
+                    style: AppTextStyles.fieldInput,
                     controller: _quantityController,
                     decoration: InputDecoration(
                       labelText: 'Quantity',
@@ -371,6 +373,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: TextField(
+                      style: AppTextStyles.fieldInput,
                       controller: _costController,
                       decoration: const InputDecoration(
                         labelText: 'Unit Cost',

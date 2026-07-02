@@ -825,6 +825,7 @@ class _PasswordField extends StatelessWidget {
           child: Text('Password', style: TextStyle(fontSize: 12, color: muted)),
         ),
         TextField(
+          style: AppTextStyles.fieldInput,
           controller: controller,
           obscureText: obscure,
           autofocus: true,
@@ -877,6 +878,7 @@ class _ReasonField extends StatelessWidget {
           child: Text('Reason', style: TextStyle(fontSize: 12, color: muted)),
         ),
         TextField(
+          style: AppTextStyles.fieldInput,
           controller: controller,
           autofocus: true,
           minLines: 2,

@@ -95,6 +95,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
               if (_isOtherSelected) ...[
                 const SizedBox(height: 16),
                 TextFormField(
+                  style: AppTextStyles.fieldInput,
                   controller: _detailController,
                   decoration: const InputDecoration(
                     labelText: 'Reason details',

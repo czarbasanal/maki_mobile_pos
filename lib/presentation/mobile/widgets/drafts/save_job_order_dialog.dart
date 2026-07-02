@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
@@ -78,6 +79,7 @@ class _SaveJobOrderDialogState extends ConsumerState<_SaveJobOrderDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
+            style: AppTextStyles.fieldInput,
             controller: _labelController,
             autofocus: true,
             textCapitalization: TextCapitalization.words,

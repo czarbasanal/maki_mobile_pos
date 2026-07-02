@@ -37,10 +37,6 @@ class ProductFormScreen extends ConsumerStatefulWidget {
   ConsumerState<ProductFormScreen> createState() => _ProductFormScreenState();
 }
 
-/// Form inputs use 14px — denser than Material's 16px default, matching the
-/// dropdowns (which inherit bodyMedium) so the form reads at one size.
-const TextStyle _kFieldTextStyle = TextStyle(fontSize: 14);
-
 class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _skuController = TextEditingController();
@@ -201,7 +197,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Widget _priceField(bool canEditPrice) => TextFormField(
         key: const Key('product-price-field'),
         controller: _priceController,
-        style: _kFieldTextStyle,
+        style: AppTextStyles.fieldInput,
         decoration: InputDecoration(
           labelText: 'Selling (${AppConstants.currencySymbol}) *',
           prefixIcon: const Icon(LucideIcons.tag),
@@ -224,7 +220,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Widget _costField(bool canEditCost) => TextFormField(
         key: const Key('product-cost-field'),
         controller: _costController,
-        style: _kFieldTextStyle,
+        style: AppTextStyles.fieldInput,
         decoration: InputDecoration(
           labelText: 'Cost (${AppConstants.currencySymbol}) *',
           prefixIcon: const Icon(AppIcons.peso),
@@ -241,7 +237,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Widget _costCodeField() => TextFormField(
         controller: _costCodeController,
-        style: _kFieldTextStyle,
+        style: AppTextStyles.fieldInput,
         textCapitalization: TextCapitalization.characters,
         decoration: const InputDecoration(
           labelText: 'Cost Code *',
@@ -258,7 +254,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Widget _quantityField(bool isNameOnly) => TextFormField(
         controller: _quantityController,
-        style: _kFieldTextStyle,
+        style: AppTextStyles.fieldInput,
         enabled: !isNameOnly,
         decoration: const InputDecoration(
           labelText: 'Quantity *',
@@ -275,7 +271,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Widget _reorderField(bool isNameOnly) => TextFormField(
         controller: _reorderLevelController,
-        style: _kFieldTextStyle,
+        style: AppTextStyles.fieldInput,
         enabled: !isNameOnly,
         decoration: const InputDecoration(
           labelText: 'Reorder at',
@@ -648,7 +644,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             TextFormField(
                               key: const Key('product-sku-field'),
                               controller: _skuController,
-                              style: _kFieldTextStyle,
+                              style: AppTextStyles.fieldInput,
                               decoration: InputDecoration(
                                 labelText: 'SKU *',
                                 prefixIcon: const Icon(LucideIcons.qrCode),
@@ -678,7 +674,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             const SizedBox(height: 14),
                             TextFormField(
                               controller: _nameController,
-                              style: _kFieldTextStyle,
+                              style: AppTextStyles.fieldInput,
                               focusNode: _nameFocusNode,
                               decoration: const InputDecoration(
                                 labelText: 'Product Name *',
@@ -763,7 +759,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             const SizedBox(height: 14),
                             TextFormField(
                               controller: _notesController,
-                              style: _kFieldTextStyle,
+                              style: AppTextStyles.fieldInput,
                               enabled: !isNameOnly,
                               decoration: const InputDecoration(
                                 labelText: 'Notes',
@@ -837,7 +833,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _barcodeInputController,
-            style: _kFieldTextStyle,
+            style: AppTextStyles.fieldInput,
             decoration: InputDecoration(
               labelText: 'Add barcode',
               hintText: 'e.g. 4806504801108',
