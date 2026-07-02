@@ -51,6 +51,7 @@ enum Permission {
   viewSalesReports,
   viewProfitReports, // Shows cost-based profit data
   viewDailySalesOnly, // Can only view today's sales (cashier & staff)
+  viewJobOrderReports, // Job Orders analytics (admin-only)
 
   // User Management Permissions
   viewUsers,
@@ -189,6 +190,7 @@ abstract class RolePermissions {
     // Reports (full access, no daily restriction)
     Permission.viewSalesReports,
     Permission.viewProfitReports,
+    Permission.viewJobOrderReports,
     // User Management
     Permission.viewUsers,
     Permission.addUser,
