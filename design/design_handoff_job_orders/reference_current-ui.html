@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Orders — current UI preview (as-built, 2026-07-02)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  /* ===== Tokens (from lib/core/theme — light mode) ===== */
+  :root{
+    --slate:#283E46; --gold:#E8B84C;
+    --canvas:#F6F5F3; --card:#FFFFFF; --muted-fill:#FAFAFA;
+    --text:#16201F; --text-2:#6A7378; --text-3:#8A9296; --hint:#9AA0A3;
+    --divider:#E0E0E0; --border:#D0D0D0; --input-border:#E2E2E2; --hairline:#ECECEC;
+    --red:#F44336; --red-dark:#C62828; --green:#4CAF50; --green-dark:#2E7D32; --green-fill:#E8F5E9;
+    --total-hairline:#E5E3DE;
+    --shadow-card:0 2px 4px rgba(17,28,29,.05),0 1px 1px rgba(17,28,29,.04);
+    --shadow-header:0 2px 10px rgba(17,28,29,.05);
+    --shadow-footer:0 -4px 16px rgba(17,28,29,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Figtree',sans-serif;background:#E9E7E2;color:var(--text);padding:32px 24px;}
+  h1{font-size:20px;font-weight:700;margin-bottom:4px}
+  .note{font-size:13px;color:var(--text-2);margin-bottom:24px;max-width:900px}
+  .frames{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  .frame-wrap>figcaption{font-size:12.5px;font-weight:600;color:var(--text-2);margin:0 0 8px 4px}
+  .phone{width:390px;height:760px;background:var(--canvas);border-radius:28px;border:1px solid #d8d5cf;
+    overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 20px rgba(17,28,29,.10);position:relative}
+  .screen{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+  i[data-lucide]{width:22px;height:22px;flex:none}
+
+  /* ===== AppBar ===== */
+  .appbar{height:56px;background:var(--card);display:flex;align-items:center;padding:0 8px;
+    box-shadow:var(--shadow-header);position:relative;z-index:2;flex:none}
+  .appbar .title{position:absolute;left:56px;right:56px;text-align:center;font-size:20px;font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .appbar .title.sm{font-size:17px}
+  .iconbtn{width:48px;height:48px;border:none;background:none;display:flex;align-items:center;justify-content:center;
+    color:var(--text);position:relative;cursor:default}
+  .iconbtn.red{color:var(--red-dark)}
+  .iconbtn.compact{width:30px;height:30px}
+  .iconbtn i[data-lucide].sm{width:16px;height:16px}
+  .spacer{flex:1}
+  .badge{position:absolute;top:8px;right:6px;min-width:16px;height:16px;border-radius:8px;background:#B3261E;
+    color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+  /* ===== Cards / buttons / chips ===== */
+  .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow-card)}
+  .card.r14{border-radius:14px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:default;
+    font-family:inherit;font-size:16px;font-weight:600;letter-spacing:.5px;border-radius:18px;
+    padding:12px 24px;min-height:48px}
+  .btn.filled{background:var(--slate);color:#fff}
+  .btn.filled.red{background:var(--red)}
+  .btn.filled:disabled{background:rgba(40,62,70,.25)}
+  .btn.small{min-height:0;padding:8px 16px;font-size:14px;border-radius:16px}
+  .btn.dialog{min-height:0;padding:12px 22px;font-size:14.5px;border-radius:16px;letter-spacing:0}
+  .btn.text{background:none;color:var(--text-2);padding:11px 16px;min-height:0;font-size:14.5px;border-radius:16px;letter-spacing:0}
+  .btn.text.slate{color:var(--slate);font-size:13px;padding:6px 10px;gap:5px}
+  .btn.outlined{background:var(--card);border:1px solid var(--border);color:var(--slate)}
+  .btn i[data-lucide]{width:18px;height:18px}
+  .btn.text.slate i[data-lucide]{width:16px;height:16px}
+  .fab{position:absolute;right:16px;bottom:20px;display:flex;align-items:center;gap:8px;background:var(--slate);
+    color:#fff;border:none;border-radius:16px;padding:0 20px;height:52px;font-family:inherit;font-size:15px;font-weight:600}
+  .fab i[data-lucide]{width:20px;height:20px}
+
+  /* ===== Drafts list ===== */
+  .list{padding:8px 0 96px}
+  .tile{margin:6px 16px;padding:16px}
+  .tile .head{display:flex;align-items:flex-start}
+  .glyph{width:40px;height:40px;border-radius:11px;background:rgba(40,62,70,.06);display:flex;align-items:center;
+    justify-content:center;color:var(--text-2);flex:none}
+  .glyph i[data-lucide]{width:20px;height:20px}
+  .tile .id{flex:1;min-width:0;margin-left:12px}
+  .tile .name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .date{font-size:12px;color:var(--text-2);margin-top:2px}
+  .tile .money{text-align:right;margin-left:8px}
+  .tile .total{font-size:15px;font-weight:700;color:var(--slate)}
+  .tile .count{font-size:12px;color:var(--text-2);margin-top:2px}
+  .preview{margin-top:12px;padding:12px;background:var(--muted-fill);border:1px solid var(--hairline);border-radius:14px}
+  .svc-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--slate);border-radius:10px;
+    padding:2px 8px;color:var(--slate);font-size:11px;font-weight:600;margin-bottom:8px}
+  .svc-chip i[data-lucide]{width:12px;height:12px}
+  .prow{display:flex;align-items:center;font-size:13px}
+  .prow+.prow{margin-top:4px}
+  .prow .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prow .q{color:var(--text-2);margin:0 12px 0 6px}
+  .prow .v{font-weight:500}
+  .more{font-size:12px;color:var(--text-2);font-style:italic;margin-top:4px}
+  .tile .foot{display:flex;align-items:center;margin-top:12px}
+  .byline{flex:1;font-size:12px;color:var(--text-2)}
+
+  /* ===== Empty state ===== */
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+  .empty i[data-lucide]{width:64px;height:64px;color:#9BA3A7}
+  .empty .t{font-size:16px;font-weight:600;margin-top:16px}
+  .empty .s{font-size:16px;color:#9BA3A7;margin-top:8px;line-height:1.5;max-width:280px;font-size:15px}
+  .empty .btn{margin-top:24px}
+
+  /* ===== Dialogs ===== */
+  .scrim{position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;
+    padding:24px;z-index:5}
+  .dialog{background:var(--card);border-radius:24px;width:100%;padding:22px 22px 16px}
+  .dlg-head{display:flex;align-items:center;gap:13px}
+  .chip42{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .chip42.neutral{background:rgba(40,62,70,.09);color:var(--slate)}
+  .chip42.destructive{background:rgba(244,67,54,.10);color:var(--red)}
+  .dlg-title{font-size:18px;font-weight:600;line-height:1.3;flex:1}
+  .dlg-body{margin-top:14px}
+  .dlg-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:22px}
+  .warnline{display:flex;align-items:flex-start;gap:7px;color:var(--red);font-size:12.5px;line-height:1.4;margin-top:11px}
+  .warnline i[data-lucide]{width:15px;height:15px;margin-top:1px}
+  .recessed{padding:11px 13px;background:var(--muted-fill);border:1px solid var(--hairline);border-radius:14px;margin-top:11px}
+  .dlg-copy{font-size:14px;line-height:1.5;color:#5A6468}
+
+  /* ===== Inputs / dropdown-pickers ===== */
+  .field{position:relative;background:var(--muted-fill);border:1px solid var(--input-border);border-radius:16px;
+    padding:16px;display:flex;align-items:center;gap:10px;margin-top:12px}
+  .field:first-child{margin-top:0}
+  .field .flabel{position:absolute;top:-8px;left:14px;background:var(--card);padding:0 4px;font-size:12px;color:var(--text-2)}
+  .field .hintt{font-size:16px;color:var(--hint);flex:1}
+  .field .valt{font-size:16px;color:var(--text);flex:1}
+  .field i[data-lucide]{width:20px;height:20px;color:var(--text-2)}
+  .field i[data-lucide].chev{width:16px;height:16px}
+
+  /* ===== Editor ===== */
+  .infohead{padding:16px;border-bottom:1px solid var(--hairline);background:var(--canvas)}
+  .inforow{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text-2)}
+  .inforow+.inforow{margin-top:4px}
+  .inforow i[data-lucide]{width:14px;height:14px}
+  .sechead{display:flex;align-items:center;gap:8px;padding:8px 4px 0 16px;color:var(--text-2)}
+  .sechead i[data-lucide]{width:16px;height:16px}
+  .sechead .st{font-size:14px;font-weight:600;letter-spacing:.25px;flex:1}
+  .item{margin:6px 16px;padding:12px;display:flex;align-items:center}
+  .qty{width:40px;height:40px;border:1.4px solid var(--slate);border-radius:10px;display:flex;align-items:center;
+    justify-content:center;color:var(--slate);font-size:13px;font-weight:700;flex:none}
+  .item .mid{flex:1;min-width:0;margin-left:12px}
+  .item .iname{font-size:14.5px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .sku{font-family:'Roboto Mono',monospace;font-size:11.5px;color:var(--text-2);letter-spacing:1px;margin-top:2px;white-space:nowrap}
+  .item .each{font-size:12px;color:var(--text-2)}
+  .item .lt{font-size:14px;font-weight:600;margin:0 2px 0 8px;white-space:nowrap}
+  .laborsec{padding:8px 16px;border-top:1px solid var(--hairline);margin-top:8px}
+  .laborrow{margin-top:8px;padding:4px 4px 4px 12px;display:flex;align-items:center;gap:8px}
+  .laborrow i[data-lucide].w{width:14px;height:14px;color:var(--text-2)}
+  .laborrow .d{flex:1;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .laborrow .f{font-size:16px;font-weight:500}
+  .summary{margin-top:auto;background:var(--canvas);border-top:1px solid var(--hairline);padding:16px}
+  .srow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+  .srow .l{color:var(--text-2)} .srow .v{font-weight:500}
+  .srow .v.green{color:var(--green-dark)}
+  .totalrow{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;padding-top:9px;
+    border-top:1px solid var(--total-hairline)}
+  .totalrow .l{font-size:15px;font-weight:700}
+  .totalrow .l small{font-size:12.5px;font-weight:500;color:var(--text-2)}
+  .totalrow .v{font-size:18px;font-weight:700}
+  .summary .btn{width:100%;margin-top:16px}
+
+  /* ===== Bottom sheet (add parts) ===== */
+  .sheet-scrim{position:absolute;inset:0;background:rgba(17,28,29,.32);z-index:5;display:flex;flex-direction:column;justify-content:flex-end}
+  .sheet{background:var(--card);border-radius:24px 24px 0 0;padding:10px 16px 20px;max-height:62%}
+  .grab{width:36px;height:4px;border-radius:2px;background:var(--divider);margin:0 auto 14px}
+  .sheet h3{font-size:16px;font-weight:600;margin-bottom:12px}
+  .search{display:flex;align-items:center;gap:10px;background:var(--muted-fill);border:1px solid var(--input-border);
+    border-radius:16px;padding:14px 16px;color:var(--hint);font-size:16px}
+  .search i[data-lucide]{width:20px;height:20px;color:var(--text-2)}
+  .result{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--hairline);font-size:14.5px}
+  .result .rn{flex:1;min-width:0}
+  .result .rs{display:block;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-2);letter-spacing:1px}
+  .result .rp{font-weight:600}
+  .sheet .done{display:flex;justify-content:flex-end;margin-top:10px}
+
+  /* ===== Reports ===== */
+  .datebar{display:flex;gap:8px;padding:14px 16px 12px}
+  .pill{height:46px;display:flex;align-items:center;gap:7px;padding:0 12px;font-size:13px;font-weight:500}
+  .pill.preset{flex:10;padding:0 13px;font-size:14px;font-weight:600}
+  .pill.range{flex:13}
+  .pill i[data-lucide]{width:17px;height:17px;color:var(--slate)}
+  .pill i[data-lucide].chev{width:16px;height:16px;color:var(--text-2)}
+  .pill .pl{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .segment{display:flex;margin:8px 16px 0;border:1px solid var(--border);border-radius:18px;overflow:hidden}
+  .seg{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0;font-size:14px;font-weight:500;
+    color:var(--text);background:var(--card)}
+  .seg.on{background:rgba(76,175,80,.18);color:var(--green-dark);font-weight:600}
+  .seg i[data-lucide]{width:16px;height:16px}
+  .seg+.seg{border-left:1px solid var(--border)}
+  .rrow{margin:8px 16px 0;padding:14px;display:flex;align-items:center}
+  .rrow .rc{flex:1;min-width:0}
+  .rrow .rt{font-size:15px;font-weight:600}
+  .rrow .rsub{font-size:12px;color:var(--text-2);margin-top:2px}
+  .rrow .rv{font-size:15px;font-weight:700}
+
+  /* ===== POS bottom bar ===== */
+  .posfoot{margin-top:auto;background:var(--card);box-shadow:var(--shadow-footer);padding:12px 16px 20px;display:flex;gap:10px}
+  .posfoot .btn{flex:1;min-height:50px}
+  .posbody{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:13px;
+    text-align:center;padding:24px;line-height:1.6}
+</style>
+</head>
+<body>
+<h1>Job Orders — current UI (as-built preview)</h1>
+<p class="note">HTML reproduction of the shipped Flutter screens (light theme), built from the real theme tokens
+(<code>app_colors / app_shadows / app_text_styles</code>: slate <code>#283E46</code>, canvas <code>#F6F5F3</code>,
+Figtree, card radius 18 / inner 14, flat buttons). Sample data is illustrative. Companion doc:
+<code>README.md</code> (this folder).</p>
+
+<div class="frames">
+
+  <!-- ============ 1. POS entry point ============ -->
+  <figure class="frame-wrap">
+    <figcaption>1 · POS screen (entry point) — badge = open job-order count, not cart count</figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title">Point of Sale</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><i data-lucide="shopping-cart"></i><span class="badge">3</span></div>
+        <div class="iconbtn red"><i data-lucide="trash-2"></i></div>
+      </div>
+      <div class="posbody">product search + cart list<br>(unchanged by Job Orders — context only)</div>
+      <div class="posfoot">
+        <button class="btn outlined"><i data-lucide="save"></i>Save Job Order</button>
+        <button class="btn filled"><i data-lucide="arrow-right"></i>Checkout</button>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 2. Job Orders list ============ -->
+  <figure class="frame-wrap">
+    <figcaption>2 · Job Orders list — /drafts</figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title">Job Orders</div>
+      </div>
+      <div class="list">
+        <div class="card tile">
+          <div class="head">
+            <div class="glyph"><i data-lucide="shopping-cart"></i></div>
+            <div class="id"><div class="name">Juan / ABC-123</div><div class="date">Jul 2, 9:41 AM</div></div>
+            <div class="money"><div class="total">₱1,730.00</div><div class="count">3 items</div></div>
+          </div>
+          <div class="preview">
+            <span class="svc-chip"><i data-lucide="wrench"></i>Service job</span>
+            <div class="prow"><span class="n">Motul 3000 4T 10W-40 1L</span><span class="q">×2</span><span class="v">₱640.00</span></div>
+            <div class="prow"><span class="n">NGK Spark Plug CPR8EA-9</span><span class="q">×1</span><span class="v">₱190.00</span></div>
+            <div class="prow"><span class="n">Oil filter Nmax</span><span class="q">×1</span><span class="v">₱250.00</span></div>
+          </div>
+          <div class="foot">
+            <span class="byline">By Czar</span>
+            <div class="iconbtn compact red"><i data-lucide="trash-2" class="sm"></i></div>
+            <button class="btn filled small"><i data-lucide="arrow-right"></i>Open</button>
+          </div>
+        </div>
+        <div class="card tile">
+          <div class="head">
+            <div class="glyph"><i data-lucide="shopping-cart"></i></div>
+            <div class="id"><div class="name">Maria / Click 125i</div><div class="date">Jul 2, 8:15 AM</div></div>
+            <div class="money"><div class="total">₱4,120.00</div><div class="count">5 items</div></div>
+          </div>
+          <div class="preview">
+            <span class="svc-chip"><i data-lucide="wrench"></i>Service job</span>
+            <div class="prow"><span class="n">CVT belt Click 125</span><span class="q">×1</span><span class="v">₱980.00</span></div>
+            <div class="prow"><span class="n">Roller set 15g</span><span class="q">×1</span><span class="v">₱420.00</span></div>
+            <div class="prow"><span class="n">Gear oil 120ml</span><span class="q">×1</span><span class="v">₱95.00</span></div>
+            <div class="more">+2 more items</div>
+          </div>
+          <div class="foot">
+            <span class="byline">By Rey</span>
+            <button class="btn filled small"><i data-lucide="arrow-right"></i>Open</button>
+          </div>
+        </div>
+        <div class="card tile">
+          <div class="head">
+            <div class="glyph"><i data-lucide="shopping-cart"></i></div>
+            <div class="id"><div class="name">Walk-in / XRM 125</div><div class="date">Jul 1, 4:02 PM</div></div>
+            <div class="money"><div class="total">₱360.00</div><div class="count">1 item</div></div>
+          </div>
+          <div class="preview">
+            <div class="prow"><span class="n">Drive chain 428H</span><span class="q">×1</span><span class="v">₱360.00</span></div>
+          </div>
+          <div class="foot">
+            <span class="byline">By Czar</span>
+            <div class="iconbtn compact red"><i data-lucide="trash-2" class="sm"></i></div>
+            <button class="btn filled small"><i data-lucide="arrow-right"></i>Open</button>
+          </div>
+        </div>
+      </div>
+      <button class="fab"><i data-lucide="plus"></i>New Job Order</button>
+    </div></div>
+  </figure>
+
+  <!-- ============ 3. Empty state ============ -->
+  <figure class="frame-wrap">
+    <figcaption>3 · Job Orders list — empty state</figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title">Job Orders</div>
+      </div>
+      <div class="empty">
+        <i data-lucide="clipboard-list"></i>
+        <div class="t">No job orders yet</div>
+        <div class="s">Tap New Job Order to open a ticket for a bike being serviced.</div>
+        <button class="btn filled"><i data-lucide="plus"></i>New Job Order</button>
+      </div>
+      <button class="fab"><i data-lucide="plus"></i>New Job Order</button>
+    </div></div>
+  </figure>
+
+  <!-- ============ 4. New Job Order dialog ============ -->
+  <figure class="frame-wrap">
+    <figcaption>4 · New Job Order dialog (over list)</figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title">Job Orders</div>
+      </div>
+      <div class="scrim">
+        <div class="dialog">
+          <div class="dlg-head">
+            <div class="chip42 neutral"><i data-lucide="clipboard-list"></i></div>
+            <div class="dlg-title">New Job Order</div>
+          </div>
+          <div class="dlg-body">
+            <div class="field"><span class="flabel">Customer / plate</span><span class="hintt">e.g. Juan / ABC-123</span></div>
+            <div class="field"><span class="flabel">Motorcycle model</span><i data-lucide="bike"></i><span class="hintt">— None —</span><i data-lucide="chevron-down" class="chev"></i></div>
+            <div class="field"><span class="flabel">Mechanic</span><i data-lucide="wrench"></i><span class="hintt">— None —</span><i data-lucide="chevron-down" class="chev"></i></div>
+          </div>
+          <div class="dlg-actions">
+            <button class="btn text">Cancel</button>
+            <button class="btn filled dialog">Create</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 5. Editor ============ -->
+  <figure class="frame-wrap">
+    <figcaption>5 · Job order editor — /drafts/:id</figcaption>
+    <div class="phone" style="height:880px"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title sm">Juan / ABC-123</div>
+        <div class="spacer"></div>
+        <div class="iconbtn red"><i data-lucide="trash-2"></i></div>
+      </div>
+      <div class="infohead">
+        <div class="inforow"><i data-lucide="clock"></i>Created Jul 2, 2026 • 9:41 AM</div>
+        <div class="inforow"><i data-lucide="pencil"></i>Updated Jul 2, 2026 • 10:05 AM</div>
+      </div>
+      <div class="sechead"><i data-lucide="package"></i><span class="st">Parts</span>
+        <button class="btn text slate"><i data-lucide="plus"></i>Add parts</button></div>
+      <div class="card r14 item">
+        <div class="qty">2x</div>
+        <div class="mid">
+          <div class="iname">Motul 3000 4T 1L</div>
+          <div class="sku">SKU: OIL-M3000</div>
+          <div class="each">₱320.00 each</div>
+        </div>
+        <span class="lt">₱640.00</span>
+        <div class="iconbtn compact"><i data-lucide="minus" class="sm"></i></div>
+        <div class="iconbtn compact"><i data-lucide="plus" class="sm"></i></div>
+        <div class="iconbtn compact"><i data-lucide="x" class="sm"></i></div>
+      </div>
+      <div class="card r14 item">
+        <div class="qty">1x</div>
+        <div class="mid">
+          <div class="iname">NGK Plug CPR8EA-9</div>
+          <div class="sku">SKU: SPK-CPR8</div>
+          <div class="each">₱190.00 each</div>
+        </div>
+        <span class="lt">₱190.00</span>
+        <div class="iconbtn compact"><i data-lucide="minus" class="sm"></i></div>
+        <div class="iconbtn compact"><i data-lucide="plus" class="sm"></i></div>
+        <div class="iconbtn compact"><i data-lucide="x" class="sm"></i></div>
+      </div>
+      <div class="laborsec">
+        <div class="sechead" style="padding:0"><i data-lucide="wrench"></i><span class="st">Labor &amp; Service</span>
+          <button class="btn text slate"><i data-lucide="plus"></i>Add Labor</button></div>
+        <div class="field" style="margin-top:8px;background:#FAFAFA"><span class="flabel" style="background:#F6F5F3">Mechanic</span><i data-lucide="wrench"></i><span class="valt">Rey</span><i data-lucide="chevron-down" class="chev"></i></div>
+        <div class="card r14 laborrow"><i data-lucide="wrench" class="w"></i><span class="d">Change oil + tune-up</span><span class="f">₱250.00</span>
+          <div class="iconbtn compact"><i data-lucide="x" class="sm"></i></div></div>
+        <div class="card r14 laborrow"><i data-lucide="wrench" class="w"></i><span class="d">Brake adjustment</span><span class="f">₱100.00</span>
+          <div class="iconbtn compact"><i data-lucide="x" class="sm"></i></div></div>
+      </div>
+      <div class="summary">
+        <div class="srow"><span class="l">Subtotal</span><span class="v">₱830.00</span></div>
+        <div class="srow"><span class="l">Labor (2 services)</span><span class="v">₱350.00</span></div>
+        <div class="totalrow"><span class="l">Total <small>(3 items)</small></span><span class="v">₱1,180.00</span></div>
+        <button class="btn filled"><i data-lucide="shopping-cart"></i>Bill out</button>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 6. Add parts sheet ============ -->
+  <figure class="frame-wrap">
+    <figcaption>6 · Add-parts bottom sheet (POS product search reuse; stays open, “Done” dismisses)</figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title sm">Juan / ABC-123</div>
+        <div class="spacer"></div>
+        <div class="iconbtn red"><i data-lucide="trash-2"></i></div>
+      </div>
+      <div class="sheet-scrim">
+        <div class="sheet">
+          <div class="grab"></div>
+          <h3>Add parts</h3>
+          <div class="search"><i data-lucide="search"></i>Search name, SKU, or scan barcode<span class="spacer"></span><i data-lucide="scan-barcode"></i></div>
+          <div class="result"><span class="rn">Motul 3000 4T 10W-40 1L<span class="rs">OIL-M3000 · 14 in stock</span></span><span class="rp">₱320.00</span></div>
+          <div class="result"><span class="rn">Motul Scooter LE 10W-30<span class="rs">OIL-MSC10 · 6 in stock</span></span><span class="rp">₱380.00</span></div>
+          <div class="result"><span class="rn">Oil filter Nmax<span class="rs">FLT-NMX · 9 in stock</span></span><span class="rp">₱250.00</span></div>
+          <div class="done"><button class="btn text" style="color:#283E46;font-weight:600">Done</button></div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 7. Delete dialog ============ -->
+  <figure class="frame-wrap">
+    <figcaption>7 · Delete confirmation</figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title">Job Orders</div>
+      </div>
+      <div class="scrim">
+        <div class="dialog">
+          <div class="dlg-head">
+            <div class="chip42 destructive"><i data-lucide="trash-2"></i></div>
+            <div class="dlg-title">Delete job order?</div>
+          </div>
+          <div class="dlg-body">
+            <div class="dlg-copy">Delete "Juan / ABC-123"?</div>
+            <div class="recessed">
+              <div style="font-size:14px;font-weight:600">3 items</div>
+              <div style="font-size:12.5px;color:var(--text-2);margin-top:2px">Total ₱1,180.00</div>
+            </div>
+            <div class="warnline"><i data-lucide="triangle-alert"></i>This action cannot be undone.</div>
+          </div>
+          <div class="dlg-actions">
+            <button class="btn text">Cancel</button>
+            <button class="btn filled dialog red">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 8. Reports ============ -->
+  <figure class="frame-wrap">
+    <figcaption>8 · Reports — /reports/job-orders (admin-only; Models / Mechanics)</figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><i data-lucide="chevron-left"></i></div>
+        <div class="title">Job Orders</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><i data-lucide="download"></i></div>
+      </div>
+      <div class="datebar">
+        <div class="card r14 pill preset"><i data-lucide="calendar-days"></i><span class="pl">This month</span><i data-lucide="chevron-down" class="chev"></i></div>
+        <div class="card r14 pill range"><i data-lucide="calendar"></i><span class="pl">Jul 1 – Jul 2, 2026</span><i data-lucide="chevron-down" class="chev"></i></div>
+      </div>
+      <div class="segment">
+        <div class="seg on"><i data-lucide="bike"></i>Models</div>
+        <div class="seg"><i data-lucide="wrench"></i>Mechanics</div>
+      </div>
+      <div class="card r14 rrow"><div class="rc"><div class="rt">Nmax</div><div class="rsub">7 jobs</div></div><span class="rv">₱18,430.00</span></div>
+      <div class="card r14 rrow"><div class="rc"><div class="rt">Click 125i</div><div class="rsub">5 jobs</div></div><span class="rv">₱12,940.00</span></div>
+      <div class="card r14 rrow"><div class="rc"><div class="rt">XRM 125</div><div class="rsub">3 jobs</div></div><span class="rv">₱4,660.00</span></div>
+      <div class="card r14 rrow"><div class="rc"><div class="rt">Mio i 125</div><div class="rsub">2 jobs</div></div><span class="rv">₱2,150.00</span></div>
+    </div></div>
+  </figure>
+
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>
