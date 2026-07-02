@@ -52,6 +52,10 @@ abstract class FirestoreCollections {
   /// Mechanics collection - admin-managed mechanic list for service drafts
   static const String mechanics = 'mechanics';
 
+  /// Motorcycle models collection - admin-managed + cashier-addable model list
+  /// picked on Job Orders.
+  static const String motorcycleModels = 'motorcycle_models';
+
   /// Void requests collection - cashier/staff void requests awaiting admin approval
   static const String voidRequests = 'void_requests';
 
