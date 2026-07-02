@@ -14,6 +14,7 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 import 'package:uuid/uuid.dart';
 
 /// Screen for editing/viewing a draft and converting to checkout.
@@ -89,6 +90,35 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
 
   Future<void> _removeItem(DraftEntity draft, String itemId) =>
       _persist(draft.removeItem(itemId));
+
+  SaleItemEntity _saleItemFromProduct(ProductEntity product) => SaleItemEntity(
+        id: const Uuid().v4(),
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        unitPrice: product.price,
+        unitCost: product.cost,
+        quantity: 1,
+        unit: product.unit,
+      );
+
+  /// Appends a product to the current working ticket (uses [_working] so
+  /// several parts added in one sitting accumulate) and persists it.
+  Future<void> _addProduct(ProductEntity product) {
+    final current = _working;
+    if (current == null) return Future.value();
+    return _persist(current.addItem(_saleItemFromProduct(product)));
+  }
+
+  void _onAddParts() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (_) => _AddPartsSheet(onProduct: _addProduct),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +246,34 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               );
             }),
 
+            // Parts header + Add action
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.package,
+                      size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Parts',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: _onAddParts,
+                    icon: const Icon(LucideIcons.plus, size: 16),
+                    label: const Text('Add parts'),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Items list
             Expanded(
               child: draft.items.isEmpty
@@ -532,63 +590,20 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed:
-                        draft.items.isEmpty ? null : () => _editInPos(draft),
-                    icon: const Icon(LucideIcons.edit),
-                    label: const Text('Edit in POS'),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm + 4),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton.icon(
-                    onPressed: draft.items.isEmpty
-                        ? null
-                        : () => _proceedToCheckout(draft),
-                    icon: const Icon(LucideIcons.shoppingCart),
-                    label: const Text('Checkout'),
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: draft.items.isEmpty
+                    ? null
+                    : () => _proceedToCheckout(draft),
+                icon: const Icon(LucideIcons.shoppingCart),
+                label: const Text('Checkout'),
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _editInPos(DraftEntity draft) async {
-    setState(() => _isLoading = true);
-
-    try {
-      // Load draft into cart and consume it — see drafts_list_screen for
-      // the rationale on destructive load.
-      ref.read(cartProvider.notifier).loadFromDraft(draft);
-      ref.read(selectedDraftProvider.notifier).state = null;
-      final actor = ref.read(currentUserProvider).valueOrNull;
-      if (actor != null) {
-        ref
-            .read(draftOperationsProvider.notifier)
-            .deleteDraft(actor: actor, draftId: draft.id);
-      }
-
-      if (mounted) {
-        // Navigate to POS
-        context.go(RoutePaths.pos);
-      }
-    } catch (e) {
-      if (mounted) {
-        context.showErrorSnackBar('Error loading job order: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   Future<void> _proceedToCheckout(DraftEntity draft) async {
@@ -648,6 +663,82 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         setState(() => _isDeleting = false);
       }
     }
+  }
+}
+
+/// Bottom sheet that reuses the POS [ProductSearchField] to append parts to a
+/// Job Order in place (no register cart). Stays open so several parts can be
+/// added in one sitting; the editor behind updates live.
+class _AddPartsSheet extends ConsumerStatefulWidget {
+  const _AddPartsSheet({required this.onProduct});
+
+  final void Function(ProductEntity) onProduct;
+
+  @override
+  ConsumerState<_AddPartsSheet> createState() => _AddPartsSheetState();
+}
+
+class _AddPartsSheetState extends ConsumerState<_AddPartsSheet> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md + bottomInset,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Add parts',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ProductSearchField(
+            controller: _controller,
+            focusNode: _focusNode,
+            onProductSelected: (p) {
+              widget.onProduct(p);
+              _controller.clear();
+              _focusNode.requestFocus();
+            },
+            onBarcodeScanned: (barcode) async {
+              final p =
+                  await ref.read(productByBarcodeProvider(barcode).future);
+              if (!context.mounted) return;
+              if (p != null) {
+                widget.onProduct(p);
+              } else {
+                context.showWarningSnackBar('Product not found: $barcode');
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 
