@@ -43,6 +43,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_s
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/mechanic_editor_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/motorcycle_model_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
@@ -428,6 +429,11 @@ List<RouteBase> featureRoutes() => [
             path: 'mechanics',
             name: RouteNames.mechanics,
             builder: (context, state) => const MechanicEditorScreen(),
+          ),
+          GoRoute(
+            path: 'motorcycle-models',
+            name: RouteNames.motorcycleModels,
+            builder: (context, state) => const MotorcycleModelEditorScreen(),
           ),
           GoRoute(
             path: 'about',
