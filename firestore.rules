@@ -290,6 +290,22 @@ service cloud.firestore {
       allow write: if isAdmin() && isActiveUser();
     }
 
+    // ==================== MOTORCYCLE MODELS COLLECTION ====================
+
+    match /motorcycle_models/{modelId} {
+      // Cashier-facing Job Order picker streams active models — read is not
+      // admin-only (mirrors mechanics).
+      allow read: if isValidUser() && isActiveUser();
+
+      // Pick-or-add: any active user may create a model inline (like /drafts).
+      allow create: if isValidUser() && isActiveUser() &&
+        request.resource.data.createdBy == request.auth.uid;
+
+      // Only admin manages the list (Settings → Motorcycle Models: rename /
+      // archive), gated by manageCategories at the route layer.
+      allow update, delete: if isAdmin() && isActiveUser();
+    }
+
     // ==================== VOID REQUESTS COLLECTION ====================
 
     match /void_requests/{requestId} {
