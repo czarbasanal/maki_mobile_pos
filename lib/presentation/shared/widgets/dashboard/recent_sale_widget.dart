@@ -38,7 +38,9 @@ class RecentSalesWidget extends ConsumerWidget {
           thickness: 1,
           indent: 14,
           endIndent: 14,
-          color: theme.dividerColor,
+          // Hairline grey — the theme dividerColor reads too dark between
+          // these rows.
+          color: AppColors.hairline(theme.brightness == Brightness.dark),
         );
         return DashboardListCard(
           child: Column(

@@ -25,6 +25,7 @@ class AppDropdown<T> extends StatelessWidget {
     this.decoration,
     this.validator,
     this.menuMaxWidth = 360,
+    this.menuMaxHeight = 320,
     this.menuHorizontalMargin = 16,
   });
 
@@ -47,6 +48,11 @@ class AppDropdown<T> extends StatelessWidget {
   /// Hard cap on popup width — applied on tablets / wide screens so the
   /// popup never feels oversized. Default 360.
   final double menuMaxWidth;
+
+  /// Hard cap on popup height so long lists (mechanics, motorcycle models —
+  /// potentially thousands of rows) open as a scrollable panel instead of
+  /// filling or overflowing the screen. Default 320.
+  final double menuMaxHeight;
 
   /// Horizontal inset (per side) between the button's left/right edges and
   /// the popup's left/right edges. Default 16.
@@ -77,6 +83,7 @@ class AppDropdown<T> extends StatelessWidget {
               items: items,
               decoration: decoration ?? const InputDecoration(),
               menuWidth: menuWidth,
+              menuMaxHeight: menuMaxHeight,
               enabled: onChanged != null,
               onSelect: handleSelect,
             );
@@ -93,6 +100,7 @@ class _AppDropdownButton<T> extends StatefulWidget {
     required this.items,
     required this.decoration,
     required this.menuWidth,
+    required this.menuMaxHeight,
     required this.enabled,
     required this.onSelect,
   });
@@ -101,6 +109,7 @@ class _AppDropdownButton<T> extends StatefulWidget {
   final List<DropdownMenuItem<T>> items;
   final InputDecoration decoration;
   final double menuWidth;
+  final double menuMaxHeight;
   final bool enabled;
   final ValueChanged<T?> onSelect;
 
@@ -132,8 +141,9 @@ class _AppDropdownButtonState<T> extends State<_AppDropdownButton<T>> {
       style: MenuStyle(
         alignment: Alignment.bottomCenter,
         minimumSize: WidgetStatePropertyAll(Size(widget.menuWidth, 0)),
-        maximumSize:
-            WidgetStatePropertyAll(Size(widget.menuWidth, double.infinity)),
+        maximumSize: WidgetStatePropertyAll(
+          Size(widget.menuWidth, widget.menuMaxHeight),
+        ),
       ),
       onOpen: () => setState(() => _menuOpen = true),
       onClose: () => setState(() => _menuOpen = false),
@@ -152,6 +162,10 @@ class _AppDropdownButtonState<T> extends State<_AppDropdownButton<T>> {
                 if (_controller.isOpen) {
                   _controller.close();
                 } else {
+                  // Drop the soft keyboard first — a dropdown opening over
+                  // an active keyboard (e.g. the POS search field) leaves
+                  // barely any room for the menu.
+                  FocusManager.instance.primaryFocus?.unfocus();
                   _controller.open();
                 }
               }

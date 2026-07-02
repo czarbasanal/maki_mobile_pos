@@ -347,7 +347,10 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 'Recent Transactions',
                 trailing: _canViewReports
                     ? TextButton(
-                        onPressed: () => context.go(RoutePaths.salesHistory),
+                        // push (not go): salesHistory nests under /reports,
+                        // and go rebuilds the stack so back would walk the
+                        // reports hierarchy instead of returning here.
+                        onPressed: () => context.push(RoutePaths.salesHistory),
                         style: TextButton.styleFrom(
                           textStyle: const TextStyle(
                             fontSize: 12.5,
