@@ -16,11 +16,14 @@ import 'package:maki_mobile_pos/services/activity_logger.dart';
 ///   cost, costCode.
 /// - [Permission.editProductLimited]  — staff: same fields **except**
 ///   price, cost, costCode. Mirrors the firestore.rules staff branch.
-/// - [Permission.editProductNameOnly] — cashier: only name and imageUrl.
-///   Mirrors the firestore.rules cashier branch.
+/// - [Permission.editProductNameOnly] — cashier: only name and imageUrl,
+///   REBASED onto the freshly-read doc (a concurrent sale mid-edit must not
+///   fail — or be overwritten by — the save). Mirrors the firestore.rules
+///   cashier branch.
 ///
-/// Returns `restricted-fields` if an actor attempts to change a column
-/// outside their tier.
+/// Returns `restricted-fields` if a staff actor attempts to change a column
+/// outside their tier; cashier out-of-tier values are silently dropped by
+/// the rebase.
 class UpdateProductUseCase {
   static const _restrictedFields = ['price', 'cost', 'costCode'];
 
@@ -33,9 +36,14 @@ class UpdateProductUseCase {
   })  : _repository = repository,
         _logger = logger;
 
+  /// [quantityEdited] — whether the actor deliberately changed the quantity
+  /// field. When false (an untouched form field), the freshly-read doc's
+  /// quantity is kept: the submitted value is a snapshot from form-open, and
+  /// writing it back would silently un-sell anything rung up mid-edit.
   Future<UseCaseResult<ProductEntity>> execute({
     required UserEntity actor,
     required ProductEntity product,
+    bool quantityEdited = true,
   }) async {
     try {
       final hasFullEdit = actor.hasPermission(Permission.editProduct);
@@ -75,37 +83,26 @@ class UpdateProductUseCase {
         }
       }
 
-      // Cashier (name-only tier) may change only name and imageUrl.
+      // Cashier (name-only tier) may change only name and imageUrl. Rebase
+      // those two onto the FRESH doc instead of comparing the submitted
+      // snapshot field-by-field: the form's copy goes stale the moment a
+      // sale decrements stock mid-edit, and the old comparison then rejected
+      // the save with restricted-fields (2026-07-02 shop bug — the image had
+      // already uploaded to Storage but the product doc kept imageUrl null).
+      // Any stray value outside the tier is dropped, never written; the
+      // firestore.rules cashier denylist stays as defense-in-depth.
+      var productToSave = product;
       if (!hasFullEdit && !hasLimitedEdit && hasNameOnlyEdit) {
-        final changed = <String>[];
-        if (skuChanged) changed.add('sku');
-        if (product.costCode != original.costCode) changed.add('costCode');
-        if (product.cost != original.cost) changed.add('cost');
-        if (product.price != original.price) changed.add('price');
-        if (product.quantity != original.quantity) changed.add('quantity');
-        if (product.reorderLevel != original.reorderLevel) {
-          changed.add('reorderLevel');
-        }
-        if (product.unit != original.unit) changed.add('unit');
-        if (product.supplierId != original.supplierId) changed.add('supplier');
-        if (!_listEquals(product.barcodes, original.barcodes)) {
-          changed.add('barcodes');
-        }
-        if (product.category != original.category) changed.add('category');
-        if (product.notes != original.notes) changed.add('notes');
-        if (changed.isNotEmpty) {
-          return UseCaseResult.failure(
-            message:
-                'Cashier can only change name and image. Ask staff or admin to update ${changed.join(", ")}.',
-            code: 'restricted-fields',
-          );
-        }
+        productToSave = original.copyWith(
+          name: product.name,
+          imageUrl: product.imageUrl,
+          clearImageUrl: product.imageUrl == null,
+        );
       }
 
       // Admin SKU change: validate format + uniqueness, keep the old SKU
       // scannable (append to barcodes), and count the variation children the
       // repository will re-point to the new SKU (for the audit log).
-      var productToSave = product;
       var relinkedVariations = 0;
       if (hasFullEdit && skuChanged) {
         if (!SkuGenerator.isValidSku(product.sku)) {
@@ -132,6 +129,13 @@ class UpdateProductUseCase {
         final group = await _repository.getSkuVariations(original.sku);
         relinkedVariations =
             group.where((p) => p.baseSku == original.sku).length;
+      }
+
+      // Untouched quantity field → keep the live count (see [execute] doc).
+      // Placed after the SKU block, which rebuilds productToSave from the
+      // submitted product.
+      if (!quantityEdited) {
+        productToSave = productToSave.copyWith(quantity: original.quantity);
       }
 
       final updated = await _repository.updateProduct(
@@ -174,11 +178,4 @@ class UpdateProductUseCase {
   static List<String> get restrictedFields =>
       List.unmodifiable(_restrictedFields);
 
-  static bool _listEquals(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }

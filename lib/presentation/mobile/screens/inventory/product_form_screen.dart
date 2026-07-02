@@ -139,8 +139,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   // ---- Bundle 04 layout helpers (sectioned cards + pinned submit) ----
 
+  // Section rhythm: the card above already carries 20 of bottom margin, so
+  // the header only adds a small top inset — 28 total between sections
+  // (was 42, which read as a double gap against the 16px field spacing).
   Widget _sectionHeader(String text) => Padding(
-        padding: const EdgeInsets.only(left: 2, top: 22, bottom: 10),
+        padding: const EdgeInsets.only(left: 2, top: 8, bottom: 10),
         child: Text(
           text,
           style: TextStyle(
@@ -598,9 +601,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   ? null
                                   : _existingProduct?.imageUrl,
                               pendingBytes: _pendingImageBytes,
+                              // Every role that can open this form may manage
+                              // the image: admin + staff (create AND edit),
+                              // cashier (name+image tier).
                               enabled: userRole == UserRole.admin ||
-                                  isNameOnly ||
-                                  (userRole == UserRole.staff && isCreating),
+                                  userRole == UserRole.staff ||
+                                  isNameOnly,
                               onChanged: (bytes, {required removed}) {
                                 setState(() {
                                   if (removed) {
@@ -1074,13 +1080,47 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           final productOps = ref.read(productOperationsProvider.notifier);
           if (!mounted) return;
           final result = await context.runWithWaiting(
-            () => productOps.updateProduct(actor: currentUser, product: product),
+            () => productOps.updateProduct(
+              actor: currentUser,
+              product: product,
+              // Untouched field → don't write the form-open snapshot back
+              // over stock a mid-edit sale already decremented.
+              quantityEdited: (int.tryParse(_quantityController.text) ?? 0) !=
+                  _existingProduct!.quantity,
+            ),
             message: 'Updating…',
           );
           if (result == null) throw Exception('Failed to update product');
         } else if (userRole == UserRole.staff) {
           // Staff: update everything EXCEPT price, cost, costCode, supplierId
           // Keep original price, cost, costCode, and supplier
+          // Image: same upload-then-write flow as the admin branch.
+          String? newImageUrl;
+          var clearImage = false;
+          if (_pendingImageBytes != null) {
+            try {
+              final storage = ref.read(productImageStorageServiceProvider);
+              newImageUrl = await storage.upload(
+                productId: _existingProduct!.id,
+                bytes: _pendingImageBytes!,
+              );
+            } catch (_) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Image upload failed — product saved without image.',
+                    ),
+                  ),
+                );
+              }
+            }
+          } else if (_imageMarkedForRemoval) {
+            final storage = ref.read(productImageStorageServiceProvider);
+            await storage.delete(productId: _existingProduct!.id);
+            clearImage = true;
+          }
+
           final product = _existingProduct!.copyWith(
             name: _nameController.text.trim(),
             // Preserve original price, cost, costCode
@@ -1102,12 +1142,21 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
+            imageUrl: newImageUrl,
+            clearImageUrl: clearImage,
           );
 
           final productOps = ref.read(productOperationsProvider.notifier);
           if (!mounted) return;
           final result = await context.runWithWaiting(
-            () => productOps.updateProduct(actor: currentUser, product: product),
+            () => productOps.updateProduct(
+              actor: currentUser,
+              product: product,
+              // Untouched field → don't write the form-open snapshot back
+              // over stock a mid-edit sale already decremented.
+              quantityEdited: (int.tryParse(_quantityController.text) ?? 0) !=
+                  _existingProduct!.quantity,
+            ),
             message: 'Updating…',
           );
           if (result == null) throw Exception('Failed to update product');
@@ -1212,6 +1261,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             await productOps.updateProduct(
               actor: currentUser,
               product: created.copyWith(imageUrl: url),
+              // This follow-up only attaches the image URL — a sale rung up
+              // during the upload must not be un-sold by a stale quantity.
+              quantityEdited: false,
             );
           } catch (_) {
             if (mounted) {
@@ -1283,6 +1335,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             await productOps.updateProduct(
               actor: currentUser,
               product: created.copyWith(imageUrl: url),
+              // This follow-up only attaches the image URL — a sale rung up
+              // during the upload must not be un-sold by a stale quantity.
+              quantityEdited: false,
             );
           } catch (_) {
             if (mounted) {

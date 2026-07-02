@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,10 +13,12 @@ import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/product_form_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_image_uploader.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cost_code_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
+import 'package:maki_mobile_pos/services/product_image_storage_service.dart';
 
 class _MockProductRepository extends Mock implements ProductRepository {}
 
@@ -24,6 +28,24 @@ class _MockActivityLogRepository extends Mock
 class _FakeProductEntity extends Fake implements ProductEntity {}
 
 class _FakeActivityLogEntity extends Fake implements ActivityLogEntity {}
+
+/// In-memory stand-in for the Storage service so save flows can run in
+/// widget tests (no Firebase). Records uploads and hands back a stable URL.
+class _FakeImageStorage extends Fake implements ProductImageStorageService {
+  final uploads = <String>[];
+
+  @override
+  Future<String> upload({
+    required String productId,
+    required Uint8List bytes,
+  }) async {
+    uploads.add(productId);
+    return 'https://fake.test/$productId/main.jpg';
+  }
+
+  @override
+  Future<void> delete({required String productId}) async {}
+}
 
 const _kSkuFieldKey = Key('product-sku-field');
 
@@ -35,6 +57,7 @@ void main() {
 
   late _MockProductRepository repo;
   late _MockActivityLogRepository logRepo;
+  late _FakeImageStorage storage;
 
   final testProduct = ProductEntity(
     id: 'p-1',
@@ -53,6 +76,7 @@ void main() {
   setUp(() {
     repo = _MockProductRepository();
     logRepo = _MockActivityLogRepository();
+    storage = _FakeImageStorage();
 
     when(() => repo.getProductById('p-1'))
         .thenAnswer((_) async => testProduct);
@@ -70,7 +94,24 @@ void main() {
         (inv) async => inv.namedArguments[#product] as ProductEntity);
     when(() => logRepo.logActivity(any()))
         .thenAnswer((inv) async => inv.positionalArguments.first);
+    // A completed save invalidates the product list providers — give the
+    // mock harmless streams so post-save rebuilds don't throw.
+    when(() => repo.watchProducts())
+        .thenAnswer((_) => Stream.value(const <ProductEntity>[]));
+    when(() => repo.watchLowStockProducts())
+        .thenAnswer((_) => Stream.value(const <ProductEntity>[]));
   });
+
+  // Smallest valid image: 1x1 transparent PNG (the uploader previews the
+  // picked bytes with Image.memory, which decodes them for real in tests).
+  final onePxPng = Uint8List.fromList([
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+    0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
+    0x0D, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x62, 0x00, 0x01, 0x00, 0x00,
+    0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
+    0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  ]);
 
   UserEntity user(UserRole role) => UserEntity(
         id: 'u-${role.value}',
@@ -92,6 +133,7 @@ void main() {
           currentUserProvider.overrideWith((ref) => Stream.value(user(role))),
           productRepositoryProvider.overrideWith((ref) => repo),
           activityLogRepositoryProvider.overrideWith((ref) => logRepo),
+          productImageStorageServiceProvider.overrideWithValue(storage),
           costCodeMappingProvider
               .overrideWith((ref) => CostCodeEntity.defaultMapping()),
         ],
@@ -123,6 +165,57 @@ void main() {
     testWidgets('cashier CANNOT edit the SKU', (tester) async {
       await pumpForm(tester, UserRole.cashier);
       expect(skuField(tester).enabled, isFalse);
+    });
+  });
+
+  group('ProductFormScreen — image uploader gating', () {
+    ProductImageUploader uploader(WidgetTester tester) =>
+        tester.widget<ProductImageUploader>(
+            find.byType(ProductImageUploader));
+
+    // Regression (2026-07-02): staff editing an existing product had the
+    // uploader disabled ("cannot attach or capture image"), even though the
+    // rules allow staff imageUrl updates.
+    testWidgets('staff CAN manage the image when editing', (tester) async {
+      await pumpForm(tester, UserRole.staff);
+      expect(uploader(tester).enabled, isTrue);
+    });
+
+    testWidgets('cashier CAN manage the image when editing', (tester) async {
+      await pumpForm(tester, UserRole.cashier);
+      expect(uploader(tester).enabled, isTrue);
+    });
+
+    testWidgets('admin CAN manage the image when editing', (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      expect(uploader(tester).enabled, isTrue);
+    });
+
+    // Pins the other half of the staff fix: the staff SAVE branch must carry
+    // the picked image through to updateProduct (it used to drop the bytes).
+    testWidgets('staff save uploads the picked image and writes its URL',
+        (tester) async {
+      await pumpForm(tester, UserRole.staff);
+
+      // Simulate a completed pick+crop via the uploader's callback (the
+      // picker itself needs a platform channel, so we invoke the contract).
+      uploader(tester).onChanged(onePxPng, removed: false);
+      await tester.pump();
+
+      await tester.ensureVisible(find.text('Update Product'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Update Product'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(storage.uploads, hasLength(1));
+      final captured = verify(() => repo.updateProduct(
+            product: captureAny(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+          )).captured;
+      expect((captured.single as ProductEntity).imageUrl,
+          'https://fake.test/p-1/main.jpg');
     });
   });
 
@@ -191,6 +284,7 @@ void main() {
           currentUserProvider.overrideWith((ref) => Stream.value(user(role))),
           productRepositoryProvider.overrideWith((ref) => repo),
           activityLogRepositoryProvider.overrideWith((ref) => logRepo),
+          productImageStorageServiceProvider.overrideWithValue(storage),
           costCodeMappingProvider
               .overrideWith((ref) => CostCodeEntity.defaultMapping()),
         ],
