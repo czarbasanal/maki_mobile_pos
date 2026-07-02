@@ -25,13 +25,13 @@ class DraftsListScreen extends ConsumerWidget {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.pos),
         ),
-        title: const Text('Saved Drafts'),
+        title: const Text('Job Orders'),
       ),
       body: draftsAsync.when(
         data: (drafts) => _buildDraftsList(context, ref, drafts),
         loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
-          message: 'Failed to load drafts\n$error',
+          message: 'Failed to load job orders\n$error',
           onRetry: () => ref.invalidate(activeDraftsProvider),
         ),
       ),
@@ -46,8 +46,8 @@ class DraftsListScreen extends ConsumerWidget {
     if (drafts.isEmpty) {
       return EmptyStateView(
         icon: LucideIcons.shoppingCart,
-        title: 'No Saved Drafts',
-        subtitle: 'Drafts you save from the POS screen will appear here.',
+        title: 'No job orders yet',
+        subtitle: "Open a job order for a bike being serviced and it'll appear here.",
         action: FilledButton.icon(
           onPressed: () => context.go(RoutePaths.pos),
           icon: const Icon(LucideIcons.shoppingCart),
@@ -182,7 +182,7 @@ class DraftsListScreen extends ConsumerWidget {
         // dropped). The draft is still listed, so the user can retry.
         if (context.mounted) {
           context.showErrorSnackBar(
-            "Couldn't remove the saved draft. Please try again.",
+            "Couldn't remove the job order. Please try again.",
           );
         }
         return;
@@ -217,9 +217,9 @@ class DraftsListScreen extends ConsumerWidget {
 
     if (context.mounted) {
       if (success) {
-        context.showSuccessSnackBar('Draft deleted');
+        context.showSuccessSnackBar('Job order deleted');
       } else {
-        context.showErrorSnackBar('Failed to delete draft');
+        context.showErrorSnackBar('Failed to delete job order');
       }
     }
   }

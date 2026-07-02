@@ -510,7 +510,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                   child: OutlinedButton.icon(
                     onPressed: canProceed ? _showSaveDraftDialog : null,
                     icon: const Icon(LucideIcons.save, size: 18),
-                    label: const Text('Save Draft'),
+                    label: const Text('Save Job Order'),
                     style: OutlinedButton.styleFrom(shape: shape),
                   ),
                 ),
@@ -554,7 +554,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
     return draftCount.when(
       data: (count) => IconButton(
-        tooltip: 'Drafts',
+        tooltip: 'Job Orders',
         icon: Badge(
           isLabelVisible: count > 0,
           label: Text('$count'),

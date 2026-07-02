@@ -122,7 +122,7 @@ class DraftListTile extends StatelessWidget {
                 IconButton(
                   icon: const Icon(LucideIcons.trash2),
                   onPressed: onDeleteTap,
-                  tooltip: 'Delete draft',
+                  tooltip: 'Delete job order',
                   visualDensity: VisualDensity.compact,
                   color: AppColors.costUp(dark),
                 ),

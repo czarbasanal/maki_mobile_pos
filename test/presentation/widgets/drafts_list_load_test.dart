@@ -20,7 +20,7 @@ class _MockDraftRepository extends Mock implements DraftRepository {}
 
 class _FakeUser extends Fake implements UserEntity {}
 
-const _errorMessage = "Couldn't remove the saved draft. Please try again.";
+const _errorMessage = "Couldn't remove the job order. Please try again.";
 
 void main() {
   setUpAll(() => registerFallbackValue(_FakeUser()));
@@ -109,7 +109,7 @@ void main() {
 
     expect(find.text(_errorMessage), findsOneWidget);
     expect(find.text('POS-STUB'), findsNothing);
-    expect(find.text('Saved Drafts'), findsOneWidget);
+    expect(find.text('Job Orders'), findsOneWidget);
   });
 
   testWidgets(
@@ -134,6 +134,6 @@ void main() {
 
     expect(find.text(_errorMessage), findsOneWidget);
     expect(find.text('POS-STUB'), findsNothing);
-    expect(find.text('Saved Drafts'), findsOneWidget);
+    expect(find.text('Job Orders'), findsOneWidget);
   });
 }

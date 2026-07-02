@@ -90,29 +90,29 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
 
     return draftAsync.when(
       loading: () => Scaffold(
-        appBar: AppBar(title: const Text('Loading Draft...')),
+        appBar: AppBar(title: const Text('Loading…')),
         body: const LoadingView(),
       ),
       error: (error, _) => Scaffold(
         appBar: AppBar(title: const Text('Error')),
         body: ErrorStateView(
-          message: 'Error loading draft: $error',
+          message: 'Error loading job order: $error',
           action: ElevatedButton(
             onPressed: () => context.go(RoutePaths.drafts),
-            child: const Text('Back to Drafts'),
+            child: const Text('Back to Job Orders'),
           ),
         ),
       ),
       data: (draft) {
         if (draft == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Draft Not Found')),
+            appBar: AppBar(title: const Text('Job Order Not Found')),
             body: EmptyStateView(
               icon: Icons.search_off,
-              title: 'Draft not found or has been deleted',
+              title: 'Job order not found or has been deleted',
               action: ElevatedButton(
                 onPressed: () => context.go(RoutePaths.drafts),
-                child: const Text('Back to Drafts'),
+                child: const Text('Back to Job Orders'),
               ),
             ),
           );
@@ -129,7 +129,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
 
     return LoadingOverlay(
       isLoading: _isLoading || _isDeleting,
-      message: _isDeleting ? 'Deleting draft...' : 'Processing...',
+      message: _isDeleting ? 'Deleting…' : 'Processing...',
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -154,7 +154,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               icon: const Icon(LucideIcons.trash2),
               color: AppColors.costUp(theme.brightness == Brightness.dark),
               onPressed: () => _confirmDelete(draft),
-              tooltip: 'Delete Draft',
+              tooltip: 'Delete Job Order',
             ),
           ],
         ),
@@ -244,7 +244,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           Icon(LucideIcons.shoppingCart, size: 56, color: muted),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'No items in this draft',
+            'No parts on this job order yet',
             style: theme.textTheme.bodyMedium?.copyWith(color: muted),
           ),
         ],
@@ -558,7 +558,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        context.showErrorSnackBar('Error loading draft: $e');
+        context.showErrorSnackBar('Error loading job order: $e');
       }
     } finally {
       if (mounted) {
@@ -588,7 +588,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        context.showErrorSnackBar('Error loading draft: $e');
+        context.showErrorSnackBar('Error loading job order: $e');
       }
     } finally {
       if (mounted) {
@@ -612,12 +612,12 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           .deleteDraft(actor: actor, draftId: draft.id);
 
       if (success && mounted) {
-        context.showSuccessSnackBar('Draft deleted');
+        context.showSuccessSnackBar('Job order deleted');
         context.go(RoutePaths.drafts);
       }
     } catch (e) {
       if (mounted) {
-        context.showErrorSnackBar('Error deleting draft: $e');
+        context.showErrorSnackBar('Error deleting job order: $e');
       }
     } finally {
       if (mounted) {

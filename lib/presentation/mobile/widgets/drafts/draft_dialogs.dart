@@ -29,7 +29,7 @@ Future<void> showDeleteDraftDialog(
       final errorColor = dark ? AppColors.errorOnDark : AppColors.error;
 
       return AppDialog(
-        title: 'Delete draft?',
+        title: 'Delete job order?',
         intent: AppDialogIntent.destructive,
         leadingIcon: LucideIcons.trash2,
         content: Column(

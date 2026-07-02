@@ -225,7 +225,7 @@ abstract class RouteGuards {
 
     // Drafts - available to all
     items.add(const MenuItem(
-      title: 'Drafts',
+      title: 'Job Orders',
       icon: Icons.drafts,
       path: '/drafts',
     ));
