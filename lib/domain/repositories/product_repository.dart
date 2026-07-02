@@ -227,6 +227,13 @@ abstract class ProductRepository {
     int limit = 50,
   });
 
+  /// Returns the newest price-history entry strictly before [before] — the
+  /// "baseline" a report range compares against — or null if none exists.
+  Future<PriceHistoryEntry?> getPriceHistoryBaseline({
+    required String productId,
+    required DateTime before,
+  });
+
   /// All price/cost changes across every product in the range, newest-first.
   /// Admin-only (price_history is admin-only). Requires the collection-group
   /// index on price_history.changedAt.

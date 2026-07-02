@@ -44,4 +44,33 @@ void main() {
     expect(changes.first.productId, 'p2'); // Jun 20 newest
     expect(changes.first.price, 250);
   });
+
+  group('getPriceHistoryBaseline', () {
+    test('returns the newest entry strictly before the date', () async {
+      await seed('p1', DateTime(2026, 4, 1), 80, 50);
+      await seed('p1', DateTime(2026, 5, 15), 90, 55);
+      await seed('p1', DateTime(2026, 6, 10), 100, 60); // in range - excluded
+
+      final baseline = await repo.getPriceHistoryBaseline(
+        productId: 'p1',
+        before: DateTime(2026, 6, 1),
+      );
+
+      expect(baseline, isNotNull);
+      expect(baseline!.price, 90);
+      expect(baseline.cost, 55);
+      expect(baseline.changedAt, DateTime(2026, 5, 15));
+    });
+
+    test('returns null when no entry precedes the date', () async {
+      await seed('p1', DateTime(2026, 6, 10), 100, 60);
+
+      final baseline = await repo.getPriceHistoryBaseline(
+        productId: 'p1',
+        before: DateTime(2026, 6, 1),
+      );
+
+      expect(baseline, isNull);
+    });
+  });
 }

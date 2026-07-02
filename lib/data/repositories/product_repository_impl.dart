@@ -798,6 +798,42 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<PriceHistoryEntry?> getPriceHistoryBaseline({
+    required String productId,
+    required DateTime before,
+  }) async {
+    try {
+      final snapshot = await _productsRef
+          .doc(productId)
+          .collection(FirestoreCollections.priceHistory)
+          .where('changedAt', isLessThan: Timestamp.fromDate(before))
+          .orderBy('changedAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+      final doc = snapshot.docs.first;
+      final data = doc.data();
+      return PriceHistoryEntry(
+        id: doc.id,
+        price: (data['price'] as num?)?.toDouble() ?? 0,
+        cost: (data['cost'] as num?)?.toDouble() ?? 0,
+        changedAt:
+            (data['changedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        changedBy: data['changedBy'] as String? ?? '',
+        reason: data['reason'] as String?,
+        note: data['note'] as String?,
+      );
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to get price-history baseline: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<List<PriceChangeEntry>> getPriceChangesInRange({
     required DateTime startDate,
     required DateTime endDate,
