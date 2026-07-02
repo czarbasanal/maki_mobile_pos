@@ -18,16 +18,60 @@ final productRepositoryProvider = Provider<ProductRepository>((ref) {
   return ProductRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
-/// Admin-only cross-product price-change report for a date range: the raw
-/// changes (collection-group query) mapped to delta rows, newest-first.
-final priceChangeReportProvider = FutureProvider.autoDispose
-    .family<List<PriceChangeRow>, DateRangeParams>((ref, params) async {
+/// Newest-first fetch cap for the price-change report. Summaries built from a
+/// capped fetch would silently misreport, so the summaries provider surfaces
+/// `truncated` when the cap is hit.
+const int _priceChangeFetchLimit = 500;
+
+/// Baseline lookups run in bounded batches so a wide range doesn't fire
+/// hundreds of simultaneous Firestore queries on a shop connection.
+const int _baselineBatchSize = 20;
+
+/// Raw in-range price/cost changes (collection-group query), newest-first.
+/// Shared source for both the summary cards and the CSV export so an export
+/// tap reuses the screen's cached fetch instead of re-querying.
+final priceChangeEntriesProvider = FutureProvider.autoDispose
+    .family<List<PriceChangeEntry>, DateRangeParams>((ref, params) {
   final repo = ref.watch(productRepositoryProvider);
-  final changes = await repo.getPriceChangesInRange(
+  return repo.getPriceChangesInRange(
     startDate: params.startDate,
     endDate: params.endDate,
+    limit: _priceChangeFetchLimit,
   );
+});
+
+/// Admin-only cross-product price-change report for a date range: the raw
+/// changes mapped to per-event delta rows, newest-first (CSV export format).
+final priceChangeReportProvider = FutureProvider.autoDispose
+    .family<List<PriceChangeRow>, DateRangeParams>((ref, params) async {
+  final changes = await ref.watch(priceChangeEntriesProvider(params).future);
   return priceChangeRowsInRange(changes);
+});
+
+/// Per-product price-change summaries for the report range: in-range changes
+/// + a one-doc baseline per product (last change before the range), newest
+/// last-change first. `truncated` is true when the fetch cap was hit and the
+/// summaries may be incomplete. Sorting is applied in the screen.
+final priceChangeSummariesProvider = FutureProvider.autoDispose.family<
+    ({List<ProductPriceChangeSummary> summaries, bool truncated}),
+    DateRangeParams>((ref, params) async {
+  final repo = ref.watch(productRepositoryProvider);
+  final changes = await ref.watch(priceChangeEntriesProvider(params).future);
+  final ids = changes.map((c) => c.productId).toSet().toList();
+  final baselines = <String, PriceHistoryEntry?>{};
+  for (var i = 0; i < ids.length; i += _baselineBatchSize) {
+    final batch = ids.skip(i).take(_baselineBatchSize);
+    await Future.wait(batch.map((id) async {
+      baselines[id] = await repo.getPriceHistoryBaseline(
+        productId: id,
+        before: params.startDate,
+      );
+    }));
+  }
+  return (
+    summaries: priceChangeProductSummaries(changes, baselines),
+    truncated: changes.length >= _priceChangeFetchLimit,
+  );
 });
 
 // ==================== PRODUCT QUERIES ====================

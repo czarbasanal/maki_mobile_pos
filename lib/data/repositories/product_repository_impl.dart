@@ -775,22 +775,51 @@ class ProductRepositoryImpl implements ProductRepository {
           .limit(limit)
           .get();
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return PriceHistoryEntry(
-          id: doc.id,
-          price: (data['price'] as num?)?.toDouble() ?? 0,
-          cost: (data['cost'] as num?)?.toDouble() ?? 0,
-          changedAt:
-              (data['changedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          changedBy: data['changedBy'] as String? ?? '',
-          reason: data['reason'] as String?,
-          note: data['note'] as String?,
-        );
-      }).toList();
+      return snapshot.docs.map(_priceHistoryEntryFromDoc).toList();
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to get price history: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  /// Shared doc → [PriceHistoryEntry] mapping so the history list and the
+  /// baseline query can never drift in parsing semantics.
+  PriceHistoryEntry _priceHistoryEntryFromDoc(
+      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    return PriceHistoryEntry(
+      id: doc.id,
+      price: (data['price'] as num?)?.toDouble() ?? 0,
+      cost: (data['cost'] as num?)?.toDouble() ?? 0,
+      changedAt: (data['changedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      changedBy: data['changedBy'] as String? ?? '',
+      reason: data['reason'] as String?,
+      note: data['note'] as String?,
+    );
+  }
+
+  @override
+  Future<PriceHistoryEntry?> getPriceHistoryBaseline({
+    required String productId,
+    required DateTime before,
+  }) async {
+    try {
+      final snapshot = await _productsRef
+          .doc(productId)
+          .collection(FirestoreCollections.priceHistory)
+          .where('changedAt', isLessThan: Timestamp.fromDate(before))
+          .orderBy('changedAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+      return _priceHistoryEntryFromDoc(snapshot.docs.first);
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to get price-history baseline: ${e.message}',
         code: e.code,
         originalError: e,
       );
