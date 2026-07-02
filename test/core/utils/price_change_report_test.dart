@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 
-PriceChangeEntry _e(String product, DateTime at, double price, double cost) =>
+PriceChangeEntry _e(String product, DateTime at, double price, double cost,
+        {String? reason}) =>
     PriceChangeEntry(
       id: '$product-${at.millisecondsSinceEpoch}',
       productId: product,
@@ -10,6 +11,7 @@ PriceChangeEntry _e(String product, DateTime at, double price, double cost) =>
       cost: cost,
       changedAt: at,
       changedBy: 'u1',
+      reason: reason,
     );
 
 PriceHistoryEntry _b(DateTime at, double price, double cost) =>
@@ -74,9 +76,12 @@ void main() {
       expect(s[0].changeCount, 2);
       expect(s[0].lastChangedAt, DateTime(2026, 6, 20));
       expect(s[0].isNew, isFalse);
+      expect(s[0].hasPrev, isTrue);
     });
 
-    test('no baseline -> prev falls back to oldest in-range entry, isNew', () {
+    test(
+        'no baseline, multiple entries -> prev falls back to oldest in-range '
+        'entry; NOT marked new (unknown history, not a new product)', () {
       final s = priceChangeProductSummaries(
         [
           _e('p1', DateTime(2026, 6, 1), 100, 60),
@@ -84,21 +89,48 @@ void main() {
         ],
         {'p1': null},
       );
-      expect(s[0].isNew, isTrue);
+      expect(s[0].isNew, isFalse);
+      expect(s[0].hasPrev, isTrue);
       expect(s[0].prevPrice, 100);
       expect(s[0].currPrice, 150);
       expect(s[0].priceDiff, 50);
     });
 
-    test('single entry without baseline -> zero diffs, isNew', () {
+    test(
+        'single non-initial entry without baseline -> hasPrev false '
+        '(prior value unknown; must not render as "no change")', () {
       final s = priceChangeProductSummaries(
-        [_e('p1', DateTime(2026, 6, 1), 100, 60)],
+        [_e('p1', DateTime(2026, 6, 1), 150, 80)],
         {'p1': null},
       );
+      expect(s[0].hasPrev, isFalse);
+      expect(s[0].isNew, isFalse);
       expect(s[0].priceDiff, 0);
       expect(s[0].costDiff, 0);
       expect(s[0].changeCount, 1);
+    });
+
+    test('created in range (oldest is Initial price) -> isNew', () {
+      final s = priceChangeProductSummaries(
+        [
+          _e('p1', DateTime(2026, 6, 1), 100, 60, reason: 'Initial price'),
+          _e('p1', DateTime(2026, 6, 20), 150, 80),
+        ],
+        {'p1': null},
+      );
       expect(s[0].isNew, isTrue);
+      expect(s[0].hasPrev, isTrue); // initial values are a real starting point
+      expect(s[0].prevPrice, 100);
+      expect(s[0].priceDiff, 50);
+    });
+
+    test('lone Initial price entry -> isNew, hasPrev false', () {
+      final s = priceChangeProductSummaries(
+        [_e('p1', DateTime(2026, 6, 1), 100, 60, reason: 'Initial price')],
+        {'p1': null},
+      );
+      expect(s[0].isNew, isTrue);
+      expect(s[0].hasPrev, isFalse);
     });
 
     test('default order is newest lastChangedAt first', () {

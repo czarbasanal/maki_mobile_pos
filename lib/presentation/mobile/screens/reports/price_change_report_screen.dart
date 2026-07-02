@@ -107,7 +107,8 @@ class _PriceChangeReportScreenState
                       ref.invalidate(priceChangeSummariesProvider(_params)),
                 ),
               ),
-              data: (summaries) => _buildList(theme, summaries, labels),
+              data: (result) => _buildList(
+                  theme, result.summaries, result.truncated, labels),
             ),
             const SizedBox(height: 24),
           ],
@@ -117,7 +118,7 @@ class _PriceChangeReportScreenState
   }
 
   Widget _buildList(ThemeData theme, List<ProductPriceChangeSummary> summaries,
-      Map<String, String> labels) {
+      bool truncated, Map<String, String> labels) {
     if (summaries.isEmpty) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
@@ -134,10 +135,29 @@ class _PriceChangeReportScreenState
       child: Column(
         children: [
           const SizedBox(height: 12),
-          _SortFilter(
+          SegmentedPillFilter<PriceChangeSort>(
+            key: const Key('price-change-sort'),
+            values: PriceChangeSort.values,
+            labels: const {
+              PriceChangeSort.latest: 'Latest',
+              PriceChangeSort.cost: 'Cost',
+              PriceChangeSort.price: 'SRP',
+              PriceChangeSort.both: 'Both',
+            },
             selected: _sort,
             onChanged: (s) => setState(() => _sort = s),
+            segmentKeyPrefix: 'sort-seg',
           ),
+          if (truncated)
+            Padding(
+              padding: const EdgeInsets.only(top: 10, left: 2, right: 2),
+              child: Text(
+                'Showing the most recent 500 changes — narrow the date range '
+                'for exact totals.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant, fontSize: 11.5),
+              ),
+            ),
           for (final summary in sorted)
             Padding(
               padding: const EdgeInsets.only(top: 12),
@@ -166,67 +186,6 @@ class _PriceChangeReportScreenState
         'price-changes_${d.format(_startDate)}_to_${d.format(_endDate)}.csv';
     if (!mounted) return;
     await saveReportCsv(context, buildPriceChangeReportCsv(rows, labels), name);
-  }
-}
-
-/// Segmented Latest / Cost / SRP / Both sort — pill on an [AppCard], selected
-/// segment filled, mirroring the price-history metric filter.
-class _SortFilter extends StatelessWidget {
-  const _SortFilter({required this.selected, required this.onChanged});
-  final PriceChangeSort selected;
-  final ValueChanged<PriceChangeSort> onChanged;
-
-  static const _labels = {
-    PriceChangeSort.latest: 'Latest',
-    PriceChangeSort.cost: 'Cost',
-    PriceChangeSort.price: 'SRP',
-    PriceChangeSort.both: 'Both',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      key: const Key('price-change-sort'),
-      radius: AppRadius.pill,
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          for (final s in PriceChangeSort.values)
-            Expanded(child: _segment(context, s)),
-        ],
-      ),
-    );
-  }
-
-  Widget _segment(BuildContext context, PriceChangeSort s) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final isSel = s == selected;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(s),
-      child: Container(
-        key: Key('sort-seg-${s.name}'),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isSel
-              ? (isDark ? AppColors.primaryAccent : AppColors.brandSlate)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Text(
-          _labels[s]!,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
-            color: isSel
-                ? (isDark ? AppColors.primaryDark : Colors.white)
-                : theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -279,6 +238,7 @@ class _ProductChangeCard extends StatelessWidget {
               prev: summary.prevCost,
               curr: summary.currCost,
               diff: summary.costDiff,
+              hasPrev: summary.hasPrev,
               theme: theme),
           const SizedBox(height: 3),
           _PrevCurrRow(
@@ -286,6 +246,7 @@ class _ProductChangeCard extends StatelessWidget {
               prev: summary.prevPrice,
               curr: summary.currPrice,
               diff: summary.priceDiff,
+              hasPrev: summary.hasPrev,
               theme: theme),
           const SizedBox(height: 6),
           Text(
@@ -305,12 +266,18 @@ class _PrevCurrRow extends StatelessWidget {
     required this.prev,
     required this.curr,
     required this.diff,
+    required this.hasPrev,
     required this.theme,
   });
   final String label;
   final double prev;
   final double curr;
   final double diff;
+
+  /// False when no prior value is known (lone entry, no baseline): the row
+  /// shows only the current value — a fake "prev → curr —" would wrongly
+  /// assert that nothing changed.
+  final bool hasPrev;
   final ThemeData theme;
 
   @override
@@ -320,6 +287,21 @@ class _PrevCurrRow extends StatelessWidget {
     final up = diff > 0;
     final deltaColor =
         up ? AppColors.costUp(isDark) : AppColors.costDown(isDark);
+    if (!hasPrev) {
+      return Row(
+        children: [
+          SizedBox(
+            width: 34,
+            child: Text(label,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: muted, fontSize: 11.5)),
+          ),
+          Text(curr.toCurrency(),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12.5)),
+        ],
+      );
+    }
     return Row(
       children: [
         SizedBox(

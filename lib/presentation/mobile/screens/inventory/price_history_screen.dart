@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/segmented_pill_filter.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 import 'package:maki_mobile_pos/core/utils/price_history_view.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart'
@@ -69,9 +70,17 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
-        _MetricFilter(
+        SegmentedPillFilter<PriceMetric>(
+          key: const Key('metric-filter'),
+          values: PriceMetric.values,
+          labels: const {
+            PriceMetric.all: 'All',
+            PriceMetric.price: 'Price',
+            PriceMetric.cost: 'Cost',
+          },
           selected: _metric,
           onChanged: (m) => setState(() => _metric = m),
+          segmentKeyPrefix: 'metric-seg',
         ),
         const SizedBox(height: 14),
         _SparklineSection(entries: entries, metric: _metric),
@@ -98,66 +107,6 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Segmented All / Price / Cost filter — a pill on an [AppCard]; selected
-/// segment is a slate(light)/gold(dark) fill, per the handoff.
-class _MetricFilter extends StatelessWidget {
-  const _MetricFilter({required this.selected, required this.onChanged});
-  final PriceMetric selected;
-  final ValueChanged<PriceMetric> onChanged;
-
-  static const _labels = {
-    PriceMetric.all: 'All',
-    PriceMetric.price: 'Price',
-    PriceMetric.cost: 'Cost',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      key: const Key('metric-filter'),
-      radius: AppRadius.pill,
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          for (final m in PriceMetric.values)
-            Expanded(child: _segment(context, m)),
-        ],
-      ),
-    );
-  }
-
-  Widget _segment(BuildContext context, PriceMetric m) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final isSel = m == selected;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(m),
-      child: Container(
-        key: Key('metric-seg-${m.name}'),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isSel
-              ? (isDark ? AppColors.primaryAccent : AppColors.brandSlate)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Text(
-          _labels[m]!,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
-            color: isSel
-                ? (isDark ? AppColors.primaryDark : Colors.white)
-                : theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
     );
   }
 }

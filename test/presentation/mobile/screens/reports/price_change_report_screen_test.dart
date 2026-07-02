@@ -30,11 +30,15 @@ void main() {
         },
       );
 
-  Future<void> pumpScreen(WidgetTester tester) async {
+  Future<void> pumpScreen(
+    WidgetTester tester, {
+    List<ProductPriceChangeSummary>? data,
+    bool truncated = false,
+  }) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
-        priceChangeSummariesProvider
-            .overrideWith((ref, params) async => summaries()),
+        priceChangeSummariesProvider.overrideWith((ref, params) async =>
+            (summaries: data ?? summaries(), truncated: truncated)),
         productsProvider.overrideWith((ref) => Stream.value(const [])),
       ],
       child: const MaterialApp(home: PriceChangeReportScreen()),
@@ -68,5 +72,36 @@ void main() {
         findsOneWidget,
       );
     }
+  });
+
+  testWidgets('shows a notice when the fetch was truncated', (tester) async {
+    await pumpScreen(tester, truncated: true);
+    expect(find.textContaining('most recent 500 changes'), findsOneWidget);
+  });
+
+  testWidgets('lone entry without known prev shows value only, no fake "—"',
+      (tester) async {
+    final lone = priceChangeProductSummaries(
+      [
+        PriceChangeEntry(
+          id: 'a',
+          productId: 'p1',
+          price: 150,
+          cost: 80,
+          changedAt: DateTime(2026, 6, 10),
+          changedBy: 'u1',
+          reason: 'Price update',
+        ),
+      ],
+      {'p1': null},
+    );
+    await pumpScreen(tester, data: lone);
+
+    // Current values shown, but no prev→curr comparison and no "—" that
+    // would wrongly assert "no change".
+    expect(find.textContaining('₱150.00'), findsOneWidget);
+    expect(find.textContaining('₱80.00'), findsOneWidget);
+    expect(find.text('—'), findsNothing);
+    expect(find.text('New'), findsNothing); // unknown history ≠ new product
   });
 }
