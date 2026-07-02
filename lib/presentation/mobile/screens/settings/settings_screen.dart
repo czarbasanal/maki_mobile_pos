@@ -93,6 +93,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Assign a mechanic to a service draft',
                   onTap: () => context.push(RoutePaths.mechanics),
                 ),
+                SettingsTile(
+                  icon: LucideIcons.bike,
+                  title: 'Motorcycle Models',
+                  subtitle: 'Models picked on job orders',
+                  onTap: () => context.push(RoutePaths.motorcycleModels),
+                ),
               ],
             ),
           ],

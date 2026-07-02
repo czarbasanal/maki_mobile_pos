@@ -55,7 +55,7 @@ void main() {
       expect(find.text('5 items'), findsOneWidget);
     });
 
-    testWidgets('calls onLoadTap when Load button is pressed', (tester) async {
+    testWidgets('calls onLoadTap when Open button is pressed', (tester) async {
       bool loadTapped = false;
 
       await tester.pumpWidget(
@@ -71,7 +71,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Load'));
+      await tester.tap(find.text('Open'));
       await tester.pump();
 
       expect(loadTapped, true);

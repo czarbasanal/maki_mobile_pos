@@ -3,6 +3,8 @@ import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
+import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
+import 'package:maki_mobile_pos/core/utils/motorcycle_model_report.dart';
 import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/core/utils/week_range.dart';
 import 'package:maki_mobile_pos/data/repositories/sale_repository_impl.dart';
@@ -67,6 +69,21 @@ final laborReportProvider =
         (ref, params) async {
   final sales = await ref.watch(salesByDateRangeProvider(params).future);
   return laborReportFromSales(sales);
+});
+
+/// Motorcycle Models report for a date range (Job Orders). Derived from the raw
+/// sales in range; admin-gated at the route layer.
+final motorcycleModelReportProvider = FutureProvider.autoDispose
+    .family<MotorcycleModelReportData, DateRangeParams>((ref, params) async {
+  final sales = await ref.watch(salesByDateRangeProvider(params).future);
+  return motorcycleModelReportFromSales(sales);
+});
+
+/// Top Mechanics report for a date range (Job Orders), ranked by total revenue.
+final mechanicPerformanceReportProvider = FutureProvider.autoDispose
+    .family<MechanicPerformanceReportData, DateRangeParams>((ref, params) async {
+  final sales = await ref.watch(salesByDateRangeProvider(params).future);
+  return mechanicPerformanceReportFromSales(sales);
 });
 
 /// Provides a single sale by ID.

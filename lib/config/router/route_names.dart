@@ -107,6 +107,9 @@ abstract class RouteNames {
   /// Labor report route
   static const String laborReport = 'laborReport';
 
+  /// Job Orders reports route (Motorcycle Models + Top Mechanics)
+  static const String jobOrderReports = 'jobOrderReports';
+
   /// Sales transaction history list route
   static const String salesHistory = 'salesHistory';
 
@@ -155,6 +158,9 @@ abstract class RouteNames {
 
   /// Mechanics admin editor — `/settings/mechanics`.
   static const String mechanics = 'mechanics';
+
+  /// Motorcycle models admin editor — `/settings/motorcycle-models`.
+  static const String motorcycleModels = 'motorcycleModels';
 
   /// About screen route — `/settings/about`.
   static const String about = 'about';
@@ -221,6 +227,7 @@ abstract class RoutePaths {
   static const String salesReport = '/reports/sales';
   static const String profitReport = '/reports/profit';
   static const String laborReport = '/reports/labor';
+  static const String jobOrderReports = '/reports/job-orders';
   static const String salesHistory = '/reports/history';
   static const String priceChangeReport = '/reports/price-changes';
   static const String topSelling = '/reports/top-selling';
@@ -242,6 +249,7 @@ abstract class RoutePaths {
   static const String categorySettings = '/settings/categories';
   static const String categoryEditor = '/settings/categories/:kind';
   static const String mechanics = '/settings/mechanics';
+  static const String motorcycleModels = '/settings/motorcycle-models';
   static const String about = '/settings/about';
 
   // ==================== LOGS PATHS ====================

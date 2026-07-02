@@ -30,6 +30,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/reports/sales_report
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/reports_hub_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/profit_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/labor_report_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/reports/job_order_reports_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/price_change_report_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/top_selling_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
@@ -43,6 +44,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_s
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/mechanic_editor_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/motorcycle_model_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
@@ -338,6 +340,11 @@ List<RouteBase> featureRoutes() => [
             builder: (context, state) => const LaborReportScreen(),
           ),
           GoRoute(
+            path: 'job-orders',
+            name: RouteNames.jobOrderReports,
+            builder: (context, state) => const JobOrderReportsScreen(),
+          ),
+          GoRoute(
             path: 'price-changes',
             name: RouteNames.priceChangeReport,
             builder: (context, state) => const PriceChangeReportScreen(),
@@ -428,6 +435,11 @@ List<RouteBase> featureRoutes() => [
             path: 'mechanics',
             name: RouteNames.mechanics,
             builder: (context, state) => const MechanicEditorScreen(),
+          ),
+          GoRoute(
+            path: 'motorcycle-models',
+            name: RouteNames.motorcycleModels,
+            builder: (context, state) => const MotorcycleModelEditorScreen(),
           ),
           GoRoute(
             path: 'about',

@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
+import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
+import 'package:maki_mobile_pos/core/utils/motorcycle_model_report.dart';
 import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/core/utils/report_csv.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -131,6 +133,43 @@ void main() {
       expect(lines.length, 3); // header + 2 changes
       expect(lines[1], contains('Widget (SKU-1)'));
       expect(lines[1], contains('+20.00')); // newest row's price delta
+    });
+  });
+
+  group('job-order report CSVs', () {
+    test('buildMotorcycleModelReportCsv: header + row + TOTAL', () {
+      final csv = buildMotorcycleModelReportCsv(const MotorcycleModelReportData(
+        totalJobs: 1,
+        totalRevenue: 100,
+        byModel: [
+          MotorcycleModelStat(
+              model: 'Nmax', jobCount: 1, totalRevenue: 100, laborTotal: 40),
+        ],
+      ));
+      final lines = csv.trim().split('\n');
+      expect(lines.first, 'Model,Jobs,Revenue,Labor');
+      expect(lines[1], 'Nmax,1,100.00,40.00');
+      expect(lines.last, contains('TOTAL'));
+    });
+
+    test('buildMechanicPerformanceReportCsv: header + row + TOTAL', () {
+      final csv = buildMechanicPerformanceReportCsv(
+          const MechanicPerformanceReportData(
+        totalRevenue: 150,
+        jobCount: 2,
+        byMechanic: [
+          MechanicPerformanceStat(
+              mechanicId: 'm1',
+              mechanicName: 'Jun',
+              jobCount: 2,
+              totalRevenue: 150,
+              laborTotal: 40),
+        ],
+      ));
+      final lines = csv.trim().split('\n');
+      expect(lines.first, 'Mechanic,Jobs,Total Revenue,Labor');
+      expect(lines[1], 'Jun,2,150.00,40.00');
+      expect(lines.last, contains('TOTAL'));
     });
   });
 }

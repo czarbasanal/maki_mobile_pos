@@ -35,6 +35,9 @@ class SaleEntity extends Equatable {
   /// Mechanic display name (snapshot, like cashierName).
   final String? mechanicName;
 
+  /// Motorcycle model serviced (canonical name snapshot); null for walk-in sales.
+  final String? motorcycleModel;
+
   /// Type of discount applied (applies to ALL items)
   /// This ensures consistency - you cannot mix amount and percentage discounts
   final DiscountType discountType;
@@ -94,6 +97,7 @@ class SaleEntity extends Equatable {
     this.laborLines = const [],
     this.mechanicId,
     this.mechanicName,
+    this.motorcycleModel,
     this.discountType = DiscountType.amount,
     required this.paymentMethod,
     this.tenders = const {},
@@ -223,6 +227,7 @@ class SaleEntity extends Equatable {
     List<LaborLineEntity>? laborLines,
     String? mechanicId,
     String? mechanicName,
+    String? motorcycleModel,
     DiscountType? discountType,
     PaymentMethod? paymentMethod,
     Map<PaymentMethod, double>? tenders,
@@ -252,6 +257,7 @@ class SaleEntity extends Equatable {
       laborLines: laborLines ?? this.laborLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
+      motorcycleModel: motorcycleModel ?? this.motorcycleModel,
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       tenders: tenders ?? this.tenders,
@@ -295,6 +301,7 @@ class SaleEntity extends Equatable {
         laborLines,
         mechanicId,
         mechanicName,
+        motorcycleModel,
         discountType,
         paymentMethod,
         tenders,

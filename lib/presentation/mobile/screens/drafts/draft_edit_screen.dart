@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/job_order_bill_out.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -14,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 import 'package:uuid/uuid.dart';
 
 /// Screen for editing/viewing a draft and converting to checkout.
@@ -30,7 +32,6 @@ class DraftEditScreen extends ConsumerStatefulWidget {
 }
 
 class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
-  bool _isLoading = false;
   bool _isDeleting = false;
 
   /// Local working copy so labor/mechanic edits render instantly; each edit is
@@ -46,7 +47,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     return _working!;
   }
 
-  Future<void> _persistLabor(DraftEntity next) async {
+  Future<void> _persist(DraftEntity next) async {
     setState(() => _working = next);
     final actor = ref.read(currentUserProvider).valueOrNull;
     if (actor == null) return;
@@ -62,7 +63,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         ? base.copyWith(clearMechanic: true, updatedAt: DateTime.now())
         : base.copyWith(
             mechanicId: id, mechanicName: name, updatedAt: DateTime.now());
-    _persistLabor(next);
+    _persist(next);
   }
 
   Future<void> _addOrEditLabor(DraftEntity draft,
@@ -77,11 +78,46 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final next = existing == null
         ? draft.addLaborLine(result)
         : draft.updateLaborLine(result);
-    await _persistLabor(next);
+    await _persist(next);
   }
 
   Future<void> _removeLabor(DraftEntity draft, String lineId) async {
-    await _persistLabor(draft.removeLaborLine(lineId));
+    await _persist(draft.removeLaborLine(lineId));
+  }
+
+  Future<void> _changeQty(DraftEntity draft, SaleItemEntity item, int delta) =>
+      _persist(draft.updateItemQuantity(item.id, item.quantity + delta));
+
+  Future<void> _removeItem(DraftEntity draft, String itemId) =>
+      _persist(draft.removeItem(itemId));
+
+  SaleItemEntity _saleItemFromProduct(ProductEntity product) => SaleItemEntity(
+        id: const Uuid().v4(),
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        unitPrice: product.price,
+        unitCost: product.cost,
+        quantity: 1,
+        unit: product.unit,
+      );
+
+  /// Appends a product to the current working ticket (uses [_working] so
+  /// several parts added in one sitting accumulate) and persists it.
+  Future<void> _addProduct(ProductEntity product) {
+    final current = _working;
+    if (current == null) return Future.value();
+    return _persist(current.addItem(_saleItemFromProduct(product)));
+  }
+
+  void _onAddParts() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (_) => _AddPartsSheet(onProduct: _addProduct),
+    );
   }
 
   @override
@@ -90,29 +126,29 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
 
     return draftAsync.when(
       loading: () => Scaffold(
-        appBar: AppBar(title: const Text('Loading Draft...')),
+        appBar: AppBar(title: const Text('Loading…')),
         body: const LoadingView(),
       ),
       error: (error, _) => Scaffold(
         appBar: AppBar(title: const Text('Error')),
         body: ErrorStateView(
-          message: 'Error loading draft: $error',
+          message: 'Error loading job order: $error',
           action: ElevatedButton(
             onPressed: () => context.go(RoutePaths.drafts),
-            child: const Text('Back to Drafts'),
+            child: const Text('Back to Job Orders'),
           ),
         ),
       ),
       data: (draft) {
         if (draft == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Draft Not Found')),
+            appBar: AppBar(title: const Text('Job Order Not Found')),
             body: EmptyStateView(
               icon: Icons.search_off,
-              title: 'Draft not found or has been deleted',
+              title: 'Job order not found or has been deleted',
               action: ElevatedButton(
                 onPressed: () => context.go(RoutePaths.drafts),
-                child: const Text('Back to Drafts'),
+                child: const Text('Back to Job Orders'),
               ),
             ),
           );
@@ -128,8 +164,8 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
     return LoadingOverlay(
-      isLoading: _isLoading || _isDeleting,
-      message: _isDeleting ? 'Deleting draft...' : 'Processing...',
+      isLoading: _isDeleting,
+      message: _isDeleting ? 'Deleting…' : 'Processing...',
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -154,7 +190,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               icon: const Icon(LucideIcons.trash2),
               color: AppColors.costUp(theme.brightness == Brightness.dark),
               onPressed: () => _confirmDelete(draft),
-              tooltip: 'Delete Draft',
+              tooltip: 'Delete Job Order',
             ),
           ],
         ),
@@ -210,6 +246,34 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               );
             }),
 
+            // Parts header + Add action
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.package,
+                      size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Parts',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: _onAddParts,
+                    icon: const Icon(LucideIcons.plus, size: 16),
+                    label: const Text('Add parts'),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Items list
             Expanded(
               child: draft.items.isEmpty
@@ -218,7 +282,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                       itemCount: draft.items.length,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemBuilder: (context, index) {
-                        return _buildDraftItem(draft.items[index]);
+                        return _buildDraftItem(draft, draft.items[index]);
                       },
                     ),
             ),
@@ -244,7 +308,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           Icon(LucideIcons.shoppingCart, size: 56, color: muted),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'No items in this draft',
+            'No parts on this job order yet',
             style: theme.textTheme.bodyMedium?.copyWith(color: muted),
           ),
         ],
@@ -252,7 +316,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     );
   }
 
-  Widget _buildDraftItem(SaleItemEntity item) {
+  Widget _buildDraftItem(DraftEntity draft, SaleItemEntity item) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
 
@@ -319,6 +383,24 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           Text(
             item.grossAmount.toCurrency(),
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.minus, size: 16),
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Decrease quantity',
+            onPressed: () => _changeQty(draft, item, -1),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.plus, size: 16),
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Increase quantity',
+            onPressed: () => _changeQty(draft, item, 1),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.x, size: 16),
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Remove part',
+            onPressed: () => _removeItem(draft, item.id),
           ),
         ],
       ),
@@ -508,28 +590,14 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed:
-                        draft.items.isEmpty ? null : () => _editInPos(draft),
-                    icon: const Icon(LucideIcons.edit),
-                    label: const Text('Edit in POS'),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm + 4),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton.icon(
-                    onPressed: draft.items.isEmpty
-                        ? null
-                        : () => _proceedToCheckout(draft),
-                    icon: const Icon(LucideIcons.shoppingCart),
-                    label: const Text('Checkout'),
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed:
+                    draft.items.isEmpty ? null : () => _billOut(draft),
+                icon: const Icon(LucideIcons.shoppingCart),
+                label: const Text('Bill out'),
+              ),
             ),
           ],
         ),
@@ -537,64 +605,33 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     );
   }
 
-  Future<void> _editInPos(DraftEntity draft) async {
-    setState(() => _isLoading = true);
-
-    try {
-      // Load draft into cart and consume it — see drafts_list_screen for
-      // the rationale on destructive load.
-      ref.read(cartProvider.notifier).loadFromDraft(draft);
-      ref.read(selectedDraftProvider.notifier).state = null;
-      final actor = ref.read(currentUserProvider).valueOrNull;
-      if (actor != null) {
-        ref
-            .read(draftOperationsProvider.notifier)
-            .deleteDraft(actor: actor, draftId: draft.id);
-      }
-
-      if (mounted) {
-        // Navigate to POS
-        context.go(RoutePaths.pos);
-      }
-    } catch (e) {
-      if (mounted) {
-        context.showErrorSnackBar('Error loading draft: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+  /// Bills out the ticket. Non-destructive: loads it into the register cart
+  /// (setting sourceDraftId so the sale carries a draftId) WITHOUT deleting it.
+  /// A successful sale marks the ticket converted (ProcessSaleUseCase
+  /// `_reconcileDraft`); an abandoned checkout leaves the ticket intact.
+  Future<void> _billOut(DraftEntity draft) async {
+    if (!jobOrderReadyToBillOut(draft)) {
+      context.showWarningSnackBar('Set the motorcycle model to bill out');
+      return;
     }
-  }
 
-  Future<void> _proceedToCheckout(DraftEntity draft) async {
-    setState(() => _isLoading = true);
-
-    try {
-      // Load draft into cart and consume it — see drafts_list_screen for
-      // the rationale on destructive load.
-      ref.read(cartProvider.notifier).loadFromDraft(draft);
-      ref.read(selectedDraftProvider.notifier).state = null;
-      final actor = ref.read(currentUserProvider).valueOrNull;
-      if (actor != null) {
-        ref
-            .read(draftOperationsProvider.notifier)
-            .deleteDraft(actor: actor, draftId: draft.id);
-      }
-
-      if (mounted) {
-        // Navigate to checkout
-        context.go(RoutePaths.checkout);
-      }
-    } catch (e) {
-      if (mounted) {
-        context.showErrorSnackBar('Error loading draft: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    // Guard: don't clobber an unfinished walk-in sale sitting in the register.
+    final cart = ref.read(cartProvider);
+    if (cart.isNotEmpty) {
+      final proceed = await showAppConfirmDialog(
+        context,
+        title: 'Register in use',
+        message: 'There is an unfinished sale in the register. Bill out this '
+            'job order anyway? The current sale will be cleared.',
+        confirmLabel: 'Bill out',
+        icon: LucideIcons.refreshCw,
+      );
+      if (!proceed || !mounted) return;
     }
+
+    ref.read(cartProvider.notifier).loadFromDraft(draft);
+    ref.read(selectedDraftProvider.notifier).state = null;
+    if (mounted) context.go(RoutePaths.checkout);
   }
 
   Future<void> _confirmDelete(DraftEntity draft) async {
@@ -612,18 +649,94 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           .deleteDraft(actor: actor, draftId: draft.id);
 
       if (success && mounted) {
-        context.showSuccessSnackBar('Draft deleted');
+        context.showSuccessSnackBar('Job order deleted');
         context.go(RoutePaths.drafts);
       }
     } catch (e) {
       if (mounted) {
-        context.showErrorSnackBar('Error deleting draft: $e');
+        context.showErrorSnackBar('Error deleting job order: $e');
       }
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);
       }
     }
+  }
+}
+
+/// Bottom sheet that reuses the POS [ProductSearchField] to append parts to a
+/// Job Order in place (no register cart). Stays open so several parts can be
+/// added in one sitting; the editor behind updates live.
+class _AddPartsSheet extends ConsumerStatefulWidget {
+  const _AddPartsSheet({required this.onProduct});
+
+  final void Function(ProductEntity) onProduct;
+
+  @override
+  ConsumerState<_AddPartsSheet> createState() => _AddPartsSheetState();
+}
+
+class _AddPartsSheetState extends ConsumerState<_AddPartsSheet> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md + bottomInset,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Add parts',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ProductSearchField(
+            controller: _controller,
+            focusNode: _focusNode,
+            onProductSelected: (p) {
+              widget.onProduct(p);
+              _controller.clear();
+              _focusNode.requestFocus();
+            },
+            onBarcodeScanned: (barcode) async {
+              final p =
+                  await ref.read(productByBarcodeProvider(barcode).future);
+              if (!context.mounted) return;
+              if (p != null) {
+                widget.onProduct(p);
+              } else {
+                context.showWarningSnackBar('Product not found: $barcode');
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 

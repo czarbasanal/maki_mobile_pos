@@ -45,6 +45,7 @@ abstract class RouteGuards {
     '/reports/sales': Permission.viewSalesReports,
     '/reports/profit': Permission.viewProfitReports,
     '/reports/labor': Permission.viewSalesReports,
+    '/reports/job-orders': Permission.viewJobOrderReports,
     '/reports/history': Permission.viewSalesReports,
     '/reports/price-changes': Permission.viewProductCost,
     '/reports/top-selling': Permission.viewSalesReports,
@@ -60,6 +61,7 @@ abstract class RouteGuards {
     '/settings/cost-codes': Permission.editCostCodeMapping,
     '/settings/categories': Permission.manageCategories,
     '/settings/mechanics': Permission.manageCategories,
+    '/settings/motorcycle-models': Permission.manageCategories,
     // Logs
     '/logs': Permission.viewUserLogs,
   };
@@ -224,7 +226,7 @@ abstract class RouteGuards {
 
     // Drafts - available to all
     items.add(const MenuItem(
-      title: 'Drafts',
+      title: 'Job Orders',
       icon: Icons.drafts,
       path: '/drafts',
     ));

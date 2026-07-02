@@ -104,7 +104,7 @@ void main() {
     expect(find.textContaining('Assign a mechanic'), findsOneWidget);
     // Save-as-Draft is gated off while labor is invalid.
     final saveButton = tester.widget<OutlinedButton>(
-      find.widgetWithText(OutlinedButton, 'Save Draft'),
+      find.widgetWithText(OutlinedButton, 'Save Job Order'),
     );
     expect(saveButton.onPressed, isNull);
   });

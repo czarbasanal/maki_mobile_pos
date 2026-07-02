@@ -120,4 +120,40 @@ void main() {
       expect(cleared.laborLines.length, 1);
     });
   });
+
+  group('motorcycleModel', () {
+    test('round-trips through fromMap/toMap/toEntity', () {
+      final map = {
+        'saleNumber': 'S-1',
+        'paymentMethod': 'cash',
+        'amountReceived': 100.0,
+        'changeGiven': 0.0,
+        'status': 'completed',
+        'cashierId': 'u1',
+        'cashierName': 'C',
+        'motorcycleModel': 'Sniper 150',
+      };
+      final model = SaleModel.fromMap(map, 's1');
+      expect(model.motorcycleModel, 'Sniper 150');
+      expect(model.toMap()['motorcycleModel'], 'Sniper 150');
+      expect(model.toEntity().motorcycleModel, 'Sniper 150');
+    });
+
+    test('is null when absent (legacy sale)', () {
+      final model = SaleModel.fromMap(
+        {
+          'saleNumber': 'S-2',
+          'paymentMethod': 'cash',
+          'amountReceived': 0.0,
+          'changeGiven': 0.0,
+          'status': 'completed',
+          'cashierId': 'u',
+          'cashierName': 'C',
+        },
+        's2',
+      );
+      expect(model.motorcycleModel, isNull);
+      expect(model.toMap()['motorcycleModel'], isNull);
+    });
+  });
 }

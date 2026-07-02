@@ -248,4 +248,21 @@ void main() {
       expect(withLabor == draft, false);
     });
   });
+
+  group('DraftEntity motorcycleModel', () {
+    test('copyWith + props carry motorcycleModel', () {
+      final d = DraftEntity(
+        id: 'd1',
+        name: 'ABC-123',
+        items: const [],
+        createdBy: 'u1',
+        createdByName: 'C',
+        createdAt: DateTime(2026, 7, 1),
+      );
+      expect(d.motorcycleModel, isNull);
+      final withModel = d.copyWith(motorcycleModel: 'Click 125i');
+      expect(withModel.motorcycleModel, 'Click 125i');
+      expect(withModel, isNot(equals(d)));
+    });
+  });
 }

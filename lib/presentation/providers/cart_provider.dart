@@ -51,6 +51,9 @@ class CartState extends Equatable {
   /// Assigned mechanic name snapshot (denormalized, like cashierName).
   final String? mechanicName;
 
+  /// Motorcycle model on this ticket (canonical name); null for walk-ins.
+  final String? motorcycleModel;
+
   /// Whether the cart is currently being processed
   final bool isProcessing;
 
@@ -74,6 +77,7 @@ class CartState extends Equatable {
     this.laborLines = const [],
     this.mechanicId,
     this.mechanicName,
+    this.motorcycleModel,
     this.isProcessing = false,
     this.errorMessage,
     this.checkoutId = '',
@@ -93,6 +97,7 @@ class CartState extends Equatable {
         laborLines,
         mechanicId,
         mechanicName,
+        motorcycleModel,
         isProcessing,
         errorMessage,
         checkoutId,
@@ -268,6 +273,7 @@ class CartState extends Equatable {
     List<LaborLineEntity>? laborLines,
     String? mechanicId,
     String? mechanicName,
+    String? motorcycleModel,
     bool? isProcessing,
     String? errorMessage,
     String? checkoutId,
@@ -293,6 +299,7 @@ class CartState extends Equatable {
       laborLines: laborLines ?? this.laborLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
+      motorcycleModel: motorcycleModel ?? this.motorcycleModel,
       isProcessing: isProcessing ?? this.isProcessing,
       errorMessage:
           clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
@@ -517,6 +524,11 @@ class CartNotifier extends StateNotifier<CartState> {
     state = state.copyWith(clearMechanic: true, clearErrorMessage: true);
   }
 
+  /// Sets the motorcycle model on this ticket (canonical name).
+  void setMotorcycleModel(String? model) {
+    state = state.copyWith(motorcycleModel: model, clearErrorMessage: true);
+  }
+
   // ==================== PAYMENT OPERATIONS ====================
 
   /// Sets the payment method, resetting the split inputs.
@@ -576,15 +588,13 @@ class CartNotifier extends StateNotifier<CartState> {
 
   // ==================== DRAFT OPERATIONS ====================
 
-  /// Loads a draft into the cart.
+  /// Loads a Job Order (draft) into the cart for bill-out.
   ///
-  /// Loading is destructive: the caller is expected to delete the source
-  /// draft right after — see [drafts_list_screen]. We deliberately don't
-  /// retain `sourceDraftId` so a follow-up "Save as Draft" creates a new
-  /// entry rather than trying to update a draft that's already been removed.
-  ///
-  /// The draft *name* is retained so the follow-up save can reuse the
-  /// original title without prompting the user again.
+  /// Retains [sourceDraftId] so the resulting sale carries a `draftId` and the
+  /// source ticket is marked converted on a successful sale (see
+  /// ProcessSaleUseCase `_reconcileDraft`). Bill-out is non-destructive — the
+  /// ticket is NOT deleted on load. The draft *name* is also retained so a
+  /// follow-up "Save as Job Order" reuses the original title.
   void loadFromDraft(DraftEntity draft) {
     state = CartState(
       items: List<SaleItemEntity>.from(draft.items),
@@ -592,10 +602,12 @@ class CartNotifier extends StateNotifier<CartState> {
       paymentMethod: PaymentMethod.cash,
       amountReceived: 0,
       notes: draft.notes,
+      sourceDraftId: draft.id,
       draftName: draft.name,
       laborLines: List<LaborLineEntity>.from(draft.laborLines),
       mechanicId: draft.mechanicId,
       mechanicName: draft.mechanicName,
+      motorcycleModel: draft.motorcycleModel,
     );
   }
 
@@ -617,6 +629,7 @@ class CartNotifier extends StateNotifier<CartState> {
       laborLines: state.laborLines,
       mechanicId: state.mechanicId,
       mechanicName: state.mechanicName,
+      motorcycleModel: state.motorcycleModel,
     );
   }
 
@@ -643,6 +656,7 @@ class CartNotifier extends StateNotifier<CartState> {
       laborLines: state.laborLines,
       mechanicId: state.mechanicId,
       mechanicName: state.mechanicName,
+      motorcycleModel: state.motorcycleModel,
     );
   }
 

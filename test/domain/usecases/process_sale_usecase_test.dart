@@ -14,6 +14,8 @@ class MockDraftRepository extends Mock implements DraftRepository {}
 
 class _FakeSaleEntity extends Fake implements SaleEntity {}
 
+class _FakeDraftEntity extends Fake implements DraftEntity {}
+
 void main() {
   setUpAll(() {
     registerFallbackValue(_FakeSaleEntity());
@@ -229,6 +231,47 @@ void main() {
       // "Labor never moves stock" is now verified at the repo layer
       // (createSale iterates sale.items only); here we just confirm the sale
       // succeeds with labor priced in.
+    });
+
+    test('a fresh draft-sourced sale marks the ticket converted on success',
+        () async {
+      final sale = createTestSale().copyWith(draftId: 'draft-9');
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
+          .thenAnswer((_) async => sale.copyWith(id: 'sale-1'));
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+      when(() => mockDraftRepo.markDraftAsConverted(
+            draftId: any(named: 'draftId'),
+            saleId: any(named: 'saleId'),
+          )).thenAnswer((_) async => _FakeDraftEntity());
+
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-conv');
+
+      expect(result.success, isTrue);
+      verify(() => mockDraftRepo.markDraftAsConverted(
+            draftId: 'draft-9',
+            saleId: 'sale-1',
+          )).called(1);
+    });
+
+    test('a walk-in sale (no draftId) converts nothing', () async {
+      final sale = createTestSale();
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
+          .thenAnswer((_) async => sale.copyWith(id: 'sale-2'));
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-walkin');
+
+      expect(result.success, isTrue);
+      verifyNever(() => mockDraftRepo.markDraftAsConverted(
+            draftId: any(named: 'draftId'),
+            saleId: any(named: 'saleId'),
+          ));
     });
   });
 }

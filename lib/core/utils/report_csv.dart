@@ -1,6 +1,8 @@
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
+import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
+import 'package:maki_mobile_pos/core/utils/motorcycle_model_report.dart';
 import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -90,6 +92,41 @@ String buildLaborReportCsv(LaborReportData report) {
     report.serviceSaleCount,
     report.totalLabor.toStringAsFixed(2),
   ]);
+  return _converter.convert(rows);
+}
+
+/// One row per motorcycle model (jobs desc), plus a TOTAL row.
+String buildMotorcycleModelReportCsv(MotorcycleModelReportData report) {
+  final rows = <List<dynamic>>[
+    ['Model', 'Jobs', 'Revenue', 'Labor'],
+  ];
+  for (final m in report.byModel) {
+    rows.add([
+      m.model,
+      m.jobCount,
+      m.totalRevenue.toStringAsFixed(2),
+      m.laborTotal.toStringAsFixed(2),
+    ]);
+  }
+  rows.add(['TOTAL', report.totalJobs, report.totalRevenue.toStringAsFixed(2), '']);
+  return _converter.convert(rows);
+}
+
+/// One row per mechanic (total revenue desc), plus a TOTAL row.
+String buildMechanicPerformanceReportCsv(MechanicPerformanceReportData report) {
+  final rows = <List<dynamic>>[
+    ['Mechanic', 'Jobs', 'Total Revenue', 'Labor'],
+  ];
+  for (final m in report.byMechanic) {
+    rows.add([
+      m.mechanicName,
+      m.jobCount,
+      m.totalRevenue.toStringAsFixed(2),
+      m.laborTotal.toStringAsFixed(2),
+    ]);
+  }
+  rows.add(
+      ['TOTAL', report.jobCount, report.totalRevenue.toStringAsFixed(2), '']);
   return _converter.convert(rows);
 }
 
