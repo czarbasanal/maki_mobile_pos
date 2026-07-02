@@ -107,4 +107,34 @@ void main() {
       expect(cleared.laborLines.length, 1);
     });
   });
+
+  group('motorcycleModel', () {
+    test('round-trips through fromMap/toMap', () {
+      final map = {
+        'name': 'ABC-123',
+        'items': <dynamic>[],
+        'motorcycleModel': 'Nmax',
+        'createdBy': 'u1',
+        'createdByName': 'Cashier',
+      };
+      final model = DraftModel.fromMap(map, 'd1');
+      expect(model.motorcycleModel, 'Nmax');
+      expect(model.toMap()['motorcycleModel'], 'Nmax');
+      expect(model.toEntity().motorcycleModel, 'Nmax');
+    });
+
+    test('is null when the key is absent (legacy/web draft)', () {
+      final model = DraftModel.fromMap(
+        {
+          'name': 'X',
+          'items': <dynamic>[],
+          'createdBy': 'u1',
+          'createdByName': 'C',
+        },
+        'd2',
+      );
+      expect(model.motorcycleModel, isNull);
+      expect(model.toMap()['motorcycleModel'], isNull);
+    });
+  });
 }

@@ -17,6 +17,7 @@ class DraftModel {
   final List<LaborLineModel> laborLines;
   final String? mechanicId;
   final String? mechanicName;
+  final String? motorcycleModel;
   final DiscountType discountType;
   final String createdBy;
   final String createdByName;
@@ -35,6 +36,7 @@ class DraftModel {
     this.laborLines = const [],
     this.mechanicId,
     this.mechanicName,
+    this.motorcycleModel,
     this.discountType = DiscountType.amount,
     required this.createdBy,
     required this.createdByName,
@@ -77,6 +79,7 @@ class DraftModel {
       laborLines: laborList,
       mechanicId: map['mechanicId'] as String?,
       mechanicName: map['mechanicName'] as String?,
+      motorcycleModel: map['motorcycleModel'] as String?,
       discountType: DiscountType.fromString(map['discountType'] as String?),
       createdBy: map['createdBy'] as String? ?? '',
       createdByName: map['createdByName'] as String? ?? '',
@@ -107,6 +110,7 @@ class DraftModel {
           laborLines.map((l) => l.toMap(includeId: true)).toList(),
       'mechanicId': mechanicId,
       'mechanicName': mechanicName,
+      'motorcycleModel': motorcycleModel,
       'discountType': discountType.value,
       'createdBy': createdBy,
       'createdByName': createdByName,
@@ -174,6 +178,7 @@ class DraftModel {
       laborLines: laborLines.map((l) => l.toEntity()).toList(),
       mechanicId: mechanicId,
       mechanicName: mechanicName,
+      motorcycleModel: motorcycleModel,
       discountType: discountType,
       createdBy: createdBy,
       createdByName: createdByName,
@@ -199,6 +204,7 @@ class DraftModel {
           .toList(),
       mechanicId: entity.mechanicId,
       mechanicName: entity.mechanicName,
+      motorcycleModel: entity.motorcycleModel,
       discountType: entity.discountType,
       createdBy: entity.createdBy,
       createdByName: entity.createdByName,
@@ -293,6 +299,7 @@ class DraftModel {
     List<LaborLineModel>? laborLines,
     String? mechanicId,
     String? mechanicName,
+    String? motorcycleModel,
     DiscountType? discountType,
     String? createdBy,
     String? createdByName,
@@ -313,6 +320,7 @@ class DraftModel {
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName:
           clearMechanic ? null : (mechanicName ?? this.mechanicName),
+      motorcycleModel: motorcycleModel ?? this.motorcycleModel,
       discountType: discountType ?? this.discountType,
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,

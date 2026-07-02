@@ -35,6 +35,9 @@ class DraftEntity extends Equatable {
   /// Mechanic display name (snapshot, like createdByName)
   final String? mechanicName;
 
+  /// Motorcycle model serviced (canonical name snapshot); null until set.
+  final String? motorcycleModel;
+
   /// Type of discount applied (applies to ALL items)
   final DiscountType discountType;
 
@@ -73,6 +76,7 @@ class DraftEntity extends Equatable {
     this.laborLines = const [],
     this.mechanicId,
     this.mechanicName,
+    this.motorcycleModel,
     this.discountType = DiscountType.amount,
     required this.createdBy,
     required this.createdByName,
@@ -284,6 +288,7 @@ class DraftEntity extends Equatable {
     List<LaborLineEntity>? laborLines,
     String? mechanicId,
     String? mechanicName,
+    String? motorcycleModel,
     DiscountType? discountType,
     String? createdBy,
     String? createdByName,
@@ -306,6 +311,7 @@ class DraftEntity extends Equatable {
       laborLines: laborLines ?? this.laborLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
+      motorcycleModel: motorcycleModel ?? this.motorcycleModel,
       discountType: discountType ?? this.discountType,
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,
@@ -340,6 +346,7 @@ class DraftEntity extends Equatable {
         laborLines,
         mechanicId,
         mechanicName,
+        motorcycleModel,
         discountType,
         createdBy,
         createdByName,
