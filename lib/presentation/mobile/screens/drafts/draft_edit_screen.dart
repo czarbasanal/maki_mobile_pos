@@ -17,6 +17,7 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_inpu
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 import 'package:uuid/uuid.dart';
 
@@ -64,6 +65,19 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       ref.invalidate(draftByIdProvider(widget.draftId));
       context.showErrorSnackBar('Failed to save changes — ticket reloaded');
     }
+  }
+
+  /// The motorcycle being serviced can change mid-job — the header picker
+  /// persists edits like the mechanic picker. The picker only ever reports
+  /// null ("— None —") or a canonical model name; clearing re-arms the
+  /// existing "Set the motorcycle model to bill out" gate.
+  void _onModelChanged(String? model) {
+    final base = _working;
+    if (base == null || model == base.motorcycleModel) return;
+    final next = (model == null)
+        ? base.copyWith(clearMotorcycleModel: true, updatedAt: DateTime.now())
+        : base.copyWith(motorcycleModel: model, updatedAt: DateTime.now());
+    _persist(next);
   }
 
   void _onMechanicChanged(String? id, String? name) {
@@ -218,30 +232,13 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Motorcycle model — the bill-out gate, so it leads the
-                    // header in primary color.
-                    if (draft.motorcycleModel?.isNotEmpty ?? false) ...[
-                      Row(
-                        children: [
-                          Icon(LucideIcons.bike,
-                              size: 15, color: theme.colorScheme.primary),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              draft.motorcycleModel!,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.primary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                    ],
+                    // Motorcycle model — the bill-out gate, editable in place
+                    // (the serviced bike can change mid-job).
+                    MotorcycleModelPicker(
+                      selectedModel: draft.motorcycleModel,
+                      onChanged: _onModelChanged,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
                         Icon(LucideIcons.clock, size: 14, color: muted),
@@ -619,6 +616,12 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       if (success && mounted) {
         context.showSuccessSnackBar('Job order deleted');
         context.go(RoutePaths.drafts);
+      } else if (!success && mounted) {
+        // Deleting stays creator-or-admin even though editing is shared —
+        // surface the rejection instead of a silent dead tap.
+        final err = ref.read(draftOperationsProvider).asError?.error;
+        context.showErrorSnackBar(
+            err?.toString() ?? 'Failed to delete job order');
       }
     } catch (e) {
       if (mounted) {

@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/void_sale_usecase.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/void_reason_field.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -51,12 +52,6 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
   String? _errorMessage;
   String? _selectedReason;
 
-  // Free-text detail field is revealed only when this option is picked.
-  // Admin must keep this entry in the void-reasons list (seeded by default).
-  static const String _otherSentinel = 'Other';
-
-  bool get _isOtherSelected => _selectedReason == _otherSentinel;
-
   @override
   void dispose() {
     _detailController.dispose();
@@ -88,31 +83,13 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
 
               const SizedBox(height: 20),
 
-              // Reason dropdown (admin-managed list)
-              _buildReasonDropdown(theme),
-
-              // Free-text detail only when "Other" is picked
-              if (_isOtherSelected) ...[
-                const SizedBox(height: 16),
-                TextFormField(
-                  style: AppTextStyles.fieldInput,
-                  controller: _detailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Reason details',
-                    hintText: 'Enter detailed reason...',
-                    prefixIcon: Icon(LucideIcons.squarePen),
-                  ),
-                  maxLines: 2,
-                  maxLength: 200,
-                  validator: (value) {
-                    if (!_isOtherSelected) return null;
-                    final v = value?.trim() ?? '';
-                    if (v.isEmpty) return 'Please provide a reason';
-                    if (v.length < 5) return 'Reason must be at least 5 characters';
-                    return null;
-                  },
-                ),
-              ],
+              // Reason dropdown (admin-managed list) + "Other" detail field
+              VoidReasonField(
+                selectedReason: _selectedReason,
+                detailController: _detailController,
+                onChanged: (value) =>
+                    setState(() => _selectedReason = value),
+              ),
 
               const SizedBox(height: 16),
 
@@ -260,63 +237,6 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
     );
   }
 
-  Widget _buildReasonDropdown(ThemeData theme) {
-    final reasonsAsync =
-        ref.watch(activeCategoriesProvider(CategoryKind.voidReason));
-    return reasonsAsync.when(
-      data: (reasons) {
-        final names = reasons.map((c) => c.name).toList();
-        // Guard against duplicate names (Firestore allows it; dropdowns don't).
-        final uniqueNames = <String>{...names}.toList();
-        if (uniqueNames.isEmpty) {
-          return Text(
-            'No void reasons configured. Ask an admin to seed defaults under Settings → Manage Lists → Void.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: AppColors.error),
-          );
-        }
-        // Reset selection if a previously-picked reason was removed/deactivated.
-        final currentValue =
-            (_selectedReason != null && uniqueNames.contains(_selectedReason))
-                ? _selectedReason
-                : null;
-        return AppDropdown<String>(
-          initialValue: currentValue,
-          decoration: const InputDecoration(
-            labelText: 'Reason',
-            prefixIcon: Icon(LucideIcons.tag),
-          ),
-          items: uniqueNames
-              .map(
-                (name) => DropdownMenuItem<String>(
-                  value: name,
-                  child: Text(name),
-                ),
-              )
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedReason = value;
-              if (value != _otherSentinel) {
-                _detailController.clear();
-              }
-            });
-          },
-          validator: (value) =>
-              (value == null || value.isEmpty) ? 'Please pick a reason' : null,
-        );
-      },
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: LinearProgressIndicator(),
-      ),
-      error: (_, __) => Text(
-        'Could not load void reasons',
-        style: theme.textTheme.bodySmall?.copyWith(color: AppColors.error),
-      ),
-    );
-  }
-
   Widget _buildErrorBanner(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm + 4),
@@ -382,9 +302,8 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
         authRepository: ref.read(authRepositoryProvider),
       );
 
-      final reason = _isOtherSelected
-          ? _detailController.text.trim()
-          : _selectedReason!;
+      final reason = VoidReasonField.resolveReason(
+          _selectedReason, _detailController.text);
 
       final result = await useCase.execute(
         actor: currentUser,

@@ -264,5 +264,21 @@ void main() {
       expect(withModel.motorcycleModel, 'Click 125i');
       expect(withModel, isNot(equals(d)));
     });
+
+    test('copyWith clearMotorcycleModel drops the model', () {
+      final d = DraftEntity(
+        id: 'd1',
+        name: 'ABC-123',
+        items: const [],
+        createdBy: 'u1',
+        createdByName: 'C',
+        createdAt: DateTime(2026, 7, 1),
+        motorcycleModel: 'Nmax',
+      );
+      // Plain null is a no-op (copyWith semantics)...
+      expect(d.copyWith().motorcycleModel, 'Nmax');
+      // ...the clear flag actually removes it.
+      expect(d.copyWith(clearMotorcycleModel: true).motorcycleModel, isNull);
+    });
   });
 }

@@ -1,5 +1,4 @@
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
-import 'package:maki_mobile_pos/core/enums/user_role.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
 import 'package:maki_mobile_pos/domain/entities/draft_entity.dart';
@@ -7,12 +6,13 @@ import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/draft_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
 
-/// Updates an existing draft.
+/// Updates an existing draft (Job Order).
 ///
-/// Permission: [Permission.editDraft]. Additionally, only the original
-/// creator OR an admin may update the draft (mirrors the firestore.rules
-/// owner-or-admin rule). Returns `not-found` if the draft is gone and
-/// `forbidden-not-owner` if the actor isn't the creator and isn't admin.
+/// Permission: [Permission.editDraft]. Job Orders are shared shop tickets:
+/// any active user may update any ticket — bill-out conversion, parts, labor,
+/// mechanic, motorcycle model (mirrors the firestore.rules /drafts update
+/// rule). Deleting stays owner-or-admin (see DeleteDraftUseCase). Returns
+/// `not-found` if the draft is gone.
 class UpdateDraftUseCase {
   final DraftRepository _repository;
 
@@ -34,12 +34,14 @@ class UpdateDraftUseCase {
         );
       }
 
-      final isOwner = original.createdBy == actor.id;
-      final isAdmin = actor.role == UserRole.admin;
-      if (!isOwner && !isAdmin) {
+      // A billed-out ticket is frozen (mirrors the firestore.rules guard).
+      // Without this, an editor holding a stale copy could write
+      // isConverted:false back over a converted ticket and let it be billed
+      // out a second time.
+      if (original.isConverted) {
         return const UseCaseResult.failure(
-          message: 'You can only edit drafts you created',
-          code: 'forbidden-not-owner',
+          message: 'This job order was already billed out',
+          code: 'already-converted',
         );
       }
 

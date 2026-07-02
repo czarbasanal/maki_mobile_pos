@@ -26,15 +26,23 @@ Any active valid user (cashier/staff/admin) may **update** any job order.
 
 Changes:
 - `firestore.rules` `/drafts/{draftId}`: split the combined
-  `update, delete` rule — `update` for any `isValidUser() && isActiveUser()`;
-  `delete` keeps the owner-or-admin condition.
+  `update, delete` rule — `update` for any `isValidUser() && isActiveUser()`,
+  **with two invariants pinned server-side** (added after code review):
+  `createdBy` is immutable (otherwise the delete guard could be laundered by
+  rewriting `createdBy` first), and a converted ticket is frozen
+  (`resource.data.get('isConverted', false) == false`) so a stale editor can
+  never resurrect a billed-out ticket into a second billing. `delete` keeps
+  the owner-or-admin condition.
   ⚠️ Production-affecting; **do not deploy without user confirmation**. The
   bug is only fixed in production once these rules deploy.
 - `UpdateDraftUseCase`: drop the owner-or-admin guard (keep
-  `Permission.editDraft` assert and the not-found check).
-- `DeleteDraftUseCase`: untouched (owner-or-admin stays).
-- `markDraftAsConverted` needs no code change — it already writes the right
-  fields; the rules were the blocker.
+  `Permission.editDraft` assert and the not-found check); add an
+  `already-converted` rejection mirroring the rules freeze.
+- `DeleteDraftUseCase`: untouched (owner-or-admin stays). The JO edit screen
+  now surfaces a delete rejection with a snackbar instead of a silent no-op.
+- `markDraftAsConverted`: made idempotent (skip the write when the ticket is
+  already converted) so a replayed checkout doesn't trip the converted-freeze
+  rule and surface a spurious warning.
 
 ## Decision 2 — Shared void-reason field
 
@@ -52,6 +60,16 @@ Extract the reason dropdown + conditional "Other" free-text detail from
 replaces its free-text field with it; the submitted `reason` string becomes
 the picked name, or the detail text when "Other" (same resolution as admin
 void). Request flow (no password; admin approves) unchanged.
+
+Review-driven hardening:
+- When the reason list is empty or fails to load, the field falls back to
+  plain free text (required, min 5 chars) so a void/request is never blocked
+  on the admin list — preserving the request dialog's old always-works
+  behavior.
+- The use cases' min-5-char reason rule is relaxed to non-empty: the reason
+  is now usually an admin-managed dropdown name, which can legitimately be
+  short (e.g. "Typo"); min-length applies only to free text at the form
+  layer.
 
 ## Decision 3 — Editable motorcycle model on the JO edit screen
 
