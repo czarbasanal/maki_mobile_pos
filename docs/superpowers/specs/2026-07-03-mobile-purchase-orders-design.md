@@ -50,11 +50,18 @@ draft ⇄ ordered → received
    → cancelled
 ```
 
-- **draft** — fully editable (items, quantities, supplier, notes).
+- **draft** — fully editable (items, quantities, supplier, notes). On the
+  detail screen edits are buffered locally and flushed with one write
+  (Save changes / Discard).
 - **ordered** — items locked; stamps `orderedAt`. Can revert to draft for edits.
-- **received** — terminal; set atomically when the linked receiving completes.
+- **received** — terminal; set atomically when the linked receiving completes,
+  and **only from `ordered`** — a stale receiving completing under a cancelled
+  or re-drafted PO never resurrects it.
 - **cancelled** — terminal; allowed from draft or ordered.
 - **Receive** is available on `ordered` POs only.
+- **Cleanup invariant:** cancel, revert-to-draft, and delete all cancel the
+  linked receiving draft (when still a draft) and clear `receivingId` in the
+  same batch — an orphan "From PO-…" draft must never stay completable.
 
 No partial fulfillment: if the supplier shorts an order, actual quantities are
 corrected on the receiving before completion and the PO still closes as
@@ -121,6 +128,11 @@ Guards:
   instead of creating a second one.
 - Cancelling or deleting the linked receiving clears the PO's `receivingId`
   so it can be received again.
+- `CurrentReceivingState` carries `purchaseOrderId`, so saving the draft in
+  the bulk receiving screen preserves the link.
+- The bulk screen's completion path saves the in-session state first (new
+  and resumed drafts alike), so edited delivered quantities are what stock
+  is incremented by.
 - Receivings without `purchaseOrderId` behave exactly as today (covered by
   tests — this touches the shared `completeReceiving` write path).
 
