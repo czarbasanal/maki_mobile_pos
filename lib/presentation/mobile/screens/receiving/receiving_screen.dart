@@ -32,11 +32,6 @@ class ReceivingScreen extends ConsumerWidget {
         title: const Text('Receiving'),
         actions: [
           IconButton(
-            tooltip: 'Purchase Orders',
-            icon: const Icon(LucideIcons.clipboardList),
-            onPressed: () => context.push(RoutePaths.purchaseOrders),
-          ),
-          IconButton(
             tooltip: 'Batch import (CSV)',
             icon: const Icon(LucideIcons.uploadCloud),
             onPressed: () => context.push(RoutePaths.batchImport),

@@ -8,12 +8,14 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 /// - New Sale: all roles
 /// - Receive Stock: staff + admin
 /// - Inventory: all roles
+/// - Reorder (purchase orders): staff + admin
 /// - Expenses: all roles
 /// - Reports: all roles
 class QuickActions extends StatelessWidget {
   final VoidCallback onNewSale;
   final VoidCallback? onReceiving;
   final VoidCallback? onInventory;
+  final VoidCallback? onReorder;
   final VoidCallback? onExpenses;
   final VoidCallback? onReports;
   final VoidCallback? onCloseDay;
@@ -23,6 +25,7 @@ class QuickActions extends StatelessWidget {
     required this.onNewSale,
     this.onReceiving,
     this.onInventory,
+    this.onReorder,
     this.onExpenses,
     this.onReports,
     this.onCloseDay,
@@ -51,6 +54,12 @@ class QuickActions extends StatelessWidget {
               icon: LucideIcons.package,
               label: 'Inventory',
               onTap: onInventory!,
+            ),
+          if (onReorder != null)
+            _QuickActionButton(
+              icon: LucideIcons.clipboardList,
+              label: 'Reorder',
+              onTap: onReorder!,
             ),
           if (onExpenses != null)
             _QuickActionButton(

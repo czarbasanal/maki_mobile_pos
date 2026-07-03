@@ -268,24 +268,24 @@ List<RouteBase> featureRoutes() => [
             name: RouteNames.batchImport,
             builder: (context, state) => const BatchImportScreen(),
           ),
+        ],
+      ),
+      GoRoute(
+        path: RoutePaths.purchaseOrders,
+        name: RouteNames.purchaseOrders,
+        builder: (context, state) => const PurchaseOrdersScreen(),
+        routes: [
           GoRoute(
-            path: 'purchase-orders',
-            name: RouteNames.purchaseOrders,
-            builder: (context, state) => const PurchaseOrdersScreen(),
-            routes: [
-              GoRoute(
-                path: 'new',
-                name: RouteNames.purchaseOrderNew,
-                builder: (context, state) => const NewPurchaseOrderScreen(),
-              ),
-              GoRoute(
-                path: ':id',
-                name: RouteNames.purchaseOrderDetail,
-                builder: (context, state) => PurchaseOrderDetailScreen(
-                  purchaseOrderId: state.pathParameters['id']!,
-                ),
-              ),
-            ],
+            path: 'new',
+            name: RouteNames.purchaseOrderNew,
+            builder: (context, state) => const NewPurchaseOrderScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            name: RouteNames.purchaseOrderDetail,
+            builder: (context, state) => PurchaseOrderDetailScreen(
+              purchaseOrderId: state.pathParameters['id']!,
+            ),
           ),
         ],
       ),
