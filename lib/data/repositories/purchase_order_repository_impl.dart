@@ -111,15 +111,88 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
     return 'PO-$dateStr-${sequence.toString().padLeft(3, '0')}';
   }
 
-  // Implemented in Task 4.
+  Future<PurchaseOrderEntity> _requireStatus(
+    String id,
+    Set<PurchaseOrderStatus> allowed,
+    String action,
+  ) async {
+    final po = await getPurchaseOrderById(id);
+    if (po == null) {
+      throw const DatabaseException(message: 'Purchase order not found');
+    }
+    if (!allowed.contains(po.status)) {
+      throw DatabaseException(
+          message: 'Cannot $action a ${po.status.displayName} purchase order');
+    }
+    return po;
+  }
+
   @override
-  Future<void> markOrdered(String id) => throw UnimplementedError();
+  Future<void> markOrdered(String id) async {
+    try {
+      await _requireStatus(id, {PurchaseOrderStatus.draft}, 'order');
+      await _ordersRef.doc(id).update({
+        'status': PurchaseOrderStatus.ordered.name,
+        'orderedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to mark purchase order ordered: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
   @override
-  Future<void> revertToDraft(String id) => throw UnimplementedError();
+  Future<void> revertToDraft(String id) async {
+    try {
+      await _requireStatus(id, {PurchaseOrderStatus.ordered}, 'reopen');
+      await _ordersRef.doc(id).update({
+        'status': PurchaseOrderStatus.draft.name,
+        'orderedAt': null,
+      });
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to revert purchase order: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
   @override
-  Future<void> cancelPurchaseOrder(String id) => throw UnimplementedError();
+  Future<void> cancelPurchaseOrder(String id) async {
+    try {
+      await _requireStatus(
+        id,
+        {PurchaseOrderStatus.draft, PurchaseOrderStatus.ordered},
+        'cancel',
+      );
+      await _ordersRef.doc(id).update({
+        'status': PurchaseOrderStatus.cancelled.name,
+      });
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to cancel purchase order: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
   @override
-  Future<void> deletePurchaseOrder(String id) => throw UnimplementedError();
+  Future<void> deletePurchaseOrder(String id) async {
+    try {
+      await _ordersRef.doc(id).delete();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to delete purchase order: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
 
   // Implemented in Task 7.
   @override
