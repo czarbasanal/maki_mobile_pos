@@ -11,8 +11,8 @@
 
 > **Status (2026-07-03): this redesign has been IMPLEMENTED and merged** (commits `37fb818`,
 > `d768129`, badge fix `1ab4597`). `current-implementation.md` now documents the shipped
-> post-redesign UI and is the source of truth; `reference_current-ui.html` shows the old
-> pre-redesign UI only.
+> post-redesign UI and is the source of truth for behavior/wiring; `reference_current-ui.html`
+> was regenerated 2026-07-03 and previews the shipped post-redesign UI (light mode).
 
 ---
 
@@ -43,7 +43,7 @@ target. Pan the board: light theme on top, dark below.
 **High-fidelity (hifi).** Final colors, type, spacing, radii, elevation, and copy. Recreate the UI
 exactly; only translate HTML/CSS constructs into their Flutter equivalents.
 
-## What changed vs the current UI (`reference_current-ui.html`)
+## What changed vs the pre-redesign UI (historical — `reference_current-ui.html` now shows the shipped UI)
 
 - **Cupertino glyphs → Lucide** everywhere (uniform stroke width **1.75**).
 - **Material `Card` item rows → soft-shadow `AppCard`s** (light) / 1px-border surfaces (dark).
@@ -223,7 +223,9 @@ field value 15 · button 14.5–15/600 · summary total 18/700 · report value 1
 
 - **`MAKI POS Job Orders.dc.html`** — the approved redesign (light + dark). Open in a browser to view.
 - **`support.js`** — runtime required by the `.dc.html`.
-- **`reference_current-ui.html`** — the current (pre-redesign) UI, for before/after only. Do not rebuild.
+- **`reference_current-ui.html`** — as-built preview of the **shipped post-redesign UI** (regenerated
+  2026-07-03; light mode, self-contained, 9 panels). The pre-redesign version it replaced lives in git
+  history (`a58fafd`) for before/after comparison.
 - **`current-implementation.md`** — real Dart file paths, routes, Riverpod providers, data model,
   permissions. Rewritten 2026-07-03 against the shipped post-redesign UI (`16280ad`); the stale-badge
   bug it used to describe is fixed. Your map to the code to change.

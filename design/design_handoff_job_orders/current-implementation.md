@@ -2,7 +2,7 @@
 
 _Documented 2026-07-03, against `main` (`16280ad`). Written so a future session can redesign this feature without re-exploring the codebase._
 
-> ⚠️ **`reference_current-ui.html` in this folder is STALE.** It reproduces the *pre-redesign* UI (as of `53cf5cf`, 2026-07-02). The feature has since been visually redesigned and shipped (commits `37fb818`, `d768129` — POS cart-card parity + red/white badge pill; `1ab4597` — live-derived badge count). Do not trust the HTML; **this markdown is the source of truth** for the current UI.
+> ℹ️ **`reference_current-ui.html` in this folder was regenerated 2026-07-03** and now reflects the current post-redesign UI (commits `37fb818`, `d768129` — POS cart-card parity + red/white badge pill; `1ab4597` — live-derived badge count): 9 light-mode panels, self-contained HTML. Use it for a quick visual read; **this markdown remains authoritative for behavior, wiring, and exact code references.**
 
 ## What it is
 
