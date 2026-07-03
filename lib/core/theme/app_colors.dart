@@ -174,6 +174,40 @@ abstract class AppColors {
   static Color neutralTileFill(bool dark) =>
       dark ? const Color(0x1F93A0A3) : const Color(0x0F283E46);
 
+  // ── Purchase-order status pill (PO redesign handoff §Design tokens) ──
+  // draft neutral · ordered amber (in flight) · received green · cancelled
+  // red. Values are the handoff table, verbatim; existing semantic tokens are
+  // reused where they already match.
+  static Color poDraftFg(bool dark) =>
+      dark ? darkTextSecondary : lightTextSecondary;
+  static Color poDraftBg(bool dark) =>
+      dark ? const Color(0x1FFFFFFF) : const Color(0x14000000);
+  static Color poOrderedFg(bool dark) =>
+      dark ? warningOnDark : const Color(0xFFC8881A);
+  static Color poOrderedBg(bool dark) =>
+      dark ? const Color(0x24F5B547) : const Color(0x1FF57C00);
+  static Color poReceivedFg(bool dark) => dark ? successOnDark : successDark;
+  static Color poReceivedBg(bool dark) =>
+      dark ? const Color(0x294CAF50) : successLight;
+  static Color poCancelledFg(bool dark) => dark ? errorOnDark : error;
+  static Color poCancelledBg(bool dark) =>
+      dark ? const Color(0x24FF6B5E) : const Color(0x1AF44336);
+
+  /// Unchecked-checkbox border (PO suggestion rows).
+  static Color checkboxBorder(bool dark) =>
+      dark ? const Color(0xFF3A4A4D) : const Color(0xFFC9CFD2);
+
+  // ── Amber inline note (PO cap warning). Mock-exact palette — softer than
+  // the reports' warningBanner*, so it gets its own tokens. ──
+  static Color amberNoteFill(bool dark) =>
+      dark ? const Color(0x1AE8B84C) : const Color(0xFFFBF3DE);
+  static Color amberNoteBorder(bool dark) =>
+      dark ? const Color(0x47E8B84C) : const Color(0x52B7831A);
+  static Color amberNoteText(bool dark) =>
+      dark ? const Color(0xFFD8B15A) : const Color(0xFF7A6320);
+  static Color amberNoteIcon(bool dark) =>
+      dark ? primaryAccent : const Color(0xFF9A7B1F);
+
   // ==================== POS SPECIFIC COLORS ====================
 
   /// Color for cash payments

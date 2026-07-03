@@ -21,6 +21,13 @@ extension DateTimeExtensions on DateTime {
     return DateFormat('MMM d, y h:mm a').format(this);
   }
 
+  /// Friendly compact date-time for card/detail meta (PO redesign).
+  ///
+  /// Example: "Jul 3, 9:41 AM"
+  String toFriendlyDateTime() {
+    return DateFormat('MMM d, h:mm a').format(this);
+  }
+
   /// Formats as date only (full month).
   ///
   /// Example: "January 15, 2025"
