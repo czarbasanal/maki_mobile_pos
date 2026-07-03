@@ -219,8 +219,10 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
       _receivingsRef.doc(receiving.id),
       ReceivingModel.fromEntity(receiving).toMap(forUpdate: true),
     );
+    // Only an ordered PO may become received — a cancelled or re-drafted PO
+    // must not be resurrected by a stale receiving completing underneath it.
     if (poSnap.exists &&
-        poSnap.data()?['status'] != PurchaseOrderStatus.received.name) {
+        poSnap.data()?['status'] == PurchaseOrderStatus.ordered.name) {
       batch.update(poRef, {
         'status': PurchaseOrderStatus.received.name,
         'receivedAt': FieldValue.serverTimestamp(),

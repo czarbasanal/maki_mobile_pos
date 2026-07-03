@@ -126,6 +126,29 @@ void main() {
     expect(po!.receivingId, isNull);
   });
 
+  test('completing a stale receiving does NOT resurrect a cancelled PO',
+      () async {
+    final pair = await linkedPair();
+    // Simulate the PO being cancelled underneath the open draft (concurrent
+    // device / old client) — raw write so the draft is left in place.
+    await fake
+        .collection('purchase_orders')
+        .doc(pair.poId)
+        .update({'status': 'cancelled'});
+
+    await receivingRepo.completeReceiving(
+      receivingId: pair.receivingId,
+      completedBy: 'u1',
+    );
+
+    final po = await poRepo.getPurchaseOrderById(pair.poId);
+    expect(po!.status, PurchaseOrderStatus.cancelled,
+        reason: 'cancelled is terminal — completion must not flip it');
+    final receiving = await receivingRepo.getReceivingById(pair.receivingId);
+    expect(receiving!.status, ReceivingStatus.completed,
+        reason: 'the receiving itself still completes');
+  });
+
   test('unlinked receivings complete exactly as before', () async {
     final created = await receivingRepo.createReceiving(ReceivingEntity(
       id: '',
