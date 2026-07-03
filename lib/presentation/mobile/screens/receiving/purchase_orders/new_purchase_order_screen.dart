@@ -10,22 +10,41 @@ import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.d
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
-/// One order line for this build pass — a velocity suggestion or a manually
-/// added product. Quantity and checked-ness live in the productId-keyed maps
-/// on the state, so a manual product that later qualifies as a suggestion
-/// keeps whatever the user set.
+/// Which bucket a line belongs to in the status view. Priority order — an
+/// item appears once, in the first bucket it qualifies for.
+enum _LineSource {
+  recommended('Recommended'),
+  outOfStock('Out of stock'),
+  lowStock('Low stock'),
+  added('Added');
+
+  final String label;
+  const _LineSource(this.label);
+
+  /// Zero-velocity buckets start unchecked so they never silently pad an
+  /// order; suggestions and deliberate manual adds start checked.
+  bool get defaultChecked =>
+      this == _LineSource.recommended || this == _LineSource.added;
+}
+
+/// One order line for this build pass. Quantity and checked-ness live in the
+/// productId-keyed maps on the state, so an item that moves between buckets
+/// (params change, manual add that becomes suggested) keeps whatever the
+/// user set.
 class _Line {
   const _Line({
     required this.product,
     required this.qty,
     required this.checked,
+    required this.source,
     this.velocityPerDay,
   });
 
   final ProductEntity product;
   final int qty;
   final bool checked;
-  final double? velocityPerDay; // null = manually added
+  final _LineSource source;
+  final double? velocityPerDay;
 }
 
 /// Drafts purchase orders from stock movement: adjustable window/cover,
@@ -50,10 +69,13 @@ class NewPurchaseOrderScreenState
   /// Products added via search that the current suggestions don't cover.
   final List<ProductEntity> _manual = [];
 
-  /// User adjustments keyed by productId — shared by suggestion and manual
-  /// lines so state survives params changes and re-grouping.
+  /// User adjustments keyed by productId — shared across every bucket so
+  /// state survives params changes and re-grouping. Checked-ness is an
+  /// override on top of each bucket's default (suggestions checked, low/out
+  /// unchecked).
   final Map<String, int> _qty = {};
-  final Set<String> _unchecked = {};
+  final Map<String, bool> _checkedOverride = {};
+  bool _byStatus = true;
   bool _saving = false;
 
   int get _coverDays =>
@@ -94,30 +116,61 @@ class NewPurchaseOrderScreenState
     );
   }
 
+  _Line _line(ProductEntity p, _LineSource source,
+      {int defaultQty = 1, double? velocityPerDay}) {
+    return _Line(
+      product: p,
+      qty: _qty[p.id] ?? defaultQty,
+      checked: _checkedOverride[p.id] ?? source.defaultChecked,
+      source: source,
+      velocityPerDay: velocityPerDay,
+    );
+  }
+
   List<_Line> _buildLines(ReorderResult result) {
-    final suggested = {for (final s in result.suggestions) s.product.id: s};
+    final seen = <String>{};
+    bool claim(String id) => seen.add(id);
+    int topUp(ProductEntity p) {
+      final target = p.reorderLevel - p.quantity;
+      return target > 0 ? target : 1;
+    }
+
     return [
       for (final s in result.suggestions)
-        _Line(
-          product: s.product,
-          qty: _qty[s.product.id] ?? s.suggestedQty,
-          checked: !_unchecked.contains(s.product.id),
-          velocityPerDay: s.velocityPerDay,
-        ),
+        if (claim(s.product.id))
+          _line(s.product, _LineSource.recommended,
+              defaultQty: s.suggestedQty, velocityPerDay: s.velocityPerDay),
+      for (final p in result.outOfStock)
+        if (claim(p.id))
+          _line(p, _LineSource.outOfStock, defaultQty: topUp(p)),
+      for (final p in result.lowStock)
+        if (claim(p.id)) _line(p, _LineSource.lowStock, defaultQty: topUp(p)),
       for (final p in _manual)
-        if (!suggested.containsKey(p.id))
-          _Line(
-            product: p,
-            qty: _qty[p.id] ?? 1,
-            checked: !_unchecked.contains(p.id),
-          ),
+        if (claim(p.id)) _line(p, _LineSource.added),
     ];
   }
 
-  Widget _buildBody(ReorderResult result) {
-    final lines = _buildLines(result);
-    // Group by supplier; suggestions arrive pre-sorted, manual lines join
-    // their supplier's group or the no-supplier bucket (last).
+  /// Section headers + rows for the active view. Status view walks the
+  /// bucket order (recommended → out → low → added); supplier view groups
+  /// the same lines by supplier name, no-supplier last.
+  List<Widget> _sections(List<_Line> lines) {
+    Widget header(String text) => Padding(
+          padding: const EdgeInsets.only(top: 16, bottom: 4),
+          child: Text(text, style: Theme.of(context).textTheme.titleSmall),
+        );
+
+    if (_byStatus) {
+      return [
+        for (final source in _LineSource.values) ...[
+          if (lines.any((l) => l.source == source)) ...[
+            header(source.label),
+            for (final line in lines)
+              if (line.source == source) _row(line),
+          ],
+        ],
+      ];
+    }
+
     final groups = <String?, List<_Line>>{};
     for (final line in lines) {
       groups.putIfAbsent(line.product.supplierName, () => []).add(line);
@@ -129,6 +182,16 @@ class NewPurchaseOrderScreenState
         if (b == null) return -1;
         return a.compareTo(b);
       });
+    return [
+      for (final key in keys) ...[
+        header(key ?? 'No supplier'),
+        for (final line in groups[key]!) _row(line),
+      ],
+    ];
+  }
+
+  Widget _buildBody(ReorderResult result) {
+    final lines = _buildLines(result);
     final checkedCount = lines.where((l) => l.checked).length;
 
     return Column(
@@ -161,6 +224,24 @@ class NewPurchaseOrderScreenState
             ],
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              ChoiceChip(
+                label: const Text('By status'),
+                selected: _byStatus,
+                onSelected: (_) => setState(() => _byStatus = true),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('By supplier'),
+                selected: !_byStatus,
+                onSelected: (_) => setState(() => _byStatus = false),
+              ),
+            ],
+          ),
+        ),
         if (result.capped)
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -175,16 +256,7 @@ class NewPurchaseOrderScreenState
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  children: [
-                    for (final key in keys) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16, bottom: 4),
-                        child: Text(key ?? 'No supplier',
-                            style: Theme.of(context).textTheme.titleSmall),
-                      ),
-                      for (final line in groups[key]!) _row(line),
-                    ],
-                  ],
+                  children: _sections(lines),
                 ),
         ),
         SafeArea(
@@ -206,15 +278,20 @@ class NewPurchaseOrderScreenState
 
   Widget _row(_Line line) {
     final p = line.product;
-    final caption = line.velocityPerDay != null
-        ? 'Stock ${p.quantity} • ${line.velocityPerDay!.toStringAsFixed(1)}/day'
-        : 'Stock ${p.quantity} • added manually';
+    final caption = switch (line.source) {
+      _LineSource.recommended =>
+        'Stock ${p.quantity} • ${line.velocityPerDay!.toStringAsFixed(1)}/day',
+      _LineSource.outOfStock ||
+      _LineSource.lowStock =>
+        'Stock ${p.quantity} • reorder at ${p.reorderLevel}',
+      _LineSource.added => 'Stock ${p.quantity} • added manually',
+    };
     return Row(
       children: [
         Checkbox(
           value: line.checked,
           onChanged: (v) => setState(() {
-            v == true ? _unchecked.remove(p.id) : _unchecked.add(p.id);
+            _checkedOverride[p.id] = v ?? false;
           }),
         ),
         Expanded(
@@ -288,8 +365,9 @@ class NewPurchaseOrderScreenState
                         onTap: () {
                           setState(() {
                             _manual.add(matches[i]);
-                            _qty.putIfAbsent(matches[i].id, () => 1);
-                            _unchecked.remove(matches[i].id);
+                            // A deliberate add is always checked, even when
+                            // the product also sits in a low/out bucket.
+                            _checkedOverride[matches[i].id] = true;
                           });
                           Navigator.of(sheetContext).pop();
                         },
