@@ -199,6 +199,19 @@ service cloud.firestore {
       allow delete: if isAdmin() && isActiveUser();
     }
 
+    // ==================== PURCHASE ORDERS COLLECTION ====================
+
+    match /purchase_orders/{purchaseOrderId} {
+      // Staff and admin can read purchase orders
+      allow read: if isStaffOrAdmin() && isActiveUser();
+
+      // Staff and admin can create/update purchase orders
+      allow create, update: if isStaffOrAdmin() && isActiveUser();
+
+      // Only admin can delete purchase orders
+      allow delete: if isAdmin() && isActiveUser();
+    }
+
     // ==================== EXPENSES COLLECTION ====================
     
     match /expenses/{expenseId} {
