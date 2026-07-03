@@ -206,6 +206,113 @@ class PoSectionHeader extends StatelessWidget {
   }
 }
 
+/// Bordered segmented control per the PO mock — equal cells, selected =
+/// faint primary wash + 600 primary text. [elevated] fills with the card
+/// surface + soft shadow (the view toggle); plain sits recessed on the
+/// params card.
+class PoSegmentedCells<T> extends StatelessWidget {
+  const PoSegmentedCells({
+    super.key,
+    required this.values,
+    required this.labels,
+    required this.selected,
+    required this.onChanged,
+    required this.keyPrefix,
+    this.icons,
+    this.radius = 12,
+    this.elevated = false,
+  });
+
+  final List<T> values;
+  final Map<T, String> labels;
+  final T selected;
+  final ValueChanged<T> onChanged;
+  final String keyPrefix;
+  final Map<T, IconData>? icons;
+  final double radius;
+  final bool elevated;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final border =
+        dark ? AppColors.darkInputBorder : AppColors.lightInputBorder;
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated ? (dark ? AppColors.darkCard : Colors.white) : null,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: elevated ? AppShadows.card(dark: dark) : null,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: [
+          for (var i = 0; i < values.length; i++)
+            Expanded(
+              child: _cell(context, values[i], first: i == 0, border: border),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cell(BuildContext context, T v,
+      {required bool first, required Color border}) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final isSel = v == selected;
+    final name = v is Enum ? v.name : v.toString();
+    final icon = icons?[v];
+    return Semantics(
+      button: true,
+      selected: isSel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onChanged(v),
+        child: Container(
+          key: Key('$keyPrefix-$name'),
+          alignment: Alignment.center,
+          padding: EdgeInsets.symmetric(vertical: icons == null ? 8 : 10),
+          decoration: BoxDecoration(
+            color: isSel
+                ? AppColors.segmentedSelectedWash(dark)
+                : Colors.transparent,
+            border: first ? null : Border(left: BorderSide(color: border)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSel
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                labels[v]!,
+                style: TextStyle(
+                  fontSize: icons == null ? 13 : 13.5,
+                  fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
+                  color: isSel
+                      ? theme.colorScheme.primary
+                      : (icons == null
+                          ? theme.colorScheme.onSurfaceVariant
+                          : theme.colorScheme.onSurface),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Pinned-footer surface — white card + soft up-shadow in light, darkCard +
 /// hairline top border in dark (mock footer elevation; shadow values are the
 /// theme's [AppShadows.pinnedFooter] token).

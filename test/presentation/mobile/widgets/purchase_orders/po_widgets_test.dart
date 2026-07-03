@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/purchase_orders/po_widgets.dart';
 
 void main() {
@@ -39,5 +40,29 @@ void main() {
             icon: LucideIcons.trendingUp, label: 'Recommended', trailing: '3'));
     expect(find.text('Recommended'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
+  });
+
+  testWidgets('PoSegmentedCells renders cells, keys, and fires onChanged',
+      (tester) async {
+    int? picked;
+    await pump(
+      tester,
+      PoSegmentedCells<int>(
+        values: const [30, 60, 90],
+        labels: const {30: '30d', 60: '60d', 90: '90d'},
+        selected: 60,
+        keyPrefix: 'test-window',
+        onChanged: (v) => picked = v,
+      ),
+    );
+    expect(find.text('30d'), findsOneWidget);
+    expect(find.byKey(const Key('test-window-90')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('test-window-30')));
+    expect(picked, 30);
+  });
+
+  test('segmentedSelectedWash matches the PO mock values', () {
+    expect(AppColors.segmentedSelectedWash(false), const Color(0x1A283E46));
+    expect(AppColors.segmentedSelectedWash(true), const Color(0x1FE8B84C));
   });
 }

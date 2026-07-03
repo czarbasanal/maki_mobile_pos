@@ -208,6 +208,11 @@ abstract class AppColors {
   static Color amberNoteIcon(bool dark) =>
       dark ? primaryAccent : const Color(0xFF9A7B1F);
 
+  /// Selected-cell wash for the PO bordered segmented control
+  /// (PoSegmentedCells) — faint slate in light, faint gold in dark.
+  static Color segmentedSelectedWash(bool dark) =>
+      dark ? const Color(0x1FE8B84C) : const Color(0x1A283E46);
+
   // ==================== POS SPECIFIC COLORS ====================
 
   /// Color for cash payments

@@ -248,7 +248,7 @@ class NewPurchaseOrderScreenState
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-          child: _SegmentedCells<_ViewMode>(
+          child: PoSegmentedCells<_ViewMode>(
             values: _ViewMode.values,
             labels: const {
               _ViewMode.byStatus: 'By status',
@@ -302,7 +302,7 @@ class NewPurchaseOrderScreenState
           Row(
             children: [
               Expanded(
-                child: _SegmentedCells<int>(
+                child: PoSegmentedCells<int>(
                   values: const [30, 60, 90],
                   labels: const {30: '30d', 60: '60d', 90: '90d'},
                   selected: _windowDays,
@@ -793,112 +793,6 @@ class _PoCheckbox extends StatelessWidget {
               ? Icon(LucideIcons.check,
                   size: 14, color: theme.colorScheme.onPrimary)
               : null,
-        ),
-      ),
-    );
-  }
-}
-
-/// Bordered segmented control per the mock — equal cells, selected = faint
-/// primary wash + 600 primary text. [elevated] fills with the card surface +
-/// soft shadow (the view toggle); plain sits recessed on the params card.
-class _SegmentedCells<T> extends StatelessWidget {
-  const _SegmentedCells({
-    super.key,
-    required this.values,
-    required this.labels,
-    required this.selected,
-    required this.onChanged,
-    required this.keyPrefix,
-    this.icons,
-    this.radius = 12,
-    this.elevated = false,
-  });
-
-  final List<T> values;
-  final Map<T, String> labels;
-  final T selected;
-  final ValueChanged<T> onChanged;
-  final String keyPrefix;
-  final Map<T, IconData>? icons;
-  final double radius;
-  final bool elevated;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final border =
-        dark ? AppColors.darkInputBorder : AppColors.lightInputBorder;
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated ? (dark ? AppColors.darkCard : Colors.white) : null,
-        border: Border.all(color: border),
-        borderRadius: BorderRadius.circular(radius),
-        boxShadow: elevated ? AppShadows.card(dark: dark) : null,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          for (var i = 0; i < values.length; i++)
-            Expanded(
-              child: _cell(context, values[i], first: i == 0, border: border),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _cell(BuildContext context, T v,
-      {required bool first, required Color border}) {
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final isSel = v == selected;
-    final name = v is Enum ? v.name : v.toString();
-    final selectedTint =
-        dark ? const Color(0x1FE8B84C) : const Color(0x1A283E46);
-    final icon = icons?[v];
-    return Semantics(
-      button: true,
-      selected: isSel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => onChanged(v),
-        child: Container(
-          key: Key('$keyPrefix-$name'),
-          alignment: Alignment.center,
-          padding: EdgeInsets.symmetric(vertical: icons == null ? 8 : 10),
-          decoration: BoxDecoration(
-            color: isSel ? selectedTint : Colors.transparent,
-            border: first ? null : Border(left: BorderSide(color: border)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 15,
-                  color: isSel
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface,
-                ),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                labels[v]!,
-                style: TextStyle(
-                  fontSize: icons == null ? 13 : 13.5,
-                  fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
-                  color: isSel
-                      ? theme.colorScheme.primary
-                      : (icons == null
-                          ? theme.colorScheme.onSurfaceVariant
-                          : theme.colorScheme.onSurface),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
