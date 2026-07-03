@@ -48,39 +48,63 @@ class ReorderResult {
   });
 }
 
-final reorderSuggestionsProvider = FutureProvider.autoDispose
-    .family<ReorderResult, ReorderParams>((ref, params) async {
-  final products = await ref.watch(productsProvider.future);
+/// Movement data for a window: units sold per product + whether the sales
+/// fetch hit [reorderSalesCap]. Keyed by windowDays ONLY — coverDays never
+/// affects the fetch, so cover changes must not refetch.
+typedef ReorderMovement = ({Map<String, int> unitsSold, bool capped});
+
+final reorderMovementProvider = FutureProvider.autoDispose
+    .family<ReorderMovement, int>((ref, windowDays) async {
   final now = DateTime.now();
   final start = DateTime(now.year, now.month, now.day)
-      .subtract(Duration(days: params.windowDays - 1));
+      .subtract(Duration(days: windowDays - 1));
   final sales = await ref.watch(saleRepositoryProvider).getSalesByDateRange(
         startDate: start,
         endDate: now,
         status: SaleStatus.completed,
         limit: reorderSalesCap,
       );
-  final suggestions =
-      computeReorderSuggestions(products, unitsSoldByProduct(sales), params);
-  final suggestedIds = {for (final s in suggestions) s.product.id};
-  final lowStock = <ProductEntity>[];
-  final outOfStock = <ProductEntity>[];
-  for (final product in products) {
-    if (!product.isActive || suggestedIds.contains(product.id)) continue;
-    if (product.quantity == 0) {
-      outOfStock.add(product);
-    } else if (product.quantity <= product.reorderLevel) {
-      lowStock.add(product);
-    }
-  }
-  int byName(ProductEntity a, ProductEntity b) => a.name.compareTo(b.name);
-  lowStock.sort(byName);
-  outOfStock.sort(byName);
-
-  return ReorderResult(
-    suggestions: suggestions,
-    lowStock: lowStock,
-    outOfStock: outOfStock,
+  return (
+    unitsSold: unitsSoldByProduct(sales),
     capped: sales.length >= reorderSalesCap,
+  );
+});
+
+/// Suggestions + low/out buckets for the given params — a pure synchronous
+/// derivation over [productsProvider] and [reorderMovementProvider], so
+/// cover-days changes recompute instantly without refetching sales.
+final reorderSuggestionsProvider = Provider.autoDispose
+    .family<AsyncValue<ReorderResult>, ReorderParams>((ref, params) {
+  final productsAsync = ref.watch(productsProvider);
+  final movementAsync = ref.watch(reorderMovementProvider(params.windowDays));
+
+  return productsAsync.when(
+    loading: () => const AsyncValue.loading(),
+    error: (e, st) => AsyncValue.error(e, st),
+    data: (products) => movementAsync.whenData((movement) {
+      final suggestions =
+          computeReorderSuggestions(products, movement.unitsSold, params);
+      final suggestedIds = {for (final s in suggestions) s.product.id};
+      final lowStock = <ProductEntity>[];
+      final outOfStock = <ProductEntity>[];
+      for (final product in products) {
+        if (!product.isActive || suggestedIds.contains(product.id)) continue;
+        if (product.quantity == 0) {
+          outOfStock.add(product);
+        } else if (product.quantity <= product.reorderLevel) {
+          lowStock.add(product);
+        }
+      }
+      int byName(ProductEntity a, ProductEntity b) => a.name.compareTo(b.name);
+      lowStock.sort(byName);
+      outOfStock.sort(byName);
+
+      return ReorderResult(
+        suggestions: suggestions,
+        lowStock: lowStock,
+        outOfStock: outOfStock,
+        capped: movement.capped,
+      );
+    }),
   );
 });

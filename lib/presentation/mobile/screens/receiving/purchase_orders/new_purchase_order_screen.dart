@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -76,13 +74,9 @@ class NewPurchaseOrderScreenState
     extends ConsumerState<NewPurchaseOrderScreen> {
   int _windowDays = 60;
 
-  /// Cover days as displayed (updates per tap, clamped 1–365)…
+  /// Cover days (clamped 1–365). Applied synchronously — the suggestions
+  /// provider derives from cached movement data, so stepping never refetches.
   int _cover = 30;
-
-  /// …and as applied to the suggestions provider (follows [_cover] after a
-  /// short debounce so stepping doesn't refetch per tap).
-  int _appliedCover = 30;
-  Timer? _coverDebounce;
 
   /// Products added via search that the current suggestions don't cover.
   final List<ProductEntity> _manual = [];
@@ -96,25 +90,11 @@ class NewPurchaseOrderScreenState
   _ViewMode _view = _ViewMode.byStatus;
   bool _saving = false;
 
-  @override
-  void dispose() {
-    _coverDebounce?.cancel();
-    super.dispose();
-  }
-
-  void _setCover(int value) {
-    final next = value.clamp(1, 365);
-    if (next == _cover) return;
-    setState(() => _cover = next);
-    _coverDebounce?.cancel();
-    _coverDebounce = Timer(const Duration(milliseconds: 350), () {
-      if (mounted) setState(() => _appliedCover = _cover);
-    });
-  }
+  void _setCover(int value) => setState(() => _cover = value.clamp(1, 365));
 
   @override
   Widget build(BuildContext context) {
-    final params = (windowDays: _windowDays, coverDays: _appliedCover);
+    final params = (windowDays: _windowDays, coverDays: _cover);
     final resultAsync = ref.watch(reorderSuggestionsProvider(params));
 
     return Scaffold(

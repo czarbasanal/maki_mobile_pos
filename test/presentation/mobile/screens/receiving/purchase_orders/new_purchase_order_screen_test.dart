@@ -59,12 +59,12 @@ void main() {
         productsProvider.overrideWith(
             (ref) => Stream.value([product('p1'), product('p2')])),
         currentUserProvider.overrideWith((ref) => Stream.value(user)),
-        reorderSuggestionsProvider.overrideWith((ref, params) async =>
-            ReorderResult(
+        reorderSuggestionsProvider.overrideWith((ref, params) =>
+            AsyncValue.data(ReorderResult(
                 suggestions: suggestions,
                 lowStock: lowStock,
                 outOfStock: outOfStock,
-                capped: false)),
+                capped: false))),
       ],
       child: const MaterialApp(home: NewPurchaseOrderScreen()),
     ));
@@ -316,37 +316,39 @@ void main() {
     expect(find.text('1 item · ₱220.00'), findsOneWidget);
   });
 
-  testWidgets('cover stepper applies after the debounce', (tester) async {
-    final received = <({int coverDays, int windowDays})>[];
+  testWidgets('cover stepping recomputes instantly without refetching sales',
+      (tester) async {
+    final fetchedWindows = <int>[];
     final fake = FakeFirebaseFirestore();
     await tester.pumpWidget(ProviderScope(
       overrides: [
         firestoreProvider.overrideWithValue(fake),
         productsProvider.overrideWith((ref) => Stream.value([product('p1')])),
         currentUserProvider.overrideWith((ref) => Stream.value(user)),
-        reorderSuggestionsProvider.overrideWith((ref, params) async {
-          received.add(params);
-          return ReorderResult(
-              suggestions: [suggestion(product('p1'), 9)],
-              lowStock: const [],
-              outOfStock: const [],
-              capped: false);
+        // Real derivation runs; only the sales fetch is faked + counted.
+        reorderMovementProvider.overrideWith((ref, windowDays) async {
+          fetchedWindows.add(windowDays);
+          return (unitsSold: {'p1': 30}, capped: false);
         }),
       ],
       child: const MaterialApp(home: NewPurchaseOrderScreen()),
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('po-cover-plus')));
-    await tester.pump();
-    expect(find.text('31'), findsOneWidget,
-        reason: 'display updates instantly');
-    expect(received.map((p) => p.coverDays), isNot(contains(31)),
-        reason: 'refetch waits for the debounce');
+    // velocity 30/60 = 0.5 → cover 30 → target 15 → stock 0 → qty 15.
+    expect(find.text('15'), findsOneWidget);
+    expect(fetchedWindows, [60]);
 
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const Key('po-cover-plus')));
     await tester.pumpAndSettle();
-    expect(received.map((p) => p.coverDays), contains(31));
+    // cover 31 → ceil(15.5) = 16 — same frame, no new fetch, no spinner.
+    expect(find.text('16'), findsOneWidget);
+    expect(fetchedWindows, [60]);
+
+    await tester.tap(find.byKey(const Key('po-window-30')));
+    await tester.pumpAndSettle();
+    expect(fetchedWindows, [60, 30],
+        reason: 'window changes still fetch (different date range)');
   });
 
   testWidgets('cap note renders the amber warning copy', (tester) async {
@@ -356,12 +358,12 @@ void main() {
         firestoreProvider.overrideWithValue(fake),
         productsProvider.overrideWith((ref) => Stream.value([product('p1')])),
         currentUserProvider.overrideWith((ref) => Stream.value(user)),
-        reorderSuggestionsProvider.overrideWith((ref, params) async =>
-            ReorderResult(
+        reorderSuggestionsProvider.overrideWith((ref, params) =>
+            AsyncValue.data(ReorderResult(
                 suggestions: [suggestion(product('p1'), 9)],
                 lowStock: const [],
                 outOfStock: const [],
-                capped: true)),
+                capped: true))),
       ],
       child: const MaterialApp(home: NewPurchaseOrderScreen()),
     ));

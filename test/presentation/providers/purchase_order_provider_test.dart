@@ -96,8 +96,14 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final result = await container.read(
-        reorderSuggestionsProvider((windowDays: 60, coverDays: 30)).future);
+    const params = (windowDays: 60, coverDays: 30);
+    final sub =
+        container.listen(reorderSuggestionsProvider(params), (_, __) {});
+    addTearDown(sub.close);
+    await container.read(productsProvider.future);
+    await container.read(reorderMovementProvider(60).future);
+
+    final result = container.read(reorderSuggestionsProvider(params)).value!;
     // velocity 1/day × 30 cover − 0 stock = 30
     expect(result.suggestions, hasLength(1));
     expect(result.suggestions.first.suggestedQty, 30);
@@ -152,8 +158,14 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final result = await container.read(
-        reorderSuggestionsProvider((windowDays: 60, coverDays: 30)).future);
+    const params = (windowDays: 60, coverDays: 30);
+    final sub =
+        container.listen(reorderSuggestionsProvider(params), (_, __) {});
+    addTearDown(sub.close);
+    await container.read(productsProvider.future);
+    await container.read(reorderMovementProvider(60).future);
+
+    final result = container.read(reorderSuggestionsProvider(params)).value!;
     expect(result.suggestions.map((s) => s.product.id), ['sold']);
     expect(result.outOfStock.map((p) => p.id), ['empty']);
     expect(result.lowStock.map((p) => p.id), ['edge', 'low'],
