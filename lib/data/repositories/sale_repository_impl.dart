@@ -608,15 +608,22 @@ class SaleRepositoryImpl implements SaleRepository {
   Future<List<SaleEntity>> _loadSalesWithItems(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) async {
+    // Item subcollections load in parallel chunks — one sequential await per
+    // sale made large windows (reports, reorder suggestions) N+1 serial
+    // round trips. Future.wait preserves per-chunk order, so query order
+    // (createdAt desc) is unchanged.
+    const chunkSize = 20;
     final sales = <SaleEntity>[];
-
-    for (final doc in docs) {
-      final items = await getSaleItems(doc.id);
-      final itemModels = items.map((e) => SaleItemModel.fromEntity(e)).toList();
-      final saleModel = SaleModel.fromFirestore(doc, items: itemModels);
-      sales.add(saleModel.toEntity());
+    for (var i = 0; i < docs.length; i += chunkSize) {
+      final chunk = docs.sublist(
+          i, (i + chunkSize) > docs.length ? docs.length : i + chunkSize);
+      sales.addAll(await Future.wait(chunk.map((doc) async {
+        final items = await getSaleItems(doc.id);
+        final itemModels =
+            items.map((e) => SaleItemModel.fromEntity(e)).toList();
+        return SaleModel.fromFirestore(doc, items: itemModels).toEntity();
+      })));
     }
-
     return sales;
   }
 

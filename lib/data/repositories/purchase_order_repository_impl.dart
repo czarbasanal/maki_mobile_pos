@@ -76,12 +76,9 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
       }
       final model = PurchaseOrderModel.fromEntity(po);
       await _ordersRef.doc(po.id).update(model.toMap());
-      final updated = await getPurchaseOrderById(po.id);
-      if (updated == null) {
-        throw const DatabaseException(
-            message: 'Purchase order not found after update');
-      }
-      return updated;
+      // update() either throws or applies exactly model.toMap(), and screens
+      // re-render from watchPurchaseOrderById — no re-read needed.
+      return po;
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to update purchase order: ${e.message}',
