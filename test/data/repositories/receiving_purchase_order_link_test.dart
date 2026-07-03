@@ -98,7 +98,9 @@ void main() {
 
   test('a deleted PO does not block completion', () async {
     final pair = await linkedPair();
-    await poRepo.deletePurchaseOrder(pair.poId);
+    // Raw delete (console / old client) — repo deletes now cancel the linked
+    // draft, so this is the only way a live draft can point at a missing PO.
+    await fake.collection('purchase_orders').doc(pair.poId).delete();
 
     await receivingRepo.completeReceiving(
       receivingId: pair.receivingId,

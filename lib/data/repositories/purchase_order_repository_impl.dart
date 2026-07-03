@@ -145,13 +145,45 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
     }
   }
 
+  /// Applies [poUpdate] to the PO (or deletes it when null) and, in the same
+  /// batch, cancels the linked receiving when it is still a draft — an orphan
+  /// "From PO-…" draft must never stay completable after the PO leaves the
+  /// ordered state.
+  Future<void> _writeAndCleanupLinkedReceiving(
+    PurchaseOrderEntity po,
+    Map<String, dynamic>? poUpdate,
+  ) async {
+    final batch = _firestore.batch();
+    if (poUpdate == null) {
+      batch.delete(_ordersRef.doc(po.id));
+    } else {
+      batch.update(_ordersRef.doc(po.id), poUpdate);
+    }
+    if (po.receivingId != null) {
+      final receivingRef = _firestore
+          .collection(FirestoreCollections.receivings)
+          .doc(po.receivingId!);
+      final snap = await receivingRef.get();
+      if (snap.exists &&
+          snap.data()?['status'] == ReceivingStatus.draft.name) {
+        batch.update(receivingRef, {
+          'status': ReceivingStatus.cancelled.name,
+          'purchaseOrderId': null,
+        });
+      }
+    }
+    await batch.commit();
+  }
+
   @override
   Future<void> revertToDraft(String id) async {
     try {
-      await _requireStatus(id, {PurchaseOrderStatus.ordered}, 'reopen');
-      await _ordersRef.doc(id).update({
+      final po =
+          await _requireStatus(id, {PurchaseOrderStatus.ordered}, 'reopen');
+      await _writeAndCleanupLinkedReceiving(po, {
         'status': PurchaseOrderStatus.draft.name,
         'orderedAt': null,
+        'receivingId': null,
       });
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -165,13 +197,14 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
   @override
   Future<void> cancelPurchaseOrder(String id) async {
     try {
-      await _requireStatus(
+      final po = await _requireStatus(
         id,
         {PurchaseOrderStatus.draft, PurchaseOrderStatus.ordered},
         'cancel',
       );
-      await _ordersRef.doc(id).update({
+      await _writeAndCleanupLinkedReceiving(po, {
         'status': PurchaseOrderStatus.cancelled.name,
+        'receivingId': null,
       });
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -185,7 +218,9 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
   @override
   Future<void> deletePurchaseOrder(String id) async {
     try {
-      await _ordersRef.doc(id).delete();
+      final po = await getPurchaseOrderById(id);
+      if (po == null) return;
+      await _writeAndCleanupLinkedReceiving(po, null);
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to delete purchase order: ${e.message}',
