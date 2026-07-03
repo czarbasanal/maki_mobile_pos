@@ -20,6 +20,9 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/bulk_recei
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_drafts_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/batch_import_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/purchase_orders/purchase_orders_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/purchase_orders/new_purchase_order_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/purchase_orders/purchase_order_detail_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/suppliers_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/suppliers/supplier_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/expenses/expenses_screen.dart';
@@ -264,6 +267,25 @@ List<RouteBase> featureRoutes() => [
             path: 'import',
             name: RouteNames.batchImport,
             builder: (context, state) => const BatchImportScreen(),
+          ),
+          GoRoute(
+            path: 'purchase-orders',
+            name: RouteNames.purchaseOrders,
+            builder: (context, state) => const PurchaseOrdersScreen(),
+            routes: [
+              GoRoute(
+                path: 'new',
+                name: RouteNames.purchaseOrderNew,
+                builder: (context, state) => const NewPurchaseOrderScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                name: RouteNames.purchaseOrderDetail,
+                builder: (context, state) => PurchaseOrderDetailScreen(
+                  purchaseOrderId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
           ),
         ],
       ),
