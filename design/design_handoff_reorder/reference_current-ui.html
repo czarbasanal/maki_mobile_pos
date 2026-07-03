@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reorder / Purchase Orders — current UI preview (as-shipped, 2026-07-03)</title>
+<style>
+  /* ===== Tokens (from lib/core/theme/app_colors.dart — light mode) ===== */
+  :root{
+    --slate:#283E46; --gold:#E8B84C;
+    --canvas:#F6F5F3; --card:#FFFFFF; --muted-fill:#FAFAFA;
+    --text:#16201F; --text-2:#6A7378; --text-3:#8A9296; --hint:#9AA0A3;
+    --divider:#E0E0E0; --border:#D0D0D0; --input-border:#E2E2E2; --hairline:#ECECEC;
+    --red:#F44336; --green-dark:#2E7D32; --green-fill:#E8F5E9;
+    --amber:#C8881A; --chip-sel:#EDEFF1;
+    --shadow-card:0 2px 4px rgba(17,28,29,.05),0 1px 1px rgba(17,28,29,.04);
+    --shadow-header:0 2px 10px rgba(17,28,29,.05);
+    --shadow-footer:0 -4px 16px rgba(17,28,29,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Figtree',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:#E9E7E2;color:var(--text);padding:32px 24px}
+  code,.mono{font-family:'Roboto Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+  h1{font-size:20px;font-weight:700;margin-bottom:4px}
+  .note{font-size:13px;color:var(--text-2);margin-bottom:24px;max-width:960px;line-height:1.5}
+  .frames{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  .frame-wrap>figcaption{font-size:12.5px;font-weight:600;color:var(--text-2);margin:0 0 2px 4px;max-width:390px}
+  .frame-wrap>figcaption .src{display:block;font-weight:400;font-size:11px;margin:2px 0 8px;
+    font-family:'Roboto Mono',ui-monospace,Menlo,monospace}
+  .phone{width:390px;height:760px;background:var(--canvas);border-radius:28px;border:1px solid #d8d5cf;
+    overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 20px rgba(17,28,29,.10);position:relative}
+  .screen{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-height:0}
+
+  /* ===== Inline Lucide-style icons (stroke 1.75, no external requests) ===== */
+  svg.ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;
+    stroke-linecap:round;stroke-linejoin:round}
+  svg.ic.s20{width:20px;height:20px} svg.ic.s18{width:18px;height:18px}
+  svg.ic.s16{width:16px;height:16px} svg.ic.s15{width:15px;height:15px}
+  svg.ic.s14{width:14px;height:14px} svg.ic.s12{width:12px;height:12px}
+  svg.ic.s64{width:64px;height:64px}
+
+  /* ===== AppBar ===== */
+  .appbar{height:56px;background:var(--card);display:flex;align-items:center;padding:0 8px;
+    box-shadow:var(--shadow-header);position:relative;z-index:2;flex:none}
+  .appbar .title{position:absolute;left:56px;right:56px;text-align:center;font-size:20px;font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+  .iconbtn{width:48px;height:48px;border:none;background:none;display:flex;align-items:center;justify-content:center;
+    color:var(--text);position:relative;cursor:default}
+  .spacer{flex:1}
+
+  /* ===== Buttons (app_theme: FilledButton/OutlinedButton radius 18, min-height 48) ===== */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:default;
+    font-family:inherit;font-size:15px;font-weight:600;border-radius:18px;padding:12px 24px;min-height:48px}
+  .btn.filled{background:var(--slate);color:#fff}
+  .btn.filled.red{background:var(--red)}
+  .btn.filled:disabled{background:rgba(40,62,70,.25)}
+  .btn.outlined{background:transparent;border:1px solid var(--border);color:var(--slate)}
+  .btn.text{background:none;color:var(--text-2);padding:11px 16px;min-height:0;font-size:14.5px}
+  .btn.dialog{min-height:0;padding:12px 22px;font-size:14.5px}
+  .btn svg.ic{width:16px;height:16px}
+  .btn.wide{width:100%}
+
+  /* ===== ChoiceChips (chipTheme: #FAFAFA fill, #ECECEC hairline, pill radius, labelSmall;
+         selected = M3 checkmark + secondaryContainer #EDEFF1) ===== */
+  .chips{display:flex;gap:8px;align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:4px 12px;border-radius:999px;
+    background:var(--muted-fill);border:1px solid var(--hairline);font-size:12px;font-weight:500;color:var(--text);
+    white-space:nowrap}
+  .chip.sel{background:var(--chip-sel)}
+  .chip svg.ic{width:16px;height:16px}
+
+  /* ===== Status pill (purchase_order_status_pill.dart: 10h/4v, radius 999, icon 12, text 12/600) ===== */
+  .popill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;flex:none}
+  .popill svg.ic{width:12px;height:12px;margin-right:4px}
+  .popill .pl{font-size:12px;font-weight:600}
+  .popill.draft{background:rgba(0,0,0,.08);color:var(--text-2)}
+  .popill.ordered{background:rgba(245,124,0,.12);color:var(--amber)}
+  .popill.received{background:var(--green-fill);color:var(--green-dark)}
+  .popill.cancelled{background:rgba(244,67,54,.10);color:var(--red)}
+
+  /* ===== Cards — NOTE: _OrderCard and the detail header pass NO padding to AppCard,
+         so content sits flush against the card edge (as shipped) ===== */
+  .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow-card)}
+  .pocard{display:flex;align-items:center;padding:0} /* flush — faithful to shipped code */
+  .pocard .l{flex:1;min-width:0}
+  .pocard .ref{font-size:14px;font-weight:600}
+  .pocard .meta{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ===== FAB (theme: slate fill, white glyph, radius 24, elevation 0) ===== */
+  .fab{position:absolute;right:16px;bottom:16px;width:56px;height:56px;border-radius:24px;background:var(--slate);
+    color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(17,28,29,.18)}
+
+  /* ===== Empty state (EmptyStateView, tiled NOT set → bare 64px glyph) ===== */
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+  .empty svg.ic{color:#9BA3A7}
+  .empty .t{font-size:16px;font-weight:600;margin-top:16px}
+  .empty .s{font-size:14px;color:#9BA3A7;margin-top:8px;line-height:1.5;max-width:260px}
+
+  /* ===== New-PO params + rows ===== */
+  .paramsrow{display:flex;align-items:center;gap:8px;padding:8px 16px}
+  .togglerow{display:flex;gap:8px;padding:0 16px}
+  .coverfield{width:88px;position:relative;background:var(--muted-fill);border:1px solid var(--input-border);
+    border-radius:16px;padding:9px 12px;margin-left:auto}
+  .coverfield .flabel{position:absolute;top:-8px;left:10px;background:var(--canvas);padding:0 4px;font-size:11px;color:var(--text-2)}
+  .coverfield .val{font-size:15px}
+  .capnote{padding:0 16px;font-size:14px}
+  .sechd{padding:16px 0 4px;font-size:14px;font-weight:600}
+  .srow{display:flex;align-items:center;min-height:48px}
+  .cbx{width:18px;height:18px;border-radius:2px;border:1.5px solid var(--border);margin:0 15px;flex:none;
+    display:flex;align-items:center;justify-content:center}
+  .cbx.on{background:var(--slate);border-color:var(--slate);color:#fff}
+  .cbx svg.ic{width:13px;height:13px;stroke-width:2.5}
+  .srow .info{flex:1;min-width:0}
+  .srow .nm{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .srow .cap{font-size:12px;color:var(--text-2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stepbtn{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--text);flex:none}
+  .stepbtn.dis{color:#BFC5C8}
+  .stepbtn svg.ic{width:16px;height:16px}
+  .qty{font-size:14px;min-width:14px;text-align:center}
+  .savebar{padding:16px;flex:none}
+
+  /* ===== Detail ===== */
+  .detail{padding:16px;flex:1;overflow-y:auto}
+  .hdrcard{padding:0} /* flush — faithful */
+  .hdrcard .r1{display:flex;align-items:center}
+  .hdrcard .ref{flex:1;font-size:16px;font-weight:600}
+  .hdrcard .sup{font-size:14px;margin-top:8px}
+  .hdrcard .ln{font-size:12px;color:var(--text-2);margin-top:1px}
+  .itemshd{font-size:14px;font-weight:600;margin:16px 0 4px}
+  .irow{display:flex;align-items:center;min-height:48px}
+  .irow .info{flex:1;min-width:0}
+  .irow .nm{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .irow .sk{font-size:12px;color:var(--text-2);margin-top:1px}
+  .irow .lock{font-size:14px}
+  .actionbar{padding:16px;display:flex;flex-wrap:wrap;gap:8px;flex:none}
+  .editbar{padding:16px;display:flex;gap:8px;flex:none}
+  .editbar .btn.filled{flex:1}
+
+  /* ===== Dialog (AppDialog shell) ===== */
+  .scrim{position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;
+    padding:24px;z-index:5}
+  .dialog{background:var(--card);border-radius:24px;width:100%;padding:22px 22px 16px}
+  .dlg-head{display:flex;align-items:center;gap:13px}
+  .chip42{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .chip42.destructive{background:rgba(244,67,54,.10);color:var(--red)}
+  .dlg-title{font-size:18px;font-weight:600;line-height:1.3;flex:1}
+  .dlg-body{margin-top:14px;font-size:14.5px;line-height:1.55;color:#5A6468}
+  .warnrow{display:flex;gap:7px;margin-top:10px;color:var(--red)}
+  .warnrow svg.ic{width:15px;height:15px;margin-top:1px}
+  .warnrow .wt{font-size:12.5px;line-height:1.4}
+  .dlg-actions{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:22px}
+
+  /* ===== Add-product bottom sheet (plain showModalBottomSheet, top radius 24, white) ===== */
+  .sheet-scrim{position:absolute;inset:0;background:rgba(17,28,29,.32);z-index:5;display:flex;flex-direction:column;justify-content:flex-end}
+  .sheet{background:var(--card);border-radius:24px 24px 0 0;height:420px;display:flex;flex-direction:column}
+  .sheet .searchpad{padding:16px}
+  .sfield{position:relative;background:var(--muted-fill);border:1px solid var(--input-border);border-radius:16px;
+    padding:15px 16px;display:flex;align-items:center}
+  .sfield .hintt{font-size:15px;color:var(--hint);flex:1}
+  .sfield .caret{width:1.5px;height:18px;background:var(--slate);margin-right:6px}
+  .ltile{display:flex;flex-direction:column;justify-content:center;padding:8px 16px;min-height:56px}
+  .ltile .tt{font-size:15px}
+  .ltile .st{font-size:12.5px;color:var(--text-2);margin-top:2px}
+
+  /* ===== Dashboard (panel 1) ===== */
+  .dashhead{background:#FFFFFF;box-shadow:var(--shadow-header);padding:12px 16px 16px;flex:none;position:relative;z-index:2}
+  .daterow{display:flex;align-items:center;gap:8px;color:var(--text-2);font-size:14px;font-weight:500;margin-bottom:16px}
+  .daterow svg.ic{width:18px;height:18px}
+  .qrow{display:flex;gap:10px;overflow:hidden}
+  .qpill{height:50px;border-radius:16px;display:inline-flex;align-items:center;gap:8px;padding:0 18px;flex:none;
+    background:var(--card);border:1px solid var(--hairline);font-size:14px;font-weight:600;color:var(--text)}
+  .qpill svg.ic{width:20px;height:20px;color:var(--text-2)}
+  .qpill.primary{background:var(--slate);border-color:var(--slate);color:#fff;
+    box-shadow:0 8px 20px -6px rgba(40,62,70,.5)}
+  .qpill.primary svg.ic{color:#fff}
+  .dashbody{flex:1;padding:24px 16px;color:var(--text-3);font-size:13px;line-height:1.6}
+  .ghost{background:rgba(40,62,70,.05);border-radius:18px;height:110px;margin-top:10px}
+</style>
+</head>
+<body>
+
+<!-- ===== Inline Lucide-style icon sprite (viewBox 0 0 24 24, stroke inherits) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-clipboard-list" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol>
+    <symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
+    <symbol id="i-share-2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+    <symbol id="i-pencil-line" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/><path d="m15 5 3 3"/></symbol>
+    <symbol id="i-package-check" viewBox="0 0 24 24"><path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-shopping-cart" viewBox="0 0 24 24"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+    <symbol id="i-more-vert" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 20h16a2 2 0 0 0 1.73-2Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  </defs>
+</svg>
+
+<h1>Reorder / Purchase Orders — current UI (as-shipped preview)</h1>
+<p class="note">Generated 2026-07-03 against <code>main</code> (<code>ed3e394</code>) — the feature as it shipped, <strong>before any design
+pass</strong>: functional Material defaults (bare ChoiceChips, plain checkbox/stepper rows, Wrap action bars, a FAB) on the app's
+light theme tokens (<code>app_colors / app_theme</code>: slate <code>#283E46</code>, canvas <code>#F6F5F3</code>, card radius 18,
+hairline <code>#ECECEC</code>). Deliberately faithful — including the <em>flush AppCard content</em> (no inner padding is passed, see
+<code>current-implementation.md</code> §Redesign starting points). Light theme only; self-contained (inline SVG icons, no external
+requests). Sample data is illustrative but internally consistent across panels. Behavior source of truth:
+<code>current-implementation.md</code>.</p>
+
+<div class="frames">
+
+  <!-- ============ 1. Dashboard entry point ============ -->
+  <figure class="frame-wrap">
+    <figcaption>1 · Dashboard quick actions — the "Reorder" pill (staff + admin; row scrolled to show it; context only)
+      <span class="src">shared/widgets/dashboard/quick_actions.dart:58-63 · screens/dashboard/dashboard_screen.dart:295-297</span></figcaption>
+    <div class="phone" style="height:420px"><div class="screen">
+      <div class="dashhead">
+        <div class="daterow"><svg class="ic"><use href="#i-calendar"/></svg>Friday, July 3, 2026</div>
+        <div class="qrow" style="margin-left:-210px">
+          <span class="qpill primary"><svg class="ic"><use href="#i-shopping-cart"/></svg>New Sale</span>
+          <span class="qpill"><svg class="ic"><use href="#i-download"/></svg>Receive Stock</span>
+          <span class="qpill"><svg class="ic"><use href="#i-package"/></svg>Inventory</span>
+          <span class="qpill"><svg class="ic"><use href="#i-clipboard-list"/></svg>Reorder</span>
+          <span class="qpill"><svg class="ic"><use href="#i-receipt"/></svg>Expenses</span>
+        </div>
+      </div>
+      <div class="dashbody">
+        Today's Sales / Inventory Status sections<br>(unchanged by Reorder — context only)
+        <div class="ghost"></div><div class="ghost"></div>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 2. Reorder list ============ -->
+  <figure class="frame-wrap">
+    <figcaption>2 · Reorder list — /reorder (status ChoiceChips, flush AppCards with status pills, FAB create)
+      <span class="src">screens/receiving/purchase_orders/purchase_orders_screen.dart · widgets/purchase_orders/purchase_order_status_pill.dart</span></figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">Reorder</div>
+      </div>
+      <div class="chips" style="padding:8px 16px">
+        <span class="chip sel"><svg class="ic"><use href="#i-check"/></svg>All</span>
+        <span class="chip">Draft</span><span class="chip">Ordered</span>
+        <span class="chip">Received</span><span class="chip">Cancelled</span>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div class="card pocard">
+          <div class="l"><div class="ref">PO-20260703-001</div>
+            <div class="meta">MotoParts Trading • 14 pcs • 2026-07-03</div></div>
+          <span class="popill draft"><svg class="ic"><use href="#i-pencil-line"/></svg><span class="pl">Draft</span></span>
+        </div>
+        <div class="card pocard">
+          <div class="l"><div class="ref">PO-20260703-002</div>
+            <div class="meta">Speedline Distributors • 5 pcs • 2026-07-03</div></div>
+          <span class="popill ordered"><svg class="ic"><use href="#i-send"/></svg><span class="pl">Ordered</span></span>
+        </div>
+        <div class="card pocard">
+          <div class="l"><div class="ref">PO-20260701-001</div>
+            <div class="meta">MotoParts Trading • 32 pcs • 2026-07-01</div></div>
+          <span class="popill received"><svg class="ic"><use href="#i-package-check"/></svg><span class="pl">Received</span></span>
+        </div>
+        <div class="card pocard">
+          <div class="l"><div class="ref">PO-20260628-002</div>
+            <div class="meta">No supplier • 6 pcs • 2026-06-28</div></div>
+          <span class="popill cancelled"><svg class="ic"><use href="#i-ban"/></svg><span class="pl">Cancelled</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="fab"><svg class="ic"><use href="#i-plus"/></svg></div></div>
+  </figure>
+
+  <!-- ============ 3. List empty state ============ -->
+  <figure class="frame-wrap">
+    <figcaption>3 · Reorder list — empty state (EmptyStateView, bare 64px glyph — tiled not set)
+      <span class="src">purchase_orders_screen.dart:75-81</span></figcaption>
+    <div class="phone" style="height:560px"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">Reorder</div>
+      </div>
+      <div class="chips" style="padding:8px 16px">
+        <span class="chip sel"><svg class="ic"><use href="#i-check"/></svg>All</span>
+        <span class="chip">Draft</span><span class="chip">Ordered</span>
+        <span class="chip">Received</span><span class="chip">Cancelled</span>
+      </div>
+      <div class="empty">
+        <svg class="ic s64"><use href="#i-clipboard-list"/></svg>
+        <div class="t">No purchase orders yet</div>
+        <div class="s">Draft one from stock movement with +</div>
+      </div>
+    </div>
+    <div class="fab"><svg class="ic"><use href="#i-plus"/></svg></div></div>
+  </figure>
+
+  <!-- ============ 4. New PO — By status ============ -->
+  <figure class="frame-wrap">
+    <figcaption>4 · New Purchase Order — By status view (window chips + cover field, second chip row = view toggle,
+      Recommended checked / Out-of-stock &amp; Low-stock unchecked top-ups / Added; "Save drafts" = one PO per supplier).
+      A plain-text cap note can appear under the toggle row when the 10k-sales fetch cap is hit.
+      <span class="src">screens/receiving/purchase_orders/new_purchase_order_screen.dart</span></figcaption>
+    <div class="phone" style="height:880px"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">New Purchase Order</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><svg class="ic"><use href="#i-search"/></svg></div>
+      </div>
+      <div class="paramsrow">
+        <span class="chip">30d</span>
+        <span class="chip sel"><svg class="ic"><use href="#i-check"/></svg>60d</span>
+        <span class="chip">90d</span>
+        <div class="coverfield"><span class="flabel">Cover days</span><span class="val">30</span></div>
+      </div>
+      <div class="togglerow">
+        <span class="chip sel"><svg class="ic"><use href="#i-check"/></svg>By status</span>
+        <span class="chip">By supplier</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 16px 16px">
+        <div class="sechd">Recommended</div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">Motul 3000 4T 10W-40 1L</div>
+            <div class="cap">OIL-M3000 • Stock 4 • 0.4/day</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">8</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">NGK Spark Plug CPR8EA-9</div>
+            <div class="cap">SPK-CPR8 • Stock 2 • 0.2/day</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">4</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">Vee Rubber tube 250/275-17</div>
+            <div class="cap">TUB-VR250 • Stock 1 • 0.1/day</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">2</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="sechd">Out of stock</div>
+        <div class="srow">
+          <span class="cbx"></span>
+          <div class="info"><div class="nm">Oil filter Click 125</div>
+            <div class="cap">FLT-CLK • Stock 0 • reorder at 5</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">5</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="sechd">Low stock</div>
+        <div class="srow">
+          <span class="cbx"></span>
+          <div class="info"><div class="nm">Drive chain 428H</div>
+            <div class="cap">CHN-428H • Stock 2 • reorder at 3</div></div>
+          <span class="stepbtn dis"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">1</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="sechd">Added</div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">Brake pads Nmax front</div>
+            <div class="cap">BRK-NMXF • Stock 7 • added manually</div></div>
+          <span class="stepbtn dis"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">1</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+      </div>
+      <div class="savebar"><button class="btn filled wide">Save drafts</button></div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 5. New PO — By supplier ============ -->
+  <figure class="frame-wrap">
+    <figcaption>5 · New Purchase Order — By supplier view (same lines, grouping only; no-supplier last;
+      checked-ness and quantities carry over between views)
+      <span class="src">new_purchase_order_screen.dart:156-191 (_sections, supplier branch)</span></figcaption>
+    <div class="phone" style="height:880px"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">New Purchase Order</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><svg class="ic"><use href="#i-search"/></svg></div>
+      </div>
+      <div class="paramsrow">
+        <span class="chip">30d</span>
+        <span class="chip sel"><svg class="ic"><use href="#i-check"/></svg>60d</span>
+        <span class="chip">90d</span>
+        <div class="coverfield"><span class="flabel">Cover days</span><span class="val">30</span></div>
+      </div>
+      <div class="togglerow">
+        <span class="chip">By status</span>
+        <span class="chip sel"><svg class="ic"><use href="#i-check"/></svg>By supplier</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 16px 16px">
+        <div class="sechd">MotoParts Trading</div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">Motul 3000 4T 10W-40 1L</div>
+            <div class="cap">OIL-M3000 • Stock 4 • 0.4/day</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">8</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="srow">
+          <span class="cbx"></span>
+          <div class="info"><div class="nm">Oil filter Click 125</div>
+            <div class="cap">FLT-CLK • Stock 0 • reorder at 5</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">5</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">Brake pads Nmax front</div>
+            <div class="cap">BRK-NMXF • Stock 7 • added manually</div></div>
+          <span class="stepbtn dis"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">1</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="sechd">Speedline Distributors</div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">NGK Spark Plug CPR8EA-9</div>
+            <div class="cap">SPK-CPR8 • Stock 2 • 0.2/day</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">4</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="srow">
+          <span class="cbx"></span>
+          <div class="info"><div class="nm">Drive chain 428H</div>
+            <div class="cap">CHN-428H • Stock 2 • reorder at 3</div></div>
+          <span class="stepbtn dis"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">1</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+        <div class="sechd">No supplier</div>
+        <div class="srow">
+          <span class="cbx on"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div class="info"><div class="nm">Vee Rubber tube 250/275-17</div>
+            <div class="cap">TUB-VR250 • Stock 1 • 0.1/day</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">2</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+        </div>
+      </div>
+      <div class="savebar"><button class="btn filled wide">Save drafts</button></div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 6. Add-product bottom sheet ============ -->
+  <figure class="frame-wrap">
+    <figcaption>6 · Add-product bottom sheet — plain TextField + ListTiles, fixed 420px; tapping a result adds it
+      checked and closes the sheet (one product per open)
+      <span class="src">new_purchase_order_screen.dart:322-384 (_showAddProductSheet)</span></figcaption>
+    <div class="phone"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">New Purchase Order</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><svg class="ic"><use href="#i-search"/></svg></div>
+      </div>
+      <div class="sheet-scrim">
+        <div class="sheet">
+          <div class="searchpad">
+            <div class="sfield"><span class="hintt">brake</span><span class="caret"></span></div>
+          </div>
+          <div style="flex:1;overflow-y:auto">
+            <div class="ltile"><div class="tt">Brake pads Nmax front</div><div class="st">BRK-NMXF</div></div>
+            <div class="ltile"><div class="tt">Brake pads Click 125 rear</div><div class="st">BRK-CLKR</div></div>
+            <div class="ltile"><div class="tt">Brake lever set universal</div><div class="st">LVR-BRKU</div></div>
+            <div class="ltile"><div class="tt">Brake fluid DOT-4 250ml</div><div class="st">FLD-DOT4</div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 7. Detail — draft with pending edits ============ -->
+  <figure class="frame-wrap">
+    <figcaption>7 · Detail — /reorder/:id, draft with staged edits (flush header AppCard + Draft pill; bare
+      stepper/trash rows; buffered edits swap the action bar for Save changes / Discard)
+      <span class="src">screens/receiving/purchase_orders/purchase_order_detail_screen.dart</span></figcaption>
+    <div class="phone" style="height:640px"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">Purchase Order</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><svg class="ic"><use href="#i-more-vert"/></svg></div>
+      </div>
+      <div class="detail">
+        <div class="card hdrcard">
+          <div class="r1"><span class="ref">PO-20260703-001</span>
+            <span class="popill draft"><svg class="ic"><use href="#i-pencil-line"/></svg><span class="pl">Draft</span></span></div>
+          <div class="sup">MotoParts Trading</div>
+          <div class="ln">Created 2026-07-03 by Czar</div>
+        </div>
+        <div class="itemshd">3 items • 16 pcs</div>
+        <div class="irow">
+          <div class="info"><div class="nm">Motul 3000 4T 10W-40 1L</div><div class="sk">OIL-M3000</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">10</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+          <span class="stepbtn"><svg class="ic"><use href="#i-trash-2"/></svg></span>
+        </div>
+        <div class="irow">
+          <div class="info"><div class="nm">Oil filter Click 125</div><div class="sk">FLT-CLK</div></div>
+          <span class="stepbtn"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">5</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+          <span class="stepbtn"><svg class="ic"><use href="#i-trash-2"/></svg></span>
+        </div>
+        <div class="irow">
+          <div class="info"><div class="nm">Brake pads Nmax front</div><div class="sk">BRK-NMXF</div></div>
+          <span class="stepbtn dis"><svg class="ic"><use href="#i-minus"/></svg></span><span class="qty">1</span><span class="stepbtn"><svg class="ic"><use href="#i-plus"/></svg></span>
+          <span class="stepbtn"><svg class="ic"><use href="#i-trash-2"/></svg></span>
+        </div>
+      </div>
+      <div class="editbar">
+        <button class="btn filled">Save changes</button>
+        <button class="btn outlined">Discard</button>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 8. Detail — ordered ============ -->
+  <figure class="frame-wrap">
+    <figcaption>8 · Detail — ordered (items locked to "qty unit"; Wrap action bar: Receive / Back to draft / Share CSV;
+      overflow ⋮ = Cancel + admin Delete)
+      <span class="src">purchase_order_detail_screen.dart:230-278 (_actionBar) · :295-322 (_receive)</span></figcaption>
+    <div class="phone" style="height:640px"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">Purchase Order</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><svg class="ic"><use href="#i-more-vert"/></svg></div>
+      </div>
+      <div class="detail">
+        <div class="card hdrcard">
+          <div class="r1"><span class="ref">PO-20260703-002</span>
+            <span class="popill ordered"><svg class="ic"><use href="#i-send"/></svg><span class="pl">Ordered</span></span></div>
+          <div class="sup">Speedline Distributors</div>
+          <div class="ln">Created 2026-07-03 by Czar</div>
+          <div class="ln">Ordered 2026-07-03</div>
+        </div>
+        <div class="itemshd">2 items • 5 pcs</div>
+        <div class="irow">
+          <div class="info"><div class="nm">NGK Spark Plug CPR8EA-9</div><div class="sk">SPK-CPR8</div></div>
+          <span class="lock">4 pc</span>
+        </div>
+        <div class="irow">
+          <div class="info"><div class="nm">Drive chain 428H</div><div class="sk">CHN-428H</div></div>
+          <span class="lock">1 pc</span>
+        </div>
+      </div>
+      <div class="actionbar">
+        <button class="btn filled">Receive</button>
+        <button class="btn outlined">Back to draft</button>
+        <button class="btn outlined"><svg class="ic"><use href="#i-share-2"/></svg>Share CSV</button>
+      </div>
+    </div></div>
+  </figure>
+
+  <!-- ============ 9. Cancel confirm dialog ============ -->
+  <figure class="frame-wrap">
+    <figcaption>9 · Cancel confirmation — showAppConfirmDialog (destructive; ban glyph chip; red warning line appears
+      when a receiving draft is linked; actions Keep / Cancel order)
+      <span class="src">purchase_order_detail_screen.dart:327-358 (_onMenu) · shared/widgets/common/app_dialog.dart:191-257</span></figcaption>
+    <div class="phone" style="height:640px"><div class="screen">
+      <div class="appbar">
+        <div class="iconbtn"><svg class="ic"><use href="#i-chevron-left"/></svg></div>
+        <div class="title">Purchase Order</div>
+        <div class="spacer"></div>
+        <div class="iconbtn"><svg class="ic"><use href="#i-more-vert"/></svg></div>
+      </div>
+      <div class="scrim">
+        <div class="dialog">
+          <div class="dlg-head">
+            <div class="chip42 destructive"><svg class="ic"><use href="#i-ban"/></svg></div>
+            <div class="dlg-title">Cancel this purchase order?</div>
+          </div>
+          <div class="dlg-body">PO-20260703-002 will be marked cancelled.
+            <div class="warnrow"><svg class="ic"><use href="#i-alert-triangle"/></svg>
+              <span class="wt">Its in-progress receiving draft will be cancelled too.</span></div>
+          </div>
+          <div class="dlg-actions">
+            <button class="btn text">Keep</button>
+            <button class="btn filled dialog red">Cancel order</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+
+</div>
+</body>
+</html>
