@@ -24,6 +24,17 @@ class ProductSearchField extends ConsumerStatefulWidget {
   final bool inlineResults;
   final String hintText;
 
+  /// Show the sale price on result rows (POS/JO default). The PO add sheet
+  /// hides it — that surface is deliberately price-free.
+  final bool showPrice;
+
+  /// Keep zero-stock rows tappable (purchase orders exist to restock them).
+  final bool allowOutOfStock;
+
+  /// Rows whose product id is in this set render a tinted "Added" chip
+  /// instead of the + button and cannot be re-added.
+  final Set<String> addedIds;
+
   const ProductSearchField({
     super.key,
     required this.controller,
@@ -32,6 +43,9 @@ class ProductSearchField extends ConsumerStatefulWidget {
     required this.onBarcodeScanned,
     this.inlineResults = false,
     this.hintText = 'Search products or scan barcode...',
+    this.showPrice = true,
+    this.allowOutOfStock = false,
+    this.addedIds = const {},
   });
 
   @override
@@ -301,7 +315,8 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
     final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
-    final disabled = product.isOutOfStock;
+    final disabled = !widget.allowOutOfStock && product.isOutOfStock;
+    final added = widget.addedIds.contains(product.id);
 
     void select() {
       widget.onProductSelected(product);
@@ -311,7 +326,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
     return Opacity(
       opacity: disabled ? 0.45 : 1,
       child: InkWell(
-        onTap: disabled ? null : select,
+        onTap: disabled || added ? null : select,
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.sm + 4,
@@ -347,16 +362,37 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                '${AppConstants.currencySymbol}'
-                '${product.price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                    fontSize: 14.5, fontWeight: FontWeight.w700),
-              ),
-              // 30px rounded-square add button per the mock; hidden on
+              if (widget.showPrice) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  '${AppConstants.currencySymbol}'
+                  '${product.price.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      fontSize: 14.5, fontWeight: FontWeight.w700),
+                ),
+              ],
+              // Already-added rows chip instead of the + button; otherwise a
+              // 30px rounded-square add button per the mock, hidden on
               // out-of-stock rows so nothing dead reads as tappable.
-              if (!disabled) ...[
+              if (added)
+                Container(
+                  margin: const EdgeInsets.only(left: AppSpacing.sm + 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.emphasisTint(isDark),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    'Added',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                )
+              else if (!disabled) ...[
                 const SizedBox(width: AppSpacing.sm + 2),
                 InkWell(
                   onTap: select,

@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/purchase_orders/po_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
@@ -78,10 +79,6 @@ class NewPurchaseOrderScreenState
   int _appliedCover = 30;
   Timer? _coverDebounce;
 
-  /// Owned by the state, not the sheet — disposing a local controller right
-  /// after showModalBottomSheet returns races the sheet's exit animation.
-  final _searchController = TextEditingController();
-
   /// Products added via search that the current suggestions don't cover.
   final List<ProductEntity> _manual = [];
 
@@ -97,7 +94,6 @@ class NewPurchaseOrderScreenState
   @override
   void dispose() {
     _coverDebounce?.cancel();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -543,65 +539,22 @@ class NewPurchaseOrderScreenState
     );
   }
 
-  Future<void> _showAddProductSheet() async {
-    // .future — the stream may not have emitted if nothing watches it yet.
-    final products = await ref.read(productsProvider.future);
-    if (!mounted) return;
-    final controller = _searchController..clear();
-    await showModalBottomSheet<void>(
+  void _showAddProductSheet() {
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (sheetContext, setSheetState) {
-          final query = controller.text.trim().toLowerCase();
-          final matches = products
-              .where((p) =>
-                  p.isActive &&
-                  !_manual.any((m) => m.id == p.id) &&
-                  (query.isEmpty ||
-                      p.name.toLowerCase().contains(query) ||
-                      p.sku.toLowerCase().contains(query)))
-              .take(30)
-              .toList();
-          return Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
-            child: SizedBox(
-              height: 420,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: controller,
-                      autofocus: true,
-                      decoration:
-                          const InputDecoration(hintText: 'Search name or SKU'),
-                      onChanged: (_) => setSheetState(() {}),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: matches.length,
-                      itemBuilder: (_, i) => ListTile(
-                        title: Text(matches[i].name),
-                        subtitle: Text(matches[i].sku),
-                        onTap: () {
-                          setState(() {
-                            _manual.add(matches[i]);
-                            // A deliberate add is always checked, even when
-                            // the product also sits in a low/out bucket.
-                            _checkedOverride[matches[i].id] = true;
-                          });
-                          Navigator.of(sheetContext).pop();
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (_) => _AddProductsSheet(
+        initiallyAdded: _manual.map((p) => p.id).toSet(),
+        onProduct: (p) {
+          if (_manual.any((m) => m.id == p.id)) return;
+          setState(() {
+            _manual.add(p);
+            // A deliberate add is always checked, even when the product also
+            // sits in a low/out bucket.
+            _checkedOverride[p.id] = true;
+          });
         },
       ),
     );
@@ -667,6 +620,135 @@ class NewPurchaseOrderScreenState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+/// Add-products sheet — Job Orders add-parts pattern: grab handle · title +
+/// session count · ProductSearchField (inline results, barcode scan, no
+/// prices, out-of-stock addable) · pinned Done. Stays open so several
+/// products accumulate; added rows chip as "Added".
+class _AddProductsSheet extends ConsumerStatefulWidget {
+  const _AddProductsSheet({
+    required this.initiallyAdded,
+    required this.onProduct,
+  });
+
+  /// Ids already added manually — their rows render the "Added" chip.
+  final Set<String> initiallyAdded;
+  final void Function(ProductEntity) onProduct;
+
+  @override
+  ConsumerState<_AddProductsSheet> createState() => _AddProductsSheetState();
+}
+
+class _AddProductsSheetState extends ConsumerState<_AddProductsSheet> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+  late final Set<String> _added = {...widget.initiallyAdded};
+  int _session = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _add(ProductEntity p) {
+    if (_added.contains(p.id)) return;
+    widget.onProduct(p);
+    setState(() {
+      _added.add(p.id);
+      _session++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    // Fixed-height sheet with an in-flow scrollable results panel, clamped so
+    // sheet + keyboard never exceed the screen (JO add-parts pattern).
+    final sheetHeight = (screenHeight * 0.62)
+        .clamp(0.0, screenHeight - bottomInset - 120)
+        .toDouble();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SizedBox(
+        height: sheetHeight,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Add products',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Text(
+                    '$_session added this session',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ProductSearchField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  inlineResults: true,
+                  showPrice: false,
+                  allowOutOfStock: true,
+                  addedIds: _added,
+                  hintText: 'Search name, SKU, or scan barcode',
+                  onProductSelected: _add,
+                  onBarcodeScanned: (barcode) async {
+                    final p = await ref
+                        .read(productByBarcodeProvider(barcode).future);
+                    if (!context.mounted) return;
+                    if (p != null) {
+                      _add(p);
+                    } else {
+                      context
+                          .showWarningSnackBar('Product not found: $barcode');
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Done'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

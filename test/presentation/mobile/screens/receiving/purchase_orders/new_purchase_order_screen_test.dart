@@ -165,10 +165,17 @@ void main() {
     // chip only forces the rebuild path that previously dropped manual state.
     await pump(tester, suggestions: [suggestion(product('p1'), 9)]);
 
-    // Add p2 via the search sheet.
+    // Add p2 via the add-products sheet (search → result row → Done).
     await tester.tap(find.byTooltip('Add product'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Item p2'));
+    await tester.enterText(find.byType(TextField), 'Item p2');
+    await tester.pump(const Duration(milliseconds: 350)); // search debounce
+    await tester.pumpAndSettle();
+    // .last — the typed query in the field also matches; the result row is
+    // the second match.
+    await tester.tap(find.text('Item p2').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
 
     // Bump its qty 1 → 3 (the p2 row is the last plus-button).
@@ -199,6 +206,50 @@ void main() {
 
     final orders = await fake.collection('purchase_orders').get();
     expect(orders.size, 1);
+  });
+
+  testWidgets('sheet stays open, accumulates adds, and chips added rows',
+      (tester) async {
+    await pump(tester, suggestions: [suggestion(product('p1'), 9)]);
+
+    await tester.tap(find.byTooltip('Add product'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add products'), findsOneWidget);
+    expect(find.text('0 added this session'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Item');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+
+    // Both overridden products are results; p2 is zero-stock (quantity: 0)
+    // and must still be addable on a purchase order.
+    await tester.tap(find.text('Item p2'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 added this session'), findsOneWidget,
+        reason: 'sheet stays open after a pick');
+    // Scoped to the sheet — the builder behind it also gains an "Added"
+    // section header for the same product.
+    expect(
+        find.descendant(
+            of: find.byType(BottomSheet), matching: find.text('Added')),
+        findsOneWidget,
+        reason: 'the picked row now shows the Added chip');
+
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Item p2'), findsWidgets,
+        reason: 'p2 landed in the builder lines');
+  });
+
+  testWidgets('sheet result rows hide the sale price', (tester) async {
+    await pump(tester, suggestions: [suggestion(product('p1'), 9)]);
+    await tester.tap(find.byTooltip('Add product'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Item p2');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('₱80'), findsNothing,
+        reason: 'the PO sheet is cost/price-free like the CSV');
   });
 
   testWidgets('create button carries the live supplier-group count',
