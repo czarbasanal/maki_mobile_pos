@@ -13,19 +13,23 @@ import 'package:maki_mobile_pos/services/firebase_service.dart';
 class _MockSaleRepository extends Mock implements SaleRepository {}
 
 void main() {
-  final product = ProductEntity(
-    id: 'p1',
-    sku: 'SKU-1',
-    name: 'Brake Pad',
-    cost: 55,
-    costCode: 'NBF',
-    price: 80,
-    quantity: 0,
-    reorderLevel: 2,
-    unit: 'pcs',
-    isActive: true,
-    createdAt: DateTime(2026, 1, 1),
-  );
+  ProductEntity makeProduct(String id,
+          {int quantity = 0, int reorderLevel = 2, bool isActive = true}) =>
+      ProductEntity(
+        id: id,
+        sku: 'SKU-$id',
+        name: 'Item $id',
+        cost: 55,
+        costCode: 'NBF',
+        price: 80,
+        quantity: quantity,
+        reorderLevel: reorderLevel,
+        unit: 'pcs',
+        isActive: isActive,
+        createdAt: DateTime(2026, 1, 1),
+      );
+
+  final product = makeProduct('p1');
 
   test('purchaseOrdersProvider streams from Firestore', () async {
     final fake = FakeFirebaseFirestore();
@@ -98,5 +102,61 @@ void main() {
     expect(result.suggestions, hasLength(1));
     expect(result.suggestions.first.suggestedQty, 30);
     expect(result.capped, isFalse);
+  });
+
+  test('buckets active non-suggested products into low/out of stock',
+      () async {
+    final saleRepo = _MockSaleRepository();
+    // Only 'sold' has movement; everything else is zero-velocity.
+    final sale = SaleEntity(
+      id: 's1',
+      saleNumber: 'S-1',
+      items: const [
+        SaleItemEntity(
+          id: 'i1',
+          productId: 'sold',
+          sku: 'SKU-sold',
+          name: 'Item sold',
+          unitPrice: 80,
+          unitCost: 55,
+          quantity: 60,
+        ),
+      ],
+      paymentMethod: PaymentMethod.cash,
+      amountReceived: 4800,
+      changeGiven: 0,
+      cashierId: 'u1',
+      cashierName: 'Admin',
+      createdAt: DateTime(2026, 7, 1),
+    );
+    when(() => saleRepo.getSalesByDateRange(
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          status: SaleStatus.completed,
+          limit: reorderSalesCap,
+        )).thenAnswer((_) async => [sale]);
+
+    final products = [
+      makeProduct('sold'), // suggested → excluded from buckets
+      makeProduct('empty'), // qty 0 → out of stock
+      makeProduct('low', quantity: 2, reorderLevel: 3), // 0<qty<=level → low
+      makeProduct('edge', quantity: 3, reorderLevel: 3), // boundary → low
+      makeProduct('fine', quantity: 9), // above level → neither
+      makeProduct('dead', isActive: false), // inactive → neither
+    ];
+
+    final container = ProviderContainer(overrides: [
+      productsProvider.overrideWith((ref) => Stream.value(products)),
+      saleRepositoryProvider.overrideWithValue(saleRepo),
+      firestoreProvider.overrideWithValue(FakeFirebaseFirestore()),
+    ]);
+    addTearDown(container.dispose);
+
+    final result = await container.read(
+        reorderSuggestionsProvider((windowDays: 60, coverDays: 30)).future);
+    expect(result.suggestions.map((s) => s.product.id), ['sold']);
+    expect(result.outOfStock.map((p) => p.id), ['empty']);
+    expect(result.lowStock.map((p) => p.id), ['edge', 'low'],
+        reason: 'sorted by name; boundary qty == reorderLevel counts as low');
   });
 }

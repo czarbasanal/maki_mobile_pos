@@ -95,11 +95,26 @@ Client-side filtering at shop volume — no composite index. FAB → new PO.
 
 ### `/receiving/purchase-orders/new` — suggestions
 - Window preset chips 30/60/90 (default 60) + cover-days field (default 30).
-- Suggestion rows grouped by supplier: name/SKU, current stock, velocity
-  (units/day), editable suggested qty, checkbox (checked by default).
+- **Two views, toggled by a segmented control (grouping only — selection,
+  quantities, and Save are identical in both):**
+  - **By status (default):** sections in order — *Recommended* (velocity
+    suggestions, qty prefilled from the formula, checked by default),
+    *Out of stock* (active products with zero stock the math didn't
+    recommend), *Low stock* (at/below their "Reorder at" level, not zero,
+    not already listed), *Added* (search-to-add rows). An item appears once,
+    in the first section it qualifies for.
+  - **By supplier:** the same full item set grouped by supplier name
+    (no-supplier last).
+- Low/out-of-stock rows are **unchecked by default** (zero-velocity items
+  must not silently pad orders) with qty prefilled to top up to the reorder
+  level: `max(1, reorderLevel − stock)`.
+- Rows show name/SKU, current stock, velocity (units/day) for recommended
+  rows or "reorder at N" for low/out rows, an editable qty, and a checkbox.
 - Search-to-add row: pull in any inventory product with a manual quantity.
+- The provider result carries `lowStock` and `outOfStock` product lists,
+  derived from the products it already fetched — no extra queries.
 - **Save** creates one draft PO per supplier that has selected items
-  (no-supplier items form their own PO).
+  (no-supplier items form their own PO) — regardless of the active view.
 
 ### `/receiving/purchase-orders/:id` — detail
 Items list; quantities editable while draft. Actions:

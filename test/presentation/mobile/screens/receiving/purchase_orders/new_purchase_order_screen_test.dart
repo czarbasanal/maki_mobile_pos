@@ -46,8 +46,12 @@ void main() {
         suggestedQty: qty,
       );
 
-  Future<FakeFirebaseFirestore> pump(WidgetTester tester,
-      {required List<ReorderSuggestion> suggestions}) async {
+  Future<FakeFirebaseFirestore> pump(
+    WidgetTester tester, {
+    required List<ReorderSuggestion> suggestions,
+    List<ProductEntity> lowStock = const [],
+    List<ProductEntity> outOfStock = const [],
+  }) async {
     final fake = FakeFirebaseFirestore();
     await tester.pumpWidget(ProviderScope(
       overrides: [
@@ -56,7 +60,11 @@ void main() {
             (ref) => Stream.value([product('p1'), product('p2')])),
         currentUserProvider.overrideWith((ref) => Stream.value(user)),
         reorderSuggestionsProvider.overrideWith((ref, params) async =>
-            ReorderResult(suggestions: suggestions, capped: false)),
+            ReorderResult(
+                suggestions: suggestions,
+                lowStock: lowStock,
+                outOfStock: outOfStock,
+                capped: false)),
       ],
       child: const MaterialApp(home: NewPurchaseOrderScreen()),
     ));
@@ -64,14 +72,67 @@ void main() {
     return fake;
   }
 
-  testWidgets('renders suggestion rows grouped by supplier', (tester) async {
+  testWidgets('default view groups by status', (tester) async {
+    await pump(
+      tester,
+      suggestions: [suggestion(product('p1'), 9)],
+      outOfStock: [product('p2', supplier: null)],
+      lowStock: [
+        ProductEntity(
+          id: 'p3',
+          sku: 'SKU-p3',
+          name: 'Item p3',
+          cost: 55,
+          costCode: 'NBF',
+          price: 80,
+          quantity: 1,
+          reorderLevel: 5,
+          unit: 'pcs',
+          isActive: true,
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ],
+    );
+    expect(find.text('Recommended'), findsOneWidget);
+    expect(find.text('Out of stock'), findsOneWidget);
+    expect(find.text('Low stock'), findsOneWidget);
+    expect(find.text('Item p1'), findsOneWidget);
+    expect(find.text('Item p2'), findsOneWidget);
+    expect(find.text('Item p3'), findsOneWidget);
+    // Low-stock row prefills a top-up to the reorder level: 5 − 1 = 4.
+    expect(find.text('4'), findsOneWidget);
+    // No supplier headers in status view.
+    expect(find.text('Acme'), findsNothing);
+  });
+
+  testWidgets('supplier toggle shows supplier groups', (tester) async {
     await pump(tester, suggestions: [
       suggestion(product('p1'), 9),
       suggestion(product('p2', supplier: null), 4),
     ]);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'By supplier'));
+    await tester.pumpAndSettle();
     expect(find.text('Item p1'), findsOneWidget);
     expect(find.text('Acme'), findsOneWidget);
     expect(find.text('No supplier'), findsOneWidget);
+  });
+
+  testWidgets('low/out rows are unchecked by default and excluded from save',
+      (tester) async {
+    final fake = await pump(
+      tester,
+      suggestions: [suggestion(product('p1'), 9)],
+      outOfStock: [product('p2', supplier: null)],
+    );
+
+    await tester.tap(find.text('Save drafts'));
+    await tester.pumpAndSettle();
+
+    final orders = await fake.collection('purchase_orders').get();
+    expect(orders.size, 1,
+        reason: 'zero-velocity items must not silently pad orders');
+    final items = orders.docs.single.data()['items'] as List;
+    expect((items.single as Map)['productId'], 'p1');
   });
 
   testWidgets('save creates one draft PO per supplier', (tester) async {
