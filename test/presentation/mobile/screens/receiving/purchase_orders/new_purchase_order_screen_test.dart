@@ -285,6 +285,37 @@ void main() {
     expect(find.text('1 item · ₱495.00'), findsOneWidget);
   });
 
+  testWidgets(
+      'supplier view splits two suppliers sharing a display name (grouped by id, like save)',
+      (tester) async {
+    ProductEntity sameName(String id, String supplierId) => ProductEntity(
+          id: id,
+          sku: 'SKU-$id',
+          name: 'Item $id',
+          cost: 55,
+          costCode: 'NBF',
+          price: 80,
+          quantity: 0,
+          reorderLevel: 2,
+          unit: 'pcs',
+          supplierId: supplierId,
+          supplierName: 'Acme',
+          isActive: true,
+          createdAt: DateTime(2026, 1, 1),
+        );
+    await pump(tester, suggestions: [
+      suggestion(sameName('p1', 'sup-A'), 9),
+      suggestion(sameName('p2', 'sup-B'), 4),
+    ]);
+    await tester.tap(find.byKey(const Key('po-view-bySupplier')));
+    await tester.pumpAndSettle();
+    // Two sections (one per supplierId) — matching the 2 POs save creates.
+    expect(find.text('Acme'), findsNWidgets(2));
+    expect(find.text('Create 2 purchase orders'), findsOneWidget);
+    expect(find.text('1 item · ₱495.00'), findsOneWidget);
+    expect(find.text('1 item · ₱220.00'), findsOneWidget);
+  });
+
   testWidgets('cover stepper applies after the debounce', (tester) async {
     final received = <({int coverDays, int windowDays})>[];
     final fake = FakeFirebaseFirestore();

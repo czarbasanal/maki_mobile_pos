@@ -100,11 +100,13 @@ class PurchaseOrderDetailScreenState
   }
 
   Widget _buildBody(PurchaseOrderEntity po) {
-    final items = _pending ?? po.items;
-    final totalQuantity =
-        items.fold<int>(0, (sum, item) => sum + item.quantity);
-    final totalCost =
-        items.fold<double>(0, (sum, item) => sum + item.totalCost);
+    // A staged buffer only applies while the PO is still editable — if the PO
+    // left draft under our feet (cancelled from the menu, marked ordered on
+    // another device) the stale buffer must not keep rendering, or the footer
+    // would offer a Save that the repo's draft-only guard rejects.
+    final items = po.canEdit ? (_pending ?? po.items) : po.items;
+    final totalQuantity = items.totalQuantity;
+    final totalCost = items.totalCost;
 
     return Column(
       children: [
@@ -212,8 +214,7 @@ class PurchaseOrderDetailScreenState
         Icon(icon, size: 14, color: secondary),
         const SizedBox(width: 8),
         Expanded(
-          child:
-              Text(text, style: TextStyle(fontSize: 12.5, color: secondary)),
+          child: Text(text, style: TextStyle(fontSize: 12.5, color: secondary)),
         ),
       ],
     );
@@ -313,7 +314,8 @@ class PurchaseOrderDetailScreenState
     );
   }
 
-  void _stageQty(PurchaseOrderEntity po, PurchaseOrderItemEntity item, int qty) {
+  void _stageQty(
+      PurchaseOrderEntity po, PurchaseOrderItemEntity item, int qty) {
     final items = List.of(_pending ?? po.items);
     final idx = items.indexWhere((i) => i.id == item.id);
     if (idx < 0) return;
@@ -337,58 +339,51 @@ class PurchaseOrderDetailScreenState
   Widget _footer(PurchaseOrderEntity po, List<PurchaseOrderItemEntity> items,
       int totalQuantity, double totalCost) {
     final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final actions = _dirty ? _editActions(po) : _statusActions(po);
+    final actions =
+        _dirty && po.canEdit ? _editActions(po) : _statusActions(po);
 
-    return Container(
-      decoration: poFooterDecoration(dark),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: SafeArea(
-        top: false,
-        child: Column(
+    return PoFooter(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text.rich(
+            Text.rich(
+              TextSpan(
+                text: 'Total ',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
+                children: [
                   TextSpan(
-                    text: 'Total ',
+                    text: '(${items.length} '
+                        '${items.length == 1 ? 'item' : 'items'} · '
+                        '$totalQuantity pcs)',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurface,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                    children: [
-                      TextSpan(
-                        text: '(${items.length} '
-                            '${items.length == 1 ? 'item' : 'items'} · '
-                            '$totalQuantity pcs)',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-                Text(
-                  totalCost.toCurrency(),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-            if (actions != null) ...[
-              const SizedBox(height: 12),
-              actions,
-            ],
+            Text(
+              totalCost.toCurrency(),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
           ],
         ),
-      ),
+        if (actions != null) ...[
+          const SizedBox(height: 12),
+          actions,
+        ],
+      ],
     );
   }
 
@@ -416,8 +411,9 @@ class PurchaseOrderDetailScreenState
     final items = _pending;
     if (items == null) return;
     final ok = await _run(
-      () async => ref.read(purchaseOrderRepositoryProvider).updatePurchaseOrder(
-          po.copyWith(items: items).recalculateTotals()),
+      () async => ref
+          .read(purchaseOrderRepositoryProvider)
+          .updatePurchaseOrder(po.copyWith(items: items).recalculateTotals()),
       'Saving…',
     );
     if (ok && mounted) setState(() => _pending = null);
@@ -571,7 +567,9 @@ class PurchaseOrderDetailScreenState
     final isDelete = value == 'delete';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: isDelete ? 'Delete this purchase order?' : 'Cancel this purchase order?',
+      title: isDelete
+          ? 'Delete this purchase order?'
+          : 'Cancel this purchase order?',
       message: isDelete
           ? '${po.referenceNumber} will be permanently removed.'
           : '${po.referenceNumber} will be marked cancelled.',

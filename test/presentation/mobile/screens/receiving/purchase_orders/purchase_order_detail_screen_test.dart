@@ -168,6 +168,22 @@ void main() {
     expect(find.text('Mark ordered'), findsNothing);
   });
 
+  testWidgets('staged edits stop applying once the PO leaves draft',
+      (tester) async {
+    final po = await seed();
+    await pump(tester, po.id, UserRole.staff);
+    // Stage an edit (5 × ₱55 = ₱275 shows), then cancel the PO externally.
+    await tester.tap(find.byIcon(LucideIcons.plus).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Save changes'), findsOneWidget);
+    await repo.cancelPurchaseOrder(po.id);
+    await tester.pumpAndSettle();
+    // The stale buffer must neither render nor offer a doomed Save.
+    expect(find.text('Save changes'), findsNothing);
+    expect(find.text('₱275.00'), findsNothing);
+    expect(find.text('₱220.00'), findsNWidgets(2));
+  });
+
   testWidgets('item remove control is the × stepper button', (tester) async {
     final po = await seed();
     await pump(tester, po.id, UserRole.staff);

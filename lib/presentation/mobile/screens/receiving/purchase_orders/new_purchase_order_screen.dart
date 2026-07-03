@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +53,11 @@ class _Line {
   final bool checked;
   final _LineSource source;
   final double? velocityPerDay;
+
+  /// Expected cost of this line — the same `product.cost` that `_save` writes
+  /// as the item's unitCost, so preview subtotals and the persisted PO share
+  /// one costing rule.
+  double get lineCost => qty * product.cost;
 }
 
 /// Grouping mode — presentation only; selection and quantities carry over.
@@ -160,8 +166,7 @@ class NewPurchaseOrderScreenState
           _line(s.product, _LineSource.recommended,
               defaultQty: s.suggestedQty, velocityPerDay: s.velocityPerDay),
       for (final p in result.outOfStock)
-        if (claim(p.id))
-          _line(p, _LineSource.outOfStock, defaultQty: topUp(p)),
+        if (claim(p.id)) _line(p, _LineSource.outOfStock, defaultQty: topUp(p)),
       for (final p in result.lowStock)
         if (claim(p.id)) _line(p, _LineSource.lowStock, defaultQty: topUp(p)),
       for (final p in _manual)
@@ -196,34 +201,40 @@ class NewPurchaseOrderScreenState
       ];
     }
 
+    // Group by supplierId — the same key `_save` and the footer count use —
+    // so a header's count/subtotal always describes exactly one created PO
+    // (two suppliers sharing a display name get two sections).
     final groups = <String?, List<_Line>>{};
     for (final line in lines) {
-      groups.putIfAbsent(line.product.supplierName, () => []).add(line);
+      groups.putIfAbsent(line.product.supplierId, () => []).add(line);
     }
+    String label(String? key) =>
+        groups[key]!.first.product.supplierName ?? 'No supplier';
     final keys = groups.keys.toList()
       ..sort((a, b) {
         if (a == b) return 0;
         if (a == null) return 1;
         if (b == null) return -1;
-        return a.compareTo(b);
+        return label(a).compareTo(label(b));
       });
     return [
       for (final key in keys) ...[
-        Builder(builder: (context) {
-          final checked = groups[key]!.where((l) => l.checked).toList();
-          final subtotal = checked.fold<double>(
-              0, (sum, l) => sum + l.qty * l.product.cost);
-          return PoSectionHeader(
-            icon: LucideIcons.truck,
-            label: key ?? 'No supplier',
-            trailing: '${checked.length} '
-                '${checked.length == 1 ? 'item' : 'items'} · '
-                '${subtotal.toCurrency()}',
-          );
-        }),
+        _supplierHeader(label(key), groups[key]!),
         for (final line in groups[key]!) _row(line),
       ],
     ];
+  }
+
+  Widget _supplierHeader(String label, List<_Line> group) {
+    final checked = group.where((l) => l.checked).toList();
+    final subtotal = checked.fold<double>(0, (sum, l) => sum + l.lineCost);
+    return PoSectionHeader(
+      icon: LucideIcons.truck,
+      label: label,
+      trailing: '${checked.length} '
+          '${checked.length == 1 ? 'item' : 'items'} · '
+          '${subtotal.toCurrency()}',
+    );
   }
 
   Widget _buildBody(ReorderResult result) {
@@ -373,76 +384,65 @@ class NewPurchaseOrderScreenState
   /// checked lines grouped by supplierId, no-supplier its own group.
   Widget _footer(List<_Line> lines) {
     final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
     final checked = lines.where((l) => l.checked).toList();
     final pcs = checked.fold<int>(0, (sum, l) => sum + l.qty);
-    final total =
-        checked.fold<double>(0, (sum, l) => sum + l.qty * l.product.cost);
-    final groupCount =
-        checked.map((l) => l.product.supplierId).toSet().length;
+    final total = checked.fold<double>(0, (sum, l) => sum + l.lineCost);
+    final groupCount = checked.map((l) => l.product.supplierId).toSet().length;
     final label = checked.isEmpty
         ? 'Create purchase orders'
         : 'Create $groupCount purchase order${groupCount == 1 ? '' : 's'}';
 
-    return Container(
-      decoration: poFooterDecoration(dark),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(2, 0, 2, 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        text: '${checked.length} '
-                            '${checked.length == 1 ? 'item' : 'items'} '
-                            'checked · $pcs pcs',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: ' · ${total.toCurrency()}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'One PO per supplier',
+    return PoFooter(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(2, 0, 2, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    text: '${checked.length} '
+                        '${checked.length == 1 ? 'item' : 'items'} '
+                        'checked · $pcs pcs',
                     style: TextStyle(
                       fontSize: 12.5,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
+                    children: [
+                      TextSpan(
+                        text: ' · ${total.toCurrency()}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                key: const Key('po-create-button'),
-                onPressed:
-                    checked.isEmpty || _saving ? null : () => _save(lines),
-                icon: const Icon(LucideIcons.clipboardPlus, size: 18),
-                label: Text(label),
+              const SizedBox(width: 8),
+              Text(
+                'One PO per supplier',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            key: const Key('po-create-button'),
+            onPressed: checked.isEmpty || _saving ? null : () => _save(lines),
+            icon: const Icon(LucideIcons.clipboardPlus, size: 18),
+            label: Text(label),
+          ),
+        ),
+      ],
     );
   }
 
@@ -669,9 +669,11 @@ class _AddProductsSheetState extends ConsumerState<_AddProductsSheet> {
     final screenHeight = MediaQuery.of(context).size.height;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     // Fixed-height sheet with an in-flow scrollable results panel, clamped so
-    // sheet + keyboard never exceed the screen (JO add-parts pattern).
+    // sheet + keyboard never exceed the screen (JO add-parts pattern). The
+    // upper bound is floored at 0 — on a very short window (split-screen +
+    // keyboard) a negative upper limit would make clamp throw.
     final sheetHeight = (screenHeight * 0.62)
-        .clamp(0.0, screenHeight - bottomInset - 120)
+        .clamp(0.0, math.max(0.0, screenHeight - bottomInset - 120))
         .toDouble();
 
     return Padding(
@@ -727,11 +729,15 @@ class _AddProductsSheetState extends ConsumerState<_AddProductsSheet> {
                     final p = await ref
                         .read(productByBarcodeProvider(barcode).future);
                     if (!context.mounted) return;
-                    if (p != null) {
-                      _add(p);
-                    } else {
+                    if (p == null) {
                       context
                           .showWarningSnackBar('Product not found: $barcode');
+                    } else if (_added.contains(p.id)) {
+                      // A silent no-op reads as a failed scan — say why
+                      // nothing changed.
+                      context.showWarningSnackBar('Already added: ${p.name}');
+                    } else {
+                      _add(p);
                     }
                   },
                 ),
@@ -755,7 +761,8 @@ class _AddProductsSheetState extends ConsumerState<_AddProductsSheet> {
 /// 22px rounded checkbox — checked = solid primary + on-primary check,
 /// unchecked = 1.5px border.
 class _PoCheckbox extends StatelessWidget {
-  const _PoCheckbox({super.key, required this.checked, required this.onChanged});
+  const _PoCheckbox(
+      {super.key, required this.checked, required this.onChanged});
 
   final bool checked;
   final ValueChanged<bool> onChanged;
@@ -764,26 +771,29 @@ class _PoCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(!checked),
-      child: Container(
-        width: 22,
-        height: 22,
-        decoration: checked
-            ? BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(7),
-              )
-            : BoxDecoration(
-                border: Border.all(
-                    color: AppColors.checkboxBorder(dark), width: 1.5),
-                borderRadius: BorderRadius.circular(7),
-              ),
-        child: checked
-            ? Icon(LucideIcons.check,
-                size: 14, color: theme.colorScheme.onPrimary)
-            : null,
+    return Semantics(
+      checked: checked,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onChanged(!checked),
+        child: Container(
+          width: 22,
+          height: 22,
+          decoration: checked
+              ? BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(7),
+                )
+              : BoxDecoration(
+                  border: Border.all(
+                      color: AppColors.checkboxBorder(dark), width: 1.5),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+          child: checked
+              ? Icon(LucideIcons.check,
+                  size: 14, color: theme.colorScheme.onPrimary)
+              : null,
+        ),
       ),
     );
   }
@@ -848,43 +858,47 @@ class _SegmentedCells<T> extends StatelessWidget {
     final selectedTint =
         dark ? const Color(0x1FE8B84C) : const Color(0x1A283E46);
     final icon = icons?[v];
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(v),
-      child: Container(
-        key: Key('$keyPrefix-$name'),
-        alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(vertical: icons == null ? 8 : 10),
-        decoration: BoxDecoration(
-          color: isSel ? selectedTint : Colors.transparent,
-          border: first ? null : Border(left: BorderSide(color: border)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 15,
-                color: isSel
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface,
+    return Semantics(
+      button: true,
+      selected: isSel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onChanged(v),
+        child: Container(
+          key: Key('$keyPrefix-$name'),
+          alignment: Alignment.center,
+          padding: EdgeInsets.symmetric(vertical: icons == null ? 8 : 10),
+          decoration: BoxDecoration(
+            color: isSel ? selectedTint : Colors.transparent,
+            border: first ? null : Border(left: BorderSide(color: border)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSel
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                labels[v]!,
+                style: TextStyle(
+                  fontSize: icons == null ? 13 : 13.5,
+                  fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
+                  color: isSel
+                      ? theme.colorScheme.primary
+                      : (icons == null
+                          ? theme.colorScheme.onSurfaceVariant
+                          : theme.colorScheme.onSurface),
+                ),
               ),
-              const SizedBox(width: 6),
             ],
-            Text(
-              labels[v]!,
-              style: TextStyle(
-                fontSize: icons == null ? 13 : 13.5,
-                fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
-                color: isSel
-                    ? theme.colorScheme.primary
-                    : (icons == null
-                        ? theme.colorScheme.onSurfaceVariant
-                        : theme.colorScheme.onSurface),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

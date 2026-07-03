@@ -61,7 +61,8 @@ class PurchaseOrderEntity extends Equatable {
   bool get canEdit => status == PurchaseOrderStatus.draft;
   bool get canReceive => status == PurchaseOrderStatus.ordered;
   bool get canCancel =>
-      status == PurchaseOrderStatus.draft || status == PurchaseOrderStatus.ordered;
+      status == PurchaseOrderStatus.draft ||
+      status == PurchaseOrderStatus.ordered;
   int get uniqueProductCount => items.length;
 
   PurchaseOrderEntity copyWith({
@@ -91,7 +92,8 @@ class PurchaseOrderEntity extends Equatable {
       id: id ?? this.id,
       referenceNumber: referenceNumber ?? this.referenceNumber,
       supplierId: clearSupplierId ? null : (supplierId ?? this.supplierId),
-      supplierName: clearSupplierName ? null : (supplierName ?? this.supplierName),
+      supplierName:
+          clearSupplierName ? null : (supplierName ?? this.supplierName),
       items: items ?? this.items,
       totalCost: totalCost ?? this.totalCost,
       totalQuantity: totalQuantity ?? this.totalQuantity,
@@ -108,13 +110,8 @@ class PurchaseOrderEntity extends Equatable {
 
   /// Recalculates totals from items.
   PurchaseOrderEntity recalculateTotals() {
-    double cost = 0;
-    int qty = 0;
-    for (final item in items) {
-      cost += item.totalCost;
-      qty += item.quantity;
-    }
-    return copyWith(totalCost: cost, totalQuantity: qty);
+    return copyWith(
+        totalCost: items.totalCost, totalQuantity: items.totalQuantity);
   }
 
   @override
@@ -192,4 +189,12 @@ class PurchaseOrderItemEntity extends Equatable {
   @override
   List<Object?> get props =>
       [id, productId, sku, name, quantity, unit, unitCost, costCode];
+}
+
+/// The one summation rule for PO item lists — used by [recalculateTotals]
+/// and every UI surface that previews totals (detail footer, staged edits),
+/// so persisted and displayed totals can never drift apart.
+extension PurchaseOrderItemsTotals on List<PurchaseOrderItemEntity> {
+  int get totalQuantity => fold(0, (sum, item) => sum + item.quantity);
+  double get totalCost => fold(0.0, (sum, item) => sum + item.totalCost);
 }

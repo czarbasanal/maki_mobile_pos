@@ -132,28 +132,32 @@ class _FilterPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? theme.colorScheme.primary
-              : (dark ? AppColors.darkCard : AppColors.lightCard),
-          border:
-              selected ? null : Border.all(color: AppColors.hairline(dark)),
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
             color: selected
-                ? theme.colorScheme.onPrimary
-                : theme.colorScheme.onSurfaceVariant,
+                ? theme.colorScheme.primary
+                : (dark ? AppColors.darkCard : AppColors.lightCard),
+            border:
+                selected ? null : Border.all(color: AppColors.hairline(dark)),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              color: selected
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),

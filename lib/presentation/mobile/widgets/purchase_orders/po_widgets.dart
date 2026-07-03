@@ -48,25 +48,30 @@ class PoStepperButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(radius),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: dark ? AppColors.darkSurfaceMuted : Colors.white,
-          border: Border.all(
-            color: dark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: dark ? AppColors.darkSurfaceMuted : Colors.white,
+            border: Border.all(
+              color:
+                  dark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
+            ),
+            borderRadius: BorderRadius.circular(radius),
           ),
-          borderRadius: BorderRadius.circular(radius),
-        ),
-        child: Icon(
-          icon,
-          size: 14,
-          color: onTap != null
-              ? theme.colorScheme.onSurfaceVariant
-              : (dark ? AppColors.darkTextHint : AppColors.lightTextHint),
+          child: Icon(
+            icon,
+            size: 14,
+            color: onTap != null
+                ? theme.colorScheme.onSurfaceVariant
+                : (dark ? AppColors.darkTextHint : AppColors.lightTextHint),
+          ),
         ),
       ),
     );
@@ -192,8 +197,7 @@ class PoSectionHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color:
-                    dark ? AppColors.darkTextHint : AppColors.lightTextHint,
+                color: dark ? AppColors.darkTextHint : AppColors.lightTextHint,
               ),
             ),
         ],
@@ -203,17 +207,34 @@ class PoSectionHeader extends StatelessWidget {
 }
 
 /// Pinned-footer surface — white card + soft up-shadow in light, darkCard +
-/// hairline top border in dark (mock footer elevation).
+/// hairline top border in dark (mock footer elevation; shadow values are the
+/// theme's [AppShadows.pinnedFooter] token).
 BoxDecoration poFooterDecoration(bool dark) => BoxDecoration(
       color: dark ? AppColors.darkCard : Colors.white,
       border: dark
           ? const Border(top: BorderSide(color: AppColors.darkHairline))
           : null,
-      boxShadow: [
-        BoxShadow(
-          color: dark ? const Color(0x66000000) : const Color(0x0F111C1D),
-          offset: const Offset(0, -4),
-          blurRadius: 16,
-        ),
-      ],
+      boxShadow: AppShadows.pinnedFooter(dark: dark),
     );
+
+/// Pinned footer shell used by the New-PO and detail screens: the
+/// [poFooterDecoration] surface + the mock's 16/12/16/8 padding +
+/// bottom-safe-area, stacking [children] in a column.
+class PoFooter extends StatelessWidget {
+  const PoFooter({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: poFooterDecoration(dark),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: SafeArea(
+        top: false,
+        child: Column(children: children),
+      ),
+    );
+  }
+}

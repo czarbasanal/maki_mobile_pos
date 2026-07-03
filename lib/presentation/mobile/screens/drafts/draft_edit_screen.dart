@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -620,8 +622,8 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         // Deleting stays creator-or-admin even though editing is shared —
         // surface the rejection instead of a silent dead tap.
         final err = ref.read(draftOperationsProvider).asError?.error;
-        context.showErrorSnackBar(
-            err?.toString() ?? 'Failed to delete job order');
+        context
+            .showErrorSnackBar(err?.toString() ?? 'Failed to delete job order');
       }
     } catch (e) {
       if (mounted) {
@@ -665,9 +667,11 @@ class _AddPartsSheetState extends ConsumerState<_AddPartsSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     // Fixed-height sheet with a scrollable in-flow results panel, so results
     // always have room and "Done" stays pinned at the bottom. Clamped so the
-    // sheet + keyboard never exceed the screen on short devices.
+    // sheet + keyboard never exceed the screen on short devices; the upper
+    // bound is floored at 0 — on a very short window (split-screen +
+    // keyboard) a negative upper limit would make clamp throw.
     final sheetHeight = (screenHeight * 0.62)
-        .clamp(0.0, screenHeight - bottomInset - 120)
+        .clamp(0.0, math.max(0.0, screenHeight - bottomInset - 120))
         .toDouble();
 
     return Padding(
