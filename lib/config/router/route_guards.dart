@@ -32,6 +32,7 @@ abstract class RouteGuards {
     '/receiving/bulk': Permission.bulkReceive,
     '/receiving/history': Permission.viewReceivingHistory,
     '/receiving/drafts': Permission.accessReceiving,
+    '/receiving/purchase-orders': Permission.accessReceiving,
     '/receiving/import': Permission.bulkReceive,
     // Suppliers
     '/suppliers': Permission.viewSuppliers,
@@ -179,6 +180,12 @@ abstract class RouteGuards {
     // /receiving/bulk.
     if (path.startsWith('/receiving/bulk/')) {
       return user.hasPermission(Permission.bulkReceive);
+    }
+
+    // Purchase orders — new + detail live under the list path; same gate as
+    // /receiving/purchase-orders (staff + admin).
+    if (path.startsWith('/receiving/purchase-orders/')) {
+      return user.hasPermission(Permission.accessReceiving);
     }
 
     // About screen lives under /settings/about — anyone with viewSettings.

@@ -68,6 +68,15 @@ abstract class RouteNames {
   /// CSV batch-import — `/receiving/import`.
   static const String batchImport = 'batchImport';
 
+  /// Purchase orders list — `/receiving/purchase-orders`.
+  static const String purchaseOrders = 'purchaseOrders';
+
+  /// New purchase order (reorder suggestions) — `/receiving/purchase-orders/new`.
+  static const String purchaseOrderNew = 'purchaseOrderNew';
+
+  /// Purchase order detail — `/receiving/purchase-orders/:id`.
+  static const String purchaseOrderDetail = 'purchaseOrderDetail';
+
   // ==================== SUPPLIER ROUTES ====================
 
   /// Suppliers list route
@@ -207,6 +216,8 @@ abstract class RoutePaths {
   static const String receivingHistory = '/receiving/history';
   static const String receivingDrafts = '/receiving/drafts';
   static const String batchImport = '/receiving/import';
+  static const String purchaseOrders = '/receiving/purchase-orders';
+  static const String purchaseOrderNew = '/receiving/purchase-orders/new';
 
   // ==================== SUPPLIER PATHS ====================
 
