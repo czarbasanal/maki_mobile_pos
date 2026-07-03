@@ -30,8 +30,22 @@ const int reorderSalesCap = 10000;
 
 class ReorderResult {
   final List<ReorderSuggestion> suggestions;
+
+  /// Active products at/below their reorder level (but not zero) that the
+  /// velocity math did NOT recommend — zero-velocity items kept visible so
+  /// dead-but-low stock can still be ordered. Sorted by name.
+  final List<ProductEntity> lowStock;
+
+  /// Active, zero-stock, non-recommended products. Sorted by name.
+  final List<ProductEntity> outOfStock;
   final bool capped;
-  const ReorderResult({required this.suggestions, required this.capped});
+
+  const ReorderResult({
+    required this.suggestions,
+    this.lowStock = const [],
+    this.outOfStock = const [],
+    required this.capped,
+  });
 }
 
 final reorderSuggestionsProvider = FutureProvider.autoDispose
@@ -46,9 +60,27 @@ final reorderSuggestionsProvider = FutureProvider.autoDispose
         status: SaleStatus.completed,
         limit: reorderSalesCap,
       );
+  final suggestions =
+      computeReorderSuggestions(products, unitsSoldByProduct(sales), params);
+  final suggestedIds = {for (final s in suggestions) s.product.id};
+  final lowStock = <ProductEntity>[];
+  final outOfStock = <ProductEntity>[];
+  for (final product in products) {
+    if (!product.isActive || suggestedIds.contains(product.id)) continue;
+    if (product.quantity == 0) {
+      outOfStock.add(product);
+    } else if (product.quantity <= product.reorderLevel) {
+      lowStock.add(product);
+    }
+  }
+  int byName(ProductEntity a, ProductEntity b) => a.name.compareTo(b.name);
+  lowStock.sort(byName);
+  outOfStock.sort(byName);
+
   return ReorderResult(
-    suggestions:
-        computeReorderSuggestions(products, unitsSoldByProduct(sales), params),
+    suggestions: suggestions,
+    lowStock: lowStock,
+    outOfStock: outOfStock,
     capped: sales.length >= reorderSalesCap,
   );
 });
