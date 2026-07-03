@@ -9,6 +9,11 @@
 >    human.** Do not guess or silently scaffold. Preserve all existing business logic; change the
 >    presentation layer only.
 
+> **Status (2026-07-03): this redesign has been IMPLEMENTED and merged** (commits `37fb818`,
+> `d768129`, badge fix `1ab4597`). `current-implementation.md` now documents the shipped
+> post-redesign UI and is the source of truth; `reference_current-ui.html` shows the old
+> pre-redesign UI only.
+
 ---
 
 ## Overview
@@ -50,8 +55,8 @@ exactly; only translate HTML/CSS constructs into their Flutter equivalents.
 - **Neutral-by-default color discipline:** job orders have no status, so no invented status colors.
 - **Full light + dark parity** (slate leads light, **gold leads dark**).
 - **Floating "New Job Order" FAB removed** at the designer's request. The empty state keeps its centered
-  "New Job Order" button; the populated list currently shows **no create affordance**. **← confirm the
-  create entry point (Rule 2):** app-bar action on the list, POS "Save Job Order" only, or re-add a FAB.
+  "New Job Order" button. **Resolved:** the populated list's create entry point shipped as a `plus`
+  app-bar action (`drafts_list_screen.dart:30-34`).
 
 ---
 
@@ -67,6 +72,8 @@ the frame; build the screen body. Every screen ships in **both** themes.
   with a badge** (`3`) + destructive `trash-2` (clear cart). Footer — outlined **"Save Job Order"**
   (`clipboard-plus`) + filled **"Checkout"** (`arrow-right`). An amber note calls out the badge fix.
 - **Badge:** slate `#283E46` (light) / gold `#E8B84C` (dark) pill, 2px canvas ring, white/ink text.
+  *(Shipped deviation: the user chose a **red pill with white count** in both themes —
+  `job_order_badge_button.dart`.)*
 
 ### 2 · Job Orders list — `drafts_list_screen.dart` (`/drafts`)
 - **Purpose:** browse open tickets, open one, delete (creator/admin).
@@ -152,6 +159,7 @@ the *current* wiring are in `current-implementation.md` — reuse it, don't rein
   sale is written.
 - **POS badge:** bind the `clipboard-list` badge to the **live open-job-order count** (the
   `activeDrafts` stream length), **not** a cached one-shot count (this was the known stale-count bug).
+  **Resolved:** shipped as a derived stream count in `1ab4597` (`draft_provider.dart:67-69`).
 - **Delete:** restricted to creator/admin.
 - **Reports:** admin-only route; derived from **completed (billed-out) sales**; CSV export; date-range
   presets; Models vs Mechanics.
@@ -217,5 +225,6 @@ field value 15 · button 14.5–15/600 · summary total 18/700 · report value 1
 - **`support.js`** — runtime required by the `.dc.html`.
 - **`reference_current-ui.html`** — the current (pre-redesign) UI, for before/after only. Do not rebuild.
 - **`current-implementation.md`** — real Dart file paths, routes, Riverpod providers, data model,
-  permissions, and the known stale-badge bug. Your map to the code to change.
+  permissions. Rewritten 2026-07-03 against the shipped post-redesign UI (`16280ad`); the stale-badge
+  bug it used to describe is fixed. Your map to the code to change.
 - **`CLAUDE.md`** — the two hard rules, verbatim.
