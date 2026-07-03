@@ -292,6 +292,9 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
             onInventory: _canViewInventory
                 ? () => context.go(RoutePaths.inventory)
                 : null,
+            onReorder: _canAccessReceiving
+                ? () => context.go(RoutePaths.purchaseOrders)
+                : null,
             onExpenses: _canViewExpenses
                 ? () => context.go(RoutePaths.expenses)
                 : null,

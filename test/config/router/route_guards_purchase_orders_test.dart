@@ -15,8 +15,8 @@ void main() {
       );
 
   test('paths and names', () {
-    expect(RoutePaths.purchaseOrders, '/receiving/purchase-orders');
-    expect(RoutePaths.purchaseOrderNew, '/receiving/purchase-orders/new');
+    expect(RoutePaths.purchaseOrders, '/reorder');
+    expect(RoutePaths.purchaseOrderNew, '/reorder/new');
     expect(RouteNames.purchaseOrders, 'purchaseOrders');
     expect(RouteNames.purchaseOrderNew, 'purchaseOrderNew');
     expect(RouteNames.purchaseOrderDetail, 'purchaseOrderDetail');
@@ -37,13 +37,25 @@ void main() {
     expect(
         RouteGuards.canAccess(RoutePaths.purchaseOrderNew, user(UserRole.staff)),
         isTrue);
-    expect(
-        RouteGuards.canAccess(
-            '/receiving/purchase-orders/abc123', user(UserRole.staff)),
+    expect(RouteGuards.canAccess('/reorder/abc123', user(UserRole.staff)),
         isTrue);
-    expect(
-        RouteGuards.canAccess(
-            '/receiving/purchase-orders/abc123', user(UserRole.cashier)),
+    expect(RouteGuards.canAccess('/reorder/abc123', user(UserRole.cashier)),
         isFalse);
+  });
+
+  test('Reorder menu item sits after Inventory for staff/admin only', () {
+    for (final role in [UserRole.staff, UserRole.admin]) {
+      final paths =
+          RouteGuards.getMenuItems(role).map((e) => e.path).toList();
+      expect(paths, contains(RoutePaths.purchaseOrders), reason: '$role');
+      expect(paths.indexOf(RoutePaths.purchaseOrders),
+          paths.indexOf(RoutePaths.inventory) + 1,
+          reason: 'Reorder directly follows Inventory');
+    }
+    expect(
+        RouteGuards.getMenuItems(UserRole.cashier)
+            .map((e) => e.path)
+            .toList(),
+        isNot(contains(RoutePaths.purchaseOrders)));
   });
 }

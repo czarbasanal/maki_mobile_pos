@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/extensions/datetime_extensions.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/purchase_order_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/purchase_orders/purchase_order_status_pill.dart';
 import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.dart';
@@ -30,9 +31,11 @@ class _PurchaseOrdersScreenState extends ConsumerState<PurchaseOrdersScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.pop(),
+          // Top-level destination (dashboard Reorder pill uses `go`) — there
+          // may be nothing to pop.
+          onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
-        title: const Text('Purchase Orders'),
+        title: const Text('Reorder'),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(RoutePaths.purchaseOrderNew),

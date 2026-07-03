@@ -32,7 +32,8 @@ abstract class RouteGuards {
     '/receiving/bulk': Permission.bulkReceive,
     '/receiving/history': Permission.viewReceivingHistory,
     '/receiving/drafts': Permission.accessReceiving,
-    '/receiving/purchase-orders': Permission.accessReceiving,
+    // Reorder (purchase orders) — same audience as Receiving
+    '/reorder': Permission.accessReceiving,
     '/receiving/import': Permission.bulkReceive,
     // Suppliers
     '/suppliers': Permission.viewSuppliers,
@@ -182,9 +183,9 @@ abstract class RouteGuards {
       return user.hasPermission(Permission.bulkReceive);
     }
 
-    // Purchase orders — new + detail live under the list path; same gate as
-    // /receiving/purchase-orders (staff + admin).
-    if (path.startsWith('/receiving/purchase-orders/')) {
+    // Purchase orders — new + detail live under /reorder; same gate as the
+    // list (staff + admin).
+    if (path.startsWith('/reorder/')) {
       return user.hasPermission(Permission.accessReceiving);
     }
 
@@ -244,6 +245,15 @@ abstract class RouteGuards {
         title: 'Inventory',
         icon: Icons.inventory,
         path: '/inventory',
+      ));
+    }
+
+    // Reorder (purchase orders) - staff and admin
+    if (RolePermissions.hasPermission(role, Permission.accessReceiving)) {
+      items.add(const MenuItem(
+        title: 'Reorder',
+        icon: Icons.shopping_cart_checkout,
+        path: '/reorder',
       ));
     }
 
