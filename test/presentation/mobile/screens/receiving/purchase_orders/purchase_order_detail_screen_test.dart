@@ -2,6 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/data/repositories/purchase_order_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -97,6 +98,32 @@ void main() {
     final receivings = await fake.collection('receivings').get();
     expect(receivings.size, 1);
     expect(receivings.docs.first.data()['purchaseOrderId'], po.id);
+  });
+
+  testWidgets('qty edits are buffered locally and flushed by Save changes',
+      (tester) async {
+    final po = await seed();
+    await pump(tester, po.id, UserRole.staff);
+
+    // Two + taps: no write yet.
+    await tester.tap(find.byIcon(LucideIcons.plus).first);
+    await tester.pump();
+    await tester.tap(find.byIcon(LucideIcons.plus).first);
+    await tester.pumpAndSettle();
+    var doc =
+        await fake.collection('purchase_orders').doc(po.id).get();
+    expect(
+        (doc.data()!['items'] as List).first['quantity'], 4,
+        reason: 'stepper taps must not write until Save changes');
+    expect(find.text('6'), findsOneWidget);
+
+    await tester.tap(find.text('Save changes'));
+    await tester.pumpAndSettle();
+    doc = await fake.collection('purchase_orders').doc(po.id).get();
+    expect((doc.data()!['items'] as List).first['quantity'], 6);
+    expect((doc.data()!['totalQuantity'] as num).toInt(), 6);
+    expect(find.text('Save changes'), findsNothing,
+        reason: 'buffer clears after a successful save');
   });
 
   testWidgets('Delete is admin-only', (tester) async {
