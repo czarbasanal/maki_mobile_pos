@@ -73,6 +73,12 @@ void main() {
   }
 
   testWidgets('default view groups by status', (tester) async {
+    // The redesigned layout (params card + view toggle + card rows) is taller
+    // than the default 800×600 test surface; give the lazy list room so the
+    // third section actually builds.
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await pump(
       tester,
       suggestions: [suggestion(product('p1'), 9)],
@@ -110,7 +116,7 @@ void main() {
       suggestion(product('p1'), 9),
       suggestion(product('p2', supplier: null), 4),
     ]);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'By supplier'));
+    await tester.tap(find.byKey(const Key('po-view-bySupplier')));
     await tester.pumpAndSettle();
     expect(find.text('Item p1'), findsOneWidget);
     expect(find.text('Acme'), findsOneWidget);
@@ -125,7 +131,7 @@ void main() {
       outOfStock: [product('p2', supplier: null)],
     );
 
-    await tester.tap(find.text('Save drafts'));
+    await tester.tap(find.byKey(const Key('po-create-button')));
     await tester.pumpAndSettle();
 
     final orders = await fake.collection('purchase_orders').get();
@@ -141,7 +147,7 @@ void main() {
       suggestion(product('p2', supplier: null), 4),
     ]);
 
-    await tester.tap(find.text('Save drafts'));
+    await tester.tap(find.byKey(const Key('po-create-button')));
     await tester.pumpAndSettle();
 
     final orders = await fake.collection('purchase_orders').get();
@@ -173,7 +179,7 @@ void main() {
 
     // Change the movement window — previously this rebuilt lines and reset
     // the manual row.
-    await tester.tap(find.widgetWithText(ChoiceChip, '30d'));
+    await tester.tap(find.byKey(const Key('po-window-30')));
     await tester.pumpAndSettle();
 
     expect(find.text('Item p2'), findsOneWidget);
@@ -186,12 +192,101 @@ void main() {
       suggestion(product('p1'), 9),
       suggestion(product('p2', supplier: null), 4),
     ]);
-    await tester.tap(find.byType(Checkbox).last);
+    await tester.tap(find.byKey(const Key('po-check-p2')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save drafts'));
+    await tester.tap(find.byKey(const Key('po-create-button')));
     await tester.pumpAndSettle();
 
     final orders = await fake.collection('purchase_orders').get();
     expect(orders.size, 1);
+  });
+
+  testWidgets('create button carries the live supplier-group count',
+      (tester) async {
+    await pump(tester, suggestions: [
+      suggestion(product('p1'), 9),
+      suggestion(product('p2', supplier: null), 4),
+    ]);
+    expect(find.text('Create 2 purchase orders'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('po-check-p2')));
+    await tester.pumpAndSettle();
+    expect(find.text('Create 1 purchase order'), findsOneWidget);
+  });
+
+  testWidgets('footer shows running total of checked lines only',
+      (tester) async {
+    // p1: 9 × ₱55 = ₱495; p2: 4 × ₱55 = ₱220 → both: ₱715.00
+    await pump(tester, suggestions: [
+      suggestion(product('p1'), 9),
+      suggestion(product('p2', supplier: null), 4),
+    ]);
+    expect(find.textContaining('₱715.00'), findsOneWidget);
+    expect(find.text('One PO per supplier'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('po-check-p2')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('₱495.00'), findsOneWidget);
+  });
+
+  testWidgets('supplier view headers show checked subtotal', (tester) async {
+    await pump(tester, suggestions: [suggestion(product('p1'), 9)]);
+    await tester.tap(find.byKey(const Key('po-view-bySupplier')));
+    await tester.pumpAndSettle();
+    expect(find.text('1 item · ₱495.00'), findsOneWidget);
+  });
+
+  testWidgets('cover stepper applies after the debounce', (tester) async {
+    final received = <({int coverDays, int windowDays})>[];
+    final fake = FakeFirebaseFirestore();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        firestoreProvider.overrideWithValue(fake),
+        productsProvider.overrideWith((ref) => Stream.value([product('p1')])),
+        currentUserProvider.overrideWith((ref) => Stream.value(user)),
+        reorderSuggestionsProvider.overrideWith((ref, params) async {
+          received.add(params);
+          return ReorderResult(
+              suggestions: [suggestion(product('p1'), 9)],
+              lowStock: const [],
+              outOfStock: const [],
+              capped: false);
+        }),
+      ],
+      child: const MaterialApp(home: NewPurchaseOrderScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('po-cover-plus')));
+    await tester.pump();
+    expect(find.text('31'), findsOneWidget,
+        reason: 'display updates instantly');
+    expect(received.map((p) => p.coverDays), isNot(contains(31)),
+        reason: 'refetch waits for the debounce');
+
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(received.map((p) => p.coverDays), contains(31));
+  });
+
+  testWidgets('cap note renders the amber warning copy', (tester) async {
+    final fake = FakeFirebaseFirestore();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        firestoreProvider.overrideWithValue(fake),
+        productsProvider.overrideWith((ref) => Stream.value([product('p1')])),
+        currentUserProvider.overrideWith((ref) => Stream.value(user)),
+        reorderSuggestionsProvider.overrideWith((ref, params) async =>
+            ReorderResult(
+                suggestions: [suggestion(product('p1'), 9)],
+                lowStock: const [],
+                outOfStock: const [],
+                capped: true)),
+      ],
+      child: const MaterialApp(home: NewPurchaseOrderScreen()),
+    ));
+    await tester.pumpAndSettle();
+    expect(
+        find.text(
+            'Movement data may be incomplete — the sales cap was reached for this window.'),
+        findsOneWidget);
   });
 }

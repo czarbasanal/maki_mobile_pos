@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/purchase_orders/po_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
@@ -47,6 +53,9 @@ class _Line {
   final double? velocityPerDay;
 }
 
+/// Grouping mode — presentation only; selection and quantities carry over.
+enum _ViewMode { byStatus, bySupplier }
+
 /// Drafts purchase orders from stock movement: adjustable window/cover,
 /// per-supplier grouping, search-to-add, one draft PO per supplier on save.
 class NewPurchaseOrderScreen extends ConsumerStatefulWidget {
@@ -60,7 +69,14 @@ class NewPurchaseOrderScreen extends ConsumerStatefulWidget {
 class NewPurchaseOrderScreenState
     extends ConsumerState<NewPurchaseOrderScreen> {
   int _windowDays = 60;
-  final _coverController = TextEditingController(text: '30');
+
+  /// Cover days as displayed (updates per tap, clamped 1–365)…
+  int _cover = 30;
+
+  /// …and as applied to the suggestions provider (follows [_cover] after a
+  /// short debounce so stepping doesn't refetch per tap).
+  int _appliedCover = 30;
+  Timer? _coverDebounce;
 
   /// Owned by the state, not the sheet — disposing a local controller right
   /// after showModalBottomSheet returns races the sheet's exit animation.
@@ -75,22 +91,29 @@ class NewPurchaseOrderScreenState
   /// unchecked).
   final Map<String, int> _qty = {};
   final Map<String, bool> _checkedOverride = {};
-  bool _byStatus = true;
+  _ViewMode _view = _ViewMode.byStatus;
   bool _saving = false;
-
-  int get _coverDays =>
-      (int.tryParse(_coverController.text) ?? 30).clamp(1, 365);
 
   @override
   void dispose() {
-    _coverController.dispose();
+    _coverDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
+  void _setCover(int value) {
+    final next = value.clamp(1, 365);
+    if (next == _cover) return;
+    setState(() => _cover = next);
+    _coverDebounce?.cancel();
+    _coverDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) setState(() => _appliedCover = _cover);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final params = (windowDays: _windowDays, coverDays: _coverDays);
+    final params = (windowDays: _windowDays, coverDays: _appliedCover);
     final resultAsync = ref.watch(reorderSuggestionsProvider(params));
 
     return Scaffold(
@@ -152,18 +175,24 @@ class NewPurchaseOrderScreenState
 
   /// Section headers + rows for the active view. Status view walks the
   /// bucket order (recommended → out → low → added); supplier view groups
-  /// the same lines by supplier name, no-supplier last.
+  /// the same lines by supplier name, no-supplier last, with the checked
+  /// count + subtotal (what that supplier's PO will cost) on the right.
   List<Widget> _sections(List<_Line> lines) {
-    Widget header(String text) => Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 4),
-          child: Text(text, style: Theme.of(context).textTheme.titleSmall),
-        );
-
-    if (_byStatus) {
+    if (_view == _ViewMode.byStatus) {
+      const icons = {
+        _LineSource.recommended: LucideIcons.trendingUp,
+        _LineSource.outOfStock: LucideIcons.packageX,
+        _LineSource.lowStock: LucideIcons.packageMinus,
+        _LineSource.added: LucideIcons.circlePlus,
+      };
       return [
         for (final source in _LineSource.values) ...[
           if (lines.any((l) => l.source == source)) ...[
-            header(source.label),
+            PoSectionHeader(
+              icon: icons[source]!,
+              label: source.label,
+              trailing: '${lines.where((l) => l.source == source).length}',
+            ),
             for (final line in lines)
               if (line.source == source) _row(line),
           ],
@@ -184,7 +213,18 @@ class NewPurchaseOrderScreenState
       });
     return [
       for (final key in keys) ...[
-        header(key ?? 'No supplier'),
+        Builder(builder: (context) {
+          final checked = groups[key]!.where((l) => l.checked).toList();
+          final subtotal = checked.fold<double>(
+              0, (sum, l) => sum + l.qty * l.product.cost);
+          return PoSectionHeader(
+            icon: LucideIcons.truck,
+            label: key ?? 'No supplier',
+            trailing: '${checked.length} '
+                '${checked.length == 1 ? 'item' : 'items'} · '
+                '${subtotal.toCurrency()}',
+          );
+        }),
         for (final line in groups[key]!) _row(line),
       ],
     ];
@@ -192,130 +232,314 @@ class NewPurchaseOrderScreenState
 
   Widget _buildBody(ReorderResult result) {
     final lines = _buildLines(result);
-    final checkedCount = lines.where((l) => l.checked).length;
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              for (final days in const [30, 60, 90]) ...[
-                ChoiceChip(
-                  label: Text('${days}d'),
-                  selected: _windowDays == days,
-                  onSelected: (_) => setState(() => _windowDays = days),
-                ),
-                const SizedBox(width: 8),
-              ],
-              const Spacer(),
-              SizedBox(
-                width: 88,
-                child: TextField(
-                  controller: _coverController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Cover days',
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => setState(() {}),
-                ),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: _paramsCard(),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              ChoiceChip(
-                label: const Text('By status'),
-                selected: _byStatus,
-                onSelected: (_) => setState(() => _byStatus = true),
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('By supplier'),
-                selected: !_byStatus,
-                onSelected: (_) => setState(() => _byStatus = false),
-              ),
-            ],
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: _SegmentedCells<_ViewMode>(
+            values: _ViewMode.values,
+            labels: const {
+              _ViewMode.byStatus: 'By status',
+              _ViewMode.bySupplier: 'By supplier',
+            },
+            icons: const {
+              _ViewMode.byStatus: LucideIcons.layers,
+              _ViewMode.bySupplier: LucideIcons.truck,
+            },
+            selected: _view,
+            keyPrefix: 'po-view',
+            radius: 14,
+            elevated: true,
+            onChanged: (v) => setState(() => _view = v),
           ),
         ),
         if (result.capped)
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Movement data may be incomplete (sales cap reached)'),
+            padding: EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: PoAmberNote(
+              text: 'Movement data may be incomplete — the sales cap was '
+                  'reached for this window.',
+            ),
           ),
         Expanded(
           child: lines.isEmpty
               ? const EmptyStateView(
+                  tiled: true,
                   icon: LucideIcons.packageCheck,
                   title: 'No suggestions — everything is stocked',
                   subtitle: 'Add products manually with the search button',
                 )
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
                   children: _sections(lines),
                 ),
         ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed:
-                    checkedCount == 0 || _saving ? null : () => _save(lines),
-                child: const Text('Save drafts'),
-              ),
-            ),
-          ),
-        ),
+        _footer(lines),
       ],
     );
   }
 
+  Widget _paramsCard() {
+    final theme = Theme.of(context);
+    return AppCard(
+      radius: AppRadius.field,
+      padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _SegmentedCells<int>(
+                  values: const [30, 60, 90],
+                  labels: const {30: '30d', 60: '60d', 90: '90d'},
+                  selected: _windowDays,
+                  keyPrefix: 'po-window',
+                  onChanged: (v) => setState(() => _windowDays = v),
+                ),
+              ),
+              const SizedBox(width: 10),
+              PoStepperButton(
+                key: const Key('po-cover-minus'),
+                icon: LucideIcons.minus,
+                size: 30,
+                radius: 9,
+                onTap: _cover > 1 ? () => _setCover(_cover - 1) : null,
+              ),
+              const SizedBox(width: 6),
+              Column(
+                children: [
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 26),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$_cover',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Text(
+                    'COVER',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: .4,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 6),
+              PoStepperButton(
+                key: const Key('po-cover-plus'),
+                icon: LucideIcons.plus,
+                size: 30,
+                radius: 9,
+                onTap: _cover < 365 ? () => _setCover(_cover + 1) : null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Text.rich(
+            TextSpan(
+              text: 'Suggesting ',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              children: [
+                TextSpan(
+                  text: '$_cover days of stock',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const TextSpan(text: ' from the last '),
+                TextSpan(
+                  text: '$_windowDays days',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const TextSpan(text: ' of sales — applies as you change it.'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Pinned footer: checked summary + running total (totals addition) over
+  /// the live-count create button. The count mirrors the `_save` grouping —
+  /// checked lines grouped by supplierId, no-supplier its own group.
+  Widget _footer(List<_Line> lines) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final checked = lines.where((l) => l.checked).toList();
+    final pcs = checked.fold<int>(0, (sum, l) => sum + l.qty);
+    final total =
+        checked.fold<double>(0, (sum, l) => sum + l.qty * l.product.cost);
+    final groupCount =
+        checked.map((l) => l.product.supplierId).toSet().length;
+    final label = checked.isEmpty
+        ? 'Create purchase orders'
+        : 'Create $groupCount purchase order${groupCount == 1 ? '' : 's'}';
+
+    return Container(
+      decoration: poFooterDecoration(dark),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(2, 0, 2, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        text: '${checked.length} '
+                            '${checked.length == 1 ? 'item' : 'items'} '
+                            'checked · $pcs pcs',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: ' · ${total.toCurrency()}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'One PO per supplier',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('po-create-button'),
+                onPressed:
+                    checked.isEmpty || _saving ? null : () => _save(lines),
+                icon: const Icon(LucideIcons.clipboardPlus, size: 18),
+                label: Text(label),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _row(_Line line) {
+    final theme = Theme.of(context);
     final p = line.product;
     final caption = switch (line.source) {
       _LineSource.recommended =>
-        'Stock ${p.quantity} • ${line.velocityPerDay!.toStringAsFixed(1)}/day',
+        'Stock ${p.quantity} · ${line.velocityPerDay!.toStringAsFixed(1)}/day',
       _LineSource.outOfStock ||
       _LineSource.lowStock =>
-        'Stock ${p.quantity} • reorder at ${p.reorderLevel}',
-      _LineSource.added => 'Stock ${p.quantity} • added manually',
+        'Stock ${p.quantity} · reorder at ${p.reorderLevel}',
+      _LineSource.added => 'Stock ${p.quantity} · added manually',
     };
-    return Row(
-      children: [
-        Checkbox(
-          value: line.checked,
-          onChanged: (v) => setState(() {
-            _checkedOverride[p.id] = v ?? false;
-          }),
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: AppCard(
+        radius: AppRadius.field,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            _PoCheckbox(
+              key: Key('po-check-${p.id}'),
+              checked: line.checked,
+              onChanged: (v) => setState(() => _checkedOverride[p.id] = v),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Opacity(
+                opacity: line.checked ? 1 : 0.62,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 14.5, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      p.sku,
+                      style: TextStyle(
+                        fontFamily: AppTextStyles.monoFontFamily,
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      caption,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Opacity(
+              opacity: line.checked ? 1 : 0.62,
+              child: Row(
+                children: [
+                  PoStepperButton(
+                    icon: LucideIcons.minus,
+                    onTap: line.qty > 1
+                        ? () => setState(() => _qty[p.id] = line.qty - 1)
+                        : null,
+                  ),
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${line.qty}',
+                      style: const TextStyle(
+                          fontSize: 14.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  PoStepperButton(
+                    icon: LucideIcons.plus,
+                    onTap: () => setState(() => _qty[p.id] = line.qty + 1),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text('${p.sku} • $caption',
-                  style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
-        ),
-        IconButton(
-          icon: const Icon(LucideIcons.minus, size: 16),
-          onPressed: line.qty > 1
-              ? () => setState(() => _qty[p.id] = line.qty - 1)
-              : null,
-        ),
-        Text('${line.qty}'),
-        IconButton(
-          icon: const Icon(LucideIcons.plus, size: 16),
-          onPressed: () => setState(() => _qty[p.id] = line.qty + 1),
-        ),
-      ],
+      ),
     );
   }
 
@@ -443,5 +667,144 @@ class NewPurchaseOrderScreenState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+/// 22px rounded checkbox — checked = solid primary + on-primary check,
+/// unchecked = 1.5px border.
+class _PoCheckbox extends StatelessWidget {
+  const _PoCheckbox({super.key, required this.checked, required this.onChanged});
+
+  final bool checked;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onChanged(!checked),
+      child: Container(
+        width: 22,
+        height: 22,
+        decoration: checked
+            ? BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(7),
+              )
+            : BoxDecoration(
+                border: Border.all(
+                    color: AppColors.checkboxBorder(dark), width: 1.5),
+                borderRadius: BorderRadius.circular(7),
+              ),
+        child: checked
+            ? Icon(LucideIcons.check,
+                size: 14, color: theme.colorScheme.onPrimary)
+            : null,
+      ),
+    );
+  }
+}
+
+/// Bordered segmented control per the mock — equal cells, selected = faint
+/// primary wash + 600 primary text. [elevated] fills with the card surface +
+/// soft shadow (the view toggle); plain sits recessed on the params card.
+class _SegmentedCells<T> extends StatelessWidget {
+  const _SegmentedCells({
+    super.key,
+    required this.values,
+    required this.labels,
+    required this.selected,
+    required this.onChanged,
+    required this.keyPrefix,
+    this.icons,
+    this.radius = 12,
+    this.elevated = false,
+  });
+
+  final List<T> values;
+  final Map<T, String> labels;
+  final T selected;
+  final ValueChanged<T> onChanged;
+  final String keyPrefix;
+  final Map<T, IconData>? icons;
+  final double radius;
+  final bool elevated;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final border =
+        dark ? AppColors.darkInputBorder : AppColors.lightInputBorder;
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated ? (dark ? AppColors.darkCard : Colors.white) : null,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: elevated ? AppShadows.card(dark: dark) : null,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: [
+          for (var i = 0; i < values.length; i++)
+            Expanded(
+              child: _cell(context, values[i], first: i == 0, border: border),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cell(BuildContext context, T v,
+      {required bool first, required Color border}) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final isSel = v == selected;
+    final name = v is Enum ? v.name : v.toString();
+    final selectedTint =
+        dark ? const Color(0x1FE8B84C) : const Color(0x1A283E46);
+    final icon = icons?[v];
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onChanged(v),
+      child: Container(
+        key: Key('$keyPrefix-$name'),
+        alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(vertical: icons == null ? 8 : 10),
+        decoration: BoxDecoration(
+          color: isSel ? selectedTint : Colors.transparent,
+          border: first ? null : Border(left: BorderSide(color: border)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 15,
+                color: isSel
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              labels[v]!,
+              style: TextStyle(
+                fontSize: icons == null ? 13 : 13.5,
+                fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
+                color: isSel
+                    ? theme.colorScheme.primary
+                    : (icons == null
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.onSurface),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
