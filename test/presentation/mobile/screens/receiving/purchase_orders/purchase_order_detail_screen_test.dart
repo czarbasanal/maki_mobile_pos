@@ -73,10 +73,10 @@ void main() {
   testWidgets('draft shows items and Mark ordered', (tester) async {
     final po = await seed();
     await pump(tester, po.id, UserRole.staff);
-    expect(find.text('PO-20260703-001'), findsOneWidget);
+    expect(find.text('PO-20260703-001'), findsNWidgets(2));
     expect(find.text('Brake Pad'), findsOneWidget);
     expect(find.text('Mark ordered'), findsOneWidget);
-    expect(find.text('Receive'), findsNothing);
+    expect(find.text('Receive delivery'), findsNothing);
   });
 
   testWidgets('Mark ordered transitions to ordered with Receive',
@@ -85,14 +85,14 @@ void main() {
     await pump(tester, po.id, UserRole.staff);
     await tester.tap(find.text('Mark ordered'));
     await tester.pumpAndSettle();
-    expect(find.text('Receive'), findsOneWidget);
+    expect(find.text('Receive delivery'), findsOneWidget);
     expect(find.text('Back to draft'), findsOneWidget);
   });
 
   testWidgets('Receive creates a linked draft receiving', (tester) async {
     final po = await seed(status: PurchaseOrderStatus.ordered);
     await pump(tester, po.id, UserRole.staff);
-    await tester.tap(find.text('Receive'));
+    await tester.tap(find.text('Receive delivery'));
     await tester.pumpAndSettle();
 
     final receivings = await fake.collection('receivings').get();
@@ -115,7 +115,7 @@ void main() {
     expect(
         (doc.data()!['items'] as List).first['quantity'], 4,
         reason: 'stepper taps must not write until Save changes');
-    expect(find.text('6'), findsOneWidget);
+    expect(find.text('6x'), findsOneWidget);
 
     await tester.tap(find.text('Save changes'));
     await tester.pumpAndSettle();
@@ -133,5 +133,47 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Delete'), findsNothing);
     expect(find.text('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('shows per-item subtotal line and footer grand total',
+      (tester) async {
+    final po = await seed(); // 4 × ₱55 = ₱220
+    await pump(tester, po.id, UserRole.staff);
+    expect(find.text('₱55.00 each'), findsOneWidget);
+    // Row subtotal + footer grand total are the same amount here.
+    expect(find.text('₱220.00'), findsNWidgets(2));
+    expect(find.textContaining('Total '), findsOneWidget);
+  });
+
+  testWidgets('staged qty edits recompute subtotal and grand total live',
+      (tester) async {
+    final po = await seed();
+    await pump(tester, po.id, UserRole.staff);
+    await tester.tap(find.byIcon(LucideIcons.plus).first);
+    await tester.pumpAndSettle();
+    // 5 × ₱55 — row and footer both update before any write.
+    expect(find.text('₱275.00'), findsNWidgets(2));
+    final doc = await fake.collection('purchase_orders').doc(po.id).get();
+    expect((doc.data()!['items'] as List).first['quantity'], 4,
+        reason: 'recompute is local; nothing written yet');
+  });
+
+  testWidgets('cancelled PO keeps the grand total but drops all actions',
+      (tester) async {
+    final po = await seed();
+    await repo.cancelPurchaseOrder(po.id);
+    await pump(tester, po.id, UserRole.staff);
+    expect(find.text('₱220.00'), findsNWidgets(2));
+    expect(find.text('Share CSV'), findsNothing);
+    expect(find.text('Mark ordered'), findsNothing);
+  });
+
+  testWidgets('item remove control is the × stepper button', (tester) async {
+    final po = await seed();
+    await pump(tester, po.id, UserRole.staff);
+    await tester.tap(find.byIcon(LucideIcons.x));
+    await tester.pumpAndSettle();
+    expect(find.text('Last item — delete the purchase order instead'),
+        findsOneWidget);
   });
 }
