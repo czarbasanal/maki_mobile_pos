@@ -2,20 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
-/// One selectable order line on the draft — either a velocity suggestion or a
-/// manually added product.
+/// One order line for this build pass — a velocity suggestion or a manually
+/// added product. Quantity and checked-ness live in the productId-keyed maps
+/// on the state, so a manual product that later qualifies as a suggestion
+/// keeps whatever the user set.
 class _Line {
-  _Line({required this.product, required this.qty, this.velocityPerDay});
+  const _Line({
+    required this.product,
+    required this.qty,
+    required this.checked,
+    this.velocityPerDay,
+  });
+
   final ProductEntity product;
-  int qty;
+  final int qty;
+  final bool checked;
   final double? velocityPerDay; // null = manually added
-  bool checked = true;
 }
 
 /// Drafts purchase orders from stock movement: adjustable window/cover,
@@ -32,10 +42,17 @@ class NewPurchaseOrderScreenState
     extends ConsumerState<NewPurchaseOrderScreen> {
   int _windowDays = 60;
   final _coverController = TextEditingController(text: '30');
-  final List<_Line> _manual = [];
-  // Suggestion adjustments keyed by productId; suggestions themselves reload
-  // when params change, manual lines persist.
-  final Map<String, int> _qtyOverride = {};
+
+  /// Owned by the state, not the sheet — disposing a local controller right
+  /// after showModalBottomSheet returns races the sheet's exit animation.
+  final _searchController = TextEditingController();
+
+  /// Products added via search that the current suggestions don't cover.
+  final List<ProductEntity> _manual = [];
+
+  /// User adjustments keyed by productId — shared by suggestion and manual
+  /// lines so state survives params changes and re-grouping.
+  final Map<String, int> _qty = {};
   final Set<String> _unchecked = {};
   bool _saving = false;
 
@@ -45,6 +62,7 @@ class NewPurchaseOrderScreenState
   @override
   void dispose() {
     _coverController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -69,24 +87,35 @@ class NewPurchaseOrderScreenState
         ],
       ),
       body: resultAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Failed to load: $e')),
+        loading: () => const LoadingView(),
+        error: (e, _) => ErrorStateView(message: 'Failed to load: $e'),
         data: (result) => _buildBody(result),
       ),
     );
   }
 
-  Widget _buildBody(ReorderResult result) {
-    final lines = <_Line>[
+  List<_Line> _buildLines(ReorderResult result) {
+    final suggested = {for (final s in result.suggestions) s.product.id: s};
+    return [
       for (final s in result.suggestions)
         _Line(
           product: s.product,
-          qty: _qtyOverride[s.product.id] ?? s.suggestedQty,
+          qty: _qty[s.product.id] ?? s.suggestedQty,
+          checked: !_unchecked.contains(s.product.id),
           velocityPerDay: s.velocityPerDay,
-        )..checked = !_unchecked.contains(s.product.id),
-      ..._manual.where(
-          (m) => !result.suggestions.any((s) => s.product.id == m.product.id)),
+        ),
+      for (final p in _manual)
+        if (!suggested.containsKey(p.id))
+          _Line(
+            product: p,
+            qty: _qty[p.id] ?? 1,
+            checked: !_unchecked.contains(p.id),
+          ),
     ];
+  }
+
+  Widget _buildBody(ReorderResult result) {
+    final lines = _buildLines(result);
     // Group by supplier; suggestions arrive pre-sorted, manual lines join
     // their supplier's group or the no-supplier bucket (last).
     final groups = <String?, List<_Line>>{};
@@ -139,8 +168,11 @@ class NewPurchaseOrderScreenState
           ),
         Expanded(
           child: lines.isEmpty
-              ? const Center(
-                  child: Text('No suggestions — everything is stocked'))
+              ? const EmptyStateView(
+                  icon: LucideIcons.packageCheck,
+                  title: 'No suggestions — everything is stocked',
+                  subtitle: 'Add products manually with the search button',
+                )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
@@ -182,11 +214,7 @@ class NewPurchaseOrderScreenState
         Checkbox(
           value: line.checked,
           onChanged: (v) => setState(() {
-            if (line.velocityPerDay != null) {
-              v == true ? _unchecked.remove(p.id) : _unchecked.add(p.id);
-            } else {
-              line.checked = v ?? false;
-            }
+            v == true ? _unchecked.remove(p.id) : _unchecked.add(p.id);
           }),
         ),
         Expanded(
@@ -201,28 +229,24 @@ class NewPurchaseOrderScreenState
         ),
         IconButton(
           icon: const Icon(LucideIcons.minus, size: 16),
-          onPressed: line.qty > 1 ? () => _setQty(line, line.qty - 1) : null,
+          onPressed: line.qty > 1
+              ? () => setState(() => _qty[p.id] = line.qty - 1)
+              : null,
         ),
         Text('${line.qty}'),
         IconButton(
           icon: const Icon(LucideIcons.plus, size: 16),
-          onPressed: () => _setQty(line, line.qty + 1),
+          onPressed: () => setState(() => _qty[p.id] = line.qty + 1),
         ),
       ],
     );
   }
 
-  void _setQty(_Line line, int qty) => setState(() {
-        if (line.velocityPerDay != null) {
-          _qtyOverride[line.product.id] = qty;
-        } else {
-          line.qty = qty;
-        }
-      });
-
   Future<void> _showAddProductSheet() async {
-    final products = ref.read(productsProvider).valueOrNull ?? [];
-    final controller = TextEditingController();
+    // .future — the stream may not have emitted if nothing watches it yet.
+    final products = await ref.read(productsProvider.future);
+    if (!mounted) return;
+    final controller = _searchController..clear();
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -232,7 +256,7 @@ class NewPurchaseOrderScreenState
           final matches = products
               .where((p) =>
                   p.isActive &&
-                  !_manual.any((m) => m.product.id == p.id) &&
+                  !_manual.any((m) => m.id == p.id) &&
                   (query.isEmpty ||
                       p.name.toLowerCase().contains(query) ||
                       p.sku.toLowerCase().contains(query)))
@@ -262,8 +286,11 @@ class NewPurchaseOrderScreenState
                         title: Text(matches[i].name),
                         subtitle: Text(matches[i].sku),
                         onTap: () {
-                          setState(() =>
-                              _manual.add(_Line(product: matches[i], qty: 1)));
+                          setState(() {
+                            _manual.add(matches[i]);
+                            _qty.putIfAbsent(matches[i].id, () => 1);
+                            _unchecked.remove(matches[i].id);
+                          });
                           Navigator.of(sheetContext).pop();
                         },
                       ),
@@ -276,7 +303,6 @@ class NewPurchaseOrderScreenState
         },
       ),
     );
-    controller.dispose();
   }
 
   Future<void> _save(List<_Line> lines) async {
@@ -331,13 +357,11 @@ class NewPurchaseOrderScreenState
         return count;
       }, message: 'Saving purchase orders…');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Created $created purchase order(s)')));
+      context.showSuccessSnackBar('Created $created purchase order(s)');
       context.pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      context.showErrorSnackBar('Save failed: $e');
     } finally {
       if (mounted) setState(() => _saving = false);
     }

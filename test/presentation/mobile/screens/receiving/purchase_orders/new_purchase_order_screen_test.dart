@@ -2,6 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/utils/reorder_suggestions.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -88,6 +89,35 @@ void main() {
     expect(statuses, {'draft'});
     final suppliers = orders.docs.map((d) => d.data()['supplierName']).toSet();
     expect(suppliers, {'Acme', null});
+  });
+
+  testWidgets('manually added product keeps its qty when params change',
+      (tester) async {
+    // p1 is suggested; p2 is added manually. The overridden provider returns
+    // the same suggestions for every params value, so switching the window
+    // chip only forces the rebuild path that previously dropped manual state.
+    await pump(tester, suggestions: [suggestion(product('p1'), 9)]);
+
+    // Add p2 via the search sheet.
+    await tester.tap(find.byTooltip('Add product'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Item p2'));
+    await tester.pumpAndSettle();
+
+    // Bump its qty 1 → 3 (the p2 row is the last plus-button).
+    await tester.tap(find.byIcon(LucideIcons.plus).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(LucideIcons.plus).last);
+    await tester.pumpAndSettle();
+
+    // Change the movement window — previously this rebuilt lines and reset
+    // the manual row.
+    await tester.tap(find.widgetWithText(ChoiceChip, '30d'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Item p2'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget,
+        reason: 'the manually set quantity must survive a params change');
   });
 
   testWidgets('unchecking a row excludes it from the save', (tester) async {
