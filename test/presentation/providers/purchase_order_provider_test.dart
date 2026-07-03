@@ -110,6 +110,44 @@ void main() {
     expect(result.capped, isFalse);
   });
 
+  test('movement window is full days ending YESTERDAY — today excluded', () async {
+    final saleRepo = _MockSaleRepository();
+    when(() => saleRepo.getSalesByDateRange(
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          status: SaleStatus.completed,
+          limit: reorderSalesCap,
+        )).thenAnswer((_) async => []);
+
+    final container = ProviderContainer(overrides: [
+      productsProvider.overrideWith((ref) => Stream.value([product])),
+      saleRepositoryProvider.overrideWithValue(saleRepo),
+      firestoreProvider.overrideWithValue(FakeFirebaseFirestore()),
+    ]);
+    addTearDown(container.dispose);
+
+    await container.read(reorderMovementProvider(60).future);
+
+    final captured = verify(() => saleRepo.getSalesByDateRange(
+          startDate: captureAny(named: 'startDate'),
+          endDate: captureAny(named: 'endDate'),
+          status: SaleStatus.completed,
+          limit: reorderSalesCap,
+        )).captured;
+    final startDate = captured[0] as DateTime;
+    final endDate = captured[1] as DateTime;
+
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    expect(endDate.isBefore(todayStart), isTrue,
+        reason: "today's partial day must not leak into velocity");
+    expect(todayStart.difference(startDate).inDays, 60,
+        reason: '60 FULL days ending yesterday');
+    // The repo normalizes endDate to endOfDay, so any instant within
+    // yesterday is a correct end anchor.
+    expect(endDate.difference(startDate).inDays, 59);
+  });
+
   test('buckets active non-suggested products into low/out of stock',
       () async {
     final saleRepo = _MockSaleRepository();

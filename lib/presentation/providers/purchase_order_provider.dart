@@ -59,18 +59,20 @@ typedef ReorderMovement = ({
 });
 
 /// Keyed by windowDays ONLY — coverDays never affects the fetch, so cover
-/// changes must not refetch. Deliberate trade-off: the fetch (and its
-/// DateTime.now() anchor) stays cached while the screen is open, so sales
-/// completed mid-session don't move velocities until the window changes or
-/// the screen is re-entered (autoDispose refetches then).
+/// changes must not refetch.
+///
+/// The window is [windowDays] FULL days ending YESTERDAY: today's partial
+/// day is excluded, so velocity always divides complete days and the cached
+/// fetch stays correct for the whole day (only a screen left open past
+/// midnight goes stale; autoDispose refetches on re-entry).
 final reorderMovementProvider = FutureProvider.autoDispose
     .family<ReorderMovement, int>((ref, windowDays) async {
   final now = DateTime.now();
-  final start = DateTime(now.year, now.month, now.day)
-      .subtract(Duration(days: windowDays - 1));
+  final todayStart = DateTime(now.year, now.month, now.day);
   final sales = await ref.watch(saleRepositoryProvider).getSalesByDateRange(
-        startDate: start,
-        endDate: now,
+        startDate: todayStart.subtract(Duration(days: windowDays)),
+        // The repo normalizes endDate to endOfDay → yesterday 23:59:59.999.
+        endDate: todayStart.subtract(const Duration(days: 1)),
         status: SaleStatus.completed,
         limit: reorderSalesCap,
       );
