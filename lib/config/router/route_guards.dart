@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -252,7 +253,7 @@ abstract class RouteGuards {
     if (RolePermissions.hasPermission(role, Permission.accessReceiving)) {
       items.add(const MenuItem(
         title: 'Reorder',
-        icon: Icons.shopping_cart_checkout,
+        icon: LucideIcons.clipboardList,
         path: '/reorder',
       ));
     }

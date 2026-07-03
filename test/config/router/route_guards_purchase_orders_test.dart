@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/route_guards.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -57,5 +58,11 @@ void main() {
             .map((e) => e.path)
             .toList(),
         isNot(contains(RoutePaths.purchaseOrders)));
+  });
+
+  test('Reorder menu item uses the Lucide clipboard-list glyph', () {
+    final item = RouteGuards.getMenuItems(UserRole.staff)
+        .firstWhere((m) => m.path == RoutePaths.purchaseOrders);
+    expect(item.icon, LucideIcons.clipboardList);
   });
 }

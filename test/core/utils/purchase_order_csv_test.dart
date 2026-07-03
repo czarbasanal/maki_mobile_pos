@@ -43,4 +43,12 @@ void main() {
     final noSup = po.copyWith(clearSupplierName: true);
     expect(buildPurchaseOrderCsv(noSup), contains('Supplier,No supplier'));
   });
+
+  test('CSV never carries currency or cost columns (totals stay UI-only)', () {
+    final csv = buildPurchaseOrderCsv(po);
+    expect(csv, isNot(contains('₱')));
+    expect(csv.toLowerCase(), isNot(contains('cost')));
+    expect(csv.toLowerCase(), isNot(contains('total')));
+    expect(csv, contains('SKU,Name,Qty,Unit'));
+  });
 }
