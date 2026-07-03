@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/models/purchase_order_model.dart';
+import 'package:maki_mobile_pos/data/models/receiving_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/purchase_order_repository.dart';
 
@@ -194,13 +195,76 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
     }
   }
 
-  // Implemented in Task 7.
   @override
   Future<String> startReceiving({
     required String purchaseOrderId,
     required String receivingReferenceNumber,
     required String createdBy,
     required String createdByName,
-  }) =>
-      throw UnimplementedError();
+  }) async {
+    try {
+      final po = await getPurchaseOrderById(purchaseOrderId);
+      if (po == null) {
+        throw const DatabaseException(message: 'Purchase order not found');
+      }
+      if (po.status != PurchaseOrderStatus.ordered) {
+        throw const DatabaseException(
+            message: 'Only ordered purchase orders can be received');
+      }
+
+      final receivingsRef =
+          _firestore.collection(FirestoreCollections.receivings);
+
+      // Idempotence: if a linked receiving is still an open draft, resume it
+      // instead of creating a duplicate.
+      if (po.receivingId != null) {
+        final existing = await receivingsRef.doc(po.receivingId!).get();
+        if (existing.exists &&
+            existing.data()?['status'] == ReceivingStatus.draft.name) {
+          return po.receivingId!;
+        }
+      }
+
+      final receivingRef = receivingsRef.doc();
+      final receiving = ReceivingEntity(
+        id: receivingRef.id,
+        referenceNumber: receivingReferenceNumber,
+        supplierId: po.supplierId,
+        supplierName: po.supplierName,
+        items: po.items
+            .map((i) => ReceivingItemEntity(
+                  id: i.id,
+                  productId: i.productId,
+                  sku: i.sku,
+                  name: i.name,
+                  quantity: i.quantity,
+                  unit: i.unit,
+                  unitCost: i.unitCost,
+                  costCode: i.costCode,
+                ))
+            .toList(),
+        totalCost: po.totalCost,
+        totalQuantity: po.totalQuantity,
+        status: ReceivingStatus.draft,
+        notes: 'From ${po.referenceNumber}',
+        createdAt: DateTime.now(),
+        createdBy: createdBy,
+        createdByName: createdByName,
+        purchaseOrderId: po.id,
+      );
+
+      final batch = _firestore.batch();
+      batch.set(receivingRef,
+          ReceivingModel.fromEntity(receiving).toMap(forCreate: true));
+      batch.update(_ordersRef.doc(po.id), {'receivingId': receivingRef.id});
+      await batch.commit();
+      return receivingRef.id;
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to start receiving: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
 }
