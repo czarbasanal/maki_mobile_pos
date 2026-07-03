@@ -139,9 +139,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   // ---- Bundle 04 layout helpers (sectioned cards + pinned submit) ----
 
-  // Section rhythm: the card above already carries 20 of bottom margin, so
-  // the header only adds a small top inset — 28 total between sections
-  // (was 42, which read as a double gap against the 16px field spacing).
+  // Section rhythm: the card above already carries 16 of bottom margin, so
+  // the header only adds a small top inset — 24 total between sections
+  // (28 before that, 42 originally; tightened per user preference).
   Widget _sectionHeader(String text) => Padding(
         padding: const EdgeInsets.only(left: 2, top: 8, bottom: 10),
         child: Text(
@@ -158,7 +158,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Widget _sectionCard({required List<Widget> children}) => AppCard(
         radius: AppRadius.field,
         padding: const EdgeInsets.all(18),
-        margin: const EdgeInsets.only(bottom: 20),
+        margin: const EdgeInsets.only(bottom: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: children,
