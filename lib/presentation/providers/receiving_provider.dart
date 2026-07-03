@@ -154,6 +154,10 @@ class CurrentReceivingState extends Equatable {
   final String? notes;
   final ReceivingStatus status;
   final DateTime? completedAt;
+
+  /// The purchase order this receiving fulfills, when it was started from
+  /// one. Must be carried through every save or the PO link is severed.
+  final String? purchaseOrderId;
   final bool isProcessing;
 
   /// True while an existing receiving is being fetched (detail / draft load),
@@ -170,6 +174,7 @@ class CurrentReceivingState extends Equatable {
     this.notes,
     this.status = ReceivingStatus.draft,
     this.completedAt,
+    this.purchaseOrderId,
     this.isProcessing = false,
     this.isLoading = false,
     this.errorMessage,
@@ -199,6 +204,7 @@ class CurrentReceivingState extends Equatable {
     String? notes,
     ReceivingStatus? status,
     DateTime? completedAt,
+    String? purchaseOrderId,
     bool? isProcessing,
     bool? isLoading,
     String? errorMessage,
@@ -220,6 +226,7 @@ class CurrentReceivingState extends Equatable {
       status: status ?? this.status,
       completedAt:
           clearCompletedAt ? null : (completedAt ?? this.completedAt),
+      purchaseOrderId: purchaseOrderId ?? this.purchaseOrderId,
       isProcessing: isProcessing ?? this.isProcessing,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
@@ -236,6 +243,7 @@ class CurrentReceivingState extends Equatable {
         notes,
         status,
         completedAt,
+        purchaseOrderId,
         isProcessing,
         isLoading,
         errorMessage,
@@ -291,6 +299,7 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
           notes: receiving.notes,
           status: receiving.status,
           completedAt: receiving.completedAt,
+          purchaseOrderId: receiving.purchaseOrderId,
         );
       } else {
         state = state.copyWith(isLoading: false);
@@ -434,6 +443,7 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
         createdAt: DateTime.now(),
         createdBy: createdBy,
         createdByName: createdByName,
+        purchaseOrderId: state.purchaseOrderId,
       );
 
       ReceivingEntity result;
@@ -468,16 +478,17 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
     state = state.copyWith(isProcessing: true, clearError: true);
 
     try {
-      // First save as draft if not already saved
-      String receivingId = state.id ?? '';
-      if (receivingId.isEmpty) {
-        final draft = await saveAsDraft(
-          createdBy: createdBy,
-          createdByName: createdByName,
-        );
-        if (draft == null) return null;
-        receivingId = draft.id;
-      }
+      // Persist the in-session state first: for a new receiving this creates
+      // the draft; for a resumed draft it writes the user's edits — otherwise
+      // completion would read the stale stored copy and increment stock by
+      // the original quantities, silently ignoring what was actually
+      // delivered.
+      final draft = await saveAsDraft(
+        createdBy: createdBy,
+        createdByName: createdByName,
+      );
+      if (draft == null) return null;
+      final receivingId = draft.id;
 
       // Complete the receiving via the use-case (asserts permission, audit-logs).
       final actor = _ref.read(currentUserProvider).valueOrNull;
