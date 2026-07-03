@@ -47,6 +47,9 @@ class ReceivingEntity extends Equatable {
   /// Who completed this receiving
   final String? completedBy;
 
+  /// The purchase order this receiving fulfills, when it was started from one.
+  final String? purchaseOrderId;
+
   const ReceivingEntity({
     required this.id,
     required this.referenceNumber,
@@ -62,6 +65,7 @@ class ReceivingEntity extends Equatable {
     required this.createdBy,
     required this.createdByName,
     this.completedBy,
+    this.purchaseOrderId,
   });
 
   /// Number of unique products in this receiving
@@ -88,11 +92,13 @@ class ReceivingEntity extends Equatable {
     String? createdBy,
     String? createdByName,
     String? completedBy,
+    String? purchaseOrderId,
     bool clearSupplierId = false,
     bool clearSupplierName = false,
     bool clearNotes = false,
     bool clearCompletedAt = false,
     bool clearCompletedBy = false,
+    bool clearPurchaseOrderId = false,
   }) {
     return ReceivingEntity(
       id: id ?? this.id,
@@ -110,6 +116,9 @@ class ReceivingEntity extends Equatable {
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,
       completedBy: clearCompletedBy ? null : (completedBy ?? this.completedBy),
+      purchaseOrderId: clearPurchaseOrderId
+          ? null
+          : (purchaseOrderId ?? this.purchaseOrderId),
     );
   }
 
@@ -140,6 +149,7 @@ class ReceivingEntity extends Equatable {
         createdBy,
         createdByName,
         completedBy,
+        purchaseOrderId,
       ];
 }
 

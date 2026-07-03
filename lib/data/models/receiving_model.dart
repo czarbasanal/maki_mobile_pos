@@ -17,6 +17,7 @@ class ReceivingModel {
   final String createdBy;
   final String createdByName;
   final String? completedBy;
+  final String? purchaseOrderId;
 
   const ReceivingModel({
     required this.id,
@@ -33,6 +34,7 @@ class ReceivingModel {
     required this.createdBy,
     required this.createdByName,
     this.completedBy,
+    this.purchaseOrderId,
   });
 
   /// Creates from Firestore document.
@@ -65,6 +67,7 @@ class ReceivingModel {
       createdBy: map['createdBy'] as String? ?? '',
       createdByName: map['createdByName'] as String? ?? '',
       completedBy: map['completedBy'] as String?,
+      purchaseOrderId: map['purchaseOrderId'] as String?,
     );
   }
 
@@ -82,6 +85,7 @@ class ReceivingModel {
       'createdBy': createdBy,
       'createdByName': createdByName,
       'completedBy': completedBy,
+      'purchaseOrderId': purchaseOrderId,
     };
 
     if (forCreate) {
@@ -129,6 +133,7 @@ class ReceivingModel {
       createdBy: createdBy,
       createdByName: createdByName,
       completedBy: completedBy,
+      purchaseOrderId: purchaseOrderId,
     );
   }
 
@@ -151,6 +156,7 @@ class ReceivingModel {
       createdBy: entity.createdBy,
       createdByName: entity.createdByName,
       completedBy: entity.completedBy,
+      purchaseOrderId: entity.purchaseOrderId,
     );
   }
 
