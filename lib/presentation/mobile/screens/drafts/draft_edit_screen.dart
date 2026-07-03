@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,10 +15,10 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/add_products_sheet.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 import 'package:uuid/uuid.dart';
 
 /// Screen for editing/viewing a draft and converting to checkout.
@@ -139,7 +137,11 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder: (_) => _AddPartsSheet(onProduct: _addProduct),
+      builder: (_) => AddProductsSheet(
+        title: 'Add parts',
+        clearQueryOnPick: true,
+        onProduct: _addProduct,
+      ),
     );
   }
 
@@ -634,120 +636,6 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         setState(() => _isDeleting = false);
       }
     }
-  }
-}
-
-/// Bottom sheet that reuses the POS [ProductSearchField] to append parts to a
-/// Job Order in place (no register cart). Stays open so several parts can be
-/// added in one sitting; the editor behind updates live.
-class _AddPartsSheet extends ConsumerStatefulWidget {
-  const _AddPartsSheet({required this.onProduct});
-
-  final void Function(ProductEntity) onProduct;
-
-  @override
-  ConsumerState<_AddPartsSheet> createState() => _AddPartsSheetState();
-}
-
-class _AddPartsSheetState extends ConsumerState<_AddPartsSheet> {
-  final _controller = TextEditingController();
-  final _focusNode = FocusNode();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final screenHeight = MediaQuery.of(context).size.height;
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    // Fixed-height sheet with a scrollable in-flow results panel, so results
-    // always have room and "Done" stays pinned at the bottom. Clamped so the
-    // sheet + keyboard never exceed the screen on short devices; the upper
-    // bound is floored at 0 — on a very short window (split-screen +
-    // keyboard) a negative upper limit would make clamp throw.
-    final sheetHeight = (screenHeight * 0.62)
-        .clamp(0.0, math.max(0.0, screenHeight - bottomInset - 120))
-        .toDouble();
-
-    return Padding(
-      // Keyboard inset applied once, outside the fixed-height content.
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: SizedBox(
-        height: sheetHeight,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm + 2,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm + 6),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Add parts',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.x, size: 20),
-                    tooltip: 'Close',
-                    visualDensity: VisualDensity.compact,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Expanded(
-                child: ProductSearchField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  inlineResults: true,
-                  hintText: 'Search name, SKU, or scan barcode',
-                  onProductSelected: (p) {
-                    widget.onProduct(p);
-                    _controller.clear();
-                    _focusNode.requestFocus();
-                  },
-                  onBarcodeScanned: (barcode) async {
-                    final p = await ref
-                        .read(productByBarcodeProvider(barcode).future);
-                    if (!context.mounted) return;
-                    if (p != null) {
-                      widget.onProduct(p);
-                    } else {
-                      context
-                          .showWarningSnackBar('Product not found: $barcode');
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

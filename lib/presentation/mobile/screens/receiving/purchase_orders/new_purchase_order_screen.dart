@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,10 +8,10 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/add_products_sheet.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/purchase_orders/po_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
-import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
+
 import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
@@ -545,7 +544,13 @@ class NewPurchaseOrderScreenState
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder: (_) => _AddProductsSheet(
+      builder: (_) => AddProductsSheet(
+        title: 'Add products',
+        dismiss: AddProductsSheetDismiss.doneButton,
+        showSessionCount: true,
+        showPrice: false,
+        allowOutOfStock: true,
+        dedupe: true,
         initiallyAdded: _manual.map((p) => p.id).toSet(),
         onProduct: (p) {
           if (_manual.any((m) => m.id == p.id)) return;
@@ -620,141 +625,6 @@ class NewPurchaseOrderScreenState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-}
-
-/// Add-products sheet — Job Orders add-parts pattern: grab handle · title +
-/// session count · ProductSearchField (inline results, barcode scan, no
-/// prices, out-of-stock addable) · pinned Done. Stays open so several
-/// products accumulate; added rows chip as "Added".
-class _AddProductsSheet extends ConsumerStatefulWidget {
-  const _AddProductsSheet({
-    required this.initiallyAdded,
-    required this.onProduct,
-  });
-
-  /// Ids already added manually — their rows render the "Added" chip.
-  final Set<String> initiallyAdded;
-  final void Function(ProductEntity) onProduct;
-
-  @override
-  ConsumerState<_AddProductsSheet> createState() => _AddProductsSheetState();
-}
-
-class _AddProductsSheetState extends ConsumerState<_AddProductsSheet> {
-  final _controller = TextEditingController();
-  final _focusNode = FocusNode();
-  late final Set<String> _added = {...widget.initiallyAdded};
-  int _session = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  void _add(ProductEntity p) {
-    if (_added.contains(p.id)) return;
-    widget.onProduct(p);
-    setState(() {
-      _added.add(p.id);
-      _session++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final screenHeight = MediaQuery.of(context).size.height;
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    // Fixed-height sheet with an in-flow scrollable results panel, clamped so
-    // sheet + keyboard never exceed the screen (JO add-parts pattern). The
-    // upper bound is floored at 0 — on a very short window (split-screen +
-    // keyboard) a negative upper limit would make clamp throw.
-    final sheetHeight = (screenHeight * 0.62)
-        .clamp(0.0, math.max(0.0, screenHeight - bottomInset - 120))
-        .toDouble();
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: SizedBox(
-        height: sheetHeight,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Add products',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                  Text(
-                    '$_session added this session',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ProductSearchField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  inlineResults: true,
-                  showPrice: false,
-                  allowOutOfStock: true,
-                  addedIds: _added,
-                  hintText: 'Search name, SKU, or scan barcode',
-                  onProductSelected: _add,
-                  onBarcodeScanned: (barcode) async {
-                    final p = await ref
-                        .read(productByBarcodeProvider(barcode).future);
-                    if (!context.mounted) return;
-                    if (p == null) {
-                      context
-                          .showWarningSnackBar('Product not found: $barcode');
-                    } else if (_added.contains(p.id)) {
-                      // A silent no-op reads as a failed scan — say why
-                      // nothing changed.
-                      context.showWarningSnackBar('Already added: ${p.name}');
-                    } else {
-                      _add(p);
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Done'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 
