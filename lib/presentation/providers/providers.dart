@@ -15,6 +15,7 @@ export 'sale_provider.dart';
 export 'supplier_provider.dart';
 export 'inventory_provider.dart';
 export 'receiving_provider.dart';
+export 'purchase_order_provider.dart';
 export 'activity_log_provider.dart';
 export 'connectivity_provider.dart';
 export 'expense_provider.dart';

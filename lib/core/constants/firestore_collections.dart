@@ -25,6 +25,9 @@ abstract class FirestoreCollections {
   /// Receivings collection - stock receiving records
   static const String receivings = 'receivings';
 
+  /// Purchase orders collection - planned stock purchases
+  static const String purchaseOrders = 'purchase_orders';
+
   /// Expenses collection - business expenses
   static const String expenses = 'expenses';
 

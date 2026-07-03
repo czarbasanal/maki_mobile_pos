@@ -1,25 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/purchase_order_entity.dart';
 
-/// Data model for Receiving with Firestore serialization.
-class ReceivingModel {
+/// Data model for PurchaseOrder with Firestore serialization.
+class PurchaseOrderModel {
   final String id;
   final String referenceNumber;
   final String? supplierId;
   final String? supplierName;
-  final List<ReceivingItemModel> items;
+  final List<PurchaseOrderItemModel> items;
   final double totalCost;
   final int totalQuantity;
-  final ReceivingStatus status;
+  final PurchaseOrderStatus status;
   final String? notes;
   final DateTime createdAt;
-  final DateTime? completedAt;
   final String createdBy;
   final String createdByName;
-  final String? completedBy;
-  final String? purchaseOrderId;
+  final DateTime? orderedAt;
+  final DateTime? receivedAt;
+  final String? receivingId;
 
-  const ReceivingModel({
+  const PurchaseOrderModel({
     required this.id,
     required this.referenceNumber,
     this.supplierId,
@@ -30,49 +30,48 @@ class ReceivingModel {
     required this.status,
     this.notes,
     required this.createdAt,
-    this.completedAt,
     required this.createdBy,
     required this.createdByName,
-    this.completedBy,
-    this.purchaseOrderId,
+    this.orderedAt,
+    this.receivedAt,
+    this.receivingId,
   });
 
   /// Creates from Firestore document.
-  factory ReceivingModel.fromFirestore(
+  factory PurchaseOrderModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data()!;
-    return ReceivingModel.fromMap(data, doc.id);
+    return PurchaseOrderModel.fromMap(doc.data()!, doc.id);
   }
 
   /// Creates from a Map.
-  factory ReceivingModel.fromMap(Map<String, dynamic> map, String documentId) {
+  factory PurchaseOrderModel.fromMap(
+      Map<String, dynamic> map, String documentId) {
     final itemsList = (map['items'] as List<dynamic>?) ?? [];
-
-    return ReceivingModel(
+    return PurchaseOrderModel(
       id: documentId,
       referenceNumber: map['referenceNumber'] as String? ?? '',
       supplierId: map['supplierId'] as String?,
       supplierName: map['supplierName'] as String?,
       items: itemsList
           .map((item) =>
-              ReceivingItemModel.fromMap(item as Map<String, dynamic>))
+              PurchaseOrderItemModel.fromMap(item as Map<String, dynamic>))
           .toList(),
       totalCost: (map['totalCost'] as num?)?.toDouble() ?? 0.0,
       totalQuantity: (map['totalQuantity'] as num?)?.toInt() ?? 0,
       status: _parseStatus(map['status'] as String?),
       notes: map['notes'] as String?,
       createdAt: _parseTimestamp(map['createdAt']) ?? DateTime.now(),
-      completedAt: _parseTimestamp(map['completedAt']),
       createdBy: map['createdBy'] as String? ?? '',
       createdByName: map['createdByName'] as String? ?? '',
-      completedBy: map['completedBy'] as String?,
-      purchaseOrderId: map['purchaseOrderId'] as String?,
+      orderedAt: _parseTimestamp(map['orderedAt']),
+      receivedAt: _parseTimestamp(map['receivedAt']),
+      receivingId: map['receivingId'] as String?,
     );
   }
 
   /// Converts to Firestore Map.
-  Map<String, dynamic> toMap({bool forCreate = false, bool forUpdate = false}) {
+  Map<String, dynamic> toMap({bool forCreate = false}) {
     final map = <String, dynamic>{
       'referenceNumber': referenceNumber,
       'supplierId': supplierId,
@@ -84,41 +83,18 @@ class ReceivingModel {
       'notes': notes,
       'createdBy': createdBy,
       'createdByName': createdByName,
-      'completedBy': completedBy,
-      'purchaseOrderId': purchaseOrderId,
+      'orderedAt': orderedAt != null ? Timestamp.fromDate(orderedAt!) : null,
+      'receivedAt': receivedAt != null ? Timestamp.fromDate(receivedAt!) : null,
+      'receivingId': receivingId,
     };
-
-    if (forCreate) {
-      map['createdAt'] = FieldValue.serverTimestamp();
-    }
-
-    if (forUpdate) {
-      // Persist the completion timestamp on update. Completion sets
-      // completedAt to a concrete DateTime, so write it through; only fall
-      // back to a server timestamp when the status is completed but no time
-      // was supplied. (Previously this only fired when completedAt was null,
-      // so a normal completion never wrote the field — the read-only banner
-      // then showed no date.)
-      if (completedAt != null) {
-        map['completedAt'] = Timestamp.fromDate(completedAt!);
-      } else if (status == ReceivingStatus.completed) {
-        map['completedAt'] = FieldValue.serverTimestamp();
-      }
-    }
-
-    if (!forCreate && !forUpdate) {
-      map['createdAt'] = Timestamp.fromDate(createdAt);
-      if (completedAt != null) {
-        map['completedAt'] = Timestamp.fromDate(completedAt!);
-      }
-    }
-
+    map['createdAt'] =
+        forCreate ? FieldValue.serverTimestamp() : Timestamp.fromDate(createdAt);
     return map;
   }
 
   /// Converts to domain entity.
-  ReceivingEntity toEntity() {
-    return ReceivingEntity(
+  PurchaseOrderEntity toEntity() {
+    return PurchaseOrderEntity(
       id: id,
       referenceNumber: referenceNumber,
       supplierId: supplierId,
@@ -129,42 +105,42 @@ class ReceivingModel {
       status: status,
       notes: notes,
       createdAt: createdAt,
-      completedAt: completedAt,
       createdBy: createdBy,
       createdByName: createdByName,
-      completedBy: completedBy,
-      purchaseOrderId: purchaseOrderId,
+      orderedAt: orderedAt,
+      receivedAt: receivedAt,
+      receivingId: receivingId,
     );
   }
 
   /// Creates from domain entity.
-  factory ReceivingModel.fromEntity(ReceivingEntity entity) {
-    return ReceivingModel(
+  factory PurchaseOrderModel.fromEntity(PurchaseOrderEntity entity) {
+    return PurchaseOrderModel(
       id: entity.id,
       referenceNumber: entity.referenceNumber,
       supplierId: entity.supplierId,
       supplierName: entity.supplierName,
       items: entity.items
-          .map((item) => ReceivingItemModel.fromEntity(item))
+          .map((item) => PurchaseOrderItemModel.fromEntity(item))
           .toList(),
       totalCost: entity.totalCost,
       totalQuantity: entity.totalQuantity,
       status: entity.status,
       notes: entity.notes,
       createdAt: entity.createdAt,
-      completedAt: entity.completedAt,
       createdBy: entity.createdBy,
       createdByName: entity.createdByName,
-      completedBy: entity.completedBy,
-      purchaseOrderId: entity.purchaseOrderId,
+      orderedAt: entity.orderedAt,
+      receivedAt: entity.receivedAt,
+      receivingId: entity.receivingId,
     );
   }
 
-  static ReceivingStatus _parseStatus(String? value) {
-    if (value == null) return ReceivingStatus.draft;
-    return ReceivingStatus.values.firstWhere(
+  static PurchaseOrderStatus _parseStatus(String? value) {
+    if (value == null) return PurchaseOrderStatus.draft;
+    return PurchaseOrderStatus.values.firstWhere(
       (s) => s.name == value,
-      orElse: () => ReceivingStatus.draft,
+      orElse: () => PurchaseOrderStatus.draft,
     );
   }
 
@@ -176,47 +152,38 @@ class ReceivingModel {
   }
 }
 
-/// Data model for ReceivingItem.
-class ReceivingItemModel {
+/// Data model for PurchaseOrderItem.
+class PurchaseOrderItemModel {
   final String id;
-  final String? productId;
+  final String productId;
   final String sku;
   final String name;
   final int quantity;
   final String unit;
   final double unitCost;
   final String costCode;
-  final bool isNewVariation;
-  final String? newProductId;
-  final String? notes;
 
-  const ReceivingItemModel({
+  const PurchaseOrderItemModel({
     required this.id,
-    this.productId,
+    required this.productId,
     required this.sku,
     required this.name,
     required this.quantity,
     required this.unit,
     required this.unitCost,
     required this.costCode,
-    this.isNewVariation = false,
-    this.newProductId,
-    this.notes,
   });
 
-  factory ReceivingItemModel.fromMap(Map<String, dynamic> map) {
-    return ReceivingItemModel(
+  factory PurchaseOrderItemModel.fromMap(Map<String, dynamic> map) {
+    return PurchaseOrderItemModel(
       id: map['id'] as String? ?? '',
-      productId: map['productId'] as String?,
+      productId: map['productId'] as String? ?? '',
       sku: map['sku'] as String? ?? '',
       name: map['name'] as String? ?? '',
       quantity: (map['quantity'] as num?)?.toInt() ?? 0,
       unit: map['unit'] as String? ?? 'pcs',
       unitCost: (map['unitCost'] as num?)?.toDouble() ?? 0.0,
       costCode: map['costCode'] as String? ?? '',
-      isNewVariation: map['isNewVariation'] as bool? ?? false,
-      newProductId: map['newProductId'] as String?,
-      notes: map['notes'] as String?,
     );
   }
 
@@ -230,14 +197,11 @@ class ReceivingItemModel {
       'unit': unit,
       'unitCost': unitCost,
       'costCode': costCode,
-      'isNewVariation': isNewVariation,
-      'newProductId': newProductId,
-      'notes': notes,
     };
   }
 
-  ReceivingItemEntity toEntity() {
-    return ReceivingItemEntity(
+  PurchaseOrderItemEntity toEntity() {
+    return PurchaseOrderItemEntity(
       id: id,
       productId: productId,
       sku: sku,
@@ -246,14 +210,11 @@ class ReceivingItemModel {
       unit: unit,
       unitCost: unitCost,
       costCode: costCode,
-      isNewVariation: isNewVariation,
-      newProductId: newProductId,
-      notes: notes,
     );
   }
 
-  factory ReceivingItemModel.fromEntity(ReceivingItemEntity entity) {
-    return ReceivingItemModel(
+  factory PurchaseOrderItemModel.fromEntity(PurchaseOrderItemEntity entity) {
+    return PurchaseOrderItemModel(
       id: entity.id,
       productId: entity.productId,
       sku: entity.sku,
@@ -262,9 +223,6 @@ class ReceivingItemModel {
       unit: entity.unit,
       unitCost: entity.unitCost,
       costCode: entity.costCode,
-      isNewVariation: entity.isNewVariation,
-      newProductId: entity.newProductId,
-      notes: entity.notes,
     );
   }
 }
