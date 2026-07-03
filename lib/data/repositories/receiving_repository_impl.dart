@@ -189,7 +189,10 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
         completedBy: completedBy,
       );
 
-      return updateReceiving(completedReceiving);
+      if (receiving.purchaseOrderId == null) {
+        return updateReceiving(completedReceiving);
+      }
+      return _completeLinkedToPurchaseOrder(completedReceiving);
     } on DatabaseException {
       rethrow;
     } catch (e) {
@@ -198,6 +201,65 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
         originalError: e,
       );
     }
+  }
+
+  /// Completes a receiving that fulfills a purchase order: the receiving's
+  /// completion write and the PO's received-mark land in one WriteBatch so
+  /// the pair can't diverge. A PO that was deleted or already received must
+  /// not block completion — it is simply skipped.
+  Future<ReceivingEntity> _completeLinkedToPurchaseOrder(
+      ReceivingEntity receiving) async {
+    final poRef = _firestore
+        .collection(FirestoreCollections.purchaseOrders)
+        .doc(receiving.purchaseOrderId!);
+    final poSnap = await poRef.get();
+
+    final batch = _firestore.batch();
+    batch.update(
+      _receivingsRef.doc(receiving.id),
+      ReceivingModel.fromEntity(receiving).toMap(forUpdate: true),
+    );
+    if (poSnap.exists &&
+        poSnap.data()?['status'] != PurchaseOrderStatus.received.name) {
+      batch.update(poRef, {
+        'status': PurchaseOrderStatus.received.name,
+        'receivedAt': FieldValue.serverTimestamp(),
+        'receivingId': receiving.id,
+      });
+    }
+    await batch.commit();
+
+    final updated = await getReceivingById(receiving.id);
+    if (updated == null) {
+      throw const DatabaseException(
+          message: 'Receiving not found after update');
+    }
+    return updated;
+  }
+
+  /// Applies [update] to the receiving (or deletes it when null) and clears
+  /// the owning PO's receivingId in the same batch — but only when the PO
+  /// still points at this receiving, so a newer link is never clobbered.
+  Future<void> _writeAndUnlinkPurchaseOrder(
+    String receivingId,
+    String purchaseOrderId,
+    Map<String, dynamic>? update,
+  ) async {
+    final poRef = _firestore
+        .collection(FirestoreCollections.purchaseOrders)
+        .doc(purchaseOrderId);
+    final poSnap = await poRef.get();
+
+    final batch = _firestore.batch();
+    if (update == null) {
+      batch.delete(_receivingsRef.doc(receivingId));
+    } else {
+      batch.update(_receivingsRef.doc(receivingId), update);
+    }
+    if (poSnap.exists && poSnap.data()?['receivingId'] == receivingId) {
+      batch.update(poRef, {'receivingId': null});
+    }
+    await batch.commit();
   }
 
   /// Processes a single receiving item.
@@ -305,12 +367,18 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
             message: 'Cannot cancel completed receiving');
       }
 
-      await _receivingsRef.doc(receivingId).update({
+      final update = {
         'status': ReceivingStatus.cancelled.name,
         'notes': reason != null
             ? '${receiving.notes ?? ''}\nCancelled: $reason'.trim()
             : receiving.notes,
-      });
+      };
+      if (receiving.purchaseOrderId != null) {
+        await _writeAndUnlinkPurchaseOrder(
+            receivingId, receiving.purchaseOrderId!, update);
+      } else {
+        await _receivingsRef.doc(receivingId).update(update);
+      }
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to cancel receiving: ${e.message}',
@@ -335,7 +403,12 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
             message: 'Only draft receivings can be deleted');
       }
 
-      await _receivingsRef.doc(receivingId).delete();
+      if (receiving.purchaseOrderId != null) {
+        await _writeAndUnlinkPurchaseOrder(
+            receivingId, receiving.purchaseOrderId!, null);
+      } else {
+        await _receivingsRef.doc(receivingId).delete();
+      }
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to delete receiving: ${e.message}',
