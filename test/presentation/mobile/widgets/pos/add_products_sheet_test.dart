@@ -65,7 +65,7 @@ void main() {
         showSessionCount: true,
         showPrice: false,
         allowOutOfStock: true,
-        dedupe: true,
+        dedupeAgainst: const <String>{},
         onProduct: (p) => added.add(p.id),
       ),
     );

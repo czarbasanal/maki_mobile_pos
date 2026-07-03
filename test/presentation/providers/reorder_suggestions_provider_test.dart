@@ -30,7 +30,7 @@ void main() {
       productsProvider.overrideWith((ref) => Stream.value([sold, low, out])),
       reorderMovementProvider.overrideWith((ref, windowDays) async {
         fetches++;
-        return (unitsSold: {'sold': 60}, capped: true);
+        return (windowDays: windowDays, unitsSold: {'sold': 60}, capped: true);
       }),
     ]);
     addTearDown(container.dispose);

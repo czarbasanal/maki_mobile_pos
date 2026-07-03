@@ -328,7 +328,11 @@ void main() {
         // Real derivation runs; only the sales fetch is faked + counted.
         reorderMovementProvider.overrideWith((ref, windowDays) async {
           fetchedWindows.add(windowDays);
-          return (unitsSold: {'p1': 30}, capped: false);
+          return (
+            windowDays: windowDays,
+            unitsSold: {'p1': 30},
+            capped: false
+          );
         }),
       ],
       child: const MaterialApp(home: NewPurchaseOrderScreen()),

@@ -30,10 +30,8 @@ class AddProductsSheet extends ConsumerStatefulWidget {
     this.showSessionCount = false,
     this.showPrice = true,
     this.allowOutOfStock = false,
-    this.dedupe = false,
-    this.initiallyAdded = const {},
+    this.dedupeAgainst,
     this.clearQueryOnPick = false,
-    this.hintText = 'Search name, SKU, or scan barcode',
   });
 
   final String title;
@@ -45,16 +43,15 @@ class AddProductsSheet extends ConsumerStatefulWidget {
   final bool showPrice;
   final bool allowOutOfStock;
 
-  /// Skip repeat picks and chip already-added rows ("Added"); a duplicate
-  /// barcode scan warns instead of silently doing nothing.
-  final bool dedupe;
+  /// Non-null enables dedupe, seeded with the ids already on the host
+  /// screen: repeat picks are skipped, already-added rows chip as "Added",
+  /// and a duplicate barcode scan warns instead of silently doing nothing.
+  final Set<String>? dedupeAgainst;
 
-  /// Ids already on the host screen — seeds the dedupe set.
-  final Set<String> initiallyAdded;
-
-  /// Clear the query and refocus after each pick (JO behavior).
+  /// Clear the query and refocus after each row-tap pick (JO behavior).
+  /// Barcode adds clear without refocusing — the scan flow deliberately
+  /// keeps the keyboard down.
   final bool clearQueryOnPick;
-  final String hintText;
 
   @override
   ConsumerState<AddProductsSheet> createState() => _AddProductsSheetState();
@@ -63,8 +60,10 @@ class AddProductsSheet extends ConsumerStatefulWidget {
 class _AddProductsSheetState extends ConsumerState<AddProductsSheet> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
-  late final Set<String> _added = {...widget.initiallyAdded};
+  late final Set<String> _added = {...?widget.dedupeAgainst};
   int _session = 0;
+
+  bool get _dedupe => widget.dedupeAgainst != null;
 
   @override
   void dispose() {
@@ -73,16 +72,20 @@ class _AddProductsSheetState extends ConsumerState<AddProductsSheet> {
     super.dispose();
   }
 
-  void _add(ProductEntity p) {
-    if (widget.dedupe && _added.contains(p.id)) return;
+  void _add(ProductEntity p, {bool refocus = true}) {
+    if (_dedupe && _added.contains(p.id)) return;
     widget.onProduct(p);
-    setState(() {
-      _added.add(p.id);
-      _session++;
-    });
+    // Only rebuild when something observable changed (the Added chips or the
+    // session count); a plain JO pick keeps no sheet-side state.
+    if (_dedupe || widget.showSessionCount) {
+      setState(() {
+        if (_dedupe) _added.add(p.id);
+        _session++;
+      });
+    }
     if (widget.clearQueryOnPick) {
       _controller.clear();
-      _focusNode.requestFocus();
+      if (refocus) _focusNode.requestFocus();
     }
   }
 
@@ -91,11 +94,13 @@ class _AddProductsSheetState extends ConsumerState<AddProductsSheet> {
     if (!mounted) return;
     if (p == null) {
       context.showWarningSnackBar('Product not found: $barcode');
-    } else if (widget.dedupe && _added.contains(p.id)) {
+    } else if (_dedupe && _added.contains(p.id)) {
       // A silent no-op reads as a failed scan — say why nothing changed.
       context.showWarningSnackBar('Already added: ${p.name}');
     } else {
-      _add(p);
+      // No refocus after a camera scan — the scan flow drops the keyboard on
+      // purpose and popping it back up would cover the results per scan.
+      _add(p, refocus: false);
     }
   }
 
@@ -167,8 +172,8 @@ class _AddProductsSheetState extends ConsumerState<AddProductsSheet> {
                   inlineResults: true,
                   showPrice: widget.showPrice,
                   allowOutOfStock: widget.allowOutOfStock,
-                  addedIds: widget.dedupe ? _added : const {},
-                  hintText: widget.hintText,
+                  addedIds: _dedupe ? _added : const {},
+                  hintText: 'Search name, SKU, or scan barcode',
                   onProductSelected: _add,
                   onBarcodeScanned: _onBarcode,
                 ),

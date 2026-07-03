@@ -9,7 +9,6 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/add_products_sheet.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/purchase_orders/po_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
-
 import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
@@ -530,8 +529,7 @@ class NewPurchaseOrderScreenState
         showSessionCount: true,
         showPrice: false,
         allowOutOfStock: true,
-        dedupe: true,
-        initiallyAdded: _manual.map((p) => p.id).toSet(),
+        dedupeAgainst: _manual.map((p) => p.id).toSet(),
         onProduct: (p) {
           if (_manual.any((m) => m.id == p.id)) return;
           setState(() {

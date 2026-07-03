@@ -8,7 +8,8 @@ import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
-final purchaseOrderRepositoryProvider = Provider<PurchaseOrderRepository>((ref) {
+final purchaseOrderRepositoryProvider =
+    Provider<PurchaseOrderRepository>((ref) {
   return PurchaseOrderRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
@@ -19,8 +20,8 @@ final purchaseOrdersProvider =
   return ref.watch(purchaseOrderRepositoryProvider).watchPurchaseOrders();
 });
 
-final purchaseOrderProvider = StreamProvider.autoDispose
-    .family<PurchaseOrderEntity?, String>((ref, id) {
+final purchaseOrderProvider =
+    StreamProvider.autoDispose.family<PurchaseOrderEntity?, String>((ref, id) {
   return ref.watch(purchaseOrderRepositoryProvider).watchPurchaseOrderById(id);
 });
 
@@ -49,10 +50,19 @@ class ReorderResult {
 }
 
 /// Movement data for a window: units sold per product + whether the sales
-/// fetch hit [reorderSalesCap]. Keyed by windowDays ONLY — coverDays never
-/// affects the fetch, so cover changes must not refetch.
-typedef ReorderMovement = ({Map<String, int> unitsSold, bool capped});
+/// fetch hit [reorderSalesCap]. Carries the [windowDays] it was fetched for
+/// so velocity math always divides by the window the numerator covers.
+typedef ReorderMovement = ({
+  int windowDays,
+  Map<String, int> unitsSold,
+  bool capped,
+});
 
+/// Keyed by windowDays ONLY — coverDays never affects the fetch, so cover
+/// changes must not refetch. Deliberate trade-off: the fetch (and its
+/// DateTime.now() anchor) stays cached while the screen is open, so sales
+/// completed mid-session don't move velocities until the window changes or
+/// the screen is re-entered (autoDispose refetches then).
 final reorderMovementProvider = FutureProvider.autoDispose
     .family<ReorderMovement, int>((ref, windowDays) async {
   final now = DateTime.now();
@@ -65,6 +75,7 @@ final reorderMovementProvider = FutureProvider.autoDispose
         limit: reorderSalesCap,
       );
   return (
+    windowDays: windowDays,
     unitsSold: unitsSoldByProduct(sales),
     capped: sales.length >= reorderSalesCap,
   );
@@ -82,8 +93,12 @@ final reorderSuggestionsProvider = Provider.autoDispose
     loading: () => const AsyncValue.loading(),
     error: (e, st) => AsyncValue.error(e, st),
     data: (products) => movementAsync.whenData((movement) {
-      final suggestions =
-          computeReorderSuggestions(products, movement.unitsSold, params);
+      // The window rides with the movement data, so the velocity denominator
+      // can never drift from the window the units were fetched for.
+      final suggestions = computeReorderSuggestions(
+          products,
+          movement.unitsSold,
+          (windowDays: movement.windowDays, coverDays: params.coverDays));
       final suggestedIds = {for (final s in suggestions) s.product.id};
       final lowStock = <ProductEntity>[];
       final outOfStock = <ProductEntity>[];
