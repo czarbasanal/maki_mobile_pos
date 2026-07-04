@@ -2,7 +2,13 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 /// Abstract repository contract for Expense operations.
 abstract class ExpenseRepository {
-  /// Creates a new expense.
+  /// Pre-allocates a document id, letting callers upload ancillary files
+  /// (receipt photo) BEFORE creating the document — required because
+  /// non-admin roles can create but not update expenses.
+  String newExpenseId();
+
+  /// Creates a new expense. A non-empty [ExpenseEntity.id] (from
+  /// [newExpenseId]) is honored; an empty id lets Firestore generate one.
   Future<ExpenseEntity> createExpense(ExpenseEntity expense);
 
   /// Gets an expense by ID.
