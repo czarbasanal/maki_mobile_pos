@@ -95,9 +95,12 @@ abstract class RolePermissions {
     // Reports (daily only)
     Permission.viewSalesReports,
     Permission.viewDailySalesOnly,
-    // Expenses (add only)
+    // Expenses (full CRUD — shop policy 2026-07-04: cashiers/staff record,
+    // fix, and remove their own entry mistakes; activity log keeps the trail)
     Permission.viewExpenses,
     Permission.addExpense,
+    Permission.editExpense,
+    Permission.deleteExpense,
     // End-of-day closing
     Permission.viewEndOfDay,
     Permission.closeDay,
@@ -137,9 +140,12 @@ abstract class RolePermissions {
     // Reports (daily only)
     Permission.viewSalesReports,
     Permission.viewDailySalesOnly,
-    // Expenses (add only)
+    // Expenses (full CRUD — shop policy 2026-07-04: cashiers/staff record,
+    // fix, and remove their own entry mistakes; activity log keeps the trail)
     Permission.viewExpenses,
     Permission.addExpense,
+    Permission.editExpense,
+    Permission.deleteExpense,
     // End-of-day closing
     Permission.viewEndOfDay,
     Permission.closeDay,

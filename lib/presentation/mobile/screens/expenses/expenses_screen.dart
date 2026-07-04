@@ -22,9 +22,9 @@ import 'package:intl/intl.dart';
 /// expense list. Filter dropdown and "View all" history link are added in
 /// later chunks; for now this is the totals + flat list.
 ///
-/// Role-based behavior:
-/// - Admin: Full CRUD on expenses.
-/// - Staff/Cashier: Can view and add expenses. Cannot edit or delete.
+/// Role-based behavior: all roles have full CRUD on expenses (shop policy
+/// 2026-07-04 — cashier/staff fix and remove their own entry mistakes; the
+/// activity log keeps the audit trail).
 class ExpensesScreen extends ConsumerStatefulWidget {
   const ExpensesScreen({super.key});
 

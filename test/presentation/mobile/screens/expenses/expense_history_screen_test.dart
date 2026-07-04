@@ -55,10 +55,11 @@ void main() {
     expect(row.onTap, isNotNull);
   });
 
-  testWidgets('cashier rows are not tappable', (tester) async {
+  testWidgets('cashier rows are tappable too (editExpense granted 2026-07-04)',
+      (tester) async {
     await pump(tester, role: UserRole.cashier);
     final row = tester.widget<ExpenseRow>(find.byType(ExpenseRow));
-    expect(row.onTap, isNull);
+    expect(row.onTap, isNotNull);
   });
 
   testWidgets('paperclip shows when the expense has a receipt',

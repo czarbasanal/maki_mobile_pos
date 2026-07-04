@@ -381,9 +381,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               'Receipt upload failed — expense saved without new receipt');
         }
       } else {
-        // Cashiers/staff can create but not update expenses (Firestore
-        // rules), so the receipt must be uploaded BEFORE the document is
-        // created — pre-allocate the id and carry the URL on the create.
+        // The receipt uploads BEFORE the document is created — pre-allocate
+        // the id and carry the URL on the create, so the expense lands in
+        // one write with no URL-fixup update racing behind it.
         var receiptFailed = false;
         final saved = await context.runWithWaiting(
           () async {

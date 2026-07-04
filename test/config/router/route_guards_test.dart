@@ -136,15 +136,15 @@ void main() {
           false);
     });
 
-    test('expense edit denies cashier and staff (admin-only)', () {
+    test('expense edit allows all roles (editExpense granted 2026-07-04)', () {
       expect(
           RouteGuards.canAccess(
               '/expenses/edit/exp-1', _user(UserRole.cashier)),
-          false);
+          true);
       expect(
           RouteGuards.canAccess(
               '/expenses/edit/exp-1', _user(UserRole.staff)),
-          false);
+          true);
       expect(
           RouteGuards.canAccess(
               '/expenses/edit/exp-1', _user(UserRole.admin)),
