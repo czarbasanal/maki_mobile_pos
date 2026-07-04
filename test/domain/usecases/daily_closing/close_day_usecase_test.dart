@@ -35,8 +35,9 @@ UserEntity _user(UserRole role, {bool active = true}) => UserEntity(
       createdAt: DateTime(2025, 1, 1),
     );
 
-ExpenseEntity _exp(double amount, PaymentMethod paidVia) => ExpenseEntity(
-      id: 'e',
+ExpenseEntity _exp(double amount, PaymentMethod paidVia, {String id = 'e'}) =>
+    ExpenseEntity(
+      id: id,
       description: 'x',
       amount: amount,
       category: 'c',
@@ -253,5 +254,40 @@ void main() {
     // expectedCash includes labor cash (float + cashSales - cashExpenses = 2000 + 1450 - 0)
     expect(saved.expectedCash, 3450);
     expect(saved.variance, 0);
+  });
+
+  test('excluded expenses are removed from the math and persisted', () async {
+    when(() => expenses.getExpenses(
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          category: any(named: 'category'),
+          limit: any(named: 'limit'),
+        )).thenAnswer((_) async => [
+          _exp(100, PaymentMethod.cash, id: 'keep'),
+          _exp(500, PaymentMethod.cash, id: 'drop'),
+        ]);
+
+    final captured = <DailyClosingEntity>[];
+    when(() => closings.saveClosing(any())).thenAnswer((inv) async {
+      final c = inv.positionalArguments.first as DailyClosingEntity;
+      captured.add(c);
+      return c;
+    });
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      date: DateTime(2026, 5, 28),
+      openingFloat: 2000,
+      countedCash: 2600,
+      excludedExpenseIds: {'drop'},
+    );
+
+    expect(result.success, true);
+    final saved = captured.single;
+    expect(saved.totalExpenses, 100);
+    expect(saved.cashExpenses, 100);
+    expect(saved.expectedCash, 2600); // 2000 + 700 - 100 (500 NOT deducted)
+    expect(saved.variance, 0);
+    expect(saved.excludedExpenseIds, ['drop']);
   });
 }
