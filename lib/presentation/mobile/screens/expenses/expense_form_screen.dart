@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,8 +10,10 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/expenses/receipt_image_field.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/services/expense_receipt_storage_service.dart';
 
 /// Screen for creating or editing an expense.
 class ExpenseFormScreen extends ConsumerStatefulWidget {
@@ -36,6 +40,10 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   bool _isSaving = false;
   bool _isDeleting = false;
 
+  Uint8List? _pendingReceiptBytes;
+  bool _receiptMarkedForRemoval = false;
+  String? _existingReceiptUrl;
+
   /// Snapshot of the form's values at load. The Update button stays disabled
   /// until the current values diverge from this (edit mode only).
   String _initialSig = '';
@@ -47,6 +55,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         _paidVia.name,
         _selectedDate.toIso8601String(),
         _notesController.text.trim(),
+        (_pendingReceiptBytes != null || _receiptMarkedForRemoval).toString(),
       ].join('|');
 
   bool get _isDirty => _sig() != _initialSig;
@@ -90,6 +99,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       _selectedCategory = expense.category;
       _paidVia = expense.paidVia;
       _selectedDate = expense.date;
+      _existingReceiptUrl = expense.receiptImageUrl;
       _initialSig = _sig();
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -124,139 +134,171 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               icon: const Icon(LucideIcons.trash2),
               tooltip: 'Delete expense',
               color: AppColors.error,
-              onPressed:
-                  (_isLoading || _isSaving || _isDeleting) ? null : _handleDelete,
+              onPressed: (_isLoading || _isSaving || _isDeleting)
+                  ? null
+                  : _handleDelete,
             ),
         ],
       ),
       body: _isLoading
           ? const FormSkeleton()
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Description
-              TextFormField(
-                style: AppTextStyles.fieldInput,
-                controller: _descriptionController,
-                autofocus: !widget.isEditing,
-                decoration: const InputDecoration(
-                  labelText: 'Description *',
-                ),
-                validator: (value) =>
-                    value?.isEmpty == true ? 'Description is required' : null,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 16),
-
-              // Amount
-              TextFormField(
-                style: AppTextStyles.fieldInput,
-                controller: _amountController,
-                decoration: const InputDecoration(
-                  labelText: 'Amount *',
-                  prefixText: '₱ ',
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                validator: (value) {
-                  if (value?.isEmpty == true) return 'Amount is required';
-                  final amount = double.tryParse(value!);
-                  if (amount == null || amount <= 0) {
-                    return 'Enter a valid amount';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Category — admin-managed dropdown.
-              _ExpenseCategoryDropdown(
-                selected: _selectedCategory,
-                onChanged: (value) {
-                  setState(() => _selectedCategory = value);
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Paid via — which payment method funded this expense.
-              AppDropdown<PaymentMethod>(
-                initialValue: _paidVia,
-                decoration: const InputDecoration(
-                  labelText: 'Paid via *',
-                ),
-                items: PaymentMethod.values
-                    .map(
-                      (m) => DropdownMenuItem(
-                        value: m,
-                        child: Text(m.displayName),
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Description
+                    TextFormField(
+                      style: AppTextStyles.fieldInput,
+                      controller: _descriptionController,
+                      autofocus: !widget.isEditing,
+                      decoration: const InputDecoration(
+                        labelText: 'Description *',
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _paidVia = value);
-                },
-              ),
-              const SizedBox(height: 16),
+                      validator: (value) => value?.isEmpty == true
+                          ? 'Description is required'
+                          : null,
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                    const SizedBox(height: 16),
 
-              // Date
-              InkWell(
-                onTap: _selectDate,
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Date *',
-                    suffixIcon: Icon(LucideIcons.calendar),
-                  ),
-                  child: Text(
-                    '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+                    // Amount
+                    TextFormField(
+                      style: AppTextStyles.fieldInput,
+                      controller: _amountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount *',
+                        prefixText: '₱ ',
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        if (value?.isEmpty == true) return 'Amount is required';
+                        final amount = double.tryParse(value!);
+                        if (amount == null || amount <= 0) {
+                          return 'Enter a valid amount';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-              // Notes
-              TextFormField(
-                style: AppTextStyles.fieldInput,
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes',
-                  hintText: 'Optional details…',
-                ),
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 32),
+                    // Category — admin-managed dropdown.
+                    _ExpenseCategoryDropdown(
+                      selected: _selectedCategory,
+                      onChanged: (value) {
+                        setState(() => _selectedCategory = value);
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: (_isSaving || (widget.isEditing && !_isDirty))
-                      ? null
-                      : _handleSubmit,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                    // Paid via — which payment method funded this expense.
+                    AppDropdown<PaymentMethod>(
+                      initialValue: _paidVia,
+                      decoration: const InputDecoration(
+                        labelText: 'Paid via *',
+                      ),
+                      items: PaymentMethod.values
+                          .map(
+                            (m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(m.displayName),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) setState(() => _paidVia = value);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Date
+                    InkWell(
+                      onTap: _selectDate,
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date *',
+                          suffixIcon: Icon(LucideIcons.calendar),
+                        ),
+                        child: Text(
+                          '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Notes
+                    TextFormField(
+                      style: AppTextStyles.fieldInput,
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Optional details…',
+                      ),
+                      maxLines: 3,
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Optional receipt photo — bytes held in memory, uploaded on
+                    // save (before create for non-admin roles; see _handleSubmit).
+                    Text(
+                      'Receipt (optional)',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
-                        )
-                      : Text(
-                          widget.isEditing ? 'Update Expense' : 'Add Expense'),
+                    ),
+                    const SizedBox(height: 8),
+                    ReceiptImageField(
+                      existingUrl:
+                          _receiptMarkedForRemoval ? null : _existingReceiptUrl,
+                      pendingBytes: _pendingReceiptBytes,
+                      onChanged: (bytes, {required removed}) {
+                        setState(() {
+                          if (removed) {
+                            _pendingReceiptBytes = null;
+                            _receiptMarkedForRemoval = true;
+                          } else {
+                            _pendingReceiptBytes = bytes;
+                            _receiptMarkedForRemoval = false;
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Submit Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed:
+                            (_isSaving || (widget.isEditing && !_isDirty))
+                                ? null
+                                : _handleSubmit,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: _isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(widget.isEditing
+                                ? 'Update Expense'
+                                : 'Add Expense'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -292,39 +334,93 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           }
           return;
         }
-        final updated = existing.copyWith(
-          description: _descriptionController.text.trim(),
-          amount: amount,
-          category: _selectedCategory!,
-          date: _selectedDate,
-          paidVia: _paidVia,
-          notes: notes.isEmpty ? null : notes,
-          clearNotes: notes.isEmpty,
-        );
         if (!mounted) return;
+        var receiptFailed = false;
         final saved = await context.runWithWaiting(
-          () => notifier.updateExpense(expense: updated),
+          () async {
+            String? newUrl;
+            if (_pendingReceiptBytes != null) {
+              try {
+                newUrl = await ref
+                    .read(expenseReceiptStorageServiceProvider)
+                    .upload(
+                        expenseId: existing.id, bytes: _pendingReceiptBytes!);
+              } catch (_) {
+                receiptFailed = true; // keep whatever URL was there before
+              }
+            }
+            final clearReceipt =
+                _receiptMarkedForRemoval && _pendingReceiptBytes == null;
+            final updated = existing.copyWith(
+              description: _descriptionController.text.trim(),
+              amount: amount,
+              category: _selectedCategory!,
+              date: _selectedDate,
+              paidVia: _paidVia,
+              notes: notes.isEmpty ? null : notes,
+              clearNotes: notes.isEmpty,
+              receiptImageUrl: newUrl,
+              clearReceiptImageUrl: clearReceipt,
+            );
+            final result = await notifier.updateExpense(expense: updated);
+            if (result != null && clearReceipt) {
+              // Best-effort storage cleanup — orphans are harmless.
+              try {
+                await ref
+                    .read(expenseReceiptStorageServiceProvider)
+                    .delete(expenseId: existing.id);
+              } catch (_) {}
+            }
+            return result;
+          },
           message: 'Updating…',
         );
         if (saved == null) throw _readOperationError();
+        if (receiptFailed && mounted) {
+          context.showWarningSnackBar(
+              'Receipt upload failed — expense saved without new receipt');
+        }
       } else {
-        final draft = ExpenseEntity(
-          id: '',
-          description: _descriptionController.text.trim(),
-          amount: amount,
-          category: _selectedCategory!,
-          date: _selectedDate,
-          paidVia: _paidVia,
-          notes: notes.isEmpty ? null : notes,
-          createdAt: now,
-          createdBy: '',
-          createdByName: '',
-        );
+        // Cashiers/staff can create but not update expenses (Firestore
+        // rules), so the receipt must be uploaded BEFORE the document is
+        // created — pre-allocate the id and carry the URL on the create.
+        var receiptFailed = false;
         final saved = await context.runWithWaiting(
-          () => notifier.createExpense(expense: draft),
+          () async {
+            var presetId = '';
+            String? receiptUrl;
+            if (_pendingReceiptBytes != null) {
+              presetId = ref.read(expenseRepositoryProvider).newExpenseId();
+              try {
+                receiptUrl = await ref
+                    .read(expenseReceiptStorageServiceProvider)
+                    .upload(expenseId: presetId, bytes: _pendingReceiptBytes!);
+              } catch (_) {
+                receiptFailed = true; // best-effort: save without receipt
+              }
+            }
+            final draft = ExpenseEntity(
+              id: receiptUrl != null ? presetId : '',
+              description: _descriptionController.text.trim(),
+              amount: amount,
+              category: _selectedCategory!,
+              date: _selectedDate,
+              paidVia: _paidVia,
+              notes: notes.isEmpty ? null : notes,
+              receiptImageUrl: receiptUrl,
+              createdAt: now,
+              createdBy: '',
+              createdByName: '',
+            );
+            return notifier.createExpense(expense: draft);
+          },
           message: 'Saving…',
         );
         if (saved == null) throw _readOperationError();
+        if (receiptFailed && mounted) {
+          context.showWarningSnackBar(
+              'Receipt upload failed — expense saved without receipt');
+        }
       }
 
       if (mounted) {
@@ -360,9 +456,20 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     setState(() => _isDeleting = true);
     try {
       final ok = await context.runWithWaiting(
-        () => ref
-            .read(expenseOperationsProvider.notifier)
-            .deleteExpense(widget.expenseId!),
+        () async {
+          final deleted = await ref
+              .read(expenseOperationsProvider.notifier)
+              .deleteExpense(widget.expenseId!);
+          if (deleted) {
+            // Best-effort receipt cleanup — orphans are harmless.
+            try {
+              await ref
+                  .read(expenseReceiptStorageServiceProvider)
+                  .delete(expenseId: widget.expenseId!);
+            } catch (_) {}
+          }
+          return deleted;
+        },
         message: 'Deleting…',
       );
       if (!ok) throw _readOperationError();
@@ -409,8 +516,7 @@ class _ExpenseCategoryDropdown extends ConsumerWidget {
       data: (categories) {
         final theme = Theme.of(context);
         final activeNames = categories.map((c) => c.name).toList();
-        final isOrphan =
-            selected != null && !activeNames.contains(selected);
+        final isOrphan = selected != null && !activeNames.contains(selected);
 
         if (activeNames.isEmpty && !isOrphan) {
           return InputDecorator(
