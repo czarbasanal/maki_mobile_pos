@@ -130,7 +130,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const FormSkeleton()
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -453,7 +453,7 @@ class _ExpenseCategoryDropdown extends ConsumerWidget {
               (value == null || value.isEmpty) ? 'Category is required' : null,
         );
       },
-      loading: () => const LinearProgressIndicator(),
+      loading: () => const FieldSkeleton(),
       error: (_, __) => const Text('Could not load categories'),
     );
   }

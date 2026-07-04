@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.dart';
 
 /// Card displaying a summary metric on the dashboard.
 ///
@@ -16,6 +17,9 @@ class SummaryCard extends StatelessWidget {
   final String? subtitle;
   final bool compact;
   final bool highlighted;
+
+  /// Shows a skeleton bar in place of [value] while it loads.
+  final bool loading;
   final VoidCallback? onTap;
 
   const SummaryCard({
@@ -27,6 +31,7 @@ class SummaryCard extends StatelessWidget {
     this.subtitle,
     this.compact = false,
     this.highlighted = false,
+    this.loading = false,
     this.onTap,
   });
 
@@ -75,16 +80,22 @@ class SummaryCard extends StatelessWidget {
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
               const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: SkeletonBox(width: 48, height: 16),
+                )
+              else
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -128,13 +139,19 @@ class SummaryCard extends StatelessWidget {
             children: [
               Icon(icon, color: accent, size: 20),
               const SizedBox(height: 4),
-              Text(
-                value,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: highlighted ? accent : null,
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: SkeletonBox(width: 48, height: 16),
+                )
+              else
+                Text(
+                  value,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: highlighted ? accent : null,
+                  ),
                 ),
-              ),
               Text(
                 title,
                 style: theme.textTheme.labelSmall?.copyWith(

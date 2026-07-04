@@ -345,16 +345,15 @@ class _TotalCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final totalAsync = ref.watch(totalExpensesProvider(params));
-    final value = totalAsync.when(
-      data: (total) => _ExpenseTotalsRow._currencyFormat.format(total),
-      loading: () => '…',
-      error: (_, __) => '—',
-    );
     return SummaryCard(
       title: title,
-      value: value,
+      value: totalAsync.maybeWhen(
+        data: (total) => _ExpenseTotalsRow._currencyFormat.format(total),
+        orElse: () => '—',
+      ),
       icon: icon,
       compact: true,
+      loading: totalAsync.isLoading,
     );
   }
 }
@@ -419,7 +418,7 @@ class _CategoryFilterDropdown extends ConsumerWidget {
           onChanged: onChanged,
         );
       },
-      loading: () => const LinearProgressIndicator(),
+      loading: () => const FieldSkeleton(),
       error: (_, __) => const Text('Could not load categories'),
     );
   }

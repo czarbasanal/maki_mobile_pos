@@ -229,7 +229,7 @@ class _HistoryCategoryFilter extends ConsumerWidget {
           onChanged: onChanged,
         );
       },
-      loading: () => const LinearProgressIndicator(),
+      loading: () => const FieldSkeleton(),
       error: (_, __) => const Text('Could not load categories'),
     );
   }

@@ -75,6 +75,46 @@ class ListSkeleton extends StatelessWidget {
   }
 }
 
+/// A single field-shaped skeleton — placeholder for a text field / dropdown
+/// while its data source loads. Replaces bare LinearProgressIndicators.
+class FieldSkeleton extends StatelessWidget {
+  const FieldSkeleton({super.key, this.height = 56});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonBox(
+      width: double.infinity,
+      height: height,
+      radius: AppRadius.field,
+    );
+  }
+}
+
+/// Skeleton for a form screen while its record loads: [fields] field-shaped
+/// bars + a button-shaped bar, inside the standard page padding.
+class FormSkeleton extends StatelessWidget {
+  const FormSkeleton({super.key, this.fields = 6});
+
+  final int fields;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      children: [
+        for (var i = 0; i < fields; i++) ...[
+          const FieldSkeleton(),
+          const SizedBox(height: AppSpacing.md),
+        ],
+        const SizedBox(height: AppSpacing.md),
+        const FieldSkeleton(height: 52),
+      ],
+    );
+  }
+}
+
 class _SkeletonRow extends StatelessWidget {
   const _SkeletonRow();
 
