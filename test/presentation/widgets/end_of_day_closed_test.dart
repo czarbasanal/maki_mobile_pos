@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:maki_mobile_pos/core/enums/payment_method.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
+import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
 
@@ -31,23 +34,37 @@ DailyClosingEntity _closing(DateTime d) => DailyClosingEntity(
       closedAt: DateTime(2026, 6, 27, 18, 32),
     );
 
-// A live draft with two more sales (+₱1,300 gross, +₱800 cash) than the
+// Live data with two more sales (+₱1,300 gross, +₱800 cash) than the
 // snapshot → triggers the post-close warning + After-close card.
-DailyClosingDraft _draft(DateTime d) => DailyClosingDraft(
+DailyClosingData _data(DateTime d) => DailyClosingData(
       businessDate: d,
-      grossSales: 9720,
-      netSales: 9600,
-      totalDiscounts: 120,
-      cashSales: 6000,
-      nonCashSales: 3520,
-      gcashSales: 2540,
-      mayaSales: 980,
-      totalExpenses: 430,
-      cashExpenses: 430,
-      salmonReceivable: 0,
-      laborRevenue: 650,
-      salesCount: 16,
-      voidedCount: 0,
+      summary: const SalesSummary(
+        totalSalesCount: 16,
+        voidedSalesCount: 0,
+        grossAmount: 9720,
+        totalDiscounts: 120,
+        netAmount: 9600,
+        totalCost: 0,
+        totalProfit: 9600,
+        byPaymentMethod: {
+          PaymentMethod.cash: 6000,
+          PaymentMethod.gcash: 2540,
+          PaymentMethod.maya: 980,
+        },
+        laborRevenue: 650,
+      ),
+      expenses: [
+        ExpenseEntity(
+          id: 'e1',
+          description: 'Diesel',
+          amount: 430,
+          category: 'Fuel',
+          date: d,
+          createdAt: d,
+          createdBy: '',
+          createdByName: '',
+        ),
+      ],
     );
 
 void main() {
@@ -58,8 +75,8 @@ void main() {
         overrides: [
           dailyClosingForDateProvider
               .overrideWith((ref, date) async => _closing(dayStart)),
-          dailyClosingDraftProvider
-              .overrideWith((ref, date) async => _draft(dayStart)),
+          dailyClosingDataProvider
+              .overrideWith((ref, date) async => _data(dayStart)),
         ],
         child: const MaterialApp(home: EndOfDayScreen()),
       );
