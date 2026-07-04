@@ -69,4 +69,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(InteractiveViewer), findsOneWidget);
   });
+
+  testWidgets('viewer has a save/download action', (tester) async {
+    await pump(tester, pendingBytes: kTinyPng);
+    await tester.tap(find.byType(Image));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(LucideIcons.download), findsOneWidget);
+  });
 }

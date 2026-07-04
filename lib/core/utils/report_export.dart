@@ -12,19 +12,43 @@ Future<void> saveReportCsv(
   BuildContext context,
   String csv,
   String fileName,
-) async {
+) {
+  return saveBytesFile(
+    context,
+    Uint8List.fromList(utf8.encode(csv)),
+    fileName,
+    dialogTitle: 'Save CSV',
+    allowedExtensions: const ['csv'],
+    successMessage: 'Exported $fileName',
+    cancelledMessage: 'Export cancelled',
+    failedPrefix: 'Export failed',
+  );
+}
+
+/// Saves [bytes] to a user-chosen file named [fileName] via the file save
+/// dialog. Shows a success / cancelled / failed snackbar. Safe to call after
+/// awaits (guards mounted).
+Future<void> saveBytesFile(
+  BuildContext context,
+  Uint8List bytes,
+  String fileName, {
+  required String dialogTitle,
+  required List<String> allowedExtensions,
+  required String successMessage,
+  String cancelledMessage = 'Save cancelled',
+  String failedPrefix = 'Save failed',
+}) async {
   try {
-    final bytes = Uint8List.fromList(utf8.encode(csv));
     final path = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save CSV',
+      dialogTitle: dialogTitle,
       fileName: fileName,
       type: FileType.custom,
-      allowedExtensions: ['csv'],
+      allowedExtensions: allowedExtensions,
       bytes: bytes,
     );
     if (!context.mounted) return;
     if (path == null) {
-      context.showSnackBar('Export cancelled');
+      context.showSnackBar(cancelledMessage);
       return;
     }
     // On mobile, saveFile(bytes:) already wrote the file; on desktop it only
@@ -33,8 +57,8 @@ Future<void> saveReportCsv(
       await File(path).writeAsBytes(bytes);
     }
     if (!context.mounted) return;
-    context.showSuccessSnackBar('Exported $fileName');
+    context.showSuccessSnackBar(successMessage);
   } catch (e) {
-    if (context.mounted) context.showErrorSnackBar('Export failed: $e');
+    if (context.mounted) context.showErrorSnackBar('$failedPrefix: $e');
   }
 }
