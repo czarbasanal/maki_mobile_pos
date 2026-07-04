@@ -185,6 +185,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         description: expense.description,
         subtitle: _dateFormat.format(expense.createdAt),
         amount: expense.amount,
+        hasReceipt: expense.receiptImageUrl != null,
         onTap: canEdit
             ? () => context.push('${RoutePaths.expenses}/edit/${expense.id}')
             : null,
