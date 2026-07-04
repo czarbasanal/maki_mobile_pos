@@ -3,6 +3,40 @@ import 'package:maki_mobile_pos/core/enums/payment_method.dart';
 import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 
+/// The raw inputs of a day's closing — the sales summary plus the itemized
+/// expense list. The EOD screen derives [DailyClosingDraft]s from this via
+/// [draftExcluding], so removing/restoring an expense recomputes instantly
+/// without refetching (fetch/derive split).
+class DailyClosingData extends Equatable {
+  final DateTime businessDate;
+  final SalesSummary summary;
+  final List<ExpenseEntity> expenses;
+
+  const DailyClosingData({
+    required this.businessDate,
+    required this.summary,
+    required this.expenses,
+  });
+
+  /// Draft computed over the expenses NOT in [excludedExpenseIds]. An
+  /// excluded expense stays recorded in the ledger — it just doesn't count
+  /// against this closing's totals or drawer math.
+  DailyClosingDraft draftExcluding(Set<String> excludedExpenseIds) {
+    return DailyClosingDraft.fromData(
+      businessDate: businessDate,
+      summary: summary,
+      expenses: excludedExpenseIds.isEmpty
+          ? expenses
+          : expenses
+              .where((e) => !excludedExpenseIds.contains(e.id))
+              .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [businessDate, summary, expenses];
+}
+
 /// Live, unsaved end-of-day figures computed from the day's sales + expenses.
 ///
 /// The manual inputs (opening float, counted cash) are layered on top by the
@@ -156,6 +190,12 @@ class DailyClosingEntity extends Equatable {
   final double variance;
   final int salesCount;
   final int voidedCount;
+
+  /// Ids of same-day expenses the closer removed from the reconciliation —
+  /// still recorded in the expenses ledger, just not deducted from the
+  /// drawer in this closing. Needed so post-close drift math can filter
+  /// them when recomputing the current draft.
+  final List<String> excludedExpenseIds;
   final String? notes;
   final String closedBy;
   final String closedByName;
@@ -183,6 +223,7 @@ class DailyClosingEntity extends Equatable {
     required this.variance,
     required this.salesCount,
     required this.voidedCount,
+    this.excludedExpenseIds = const [],
     this.notes,
     required this.closedBy,
     required this.closedByName,
@@ -212,6 +253,7 @@ class DailyClosingEntity extends Equatable {
         variance,
         salesCount,
         voidedCount,
+        excludedExpenseIds,
         notes,
         closedBy,
         closedByName,
