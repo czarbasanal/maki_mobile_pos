@@ -35,8 +35,6 @@ class DraftEditScreen extends ConsumerStatefulWidget {
 }
 
 class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
-  bool _isDeleting = false;
-
   /// Local working copy so labor/mechanic edits render instantly; each edit is
   /// persisted through the FULL updateDraft path (NOT updateDraftItems, which
   /// writes only `items` and would drop labor).
@@ -188,143 +186,139 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
-    return LoadingOverlay(
-      isLoading: _isDeleting,
-      message: _isDeleting ? 'Deleting…' : 'Processing...',
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            draft.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-          ),
-          leading: IconButton(
-            icon: const Icon(LucideIcons.chevronLeft),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go(RoutePaths.drafts);
-              }
-            },
-          ),
-          actions: [
-            // Delete button (red)
-            IconButton(
-              icon: const Icon(LucideIcons.trash2),
-              color: AppColors.costUp(theme.brightness == Brightness.dark),
-              onPressed: () => _confirmDelete(draft),
-              tooltip: 'Delete Job Order',
-            ),
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          draft.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
-        body: Column(
-          children: [
-            // Draft info header
-            Builder(builder: (context) {
-              final muted = theme.colorScheme.onSurfaceVariant;
-              final isDark = theme.brightness == Brightness.dark;
-              final hairline =
-                  isDark ? AppColors.darkHairline : AppColors.lightHairline;
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: hairline)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Motorcycle model — the bill-out gate, editable in place
-                    // (the serviced bike can change mid-job).
-                    MotorcycleModelPicker(
-                      selectedModel: draft.motorcycleModel,
-                      onChanged: _onModelChanged,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
+        leading: IconButton(
+          icon: const Icon(LucideIcons.chevronLeft),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(RoutePaths.drafts);
+            }
+          },
+        ),
+        actions: [
+          // Delete button (red)
+          IconButton(
+            icon: const Icon(LucideIcons.trash2),
+            color: AppColors.costUp(theme.brightness == Brightness.dark),
+            onPressed: () => _confirmDelete(draft),
+            tooltip: 'Delete Job Order',
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Draft info header
+          Builder(builder: (context) {
+            final muted = theme.colorScheme.onSurfaceVariant;
+            final isDark = theme.brightness == Brightness.dark;
+            final hairline =
+                isDark ? AppColors.darkHairline : AppColors.lightHairline;
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: hairline)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Motorcycle model — the bill-out gate, editable in place
+                  // (the serviced bike can change mid-job).
+                  MotorcycleModelPicker(
+                    selectedModel: draft.motorcycleModel,
+                    onChanged: _onModelChanged,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Icon(LucideIcons.clock, size: 14, color: muted),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'Created ${dateFormat.format(draft.createdAt)}',
+                        style:
+                            theme.textTheme.bodySmall?.copyWith(color: muted),
+                      ),
+                    ],
+                  ),
+                  if (draft.updatedAt != null) ...[
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(LucideIcons.clock, size: 14, color: muted),
+                        Icon(LucideIcons.squarePen, size: 14, color: muted),
                         const SizedBox(width: AppSpacing.sm),
                         Text(
-                          'Created ${dateFormat.format(draft.createdAt)}',
+                          'Updated ${dateFormat.format(draft.updatedAt!)}',
                           style:
                               theme.textTheme.bodySmall?.copyWith(color: muted),
                         ),
                       ],
                     ),
-                    if (draft.updatedAt != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(LucideIcons.squarePen, size: 14, color: muted),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            'Updated ${dateFormat.format(draft.updatedAt!)}',
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(color: muted),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (draft.notes != null && draft.notes!.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(draft.notes!, style: theme.textTheme.bodyMedium),
-                    ],
                   ],
-                ),
-              );
-            }),
-
-            // Parts header + Add action
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
-              child: Row(
-                children: [
-                  Icon(LucideIcons.package,
-                      size: 16, color: theme.colorScheme.onSurfaceVariant),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Parts',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: _onAddParts,
-                    icon: const Icon(LucideIcons.plus, size: 16),
-                    label: const Text('Add parts'),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
+                  if (draft.notes != null && draft.notes!.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(draft.notes!, style: theme.textTheme.bodyMedium),
+                  ],
                 ],
               ),
-            ),
-            // Items list
-            Expanded(
-              child: draft.items.isEmpty
-                  ? _buildEmptyItems()
-                  : ListView.builder(
-                      itemCount: draft.items.length,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemBuilder: (context, index) {
-                        return _buildDraftItem(draft, draft.items[index]);
-                      },
-                    ),
-            ),
+            );
+          }),
 
-            // Labor & Service (mechanic + labor lines) — editable anytime.
-            _buildLaborSection(draft),
+          // Parts header + Add action
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
+            child: Row(
+              children: [
+                Icon(LucideIcons.package,
+                    size: 16, color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'Parts',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _onAddParts,
+                  icon: const Icon(LucideIcons.plus, size: 16),
+                  label: const Text('Add parts'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Items list
+          Expanded(
+            child: draft.items.isEmpty
+                ? _buildEmptyItems()
+                : ListView.builder(
+                    itemCount: draft.items.length,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemBuilder: (context, index) {
+                      return _buildDraftItem(draft, draft.items[index]);
+                    },
+                  ),
+          ),
 
-            // Summary and actions
-            _buildSummarySection(draft),
-          ],
-        ),
+          // Labor & Service (mechanic + labor lines) — editable anytime.
+          _buildLaborSection(draft),
+
+          // Summary and actions
+          _buildSummarySection(draft),
+        ],
       ),
     );
   }
@@ -608,14 +602,15 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   }
 
   Future<void> _deleteDraft(DraftEntity draft) async {
-    setState(() => _isDeleting = true);
-
     try {
       final actor = ref.read(currentUserProvider).value;
       if (actor == null) return;
-      final success = await ref
-          .read(draftOperationsProvider.notifier)
-          .deleteDraft(actor: actor, draftId: draft.id);
+      final success = await context.runWithWaiting(
+        () => ref
+            .read(draftOperationsProvider.notifier)
+            .deleteDraft(actor: actor, draftId: draft.id),
+        message: 'Deleting…',
+      );
 
       if (success && mounted) {
         context.showSuccessSnackBar('Job order deleted');
@@ -630,10 +625,6 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     } catch (e) {
       if (mounted) {
         context.showErrorSnackBar('Error deleting job order: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isDeleting = false);
       }
     }
   }
