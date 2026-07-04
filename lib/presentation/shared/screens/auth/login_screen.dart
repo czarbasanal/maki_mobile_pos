@@ -25,7 +25,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
 
-  bool _isLoading = false;
   String? _errorMessage;
 
   @override
@@ -40,21 +39,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleLogin() async {
     setState(() => _errorMessage = null);
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
 
     try {
-      await ref.read(authActionsProvider).signIn(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
+      await context.runWithWaiting(
+        () => ref.read(authActionsProvider).signIn(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            ),
+        message: 'Signing in…',
+      );
       if (mounted) context.go(RoutePaths.dashboard);
     } on AuthException catch (e) {
-      setState(() => _errorMessage = e.message);
+      if (mounted) setState(() => _errorMessage = e.message);
     } catch (_) {
-      setState(() =>
-          _errorMessage = 'An unexpected error occurred. Please try again.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() =>
+            _errorMessage = 'An unexpected error occurred. Please try again.');
+      }
     }
   }
 
@@ -80,12 +81,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       icon: LucideIcons.mail,
     );
 
-    if (!shouldSend) return;
-
-    setState(() => _isLoading = true);
+    if (!shouldSend || !mounted) return;
 
     try {
-      await ref.read(authActionsProvider).sendPasswordResetEmail(email);
+      await context.runWithWaiting(
+        () => ref.read(authActionsProvider).sendPasswordResetEmail(email),
+        message: 'Sending…',
+      );
       if (mounted) {
         context.showSuccessSnackBar(
           'Password reset email sent. Check your inbox.',
@@ -97,88 +99,81 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           'Failed to send reset email. Please try again.',
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LoadingOverlay(
-        isLoading: _isLoading,
-        message: 'Signing in…',
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 32,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 360),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 40),
-                      if (_errorMessage != null) ...[
-                        _buildErrorMessage(),
-                        const SizedBox(height: 16),
-                      ],
-                      AppTextField(
-                        controller: _emailController,
-                        focusNode: _emailFocusNode,
-                        labelText: 'Email',
-                        prefixIcon: LucideIcons.mail,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        autofocus: true,
-                        onSubmitted: (_) => _passwordFocusNode.requestFocus(),
-                        validator: Validators.email,
-                      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 32,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 40),
+                    if (_errorMessage != null) ...[
+                      _buildErrorMessage(),
                       const SizedBox(height: 16),
-                      AppTextField(
-                        controller: _passwordController,
-                        focusNode: _passwordFocusNode,
-                        labelText: 'Password',
-                        prefixIcon: LucideIcons.lock,
-                        obscureText: true,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _handleLogin(),
-                        validator: Validators.password,
-                      ),
-                      const SizedBox(height: 24),
-                      AppButton(
-                        text: 'Sign in',
-                        onPressed: _handleLogin,
-                        isLoading: _isLoading,
-                        isFullWidth: true,
-                      ),
-                      const SizedBox(height: 4),
-                      Center(
-                        child: TextButton(
-                          onPressed: _handleForgotPassword,
-                          style: TextButton.styleFrom(
-                            foregroundColor:
-                                Theme.of(context).colorScheme.primary,
-                          ),
-                          child: const Text(
-                            'Forgot password?',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    ],
+                    AppTextField(
+                      controller: _emailController,
+                      focusNode: _emailFocusNode,
+                      labelText: 'Email',
+                      prefixIcon: LucideIcons.mail,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofocus: true,
+                      onSubmitted: (_) => _passwordFocusNode.requestFocus(),
+                      validator: Validators.email,
+                    ),
+                    const SizedBox(height: 16),
+                    AppTextField(
+                      controller: _passwordController,
+                      focusNode: _passwordFocusNode,
+                      labelText: 'Password',
+                      prefixIcon: LucideIcons.lock,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _handleLogin(),
+                      validator: Validators.password,
+                    ),
+                    const SizedBox(height: 24),
+                    AppButton(
+                      text: 'Sign in',
+                      onPressed: _handleLogin,
+                      isFullWidth: true,
+                    ),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: TextButton(
+                        onPressed: _handleForgotPassword,
+                        style: TextButton.styleFrom(
+                          foregroundColor:
+                              Theme.of(context).colorScheme.primary,
+                        ),
+                        child: const Text(
+                          'Forgot password?',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 48),
-                      _buildFooter(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 48),
+                    _buildFooter(),
+                  ],
                 ),
               ),
             ),

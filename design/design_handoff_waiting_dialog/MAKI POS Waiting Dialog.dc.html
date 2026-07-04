@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  svg.lucide{display:inline-block;vertical-align:middle}
+  @keyframes wspin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+
+<div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:48px 56px 76px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <!-- ============ HEADER ============ -->
+  <div style="max-width:900px;margin:0 0 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px"><span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Cross-cutting · Waiting overlay</div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">MAKI POS — waiting dialog</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.6;max-width:76ch">The blocking busy overlay every screen shows while an async action is in flight — saving a job order, <b>billing out</b>, deleting, syncing, exporting a report. One centered card on the elevated theme (radius <b>24</b>, the same scrim + shadow as every dialog), a primary progress ring, and a verb-first label. <b>Neutral by default</b> — the ring uses the slate / gold primary, never a status color. It <b>blocks input</b> and is <b>not tap-to-dismiss</b>; only the cancelable variant offers a way out. Maps to the app's <span style="font-family:'Roboto Mono';font-size:13px">LoadingOverlay</span> / <span style="font-family:'Roboto Mono';font-size:13px">showDialog(barrierDismissible:false)</span>. Full dark parity (gold leads).</p>
+  </div>
+
+  <!-- ============ USAGE / ANATOMY STRIP ============ -->
+  <div style="max-width:900px;margin:0 0 48px;background:#fff;border-radius:22px;padding:22px 26px;box-shadow:0 10px 30px -14px rgba(17,28,29,.2),0 2px 6px rgba(17,28,29,.05);display:flex;flex-wrap:wrap;gap:36px 44px;align-items:flex-start">
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Spinner</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:44px;height:44px;border-radius:999px;border:4px solid rgba(40,62,70,.12);border-top-color:#283E46;animation:wspin .8s linear infinite"></div>
+        <div style="font-size:12.5px;color:#5A6468;line-height:1.5">56px · 4px stroke<br><span style="font-family:'Roboto Mono';font-size:11px;color:#9AA0A3">.8s linear · primary arc</span></div>
+      </div>
+    </div>
+    <div style="max-width:230px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Behavior</div>
+      <div style="font-size:12.5px;color:#5A6468;line-height:1.6">Blocks input · scrim <b>not</b> tap-to-dismiss · show a <b>~300ms min</b> so it never flashes · auto-closes on result (→ success / error, or silent).</div>
+    </div>
+    <div style="max-width:230px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Label</div>
+      <div style="font-size:12.5px;color:#5A6468;line-height:1.6">Verb-first, present tense — <span style="color:#16201F;font-weight:600">Saving…</span>, <span style="color:#16201F;font-weight:600">Billing out…</span>, <span style="color:#16201F;font-weight:600">Deleting…</span>. Generic <span style="color:#16201F;font-weight:600">Please wait…</span> only when the action is ambiguous.</div>
+    </div>
+    <div style="max-width:210px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#9AA0A3;margin-bottom:14px">Maps to</div>
+      <div style="font-family:'Roboto Mono';font-size:11.5px;color:#5A6468;line-height:1.7">LoadingOverlay<br>showDialog(barrierDismissible:false)<br>CircularProgressIndicator</div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION ============ -->
+  <div style="display:flex;align-items:center;gap:10px;margin:0 0 24px 4px;width:820px">
+    <i data-lucide="loader-circle" style="width:18px;height:18px;color:#283E46;stroke-width:1.75"></i>
+    <span style="font-size:13px;font-weight:700;letter-spacing:.5px;color:#16201F;text-transform:uppercase">Waiting overlay · variants</span>
+    <span style="flex:1;height:1px;background:#D8D5CF"></span>
+  </div>
+
+  <!-- ===== VARIANT A · DEFAULT ===== -->
+  <div style="margin-bottom:46px">
+    <div style="font-size:13px;font-weight:700;color:#16201F;margin:0 0 14px 4px">Default <span style="font-weight:500;color:#8A9296">— indeterminate · blocking · no dismiss</span></div>
+    <div style="display:flex;gap:40px">
+
+      <!-- default · light -->
+      <div style="flex:0 0 auto">
+        <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Light</div>
+        <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+          <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:17px;font-weight:600;color:#16201F;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Juan / ABC-123</div></div>
+          <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:56px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:56px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:56px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+          <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+            <div style="min-width:210px;max-width:300px;background:#fff;border-radius:24px;padding:32px 36px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07);display:flex;flex-direction:column;align-items:center">
+              <div style="width:56px;height:56px;border-radius:999px;border:4px solid rgba(40,62,70,.12);border-top-color:#283E46;animation:wspin .8s linear infinite"></div>
+              <div style="margin-top:20px;font-size:17px;font-weight:600;color:#16201F">Please wait…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- default · dark -->
+      <div style="flex:0 0 auto">
+        <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dark</div>
+        <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+          <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:17px;font-weight:600;color:#ECEFEF;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Juan / ABC-123</div></div>
+          <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px"></div></div>
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+            <div style="min-width:210px;max-width:300px;background:#18262A;border:1px solid #243234;border-radius:24px;padding:32px 36px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center">
+              <div style="width:56px;height:56px;border-radius:999px;border:4px solid rgba(232,184,76,.18);border-top-color:#E8B84C;animation:wspin .8s linear infinite"></div>
+              <div style="margin-top:20px;font-size:17px;font-weight:600;color:#ECEFEF">Please wait…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== VARIANT B · CONTEXTUAL ===== -->
+  <div style="margin-bottom:46px">
+    <div style="font-size:13px;font-weight:700;color:#16201F;margin:0 0 14px 4px">Contextual <span style="font-weight:500;color:#8A9296">— verb-first label + subtitle · recommended default</span></div>
+    <div style="display:flex;gap:40px">
+
+      <!-- contextual · light -->
+      <div style="flex:0 0 auto">
+        <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Light</div>
+        <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+          <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:17px;font-weight:600;color:#16201F;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Juan / ABC-123</div></div>
+          <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:56px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:56px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:56px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+          <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+            <div style="min-width:220px;max-width:300px;background:#fff;border-radius:24px;padding:32px 34px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07);display:flex;flex-direction:column;align-items:center">
+              <div style="width:56px;height:56px;border-radius:999px;border:4px solid rgba(40,62,70,.12);border-top-color:#283E46;animation:wspin .8s linear infinite"></div>
+              <div style="margin-top:20px;font-size:17px;font-weight:600;color:#16201F;text-align:center">Billing out…</div>
+              <div style="margin-top:6px;font-size:13.5px;line-height:1.5;color:#8A9296;text-align:center;max-width:212px">Loading this job order into the register.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- contextual · dark -->
+      <div style="flex:0 0 auto">
+        <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dark</div>
+        <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+          <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:17px;font-weight:600;color:#ECEFEF;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Juan / ABC-123</div></div>
+          <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px"></div></div>
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+            <div style="min-width:220px;max-width:300px;background:#18262A;border:1px solid #243234;border-radius:24px;padding:32px 34px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center">
+              <div style="width:56px;height:56px;border-radius:999px;border:4px solid rgba(232,184,76,.18);border-top-color:#E8B84C;animation:wspin .8s linear infinite"></div>
+              <div style="margin-top:20px;font-size:17px;font-weight:600;color:#ECEFEF;text-align:center">Billing out…</div>
+              <div style="margin-top:6px;font-size:13.5px;line-height:1.5;color:#93A0A3;text-align:center;max-width:212px">Loading this job order into the register.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== VARIANT C · CANCELABLE ===== -->
+  <div style="margin-bottom:10px">
+    <div style="font-size:13px;font-weight:700;color:#16201F;margin:0 0 14px 4px">Cancelable <span style="font-weight:500;color:#8A9296">— long-running · dismissible via explicit Cancel</span></div>
+    <div style="display:flex;gap:40px">
+
+      <!-- cancelable · light -->
+      <div style="flex:0 0 auto">
+        <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Light</div>
+        <div style="width:390px;height:824px;background:#F6F5F3;border-radius:42px;overflow:hidden;position:relative;border:1px solid #E2E0DB;box-shadow:0 36px 80px -34px rgba(17,28,29,.5)">
+          <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#16201F"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#444"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#16201F"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#16201F;padding-left:4px">Sales</div></div>
+          <div style="padding:8px 18px"><div style="background:#fff;border-radius:16px;height:56px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:56px;margin-bottom:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div><div style="background:#fff;border-radius:16px;height:56px;box-shadow:0 2px 8px rgba(17,28,29,.05)"></div></div>
+          <div style="position:absolute;inset:0;background:rgba(17,28,29,.32);display:flex;align-items:center;justify-content:center;padding:24px">
+            <div style="min-width:230px;max-width:300px;background:#fff;border-radius:24px;padding:30px 30px 12px;box-shadow:0 26px 60px -18px rgba(17,28,29,.42),0 6px 16px rgba(17,28,29,.07);display:flex;flex-direction:column;align-items:center">
+              <div style="width:56px;height:56px;border-radius:999px;border:4px solid rgba(40,62,70,.12);border-top-color:#283E46;animation:wspin .8s linear infinite"></div>
+              <div style="margin-top:20px;font-size:17px;font-weight:600;color:#16201F;text-align:center">Syncing sales…</div>
+              <div style="margin-top:6px;font-size:13.5px;line-height:1.5;color:#8A9296;text-align:center;max-width:200px">This can take a moment on a slow connection.</div>
+              <div style="align-self:stretch;height:1px;background:#ECECEC;margin:22px 0 0"></div>
+              <div style="align-self:stretch;text-align:center;padding:14px 0 4px;font-size:14.5px;font-weight:600;color:#8A9296">Cancel</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- cancelable · dark -->
+      <div style="flex:0 0 auto">
+        <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 12px 6px">Dark</div>
+        <div style="width:390px;height:824px;background:#0C1415;border-radius:42px;overflow:hidden;position:relative;border:1px solid #243234;box-shadow:0 36px 80px -34px rgba(0,0,0,.7)">
+          <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#ECEFEF"><span>9:41</span><span style="display:flex;gap:6px;align-items:center;color:#9FB0B0"><i data-lucide="signal-high" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="wifi" style="width:16px;height:16px;stroke-width:1.75"></i><i data-lucide="battery-full" style="width:18px;height:18px;stroke-width:1.75"></i></span></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px"><div style="width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#ECEFEF"><i data-lucide="chevron-left" style="width:22px;height:22px;stroke-width:1.75"></i></div><div style="flex:1;font-size:18px;font-weight:600;color:#ECEFEF;padding-left:4px">Sales</div></div>
+          <div style="padding:8px 18px"><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px;margin-bottom:12px"></div><div style="background:#18262A;border:1px solid #243234;border-radius:16px;height:56px"></div></div>
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px">
+            <div style="min-width:230px;max-width:300px;background:#18262A;border:1px solid #243234;border-radius:24px;padding:30px 30px 12px;box-shadow:0 26px 70px -18px rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center">
+              <div style="width:56px;height:56px;border-radius:999px;border:4px solid rgba(232,184,76,.18);border-top-color:#E8B84C;animation:wspin .8s linear infinite"></div>
+              <div style="margin-top:20px;font-size:17px;font-weight:600;color:#ECEFEF;text-align:center">Syncing sales…</div>
+              <div style="margin-top:6px;font-size:13.5px;line-height:1.5;color:#93A0A3;text-align:center;max-width:200px">This can take a moment on a slow connection.</div>
+              <div style="align-self:stretch;height:1px;background:#243234;margin:22px 0 0"></div>
+              <div style="align-self:stretch;text-align:center;padding:14px 0 4px;font-size:14.5px;font-weight:600;color:#93A0A3">Cancel</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>

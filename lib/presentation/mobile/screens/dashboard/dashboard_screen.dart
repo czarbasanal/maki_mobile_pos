@@ -68,8 +68,6 @@ class _DashboardContent extends ConsumerStatefulWidget {
 }
 
 class _DashboardContentState extends ConsumerState<_DashboardContent> {
-  bool _isLoggingOut = false;
-
   String get _greeting {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good morning';
@@ -108,19 +106,19 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       icon: LucideIcons.logOut,
     );
 
-    if (!shouldSignOut) return;
-
-    setState(() => _isLoggingOut = true);
+    if (!shouldSignOut || !mounted) return;
 
     try {
-      await ref.read(authActionsProvider).signOut();
+      await context.runWithWaiting(
+        () => ref.read(authActionsProvider).signOut(),
+        message: 'Signing out…',
+      );
       if (mounted) {
         context.go(RoutePaths.login);
       }
     } catch (e) {
       if (mounted) {
         context.showErrorSnackBar('Failed to sign out: $e');
-        setState(() => _isLoggingOut = false);
       }
     }
   }
@@ -135,70 +133,66 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
   @override
   Widget build(BuildContext context) {
-    return LoadingOverlay(
-      isLoading: _isLoggingOut,
-      message: 'Signing out...',
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkBackground
-              : AppColors.lightBackground,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leadingWidth: 16 + 42 + 12,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Center(child: _buildAvatarTile()),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _greeting,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-              Text(
-                widget.user.displayName,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ],
-          ),
-          centerTitle: false,
-          automaticallyImplyLeading: false,
-          actions: [
-            if (widget.user.hasPermission(Permission.voidSale))
-              _buildVoidRequestsBell(context),
-            IconButton(
-              icon: const Icon(LucideIcons.settings),
-              onPressed: () => context.go(RoutePaths.settings),
-              tooltip: 'Settings',
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkBackground
+            : AppColors.lightBackground,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leadingWidth: 16 + 42 + 12,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(child: _buildAvatarTile()),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _greeting,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
-            IconButton(
-              icon: const Icon(LucideIcons.logOut),
-              onPressed: _handleSignOut,
-              tooltip: 'Sign Out',
+            Text(
+              widget.user.displayName,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           ],
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Pinned header — date strip + role-based QuickActions stay
-              // visible while the user scrolls the dashboard sections below.
-              _buildPinnedHeader(),
-              // Scrollable region — Today's Sales onward.
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: _buildScrollableSections(),
-                ),
-              ),
-            ],
+        centerTitle: false,
+        automaticallyImplyLeading: false,
+        actions: [
+          if (widget.user.hasPermission(Permission.voidSale))
+            _buildVoidRequestsBell(context),
+          IconButton(
+            icon: const Icon(LucideIcons.settings),
+            onPressed: () => context.go(RoutePaths.settings),
+            tooltip: 'Settings',
           ),
+          IconButton(
+            icon: const Icon(LucideIcons.logOut),
+            onPressed: _handleSignOut,
+            tooltip: 'Sign Out',
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Pinned header — date strip + role-based QuickActions stay
+            // visible while the user scrolls the dashboard sections below.
+            _buildPinnedHeader(),
+            // Scrollable region — Today's Sales onward.
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _handleRefresh,
+                child: _buildScrollableSections(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -295,15 +289,12 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
             onReorder: _canAccessReceiving
                 ? () => context.go(RoutePaths.purchaseOrders)
                 : null,
-            onExpenses: _canViewExpenses
-                ? () => context.go(RoutePaths.expenses)
-                : null,
-            onReports: _canViewReports
-                ? () => context.go(RoutePaths.reports)
-                : null,
-            onCloseDay: _canCloseDay
-                ? () => context.push(RoutePaths.endOfDay)
-                : null,
+            onExpenses:
+                _canViewExpenses ? () => context.go(RoutePaths.expenses) : null,
+            onReports:
+                _canViewReports ? () => context.go(RoutePaths.reports) : null,
+            onCloseDay:
+                _canCloseDay ? () => context.push(RoutePaths.endOfDay) : null,
           ),
         ],
       ),
@@ -415,5 +406,4 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
       ],
     );
   }
-
 }
