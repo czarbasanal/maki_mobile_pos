@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
@@ -11,6 +12,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/pending_void_banner.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/request_void_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/void_sale_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -734,27 +736,18 @@ class SaleDetailScreen extends ConsumerWidget {
     final hasPending =
         pendingAsync.maybeWhen(data: (l) => l.isNotEmpty, orElse: () => false);
 
-    if (hasPending) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.clock, size: 18),
-            SizedBox(width: 8),
-            Text('Void pending approval'),
-          ],
-        ),
-      );
-    }
-
     final canVoidDirect = user?.hasPermission(Permission.voidSale) ?? false;
     final canRequest = user?.hasPermission(Permission.requestVoidSale) ?? false;
+
+    if (hasPending) {
+      // Admins can act on the request — the banner taps through to the
+      // void-requests queue. Requesters just see the status.
+      return PendingVoidBanner(
+        onTap: canVoidDirect
+            ? () => context.push(RoutePaths.voidRequests)
+            : null,
+      );
+    }
 
     if (canVoidDirect) {
       return _buildVoidButton(context, ref, sale);
