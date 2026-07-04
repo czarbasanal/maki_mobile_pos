@@ -1,12 +1,16 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart'
+    show consolidateHttpClientResponseBytes;
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_bottom_sheet.dart';
 
 /// Optional receipt-photo control for the expense form. Shows an add tile
@@ -100,6 +104,36 @@ class ReceiptImageField extends StatelessWidget {
     onChanged(compressed ?? bytes, removed: false);
   }
 
+  /// Resolves the displayed image to raw bytes — the fresh local pick, or a
+  /// fetch of the uploaded URL — and hands them to the shared save dialog.
+  Future<void> _saveImage(BuildContext context) async {
+    Uint8List bytes;
+    if (pendingBytes != null) {
+      bytes = pendingBytes!;
+    } else {
+      try {
+        final request =
+            await HttpClient().getUrl(Uri.parse(existingUrl!));
+        final response = await request.close();
+        bytes = await consolidateHttpClientResponseBytes(response);
+      } catch (_) {
+        if (context.mounted) {
+          context.showErrorSnackBar('Could not load receipt to save');
+        }
+        return;
+      }
+    }
+    if (!context.mounted) return;
+    await saveBytesFile(
+      context,
+      bytes,
+      'receipt.jpg',
+      dialogTitle: 'Save receipt',
+      allowedExtensions: const ['jpg'],
+      successMessage: 'Receipt saved',
+    );
+  }
+
   void _openViewer(BuildContext context) {
     final image = pendingBytes != null
         ? Image.memory(pendingBytes!, fit: BoxFit.contain)
@@ -117,6 +151,13 @@ class ReceiptImageField extends StatelessWidget {
               onPressed: () => Navigator.of(viewerContext).pop(),
             ),
             title: const Text('Receipt'),
+            actions: [
+              IconButton(
+                icon: const Icon(LucideIcons.download),
+                tooltip: 'Save receipt',
+                onPressed: () => _saveImage(viewerContext),
+              ),
+            ],
           ),
           body: Center(
             child: InteractiveViewer(maxScale: 5, child: image),
