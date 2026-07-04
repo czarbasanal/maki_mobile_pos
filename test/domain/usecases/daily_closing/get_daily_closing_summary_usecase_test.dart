@@ -74,14 +74,16 @@ void main() {
         ]);
   });
 
-  test('computes the draft for an authorized actor', () async {
+  test('returns the day data; draft derives from it', () async {
     final result = await useCase.execute(
       actor: _user(UserRole.cashier),
       date: DateTime(2026, 5, 28),
     );
 
     expect(result.success, true);
-    final draft = result.data!;
+    final data = result.data!;
+    expect(data.expenses, hasLength(2));
+    final draft = data.draftExcluding(const {});
     expect(draft.grossSales, 1000);
     expect(draft.cashSales, 700);
     expect(draft.nonCashSales, 300);

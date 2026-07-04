@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/closing_expense_list.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -32,6 +33,10 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   final _plateDeliveryController = TextEditingController();
   final _notesController = TextEditingController();
   bool _busy = false;
+
+  /// Same-day expenses removed from this closing's reconciliation. Session
+  /// state only — persisted onto the closing when the day is closed.
+  final Set<String> _excludedIds = {};
 
   DateTime get _today {
     final n = DateTime.now();
@@ -74,7 +79,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
         ],
       ),
       body: existingAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const FormSkeleton(),
         error: (e, _) => ErrorStateView(
           message: 'Error: $e',
           onRetry: () => ref.invalidate(dailyClosingForDateProvider(_today)),
@@ -87,14 +92,15 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   }
 
   Widget _buildReview() {
-    final draftAsync = ref.watch(dailyClosingDraftProvider(_today));
-    return draftAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+    final dataAsync = ref.watch(dailyClosingDataProvider(_today));
+    return dataAsync.when(
+      loading: () => const FormSkeleton(),
       error: (e, _) => ErrorStateView(
         message: 'Error: $e',
-        onRetry: () => ref.invalidate(dailyClosingDraftProvider(_today)),
+        onRetry: () => ref.invalidate(dailyClosingDataProvider(_today)),
       ),
-      data: (draft) {
+      data: (data) {
+        final draft = data.draftExcluding(_excludedIds);
         final expected = draft.expectedCashFor(
           _float,
           plateNoDp: _plateDp,
@@ -132,8 +138,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                           value: _peso(draft.mayaSales),
                           indented: true),
                     ClosingKvRow(
-                        label: 'Discounts',
-                        value: _peso(draft.totalDiscounts)),
+                        label: 'Discounts', value: _peso(draft.totalDiscounts)),
                     if (draft.laborRevenue > 0)
                       ClosingKvRow(
                           label: 'Labor revenue (service)',
@@ -151,12 +156,55 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                   icon: LucideIcons.arrowDownCircle,
                   title: 'Expenses',
                   children: [
-                    ClosingKvRow(
-                        label: 'Total expenses',
-                        value: _peso(draft.totalExpenses)),
-                    ClosingKvRow(
-                        label: 'Cash expenses',
-                        value: _peso(draft.cashExpenses)),
+                    if (data.expenses.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          'No expenses today',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    else ...[
+                      ClosingExpenseList(
+                        expenses: data.expenses,
+                        excludedIds: _excludedIds,
+                        enabled: !_busy,
+                        onToggle: (id) => setState(() {
+                          _excludedIds.contains(id)
+                              ? _excludedIds.remove(id)
+                              : _excludedIds.add(id);
+                        }),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(
+                          height: 1,
+                          color: AppColors.hairline(
+                              Theme.of(context).brightness == Brightness.dark),
+                        ),
+                      ),
+                      ClosingKvRow(
+                          label: 'Total expenses',
+                          value: _peso(draft.totalExpenses)),
+                      ClosingKvRow(
+                          label: 'Cash expenses',
+                          value: _peso(draft.cashExpenses)),
+                    ],
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () => context.push(RoutePaths.expenseAdd),
+                        icon: const Icon(LucideIcons.plus, size: 16),
+                        label: const Text('Add Expense'),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -340,6 +388,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
               countedCash: _counted ?? 0,
               plateNoDp: _plateDp,
               plateNoDelivery: _plateDelivery,
+              excludedExpenseIds: Set.of(_excludedIds),
               notes: notes.isEmpty ? null : notes,
             );
     if (!mounted) return;
@@ -352,7 +401,6 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     }
     context.showSuccessSnackBar('Day closed');
   }
-
 }
 
 /// Read-only view of an already-saved closing.
@@ -368,7 +416,11 @@ class _ClosedView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final liveDraft = ref.watch(dailyClosingDraftProvider(date)).valueOrNull;
+    // The comparison draft must honor the snapshot's exclusions, or an
+    // excluded expense would read as phantom "cash expenses after close".
+    final liveData = ref.watch(dailyClosingDataProvider(date)).valueOrNull;
+    final liveDraft =
+        liveData?.draftExcluding(closing.excludedExpenseIds.toSet());
     final activity = liveDraft == null
         ? null
         : PostCloseActivity.between(closing: closing, current: liveDraft);
@@ -380,7 +432,8 @@ class _ClosedView extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (showActivity) ...[
-            PostCloseWarningBanner(message: _postCloseMessage(context, activity)),
+            PostCloseWarningBanner(
+                message: _postCloseMessage(context, activity)),
             const SizedBox(height: 12),
           ],
           ClosedByBanner(
@@ -426,8 +479,7 @@ class _ClosedView extends ConsumerWidget {
             title: 'Expenses',
             children: [
               ClosingKvRow(
-                  label: 'Total expenses',
-                  value: _peso(closing.totalExpenses)),
+                  label: 'Total expenses', value: _peso(closing.totalExpenses)),
               ClosingKvRow(
                   label: 'Cash expenses', value: _peso(closing.cashExpenses)),
             ],
@@ -484,8 +536,7 @@ class _ClosedView extends ConsumerWidget {
   }
 
   String _postCloseMessage(BuildContext context, PostCloseActivity activity) {
-    final closedTime =
-        TimeOfDay.fromDateTime(closing.closedAt).format(context);
+    final closedTime = TimeOfDay.fromDateTime(closing.closedAt).format(context);
     final amount =
         '${AppConstants.currencySymbol}${activity.grossDelta.abs().toCurrencyWithoutSymbol()}';
     return activity.isAdditional

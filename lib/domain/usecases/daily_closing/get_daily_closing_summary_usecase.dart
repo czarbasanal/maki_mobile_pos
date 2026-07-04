@@ -7,8 +7,9 @@ import 'package:maki_mobile_pos/domain/repositories/expense_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
 
-/// Computes the live, unsaved [DailyClosingDraft] for a business day by
-/// combining the sales summary with the day's expenses.
+/// Fetches the raw closing inputs ([DailyClosingData]: sales summary +
+/// itemized expenses) for a business day. Callers derive drafts via
+/// [DailyClosingData.draftExcluding].
 ///
 /// Permission: [Permission.viewEndOfDay].
 class GetDailyClosingSummaryUseCase {
@@ -21,7 +22,7 @@ class GetDailyClosingSummaryUseCase {
   })  : _saleRepository = saleRepository,
         _expenseRepository = expenseRepository;
 
-  Future<UseCaseResult<DailyClosingDraft>> execute({
+  Future<UseCaseResult<DailyClosingData>> execute({
     required UserEntity actor,
     required DateTime date,
   }) async {
@@ -42,12 +43,11 @@ class GetDailyClosingSummaryUseCase {
         limit: 1000,
       );
 
-      final draft = DailyClosingDraft.fromData(
+      return UseCaseResult.successData(DailyClosingData(
         businessDate: dayStart,
         summary: summary,
         expenses: expenses,
-      );
-      return UseCaseResult.successData(draft);
+      ));
     } on AppException catch (e) {
       return UseCaseResult.fromException(e);
     } catch (e) {

@@ -24,6 +24,7 @@ class DailyClosingModel {
   final double variance;
   final int salesCount;
   final int voidedCount;
+  final List<String> excludedExpenseIds;
   final String? notes;
   final String closedBy;
   final String closedByName;
@@ -51,6 +52,7 @@ class DailyClosingModel {
     required this.variance,
     required this.salesCount,
     required this.voidedCount,
+    this.excludedExpenseIds = const [],
     this.notes,
     required this.closedBy,
     required this.closedByName,
@@ -88,6 +90,8 @@ class DailyClosingModel {
       variance: d('variance'),
       salesCount: i('salesCount'),
       voidedCount: i('voidedCount'),
+      excludedExpenseIds:
+          (map['excludedExpenseIds'] as List?)?.cast<String>() ?? const [],
       notes: map['notes'] as String?,
       closedBy: map['closedBy'] as String? ?? '',
       closedByName: map['closedByName'] as String? ?? '',
@@ -118,6 +122,7 @@ class DailyClosingModel {
       variance: e.variance,
       salesCount: e.salesCount,
       voidedCount: e.voidedCount,
+      excludedExpenseIds: e.excludedExpenseIds,
       notes: e.notes,
       closedBy: e.closedBy,
       closedByName: e.closedByName,
@@ -147,6 +152,7 @@ class DailyClosingModel {
       'variance': variance,
       'salesCount': salesCount,
       'voidedCount': voidedCount,
+      'excludedExpenseIds': excludedExpenseIds,
       'notes': notes,
       'closedBy': closedBy,
       'closedByName': closedByName,
@@ -184,6 +190,7 @@ class DailyClosingModel {
       variance: variance,
       salesCount: salesCount,
       voidedCount: voidedCount,
+      excludedExpenseIds: excludedExpenseIds,
       notes: notes,
       closedBy: closedBy,
       closedByName: closedByName,

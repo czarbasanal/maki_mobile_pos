@@ -38,7 +38,7 @@ final closeDayUseCaseProvider = Provider<CloseDayUseCase>((ref) {
 
 // ==================== QUERIES ====================
 
-/// Live, unsaved closing figures for [date]. Drives the review screen.
+/// Raw closing inputs (sales summary + itemized expenses) for [date].
 ///
 /// For **today** the figures are sourced from the same live providers the rest
 /// of the app uses — [todaysSalesSummaryProvider] (sales) and
@@ -46,8 +46,8 @@ final closeDayUseCaseProvider = Provider<CloseDayUseCase>((ref) {
 /// match the dashboard and refresh on the same triggers (checkout / void /
 /// expense edits). For a past date (not reached by the current UI) it falls
 /// back to the one-shot use case.
-final dailyClosingDraftProvider =
-    FutureProvider.family<DailyClosingDraft, DateTime>((ref, date) async {
+final dailyClosingDataProvider =
+    FutureProvider.family<DailyClosingData, DateTime>((ref, date) async {
   final dayStart = DateTime(date.year, date.month, date.day);
   final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
   final now = DateTime.now();
@@ -60,7 +60,7 @@ final dailyClosingDraftProvider =
         ExpenseDateRangeParams(startDate: dayStart, endDate: dayEnd),
       ).future,
     );
-    return DailyClosingDraft.fromData(
+    return DailyClosingData(
       businessDate: dayStart,
       summary: summary,
       expenses: expenses,
@@ -82,6 +82,14 @@ final dailyClosingDraftProvider =
     );
   }
   return result.data!;
+});
+
+/// Full-day (no exclusions) draft for [date] — a thin derive over
+/// [dailyClosingDataProvider] for consumers that only need the totals.
+final dailyClosingDraftProvider =
+    FutureProvider.family<DailyClosingDraft, DateTime>((ref, date) async {
+  final data = await ref.watch(dailyClosingDataProvider(date).future);
+  return data.draftExcluding(const {});
 });
 
 /// The saved closing for [date], or null if the day is still open.
@@ -122,6 +130,7 @@ class DailyClosingOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     required double countedCash,
     double plateNoDp = 0,
     double plateNoDelivery = 0,
+    Set<String> excludedExpenseIds = const {},
     String? notes,
   }) async {
     state = const AsyncValue.loading();
@@ -134,11 +143,13 @@ class DailyClosingOperationsNotifier extends StateNotifier<AsyncValue<void>> {
             countedCash: countedCash,
             plateNoDp: plateNoDp,
             plateNoDelivery: plateNoDelivery,
+            excludedExpenseIds: excludedExpenseIds,
             notes: notes,
           );
       if (result.success) {
         state = const AsyncValue.data(null);
         _ref.invalidate(dailyClosingForDateProvider);
+        _ref.invalidate(dailyClosingDataProvider);
         _ref.invalidate(dailyClosingDraftProvider);
         _ref.invalidate(dailyClosingHistoryProvider);
         _ref.invalidate(todaysSalesSummaryProvider);

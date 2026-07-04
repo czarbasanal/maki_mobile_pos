@@ -39,6 +39,7 @@ class CloseDayUseCase {
     required double countedCash,
     double plateNoDp = 0,
     double plateNoDelivery = 0,
+    Set<String> excludedExpenseIds = const {},
     String? notes,
   }) async {
     try {
@@ -66,10 +67,18 @@ class CloseDayUseCase {
         limit: 1000,
       );
 
+      // Excluded expenses stay recorded in the ledger — they're just not
+      // deducted from the drawer in this closing.
+      final includedExpenses = excludedExpenseIds.isEmpty
+          ? expenses
+          : expenses
+              .where((e) => !excludedExpenseIds.contains(e.id))
+              .toList();
+
       final draft = DailyClosingDraft.fromData(
         businessDate: dayStart,
         summary: summary,
-        expenses: expenses,
+        expenses: includedExpenses,
       );
       final expectedCash = draft.expectedCashFor(
         openingFloat,
@@ -101,6 +110,7 @@ class CloseDayUseCase {
         variance: variance,
         salesCount: draft.salesCount,
         voidedCount: draft.voidedCount,
+        excludedExpenseIds: excludedExpenseIds.toList()..sort(),
         notes: (notes == null || notes.trim().isEmpty) ? null : notes.trim(),
         closedBy: actor.id,
         closedByName: actor.displayName,
