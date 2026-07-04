@@ -73,26 +73,30 @@ void main() {
       verify(() => logRepo.logActivity(any())).called(1);
     });
 
-    test('cashier is denied (deleteExpense is admin-only)', () async {
+    test('cashier can delete (deleteExpense granted 2026-07-04)', () async {
+      when(() => repo.getExpenseById('exp-1'))
+          .thenAnswer((_) async => _expense());
+
       final result = await useCase.execute(
         actor: _user(UserRole.cashier),
         expenseId: 'exp-1',
       );
 
-      expect(result.success, false);
-      expect(result.errorCode, 'permission-denied');
-      verifyNever(() => repo.deleteExpense(any()));
-      verifyNever(() => repo.getExpenseById(any()));
+      expect(result.success, true);
+      verify(() => repo.deleteExpense('exp-1')).called(1);
     });
 
-    test('staff is denied', () async {
+    test('staff can delete', () async {
+      when(() => repo.getExpenseById('exp-1'))
+          .thenAnswer((_) async => _expense());
+
       final result = await useCase.execute(
         actor: _user(UserRole.staff),
         expenseId: 'exp-1',
       );
 
-      expect(result.success, false);
-      expect(result.errorCode, 'permission-denied');
+      expect(result.success, true);
+      verify(() => repo.deleteExpense('exp-1')).called(1);
     });
 
     test('still deletes when prior fetch returns null (graceful)', () async {

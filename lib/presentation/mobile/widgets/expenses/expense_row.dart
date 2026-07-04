@@ -20,6 +20,7 @@ class ExpenseRow extends StatelessWidget {
     required this.description,
     required this.subtitle,
     required this.amount,
+    this.hasReceipt = false,
     this.onTap,
     this.onLongPress,
   });
@@ -27,6 +28,9 @@ class ExpenseRow extends StatelessWidget {
   final String description;
   final String subtitle;
   final double amount;
+
+  /// Shows a small paperclip when the expense has a receipt photo attached.
+  final bool hasReceipt;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
@@ -74,6 +78,10 @@ class ExpenseRow extends StatelessWidget {
               ],
             ),
           ),
+          if (hasReceipt) ...[
+            const SizedBox(width: 6),
+            Icon(LucideIcons.paperclip, size: 14, color: muted),
+          ],
           const SizedBox(width: 10),
           Text(
             _expenseCurrency.format(amount),

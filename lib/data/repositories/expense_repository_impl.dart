@@ -19,12 +19,22 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   // ==================== CREATE ====================
 
   @override
+  String newExpenseId() => _expensesRef.doc().id;
+
+  @override
   Future<ExpenseEntity> createExpense(ExpenseEntity expense) async {
     try {
       debugPrint('ExpenseRepository: Creating expense');
       final model = ExpenseModel.fromEntity(expense);
-      final docRef = await _expensesRef.add(model.toCreateMap());
-
+      // A preset id means ancillary files (receipt photo) were uploaded
+      // under it already — write with set() so the doc lands on that id.
+      final DocumentReference docRef;
+      if (expense.id.isEmpty) {
+        docRef = await _expensesRef.add(model.toCreateMap());
+      } else {
+        docRef = _expensesRef.doc(expense.id);
+        await docRef.set(model.toCreateMap());
+      }
       final doc = await docRef.get();
       return ExpenseModel.fromFirestore(doc).toEntity();
     } on FirebaseException catch (e) {

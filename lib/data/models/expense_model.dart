@@ -14,6 +14,7 @@ class ExpenseModel {
   final DateTime date;
   final String? notes;
   final String? receiptNumber;
+  final String? receiptImageUrl;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final String createdBy;
@@ -29,6 +30,7 @@ class ExpenseModel {
     required this.date,
     this.notes,
     this.receiptNumber,
+    this.receiptImageUrl,
     required this.createdAt,
     this.updatedAt,
     required this.createdBy,
@@ -53,6 +55,7 @@ class ExpenseModel {
       date: (map['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
       notes: map['notes'] as String?,
       receiptNumber: map['receiptNumber'] as String?,
+      receiptImageUrl: map['receiptImageUrl'] as String?,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
       createdBy: map['createdBy'] as String? ?? '',
@@ -72,6 +75,7 @@ class ExpenseModel {
       date: entity.date,
       notes: entity.notes,
       receiptNumber: entity.receiptNumber,
+      receiptImageUrl: entity.receiptImageUrl,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       createdBy: entity.createdBy,
@@ -90,6 +94,7 @@ class ExpenseModel {
       'date': Timestamp.fromDate(date),
       'notes': notes,
       'receiptNumber': receiptNumber,
+      'receiptImageUrl': receiptImageUrl,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       'createdBy': createdBy,
@@ -108,6 +113,7 @@ class ExpenseModel {
       'date': Timestamp.fromDate(date),
       'notes': notes,
       'receiptNumber': receiptNumber,
+      'receiptImageUrl': receiptImageUrl,
       'createdAt': FieldValue.serverTimestamp(),
       'createdBy': createdBy,
       'createdByName': createdByName,
@@ -124,6 +130,7 @@ class ExpenseModel {
       'date': Timestamp.fromDate(date),
       'notes': notes,
       'receiptNumber': receiptNumber,
+      'receiptImageUrl': receiptImageUrl,
       'updatedAt': FieldValue.serverTimestamp(),
       'updatedBy': updatedBy,
     };
@@ -140,6 +147,7 @@ class ExpenseModel {
       date: date,
       notes: notes,
       receiptNumber: receiptNumber,
+      receiptImageUrl: receiptImageUrl,
       createdAt: createdAt,
       updatedAt: updatedAt,
       createdBy: createdBy,

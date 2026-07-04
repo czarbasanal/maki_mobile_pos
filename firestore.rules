@@ -221,8 +221,10 @@ service cloud.firestore {
       // All valid users can create expenses (cashier/staff can add)
       allow create: if isValidUser() && isActiveUser();
       
-      // Only admin can update/delete expenses
-      allow update, delete: if isAdmin() && isActiveUser();
+      // All valid users can update/delete expenses (shop policy 2026-07-04:
+      // cashier/staff fix and remove their own entry mistakes; the activity
+      // log keeps the audit trail)
+      allow update, delete: if isValidUser() && isActiveUser();
     }
     
     // ==================== DAILY CLOSINGS COLLECTION ====================

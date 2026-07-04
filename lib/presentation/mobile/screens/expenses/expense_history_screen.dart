@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/expense_filters.dart';
@@ -44,6 +46,9 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final expensesAsync = ref.watch(expensesProvider);
+    final currentUser = ref.watch(currentUserProvider).value;
+    final canEdit = RolePermissions.hasPermission(
+        currentUser?.role ?? UserRole.cashier, Permission.editExpense);
 
     return Scaffold(
       appBar: AppBar(
@@ -54,7 +59,7 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
         title: const Text('Expense History'),
       ),
       body: expensesAsync.when(
-        data: (expenses) => _buildBody(expenses),
+        data: (expenses) => _buildBody(expenses, canEdit: canEdit),
         loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
           message: 'Error: $error',
@@ -64,7 +69,7 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
     );
   }
 
-  Widget _buildBody(List<ExpenseEntity> expenses) {
+  Widget _buildBody(List<ExpenseEntity> expenses, {required bool canEdit}) {
     final filtered = _selectedCategory == null
         ? expenses
         : expenses.where((e) => e.category == _selectedCategory).toList();
@@ -117,6 +122,11 @@ class _ExpenseHistoryScreenState extends ConsumerState<ExpenseHistoryScreen> {
                     description: e.description,
                     subtitle: '${_dateFormat.format(e.date)} • ${e.category}',
                     amount: e.amount,
+                    hasReceipt: e.receiptImageUrl != null,
+                    onTap: canEdit
+                        ? () => context
+                            .push('${RoutePaths.expenses}/edit/${e.id}')
+                        : null,
                   ),
                 );
               },
@@ -229,7 +239,7 @@ class _HistoryCategoryFilter extends ConsumerWidget {
           onChanged: onChanged,
         );
       },
-      loading: () => const LinearProgressIndicator(),
+      loading: () => const FieldSkeleton(),
       error: (_, __) => const Text('Could not load categories'),
     );
   }

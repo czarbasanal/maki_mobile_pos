@@ -93,26 +93,24 @@ void main() {
       expect(captured.single.updatedAt, isNotNull);
     });
 
-    test('cashier is denied (editExpense is admin-only)', () async {
+    test('cashier can update (editExpense granted 2026-07-04)', () async {
       final result = await useCase.execute(
         actor: _user(UserRole.cashier),
         expense: _expense(),
       );
 
-      expect(result.success, false);
-      expect(result.errorCode, 'permission-denied');
-      verifyNever(() => repo.updateExpense(any()));
+      expect(result.success, true);
+      verify(() => repo.updateExpense(any())).called(1);
     });
 
-    test('staff is denied', () async {
+    test('staff can update', () async {
       final result = await useCase.execute(
         actor: _user(UserRole.staff),
         expense: _expense(),
       );
 
-      expect(result.success, false);
-      expect(result.errorCode, 'permission-denied');
-      verifyNever(() => repo.updateExpense(any()));
+      expect(result.success, true);
+      verify(() => repo.updateExpense(any())).called(1);
     });
 
     test('inactive admin is denied', () async {

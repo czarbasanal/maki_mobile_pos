@@ -31,6 +31,9 @@ class ExpenseEntity extends Equatable {
   /// Optional receipt number or reference
   final String? receiptNumber;
 
+  /// Optional photo of the physical receipt (Storage download URL).
+  final String? receiptImageUrl;
+
   /// When the record was created
   final DateTime createdAt;
 
@@ -55,6 +58,7 @@ class ExpenseEntity extends Equatable {
     required this.date,
     this.notes,
     this.receiptNumber,
+    this.receiptImageUrl,
     required this.createdAt,
     this.updatedAt,
     required this.createdBy,
@@ -73,6 +77,8 @@ class ExpenseEntity extends Equatable {
     bool clearNotes = false,
     String? receiptNumber,
     bool clearReceiptNumber = false,
+    String? receiptImageUrl,
+    bool clearReceiptImageUrl = false,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createdBy,
@@ -89,6 +95,9 @@ class ExpenseEntity extends Equatable {
       notes: clearNotes ? null : (notes ?? this.notes),
       receiptNumber:
           clearReceiptNumber ? null : (receiptNumber ?? this.receiptNumber),
+      receiptImageUrl: clearReceiptImageUrl
+          ? null
+          : (receiptImageUrl ?? this.receiptImageUrl),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
@@ -107,6 +116,7 @@ class ExpenseEntity extends Equatable {
         date,
         notes,
         receiptNumber,
+        receiptImageUrl,
         createdAt,
         updatedAt,
         createdBy,

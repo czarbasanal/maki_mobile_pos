@@ -13,6 +13,7 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/expenses/expense_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/summary_card.dart';
+import 'package:maki_mobile_pos/services/expense_receipt_storage_service.dart';
 import 'package:intl/intl.dart';
 
 /// Expenses dashboard.
@@ -21,9 +22,9 @@ import 'package:intl/intl.dart';
 /// expense list. Filter dropdown and "View all" history link are added in
 /// later chunks; for now this is the totals + flat list.
 ///
-/// Role-based behavior:
-/// - Admin: Full CRUD on expenses.
-/// - Staff/Cashier: Can view and add expenses. Cannot edit or delete.
+/// Role-based behavior: all roles have full CRUD on expenses (shop policy
+/// 2026-07-04 — cashier/staff fix and remove their own entry mistakes; the
+/// activity log keeps the audit trail).
 class ExpensesScreen extends ConsumerStatefulWidget {
   const ExpensesScreen({super.key});
 
@@ -60,7 +61,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         title: const Text('Expenses'),
       ),
       body: expensesAsync.when(
-        data: (expenses) => _buildBody(expenses, canEdit: canEdit, canDelete: canDelete),
+        data: (expenses) =>
+            _buildBody(expenses, canEdit: canEdit, canDelete: canDelete),
         loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
           message: 'Error: $error',
@@ -185,6 +187,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         description: expense.description,
         subtitle: _dateFormat.format(expense.createdAt),
         amount: expense.amount,
+        hasReceipt: expense.receiptImageUrl != null,
         onTap: canEdit
             ? () => context.push('${RoutePaths.expenses}/edit/${expense.id}')
             : null,
@@ -250,6 +253,14 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           .read(expenseOperationsProvider.notifier)
           .deleteExpense(expense.id);
       if (!ok) throw Exception('Delete failed');
+      if (expense.receiptImageUrl != null) {
+        // Best-effort receipt cleanup — orphans are harmless.
+        try {
+          await ref
+              .read(expenseReceiptStorageServiceProvider)
+              .delete(expenseId: expense.id);
+        } catch (_) {}
+      }
       if (context.mounted) {
         context.showSuccessSnackBar('Expense deleted');
       }
@@ -345,16 +356,15 @@ class _TotalCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final totalAsync = ref.watch(totalExpensesProvider(params));
-    final value = totalAsync.when(
-      data: (total) => _ExpenseTotalsRow._currencyFormat.format(total),
-      loading: () => '…',
-      error: (_, __) => '—',
-    );
     return SummaryCard(
       title: title,
-      value: value,
+      value: totalAsync.maybeWhen(
+        data: (total) => _ExpenseTotalsRow._currencyFormat.format(total),
+        orElse: () => '—',
+      ),
       icon: icon,
       compact: true,
+      loading: totalAsync.isLoading,
     );
   }
 }
@@ -419,7 +429,7 @@ class _CategoryFilterDropdown extends ConsumerWidget {
           onChanged: onChanged,
         );
       },
-      loading: () => const LinearProgressIndicator(),
+      loading: () => const FieldSkeleton(),
       error: (_, __) => const Text('Could not load categories'),
     );
   }

@@ -32,6 +32,22 @@ service firebase.storage {
                    );
     }
 
+    // Expense receipt photos — `expenses/{expenseId}/receipt.jpg` (one
+    // receipt per expense, overwritten on re-upload). Same posture as
+    // products: any signed-in user reads/writes; role is enforced at the
+    // application layer (anyone may create an expense; only admin edits).
+    match /expenses/{expenseId}/{file=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && (
+                     request.resource == null
+                     || (
+                       request.resource.size < 2 * 1024 * 1024
+                       && request.resource.contentType.matches('image/.*')
+                     )
+                   );
+    }
+
     // Default-deny everything else.
     match /{path=**} {
       allow read, write: if false;
