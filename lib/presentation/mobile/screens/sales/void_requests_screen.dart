@@ -115,12 +115,13 @@ class _CountCaption extends StatelessWidget {
             child: Text(
               '$pending pending',
               style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700, color: s.textColor),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: s.textColor),
             ),
           ),
           const SizedBox(width: 7),
-          Text('· $total total',
-              style: TextStyle(fontSize: 12, color: muted)),
+          Text('· $total total', style: TextStyle(fontSize: 12, color: muted)),
         ],
       ),
     );
@@ -195,8 +196,7 @@ class _RequestRow extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${request.requestedByName} · ${request.reason}',
-                  style: TextStyle(
-                      fontSize: 12.5, height: 1.45, color: muted),
+                  style: TextStyle(fontSize: 12.5, height: 1.45, color: muted),
                 ),
                 const SizedBox(height: 7),
                 Row(
@@ -407,7 +407,8 @@ class _Receipt extends StatelessWidget {
     final rows = <Widget>[];
     for (var i = 0; i < sale.items.length; i++) {
       final item = sale.items[i];
-      final net = item.calculateNetAmount(isPercentage: sale.isPercentageDiscount);
+      final net =
+          item.calculateNetAmount(isPercentage: sale.isPercentageDiscount);
       rows.add(_lineRow(
         theme: theme,
         muted: muted,
@@ -477,8 +478,8 @@ class _Receipt extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total to void',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600, fontSize: 14)),
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
               Text(
                 sale.grandTotal.toCurrency(),
                 style: const TextStyle(
@@ -509,8 +510,8 @@ class _Receipt extends StatelessWidget {
   Widget _laborChip(ThemeData theme, bool dark) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary
-              .withValues(alpha: dark ? 0.18 : 0.10),
+          color:
+              theme.colorScheme.primary.withValues(alpha: dark ? 0.18 : 0.10),
           borderRadius: BorderRadius.circular(7),
         ),
         child: Text('Labor',
@@ -554,8 +555,8 @@ class _Receipt extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Text(amount,
-              style: const TextStyle(
-                  fontSize: 13.5, fontWeight: FontWeight.w700)),
+              style:
+                  const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -618,8 +619,7 @@ class _SheetButton extends StatelessWidget {
 
 // ============================ dialogs ============================
 
-void _approveDialog(
-    BuildContext context, WidgetRef ref, VoidRequestEntity r) {
+void _approveDialog(BuildContext context, WidgetRef ref, VoidRequestEntity r) {
   final controller = TextEditingController();
   var obscure = true;
   showDialog(
@@ -647,9 +647,13 @@ void _approveDialog(
           onAction: () async {
             final pw = controller.text;
             Navigator.pop(dialogContext);
-            final err = await ref
-                .read(voidRequestOperationsProvider.notifier)
-                .approve(request: r, password: pw);
+            if (!context.mounted) return;
+            final err = await context.runWithWaiting(
+              () => ref
+                  .read(voidRequestOperationsProvider.notifier)
+                  .approve(request: r, password: pw),
+              message: 'Approving…',
+            );
             if (context.mounted) {
               err == null
                   ? context.showSuccessSnackBar('Sale voided')
@@ -682,9 +686,13 @@ void _rejectDialog(BuildContext context, WidgetRef ref, VoidRequestEntity r) {
         onAction: () async {
           final reason = controller.text;
           Navigator.pop(dialogContext);
-          final err = await ref
-              .read(voidRequestOperationsProvider.notifier)
-              .reject(request: r, rejectionReason: reason);
+          if (!context.mounted) return;
+          final err = await context.runWithWaiting(
+            () => ref
+                .read(voidRequestOperationsProvider.notifier)
+                .reject(request: r, rejectionReason: reason),
+            message: 'Rejecting…',
+          );
           if (context.mounted) {
             err == null
                 ? context.showSuccessSnackBar('Request rejected')
@@ -761,8 +769,8 @@ class _DialogShell extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text('Cancel',
-                      style: TextStyle(
-                          color: muted, fontWeight: FontWeight.w600)),
+                      style:
+                          TextStyle(color: muted, fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(width: 6),
                 FilledButton(
@@ -848,7 +856,8 @@ class _PasswordField extends StatelessWidget {
     );
   }
 
-  OutlineInputBorder _border(ThemeData theme, bool focused) => OutlineInputBorder(
+  OutlineInputBorder _border(ThemeData theme, bool focused) =>
+      OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
         borderSide: BorderSide(
           color: focused

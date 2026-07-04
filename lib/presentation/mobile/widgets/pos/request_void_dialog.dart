@@ -53,15 +53,18 @@ class _RequestVoidDialogState extends ConsumerState<RequestVoidDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final reason = VoidReasonField.resolveReason(
-        _selectedReason, _detailController.text);
+    final reason =
+        VoidReasonField.resolveReason(_selectedReason, _detailController.text);
     setState(() {
       _submitting = true;
       _error = null;
     });
-    final err = await ref
-        .read(voidRequestOperationsProvider.notifier)
-        .requestVoid(sale: widget.sale, reason: reason);
+    final err = await context.runWithWaiting(
+      () => ref
+          .read(voidRequestOperationsProvider.notifier)
+          .requestVoid(sale: widget.sale, reason: reason),
+      message: 'Submitting…',
+    );
     if (!mounted) return;
     if (err == null) {
       Navigator.pop(context);
@@ -90,7 +93,9 @@ class _RequestVoidDialogState extends ConsumerState<RequestVoidDialog> {
             Text(
               'Sale ${widget.sale.saleNumber} will be sent to an admin for approval.',
               style: TextStyle(
-                  fontSize: 14.5, height: 1.55, color: appDialogBodyColor(dark)),
+                  fontSize: 14.5,
+                  height: 1.55,
+                  color: appDialogBodyColor(dark)),
             ),
             const SizedBox(height: 12),
             VoidReasonField(

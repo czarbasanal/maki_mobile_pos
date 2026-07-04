@@ -87,8 +87,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
               VoidReasonField(
                 selectedReason: _selectedReason,
                 detailController: _detailController,
-                onChanged: (value) =>
-                    setState(() => _selectedReason = value),
+                onChanged: (value) => setState(() => _selectedReason = value),
               ),
 
               const SizedBox(height: 16),
@@ -154,8 +153,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
   Widget _buildSaleInfo(ThemeData theme) {
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
     final mutedFill =
         isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted;
     return Container(
@@ -273,9 +271,10 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
       subtitle: 'Enter your password to void this sale.',
       confirmButtonText: 'Verify & Void',
       confirmButtonColor: AppColors.error,
-      onVerify: (password) async {
-        return await _processVoid(password);
-      },
+      onVerify: (password) => context.runWithWaiting(
+        () => _processVoid(password),
+        message: 'Voiding…',
+      ),
     );
 
     if (passwordVerified && mounted) {
