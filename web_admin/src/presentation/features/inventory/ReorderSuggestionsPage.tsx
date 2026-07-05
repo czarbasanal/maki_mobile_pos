@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { startOfDay } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { REORDER_SALES_CAP, useReorderSuggestions } from '@/presentation/hooks/useReorderSuggestions';
@@ -13,7 +14,11 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 const WINDOWS = [7, 14, 30, 90];
 
 export function ReorderSuggestionsPage() {
-  const [now] = useState(() => new Date());
+  // Day-stable clock: same timestamp all day, advances on the first render
+  // after midnight so the yesterday-ending window never goes stale in a
+  // long-lived tab (a frozen mount-time `now` would drop a whole day).
+  const todayKey = startOfDay(new Date()).getTime();
+  const now = useMemo(() => new Date(todayKey), [todayKey]);
   const [windowDays, setWindowDays] = useState(30);
   const [coverDays, setCoverDays] = useState(14);
   const params: ReorderParams = { windowDays, coverDays };
@@ -56,7 +61,7 @@ export function ReorderSuggestionsPage() {
       ['Supplier', 'SKU', 'Name', 'Current stock', 'Velocity/day', 'Order qty'],
       rows,
     );
-    downloadCsv(`reorder-${now.toISOString().slice(0, 10)}.csv`, csv);
+    downloadCsv(`reorder-${new Date().toISOString().slice(0, 10)}.csv`, csv);
   }
 
   return (

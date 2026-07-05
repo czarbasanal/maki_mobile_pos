@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useProducts } from './useProducts';
 import { useSaleRepo } from '@/infrastructure/di/container';
+import { SaleStatus } from '@/domain/enums';
 import { reorderWindow } from '@/domain/reorder/reorderWindow';
 import { unitsSoldByProduct } from '@/domain/reorder/unitsSoldByProduct';
 import {
@@ -24,7 +25,12 @@ export function useReorderSuggestions(params: ReorderParams, now: Date) {
   const salesQ = useQuery({
     queryKey: ['reorder', 'sales', range.start.getTime(), range.end.getTime()],
     queryFn: () =>
-      saleRepo.list({ start: range.start, end: range.end, limit: REORDER_SALES_CAP }),
+      saleRepo.list({
+        start: range.start,
+        end: range.end,
+        limit: REORDER_SALES_CAP,
+        status: SaleStatus.completed,
+      }),
   });
 
   const suggestions = useMemo<ReorderSuggestion[]>(() => {
