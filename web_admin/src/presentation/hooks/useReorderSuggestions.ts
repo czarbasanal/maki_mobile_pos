@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { endOfDay, startOfDay, subDays } from 'date-fns';
 import { useProducts } from './useProducts';
 import { useSaleRepo } from '@/infrastructure/di/container';
+import { reorderWindow } from '@/domain/reorder/reorderWindow';
 import { unitsSoldByProduct } from '@/domain/reorder/unitsSoldByProduct';
 import {
   computeReorderSuggestions,
@@ -10,23 +10,21 @@ import {
   type ReorderSuggestion,
 } from '@/domain/reorder/computeReorderSuggestions';
 
-const SALES_CAP = 2000;
+export const REORDER_SALES_CAP = 10_000;
 
 export function useReorderSuggestions(params: ReorderParams, now: Date) {
   const saleRepo = useSaleRepo();
   const { data: products, isLoading: lp } = useProducts();
 
   const range = useMemo(
-    () => ({
-      start: startOfDay(subDays(now, params.windowDays - 1)),
-      end: endOfDay(now),
-    }),
+    () => reorderWindow(now, params.windowDays),
     [now, params.windowDays],
   );
 
   const salesQ = useQuery({
     queryKey: ['reorder', 'sales', range.start.getTime(), range.end.getTime()],
-    queryFn: () => saleRepo.list({ start: range.start, end: range.end, limit: SALES_CAP }),
+    queryFn: () =>
+      saleRepo.list({ start: range.start, end: range.end, limit: REORDER_SALES_CAP }),
   });
 
   const suggestions = useMemo<ReorderSuggestion[]>(() => {
@@ -39,6 +37,6 @@ export function useReorderSuggestions(params: ReorderParams, now: Date) {
     suggestions,
     isLoading: lp || salesQ.isLoading,
     error: (salesQ.error as Error) ?? null,
-    capped: (salesQ.data?.length ?? 0) >= SALES_CAP,
+    capped: (salesQ.data?.length ?? 0) >= REORDER_SALES_CAP,
   };
 }
