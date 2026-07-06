@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { startOfDay } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import { useReorderSuggestions } from '@/presentation/hooks/useReorderSuggestions';
+import { REORDER_SALES_CAP, useReorderSuggestions } from '@/presentation/hooks/useReorderSuggestions';
+import { CappedNotice } from './CappedNotice';
 import type { ReorderParams, ReorderSuggestion } from '@/domain/reorder/computeReorderSuggestions';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
@@ -12,11 +14,15 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 const WINDOWS = [7, 14, 30, 90];
 
 export function ReorderSuggestionsPage() {
-  const [now] = useState(() => new Date());
+  // Day-stable clock: same timestamp all day, advances on the first render
+  // after midnight so the yesterday-ending window never goes stale in a
+  // long-lived tab (a frozen mount-time `now` would drop a whole day).
+  const todayKey = startOfDay(new Date()).getTime();
+  const now = useMemo(() => new Date(todayKey), [todayKey]);
   const [windowDays, setWindowDays] = useState(30);
   const [coverDays, setCoverDays] = useState(14);
   const params: ReorderParams = { windowDays, coverDays };
-  const { suggestions, isLoading, error } = useReorderSuggestions(params, now);
+  const { suggestions, isLoading, error, capped } = useReorderSuggestions(params, now);
 
   // Editable qty overrides, keyed by product id; reset when recomputed.
   const [overrides, setOverrides] = useState<Record<string, number>>({});
@@ -55,7 +61,7 @@ export function ReorderSuggestionsPage() {
       ['Supplier', 'SKU', 'Name', 'Current stock', 'Velocity/day', 'Order qty'],
       rows,
     );
-    downloadCsv(`reorder-${now.toISOString().slice(0, 10)}.csv`, csv);
+    downloadCsv(`reorder-${new Date().toISOString().slice(0, 10)}.csv`, csv);
   }
 
   return (
@@ -71,7 +77,8 @@ export function ReorderSuggestionsPage() {
           Reorder suggestions
         </h1>
         <p className="text-bodySmall text-light-text-secondary">
-          Suggested order quantity from recent sales velocity × (supplier lead time + cover days).
+          Suggested order quantity from recent sales velocity × days of cover. Velocity uses
+          complete days ending yesterday.
         </p>
       </header>
 
@@ -92,6 +99,8 @@ export function ReorderSuggestionsPage() {
           <ArrowDownTrayIcon className="h-4 w-4" /> Export CSV
         </button>
       </div>
+
+      <CappedNotice capped={capped} cap={REORDER_SALES_CAP} />
 
       {error ? (
         <ErrorView title="Could not load reorder data" message={error.message} />

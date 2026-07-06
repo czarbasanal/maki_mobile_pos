@@ -261,10 +261,16 @@ export class FirestoreSaleRepository implements SaleRepository {
   }
 
   private async loadSalesWithItems(sales: Sale[]): Promise<Sale[]> {
-    // Parallel item-loads keep the dashboard responsive on busy days. N+1
-    // is fine for daily volume; reports paginate so this never grows
-    // unbounded.
-    const itemLists = await Promise.all(sales.map((s) => this.loadItems(s.id)));
-    return sales.map((s, i) => ({ ...s, items: itemLists[i] }));
+    // Item subcollections load in parallel chunks of 20, mirroring the
+    // mobile repository: unbounded fan-out melts large windows (reports,
+    // reorder suggestions), while per-chunk Promise.all preserves order.
+    const chunkSize = 20;
+    const out: Sale[] = [];
+    for (let i = 0; i < sales.length; i += chunkSize) {
+      const chunk = sales.slice(i, i + chunkSize);
+      const itemLists = await Promise.all(chunk.map((s) => this.loadItems(s.id)));
+      out.push(...chunk.map((s, j) => ({ ...s, items: itemLists[j] })));
+    }
+    return out;
   }
 }
