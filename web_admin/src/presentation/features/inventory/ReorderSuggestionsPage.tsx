@@ -3,7 +3,7 @@ import { startOfDay } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { REORDER_SALES_CAP, useReorderSuggestions } from '@/presentation/hooks/useReorderSuggestions';
-import { CappedNotice } from './CappedNotice';
+import { CappedNotice } from '@/presentation/components/common/CappedNotice';
 import type { ReorderParams, ReorderSuggestion } from '@/domain/reorder/computeReorderSuggestions';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
@@ -100,7 +100,10 @@ export function ReorderSuggestionsPage() {
         </button>
       </div>
 
-      <CappedNotice capped={capped} cap={REORDER_SALES_CAP} />
+      <CappedNotice capped={capped}>
+        Velocity is computed from the most recent {REORDER_SALES_CAP.toLocaleString('en-US')}{' '}
+        sales — it may be understated for this window.
+      </CappedNotice>
 
       {error ? (
         <ErrorView title="Could not load reorder data" message={error.message} />

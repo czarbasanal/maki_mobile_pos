@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChartBarIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
-import { useReportData } from '@/presentation/hooks/useReportData';
+import { SALES_FETCH_CAP, useReportData } from '@/presentation/hooks/useReportData';
 import { salesToCsv, downloadCsv } from '@/core/utils/csv';
 import { formatMoney } from '@/core/utils/money';
 import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
@@ -11,6 +11,7 @@ import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
 import { SalesTable } from './SalesTable';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
+import { CappedNotice } from '@/presentation/components/common/CappedNotice';
 
 const fileStamp = (d: Date) =>
   `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(
@@ -53,11 +54,10 @@ export function SalesReportPage() {
         </div>
       ) : (
         <>
-          {capped ? (
-            <p className="rounded-md border border-warning bg-warning-light px-tk-md py-tk-sm text-bodySmall text-warning-dark">
-              Showing the most recent 2,000 sales — narrow the date range for exact totals.
-            </p>
-          ) : null}
+          <CappedNotice capped={capped}>
+            Showing the most recent {SALES_FETCH_CAP.toLocaleString('en-US')} sales — narrow the
+            date range for exact totals.
+          </CappedNotice>
 
           <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2 lg:grid-cols-4">
             <SummaryCard title="Gross Sales" value={formatMoney(summary.grossAmount)} emphasized />
