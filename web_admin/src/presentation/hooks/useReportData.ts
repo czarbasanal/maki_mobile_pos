@@ -8,7 +8,7 @@ import {
 import { type Sale } from '@/domain/entities';
 import type { DateRange } from '@/domain/reports/dateRange';
 
-const SALES_FETCH_CAP = 2000;
+export const SALES_FETCH_CAP = 2000;
 
 export interface ReportData {
   sales: Sale[];
