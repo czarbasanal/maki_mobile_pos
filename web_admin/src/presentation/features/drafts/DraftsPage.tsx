@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { useDrafts } from '@/presentation/hooks/useDrafts';
 import { useDeleteDraft } from '@/presentation/hooks/useDraftMutations';
@@ -73,6 +73,12 @@ export function DraftsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-tk-sm">
+                    <Link
+                      to={`/drafts/${d.id}`}
+                      className="rounded-md border border-light-border px-tk-md py-[6px] text-[12px] font-medium text-light-text hover:bg-light-subtle"
+                    >
+                      Edit
+                    </Link>
                     <button
                       type="button"
                       onClick={() => onResume(d)}

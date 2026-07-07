@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useCartStore } from '@/presentation/stores/cartStore';
+import type { CartStore } from '@/presentation/stores/cartStore';
 import { useActiveMechanics } from '@/presentation/hooks/useMechanics';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 
-export function LaborSection() {
-  const laborLines = useCartStore((s) => s.laborLines);
-  const addLaborLine = useCartStore((s) => s.addLaborLine);
-  const setLaborLine = useCartStore((s) => s.setLaborLine);
-  const removeLaborLine = useCartStore((s) => s.removeLaborLine);
-  const mechanicId = useCartStore((s) => s.mechanicId);
-  const mechanicName = useCartStore((s) => s.mechanicName);
-  const setMechanic = useCartStore((s) => s.setMechanic);
+export function LaborSection({ store }: { store: CartStore }) {
+  const laborLines = store((s) => s.laborLines);
+  const addLaborLine = store((s) => s.addLaborLine);
+  const setLaborLine = store((s) => s.setLaborLine);
+  const removeLaborLine = store((s) => s.removeLaborLine);
+  const mechanicId = store((s) => s.mechanicId);
+  const mechanicName = store((s) => s.mechanicName);
+  const setMechanic = store((s) => s.setMechanic);
 
   const { data: mechanics } = useActiveMechanics();
   const active = mechanics ?? [];
