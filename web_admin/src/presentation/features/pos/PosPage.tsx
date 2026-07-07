@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { describedLaborLines } from '@/domain/sales/labor';
 import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
@@ -19,6 +19,7 @@ export function PosPage() {
   const clear = useCartStore((s) => s.clear);
   const saveDraft = useSaveDraft();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [done, setDone] = useState<string | null>(
     (location.state as { completedSaleNumber?: string } | null)?.completedSaleNumber ?? null,
@@ -32,9 +33,12 @@ export function PosPage() {
 
   useEffect(() => {
     if ((location.state as { completedSaleNumber?: string } | null)?.completedSaleNumber) {
-      window.history.replaceState({}, '');
+      navigate(RoutePaths.pos, { replace: true, state: null });
     }
-  }, []); // run once
+    // run once — `done` is already captured from location.state in the useState
+    // initializer above, so clearing router state here doesn't affect the banner.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Dismiss the previous sale's success banner once a new cart is started.
   useEffect(() => {

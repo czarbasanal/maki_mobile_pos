@@ -47,7 +47,7 @@ export function CheckoutPage() {
       });
       pay.reset();
       clear();
-      navigate(RoutePaths.pos, { state: { completedSaleNumber: sale.saleNumber } });
+      navigate(RoutePaths.pos, { replace: true, state: { completedSaleNumber: sale.saleNumber } });
     } catch {
       // surfaced via checkout.error
     }
