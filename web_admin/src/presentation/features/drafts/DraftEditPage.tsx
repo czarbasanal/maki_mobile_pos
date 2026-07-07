@@ -26,32 +26,29 @@ export function DraftEditPage() {
   const mechanicName = useDraftEditStore((s) => s.mechanicName);
 
   const [name, setName] = useState('');
-  const hydrated = useRef(false);
+  const hydratedId = useRef<string | null>(null);
 
   useEffect(() => {
     document.title = 'Edit draft';
   }, []);
   useEffect(() => {
-    if (draft && !draft.isConverted && !hydrated.current) {
+    if (draft && !draft.isConverted && hydratedId.current !== draft.id) {
       loadDraft(draft);
       setName(draft.name);
-      hydrated.current = true;
+      hydratedId.current = draft.id;
     }
-    return () => clear();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft]);
+  }, [draft, loadDraft]);
+  useEffect(() => () => clear(), [clear]);
 
   if (error) return <ErrorView title="Could not load draft" message={error.message} />;
-  if (isLoading || !draft) {
-    if (!isLoading && !draft) {
-      return (
-        <div className="px-tk-xl py-tk-lg">
-          <EmptyState title="Draft not found" description="It may have been deleted or already billed out." />
-          <Link to={RoutePaths.drafts} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Drafts</Link>
-        </div>
-      );
-    }
-    return <LoadingView label="Loading draft…" />;
+  if (isLoading) return <LoadingView label="Loading draft…" />;
+  if (!draft) {
+    return (
+      <div className="px-tk-xl py-tk-lg">
+        <EmptyState title="Draft not found" description="It may have been deleted or already billed out." />
+        <Link to={RoutePaths.drafts} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Drafts</Link>
+      </div>
+    );
   }
   if (draft.isConverted) {
     return (

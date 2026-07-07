@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { DraftEditPage } from './DraftEditPage';
@@ -59,5 +60,52 @@ describe('DraftEditPage', () => {
   it('shows not-found when the draft is missing', async () => {
     harness({ getById: vi.fn().mockResolvedValue(null) });
     await waitFor(() => expect(screen.getByText(/Draft not found/i)).toBeInTheDocument());
+  });
+
+  it('re-hydrates the editor when navigating between drafts without unmounting', async () => {
+    const draftsById: Record<string, Draft> = {
+      d1: draft({ id: 'd1', name: 'Draft One' }),
+      d2: draft({ id: 'd2', name: 'Draft Two' }),
+    };
+    const getById = vi.fn((id: string) => Promise.resolve(draftsById[id] ?? null));
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const productRepo: Partial<Container['productRepo']> = {
+      watchAll: (cb: (products: Product[]) => void) => {
+        cb([]);
+        return () => {};
+      },
+    };
+    const mechanicRepo: Partial<Container['mechanicRepo']> = {
+      watchAll: (cb: (mechanics: Mechanic[]) => void) => {
+        cb([]);
+        return () => {};
+      },
+    };
+
+    render(
+      <DiProvider
+        override={{
+          draftRepo: { getById } as unknown as Container['draftRepo'],
+          productRepo: productRepo as Container['productRepo'],
+          mechanicRepo: mechanicRepo as Container['mechanicRepo'],
+        }}
+      >
+        <QueryClientProvider client={qc}>
+          <MemoryRouter initialEntries={['/drafts/d1']}>
+            <Link to="/drafts/d2">Go to draft two</Link>
+            {/* Same Route element instance is reused across param changes (no key) — this is what exposed the bug. */}
+            <Routes>
+              <Route path="/drafts/:id" element={<DraftEditPage />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </DiProvider>,
+    );
+
+    await screen.findByDisplayValue('Draft One');
+
+    await userEvent.click(screen.getByText('Go to draft two'));
+
+    await screen.findByDisplayValue('Draft Two');
   });
 });
