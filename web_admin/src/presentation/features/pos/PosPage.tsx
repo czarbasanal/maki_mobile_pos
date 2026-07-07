@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
-import { useCheckout } from '@/presentation/hooks/useCheckout';
-import { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { cartSubtotal, cartDiscount, cartGrandTotal, lowStockLines } from '@/domain/sales/cart';
 import { describedLaborLines, cartLaborSubtotal } from '@/domain/sales/labor';
@@ -12,7 +11,7 @@ import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
 import { Dialog } from '@/presentation/components/common/Dialog';
-import { PaymentSection } from './PaymentSection';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { LaborSection } from './LaborSection';
 
 export function PosPage() {
@@ -30,11 +29,13 @@ export function PosPage() {
   const draftId = useCartStore((s) => s.draftId);
   const draftName = useCartStore((s) => s.draftName);
   const clear = useCartStore((s) => s.clear);
-  const checkout = useCheckout();
   const saveDraft = useSaveDraft();
+  const location = useLocation();
 
   const [search, setSearch] = useState('');
-  const [done, setDone] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(
+    (location.state as { completedSaleNumber?: string } | null)?.completedSaleNumber ?? null,
+  );
   const [saveOpen, setSaveOpen] = useState(false);
   const [draftNameInput, setDraftNameInput] = useState('');
 
@@ -43,11 +44,16 @@ export function PosPage() {
   const discount = cartDiscount(lines, discountType);
   const grandTotal = cartGrandTotal(lines, laborLines, discountType);
   const labor = cartLaborSubtotal(laborLines);
-  const pay = usePaymentDraft(grandTotal);
 
   useEffect(() => {
     document.title = 'POS';
   }, []);
+
+  useEffect(() => {
+    if ((location.state as { completedSaleNumber?: string } | null)?.completedSaleNumber) {
+      window.history.replaceState({}, '');
+    }
+  }, []); // run once
 
   // Dismiss the previous sale's success banner once a new cart is started.
   useEffect(() => {
@@ -71,30 +77,6 @@ export function PosPage() {
   }, [active, search]);
 
   const lowStock = useMemo(() => lowStockLines(lines, active), [lines, active]);
-  const canComplete = lines.length > 0 && pay.isValid && !checkout.isPending;
-
-  const onComplete = async () => {
-    saveDraft.reset(); // clear any lingering "Saved to drafts" banner
-    try {
-      const sale = await checkout.mutateAsync({
-        lines,
-        discountType,
-        paymentMethod: pay.paymentMethod,
-        tenders: pay.tenders,
-        amountReceived: pay.amountReceived,
-        changeGiven: pay.changeGiven,
-        laborLines: describedLaborLines(laborLines),
-        mechanicId,
-        mechanicName,
-        draftId,
-      });
-      setDone(sale.saleNumber);
-      pay.reset();
-      clear();
-    } catch {
-      // surfaced via checkout.error
-    }
-  };
 
   const openSave = () => {
     setDraftNameInput(draftName ?? '');
@@ -163,11 +145,6 @@ export function PosPage() {
         {done ? (
           <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
             Sale <span className="font-mono">{done}</span> completed.
-          </p>
-        ) : null}
-        {checkout.error ? (
-          <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
-            {checkout.error.message}
           </p>
         ) : null}
         {saveDraft.isSuccess && lines.length === 0 ? (
@@ -253,18 +230,16 @@ export function PosPage() {
         </div>
 
         <div className="space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-md">
-          <PaymentSection pay={pay} grandTotal={grandTotal} />
-          <button
-            type="button"
-            disabled={!canComplete}
-            onClick={onComplete}
+          <Link
+            to={RoutePaths.checkout}
+            aria-disabled={lines.length === 0}
             className={cn(
-              'w-full rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark',
-              !canComplete && 'cursor-not-allowed opacity-60',
+              'block w-full rounded-md bg-light-text px-tk-md py-tk-sm text-center text-bodySmall font-semibold text-light-background hover:bg-primary-dark',
+              lines.length === 0 && 'pointer-events-none cursor-not-allowed opacity-60',
             )}
           >
-            {checkout.isPending ? 'Completing…' : 'Complete sale'}
-          </button>
+            Checkout
+          </Link>
           <button
             type="button"
             disabled={lines.length === 0 || saveDraft.isPending}

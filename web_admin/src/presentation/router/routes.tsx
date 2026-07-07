@@ -36,6 +36,7 @@ import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
 import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
 import { PosPage } from '@/presentation/features/pos/PosPage';
+import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
 import { DraftsPage } from '@/presentation/features/drafts/DraftsPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
@@ -61,7 +62,7 @@ export const router = createBrowserRouter(
       children: [
         { path: RoutePaths.dashboard, element: <DashboardPage /> },
         { path: RoutePaths.pos, element: <PosPage /> },
-        { path: RoutePaths.checkout, element: placeholder('Checkout', 'phase 11') },
+        { path: RoutePaths.checkout, element: <CheckoutPage /> },
         { path: RoutePaths.drafts, element: <DraftsPage /> },
         { path: RoutePaths.draftEdit, element: placeholder('Edit Draft', 'phase 10') },
         { path: RoutePaths.inventory, element: <InventoryListPage /> },
