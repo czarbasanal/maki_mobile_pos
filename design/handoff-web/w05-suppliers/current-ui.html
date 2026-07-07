@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS Web Admin — w05 Suppliers (current UI)</title>
+<style>
+  :root{
+    --text:#0A0A0A; --secondary:#666666; --hint:#A0A0A0;
+    --bg:#FFFFFF; --card:#FFFFFF; --subtle:#FAFAFA;
+    --hairline:#EAEAEA; --border:#E0E0E0; --primary-dark:#121C1D;
+    --success:#4CAF50; --success-dark:#2E7D32;
+    --error:#F44336; --error-light:#FFEBEE; --error-dark:#C62828;
+    --warning-light:#FFF8E1; --warning-dark:#F57C00;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#EFEFEF;color:var(--text);
+    font-family:Roboto,system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.4;}
+  .mono{font-family:ui-monospace,Menlo,monospace;}
+  h1,h2,h3,p{margin:0;}
+  a{color:inherit;text-decoration:none;}
+  .tnum{font-variant-numeric:tabular-nums;}
+
+  /* Page scaffold */
+  .page{max-width:1360px;margin:0 auto;padding:32px 24px 64px;}
+  .page-head{margin-bottom:28px;}
+  .page-head h1{font-size:22px;font-weight:700;letter-spacing:-.01em;}
+  .page-head .meta{color:var(--secondary);font-size:13px;margin-top:6px;}
+  .section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--hint);margin:40px 0 12px;}
+
+  /* Browser frame */
+  .frame{border:1px solid #d5d5d5;border-radius:10px;overflow:hidden;background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:8px;}
+  .frame-bar{display:flex;align-items:center;gap:10px;background:#F3F3F3;
+    border-bottom:1px solid #E3E3E3;padding:8px 14px;font-size:12px;color:var(--secondary);}
+  .frame-bar .route{font-family:ui-monospace,Menlo,monospace;color:var(--text);font-weight:500;}
+  .frame-bar .who{margin-left:auto;background:#ECECEC;border:1px solid #DEDEDE;border-radius:999px;
+    padding:2px 10px;font-size:11px;color:var(--secondary);}
+  .frame-cap{font-size:12px;color:var(--secondary);margin:0 2px 28px;}
+
+  /* App shell (sidebar + content) */
+  .shell{display:flex;min-height:640px;background:var(--bg);}
+  .sidebar{width:240px;flex:0 0 240px;background:#fff;border-right:1px solid var(--hairline);
+    display:flex;flex-direction:column;}
+  .brand{height:56px;display:flex;align-items:center;padding:0 24px;font-size:16px;font-weight:600;
+    letter-spacing:-.01em;}
+  .nav{flex:1;padding:8px;overflow:auto;}
+  .nav-group-label{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--hint);padding:14px 8px 6px;}
+  .nav-item{display:flex;align-items:center;gap:8px;border-radius:6px;padding:6px 8px;font-size:14px;
+    color:var(--secondary);}
+  .nav-item svg{width:16px;height:16px;flex:0 0 16px;}
+  .nav-item:hover{background:var(--subtle);color:var(--text);}
+  .nav-item.active{background:var(--subtle);color:var(--text);font-weight:600;}
+  .acct{border-top:1px solid var(--hairline);padding:8px;}
+  .acct-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;}
+  .avatar{width:28px;height:28px;flex:0 0 28px;border-radius:999px;background:var(--primary-dark);
+    color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  .acct-mail{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .acct-role{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--hint);}
+  .content{flex:1;overflow:auto;}
+
+  /* Suppliers page interior */
+  .sp{padding:24px 32px;}
+  .sp-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;
+    margin-bottom:32px;}
+  .sp-head h1{font-size:24px;font-weight:600;letter-spacing:-.01em;}
+  .sp-head .sub{font-size:14px;color:var(--secondary);margin-top:4px;}
+
+  .btn{display:inline-flex;align-items:center;gap:4px;border-radius:6px;font-size:14px;
+    padding:8px 16px;cursor:default;border:1px solid transparent;}
+  .btn svg{width:14px;height:14px;}
+  .btn-dark{background:var(--text);color:#fff;font-weight:600;}
+  .btn-outline{background:#fff;border-color:var(--border);color:var(--text);}
+  .btn-ghost{background:transparent;color:var(--text);padding:6px 8px;}
+  .btn-ghost:hover{background:var(--subtle);}
+  .btn-error{background:var(--error);color:#fff;font-weight:600;}
+
+  .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:32px;}
+  .search{position:relative;flex:1;max-width:448px;}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;
+    color:var(--hint);}
+  .search input{width:100%;border:1px solid var(--border);border-radius:6px;background:#fff;
+    padding:8px 16px 8px 36px;font-size:14px;color:var(--text);font-family:inherit;}
+  .search input::placeholder{color:var(--hint);}
+
+  /* Table */
+  .tbl-card{border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  thead tr{background:var(--subtle);border-bottom:1px solid var(--hairline);}
+  th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--secondary);padding:8px 16px;}
+  th.right,td.right{text-align:right;}
+  tbody tr{border-top:1px solid var(--hairline);}
+  tbody tr:first-child{border-top:none;}
+  td{padding:8px 16px;vertical-align:top;}
+  .s-name{font-size:16px;font-weight:500;}
+  .s-addr{font-size:12px;color:var(--hint);max-width:220px;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;}
+  .c-person{font-size:14px;}
+  .c-num{font-size:12px;color:var(--secondary);}
+  .dash{font-size:12px;color:var(--hint);}
+  .terms{font-size:14px;color:var(--secondary);}
+  .inv-count{font-weight:600;}
+  .inv-val{font-size:12px;color:var(--hint);}
+  .status{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;}
+  .dot{width:6px;height:6px;border-radius:999px;display:inline-block;}
+  .status.active{color:var(--success-dark);}
+  .status.inactive{color:var(--secondary);}
+  tr.inactive{opacity:.6;}
+  .acts{display:inline-flex;align-items:center;gap:4px;justify-content:flex-end;position:relative;}
+  .edit-link{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:4px 8px;
+    font-size:14px;}
+  .edit-link:hover{background:var(--subtle);}
+  .edit-link svg{width:14px;height:14px;}
+  .more-btn{border-radius:6px;padding:4px;color:var(--secondary);background:transparent;border:none;
+    cursor:default;display:inline-flex;}
+  .more-btn:hover{background:var(--subtle);}
+  .more-btn svg{width:16px;height:16px;}
+
+  /* States */
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+  .loadingview{display:flex;align-items:center;justify-content:center;gap:8px;padding:48px;
+    color:var(--secondary);font-size:14px;}
+  .spin{width:16px;height:16px;color:currentColor;}
+  .emptystate{display:flex;flex-direction:column;align-items:center;gap:8px;border-radius:8px;
+    border:1px solid var(--hairline);background:var(--subtle);padding:32px;text-align:center;}
+  .emptystate .t{font-size:16px;font-weight:600;}
+  .emptystate .d{font-size:14px;color:var(--secondary);max-width:360px;}
+  .errorview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    padding:48px 32px;text-align:center;}
+  .errorview svg{width:32px;height:32px;color:var(--error);}
+  .errorview .t{font-size:20px;font-weight:600;}
+  .errorview .m{font-size:14px;color:var(--secondary);}
+
+  /* Form */
+  .form-head .back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--secondary);}
+  .form-head .back:hover{color:var(--text);}
+  .form-head .back svg{width:14px;height:14px;}
+  .form-head h1{font-size:24px;font-weight:600;letter-spacing:-.01em;margin-top:8px;}
+  .err-banner{border:1px solid #F7C6C6;background:rgba(255,235,238,.4);color:var(--error-dark);
+    border-radius:6px;padding:8px 16px;font-size:14px;margin:32px 0;}
+  form.sp-form{display:flex;flex-direction:column;gap:24px;margin-top:32px;}
+  .sec{display:flex;flex-direction:column;gap:8px;}
+  .sec > h2{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--hint);}
+  .sec-card{border:1px solid var(--hairline);border-radius:8px;background:#fff;padding:16px;
+    display:flex;flex-direction:column;gap:16px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field > span{font-size:14px;font-weight:500;}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:6px;
+    background:#fff;padding:10px 16px;font-size:14px;color:var(--text);font-family:inherit;}
+  .field textarea{resize:vertical;line-height:1.6;min-height:76px;}
+  .field .ferr{font-size:12px;color:var(--error);}
+  .field.has-err input{border-color:var(--error);outline:1px solid var(--error);}
+  .foot{display:flex;justify-content:flex-end;gap:8px;}
+
+  /* Modals section */
+  .modal-stage{position:relative;border-radius:10px;background:rgba(0,0,0,.30);padding:40px;
+    display:flex;align-items:center;justify-content:center;min-height:220px;overflow:hidden;}
+  .dialog{width:100%;max-width:448px;background:#fff;border:1px solid var(--hairline);border-radius:8px;
+    box-shadow:0 20px 25px -5px rgba(0,0,0,.2);}
+  .dialog-head{border-bottom:1px solid var(--hairline);padding:16px 24px;display:flex;
+    align-items:flex-start;justify-content:space-between;gap:16px;}
+  .dialog-head .t{font-size:16px;font-weight:600;}
+  .dialog-head .d{font-size:14px;color:var(--secondary);margin-top:4px;}
+  .dialog-body{padding:24px;}
+  .inline-err{font-size:14px;color:var(--error);margin-bottom:16px;}
+  .popover{width:176px;background:#fff;border:1px solid var(--hairline);border-radius:6px;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.15);overflow:hidden;}
+  .popover button{display:flex;width:100%;align-items:center;gap:8px;padding:8px 16px;text-align:left;
+    font-size:14px;color:var(--error-dark);background:#fff;border:none;cursor:default;}
+  .popover button:hover{background:rgba(255,235,238,.4);}
+  .popover svg{width:16px;height:16px;}
+  .pop-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .pop-anchor{display:inline-flex;align-items:center;gap:4px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-head">
+    <h1>MAKI POS Web Admin — w05 Suppliers</h1>
+    <p class="meta">current web UI — light theme, desktop · 2026-07-07 · Suppliers list + Supplier form + modals</p>
+  </div>
+
+  <!-- ============ SCREEN 1: SUPPLIERS LIST ============ -->
+  <div class="section-label">Screen 1 — Suppliers list</div>
+  <div class="frame">
+    <div class="frame-bar">
+      <span>Suppliers list</span><span class="route">/suppliers</span>
+      <span class="who">admin only</span>
+    </div>
+    <div class="shell">
+      <!-- Sidebar (admin view, Suppliers active) -->
+      <aside class="sidebar">
+        <div class="brand">MAKI POS</div>
+        <nav class="nav">
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="nav-group-label">Sell</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.4 12.3a1 1 0 0 0 1 .7h9.2a1 1 0 0 0 1-.8L21 7H6"/></svg>POS</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Drafts</a>
+          <div class="nav-group-label">Stock</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>Inventory</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7Z"/><circle cx="5" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>Receiving</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Reorder</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+          <a class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>Suppliers</a>
+          <div class="nav-group-label">Money</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2Z"/><path d="M9 8h6M9 12h4"/></svg>Expenses</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+          <div class="nav-group-label">Admin</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6M21 20a5.5 5.5 0 0 0-4-5.3"/></svg>Users</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.6H9.5L9.1 5.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h5l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.1-.3.1-.7.1-1Z"/></svg>Settings</a>
+        </nav>
+        <div class="acct">
+          <div class="acct-row">
+            <div class="avatar">C</div>
+            <div style="min-width:0;flex:1;">
+              <div class="acct-mail">czarbasanal@gmail.com</div>
+              <div class="acct-role">Admin</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="1.5"><path d="m6 15 6-6 6 6"/></svg>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content: populated list -->
+      <div class="content">
+        <div class="sp">
+          <div class="sp-head">
+            <div>
+              <h1>Suppliers</h1>
+              <div class="sub">Vendor directory used by inventory and receiving.</div>
+            </div>
+            <a class="btn btn-dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add supplier</a>
+          </div>
+
+          <div class="toolbar">
+            <div class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input type="text" placeholder="Search by name, contact, email, phone…" />
+            </div>
+            <button class="btn btn-outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Show inactive</button>
+          </div>
+
+          <div class="tbl-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Supplier</th><th>Contact</th><th>Terms</th>
+                  <th class="right">Inventory</th><th>Status</th><th class="right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div class="s-name">JVT Motor Supply</div><div class="s-addr">Osmeña Blvd, Cebu City</div></td>
+                  <td><div class="c-person">Jonathan Tan</div><div class="c-num">0917 812 4455</div></td>
+                  <td class="terms">30 Days</td>
+                  <td class="right tnum"><div class="inv-count">142</div><div class="inv-val">₱268,450.00</div></td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><div class="s-name">Kadena Chain &amp; Sprocket</div><div class="s-addr">A.S. Fortuna St, Mandaue</div></td>
+                  <td><div class="c-person">Rina Lopez</div><div class="c-num">0928 330 1190</div></td>
+                  <td class="terms">45 Days</td>
+                  <td class="right tnum"><div class="inv-count">58</div><div class="inv-val">₱94,120.00</div></td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><div class="s-name">Silangan Oil Trading</div><div class="s-addr">Natalio Bacalso Ave, Cebu City</div></td>
+                  <td><div class="c-person">Marco Villamor</div><div class="c-num">0905 771 2038</div></td>
+                  <td class="terms">Cash</td>
+                  <td class="right tnum"><div class="inv-count">76</div><div class="inv-val">₱131,900.00</div></td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><div class="s-name">Northwind Brake Parts</div><div class="s-addr">Banilad Rd, Cebu City</div></td>
+                  <td><span class="dash">—</span></td>
+                  <td class="terms">60 Days</td>
+                  <td class="right tnum"><div class="inv-count">33</div><div class="inv-val">₱47,300.00</div></td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr class="inactive">
+                  <td><div class="s-name">Vista Bulb &amp; Electricals</div><div class="s-addr">Colon St, Cebu City</div></td>
+                  <td><div class="c-person">Elena Sy</div><div class="c-num">0917 445 8821</div></td>
+                  <td class="terms"><span class="dash">—</span></td>
+                  <td class="right tnum"><div class="inv-count">12</div><div class="inv-val">₱9,850.00</div></td>
+                  <td><span class="status inactive"><span class="dot" style="background:#a3a3a3"></span>Inactive</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="frame-cap">Shown with "Show inactive" toggled on so an inactive row is visible (dimmed, gray dot, no overflow menu). Default state hides inactive rows and the toggle reads "Show inactive" (eye icon). Only admins reach this route — staff/cashier never see the Suppliers sidebar item.</p>
+
+  <!-- List states -->
+  <div class="section-label">Screen 1 — list states (body region only)</div>
+  <div class="states">
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Loading</div>
+      <div class="tbl-card"><div class="loadingview">
+        <svg class="spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        Loading suppliers…
+      </div></div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Empty — no search</div>
+      <div class="emptystate">
+        <div class="t">No suppliers found</div>
+        <div class="d">Add your first supplier to get started.</div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Empty — active search</div>
+      <div class="emptystate">
+        <div class="t">No suppliers found</div>
+        <div class="d">Try a different search.</div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Error (replaces whole page)</div>
+      <div class="tbl-card"><div class="errorview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div class="t">Could not load suppliers</div>
+        <div class="m">Failed to reach Firestore. Check your connection.</div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 2: SUPPLIER FORM ============ -->
+  <div class="section-label">Screen 2 — Supplier form (add / edit)</div>
+  <div class="frame">
+    <div class="frame-bar">
+      <span>Supplier form — edit mode</span><span class="route">/suppliers/edit/:id</span>
+      <span class="who">admin only</span>
+    </div>
+    <div class="shell">
+      <!-- Sidebar (condensed, Suppliers active) -->
+      <aside class="sidebar">
+        <div class="brand">MAKI POS</div>
+        <nav class="nav">
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="nav-group-label">Stock</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>Inventory</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7Z"/><circle cx="5" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>Receiving</a>
+          <a class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>Suppliers</a>
+          <div class="nav-group-label">Money</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+          <div class="nav-group-label">Admin</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6M21 20a5.5 5.5 0 0 0-4-5.3"/></svg>Users</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.6H9.5L9.1 5.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h5l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.1-.3.1-.7.1-1Z"/></svg>Settings</a>
+        </nav>
+        <div class="acct">
+          <div class="acct-row">
+            <div class="avatar">C</div>
+            <div style="min-width:0;flex:1;">
+              <div class="acct-mail">czarbasanal@gmail.com</div>
+              <div class="acct-role">Admin</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="1.5"><path d="m6 15 6-6 6 6"/></svg>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content: form -->
+      <div class="content">
+        <div class="sp">
+          <div class="form-head">
+            <a class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Suppliers</a>
+            <h1>Edit supplier</h1>
+          </div>
+
+          <form class="sp-form">
+            <section class="sec">
+              <h2>Basic information</h2>
+              <div class="sec-card">
+                <label class="field">
+                  <span>Name</span>
+                  <input type="text" value="JVT Motor Supply" />
+                </label>
+                <label class="field">
+                  <span>Address</span>
+                  <input type="text" value="Osmeña Blvd, Cebu City" />
+                </label>
+              </div>
+            </section>
+
+            <section class="sec">
+              <h2>Contact</h2>
+              <div class="sec-card">
+                <div class="grid2">
+                  <label class="field"><span>Contact person</span><input type="text" value="Jonathan Tan" /></label>
+                  <label class="field"><span>Email</span><input type="email" value="sales@jvtmotor.ph" /></label>
+                  <label class="field"><span>Contact number</span><input type="tel" value="0917 812 4455" /></label>
+                  <label class="field"><span>Alternative number</span><input type="tel" value="(032) 255 3390" /></label>
+                </div>
+              </div>
+            </section>
+
+            <section class="sec">
+              <h2>Terms</h2>
+              <div class="sec-card">
+                <label class="field">
+                  <span>Payment terms</span>
+                  <select>
+                    <option>Cash</option><option selected>30 Days</option><option>45 Days</option>
+                    <option>60 Days</option><option>90 Days</option><option>N/A</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="sec">
+              <h2>Notes</h2>
+              <div class="sec-card">
+                <label class="field">
+                  <span>Internal notes</span>
+                  <textarea>Reliable on chain and CVT stock. Ask for Jonathan for rush orders.</textarea>
+                </label>
+              </div>
+            </section>
+
+            <div class="foot">
+              <a class="btn btn-ghost">Cancel</a>
+              <button class="btn btn-dark">Save changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="frame-cap">Add mode is the same layout with header "New supplier", empty fields, Terms defaulting to "Cash", and the submit button labeled "Create supplier". Both add (<span class="mono">addSupplier</span>) and edit (<span class="mono">editSupplier</span>) routes are admin-only.</p>
+
+  <!-- Form states / variants -->
+  <div class="section-label">Screen 2 — form variants &amp; states</div>
+  <div class="states">
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Top mutation-error banner + Name field error (duplicate)</div>
+      <div style="border:1px solid var(--hairline);border-radius:8px;background:#fff;padding:20px;">
+        <div class="err-banner" style="margin:0 0 16px;">A supplier with that name already exists.</div>
+        <label class="field has-err" style="margin-bottom:0;">
+          <span>Name</span>
+          <input type="text" value="JVT Motor Supply" />
+          <span class="ferr">A supplier named "JVT Motor Supply" already exists.</span>
+        </label>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Submitting (button spinner, disabled)</div>
+      <div style="border:1px solid var(--hairline);border-radius:8px;background:#fff;padding:20px;display:flex;justify-content:flex-end;gap:8px;">
+        <a class="btn btn-ghost">Cancel</a>
+        <button class="btn btn-dark" style="opacity:.6;">
+          <svg class="spin" style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="3" opacity=".3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+          Saving…
+        </button>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Edit — loading target</div>
+      <div style="border:1px solid var(--hairline);border-radius:8px;background:#fff;"><div class="loadingview">
+        <svg class="spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        Loading supplier…
+      </div></div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Edit — load error</div>
+      <div style="border:1px solid var(--hairline);border-radius:8px;background:#fff;"><div class="errorview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div class="t">Could not load supplier</div>
+        <div class="m">Supplier not found or failed to load.</div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ============ MODALS & OVERLAYS ============ -->
+  <div class="section-label">Modals &amp; overlays</div>
+  <div class="states">
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Row action popover (active rows only)</div>
+      <div class="modal-stage" style="align-items:flex-start;">
+        <div class="pop-wrap">
+          <span class="pop-anchor">
+            <span style="font-size:14px;color:#fff;">Edit</span>
+            <span class="more-btn" style="background:rgba(255,255,255,.15);color:#fff;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+          </span>
+          <div class="popover">
+            <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Deactivate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Deactivate supplier confirm (Dialog)</div>
+      <div class="modal-stage">
+        <div class="dialog">
+          <div class="dialog-head">
+            <div>
+              <div class="t">Deactivate supplier</div>
+              <div class="d">JVT Motor Supply will be hidden from new product and receiving forms. Existing references stay intact.</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </div>
+          <div class="dialog-body">
+            <div class="foot">
+              <button class="btn btn-ghost">Cancel</button>
+              <button class="btn btn-error">Deactivate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Deactivate — pending (non-dismissable, spinner)</div>
+      <div class="modal-stage">
+        <div class="dialog">
+          <div class="dialog-head">
+            <div>
+              <div class="t">Deactivate supplier</div>
+              <div class="d">JVT Motor Supply will be hidden from new product and receiving forms. Existing references stay intact.</div>
+            </div>
+            <!-- close button hidden while pending / non-dismissable -->
+          </div>
+          <div class="dialog-body">
+            <div class="foot">
+              <button class="btn btn-ghost" style="opacity:.6;">Cancel</button>
+              <button class="btn btn-error" style="opacity:.6;">
+                <svg class="spin" style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="3" opacity=".3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+                Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Deactivate — mutation error</div>
+      <div class="modal-stage">
+        <div class="dialog">
+          <div class="dialog-head">
+            <div>
+              <div class="t">Deactivate supplier</div>
+              <div class="d">JVT Motor Supply will be hidden from new product and receiving forms. Existing references stay intact.</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </div>
+          <div class="dialog-body">
+            <div class="inline-err">Permission denied. Only admins can deactivate suppliers.</div>
+            <div class="foot">
+              <button class="btn btn-ghost">Cancel</button>
+              <button class="btn btn-error">Deactivate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

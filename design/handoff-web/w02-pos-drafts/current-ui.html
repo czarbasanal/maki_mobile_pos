@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS Web Admin — w02 POS + Drafts (current UI)</title>
+<style>
+  :root{
+    --text:#0A0A0A; --text-sec:#666666; --hint:#A0A0A0;
+    --bg:#FFFFFF; --card:#FFFFFF; --subtle:#FAFAFA;
+    --hairline:#EAEAEA; --border:#E0E0E0; --primary-dark:#121C1D;
+    --success:#4CAF50; --success-light:#E8F5E9; --success-dark:#2E7D32;
+    --warning:#FFC107; --warning-light:#FFF8E1; --warning-dark:#F57C00;
+    --error:#F44336; --error-light:#FFEBEE; --error-dark:#C62828;
+    --info:#2196F3; --info-light:#E3F2FD; --info-dark:#1565C0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:Roboto, system-ui, -apple-system, sans-serif;
+    color:var(--text); background:#f2f2f0; font-size:14px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  h1,h2,h3,p,ul,dl{margin:0;padding:0;}
+  ul{list-style:none;}
+  button{font-family:inherit;cursor:default;}
+
+  .page{max-width:1400px;margin:0 auto;padding:32px 24px 64px;}
+  .page-head{margin-bottom:28px;}
+  .page-head h1{font-size:24px;font-weight:700;letter-spacing:-0.02em;}
+  .page-head .meta{color:var(--text-sec);font-size:13px;margin-top:6px;}
+  .page-head .date{color:var(--hint);font-size:12px;margin-top:2px;}
+
+  /* frame */
+  .frame{margin:34px 0;border:1px solid #d8d8d4;border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .frame-label{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;background:#111c1d;color:#fff;padding:9px 16px;font-size:12px;}
+  .frame-label .r{color:#8fb0b3;}
+  .frame-label .who{margin-left:auto;color:#c9d6d7;font-size:11px;}
+  .caption{background:var(--warning-light);color:#8a5a00;border-top:1px solid #f0e2b8;padding:8px 16px;font-size:12px;}
+
+  /* app shell */
+  .shell{display:flex;min-height:560px;background:var(--bg);}
+  .sidebar{width:240px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--hairline);display:flex;flex-direction:column;}
+  .brand{height:56px;display:flex;align-items:center;padding:0 24px;font-size:16px;font-weight:600;letter-spacing:-0.02em;}
+  .nav{flex:1;overflow:auto;padding:8px;}
+  .nav-sec{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);padding:14px 8px 4px;}
+  .nav-item{display:flex;gap:8px;align-items:center;border-radius:6px;padding:6px 8px;font-size:14px;color:var(--text-sec);}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;}
+  .nav-item.active{background:var(--subtle);font-weight:600;color:var(--text);}
+  .nav-item .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .acct{border-top:1px solid var(--hairline);padding:8px;display:flex;align-items:center;gap:8px;}
+  .avatar{width:28px;height:28px;border-radius:999px;background:var(--primary-dark);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .acct .em{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .acct .ro{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);}
+  .main{flex:1;overflow:auto;background:var(--bg);}
+
+  /* generic */
+  .card{border:1px solid var(--hairline);border-radius:8px;background:var(--card);}
+  .divide > * + *{border-top:1px solid var(--hairline);}
+  .muted{color:var(--text-sec);}
+  .hint{color:var(--hint);}
+  .input{width:100%;border:1px solid var(--border);border-radius:6px;background:var(--card);padding:10px 16px;font-size:14px;color:var(--text);}
+  .input::placeholder{color:var(--hint);}
+  .sel{border:1px solid var(--border);border-radius:6px;background:var(--card);padding:5px 8px;font-size:12px;color:var(--text);}
+  .num{border:1px solid var(--border);border-radius:6px;background:var(--card);padding:4px 8px;font-size:13px;}
+
+  .btn{border-radius:6px;padding:9px 16px;font-size:14px;border:1px solid transparent;}
+  .btn-dark{background:var(--text);color:var(--bg);font-weight:600;}
+  .btn-out{border-color:var(--border);background:var(--card);color:var(--text);font-weight:500;}
+  .btn-full{width:100%;}
+  .btn-dis{cursor:not-allowed;opacity:.6;}
+  .btn-sm{padding:6px 16px;font-size:12px;}
+
+  .banner{border-radius:6px;padding:8px 16px;font-size:14px;border:1px solid;}
+  .bn-ok{border-color:var(--success-light);background:rgba(232,245,233,.5);color:var(--success-dark);}
+  .bn-err{border-color:var(--error-light);background:rgba(255,235,238,.5);color:var(--error-dark);}
+
+  .chip{border-radius:999px;border:1px solid var(--border);background:var(--card);padding:6px 16px;font-size:12px;color:var(--text-sec);}
+  .chip.sel{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .toggle{border:1px solid var(--border);border-radius:6px;background:var(--card);padding:4px 8px;font-size:12px;color:var(--text-sec);}
+  .toggle.sel{background:var(--subtle);border-color:var(--text);color:var(--text);}
+
+  .icon-btn{color:var(--hint);background:none;border:none;display:inline-flex;padding:0;}
+  .icon-btn svg{width:16px;height:16px;}
+  .icon-btn.err:hover{color:var(--error);}
+
+  .row-between{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+  /* states grid */
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;padding:20px;background:var(--subtle);border-top:1px solid var(--hairline);}
+  .state-card{background:var(--card);border:1px solid var(--hairline);border-radius:8px;overflow:hidden;}
+  .state-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);padding:8px 12px;border-bottom:1px solid var(--hairline);background:var(--subtle);}
+
+  /* pos layout */
+  .pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:32px;}
+  .col{display:flex;flex-direction:column;gap:16px;}
+
+  .result-btn{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;text-align:left;background:none;border:none;padding:8px 16px;}
+  .result-btn:hover{background:var(--subtle);}
+  .result-name{display:block;font-size:14px;}
+  .result-sub{display:block;font-size:12px;color:var(--hint);}
+
+  .cart-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hairline);padding:8px 16px;}
+  .cart-head .t{font-size:16px;font-weight:600;}
+  .cart-line{padding:8px 16px;display:flex;flex-direction:column;gap:4px;}
+  .cart-line .r2{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec);}
+  .lbl-inline{display:inline-flex;align-items:center;gap:4px;}
+  .warn{font-size:11px;color:var(--warning-dark);}
+
+  .totals{border-top:1px solid var(--hairline);padding:8px 16px;display:flex;flex-direction:column;gap:4px;font-size:14px;}
+  .totals .tr{display:flex;justify-content:space-between;}
+  .totals .tr dt{color:var(--hint);}
+  .totals .tr.strong dd{font-weight:600;}
+
+  .labor{border-top:1px solid var(--hairline);padding:8px 16px;display:flex;flex-direction:column;gap:8px;}
+  .labor-head{display:flex;align-items:center;justify-content:space-between;}
+  .labor-head .t{font-size:14px;font-weight:500;}
+  .labor-add{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text-sec);background:var(--card);}
+  .labor-add svg{width:14px;height:14px;}
+  .labor-row{display:flex;align-items:center;gap:8px;}
+  .mech{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec);}
+
+  .pay-card{border:1px solid var(--hairline);border-radius:8px;background:var(--card);padding:16px;display:flex;flex-direction:column;gap:8px;}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;}
+  .amt-label{display:block;font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;}
+  .readout{display:flex;justify-content:space-between;font-size:14px;}
+  .readout .k{color:var(--hint);}
+  .sub-sel{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec);}
+  .val-err{font-size:12px;color:var(--error-dark);}
+
+  /* drafts */
+  .draft-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 16px;}
+  .draft-name{font-size:14px;font-weight:500;}
+  .draft-meta{font-size:12px;color:var(--hint);}
+
+  .empty{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--hairline);background:var(--subtle);border-radius:8px;padding:32px;text-align:center;}
+  .empty .t{font-size:16px;font-weight:600;}
+  .empty .d{font-size:14px;color:var(--text-sec);max-width:26rem;}
+  .center-hint{padding:24px 16px;text-align:center;font-size:14px;color:var(--hint);}
+  .load{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--text-sec);font-size:14px;}
+  .spin{width:16px;height:16px;border:2px solid rgba(0,0,0,.15);border-top-color:currentColor;border-radius:999px;display:inline-block;}
+  .errview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:40px;text-align:center;}
+  .errview svg{width:32px;height:32px;color:var(--error);}
+  .errview .t{font-size:20px;font-weight:600;}
+  .errview .m{font-size:14px;color:var(--text-sec);}
+
+  /* modal */
+  .backdrop{background:rgba(0,0,0,.30);border-radius:10px;padding:32px;display:flex;align-items:center;justify-content:center;min-height:360px;}
+  .modal{width:100%;max-width:28rem;background:var(--card);border:1px solid var(--hairline);border-radius:8px;box-shadow:0 20px 40px rgba(0,0,0,.25);overflow:hidden;}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hairline);padding:16px 24px;}
+  .modal-head .t{font-size:16px;font-weight:600;}
+  .modal-body{padding:24px;display:flex;flex-direction:column;gap:16px;}
+  .field-label{font-size:14px;color:var(--text-sec);margin-bottom:4px;display:block;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;}
+
+  .native-confirm{max-width:26rem;background:#ececec;border:1px solid #c9c9c9;border-radius:8px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.22);}
+  .nc-body{padding:18px 20px;font-size:13px;color:#1a1a1a;}
+  .nc-actions{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;background:#e2e2e2;border-top:1px solid #cfcfcf;}
+  .nc-btn{border:1px solid #b5b5b5;background:#f7f7f7;border-radius:5px;padding:5px 14px;font-size:12px;}
+  .nc-btn.p{background:#3478f6;border-color:#2f6ad9;color:#fff;font-weight:600;}
+  .nc-host{background:#fbfbfa;border-radius:8px;border:1px dashed #d3d3cf;padding:22px;display:flex;justify-content:center;}
+
+  .note{font-size:12px;color:var(--text-sec);padding:0 16px 4px;}
+  .sec-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;margin:44px 0 4px;}
+  .sec-sub{color:var(--text-sec);font-size:13px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-head">
+    <h1>MAKI POS Web Admin — w02: POS + Drafts</h1>
+    <div class="meta">Current web UI — light theme, desktop. Token-accurate reconstruction rendered inside the 240px AdminShell sidebar chrome.</div>
+    <div class="date">2026-07-07</div>
+  </div>
+
+  <!-- =================== SCREEN 1: POS =================== -->
+  <div class="frame">
+    <div class="frame-label">POS &nbsp;<span class="r">/pos</span><span class="who">All roles (admin · staff · cashier) — identical, no gating</span></div>
+    <div class="shell">
+      <!-- sidebar (admin view) -->
+      <aside class="sidebar">
+        <div class="brand">MAKI POS</div>
+        <nav class="nav">
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">Dashboard</span></div>
+          <div class="nav-sec">Sell</div>
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.4 12.3a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L21 7H6"/></svg><span class="lbl">POS</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span class="lbl">Drafts</span></div>
+          <div class="nav-sec">Stock</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg><span class="lbl">Inventory</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h13v13H1z"/><path d="M14 8h5l3 3v5h-8Z"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg><span class="lbl">Receiving</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h5"/></svg><span class="lbl">Reorder</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">Price History</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span class="lbl">Suppliers</span></div>
+          <div class="nav-sec">Money</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h4"/></svg><span class="lbl">Expenses</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18"/><rect x="5" y="11" width="3" height="7"/><rect x="10.5" y="7" width="3" height="11"/><rect x="16" y="13" width="3" height="5"/></svg><span class="lbl">Reports</span></div>
+          <div class="nav-sec">Admin</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6M21 20a5 5 0 0 0-4-5"/></svg><span class="lbl">Users</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">Activity Logs</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.3 1a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.3-1a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.5-2-1.5c.1-.3.1-.7.1-1Z"/></svg><span class="lbl">Settings</span></div>
+        </nav>
+        <div class="acct">
+          <div class="avatar">C</div>
+          <div style="min-width:0;flex:1;">
+            <div class="em">czarbasanal@gmail.com</div>
+            <div class="ro">Admin</div>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="1.5" style="width:16px;height:16px;"><path d="M6 15l6-6 6 6"/></svg>
+        </div>
+      </aside>
+
+      <!-- main: POS populated -->
+      <div class="main">
+        <div class="pos-grid">
+          <!-- LEFT -->
+          <section class="col">
+            <h1 style="font-size:24px;font-weight:600;letter-spacing:-0.02em;">POS</h1>
+            <input class="input" value="oil" placeholder="Search products by name or SKU" />
+            <div class="card divide">
+              <button class="result-btn"><span><span class="result-name">Motul 5100 10W-40 Semi-Synthetic 1L</span><span class="result-sub">OIL-5100-1L · 24 on hand</span></span><span style="font-size:14px;font-weight:500;">₱620.00</span></button>
+              <button class="result-btn"><span><span class="result-name">Shell Advance AX7 10W-40 1L</span><span class="result-sub">OIL-AX7-1L · 8 on hand</span></span><span style="font-size:14px;font-weight:500;">₱410.00</span></button>
+              <button class="result-btn"><span><span class="result-name">Petron Sprint 4T Oil 800ml</span><span class="result-sub">OIL-SPR-800 · 40 on hand</span></span><span style="font-size:14px;font-weight:500;">₱185.00</span></button>
+              <button class="result-btn"><span><span class="result-name">Castrol Power1 4T 20W-50 1L</span><span class="result-sub">OIL-PW1-1L · 3 on hand</span></span><span style="font-size:14px;font-weight:500;">₱480.00</span></button>
+            </div>
+          </section>
+
+          <!-- RIGHT -->
+          <section class="col">
+            <div class="banner bn-ok">Sale <span class="mono">S-2026-0418</span> completed.</div>
+
+            <div class="card">
+              <div class="cart-head">
+                <span class="t">Cart</span>
+                <label class="mech">Discount
+                  <select class="sel"><option>₱ amount</option><option>%</option></select>
+                </label>
+              </div>
+              <ul class="divide">
+                <li class="cart-line">
+                  <div class="row-between"><span style="font-size:14px;">Shell Advance AX7 10W-40 1L</span>
+                    <button class="icon-btn err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+                  </div>
+                  <div class="r2">
+                    <label class="lbl-inline">Qty<input class="num tnum" style="width:64px;" value="2"/></label>
+                    <label class="lbl-inline">₱ off<input class="num tnum" style="width:80px;" value="0"/></label>
+                    <span style="margin-left:auto;font-weight:500;color:var(--text);">₱820.00</span>
+                  </div>
+                </li>
+                <li class="cart-line">
+                  <div class="row-between"><span style="font-size:14px;">Bosch Brake Pads — Mio Sporty</span>
+                    <button class="icon-btn err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+                  </div>
+                  <div class="r2">
+                    <label class="lbl-inline">Qty<input class="num tnum" style="width:64px;" value="6"/></label>
+                    <label class="lbl-inline">₱ off<input class="num tnum" style="width:80px;" value="50"/></label>
+                    <span style="margin-left:auto;font-weight:500;color:var(--text);">₱1,390.00</span>
+                  </div>
+                  <p class="warn">⚠ exceeds on-hand stock</p>
+                </li>
+              </ul>
+
+              <!-- labor -->
+              <div class="labor">
+                <div class="labor-head">
+                  <span class="t">Labor</span>
+                  <button class="labor-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg> Add labor</button>
+                </div>
+                <div class="labor-row">
+                  <input class="num" style="flex:1;min-width:0;" value="Change oil + brake bleed" />
+                  <input class="num tnum" style="width:96px;" value="250" />
+                  <button class="icon-btn err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+                </div>
+                <label class="mech">Mechanic
+                  <select class="sel"><option>Jun Dela Cruz</option><option>None</option></select>
+                </label>
+              </div>
+
+              <!-- totals -->
+              <dl class="totals">
+                <div class="tr"><dt>Subtotal</dt><dd class="tnum">₱2,260.00</dd></div>
+                <div class="tr"><dt>Discount</dt><dd class="tnum">− ₱50.00</dd></div>
+                <div class="tr"><dt>Labor</dt><dd class="tnum">₱250.00</dd></div>
+                <div class="tr strong"><dt style="color:var(--text);">Total</dt><dd class="tnum">₱2,460.00</dd></div>
+              </dl>
+            </div>
+
+            <!-- payment + actions -->
+            <div class="pay-card">
+              <div class="chips">
+                <button class="chip sel">Cash</button>
+                <button class="chip">GCash</button>
+                <button class="chip">Maya</button>
+                <button class="chip">Mixed</button>
+                <button class="chip">Salmon</button>
+              </div>
+              <div>
+                <span class="amt-label">Cash received</span>
+                <input class="input tnum" value="2500" />
+              </div>
+              <div class="readout"><span class="k">Change</span><span class="tnum">₱40.00</span></div>
+              <button class="btn btn-dark btn-full">Complete sale</button>
+              <button class="btn btn-out btn-full">Save as draft</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Staff &amp; cashier see this exact screen — POS is a common route with no permission gate and no in-page role branching. (Their sidebar differs: cashier hides Receiving/Reorder/Price History/Suppliers/Users/Logs; staff hides Reorder/Price History/Suppliers/Users/Logs — see w01.)</div>
+  </div>
+
+  <!-- =================== POS states / banners =================== -->
+  <div class="sec-title">POS — search empty states &amp; right-column banners</div>
+  <div class="sec-sub">Small variants the main frame doesn't show at once.</div>
+  <div class="frame">
+    <div class="frame-label">POS — states &nbsp;<span class="r">/pos</span></div>
+    <div class="states">
+      <div class="state-card">
+        <div class="state-lbl">Search — no query</div>
+        <div style="padding:12px;"><input class="input" placeholder="Search products by name or SKU" style="margin-bottom:12px;"/><div class="card"><p class="center-hint">Type to search products.</p></div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Search — no matches</div>
+        <div style="padding:12px;"><input class="input" value="xyz123" style="margin-bottom:12px;"/><div class="card"><p class="center-hint">No matches.</p></div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Cart — empty</div>
+        <div style="padding:12px;"><div class="card"><div class="cart-head"><span class="t">Cart</span><label class="mech">Discount<select class="sel"><option>₱ amount</option></select></label></div><p class="center-hint">Cart is empty.</p></div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Banner — checkout error</div>
+        <div style="padding:12px;"><div class="banner bn-err">Not enough stock for “Bosch Brake Pads — Mio Sporty”.</div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Banner — saved to drafts</div>
+        <div style="padding:12px;"><div class="banner bn-ok">Saved to drafts.</div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Actions — pending / disabled</div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-dark btn-full btn-dis">Completing…</button>
+          <button class="btn btn-out btn-full btn-dis">Saving…</button>
+          <button class="btn btn-dark btn-full btn-dis">Complete sale</button>
+        </div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Labor — fee without description</div>
+        <div style="padding:12px;">
+          <div class="labor-row" style="margin-bottom:6px;"><input class="num" style="flex:1;" placeholder="Description"/><input class="num tnum" style="width:96px;" value="150"/><button class="icon-btn err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>
+          <p class="warn">Add a description to include this charge.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== Payment modes =================== -->
+  <div class="sec-title">POS — PaymentSection tender modes</div>
+  <div class="sec-sub">Cash is shown selected in the main frame above; here are the other four modes plus a validation-error variant.</div>
+  <div class="frame">
+    <div class="frame-label">Payment modes &nbsp;<span class="r">/pos · PaymentSection.tsx</span></div>
+    <div class="states">
+
+      <div class="state-card">
+        <div class="state-lbl">GCash / Maya</div>
+        <div class="pay-card" style="border:none;border-radius:0;">
+          <div class="chips"><button class="chip">Cash</button><button class="chip sel">GCash</button><button class="chip">Maya</button><button class="chip">Mixed</button><button class="chip">Salmon</button></div>
+          <p class="muted" style="font-size:14px;">Paid in full via GCash — ₱2,460.00</p>
+        </div>
+      </div>
+
+      <div class="state-card">
+        <div class="state-lbl">Mixed (digital + cash)</div>
+        <div class="pay-card" style="border:none;border-radius:0;">
+          <div class="chips"><button class="chip">Cash</button><button class="chip">GCash</button><button class="chip">Maya</button><button class="chip sel">Mixed</button><button class="chip">Salmon</button></div>
+          <div class="sub-sel"><span>Digital</span><div style="display:flex;gap:4px;"><button class="toggle sel">GCash</button><button class="toggle">Maya</button></div></div>
+          <div><span class="amt-label">Digital amount</span><input class="input tnum" value="1500"/></div>
+          <div class="readout"><span class="k">Cash portion</span><span class="tnum">₱960.00</span></div>
+        </div>
+      </div>
+
+      <div class="state-card">
+        <div class="state-lbl">Salmon (downpayment + receivable)</div>
+        <div class="pay-card" style="border:none;border-radius:0;">
+          <div class="chips"><button class="chip">Cash</button><button class="chip">GCash</button><button class="chip">Maya</button><button class="chip">Mixed</button><button class="chip sel">Salmon</button></div>
+          <div class="sub-sel"><span>Downpayment via</span><div style="display:flex;gap:4px;"><button class="toggle sel">Cash</button><button class="toggle">GCash</button><button class="toggle">Maya</button></div></div>
+          <div><span class="amt-label">Downpayment</span><input class="input tnum" value="1000"/></div>
+          <div class="readout"><span class="k">Salmon balance (receivable)</span><span class="tnum">₱1,460.00</span></div>
+        </div>
+      </div>
+
+      <div class="state-card">
+        <div class="state-lbl">Cash — validation error</div>
+        <div class="pay-card" style="border:none;border-radius:0;">
+          <div class="chips"><button class="chip sel">Cash</button><button class="chip">GCash</button><button class="chip">Maya</button><button class="chip">Mixed</button><button class="chip">Salmon</button></div>
+          <div><span class="amt-label">Cash received</span><input class="input tnum" value="2000"/></div>
+          <div class="readout"><span class="k">Change</span><span class="tnum">₱0.00</span></div>
+          <p class="val-err">Cash received is less than the total</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =================== SCREEN 2: DRAFTS =================== -->
+  <div class="sec-title">Screen 2 — Drafts list</div>
+  <div class="frame">
+    <div class="frame-label">Drafts &nbsp;<span class="r">/drafts</span><span class="who">All roles — identical, no gating</span></div>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">MAKI POS</div>
+        <nav class="nav">
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">Dashboard</span></div>
+          <div class="nav-sec">Sell</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.4 12.3a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L21 7H6"/></svg><span class="lbl">POS</span></div>
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span class="lbl">Drafts</span></div>
+          <div class="nav-sec">Stock</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg><span class="lbl">Inventory</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h13v13H1z"/><path d="M14 8h5l3 3v5h-8Z"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg><span class="lbl">Receiving</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h5"/></svg><span class="lbl">Reorder</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">Price History</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span class="lbl">Suppliers</span></div>
+          <div class="nav-sec">Money</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h4"/></svg><span class="lbl">Expenses</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18"/><rect x="5" y="11" width="3" height="7"/><rect x="10.5" y="7" width="3" height="11"/><rect x="16" y="13" width="3" height="5"/></svg><span class="lbl">Reports</span></div>
+          <div class="nav-sec">Admin</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6M21 20a5 5 0 0 0-4-5"/></svg><span class="lbl">Users</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">Activity Logs</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.3 1a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.3-1a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.5-2-1.5c.1-.3.1-.7.1-1Z"/></svg><span class="lbl">Settings</span></div>
+        </nav>
+        <div class="acct">
+          <div class="avatar">C</div>
+          <div style="min-width:0;flex:1;"><div class="em">czarbasanal@gmail.com</div><div class="ro">Admin</div></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="1.5" style="width:16px;height:16px;"><path d="M6 15l6-6 6 6"/></svg>
+        </div>
+      </aside>
+
+      <div class="main">
+        <div style="padding:24px 32px;display:flex;flex-direction:column;gap:32px;">
+          <header>
+            <h1 style="font-size:24px;font-weight:600;letter-spacing:-0.02em;">Drafts</h1>
+            <p class="muted" style="font-size:14px;margin-top:4px;">Held orders — resume one into the POS or delete it.</p>
+          </header>
+
+          <div class="card" style="overflow:hidden;">
+            <ul class="divide">
+              <li class="draft-row">
+                <div style="min-width:0;">
+                  <div class="draft-name">Mr Cruz — blue Mio</div>
+                  <div class="draft-meta">3 items · ₱2,460.00 · Jun Dela Cruz · 7/6/2026</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button class="btn btn-dark btn-sm">Resume</button>
+                  <button class="icon-btn err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+                </div>
+              </li>
+              <li class="draft-row">
+                <div style="min-width:0;">
+                  <div class="draft-name">Walk-in — CVT parts Nmax</div>
+                  <div class="draft-meta">5 items · ₱3,180.00 · 7/6/2026</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button class="btn btn-dark btn-sm">Resume</button>
+                  <button class="icon-btn err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+                </div>
+              </li>
+              <li class="draft-row">
+                <div style="min-width:0;">
+                  <div class="draft-name">Ate Malou — brake pads + bulb</div>
+                  <div class="draft-meta">1 item · ₱410.00 · 7/5/2026</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button class="btn btn-dark btn-sm">Resume</button>
+                  <button class="icon-btn err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drafts states -->
+  <div class="frame">
+    <div class="frame-label">Drafts — states &nbsp;<span class="r">/drafts</span></div>
+    <div class="states">
+      <div class="state-card">
+        <div class="state-lbl">Delete-error banner</div>
+        <div style="padding:12px;"><div class="banner bn-err">Could not delete the draft: network request failed.</div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Empty</div>
+        <div style="padding:12px;"><div class="empty"><div class="t">No drafts</div><div class="d">Hold a cart from the POS with “Save as draft”.</div></div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Loading</div>
+        <div style="padding:12px;"><div class="load"><span class="spin"></span> Loading…</div></div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Error</div>
+        <div style="padding:12px;"><div class="errview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div class="t">Could not load drafts</div><div class="m">Missing or insufficient permissions.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== MODALS & OVERLAYS =================== -->
+  <div class="sec-title">Modals &amp; overlays</div>
+
+  <div class="frame">
+    <div class="frame-label">Save-as-draft dialog &nbsp;<span class="r">/pos · common/Dialog</span></div>
+    <div class="states" style="grid-template-columns:1fr 1fr;">
+      <div class="state-card">
+        <div class="state-lbl">Save as draft (new)</div>
+        <div class="backdrop">
+          <div class="modal">
+            <div class="modal-head"><span class="t">Save as draft</span>
+              <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <div class="modal-body">
+              <label style="display:block;">
+                <span class="field-label">Draft name</span>
+                <input class="input" placeholder="e.g. Mr Cruz — blue Mio" />
+              </label>
+              <div class="modal-actions">
+                <button class="btn btn-out">Cancel</button>
+                <button class="btn btn-dark">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Update draft (editing) — Save disabled while writing (non-dismissable: no X)</div>
+        <div class="backdrop">
+          <div class="modal">
+            <div class="modal-head"><span class="t">Update draft</span></div>
+            <div class="modal-body">
+              <label style="display:block;">
+                <span class="field-label">Draft name</span>
+                <input class="input" value="Mr Cruz — blue Mio" />
+              </label>
+              <div class="modal-actions">
+                <button class="btn btn-out btn-dis">Cancel</button>
+                <button class="btn btn-dark btn-dis">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note">While the save is pending the dialog is non-dismissable (no ESC / overlay / X close) — the X close button is hidden, Cancel + Save are disabled. On success it closes and clears the cart. The parent "Save/Update draft" button shows "Saving…".</div>
+  </div>
+
+  <div class="frame">
+    <div class="frame-label">Native confirms (Drafts) &nbsp;<span class="r">window.confirm — browser-styled, not a custom dialog</span></div>
+    <div class="states" style="grid-template-columns:1fr 1fr;">
+      <div class="state-card">
+        <div class="state-lbl">Resume (only when current cart is non-empty)</div>
+        <div class="nc-host">
+          <div class="native-confirm">
+            <div class="nc-body">Replace the current cart with this draft?</div>
+            <div class="nc-actions"><button class="nc-btn">Cancel</button><button class="nc-btn p">OK</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="state-card">
+        <div class="state-lbl">Delete</div>
+        <div class="nc-host">
+          <div class="native-confirm">
+            <div class="nc-body">Delete draft "Mr Cruz — blue Mio"?</div>
+            <div class="nc-actions"><button class="nc-btn">Cancel</button><button class="nc-btn p">OK</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note">These use the browser's native confirm dialog today — no styled component. Copy is exact.</div>
+  </div>
+
+  <p style="text-align:center;color:var(--hint);font-size:12px;margin-top:40px;">
+    w01-shell-login-dashboard · <strong>w02-pos-drafts (this)</strong> · w03-inventory · w04-receiving · w05-suppliers · w06-reports · w07-users · w08-settings · w09-logs
+  </p>
+
+</div>
+</body>
+</html>

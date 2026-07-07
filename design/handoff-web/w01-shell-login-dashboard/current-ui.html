@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAKI POS Web Admin — w01 Shell + Login + Dashboard (current UI)</title>
+<style>
+  :root{
+    --text:#0A0A0A; --text2:#666; --hint:#A0A0A0;
+    --bg:#FFFFFF; --card:#FFFFFF; --subtle:#FAFAFA;
+    --hairline:#EAEAEA; --border:#E0E0E0; --dark:#121C1D;
+    --success:#4CAF50; --success-l:#E8F5E9; --success-d:#2E7D32;
+    --warning:#FFC107; --warning-l:#FFF8E1; --warning-d:#F57C00;
+    --error:#F44336; --error-l:#FFEBEE; --error-d:#C62828;
+    --info:#2196F3; --info-l:#E3F2FD; --info-d:#1565C0;
+    --cash:#4CAF50; --gcash:#007DFE; --voided:#9E9E9E;
+    /* tonal stroke (icons) — Tailwind *-500 */
+    --t-yellow:#EAB308; --t-green:#22C55E; --t-blue:#3B82F6;
+    --t-orange:#F97316; --t-red:#EF4444; --t-violet:#8B5CF6;
+    /* tonal badge bg — Tailwind *-50 / text *-600 */
+    --b-green-bg:#F0FDF4; --b-green-tx:#16A34A;
+    --b-orange-bg:#FFF7ED; --b-orange-tx:#EA580C;
+    --b-red-bg:#FEF2F2; --b-red-tx:#DC2626;
+    --b-violet-bg:#F5F3FF; --b-violet-tx:#7C3AED;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#F3F3F1;color:var(--text);
+    font-family:Roboto,system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .tnum{font-variant-numeric:tabular-nums}
+  h1,h2,h3,p,ul{margin:0}
+  ul{list-style:none;padding:0}
+  a{color:inherit}
+  svg.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;
+    stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ic14{width:14px;height:14px}
+  .ic40{width:40px;height:40px}
+  .ic24{width:24px;height:24px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{animation:spin 1s linear infinite}
+
+  /* page scaffolding */
+  .page{max-width:1360px;margin:0 auto;padding:32px 24px 80px}
+  .page-head{margin-bottom:28px}
+  .page-head h1{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .page-head .meta{color:var(--text2);font-size:13px;margin-top:4px}
+  .sec-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--hint);margin:40px 0 12px}
+  .caption{font-size:12px;color:var(--text2);margin:8px 2px 0;max-width:960px}
+
+  /* frame */
+  .frame{width:1280px;max-width:100%;border:1px solid var(--border);border-radius:10px;
+    overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .frame-label{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--subtle);border-bottom:1px solid var(--hairline);
+    padding:8px 14px;font-size:12px;color:var(--text2)}
+  .frame-label b{color:var(--text);font-weight:600}
+  .frame-label .route{font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    background:#fff;border:1px solid var(--hairline);border-radius:5px;padding:1px 6px}
+  .frame-label .who{margin-left:auto;color:var(--hint)}
+  .frame-body{display:flex;height:640px}
+
+  /* sidebar */
+  .sb{width:240px;flex-shrink:0;display:flex;flex-direction:column;
+    background:var(--bg);border-right:1px solid var(--hairline)}
+  .sb-brand{height:56px;display:flex;align-items:center;padding:0 24px;
+    font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .sb-nav{flex:1;overflow-y:auto;padding:8px}
+  .sb-sec{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--hint);padding:0 8px 4px;margin-top:24px}
+  .sb-link{display:flex;align-items:center;gap:8px;border-radius:6px;padding:6px 8px;
+    font-size:14px;color:var(--text2);cursor:default;margin-bottom:1px}
+  .sb-link:hover{background:var(--subtle);color:var(--text)}
+  .sb-link.active{background:var(--subtle);font-weight:600;color:var(--text)}
+  .sb-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sb-foot{position:relative;border-top:1px solid var(--hairline);padding:8px}
+  .sb-acct{display:flex;align-items:center;gap:8px;width:100%;border-radius:6px;
+    padding:8px;text-align:left;background:none;border:none;cursor:default}
+  .sb-acct:hover{background:var(--subtle)}
+  .avatar{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:var(--dark);
+    color:#fff;font-size:12px;font-weight:500;display:grid;place-items:center}
+  .acct-txt{min-width:0;flex:1}
+  .acct-email{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acct-role{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint)}
+
+  /* main */
+  .main{flex:1;overflow:auto;background:#fff}
+  .content{padding:24px 32px}
+  .dash-head h1{font-size:24px;font-weight:600;letter-spacing:-.01em}
+  .dash-head p{color:var(--text2);font-size:14px;margin-top:4px}
+
+  /* summary tiles */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:32px}
+  .tile{display:flex;flex-direction:column;gap:4px;border:1px solid var(--hairline);
+    border-radius:8px;background:var(--card);padding:16px}
+  .tile-top{display:flex;align-items:center;justify-content:space-between;color:var(--text2)}
+  .tile-top .lbl{font-size:14px}
+  .tile-val{font-size:24px;font-weight:600;letter-spacing:-.01em}
+  .tile.emph{background:var(--text);color:#fff}
+  .tile.emph .tile-top{color:rgba(255,255,255,.7)}
+  .tile.emph .tile-val{color:#fff}
+  .t-blue{color:var(--t-blue)} .t-yellow{color:var(--t-yellow)} .t-orange{color:var(--t-orange)}
+  .t-green{color:var(--t-green)} .t-violet{color:var(--t-violet)}
+
+  /* panels */
+  .panels{display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:32px}
+  .panel{border:1px solid var(--hairline);border-radius:8px;background:var(--card);padding:24px}
+  .panel h2{font-size:16px;font-weight:600;margin-bottom:16px}
+
+  /* recent sales rows */
+  .rs li{display:flex;align-items:center;gap:16px;padding:8px 0;border-top:1px solid var(--hairline)}
+  .rs li:first-child{border-top:none}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .rs-main{min-width:0;flex:1}
+  .rs-row1{display:flex;align-items:center;gap:8px}
+  .rs-no{font-size:14px;font-weight:600}
+  .rs-no.void{text-decoration:line-through;color:var(--hint)}
+  .void-pill{background:var(--error-l);color:var(--error-d);font-size:10px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:1px 6px}
+  .rs-pm{font-size:12px;color:var(--hint)}
+  .rs-sub{font-size:12px;color:var(--hint);margin-top:2px}
+  .rs-total{font-size:14px;font-weight:600}
+  .rs-total.void{text-decoration:line-through;color:var(--hint)}
+
+  /* inventory status rows */
+  .inv li{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--hairline)}
+  .inv li:first-child{border-top:none}
+  .inv-badge{width:24px;height:24px;flex-shrink:0;border-radius:6px;display:grid;place-items:center}
+  .inv-lbl{flex:1;font-size:14px;color:var(--text2)}
+  .inv-val{font-size:16px;font-weight:600}
+  .bg-violet{background:var(--b-violet-bg);color:var(--b-violet-tx)}
+  .bg-green{background:var(--b-green-bg);color:var(--b-green-tx)}
+  .bg-orange{background:var(--b-orange-bg);color:var(--b-orange-tx)}
+  .bg-red{background:var(--b-red-bg);color:var(--b-red-tx)}
+
+  /* shared state views */
+  .loadingview{display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:32px;color:var(--text2);font-size:14px}
+  .errorview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    padding:32px;text-align:center}
+  .errorview .ttl{font-size:20px;font-weight:600}
+  .errorview .msg{font-size:14px;color:var(--text2)}
+  .errorview .retry{margin-top:4px;border:1px solid var(--hairline);background:var(--card);
+    border-radius:6px;padding:6px 14px;font-size:14px}
+  .emptystate{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+    border:1px solid var(--hairline);border-radius:8px;background:var(--subtle);padding:32px}
+  .emptystate .ttl{font-size:16px;font-weight:600}
+  .emptystate .desc{font-size:14px;color:var(--text2);max-width:22rem}
+
+  /* auth */
+  .auth-wrap{display:flex;align-items:center;justify-content:center;background:var(--bg);
+    height:640px;padding:24px}
+  .auth-card{width:100%;max-width:28rem}
+  .login-head{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .monogram{width:48px;height:48px;border:1px solid var(--border);border-radius:6px;
+    display:grid;place-items:center;font-size:20px;font-weight:600}
+  .login-head h1{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-top:16px}
+  .login-head p{font-size:14px;color:var(--text2);margin-top:4px}
+  .field{display:block;margin-bottom:16px}
+  .field .lab{display:block;font-size:14px;font-weight:500;margin-bottom:4px}
+  .field .err{display:block;font-size:12px;color:var(--error);margin-top:4px}
+  .inp{width:100%;border:1px solid var(--border);background:var(--card);border-radius:6px;
+    padding:10px 16px;font-size:14px;color:var(--text)}
+  .inp.err-b{border-color:var(--error)}
+  .inp-wrap{position:relative}
+  .inp-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--text2);border-radius:6px;padding:4px;cursor:default}
+  .btn-black{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;
+    border:none;border-radius:6px;background:var(--text);color:#fff;padding:9px 16px;
+    font-size:14px;font-weight:600;cursor:default}
+  .btn-black:hover{background:var(--dark)}
+  .btn-black.dis{opacity:.6}
+  .forgot{background:none;border:none;font-size:14px;color:var(--text2);
+    text-decoration-line:underline;text-underline-offset:2px;cursor:default;padding:8px 0 0}
+  .banner{display:flex;align-items:flex-start;gap:8px;border-radius:6px;padding:8px 16px;margin-bottom:16px}
+  .banner p{flex:1;font-size:13px}
+  .banner.err{border:1px solid var(--error-l);background:rgba(255,235,238,.4);color:var(--error-d)}
+  .banner.err .ic{color:var(--error)}
+  .banner.ok{border:1px solid var(--success-l);background:rgba(232,245,233,.4);color:var(--success-d)}
+  .banner.ok .ic{color:var(--success)}
+  .banner button{background:none;border:none;cursor:default;padding:0}
+  .footer-v{text-align:center;font-size:11px;letter-spacing:.5px;color:var(--hint);margin-top:32px}
+  .reset-card{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+    border:1px solid var(--hairline);background:var(--subtle);border-radius:6px;padding:16px;width:100%}
+  .reset-card p{font-size:14px}
+  .reset-btns{display:flex;gap:8px}
+  .btn-ghost{background:none;border:none;border-radius:6px;padding:4px 16px;font-size:14px;cursor:default}
+  .btn-ghost:hover{background:var(--hairline)}
+  .btn-black.sm{width:auto;padding:4px 16px}
+
+  /* access denied */
+  .ad{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+  .ad h1{font-size:24px;font-weight:600}
+  .ad p{font-size:14px;color:var(--text2);max-width:26rem}
+  .ad .no{color:var(--text2)}
+
+  /* offline banner */
+  .offline{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--hairline);
+    background:var(--subtle);color:var(--text2);padding:4px 24px;font-size:13px}
+
+  /* modal / overlay staging */
+  .stage{display:flex;flex-wrap:wrap;gap:24px}
+  .backdrop{background:rgba(0,0,0,.30);border-radius:10px;padding:40px;
+    display:flex;align-items:center;justify-content:center;min-height:220px}
+  .popover{width:200px;border:1px solid var(--hairline);background:var(--card);
+    border-radius:6px;box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);overflow:hidden}
+  .pop-top{border-bottom:1px solid var(--hairline);padding:8px 16px}
+  .pop-email{font-size:14px}
+  .pop-role{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-top:2px}
+  .pop-signout{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;
+    padding:8px 16px;font-size:14px;text-align:left;cursor:default}
+  .pop-signout:hover{background:var(--subtle)}
+  .card-plain{border:1px solid var(--hairline);border-radius:10px;background:#fff;padding:16px;
+    max-width:360px}
+  .card-plain .cap{font-size:12px;color:var(--hint);margin-bottom:10px}
+  .state-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+  .mini{border:1px solid var(--hairline);border-radius:8px;background:#fff;overflow:hidden}
+  .mini .mini-lbl{font-size:12px;color:var(--text2);background:var(--subtle);
+    border-bottom:1px solid var(--hairline);padding:6px 12px}
+  .mini .mini-body{padding:16px}
+  .disclaim{font-size:12px;color:var(--hint);margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- ===== SVG SPRITE ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M2.5 3h1.8l1.7 11h10.5l1.8-8H6"/><circle cx="9" cy="19.2" r="1.1"/><circle cx="16.5" cy="19.2" r="1.1"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18 3l3 3-8.5 8.5-4 1 1-4L18 3z"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4.2 7.6l7.8 4.4 7.8-4.4M12 12v9"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><rect x="2" y="6" width="12" height="9" rx="1.2"/><path d="M14 9h4l3 3v3h-2M14 15h-2"/><circle cx="7" cy="17" r="1.6"/><circle cx="17.5" cy="17" r="1.6"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4.5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5V20h16V9.5"/><path d="M3 9.2L4.5 4.5h15L21 9.2a2.4 2.4 0 0 1-4.7 0 2.4 2.4 0 0 1-4.3 0 2.4 2.4 0 0 1-4.3 0A2.4 2.4 0 0 1 3 9.2z"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-1.8-3 1.8-3-1.8L6 21V3z"/><path d="M9.5 14l5-5"/><circle cx="9.7" cy="9.7" r="1"/><circle cx="14.3" cy="14.3" r="1"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9.5v5M17.5 9.5v5"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3.5 20h17"/><rect x="5" y="11" width="3" height="8" rx=".5"/><rect x="10.5" y="6.5" width="3" height="12.5" rx=".5"/><rect x="16" y="9" width="3" height="10" rx=".5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 5.6a3 3 0 0 1 0 5.8M21 20a5.5 5.5 0 0 0-3.7-5.2"/></symbol>
+  <symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.4 4.4l2.1 2.1M17.5 17.5l2.1 2.1M2.5 12h3M18.5 12h3M4.4 19.6l2.1-2.1M17.5 6.5l2.1-2.1"/></symbol>
+  <symbol id="i-chevup" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+  <symbol id="i-signout" viewBox="0 0 24 24"><path d="M14 12H3M8 8l-5 4 5 4"/><path d="M13 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M8 20v-6M12 20v-8M16 20v-9M20 20V8"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 6.2C11 6.1 11.5 6 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3 3.7M6.5 6.6A17 17 0 0 0 2 12s3.6 6 10 6c1 0 2-.1 2.9-.4"/></symbol>
+  <symbol id="i-exc-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.4v.2"/></symbol>
+  <symbol id="i-check-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-nosym" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  <symbol id="i-exc-t" viewBox="0 0 24 24"><path d="M12 4l9 16H3L12 4z"/><path d="M12 10v4M12 17.2v.2"/></symbol>
+  <symbol id="i-x-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+  <symbol id="i-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9"/></symbol>
+</svg>
+
+<div class="page">
+
+  <div class="page-head">
+    <h1>MAKI POS Web Admin — w01 · Shell + Login + Dashboard</h1>
+    <div class="meta">Current web UI — light theme, desktop · 2026-07-07 · token-accurate static reconstruction</div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- SIDEBAR PER ROLE                                              -->
+  <!-- ============================================================= -->
+  <div class="sec-title">Sidebar per role — chrome shared by every screen</div>
+  <p class="caption">The AdminShell wraps every non-auth screen: a fixed 240px sidebar on the left, no top bar, and a
+    scrolling content region on the right (with the OfflineBanner pinned above it when offline). The sidebar filters
+    each item through <span class="mono">canAccess</span> — the same gate as the route guard — and hides any section
+    whose items are all denied. Below, the same sidebar rendered for the three roles (Dashboard shown active).</p>
+
+  <div class="stage">
+    <!-- ADMIN -->
+    <div>
+      <div class="caption"><b>admin</b> — sees everything</div>
+      <div style="height:600px;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex">
+        <aside class="sb" style="width:240px;border-right:none">
+          <div class="sb-brand">MAKI POS</div>
+          <nav class="sb-nav">
+            <a class="sb-link active"><svg class="ic"><use href="#i-dash"/></svg><span>Dashboard</span></a>
+            <div class="sb-sec">Sell</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cart"/></svg><span>POS</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-pencil"/></svg><span>Drafts</span></a>
+            <div class="sb-sec">Stock</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cube"/></svg><span>Inventory</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-truck"/></svg><span>Receiving</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-clip"/></svg><span>Reorder</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-clock"/></svg><span>Price History</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-store"/></svg><span>Suppliers</span></a>
+            <div class="sb-sec">Money</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-receipt"/></svg><span>Expenses</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-chart"/></svg><span>Reports</span></a>
+            <div class="sb-sec">Admin</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-users"/></svg><span>Users</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-clock"/></svg><span>Activity Logs</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-cog"/></svg><span>Settings</span></a>
+          </nav>
+          <div class="sb-foot">
+            <button class="sb-acct">
+              <span class="avatar">C</span>
+              <span class="acct-txt">
+                <span class="acct-email">czar@makipos.ph</span>
+                <span class="acct-role">admin</span>
+              </span>
+              <svg class="ic" style="color:var(--text2)"><use href="#i-chevup"/></svg>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div>
+      <div class="caption"><b>staff</b> — no Reorder / Price History / Suppliers / Users / Logs</div>
+      <div style="height:600px;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex">
+        <aside class="sb" style="width:240px;border-right:none">
+          <div class="sb-brand">MAKI POS</div>
+          <nav class="sb-nav">
+            <a class="sb-link active"><svg class="ic"><use href="#i-dash"/></svg><span>Dashboard</span></a>
+            <div class="sb-sec">Sell</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cart"/></svg><span>POS</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-pencil"/></svg><span>Drafts</span></a>
+            <div class="sb-sec">Stock</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cube"/></svg><span>Inventory</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-truck"/></svg><span>Receiving</span></a>
+            <div class="sb-sec">Money</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-receipt"/></svg><span>Expenses</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-chart"/></svg><span>Reports</span></a>
+            <div class="sb-sec">Admin</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cog"/></svg><span>Settings</span></a>
+          </nav>
+          <div class="sb-foot">
+            <button class="sb-acct">
+              <span class="avatar">R</span>
+              <span class="acct-txt">
+                <span class="acct-email">rico@makipos.ph</span>
+                <span class="acct-role">staff</span>
+              </span>
+              <svg class="ic" style="color:var(--text2)"><use href="#i-chevup"/></svg>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- CASHIER -->
+    <div>
+      <div class="caption"><b>cashier</b> — also no Receiving (Stock = Inventory only)</div>
+      <div style="height:600px;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex">
+        <aside class="sb" style="width:240px;border-right:none">
+          <div class="sb-brand">MAKI POS</div>
+          <nav class="sb-nav">
+            <a class="sb-link active"><svg class="ic"><use href="#i-dash"/></svg><span>Dashboard</span></a>
+            <div class="sb-sec">Sell</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cart"/></svg><span>POS</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-pencil"/></svg><span>Drafts</span></a>
+            <div class="sb-sec">Stock</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cube"/></svg><span>Inventory</span></a>
+            <div class="sb-sec">Money</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-receipt"/></svg><span>Expenses</span></a>
+            <a class="sb-link"><svg class="ic"><use href="#i-chart"/></svg><span>Reports</span></a>
+            <div class="sb-sec">Admin</div>
+            <a class="sb-link"><svg class="ic"><use href="#i-cog"/></svg><span>Settings</span></a>
+          </nav>
+          <div class="sb-foot">
+            <button class="sb-acct">
+              <span class="avatar">M</span>
+              <span class="acct-txt">
+                <span class="acct-email">mila@makipos.ph</span>
+                <span class="acct-role">cashier</span>
+              </span>
+              <svg class="ic" style="color:var(--text2)"><use href="#i-chevup"/></svg>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- DASHBOARD (full frame incl. sidebar)                          -->
+  <!-- ============================================================= -->
+  <div class="sec-title">Screen — Dashboard</div>
+  <div class="frame">
+    <div class="frame-label"><b>Dashboard</b><span class="route">/</span>
+      <span class="who">all roles (common route — no cost/profit gating here)</span></div>
+    <div class="frame-body">
+      <!-- sidebar (admin, Dashboard active) -->
+      <aside class="sb">
+        <div class="sb-brand">MAKI POS</div>
+        <nav class="sb-nav">
+          <a class="sb-link active"><svg class="ic"><use href="#i-dash"/></svg><span>Dashboard</span></a>
+          <div class="sb-sec">Sell</div>
+          <a class="sb-link"><svg class="ic"><use href="#i-cart"/></svg><span>POS</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-pencil"/></svg><span>Drafts</span></a>
+          <div class="sb-sec">Stock</div>
+          <a class="sb-link"><svg class="ic"><use href="#i-cube"/></svg><span>Inventory</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-truck"/></svg><span>Receiving</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-clip"/></svg><span>Reorder</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-clock"/></svg><span>Price History</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-store"/></svg><span>Suppliers</span></a>
+          <div class="sb-sec">Money</div>
+          <a class="sb-link"><svg class="ic"><use href="#i-receipt"/></svg><span>Expenses</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-chart"/></svg><span>Reports</span></a>
+          <div class="sb-sec">Admin</div>
+          <a class="sb-link"><svg class="ic"><use href="#i-users"/></svg><span>Users</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-clock"/></svg><span>Activity Logs</span></a>
+          <a class="sb-link"><svg class="ic"><use href="#i-cog"/></svg><span>Settings</span></a>
+        </nav>
+        <div class="sb-foot">
+          <button class="sb-acct">
+            <span class="avatar">C</span>
+            <span class="acct-txt">
+              <span class="acct-email">czar@makipos.ph</span>
+              <span class="acct-role">admin</span>
+            </span>
+            <svg class="ic" style="color:var(--text2)"><use href="#i-chevup"/></svg>
+          </button>
+        </div>
+      </aside>
+
+      <!-- main -->
+      <main class="main">
+        <div class="content">
+          <div class="dash-head">
+            <h1>Dashboard</h1>
+            <p>Live snapshot of today's activity.</p>
+          </div>
+
+          <!-- summary tiles -->
+          <div class="tiles">
+            <div class="tile">
+              <div class="tile-top"><span class="lbl">Sales today</span><svg class="ic t-blue"><use href="#i-receipt"/></svg></div>
+              <div class="tile-val tnum">27</div>
+            </div>
+            <div class="tile emph">
+              <div class="tile-top"><span class="lbl">Gross Sales</span><svg class="ic" style="color:#fff"><use href="#i-bank"/></svg></div>
+              <div class="tile-val tnum">₱48,920.00</div>
+            </div>
+            <div class="tile">
+              <div class="tile-top"><span class="lbl">Total COGS</span><svg class="ic t-orange"><use href="#i-cube"/></svg></div>
+              <div class="tile-val tnum">₱31,540.00</div>
+            </div>
+            <div class="tile">
+              <div class="tile-top"><span class="lbl">Gross profit</span><svg class="ic t-green"><use href="#i-trend"/></svg></div>
+              <div class="tile-val tnum">₱17,380.00</div>
+            </div>
+            <div class="tile">
+              <div class="tile-top"><span class="lbl">Avg order</span><svg class="ic t-violet"><use href="#i-chart"/></svg></div>
+              <div class="tile-val tnum">₱1,812.00</div>
+            </div>
+          </div>
+
+          <!-- panels -->
+          <div class="panels">
+            <section class="panel">
+              <h2>Recent sales</h2>
+              <ul class="rs">
+                <li>
+                  <span class="dot" style="background:var(--cash)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no tnum">S-001042</span><span class="rs-pm">Cash</span></div>
+                    <div class="rs-sub">2 items · 9:15 AM</div>
+                  </div>
+                  <div class="rs-total tnum">₱1,250.00</div>
+                </li>
+                <li>
+                  <span class="dot" style="background:var(--gcash)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no tnum">S-001041</span><span class="rs-pm">GCash</span></div>
+                    <div class="rs-sub">1 item · 9:02 AM</div>
+                  </div>
+                  <div class="rs-total tnum">₱480.00</div>
+                </li>
+                <li>
+                  <span class="dot" style="background:var(--cash)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no tnum">S-001040</span><span class="rs-pm">Cash</span></div>
+                    <div class="rs-sub">5 items · 8:47 AM</div>
+                  </div>
+                  <div class="rs-total tnum">₱2,340.00</div>
+                </li>
+                <li>
+                  <span class="dot" style="background:var(--voided)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no void tnum">S-001039</span><span class="void-pill">Void</span><span class="rs-pm">Cash</span></div>
+                    <div class="rs-sub">3 items · 8:30 AM</div>
+                  </div>
+                  <div class="rs-total void tnum">₱890.00</div>
+                </li>
+                <li>
+                  <span class="dot" style="background:var(--gcash)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no tnum">S-001038</span><span class="rs-pm">GCash</span></div>
+                    <div class="rs-sub">1 item · 8:12 AM</div>
+                  </div>
+                  <div class="rs-total tnum">₱150.00</div>
+                </li>
+                <li>
+                  <span class="dot" style="background:var(--cash)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no tnum">S-001037</span><span class="rs-pm">Cash</span></div>
+                    <div class="rs-sub">4 items · 7:58 AM</div>
+                  </div>
+                  <div class="rs-total tnum">₱1,760.00</div>
+                </li>
+                <li>
+                  <span class="dot" style="background:var(--cash)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no tnum">S-001036</span><span class="rs-pm">Cash</span></div>
+                    <div class="rs-sub">2 items · 7:41 AM</div>
+                  </div>
+                  <div class="rs-total tnum">₱620.00</div>
+                </li>
+                <li>
+                  <span class="dot" style="background:var(--gcash)"></span>
+                  <div class="rs-main">
+                    <div class="rs-row1"><span class="rs-no tnum">S-001035</span><span class="rs-pm">GCash</span></div>
+                    <div class="rs-sub">6 items · 7:25 AM</div>
+                  </div>
+                  <div class="rs-total tnum">₱3,110.00</div>
+                </li>
+              </ul>
+            </section>
+
+            <section class="panel">
+              <h2>Inventory status</h2>
+              <ul class="inv">
+                <li><span class="inv-badge bg-violet"><svg class="ic ic14"><use href="#i-cube"/></svg></span><span class="inv-lbl">Total</span><span class="inv-val tnum">342</span></li>
+                <li><span class="inv-badge bg-green"><svg class="ic ic14"><use href="#i-check-c"/></svg></span><span class="inv-lbl">In stock</span><span class="inv-val tnum">298</span></li>
+                <li><span class="inv-badge bg-orange"><svg class="ic ic14"><use href="#i-exc-t"/></svg></span><span class="inv-lbl">Low stock</span><span class="inv-val tnum">31</span></li>
+                <li><span class="inv-badge bg-red"><svg class="ic ic14"><use href="#i-x-c"/></svg></span><span class="inv-lbl">Out of stock</span><span class="inv-val tnum">13</span></li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Dashboard states -->
+  <div class="sec-title">Dashboard — states (summary grid · recent-sales panel · inventory panel)</div>
+  <div class="state-grid">
+    <div class="mini">
+      <div class="mini-lbl">Summary grid — loading</div>
+      <div class="mini-body">
+        <div class="loadingview"><svg class="ic spin"><use href="#i-spin"/></svg> Loading today's sales…</div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Summary grid — error</div>
+      <div class="mini-body">
+        <div class="errorview">
+          <svg class="ic24" style="color:var(--error)"><use href="#i-exc-c"/></svg>
+          <div class="ttl">Could not load sales</div>
+          <div class="msg">Failed to fetch today's sales.</div>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Recent sales — empty (0 sales today)</div>
+      <div class="mini-body">
+        <div class="emptystate">
+          <div class="ttl">No sales today</div>
+          <div class="desc">Transactions will appear here as they happen.</div>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Recent sales / Inventory panel — loading</div>
+      <div class="mini-body">
+        <div class="loadingview"><svg class="ic spin"><use href="#i-spin"/></svg> Loading sales…</div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Inventory panel — loading</div>
+      <div class="mini-body">
+        <div class="loadingview"><svg class="ic spin"><use href="#i-spin"/></svg> Loading inventory…</div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Panel — error (with Try again on Dashboard errorview)</div>
+      <div class="mini-body">
+        <div class="errorview">
+          <svg class="ic24" style="color:var(--error)"><use href="#i-exc-c"/></svg>
+          <div class="ttl">Something went wrong</div>
+          <div class="msg">Network request failed.</div>
+          <button class="retry">Try again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- LOGIN                                                          -->
+  <!-- ============================================================= -->
+  <div class="sec-title">Screen — Login</div>
+  <div class="frame">
+    <div class="frame-label"><b>Login</b><span class="route">/login</span>
+      <span class="who">public · AuthLayout (centered, no sidebar)</span></div>
+    <div class="frame-body" style="height:auto">
+      <div class="auth-wrap" style="width:100%">
+        <div class="auth-card">
+          <div class="login-head">
+            <div class="monogram">M</div>
+            <h1>MAKI POS Admin</h1>
+            <p>Sign in to continue</p>
+          </div>
+
+          <form style="margin-top:32px" onsubmit="return false">
+            <label class="field">
+              <span class="lab">Email</span>
+              <input class="inp" type="email" value="czar@makipos.ph">
+            </label>
+            <label class="field">
+              <span class="lab">Password</span>
+              <div class="inp-wrap">
+                <input class="inp" type="password" value="••••••••••" style="padding-right:40px">
+                <button class="inp-eye" type="button"><svg class="ic"><use href="#i-eye"/></svg></button>
+              </div>
+            </label>
+            <button class="btn-black" type="button">Sign in</button>
+            <div style="display:flex;justify-content:center">
+              <button class="forgot" type="button">Forgot password?</button>
+            </div>
+          </form>
+
+          <div class="footer-v">v1.0.0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login states -->
+  <div class="sec-title">Login — states &amp; variants</div>
+  <div class="state-grid">
+    <div class="mini">
+      <div class="mini-lbl">Restoring session (auth status = loading — replaces the form)</div>
+      <div class="mini-body">
+        <div class="loadingview"><svg class="ic spin"><use href="#i-spin"/></svg> Restoring session…</div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Submitting (spinner + "Signing in…")</div>
+      <div class="mini-body">
+        <button class="btn-black dis" type="button"><svg class="ic spin"><use href="#i-spin"/></svg> Signing in…</button>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Field validation error</div>
+      <div class="mini-body">
+        <label class="field" style="margin:0">
+          <span class="lab">Email</span>
+          <input class="inp err-b" type="email" value="">
+          <span class="err">Email is required</span>
+        </label>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mini-lbl">Auth failure — surfaces as password field error</div>
+      <div class="mini-body">
+        <label class="field" style="margin:0">
+          <span class="lab">Password</span>
+          <input class="inp err-b" type="password" value="••••••">
+          <span class="err">Incorrect email or password. Please try again.</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- ACCESS DENIED                                                  -->
+  <!-- ============================================================= -->
+  <div class="sec-title">Screen — Access Denied</div>
+  <div class="frame">
+    <div class="frame-label"><b>Access denied</b><span class="route">/access-denied</span>
+      <span class="who">shown to any signed-in non-admin · AuthLayout (centered)</span></div>
+    <div class="frame-body" style="height:auto">
+      <div class="auth-wrap" style="width:100%">
+        <div class="auth-card">
+          <div class="ad">
+            <div class="no"><svg class="ic40"><use href="#i-nosym"/></svg></div>
+            <h1>Access denied</h1>
+            <p>Your account does not have permission to use the web admin. Sign in with an admin account to continue.</p>
+            <button class="btn-black sm" type="button" style="width:auto">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- MODALS & OVERLAYS                                              -->
+  <!-- ============================================================= -->
+  <div class="sec-title">Modals &amp; overlays</div>
+
+  <div class="stage">
+    <!-- account popover -->
+    <div class="card-plain">
+      <div class="cap">Account popover — opens <b>upward</b> from the pinned account chip (Sidebar)</div>
+      <div style="position:relative;background:var(--bg);border:1px solid var(--hairline);border-radius:8px;padding:8px">
+        <!-- popover -->
+        <div class="popover" style="margin:0 0 8px">
+          <div class="pop-top">
+            <div class="pop-email">czar@makipos.ph</div>
+            <div class="pop-role">admin</div>
+          </div>
+          <button class="pop-signout"><svg class="ic"><use href="#i-signout"/></svg> Sign out</button>
+        </div>
+        <!-- chip -->
+        <button class="sb-acct">
+          <span class="avatar">C</span>
+          <span class="acct-txt">
+            <span class="acct-email">czar@makipos.ph</span>
+            <span class="acct-role">admin</span>
+          </span>
+          <svg class="ic" style="color:var(--text2);transform:rotate(180deg)"><use href="#i-chevup"/></svg>
+        </button>
+      </div>
+      <div class="disclaim">Chevron rotates 180° when open · closes on outside click.</div>
+    </div>
+
+    <!-- login inline reset confirm -->
+    <div class="card-plain">
+      <div class="cap">Login — inline reset-password confirm card (replaces "Forgot password?")</div>
+      <div class="reset-card">
+        <p>Send password reset email to <b>czar@makipos.ph</b>?</p>
+        <div class="reset-btns">
+          <button class="btn-ghost" type="button">Cancel</button>
+          <button class="btn-black sm" type="button">Send</button>
+        </div>
+      </div>
+      <div class="disclaim">Send shows a spinner + "Sending…" while pending; disabled when no email. Empty-email copy: "Enter your email above first."</div>
+    </div>
+
+    <!-- offline banner -->
+    <div class="card-plain" style="max-width:520px">
+      <div class="cap">OfflineBanner — strip above content in AdminShell (only when offline)</div>
+      <div style="border:1px solid var(--hairline);border-radius:8px;overflow:hidden">
+        <div class="offline"><svg class="ic"><use href="#i-signal"/></svg><span>Offline — changes will sync automatically</span></div>
+        <div style="padding:16px;color:var(--hint);font-size:13px">…page content below…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage" style="margin-top:24px">
+    <!-- login error banner -->
+    <div class="card-plain" style="max-width:420px">
+      <div class="cap">Login — ErrorBanner (sign-in / reset error, dismissable)</div>
+      <div class="banner err">
+        <svg class="ic" style="margin-top:2px"><use href="#i-exc-c"/></svg>
+        <p>Incorrect email or password. Please try again.</p>
+        <button type="button"><svg class="ic"><use href="#i-x"/></svg></button>
+      </div>
+    </div>
+    <!-- login success banner -->
+    <div class="card-plain" style="max-width:420px">
+      <div class="cap">Login — SuccessBanner (after reset email sent, dismissable)</div>
+      <div class="banner ok">
+        <svg class="ic" style="margin-top:2px"><use href="#i-check-c"/></svg>
+        <p>Password reset email sent to czar@makipos.ph. Check your inbox.</p>
+        <button type="button"><svg class="ic"><use href="#i-x"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <p class="caption" style="margin-top:40px">
+    Bundles: <b>w01-shell-login-dashboard (this)</b> · w02-pos-drafts · w03-inventory · w04-receiving ·
+    w05-suppliers · w06-reports · w07-users · w08-settings · w09-logs. One bundle at a time, per
+    <span class="mono">design/handoff-web/ROADMAP.md</span>.
+  </p>
+
+</div>
+</body>
+</html>
