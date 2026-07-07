@@ -38,6 +38,7 @@ import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierForm
 import { PosPage } from '@/presentation/features/pos/PosPage';
 import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
 import { DraftsPage } from '@/presentation/features/drafts/DraftsPage';
+import { DraftEditPage } from '@/presentation/features/drafts/DraftEditPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -64,7 +65,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.pos, element: <PosPage /> },
         { path: RoutePaths.checkout, element: <CheckoutPage /> },
         { path: RoutePaths.drafts, element: <DraftsPage /> },
-        { path: RoutePaths.draftEdit, element: placeholder('Edit Draft', 'phase 10') },
+        { path: RoutePaths.draftEdit, element: <DraftEditPage /> },
         { path: RoutePaths.inventory, element: <InventoryListPage /> },
         { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
         { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
