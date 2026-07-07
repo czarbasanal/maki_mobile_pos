@@ -6,6 +6,5 @@ export * from './DraftRepository';
 export * from './SupplierRepository';
 export * from './ExpenseRepository';
 export * from './ReceivingRepository';
-export * from './PettyCashRepository';
 export * from './ActivityLogRepository';
 export * from './CostCodeRepository';

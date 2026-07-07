@@ -1,0 +1,705 @@
+<title>MAKI POS Web Admin — w06 Reports (current UI)</title>
+<style>
+  :root{
+    --text:#0A0A0A; --secondary:#666666; --hint:#A0A0A0;
+    --bg:#FFFFFF; --card:#FFFFFF; --subtle:#FAFAFA; --hairline:#EAEAEA; --border:#E0E0E0;
+    --primary-dark:#121C1D;
+    --success:#4CAF50; --success-light:#E8F5E9; --success-dark:#2E7D32;
+    --warning:#FFC107; --warning-light:#FFF8E1; --warning-dark:#F57C00;
+    --error:#F44336; --error-light:#FFEBEE; --error-dark:#C62828;
+    --info:#2196F3; --info-light:#E3F2FD; --info-dark:#1565C0;
+    --violet:#9C27B0; --orange:#FF9800;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#F3F3F3;color:var(--text);
+    font-family:Roboto,system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.45;}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .tnum{font-variant-numeric:tabular-nums}
+  h1,h2,h3,p{margin:0}
+  a{color:inherit;text-decoration:none}
+
+  /* page shell */
+  .page{max-width:1180px;margin:0 auto;padding:32px 20px 80px}
+  .pagehead{margin-bottom:28px}
+  .pagehead h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
+  .pagehead .meta{color:var(--secondary);font-size:13px;margin-top:4px}
+  .sectionlabel{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--secondary);margin:36px 0 12px}
+
+  /* frame = one screen preview */
+  .frame{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;margin-bottom:28px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .framebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--primary-dark);color:#fff;padding:9px 14px;font-size:12px}
+  .framebar .route{font-family:ui-monospace,Menlo,monospace;color:#cbd5d6}
+  .framebar .who{margin-left:auto;background:rgba(255,255,255,.12);border-radius:999px;
+    padding:2px 9px;font-size:11px;color:#e6ecec}
+  .framecap{background:var(--warning-light);color:var(--warning-dark);font-size:12px;
+    padding:6px 14px;border-bottom:1px solid var(--hairline)}
+  .app{display:flex;min-height:200px;background:var(--bg)}
+
+  /* sidebar */
+  .sidebar{width:240px;flex-shrink:0;border-right:1px solid var(--hairline);
+    display:flex;flex-direction:column;background:#fff}
+  .sb-brand{height:56px;display:flex;align-items:center;padding:0 24px;font-size:16px;
+    font-weight:600;letter-spacing:-.3px;border-bottom:1px solid var(--hairline)}
+  .sb-nav{flex:1;padding:8px;overflow:hidden}
+  .sb-sec{font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;
+    color:var(--hint);padding:12px 8px 4px}
+  .sb-link{display:flex;align-items:center;gap:8px;border-radius:6px;padding:6px 8px;
+    font-size:14px;color:var(--secondary)}
+  .sb-link svg{width:16px;height:16px;flex-shrink:0}
+  .sb-link.active{background:var(--subtle);font-weight:600;color:var(--text)}
+  .sb-acct{border-top:1px solid var(--hairline);padding:8px;display:flex;align-items:center;gap:8px}
+  .sb-ava{width:28px;height:28px;border-radius:999px;background:var(--primary-dark);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+  .sb-acct .email{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sb-acct .role{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--hint)}
+
+  /* content */
+  .content{flex:1;overflow:hidden}
+  .cwrap{padding:24px 32px}
+  .rhead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+  .backlink{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--secondary);margin-bottom:4px}
+  .backlink svg{width:14px;height:14px}
+  .rtitle{font-size:22px;font-weight:700;letter-spacing:-.4px}
+  .rsub{font-size:14px;color:var(--secondary);margin-top:4px}
+
+  /* date range picker */
+  .drp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .drp select,.drp input{border:1px solid var(--border);border-radius:6px;background:#fff;
+    padding:8px 10px;font-size:14px;font-family:inherit;color:var(--text)}
+  .drp .dash{color:var(--hint)}
+
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:8px 14px;
+    font-size:14px;font-family:inherit;cursor:default;border:1px solid var(--border);background:#fff;color:var(--text)}
+  .btn svg{width:16px;height:16px}
+  .btn:hover{background:var(--subtle)}
+  .btn.dark{background:var(--text);color:#fff;border-color:var(--text)}
+  .btn.danger{border-color:var(--error-light);color:var(--error-dark)}
+  .btn.dangerfill{background:var(--error);border-color:var(--error);color:#fff;font-weight:600}
+  .btn.disabled{opacity:.5}
+
+  /* summary cards */
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .sc{display:flex;flex-direction:column;gap:4px;border:1px solid var(--hairline);
+    border-radius:8px;background:#fff;padding:16px}
+  .sc .t{font-size:14px;color:var(--secondary)}
+  .sc .v{font-size:24px;font-weight:600;letter-spacing:-.4px}
+  .sc.emph{background:var(--text);color:#fff}
+  .sc.emph .t{color:rgba(255,255,255,.7)}
+
+  /* panels */
+  .panel{border:1px solid var(--hairline);border-radius:8px;background:#fff;padding:24px}
+  .panel h2{font-size:16px;font-weight:600;margin-bottom:16px}
+  .dl .row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0}
+  .dl .row dt{color:var(--secondary)}
+  .dl .sep{border-top:1px solid var(--hairline);margin-top:4px;padding-top:12px}
+
+  /* inline tables (top products / mechanic / price) */
+  .itbl{width:100%;border-collapse:collapse;font-size:14px}
+  .itbl th{text-align:left;font-weight:500;color:var(--secondary);padding:4px 0}
+  .itbl th.r,.itbl td.r{text-align:right}
+  .itbl td{padding:6px 0;border-top:1px solid var(--hairline)}
+  .itbl tbody tr:first-child td{border-top:none}
+  .up{color:var(--error-dark)} .down{color:var(--success-dark)} .flat{color:var(--hint)}
+
+  /* card table (sales / items) */
+  .ctbl-wrap{border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:#fff}
+  .ctbl{width:100%;border-collapse:collapse;font-size:14px}
+  .ctbl thead th{background:var(--subtle);color:var(--secondary);text-align:left;font-weight:500;
+    padding:8px 16px;border-bottom:1px solid var(--hairline)}
+  .ctbl th.r,.ctbl td.r{text-align:right}
+  .ctbl td{padding:8px 16px;border-bottom:1px solid var(--hairline)}
+  .ctbl tbody tr:last-child td{border-bottom:none}
+  .ctbl tbody tr:hover{background:var(--subtle)}
+  .salelink{font-weight:600;color:var(--text)}
+  .struck{text-decoration:line-through;color:var(--hint)}
+  .pill{display:inline-block;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.6px;vertical-align:middle}
+  .pill.void{background:var(--error-light);color:var(--error-dark)}
+  .pill.voided{font-size:11px;padding:2px 9px}
+
+  .sechead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .sechead h2{font-size:16px;font-weight:600}
+
+  /* states */
+  .empty{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--hairline);
+    border-radius:8px;background:var(--subtle);padding:32px;text-align:center}
+  .empty .et{font-size:16px;font-weight:600}
+  .empty .ed{font-size:14px;color:var(--secondary);max-width:360px}
+  .loading{display:flex;align-items:center;justify-content:center;gap:8px;height:128px;color:var(--secondary);font-size:14px}
+  .spinner{width:16px;height:16px;border:2px solid rgba(0,0,0,.15);border-top-color:var(--text);border-radius:999px}
+  .errview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:40px;text-align:center}
+  .errview svg{width:32px;height:32px;color:var(--error)}
+  .errview .et{font-size:20px;font-weight:600}
+  .errview .ed{font-size:14px;color:var(--secondary)}
+
+  /* hub cards */
+  .hubgrid{display:grid;gap:24px;grid-template-columns:repeat(2,1fr)}
+  .hubcard{border:1px solid var(--hairline);border-radius:8px;background:#fff;padding:24px}
+  .hubcard svg{width:24px;height:24px;color:var(--secondary)}
+  .hubcard h2{font-size:16px;font-weight:600;margin-top:16px}
+  .hubcard p{font-size:14px;color:var(--secondary);margin-top:4px}
+
+  /* totals panel */
+  .totals{margin-left:auto;width:100%;max-width:384px;border:1px solid var(--hairline);
+    border-radius:8px;background:#fff;padding:24px;font-size:14px}
+  .totals .row{display:flex;justify-content:space-between;padding:2px 0}
+  .totals .row .lbl{color:var(--secondary);text-transform:capitalize}
+  .totals .row .lbl.muted{color:var(--hint)}
+  .totals .row .val{font-variant-numeric:tabular-nums}
+  .totals .div{border-top:1px solid var(--hairline);margin-top:4px;padding-top:6px}
+  .totals .div.tenders{margin-top:8px;padding-top:8px}
+  .totals .row.bold .lbl{color:var(--text)} .totals .row.bold .val{font-weight:600}
+
+  /* receipt */
+  .rcpt-stage{background:#ececec;padding:24px;display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+  .rcpt{width:320px;background:#fff;border:1px solid var(--border);padding:16px;
+    font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--text)}
+  .rcpt .ctr{text-align:center}
+  .rcpt .store{font-size:14px;font-weight:700}
+  .rcpt .vd{text-align:center;font-weight:700;margin:8px 0}
+  .rcpt .dash{border-top:1px dashed var(--border);margin:8px 0}
+  .rcpt .ln{display:flex;justify-content:space-between;gap:8px}
+  .rcpt .ln .qty{font-size:10px;color:var(--hint)}
+  .rcpt .ln.bold{font-weight:700}
+  .rcpt .thanks{text-align:center;margin-top:16px;font-size:11px;color:var(--secondary)}
+
+  /* modal */
+  .modal-stage{background:#e4e4e4;border-radius:10px;padding:32px;display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+  .backdrop{background:rgba(0,0,0,.30);border-radius:10px;padding:40px 32px;flex:1;min-width:360px;
+    display:flex;justify-content:center}
+  .dialog{width:100%;max-width:420px;background:#fff;border:1px solid var(--hairline);border-radius:8px;
+    box-shadow:0 20px 40px rgba(0,0,0,.25);overflow:hidden}
+  .dialog .dhead{display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--hairline);padding:16px 24px}
+  .dialog .dhead h3{font-size:16px;font-weight:600}
+  .dialog .dhead .x{width:16px;height:16px;color:var(--secondary)}
+  .dialog .dbody{padding:24px;display:flex;flex-direction:column;gap:16px}
+  .dialog label span{display:block;font-size:14px;color:var(--secondary);margin-bottom:4px}
+  .dialog select{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit}
+  .dialog .warn{font-size:14px;color:var(--secondary)}
+  .dialog .lnk{color:var(--text);text-decoration:underline}
+  .dialog .err{font-size:14px;color:var(--error-dark)}
+  .dialog .dfoot{display:flex;justify-content:flex-end;gap:8px}
+  .capt{font-size:13px;color:var(--secondary);margin:-12px 0 20px;padding-left:2px}
+  .capt strong{color:var(--text)}
+  small.note{display:block;font-size:12px;color:var(--hint);margin-top:6px}
+</style>
+
+<div class="page">
+  <div class="pagehead">
+    <h1>MAKI POS Web Admin — Handoff w06: Reports &amp; Sale detail</h1>
+    <div class="meta">Current web UI — light theme, desktop · 2026-07-07 · token-accurate static reconstruction (no JS)</div>
+  </div>
+
+  <!-- ============ SCREEN 1: HUB ============ -->
+  <div class="sectionlabel">Screen 1 — Reports hub</div>
+  <div class="frame">
+    <div class="framebar"><span>Reports hub</span><span class="route">/reports</span>
+      <span class="who">all roles · sidebar item "Reports"</span></div>
+    <div class="app">
+      <!--SIDEBAR-->
+      <aside class="sidebar">
+        <div class="sb-brand">MAKI POS</div>
+        <nav class="sb-nav">
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="sb-sec">Sell</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/><path d="M2 3h2l2 12h11l2-8H6"/></svg>POS</a>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M4 20l1-4 11-11a2 2 0 013 3L8 19z"/></svg>Drafts</a>
+          <div class="sb-sec">Stock</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8"/></svg>Inventory</a>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="18.5" cy="18.5" r="1.5"/></svg>Receiving</a>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5h6M9 5a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2"/></svg>Reorder</a>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21V8l9-5 9 5v13M9 21v-6h6v6"/></svg>Suppliers</a>
+          <div class="sb-sec">Money</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-2 2-3-2-3 2-2-2-3 2z"/></svg>Expenses</a>
+          <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>Reports</a>
+          <div class="sb-sec">Admin</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0112 0M16 6a3 3 0 010 6M21 20a6 6 0 00-4-5.6"/></svg>Users</a>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.5-2.3 1a7 7 0 00-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 00-1.7 1l-2.3-1-2 3.5 2 1.5a7 7 0 000 2l-2 1.5 2 3.5 2.3-1a7 7 0 001.7 1l.3 2.5h4l.3-2.5a7 7 0 001.7-1l2.3 1 2-3.5-2-1.5c.1-.3.1-.7.1-1z"/></svg>Settings</a>
+        </nav>
+        <div class="sb-acct">
+          <div class="sb-ava">C</div>
+          <div style="min-width:0;flex:1">
+            <div class="email">czar@makipos.ph</div><div class="role">Admin</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+        </div>
+      </aside>
+      <!--/SIDEBAR-->
+      <div class="content"><div class="cwrap">
+        <div class="rhead"><div>
+          <h1 class="rtitle">Reports</h1>
+          <p class="rsub">Sales and profit over any date range.</p>
+        </div></div>
+        <div class="hubgrid">
+          <a class="hubcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>
+            <h2>Sales report</h2><p>Sales, payment breakdown, top products, and a downloadable sales list.</p></a>
+          <a class="hubcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 17l6-6 4 4 8-8M21 7v5M21 7h-5"/></svg>
+            <h2>Profit report</h2><p>Cost of goods, gross profit, margin, and top products by profit.</p></a>
+          <a class="hubcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6a3.5 3.5 0 01-4.6 4.6L4 16l4 4 5.4-5.4A3.5 3.5 0 0118 10l-2.5-2.5z"/></svg>
+            <h2>Labor report</h2><p>Service revenue and a per-mechanic breakdown of labor.</p></a>
+          <a class="hubcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 12l-8 8-9-9V3h8zM7 7h.01"/></svg>
+            <h2>Price changes</h2><p>Price/cost changes across products over a date range.</p></a>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="capt">All four hub cards link out; <strong>Profit report</strong> and <strong>Price changes</strong> routes are admin-only (a cashier/staff who opens those URLs is bounced by the router — the hub still shows all four cards). Sidebar for staff/cashier hides Reorder, Price History, Suppliers, Users, Activity Logs (see w01).</div>
+
+  <!-- ============ SCREEN 2: SALES REPORT ============ -->
+  <div class="sectionlabel">Screen 2 — Sales report (populated)</div>
+  <div class="frame">
+    <div class="framebar"><span>Sales report</span><span class="route">/reports/sales</span>
+      <span class="who">all roles · default range Last 7 days</span></div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sb-brand">MAKI POS</div>
+        <nav class="sb-nav">
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="sb-sec">Money</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-2 2-3-2-3 2-2-2-3 2z"/></svg>Expenses</a>
+          <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>Reports</a>
+          <div class="sb-sec">Admin</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2"/></svg>Settings</a>
+        </nav>
+        <div class="sb-acct"><div class="sb-ava">C</div>
+          <div style="min-width:0;flex:1"><div class="email">czar@makipos.ph</div><div class="role">Admin</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></div>
+      </aside>
+      <div class="content"><div class="cwrap">
+        <div class="rhead">
+          <div>
+            <a class="backlink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Reports</a>
+            <h1 class="rtitle">Sales report</h1>
+            <p class="rsub">Sales and payment breakdown for the selected range.</p>
+          </div>
+          <div class="drp">
+            <select><option>Last 7 days</option></select>
+          </div>
+        </div>
+
+        <div class="grid g4" style="margin-bottom:24px">
+          <div class="sc emph"><div class="t">Gross Sales</div><div class="v tnum">₱48,250.00</div></div>
+          <div class="sc"><div class="t">Net</div><div class="v tnum">₱46,180.00</div></div>
+          <div class="sc"><div class="t">Avg order</div><div class="v tnum">₱1,206.25</div></div>
+          <div class="sc"><div class="t">Sales count</div><div class="v tnum">40</div></div>
+        </div>
+
+        <div class="grid g3" style="margin-bottom:24px">
+          <div class="panel">
+            <h2>By payment method</h2>
+            <div class="dl">
+              <div class="row"><dt>Cash</dt><dd class="tnum">₱21,400.00</dd></div>
+              <div class="row"><dt>Gcash</dt><dd class="tnum">₱15,850.00</dd></div>
+              <div class="row"><dt>Maya</dt><dd class="tnum">₱6,200.00</dd></div>
+              <div class="row"><dt>Salmon</dt><dd class="tnum">₱1,800.00</dd></div>
+              <div class="row sep"><dt>Service / Labor</dt><dd class="tnum">₱3,000.00</dd></div>
+            </div>
+          </div>
+          <div class="panel" style="grid-column:span 2">
+            <h2>Top products</h2>
+            <table class="itbl">
+              <thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Revenue</th><th class="r">Profit</th></tr></thead>
+              <tbody>
+                <tr><td>Shell Advance AX7 10W-40 1L</td><td class="r tnum">64</td><td class="r tnum">₱18,560.00</td><td class="r tnum">₱4,480.00</td></tr>
+                <tr><td>NGK Spark Plug CPR6EA-9</td><td class="r tnum">48</td><td class="r tnum">₱7,200.00</td><td class="r tnum">₱2,640.00</td></tr>
+                <tr><td>Brembo Brake Pads (front)</td><td class="r tnum">22</td><td class="r tnum">₱9,900.00</td><td class="r tnum">₱3,080.00</td></tr>
+                <tr><td>RK Drive Chain 428H-120L</td><td class="r tnum">15</td><td class="r tnum">₱6,750.00</td><td class="r tnum">₱1,875.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="sechead"><h2>Sales (40)</h2>
+          <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>Download CSV</button>
+        </div>
+        <div class="ctbl-wrap">
+          <table class="ctbl">
+            <thead><tr><th>When</th><th>Sale #</th><th class="r">Items</th><th>Mechanic</th><th>Payment</th><th class="r">Total</th></tr></thead>
+            <tbody>
+              <tr><td style="color:var(--hint)">Jul 7, 2:14 PM</td><td><a class="salelink">S-001042</a></td><td class="r tnum">3</td><td style="color:var(--hint)">Boyet Ramos</td><td>GCash</td><td class="r tnum" style="font-weight:600">₱1,850.00</td></tr>
+              <tr><td style="color:var(--hint)">Jul 7, 11:38 AM</td><td><a class="salelink">S-001041</a></td><td class="r tnum">1</td><td style="color:var(--hint)">—</td><td>Cash</td><td class="r tnum" style="font-weight:600">₱290.00</td></tr>
+              <tr><td style="color:var(--hint)">Jul 6, 4:52 PM</td><td><a class="salelink struck">S-001040</a> <span class="pill void">Void</span></td><td class="r tnum">2</td><td style="color:var(--hint)">—</td><td>Cash</td><td class="r tnum struck">₱640.00</td></tr>
+              <tr><td style="color:var(--hint)">Jul 6, 10:05 AM</td><td><a class="salelink">S-001039</a></td><td class="r tnum">5</td><td style="color:var(--hint)">Danny Cruz</td><td>Mixed</td><td class="r tnum" style="font-weight:600">₱3,420.00</td></tr>
+              <tr><td style="color:var(--hint)">Jul 5, 3:20 PM</td><td><a class="salelink">S-001038</a></td><td class="r tnum">2</td><td style="color:var(--hint)">—</td><td>Maya</td><td class="r tnum" style="font-weight:600">₱780.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="sectionlabel">Screen 2 — Sales report states (capped banner · empty sales table)</div>
+  <div class="frame">
+    <div class="framebar"><span>Sales report · states</span><span class="route">/reports/sales</span><span class="who">variants</span></div>
+    <div class="app"><div class="content" style="width:100%"><div class="cwrap">
+      <div style="max-width:760px">
+        <p style="font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary);margin-bottom:8px">CappedNotice — shown only when the fetch hits 2,000 rows</p>
+        <div style="border:1px solid var(--warning-light);background:rgba(255,248,225,.4);border-radius:6px;padding:8px 16px;font-size:14px;color:var(--warning-dark);margin-bottom:28px">
+          Showing the most recent 2,000 sales — narrow the date range for exact totals.
+        </div>
+        <p style="font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary);margin-bottom:8px">SalesTable empty state</p>
+        <div class="empty" style="margin-bottom:28px">
+          <div class="et">No sales in this range</div>
+          <div class="ed">Adjust the date range above.</div>
+        </div>
+        <div class="grid g2">
+          <div>
+            <p style="font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary);margin-bottom:8px">Loading</p>
+            <div class="loading"><span class="spinner"></span> Loading sales…</div>
+          </div>
+          <div>
+            <p style="font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary);margin-bottom:8px">Error</p>
+            <div class="errview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><div class="et">Could not load sales</div><div class="ed">FirebaseError: permission-denied</div></div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+  </div>
+
+  <!-- ============ SCREEN 3: PROFIT ============ -->
+  <div class="sectionlabel">Screen 3 — Profit report (admin only)</div>
+  <div class="frame">
+    <div class="framebar"><span>Profit report</span><span class="route">/reports/profit</span>
+      <span class="who">ADMIN ONLY · viewProfitReports</span></div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sb-brand">MAKI POS</div>
+        <nav class="sb-nav">
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="sb-sec">Money</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-2 2-3-2-3 2-2-2-3 2z"/></svg>Expenses</a>
+          <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>Reports</a>
+          <div class="sb-sec">Admin</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2"/></svg>Settings</a>
+        </nav>
+        <div class="sb-acct"><div class="sb-ava">C</div>
+          <div style="min-width:0;flex:1"><div class="email">czar@makipos.ph</div><div class="role">Admin</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></div>
+      </aside>
+      <div class="content"><div class="cwrap">
+        <div class="rhead">
+          <div>
+            <a class="backlink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Reports</a>
+            <h1 class="rtitle">Profit report</h1>
+            <p class="rsub">Cost of goods, gross profit, and margin for the selected range.</p>
+          </div>
+          <div class="drp"><select><option>Last 7 days</option></select></div>
+        </div>
+
+        <div class="grid g4" style="margin-bottom:16px">
+          <div class="sc"><div class="t">Gross Sales</div><div class="v tnum">₱48,250.00</div></div>
+          <div class="sc"><div class="t">Total COGS</div><div class="v tnum">₱31,900.00</div></div>
+          <div class="sc emph"><div class="t">Gross Profit</div><div class="v tnum">₱16,350.00</div></div>
+          <div class="sc"><div class="t">Margin</div><div class="v tnum">33.9%</div></div>
+        </div>
+        <div class="grid g2" style="margin-bottom:24px">
+          <div class="sc"><div class="t">Service / Labor profit</div><div class="v tnum">₱3,000.00</div></div>
+        </div>
+
+        <div class="panel">
+          <h2>Top products by profit</h2>
+          <table class="itbl">
+            <thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Revenue</th><th class="r">Cost</th><th class="r">Profit</th></tr></thead>
+            <tbody>
+              <tr><td>Shell Advance AX7 10W-40 1L</td><td class="r tnum">64</td><td class="r tnum">₱18,560.00</td><td class="r tnum">₱14,080.00</td><td class="r tnum">₱4,480.00</td></tr>
+              <tr><td>Brembo Brake Pads (front)</td><td class="r tnum">22</td><td class="r tnum">₱9,900.00</td><td class="r tnum">₱6,820.00</td><td class="r tnum">₱3,080.00</td></tr>
+              <tr><td>NGK Spark Plug CPR6EA-9</td><td class="r tnum">48</td><td class="r tnum">₱7,200.00</td><td class="r tnum">₱4,560.00</td><td class="r tnum">₱2,640.00</td></tr>
+              <tr><td>RK Drive Chain 428H-120L</td><td class="r tnum">15</td><td class="r tnum">₱6,750.00</td><td class="r tnum">₱4,875.00</td><td class="r tnum">₱1,875.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="capt">No CSV export and no capped notice on this page. Empty top-products → “No products sold in this range.” Loading label “Loading…”; error title “Could not load profit”.</div>
+
+  <!-- ============ SCREEN 4: LABOR ============ -->
+  <div class="sectionlabel">Screen 4 — Labor report</div>
+  <div class="frame">
+    <div class="framebar"><span>Labor report</span><span class="route">/reports/labor</span>
+      <span class="who">all roles · viewSalesReports</span></div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sb-brand">MAKI POS</div>
+        <nav class="sb-nav">
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="sb-sec">Money</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-2 2-3-2-3 2-2-2-3 2z"/></svg>Expenses</a>
+          <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>Reports</a>
+          <div class="sb-sec">Admin</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2"/></svg>Settings</a>
+        </nav>
+        <div class="sb-acct"><div class="sb-ava">C</div>
+          <div style="min-width:0;flex:1"><div class="email">czar@makipos.ph</div><div class="role">Admin</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></div>
+      </aside>
+      <div class="content"><div class="cwrap">
+        <div class="rhead">
+          <div>
+            <a class="backlink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Reports</a>
+            <h1 class="rtitle">Labor report</h1>
+            <p class="rsub">Service revenue and per-mechanic breakdown for the selected range.</p>
+          </div>
+          <div class="drp"><select><option>Last 7 days</option></select></div>
+        </div>
+
+        <div class="grid g4" style="margin-bottom:24px">
+          <div class="sc emph"><div class="t">Total Labor</div><div class="v tnum">₱3,000.00</div></div>
+          <div class="sc"><div class="t">Service Sales</div><div class="v tnum">7</div></div>
+        </div>
+
+        <div class="panel">
+          <h2>Labor by mechanic</h2>
+          <table class="itbl">
+            <thead><tr><th>Mechanic</th><th class="r">Jobs</th><th class="r">Labor</th></tr></thead>
+            <tbody>
+              <tr><td>Boyet Ramos</td><td class="r tnum">4</td><td class="r tnum">₱1,700.00</td></tr>
+              <tr><td>Danny Cruz</td><td class="r tnum">2</td><td class="r tnum">₱900.00</td></tr>
+              <tr><td>Unassigned</td><td class="r tnum">1</td><td class="r tnum">₱400.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="capt">No CSV, no capped notice. Empty → “No labor recorded in this range.” Loading “Loading…”; error “Could not load labor”. Unassigned row key = <span class="mono">__unassigned__</span>.</div>
+
+  <!-- ============ SCREEN 5: PRICE CHANGES ============ -->
+  <div class="sectionlabel">Screen 5 — Price changes (admin only)</div>
+  <div class="frame">
+    <div class="framebar"><span>Price changes</span><span class="route">/reports/price-changes</span>
+      <span class="who">ADMIN ONLY · viewProductCost · default range This month</span></div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sb-brand">MAKI POS</div>
+        <nav class="sb-nav">
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="sb-sec">Money</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-2 2-3-2-3 2-2-2-3 2z"/></svg>Expenses</a>
+          <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>Reports</a>
+          <div class="sb-sec">Admin</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2"/></svg>Settings</a>
+        </nav>
+        <div class="sb-acct"><div class="sb-ava">C</div>
+          <div style="min-width:0;flex:1"><div class="email">czar@makipos.ph</div><div class="role">Admin</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></div>
+      </aside>
+      <div class="content"><div class="cwrap">
+        <div class="rhead">
+          <div>
+            <a class="backlink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Reports</a>
+            <h1 class="rtitle">Price changes</h1>
+            <p class="rsub">Price/cost changes across products for the selected range.</p>
+          </div>
+          <div class="drp">
+            <select><option>This month</option></select>
+            <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>CSV</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <table class="itbl">
+            <thead><tr><th>Product</th><th>SKU</th><th class="r">New Price</th><th class="r">Δ</th><th class="r">New Cost</th><th class="r">Δ</th><th>Reason</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td>Shell Advance AX7 10W-40 1L</td><td style="color:var(--secondary)" class="mono">OIL-SH-AX7</td><td class="r tnum">₱290.00</td><td class="r tnum up">+15.00</td><td class="r tnum">₱220.00</td><td class="r tnum up">+10.00</td><td>Supplier increase</td><td style="color:var(--secondary)">7/2/2026</td></tr>
+              <tr><td>Brembo Brake Pads (front)</td><td style="color:var(--secondary)" class="mono">BRK-BREM-F</td><td class="r tnum">₱450.00</td><td class="r tnum down">-30.00</td><td class="r tnum">₱310.00</td><td class="r tnum down">-20.00</td><td>Promo</td><td style="color:var(--secondary)">7/1/2026</td></tr>
+              <tr><td>NGK Spark Plug CPR6EA-9</td><td style="color:var(--secondary)" class="mono">SPK-NGK-CPR</td><td class="r tnum">₱150.00</td><td class="r tnum flat"></td><td class="r tnum">₱95.00</td><td class="r tnum up">+5.00</td><td>Cost correction</td><td style="color:var(--secondary)">6/28/2026</td></tr>
+              <tr><td>RK Drive Chain 428H-120L</td><td style="color:var(--secondary)" class="mono">CHN-RK-428</td><td class="r tnum">₱450.00</td><td class="r tnum flat"></td><td class="r tnum">₱325.00</td><td class="r tnum flat"></td><td></td><td style="color:var(--secondary)">6/25/2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="capt">Delta cells: increase → red (<span class="up">+red</span>), decrease → green (<span class="down">-green</span>), unchanged/no-prior → blank (hint). CSV headers: Date, Product, SKU, New Price, Price Delta, New Cost, Cost Delta, Reason, Changed By. Empty → “No price changes in this range.” No capped notice. Loading “Loading…”; error “Could not load price changes”.</div>
+
+  <!-- ============ SCREEN 6: SALE DETAIL ============ -->
+  <div class="sectionlabel">Screen 6 — Sale detail</div>
+  <div class="frame">
+    <div class="framebar"><span>Sale detail</span><span class="route">/reports/sale/:id</span>
+      <span class="who">all roles · Void button = admin, completed only</span></div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sb-brand">MAKI POS</div>
+        <nav class="sb-nav">
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="sb-sec">Money</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v18l-3-2-2 2-3-2-3 2-2-2-3 2z"/></svg>Expenses</a>
+          <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-6"/></svg>Reports</a>
+          <div class="sb-sec">Admin</div>
+          <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2"/></svg>Settings</a>
+        </nav>
+        <div class="sb-acct"><div class="sb-ava">C</div>
+          <div style="min-width:0;flex:1"><div class="email">czar@makipos.ph</div><div class="role">Admin</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></div>
+      </aside>
+      <div class="content"><div class="cwrap">
+        <a class="backlink" style="margin-bottom:8px;display:inline-block">← Back to sales</a>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:4px">
+          <h1 class="rtitle">S-001042</h1>
+        </div>
+        <p class="rsub" style="margin-bottom:24px">Jul 7, 2026, 2:14 PM · Marites Santos · Mechanic: Boyet Ramos</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">
+          <button class="btn" style="font-weight:500">Print receipt</button>
+          <button class="btn danger" style="font-weight:500">Void sale</button>
+        </div>
+
+        <div class="ctbl-wrap" style="margin-bottom:24px">
+          <table class="ctbl">
+            <thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit</th><th class="r">Net</th></tr></thead>
+            <tbody>
+              <tr><td><span style="font-weight:500">Shell Advance AX7 10W-40 1L</span> <span style="color:var(--hint)" class="mono">OIL-SH-AX7</span></td><td class="r tnum">2</td><td class="r tnum">₱290.00</td><td class="r tnum">₱580.00</td></tr>
+              <tr><td><span style="font-weight:500">NGK Spark Plug CPR6EA-9</span> <span style="color:var(--hint)" class="mono">SPK-NGK-CPR</span></td><td class="r tnum">1</td><td class="r tnum">₱150.00</td><td class="r tnum">₱150.00</td></tr>
+              <tr style="background:var(--subtle)"><td colspan="3">🔧 Oil change &amp; tune-up</td><td class="r tnum">₱1,000.00</td></tr>
+              <tr style="background:var(--subtle)"><td colspan="3">🔧 Service</td><td class="r tnum">₱120.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="totals">
+          <div class="row"><span class="lbl">Gross Sales</span><span class="val tnum">₱730.00</span></div>
+          <div class="row"><span class="lbl">Discount</span><span class="val tnum">-₱0.00</span></div>
+          <div class="row"><span class="lbl">Labor</span><span class="val tnum">₱1,120.00</span></div>
+          <div class="div"><div class="row bold"><span class="lbl">Total</span><span class="val tnum">₱1,850.00</span></div></div>
+          <div class="div tenders">
+            <div class="row"><span class="lbl muted">GCash</span><span class="val tnum">₱1,850.00</span></div>
+            <div class="row"><span class="lbl muted">Amount received</span><span class="val tnum">₱1,850.00</span></div>
+            <div class="row"><span class="lbl muted">Change</span><span class="val tnum">₱0.00</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="capt">Header shows a red <span class="pill voided" style="background:var(--error-light);color:var(--error-dark)">Voided</span> pill next to the sale number when voided. <strong>Void sale</strong> renders only when <span class="mono">canVoidSale</span> (not voided AND status = completed) — it opens the reason dialog below. Labor lines render as <span class="mono">bg-subtle</span> rows spanning the first 3 columns with a 🔧 prefix. Tender rows list each real method (cash/gcash/maya/salmon) with amount &gt; 0.</div>
+
+  <div class="sectionlabel">Screen 6 — Sale detail states (not found · loading · error)</div>
+  <div class="frame">
+    <div class="framebar"><span>Sale detail · states</span><span class="route">/reports/sale/:id</span><span class="who">variants</span></div>
+    <div class="app"><div class="content" style="width:100%"><div class="cwrap">
+      <div class="grid g3">
+        <div>
+          <p style="font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary);margin-bottom:8px">Not found</p>
+          <div class="empty">
+            <div class="et">Sale not found</div>
+            <div class="ed">It may have been removed.</div>
+            <a style="color:var(--text);text-decoration:underline;font-size:14px">Back to sales</a>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary);margin-bottom:8px">Loading</p>
+          <div class="loading"><span class="spinner"></span> Loading sale…</div>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary);margin-bottom:8px">Error</p>
+          <div class="errview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><div class="et">Could not load sale</div><div class="ed">Network request failed</div></div>
+        </div>
+      </div>
+    </div></div></div>
+  </div>
+
+  <!-- ============ RECEIPT ============ -->
+  <div class="sectionlabel">Printable receipt — rendered only via Print receipt (window.print); 320px mono, chrome hidden by @media print</div>
+  <div class="frame">
+    <div class="framebar"><span>Receipt.tsx</span><span class="route">#print-receipt (hidden print:block)</span><span class="who">normal · voided</span></div>
+    <div class="rcpt-stage">
+      <div class="rcpt">
+        <div class="ctr">
+          <div class="store">MAKI Mobile POS</div>
+          <div>S-001042</div>
+          <div>Jul 7, 2026, 2:14 PM</div>
+          <div>Cashier: Marites Santos</div>
+          <div>Mechanic: Boyet Ramos</div>
+        </div>
+        <div class="dash"></div>
+        <div class="ln"><span>Shell Advance AX7 10W-40 1L <span class="qty">2×₱290.00</span></span><span class="tnum">₱580.00</span></div>
+        <div class="ln"><span>NGK Spark Plug CPR6EA-9 <span class="qty">1×₱150.00</span></span><span class="tnum">₱150.00</span></div>
+        <div class="ln"><span>🔧 Oil change &amp; tune-up</span><span class="tnum">₱1,000.00</span></div>
+        <div class="ln"><span>🔧 Service</span><span class="tnum">₱120.00</span></div>
+        <div class="dash"></div>
+        <div class="ln"><span>Subtotal</span><span class="tnum">₱730.00</span></div>
+        <div class="ln"><span>Discount</span><span class="tnum">-₱0.00</span></div>
+        <div class="ln"><span>Labor</span><span class="tnum">₱1,120.00</span></div>
+        <div class="ln bold"><span>TOTAL</span><span class="tnum">₱1,850.00</span></div>
+        <div class="dash"></div>
+        <div class="ln"><span>GCash</span><span class="tnum">₱1,850.00</span></div>
+        <div class="ln"><span>Amount received</span><span class="tnum">₱1,850.00</span></div>
+        <div class="ln"><span>Change</span><span class="tnum">₱0.00</span></div>
+        <div class="thanks">Thank you!</div>
+      </div>
+
+      <div class="rcpt">
+        <div class="ctr">
+          <div class="store">MAKI Mobile POS</div>
+          <div>S-001040</div>
+          <div>Jul 6, 2026, 4:52 PM</div>
+          <div>Cashier: Marites Santos</div>
+        </div>
+        <div class="vd">*** VOIDED *** (Wrong item)</div>
+        <div class="dash"></div>
+        <div class="ln"><span>Brembo Brake Pads (front) <span class="qty">1×₱450.00</span></span><span class="tnum">₱450.00</span></div>
+        <div class="ln"><span>Bulb 12V 35/35W <span class="qty">1×₱190.00</span></span><span class="tnum">₱190.00</span></div>
+        <div class="dash"></div>
+        <div class="ln"><span>Subtotal</span><span class="tnum">₱640.00</span></div>
+        <div class="ln"><span>Discount</span><span class="tnum">-₱0.00</span></div>
+        <div class="ln"><span>Labor</span><span class="tnum">₱0.00</span></div>
+        <div class="ln bold"><span>TOTAL</span><span class="tnum">₱640.00</span></div>
+        <div class="dash"></div>
+        <div class="ln"><span>Cash</span><span class="tnum">₱640.00</span></div>
+        <div class="ln"><span>Amount received</span><span class="tnum">₱1,000.00</span></div>
+        <div class="ln"><span>Change</span><span class="tnum">₱360.00</span></div>
+        <div class="thanks">Thank you!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+  <div class="sectionlabel">Modals &amp; overlays — Void-sale reason dialog</div>
+  <div class="frame">
+    <div class="framebar"><span>Void-sale reason dialog</span><span class="route">SaleDetailPage · shared Dialog</span><span class="who">with reasons · no reasons</span></div>
+    <div class="modal-stage">
+      <div class="backdrop">
+        <div class="dialog">
+          <div class="dhead"><h3>Void sale</h3>
+            <svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div class="dbody">
+            <p class="warn">Voiding restores the sold stock and removes this sale from reports. This can’t be undone.</p>
+            <label><span>Reason</span>
+              <select><option>Select a reason…</option><option>Wrong item</option><option>Customer changed mind</option><option>Duplicate sale</option></select>
+            </label>
+            <div class="dfoot">
+              <button class="btn">Cancel</button>
+              <button class="btn dangerfill">Void sale</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="backdrop">
+        <div class="dialog">
+          <div class="dhead"><h3>Void sale</h3>
+            <svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div class="dbody">
+            <p class="warn">Voiding restores the sold stock and removes this sale from reports. This can’t be undone.</p>
+            <p class="warn">No void reasons configured. <a class="lnk">Add them in Manage lists</a>.</p>
+            <div class="dfoot">
+              <button class="btn">Cancel</button>
+              <button class="btn dangerfill disabled">Void sale</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="capt"><strong>Void sale</strong> (red fill) is disabled until a reason is picked; while the mutation runs its label becomes “Voiding…”, both buttons disable, and the dialog becomes non-dismissable (X hidden, ESC/overlay-click blocked). Mutation error renders in <span class="up">error-dark</span> above the buttons. No-reasons variant swaps the select for the Manage-lists link and keeps Void disabled.</div>
+
+</div>

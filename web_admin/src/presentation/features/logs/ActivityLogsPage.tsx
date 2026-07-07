@@ -7,7 +7,6 @@ import {
   ArrowPathIcon,
   ArrowRightOnRectangleIcon,
   ArrowUturnLeftIcon,
-  BanknotesIcon,
   BuildingStorefrontIcon,
   ChevronDownIcon,
   ClipboardDocumentListIcon,
@@ -66,8 +65,6 @@ const ICONS: Record<ActivityType, ComponentType<SVGProps<SVGSVGElement>>> = {
   cost_code_changed: CodeBracketSquareIcon,
   expense: ReceiptPercentIcon,
   supplier: BuildingStorefrontIcon,
-  petty_cash: BanknotesIcon,
-  petty_cash_cutoff: BanknotesIcon,
   other: ClipboardDocumentListIcon,
 };
 
@@ -88,8 +85,6 @@ function toneFor(type: ActivityType): Tone {
     case ActivityType.costCodeChanged:
       return 'orange';
     case ActivityType.expense:
-    case ActivityType.pettyCash:
-    case ActivityType.pettyCashCutOff:
       return 'yellow';
     default:
       return 'blue';

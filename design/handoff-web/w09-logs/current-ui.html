@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS Web Admin — w09 Activity Logs (current UI)</title>
+<style>
+  :root{
+    --text:#0A0A0A; --secondary:#666666; --hint:#A0A0A0;
+    --bg:#FFFFFF; --card:#FFFFFF; --subtle:#FAFAFA;
+    --hairline:#EAEAEA; --border:#E0E0E0; --primary-dark:#121C1D;
+    --success:#4CAF50; --success-dark:#2E7D32;
+    --error:#F44336; --error-light:#FFEBEE; --error-dark:#C62828;
+    --warning-light:#FFF8E1; --warning-dark:#F57C00;
+    /* tonal palette (Tailwind 50/600 scale, from core/theme/tones.ts) */
+    --yellow-50:#FEFCE8; --yellow-600:#CA8A04;
+    --green-50:#F0FDF4;  --green-600:#16A34A;
+    --blue-50:#EFF6FF;   --blue-600:#2563EB;
+    --orange-50:#FFF7ED; --orange-600:#EA580C;
+    --red-50:#FEF2F2;    --red-600:#DC2626;
+    --violet-50:#F5F3FF; --violet-600:#7C3AED;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#EFEFEF;color:var(--text);
+    font-family:Roboto,system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.4;}
+  .mono{font-family:ui-monospace,Menlo,monospace;}
+  h1,h2,h3,p{margin:0;}
+  a{color:inherit;text-decoration:none;}
+  .tnum{font-variant-numeric:tabular-nums;}
+
+  /* Page scaffold */
+  .page{max-width:1360px;margin:0 auto;padding:32px 24px 64px;}
+  .page-head{margin-bottom:28px;}
+  .page-head h1{font-size:22px;font-weight:700;letter-spacing:-.01em;}
+  .page-head .meta{color:var(--secondary);font-size:13px;margin-top:6px;}
+  .section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--hint);margin:40px 0 12px;}
+
+  /* Browser frame */
+  .frame{border:1px solid #d5d5d5;border-radius:10px;overflow:hidden;background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:8px;}
+  .frame-bar{display:flex;align-items:center;gap:10px;background:#F3F3F3;
+    border-bottom:1px solid #E3E3E3;padding:8px 14px;font-size:12px;color:var(--secondary);}
+  .frame-bar .route{font-family:ui-monospace,Menlo,monospace;color:var(--text);font-weight:500;}
+  .frame-bar .who{margin-left:auto;background:#ECECEC;border:1px solid #DEDEDE;border-radius:999px;
+    padding:2px 10px;font-size:11px;color:var(--secondary);}
+  .frame-cap{font-size:12px;color:var(--secondary);margin:0 2px 28px;line-height:1.5;}
+
+  /* App shell (sidebar + content) */
+  .shell{display:flex;min-height:640px;background:var(--bg);}
+  .sidebar{width:240px;flex:0 0 240px;background:#fff;border-right:1px solid var(--hairline);
+    display:flex;flex-direction:column;}
+  .brand{height:56px;display:flex;align-items:center;padding:0 24px;font-size:16px;font-weight:600;
+    letter-spacing:-.01em;}
+  .nav{flex:1;padding:8px;overflow:auto;}
+  .nav-group-label{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--hint);padding:14px 8px 6px;}
+  .nav-item{display:flex;align-items:center;gap:8px;border-radius:6px;padding:6px 8px;font-size:14px;
+    color:var(--secondary);}
+  .nav-item svg{width:16px;height:16px;flex:0 0 16px;}
+  .nav-item:hover{background:var(--subtle);color:var(--text);}
+  .nav-item.active{background:var(--subtle);color:var(--text);font-weight:600;}
+  .acct{border-top:1px solid var(--hairline);padding:8px;}
+  .acct-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;}
+  .avatar{width:28px;height:28px;flex:0 0 28px;border-radius:999px;background:var(--primary-dark);
+    color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  .acct-mail{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .acct-role{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--hint);}
+  .content{flex:1;overflow:auto;}
+
+  /* Logs page interior */
+  .lg{padding:24px 32px;}
+  .lg-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;
+    margin-bottom:32px;}
+  .lg-head h1{font-size:24px;font-weight:600;letter-spacing:-.01em;}
+  .lg-head .sub{font-size:14px;color:var(--secondary);margin-top:4px;max-width:520px;}
+
+  .btn{display:inline-flex;align-items:center;gap:4px;border-radius:6px;font-size:14px;
+    padding:8px 16px;cursor:default;border:1px solid transparent;}
+  .btn svg{width:14px;height:14px;}
+  .btn-outline{background:#fff;border-color:var(--border);color:var(--text);}
+  .btn-outline:hover{background:var(--subtle);}
+  .filter-btn svg{width:14px;height:14px;}
+
+  /* Day group + sticky header */
+  .day-group{margin-bottom:24px;}
+  .day-header{position:sticky;top:0;z-index:1;font-size:11px;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--secondary);background:rgba(255,255,255,.8);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--hairline);
+    padding:4px 32px;margin:0 -32px 8px;}
+
+  /* Log rows */
+  .log-card{border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:#fff;}
+  .log-row{display:flex;align-items:flex-start;gap:16px;padding:16px;border-top:1px solid var(--hairline);}
+  .log-row:first-child{border-top:none;}
+  .type-sq{width:36px;height:36px;flex:0 0 36px;border-radius:6px;display:grid;place-items:center;}
+  .type-sq svg{width:16px;height:16px;}
+  .type-sq.yellow{background:var(--yellow-50);color:var(--yellow-600);}
+  .type-sq.green{background:var(--green-50);color:var(--green-600);}
+  .type-sq.blue{background:var(--blue-50);color:var(--blue-600);}
+  .type-sq.orange{background:var(--orange-50);color:var(--orange-600);}
+  .type-sq.red{background:var(--red-50);color:var(--red-600);}
+  .type-sq.violet{background:var(--violet-50);color:var(--violet-600);}
+  .log-main{min-width:0;flex:1;}
+  .log-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;}
+  .log-action{font-size:16px;font-weight:500;color:var(--text);}
+  .log-time{font-size:12px;color:var(--hint);flex:0 0 auto;}
+  .log-details{font-size:14px;color:var(--secondary);margin-top:4px;}
+  .log-meta{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:var(--hint);}
+  .log-user{display:inline-flex;align-items:center;gap:4px;}
+  .log-user svg{width:12px;height:12px;}
+  .role-pill{border-radius:999px;background:var(--subtle);padding:1px 6px;font-size:10px;font-weight:600;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--secondary);}
+
+  /* Type-filter trigger */
+  .filter-btn{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);
+    border-radius:6px;background:#fff;padding:8px 16px;font-size:14px;color:var(--text);}
+  .filter-btn:hover{background:var(--subtle);}
+
+  /* States */
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+  .loadingview{display:flex;align-items:center;justify-content:center;gap:8px;padding:48px;
+    color:var(--secondary);font-size:14px;}
+  .spin{width:16px;height:16px;color:currentColor;}
+  .emptystate{display:flex;flex-direction:column;align-items:center;gap:8px;border-radius:8px;
+    border:1px solid var(--hairline);background:var(--subtle);padding:32px;text-align:center;}
+  .emptystate .t{font-size:16px;font-weight:600;}
+  .emptystate .d{font-size:14px;color:var(--secondary);max-width:360px;}
+  .errorview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    padding:48px 32px;text-align:center;}
+  .errorview svg{width:32px;height:32px;color:var(--error);}
+  .errorview .t{font-size:20px;font-weight:600;}
+  .errorview .m{font-size:14px;color:var(--secondary);}
+
+  /* Modals section */
+  .modal-stage{position:relative;border-radius:10px;background:rgba(0,0,0,.30);padding:40px;
+    display:flex;align-items:flex-start;justify-content:center;min-height:340px;overflow:hidden;}
+  .popover-menu{width:256px;background:#fff;border:1px solid var(--hairline);border-radius:6px;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.15);overflow:hidden;max-height:320px;}
+  .popover-menu button{display:flex;width:100%;align-items:center;gap:8px;padding:8px 16px;text-align:left;
+    font-size:14px;color:var(--text);background:#fff;border:none;cursor:default;}
+  .popover-menu button:hover{background:var(--subtle);}
+  .popover-menu button.selected{font-weight:600;}
+  .popover-menu button.all-secondary{color:var(--secondary);}
+  .popover-divider{border-top:1px solid var(--hairline);}
+  .mini-sq{width:24px;height:24px;flex:0 0 24px;border-radius:6px;display:grid;place-items:center;}
+  .mini-sq svg{width:14px;height:14px;}
+  .mini-sq.yellow{background:var(--yellow-50);color:var(--yellow-600);}
+  .mini-sq.green{background:var(--green-50);color:var(--green-600);}
+  .mini-sq.blue{background:var(--blue-50);color:var(--blue-600);}
+  .mini-sq.orange{background:var(--orange-50);color:var(--orange-600);}
+  .mini-sq.red{background:var(--red-50);color:var(--red-600);}
+  .mini-sq.violet{background:var(--violet-50);color:var(--violet-600);}
+  .pop-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-head">
+    <h1>MAKI POS Web Admin — w09 Activity Logs</h1>
+    <p class="meta">current web UI — light theme, desktop · 2026-07-07 · Activity logs (day-grouped) + type-filter popover + states</p>
+  </div>
+
+  <!-- ============ SCREEN: ACTIVITY LOGS ============ -->
+  <div class="section-label">Screen — Activity logs (day-grouped audit trail)</div>
+  <div class="frame">
+    <div class="frame-bar">
+      <span>Activity logs</span><span class="route">/logs</span>
+      <span class="who">admin only</span>
+    </div>
+    <div class="shell">
+      <!-- Sidebar (admin view, Activity Logs active) -->
+      <aside class="sidebar">
+        <div class="brand">MAKI POS</div>
+        <nav class="nav">
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="nav-group-label">Sell</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.4 12.3a1 1 0 0 0 1 .7h9.2a1 1 0 0 0 1-.8L21 7H6"/></svg>POS</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Drafts</a>
+          <div class="nav-group-label">Stock</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>Inventory</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7Z"/><circle cx="5" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>Receiving</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Reorder</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>Suppliers</a>
+          <div class="nav-group-label">Money</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2Z"/><path d="M9 8h6M9 12h4"/></svg>Expenses</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+          <div class="nav-group-label">Admin</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6M21 20a5.5 5.5 0 0 0-4-5.3"/></svg>Users</a>
+          <a class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.6H9.5L9.1 5.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h5l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.1-.3.1-.7.1-1Z"/></svg>Settings</a>
+        </nav>
+        <div class="acct">
+          <div class="acct-row">
+            <div class="avatar">C</div>
+            <div style="min-width:0;flex:1;">
+              <div class="acct-mail">czarbasanal@gmail.com</div>
+              <div class="acct-role">Admin</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="1.5"><path d="m6 15 6-6 6 6"/></svg>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content: populated grouped list -->
+      <div class="content">
+        <div class="lg">
+          <div class="lg-head">
+            <div>
+              <h1>Activity logs</h1>
+              <div class="sub">Real-time audit trail of user actions across both web and mobile clients.</div>
+            </div>
+            <button class="filter-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h18l-7 8v6l-4-2v-4Z"/></svg>
+              All activities
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <!-- Day group: Today -->
+          <section class="day-group">
+            <h2 class="day-header">Today</h2>
+            <ul class="log-card" style="list-style:none;margin:0;padding:0;">
+              <li class="log-row">
+                <span class="type-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Signed in</span><span class="log-time">9:02 AM</span></div>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Czar Basañal</span><span class="role-pill">admin</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2 0 0 1 5 0c0 1-1 1.5-2.5 1.5s-2.5.5-2.5 1.5a2.5 2 0 0 0 5 0"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Completed sale INV-100248</span><span class="log-time">9:41 AM</span></div>
+                  <p class="log-details">₱1,850.00 · GCash · 3 items</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Rhea Mendoza</span><span class="role-pill">cashier</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 11a8 8 0 0 0-14-4L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4l2-2"/><path d="M20 20v-5h-5"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Adjusted stock: Yamaha Mio CVT Belt</span><span class="log-time">10:15 AM</span></div>
+                  <p class="log-details">−2 units · reason: damaged in storage</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mark Villanueva</span><span class="role-pill">staff</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Viewed product cost</span><span class="log-time">10:32 AM</span></div>
+                  <p class="log-details">Motul 3100 4T 10W-40 1L</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Czar Basañal</span><span class="role-pill">admin</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Voided sale INV-100244</span><span class="log-time">11:05 AM</span></div>
+                  <p class="log-details">₱620.00 · reason: wrong item scanned</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Czar Basañal</span><span class="role-pill">admin</span></div>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Day group: Yesterday -->
+          <section class="day-group">
+            <h2 class="day-header">Yesterday</h2>
+            <ul class="log-card" style="list-style:none;margin:0;padding:0;">
+              <li class="log-row">
+                <span class="type-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7Z"/><circle cx="5" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Received delivery from JVT Motor Supply</span><span class="log-time">4:12 PM</span></div>
+                  <p class="log-details">18 items · ₱24,300.00</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mark Villanueva</span><span class="role-pill">staff</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M18 8v6M15 11h6"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Created user Rhea Mendoza</span><span class="log-time">2:20 PM</span></div>
+                  <p class="log-details">Role: Cashier</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Czar Basañal</span><span class="role-pill">admin</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="9" r="3"/><path d="m13 12 6-6 2 2-2 2 1.5 1.5L18 13l-1.5-1.5L14 14Z"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Changed role for Mark Villanueva</span><span class="log-time">1:47 PM</span></div>
+                  <p class="log-details">Cashier → Staff</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Czar Basañal</span><span class="role-pill">admin</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Failed password verification</span><span class="log-time">11:58 AM</span></div>
+                  <p class="log-details">Cost code settings · 3rd attempt</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Rhea Mendoza</span><span class="role-pill">cashier</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq yellow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2Z"/><path d="M9 8h6M9 12h4"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Recorded expense</span><span class="log-time">9:30 AM</span></div>
+                  <p class="log-details">₱450.00 · Shop supplies</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mark Villanueva</span><span class="role-pill">staff</span></div>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Day group: full date -->
+          <section class="day-group">
+            <h2 class="day-header">Friday, July 4, 2026</h2>
+            <ul class="log-card" style="list-style:none;margin:0;padding:0;">
+              <li class="log-row">
+                <span class="type-sq green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2 0 0 1 5 0c0 1-1 1.5-2.5 1.5s-2.5.5-2.5 1.5a2.5 2 0 0 0 5 0"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Completed sale INV-100221</span><span class="log-time">5:02 PM</span></div>
+                  <p class="log-details">₱3,200.00 · Cash · 5 items</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Rhea Mendoza</span><span class="role-pill">cashier</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 9-2 3 2 3M16 9l2 3-2 3M13 8l-2 8"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Updated cost code mapping</span><span class="log-time">3:15 PM</span></div>
+                  <p class="log-details">Digit 5 → K (was J)</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Czar Basañal</span><span class="role-pill">admin</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Verified password</span><span class="log-time">3:14 PM</span></div>
+                  <p class="log-details">Cost code settings</p>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Czar Basañal</span><span class="role-pill">admin</span></div>
+                </div>
+              </li>
+              <li class="log-row">
+                <span class="type-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"/><path d="M14 17l5-5-5-5"/><path d="M19 12H7"/></svg></span>
+                <div class="log-main">
+                  <div class="log-top"><span class="log-action">Signed out</span><span class="log-time">6:30 PM</span></div>
+                  <div class="log-meta"><span class="log-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Rhea Mendoza</span><span class="role-pill">cashier</span></div>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="frame-cap">Read-only screen — no mutations. Rows show <span class="mono">action</span> (falls back to the type's display name), a right-aligned <span class="mono">en-PH</span> time, an optional details paragraph, and a meta line with a user icon + userName + a plain-grey role pill. The 9×9 type square is tinted by the activity's tone (see the full tone/icon tables in the README). Day headers stick to the top of the scroll region on a blurred background. Only admins reach <span class="mono">/logs</span> (gated by <span class="mono">viewUserLogs</span>) — staff/cashier never see the Activity Logs sidebar item and are bounced to Access Denied.</p>
+
+  <!-- ============ STATES ============ -->
+  <div class="section-label">Content states (body region only)</div>
+  <div class="states">
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Loading</div>
+      <div class="log-card"><div class="loadingview">
+        <svg class="spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        Loading logs…
+      </div></div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Empty — no filter</div>
+      <div class="emptystate">
+        <div class="t">No activity yet</div>
+        <div class="d">Logs will appear here as users sign in and take actions.</div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Empty — filtered (e.g. "Void Sale")</div>
+      <div class="emptystate">
+        <div class="t">No activity yet</div>
+        <div class="d">No Void Sale entries match this filter.</div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">Error (replaces the list)</div>
+      <div class="log-card"><div class="errorview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div class="t">Could not load logs</div>
+        <div class="m">Failed to reach Firestore. Check your connection.</div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ============ MODALS & OVERLAYS ============ -->
+  <div class="section-label">Modals &amp; overlays</div>
+  <div class="states">
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">TypeFilter dropdown popover — anchored under the trigger (right-aligned). "All activities" is selected (semibold). Click-outside overlay dismisses.</div>
+      <div class="modal-stage">
+        <div class="pop-wrap">
+          <span class="filter-btn" style="background:#fff;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h18l-7 8v6l-4-2v-4Z"/></svg>
+            All activities
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+          <div class="popover-menu">
+            <button class="selected">All activities</button>
+            <div class="popover-divider"></div>
+            <button><span class="mini-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>Login</button>
+            <button><span class="mini-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"/><path d="M14 17l5-5-5-5"/><path d="M19 12H7"/></svg></span>Logout</button>
+            <button><span class="mini-sq green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2 0 0 1 5 0c0 1-1 1.5-2.5 1.5s-2.5.5-2.5 1.5a2.5 2 0 0 0 5 0"/></svg></span>Sale</button>
+            <button><span class="mini-sq green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>Void Sale</button>
+            <button><span class="mini-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 11a8 8 0 0 0-14-4L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4l2-2"/><path d="M20 20v-5h-5"/></svg></span>Stock Adjustment</button>
+            <button><span class="mini-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7Z"/><circle cx="5" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></span>Receiving</button>
+            <button><span class="mini-sq violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M18 8v6M15 11h6"/></svg></span>User Created</button>
+            <button><span class="mini-sq violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span>User Updated</button>
+            <button><span class="mini-sq violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="9" r="3"/><path d="m13 12 6-6 2 2-2 2 1.5 1.5L18 13l-1.5-1.5L14 14Z"/></svg></span>Role Changed</button>
+            <button><span class="mini-sq red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>Password Verified</button>
+            <button><span class="mini-sq red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg></span>Password Failed</button>
+            <button><span class="mini-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>Cost Viewed</button>
+            <button><span class="mini-sq orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 9-2 3 2 3M16 9l2 3-2 3M13 8l-2 8"/></svg></span>Cost Code Changed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-cap" style="margin-bottom:8px;font-weight:600;color:var(--text);">TypeFilter — a type selected (trigger reflects the choice; that row is semibold in the menu)</div>
+      <div class="modal-stage">
+        <div class="pop-wrap">
+          <span class="filter-btn" style="background:#fff;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h18l-7 8v6l-4-2v-4Z"/></svg>
+            Void Sale
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+          <div class="popover-menu">
+            <button class="all-secondary">All activities</button>
+            <div class="popover-divider"></div>
+            <button><span class="mini-sq green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2 0 0 1 5 0c0 1-1 1.5-2.5 1.5s-2.5.5-2.5 1.5a2.5 2 0 0 0 5 0"/></svg></span>Sale</button>
+            <button class="selected"><span class="mini-sq green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>Void Sale</button>
+            <button><span class="mini-sq blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 11a8 8 0 0 0-14-4L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4l2-2"/><path d="M20 20v-5h-5"/></svg></span>Stock Adjustment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

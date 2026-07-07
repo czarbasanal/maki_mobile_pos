@@ -82,8 +82,6 @@ export const router = createBrowserRouter(
         { path: RoutePaths.expenses, element: placeholder('Expenses', 'phase 9') },
         { path: RoutePaths.expenseAdd, element: placeholder('New expense', 'phase 9') },
         { path: RoutePaths.expenseEdit, element: placeholder('Edit expense', 'phase 9') },
-        { path: RoutePaths.pettyCash, element: placeholder('Petty cash', 'phase 9') },
-        { path: RoutePaths.pettyCashNew, element: placeholder('Petty cash entry', 'phase 9') },
         { path: RoutePaths.reports, element: <ReportsHubPage /> },
         { path: RoutePaths.salesReport, element: <SalesReportPage /> },
         { path: RoutePaths.profitReport, element: <ProfitReportPage /> },

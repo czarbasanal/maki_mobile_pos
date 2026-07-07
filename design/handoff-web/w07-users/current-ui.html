@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS Web Admin — w07 Users (current UI)</title>
+<style>
+  :root{
+    --text:#0A0A0A; --secondary:#666666; --hint:#A0A0A0;
+    --bg:#FFFFFF; --card:#FFFFFF; --subtle:#FAFAFA;
+    --hairline:#EAEAEA; --border:#E0E0E0; --primary-dark:#121C1D;
+    --success:#4CAF50; --success-light:#E8F5E9; --success-dark:#2E7D32;
+    --error:#F44336; --error-light:#FFEBEE; --error-dark:#C62828;
+    /* role tones (Tailwind 50 / 600) */
+    --violet-50:#F5F3FF; --violet-600:#7C3AED;
+    --green-50:#F0FDF4; --green-600:#16A34A;
+    --blue-50:#EFF6FF; --blue-600:#2563EB;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#EFEFEF;color:var(--text);
+    font-family:Roboto,system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.4;}
+  h1,h2,h3,p{margin:0;}
+  a{color:inherit;text-decoration:none;}
+  .tnum{font-variant-numeric:tabular-nums;}
+
+  /* Page scaffold */
+  .page{max-width:1360px;margin:0 auto;padding:32px 24px 64px;}
+  .page-head{margin-bottom:28px;}
+  .page-head h1{font-size:22px;font-weight:700;letter-spacing:-.01em;}
+  .page-head .meta{color:var(--secondary);font-size:13px;margin-top:6px;}
+  .section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--hint);margin:40px 0 12px;}
+
+  /* Browser frame */
+  .frame{border:1px solid #d5d5d5;border-radius:10px;overflow:hidden;background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:8px;}
+  .frame-bar{display:flex;align-items:center;gap:10px;background:#F3F3F3;
+    border-bottom:1px solid #E3E3E3;padding:8px 14px;font-size:12px;color:var(--secondary);}
+  .frame-bar .route{font-family:ui-monospace,Menlo,monospace;color:var(--text);font-weight:500;}
+  .frame-bar .who{margin-left:auto;background:#ECECEC;border:1px solid #DEDEDE;border-radius:999px;
+    padding:2px 10px;font-size:11px;color:var(--secondary);}
+  .frame-cap{font-size:12px;color:var(--secondary);margin:0 2px 28px;}
+
+  /* App shell (sidebar + content) */
+  .shell{display:flex;min-height:640px;background:var(--bg);}
+  .sidebar{width:240px;flex:0 0 240px;background:#fff;border-right:1px solid var(--hairline);
+    display:flex;flex-direction:column;}
+  .brand{height:56px;display:flex;align-items:center;padding:0 24px;font-size:16px;font-weight:600;
+    letter-spacing:-.01em;}
+  .nav{flex:1;padding:8px;overflow:auto;}
+  .nav-group-label{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--hint);padding:14px 8px 6px;}
+  .nav-item{display:flex;align-items:center;gap:8px;border-radius:6px;padding:6px 8px;font-size:14px;
+    color:var(--secondary);}
+  .nav-item svg{width:16px;height:16px;flex:0 0 16px;}
+  .nav-item:hover{background:var(--subtle);color:var(--text);}
+  .nav-item.active{background:var(--subtle);color:var(--text);font-weight:600;}
+  .acct{border-top:1px solid var(--hairline);padding:8px;}
+  .acct-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;}
+  .avatar{width:28px;height:28px;flex:0 0 28px;border-radius:999px;background:var(--primary-dark);
+    color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  .acct-mail{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .acct-role{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--hint);}
+  .content{flex:1;overflow:auto;}
+
+  /* Page interior (shared) */
+  .pg{padding:24px 32px;}
+  .pg-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;
+    margin-bottom:32px;}
+  .pg-head h1{font-size:24px;font-weight:600;letter-spacing:-.01em;}
+  .pg-head .sub{font-size:14px;color:var(--secondary);margin-top:4px;}
+
+  .btn{display:inline-flex;align-items:center;gap:4px;border-radius:6px;font-size:14px;
+    padding:8px 16px;cursor:default;border:1px solid transparent;}
+  .btn svg{width:14px;height:14px;}
+  .btn-dark{background:var(--text);color:#fff;font-weight:600;}
+  .btn-outline{background:#fff;border-color:var(--border);color:var(--text);}
+  .btn-ghost{background:transparent;color:var(--text);padding:8px 16px;}
+  .btn-ghost:hover{background:var(--subtle);}
+  .btn-error{background:var(--error);color:#fff;font-weight:600;}
+  .btn[disabled],.btn.disabled{opacity:.6;}
+
+  /* Summary tiles */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+  .tile{display:flex;flex-direction:column;align-items:flex-start;border:1px solid var(--hairline);
+    border-radius:8px;background:#fff;padding:16px;text-align:left;cursor:default;}
+  .tile:hover{background:var(--subtle);}
+  .tile.active{border-color:var(--text);background:var(--subtle);}
+  .tile .lbl{font-size:14px;color:var(--secondary);}
+  .tile .val{margin-top:4px;font-size:20px;font-weight:600;}
+
+  /* Filter row */
+  .filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:32px;}
+  .pill-x{display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--subtle);
+    padding:2px 8px;font-size:14px;color:var(--text);cursor:default;}
+  .toggle{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:6px;
+    padding:4px 8px;font-size:14px;color:var(--text);background:#fff;cursor:default;}
+  .toggle:hover{background:var(--subtle);}
+  .toggle svg{width:14px;height:14px;}
+
+  /* Table */
+  .tbl-card{border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  thead tr{background:var(--subtle);border-bottom:1px solid var(--hairline);}
+  th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--secondary);padding:8px 16px;}
+  th.right,td.right{text-align:right;}
+  tbody tr{border-top:1px solid var(--hairline);}
+  tbody tr:first-child{border-top:none;}
+  td{padding:8px 16px;vertical-align:middle;}
+  .u-cell{display:flex;align-items:center;gap:8px;}
+  .u-av{width:36px;height:36px;flex:0 0 36px;border-radius:999px;background:var(--primary-dark);
+    color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  .u-name{display:flex;align-items:center;gap:4px;font-size:16px;font-weight:500;}
+  .you{border-radius:999px;background:var(--subtle);padding:1px 4px;font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--secondary);}
+  .u-mail{font-size:12px;color:var(--secondary);}
+  .u-when{font-size:12px;color:var(--secondary);}
+  .dash{font-size:12px;color:var(--hint);}
+  .role-badge{display:inline-flex;align-items:center;border-radius:999px;padding:1px 8px;font-size:11px;
+    font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+  .role-admin{background:var(--violet-50);color:var(--violet-600);}
+  .role-staff{background:var(--green-50);color:var(--green-600);}
+  .role-cashier{background:var(--blue-50);color:var(--blue-600);}
+  .status{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;}
+  .dot{width:6px;height:6px;border-radius:999px;display:inline-block;}
+  .status.active{color:var(--success-dark);}
+  .status.inactive{color:var(--secondary);}
+  tr.inactive{opacity:.6;}
+  .acts{display:inline-flex;align-items:center;gap:4px;justify-content:flex-end;position:relative;}
+  .edit-link{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:4px 8px;
+    font-size:14px;}
+  .edit-link:hover{background:var(--subtle);}
+  .edit-link svg{width:14px;height:14px;}
+  .more-btn{border-radius:6px;padding:4px;color:var(--secondary);background:transparent;border:none;
+    cursor:default;display:inline-flex;}
+  .more-btn:hover{background:var(--subtle);}
+  .more-btn svg{width:16px;height:16px;}
+
+  /* States */
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+  .loadingview{display:flex;align-items:center;justify-content:center;gap:8px;padding:48px;
+    color:var(--secondary);font-size:14px;}
+  .spin{width:16px;height:16px;color:currentColor;}
+  .emptystate{display:flex;flex-direction:column;align-items:center;gap:8px;border-radius:8px;
+    border:1px solid var(--hairline);background:var(--subtle);padding:32px;text-align:center;}
+  .emptystate .t{font-size:16px;font-weight:600;}
+  .emptystate .d{font-size:14px;color:var(--secondary);max-width:360px;}
+  .errorview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    padding:48px 32px;text-align:center;}
+  .errorview svg{width:32px;height:32px;color:var(--error);}
+  .errorview .t{font-size:20px;font-weight:600;}
+  .errorview .m{font-size:14px;color:var(--secondary);}
+
+  /* Form */
+  .form-head .back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--secondary);}
+  .form-head .back:hover{color:var(--text);}
+  .form-head .back svg{width:14px;height:14px;}
+  .form-head h1{font-size:24px;font-weight:600;letter-spacing:-.01em;margin-top:8px;}
+  form.u-form{display:flex;flex-direction:column;gap:24px;margin-top:32px;}
+
+  /* avatar/role banner */
+  .banner{display:flex;align-items:center;gap:16px;border:1px solid var(--hairline);border-radius:8px;
+    background:#fff;padding:16px;}
+  .banner-av{width:48px;height:48px;flex:0 0 48px;border-radius:999px;background:var(--primary-dark);
+    color:#fff;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  .banner .bn{font-size:16px;font-weight:600;}
+  .banner .bm{font-size:14px;color:var(--secondary);}
+
+  .banner.err{border-color:#F7C6C6;background:rgba(255,235,238,.4);color:var(--error-dark);
+    display:block;font-size:14px;padding:8px 16px;}
+  .banner.ok{border-color:#C8E6C9;background:rgba(232,245,233,.6);color:var(--success-dark);
+    display:flex;align-items:flex-start;gap:8px;font-size:14px;padding:8px 16px;}
+  .banner.ok svg{width:16px;height:16px;flex:0 0 16px;margin-top:2px;color:var(--success);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field > span{font-size:14px;font-weight:500;}
+  .field input{width:100%;border:1px solid var(--border);border-radius:6px;background:#fff;
+    padding:10px 16px;font-size:14px;color:var(--text);font-family:inherit;}
+  .field input:disabled{background:var(--subtle);color:var(--secondary);}
+  .field .fhint{font-size:12px;color:var(--hint);}
+  .field .ferr{font-size:12px;color:var(--error);}
+  .field.has-err input{border-color:var(--error);outline:1px solid var(--error);}
+  .pw-wrap{position:relative;}
+  .pw-wrap input{padding-right:40px;}
+  .pw-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;
+    color:var(--secondary);padding:4px;border-radius:6px;cursor:default;display:inline-flex;}
+  .pw-eye svg{width:16px;height:16px;}
+
+  /* role picker */
+  fieldset.roles{border:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;}
+  fieldset.roles legend{font-size:14px;font-weight:500;padding:0;margin-bottom:4px;}
+  .role-card{display:flex;align-items:center;gap:16px;border:1px solid var(--hairline);border-radius:8px;
+    background:#fff;padding:16px;text-align:left;cursor:default;}
+  .role-card:hover{background:var(--subtle);}
+  .role-card.sel{border-color:var(--text);background:var(--subtle);}
+  .role-card.locked{opacity:.6;cursor:not-allowed;}
+  .role-sq{width:36px;height:36px;flex:0 0 36px;border-radius:6px;display:flex;align-items:center;
+    justify-content:center;font-size:12px;font-weight:700;}
+  .role-card .rn{font-size:16px;font-weight:600;}
+  .role-card .rd{font-size:14px;color:var(--secondary);}
+  .role-check{width:20px;height:20px;color:var(--text);}
+  .role-hint{font-size:12px;color:var(--hint);}
+
+  /* reset-password card (edit) */
+  .reset-card{border:1px solid var(--hairline);border-radius:8px;background:#fff;padding:16px;}
+  .reset-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .reset-row .rt{font-size:16px;font-weight:600;}
+  .reset-row .rs{font-size:14px;color:var(--secondary);}
+
+  .foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;}
+
+  /* Modals section */
+  .modal-stage{position:relative;border-radius:10px;background:rgba(0,0,0,.30);padding:40px;
+    display:flex;align-items:center;justify-content:center;min-height:240px;overflow:hidden;}
+  .dialog{width:100%;max-width:448px;background:#fff;border:1px solid var(--hairline);border-radius:8px;
+    box-shadow:0 20px 25px -5px rgba(0,0,0,.2);}
+  .dialog-head{border-bottom:1px solid var(--hairline);padding:16px 24px;display:flex;
+    align-items:flex-start;justify-content:space-between;gap:16px;}
+  .dialog-head .t{font-size:16px;font-weight:600;}
+  .dialog-head .d{font-size:14px;color:var(--secondary);margin-top:4px;}
+  .x-btn{border:none;background:transparent;color:var(--secondary);padding:4px;border-radius:6px;
+    cursor:default;display:inline-flex;}
+  .x-btn svg{width:16px;height:16px;}
+  .dialog-body{padding:24px;}
+  .inline-err{font-size:14px;color:var(--error);margin-bottom:16px;}
+  .popover{width:176px;background:#fff;border:1px solid var(--hairline);border-radius:6px;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.15);overflow:hidden;}
+  .popover a,.popover button{display:flex;width:100%;align-items:center;gap:8px;padding:8px 16px;
+    text-align:left;font-size:14px;color:var(--text);background:#fff;border:none;cursor:default;}
+  .popover .danger{color:var(--error-dark);}
+  .popover .danger:hover{background:rgba(255,235,238,.4);}
+  .popover .neutral:hover{background:var(--subtle);}
+  .popover .sep{border-top:1px solid var(--hairline);}
+  .popover svg{width:16px;height:16px;}
+  .modal-cap{font-size:12px;color:var(--secondary);text-align:center;margin:8px 2px 28px;}
+  .two-up{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-head">
+    <h1>MAKI POS Web Admin — w07 Users</h1>
+    <p class="meta">current web UI — light theme, desktop · 2026-07-07 · Users list + User form + modals</p>
+  </div>
+
+  <!-- ============ SCREEN 1: USERS LIST ============ -->
+  <div class="section-label">Screen 1 — Users list</div>
+  <div class="frame">
+    <div class="frame-bar">
+      <span>Users list</span><span class="route">/users</span>
+      <span class="who">admin only</span>
+    </div>
+    <div class="shell">
+      <!-- Sidebar (admin view, Users active) -->
+      <aside class="sidebar">
+        <div class="brand">MAKI POS</div>
+        <nav class="nav">
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+          <div class="nav-group-label">Sell</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.4 12.3a1 1 0 0 0 1 .7h9.2a1 1 0 0 0 1-.8L21 7H6"/></svg>POS</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Drafts</a>
+          <div class="nav-group-label">Stock</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>Inventory</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7Z"/><circle cx="5" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>Receiving</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Reorder</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>Suppliers</a>
+          <div class="nav-group-label">Money</div>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2Z"/><path d="M9 8h6M9 12h4"/></svg>Expenses</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+          <div class="nav-group-label">Admin</div>
+          <a class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6M21 20a5.5 5.5 0 0 0-4-5.3"/></svg>Users</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+          <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.6H9.5L9.1 5.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h5l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.1-.3.1-.7.1-1Z"/></svg>Settings</a>
+        </nav>
+        <div class="acct">
+          <div class="acct-row">
+            <div class="avatar">C</div>
+            <div style="min-width:0;flex:1;">
+              <div class="acct-mail">czarbasanal@gmail.com</div>
+              <div class="acct-role">Admin</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="1.5"><path d="m6 15 6-6 6 6"/></svg>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Users list content -->
+      <div class="content">
+        <div class="pg">
+          <div class="pg-head">
+            <div>
+              <h1>Users</h1>
+              <p class="sub">Add, edit, and manage admin users and staff accounts.</p>
+            </div>
+            <button class="btn btn-dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>Add user</button>
+          </div>
+
+          <!-- Summary tiles (Total active active = no filter) -->
+          <div class="tiles">
+            <button class="tile active"><span class="lbl">Total active</span><span class="val tnum">7</span></button>
+            <button class="tile"><span class="lbl">Admins</span><span class="val tnum">2</span></button>
+            <button class="tile"><span class="lbl">Staff</span><span class="val tnum">3</span></button>
+            <button class="tile"><span class="lbl">Cashiers</span><span class="val tnum">2</span></button>
+          </div>
+
+          <!-- Filter row (no role pill in default state) -->
+          <div class="filter-row">
+            <button class="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Show inactive</button>
+          </div>
+
+          <!-- Table -->
+          <div class="tbl-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Last sign-in</th>
+                  <th>Status</th>
+                  <th class="right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="u-cell">
+                      <span class="u-av">C</span>
+                      <div style="min-width:0;">
+                        <div class="u-name"><span>Czar Basañal</span><span class="you">You</span></div>
+                        <div class="u-mail">czarbasanal@gmail.com</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge role-admin">Admin</span></td>
+                  <td class="u-when">Jul 7, 2026, 8:42 AM</td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="u-cell">
+                      <span class="u-av">R</span>
+                      <div style="min-width:0;">
+                        <div class="u-name"><span>Rico Dela Cruz</span></div>
+                        <div class="u-mail">rico.delacruz@makimoto.ph</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge role-admin">Admin</span></td>
+                  <td class="u-when">Jul 6, 2026, 5:10 PM</td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="u-cell">
+                      <span class="u-av">M</span>
+                      <div style="min-width:0;">
+                        <div class="u-name"><span>Mariel Santos</span></div>
+                        <div class="u-mail">mariel.santos@makimoto.ph</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge role-staff">Staff</span></td>
+                  <td class="u-when">Jul 7, 2026, 9:03 AM</td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="u-cell">
+                      <span class="u-av">J</span>
+                      <div style="min-width:0;">
+                        <div class="u-name"><span>Jomar Ilagan</span></div>
+                        <div class="u-mail">jomar.ilagan@makimoto.ph</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge role-staff">Staff</span></td>
+                  <td class="u-when">Jul 5, 2026, 2:26 PM</td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="u-cell">
+                      <span class="u-av">A</span>
+                      <div style="min-width:0;">
+                        <div class="u-name"><span>Angelica Reyes</span></div>
+                        <div class="u-mail">angelica.reyes@makimoto.ph</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge role-cashier">Cashier</span></td>
+                  <td class="u-when">Jul 7, 2026, 8:15 AM</td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="u-cell">
+                      <span class="u-av">B</span>
+                      <div style="min-width:0;">
+                        <div class="u-name"><span>Benjie Aquino</span></div>
+                        <div class="u-mail">benjie.aquino@makimoto.ph</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge role-cashier">Cashier</span></td>
+                  <td class="u-when"><span class="dash">—</span></td>
+                  <td><span class="status active"><span class="dot" style="background:#16a34a"></span>Active</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+                <tr class="inactive">
+                  <td>
+                    <div class="u-cell">
+                      <span class="u-av">D</span>
+                      <div style="min-width:0;">
+                        <div class="u-name"><span>Dante Villamor</span></div>
+                        <div class="u-mail">dante.villamor@makimoto.ph</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge role-staff">Staff</span></td>
+                  <td class="u-when">Jun 12, 2026, 6:48 PM</td>
+                  <td><span class="status inactive"><span class="dot" style="background:#a3a3a3"></span>Inactive</span></td>
+                  <td class="right">
+                    <span class="acts">
+                      <a class="edit-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit</a>
+                      <button class="more-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="frame-cap">Populated state — admin viewing. Row 1 is the self row: "You" pill, no ellipsis menu (can't self-deactivate). Last row is inactive (opacity 60%, grey status dot). Staff/cashier never reach this route (redirected to <span class="route" style="font-family:ui-monospace,Menlo,monospace">/access-denied</span>).</p>
+
+  <!-- ============ USERS LIST — VARIANT STATES ============ -->
+  <div class="section-label">Screen 1 — filtered view + states</div>
+  <div class="frame">
+    <div class="frame-bar"><span>Filtered by role + inactive shown</span><span class="route">/users?role=cashier</span><span class="who">admin only</span></div>
+    <div class="pg" style="background:#fff">
+      <div class="tiles" style="margin-bottom:24px">
+        <button class="tile"><span class="lbl">Total active</span><span class="val tnum">7</span></button>
+        <button class="tile"><span class="lbl">Admins</span><span class="val tnum">2</span></button>
+        <button class="tile"><span class="lbl">Staff</span><span class="val tnum">3</span></button>
+        <button class="tile active"><span class="lbl">Cashiers</span><span class="val tnum">2</span></button>
+      </div>
+      <div class="filter-row">
+        <span class="pill-x">Cashier <span aria-hidden>×</span></span>
+        <button class="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>Hide inactive</button>
+      </div>
+      <p class="sub" style="font-size:13px;color:var(--secondary)">Cashiers-tile active → role filter pill "Cashier ×" removes it; the toggle now reads "Hide inactive" (eye-slash) with deactivated rows shown.</p>
+    </div>
+  </div>
+  <p class="frame-cap">Header + tiles omitted from the state cards below for brevity.</p>
+
+  <div class="states" style="margin-bottom:28px">
+    <div class="frame" style="margin:0">
+      <div class="frame-bar"><span>Loading</span></div>
+      <div class="loadingview">
+        <svg class="spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        Loading users…
+      </div>
+    </div>
+    <div class="frame" style="margin:0">
+      <div class="frame-bar"><span>Empty</span></div>
+      <div style="padding:24px">
+        <div class="emptystate">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--hint)" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/></svg>
+          <div class="t">No users found</div>
+          <div class="d">Try clearing the filter or adding a new user.</div>
+        </div>
+      </div>
+    </div>
+    <div class="frame" style="margin:0">
+      <div class="frame-bar"><span>Error</span></div>
+      <div class="errorview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div class="t">Could not load users</div>
+        <div class="m">Network request failed. Check your connection.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 2: USER FORM — CREATE ============ -->
+  <div class="section-label">Screen 2 — User form · create mode</div>
+  <div class="frame">
+    <div class="frame-bar"><span>New user</span><span class="route">/users/add</span><span class="who">admin only</span></div>
+    <div class="pg" style="background:#fff">
+      <div class="form-head">
+        <a class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Users</a>
+        <h1>New user</h1>
+      </div>
+      <form class="u-form" onsubmit="return false">
+        <!-- avatar/role banner: role pill = selected role (cashier default) -->
+        <div class="banner">
+          <span class="banner-av">?</span>
+          <div style="min-width:0;flex:1;">
+            <div class="bn">New account</div>
+            <div class="bm">Choose a role and email below</div>
+          </div>
+          <span class="role-badge role-cashier">Cashier</span>
+        </div>
+
+        <div class="grid2">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" value="angelo.cruz@makimoto.ph" />
+          </label>
+          <label class="field">
+            <span>Display name</span>
+            <input type="text" value="Angelo Cruz" />
+          </label>
+        </div>
+
+        <fieldset class="roles">
+          <legend>Role</legend>
+          <button class="role-card">
+            <span class="role-sq role-admin">A</span>
+            <div style="min-width:0;flex:1;">
+              <div class="rn">Admin</div>
+              <div class="rd">Full access including user management and cost visibility</div>
+            </div>
+          </button>
+          <button class="role-card">
+            <span class="role-sq role-staff">S</span>
+            <div style="min-width:0;flex:1;">
+              <div class="rn">Staff</div>
+              <div class="rd">POS, inventory, receiving (no cost visibility)</div>
+            </div>
+          </button>
+          <button class="role-card sel">
+            <span class="role-sq role-cashier">C</span>
+            <div style="min-width:0;flex:1;">
+              <div class="rn">Cashier</div>
+              <div class="rd">POS operations only</div>
+            </div>
+            <svg class="role-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+          </button>
+        </fieldset>
+
+        <div class="grid2">
+          <label class="field">
+            <span>Password</span>
+            <div class="pw-wrap">
+              <input type="password" value="········" />
+              <button class="pw-eye" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
+          </label>
+          <label class="field">
+            <span>Confirm password</span>
+            <div class="pw-wrap">
+              <input type="password" value="········" />
+              <button class="pw-eye" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
+          </label>
+        </div>
+
+        <div class="foot">
+          <a class="btn btn-ghost">Cancel</a>
+          <button class="btn btn-dark">Create user</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <p class="frame-cap">Create mode. Role pill in the banner tracks the selected role card (cashier here). Password + Confirm password shown with eye toggles. Validation (not drawn): email required+valid, display name ≥2, password ≥6, confirm must match; <code>email-already-in-use</code> → email field error, <code>weak-password</code> → password field error.</p>
+
+  <!-- ============ SCREEN 2: USER FORM — EDIT ============ -->
+  <div class="section-label">Screen 2 — User form · edit mode (editing self)</div>
+  <div class="frame">
+    <div class="frame-bar"><span>Edit user</span><span class="route">/users/edit/:id</span><span class="who">admin only</span></div>
+    <div class="pg" style="background:#fff">
+      <div class="form-head">
+        <a class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Users</a>
+        <h1>Edit user</h1>
+      </div>
+      <form class="u-form" onsubmit="return false">
+        <div class="banner">
+          <span class="banner-av">C</span>
+          <div style="min-width:0;flex:1;">
+            <div class="bn">Czar Basañal</div>
+            <div class="bm">czarbasanal@gmail.com</div>
+          </div>
+          <span class="role-badge role-admin">Admin</span>
+        </div>
+
+        <!-- reset-sent success banner -->
+        <div class="banner ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+          <span>Password reset email sent to czarbasanal@gmail.com.</span>
+        </div>
+
+        <div class="grid2">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" value="czarbasanal@gmail.com" disabled />
+            <span class="fhint">Email can't be changed after creation.</span>
+          </label>
+          <label class="field">
+            <span>Display name</span>
+            <input type="text" value="Czar Basañal" />
+          </label>
+        </div>
+
+        <fieldset class="roles">
+          <legend>Role</legend>
+          <button class="role-card sel">
+            <span class="role-sq role-admin">A</span>
+            <div style="min-width:0;flex:1;">
+              <div class="rn">Admin</div>
+              <div class="rd">Full access including user management and cost visibility</div>
+            </div>
+            <svg class="role-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+          </button>
+          <button class="role-card locked">
+            <span class="role-sq role-staff">S</span>
+            <div style="min-width:0;flex:1;">
+              <div class="rn">Staff</div>
+              <div class="rd">POS, inventory, receiving (no cost visibility)</div>
+            </div>
+          </button>
+          <button class="role-card locked">
+            <span class="role-sq role-cashier">C</span>
+            <div style="min-width:0;flex:1;">
+              <div class="rn">Cashier</div>
+              <div class="rd">POS operations only</div>
+            </div>
+          </button>
+          <p class="role-hint">You can't change your own role. Ask another admin if you need this.</p>
+        </fieldset>
+
+        <!-- reset password card (replaces password fields in edit) -->
+        <div class="reset-card">
+          <div class="reset-row">
+            <div style="min-width:0">
+              <div class="rt">Reset password</div>
+              <div class="rs">Sends a Firebase reset email so the user can choose a new one.</div>
+            </div>
+            <button class="btn btn-outline">Send reset email</button>
+          </div>
+        </div>
+
+        <div class="foot">
+          <a class="btn btn-ghost">Cancel</a>
+          <button class="btn btn-dark">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <p class="frame-cap">Edit mode shown for the self account: email disabled with hint, the two non-current role cards are locked (opacity 60% + not-allowed) with the self-role hint, and the password fields are replaced by the "Reset password" card. The green banner is the reset-sent success state. Submit reads "Save changes". Editing another user is identical minus the locked roles + self hint.</p>
+
+  <!-- ============ USER FORM — EDIT LOAD STATES ============ -->
+  <div class="states" style="margin-bottom:28px">
+    <div class="frame" style="margin:0">
+      <div class="frame-bar"><span>Edit — loading</span><span class="route">/users/edit/:id</span></div>
+      <div class="loadingview">
+        <svg class="spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        Loading user…
+      </div>
+    </div>
+    <div class="frame" style="margin:0">
+      <div class="frame-bar"><span>Edit — load error</span></div>
+      <div class="errorview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div class="t">Could not load user</div>
+        <div class="m">User not found or request failed.</div>
+      </div>
+    </div>
+    <div class="frame" style="margin:0">
+      <div class="frame-bar"><span>Mutation error banner</span></div>
+      <div style="padding:24px">
+        <div class="banner err">This email is already in use.</div>
+        <p class="sub" style="font-size:13px;margin-top:12px">Shown above the fields on create/update failure. Field-level auth errors render red inline instead (see create-mode caption).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALS & OVERLAYS ============ -->
+  <div class="section-label">Modals &amp; overlays</div>
+
+  <div class="two-up">
+    <!-- Row popover: active user -->
+    <div>
+      <div class="modal-stage" style="align-items:flex-start;justify-content:flex-end;min-height:200px">
+        <div class="popover">
+          <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 11h6"/></svg>Deactivate</button>
+          <a class="neutral sep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>View details</a>
+        </div>
+      </div>
+      <p class="modal-cap">Row popover — active user (Deactivate in red + View details). Opens from the ellipsis; never on the self row.</p>
+    </div>
+
+    <!-- Row popover: inactive user -->
+    <div>
+      <div class="modal-stage" style="align-items:flex-start;justify-content:flex-end;min-height:200px">
+        <div class="popover">
+          <button class="neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M19 8v6M22 11h-6"/></svg>Reactivate</button>
+          <a class="neutral sep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>View details</a>
+        </div>
+      </div>
+      <p class="modal-cap">Row popover — inactive user (Reactivate, neutral + View details).</p>
+    </div>
+  </div>
+
+  <div class="two-up">
+    <!-- Deactivate confirm -->
+    <div>
+      <div class="modal-stage">
+        <div class="dialog">
+          <div class="dialog-head">
+            <div>
+              <div class="t">Deactivate user</div>
+              <div class="d">Mariel Santos will no longer be able to sign in.</div>
+            </div>
+            <button class="x-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          </div>
+          <div class="dialog-body">
+            <div class="foot">
+              <button class="btn btn-ghost">Cancel</button>
+              <button class="btn btn-error">Deactivate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="modal-cap">Deactivate confirm — destructive red confirm button. Copy: "{name or email} will no longer be able to sign in."</p>
+    </div>
+
+    <!-- Reactivate confirm (pending) -->
+    <div>
+      <div class="modal-stage">
+        <div class="dialog">
+          <div class="dialog-head">
+            <div>
+              <div class="t">Reactivate user</div>
+              <div class="d">Dante Villamor will be able to sign in again.</div>
+            </div>
+            <!-- no close button while pending -->
+          </div>
+          <div class="dialog-body">
+            <div class="foot">
+              <button class="btn btn-ghost disabled">Cancel</button>
+              <button class="btn btn-dark">
+                <svg class="spin" viewBox="0 0 24 24" fill="none" style="width:14px;height:14px"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                Reactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="modal-cap">Reactivate confirm — dark confirm button, shown in the pending state: inline spinner, Cancel disabled, close button hidden (non-dismissable while pending). A mutation error would render as a red line above the buttons.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

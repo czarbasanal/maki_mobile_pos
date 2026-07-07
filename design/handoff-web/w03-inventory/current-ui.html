@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS Web Admin — w03 Inventory (current UI)</title>
+<style>
+  :root{
+    --text:#0A0A0A; --text-2:#666666; --hint:#A0A0A0;
+    --bg:#FFFFFF; --card:#FFFFFF; --subtle:#FAFAFA;
+    --hairline:#EAEAEA; --border:#E0E0E0; --primary-dark:#121C1D;
+    --success:#4CAF50; --success-l:#E8F5E9; --success-d:#2E7D32;
+    --warning:#FFC107; --warning-l:#FFF8E1; --warning-d:#F57C00;
+    --error:#F44336; --error-l:#FFEBEE; --error-d:#C62828;
+    --info:#2196F3; --info-l:#E3F2FD; --info-d:#1565C0;
+    --green50:#F0FDF4; --green500:#22C55E; --green700:#15803D;
+    --orange50:#FFF7ED; --orange500:#F97316; --orange700:#C2410C;
+    --red50:#FEF2F2; --red500:#EF4444; --red700:#B91C1C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#F3F3F1; color:var(--text);
+    font-family:Roboto, system-ui, -apple-system, sans-serif;
+    font-size:14px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:ui-monospace, Menlo, monospace;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  a{color:inherit;text-decoration:none;}
+  h1,h2,h3,p,ul{margin:0;}
+
+  /* Page shell */
+  .page{max-width:1360px;margin:0 auto;padding:32px 24px 80px;}
+  .page-head{margin-bottom:28px;}
+  .page-head .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--hint);font-weight:600;}
+  .page-head h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:6px;}
+  .page-head .meta{font-size:13px;color:var(--text-2);margin-top:6px;}
+
+  /* Frame */
+  .frame{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:34px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .frame-label{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:#111C1D;color:#fff;padding:10px 16px;font-size:12.5px;}
+  .frame-label .name{font-weight:600;}
+  .frame-label .route{font-family:ui-monospace,Menlo,monospace;color:#B9C7C9;font-size:11.5px;}
+  .frame-label .who{margin-left:auto;color:#8FE39A;font-size:11px;letter-spacing:.03em;text-transform:uppercase;}
+  .frame-label .who.admin{color:#E8B84C;}
+  .frame-cap{background:var(--warning-l);color:var(--warning-d);font-size:12px;padding:7px 16px;border-bottom:1px solid var(--hairline);}
+
+  /* App layout inside a frame */
+  .app{display:flex;min-height:560px;background:var(--bg);}
+
+  /* Sidebar */
+  .sb{width:240px;flex-shrink:0;border-right:1px solid var(--hairline);display:flex;flex-direction:column;background:var(--bg);}
+  .sb-brand{height:56px;display:flex;align-items:center;padding:0 24px;font-size:15px;font-weight:600;letter-spacing:-.01em;}
+  .sb-nav{flex:1;padding:8px;overflow:hidden;}
+  .sb-sec{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);padding:12px 8px 4px;}
+  .sb-link{display:flex;align-items:center;gap:8px;border-radius:6px;padding:6px 8px;font-size:13px;color:var(--text-2);}
+  .sb-link svg{width:16px;height:16px;flex-shrink:0;}
+  .sb-link.active{background:var(--subtle);color:var(--text);font-weight:600;}
+  .sb-foot{border-top:1px solid var(--hairline);padding:8px;}
+  .sb-acct{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;}
+  .sb-ava{width:28px;height:28px;border-radius:999px;background:var(--primary-dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+  .sb-acct .em{font-size:13px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sb-acct .rl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);}
+  .sb-chev{margin-left:auto;color:var(--hint);}
+
+  /* Main content */
+  .main{flex:1;overflow:hidden;}
+  .content{padding:24px 32px;}
+
+  /* Generic */
+  .head-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:32px;}
+  .h-title{font-size:24px;font-weight:600;letter-spacing:-.01em;}
+  .h-sub{font-size:14px;color:var(--text-2);margin-top:4px;}
+  .backlink{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--text-2);}
+  .backlink svg{width:14px;height:14px;}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;border-radius:6px;padding:8px 16px;font-size:14px;cursor:default;border:1px solid transparent;}
+  .btn svg{width:14px;height:14px;}
+  .btn-dark{background:var(--text);color:#fff;font-weight:600;}
+  .btn-out{border-color:var(--border);color:var(--text);background:var(--card);}
+  .btn-danger-out{border-color:var(--error-l);color:var(--error-d);background:var(--card);}
+  .btn-disabled{opacity:.5;}
+
+  /* Count cards */
+  .counts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;}
+  .count{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--hairline);border-radius:8px;background:var(--card);padding:16px 24px;text-align:left;}
+  .count.active{border-color:var(--text);}
+  .count .lab{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text-2);}
+  .dot{width:8px;height:8px;border-radius:999px;}
+  .count .val{font-size:24px;font-weight:600;}
+
+  /* Filter bar */
+  .filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:32px;}
+  .search{position:relative;flex:1;max-width:420px;}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--hint);}
+  .search input{width:100%;border:1px solid var(--border);border-radius:6px;background:var(--card);padding:8px 16px 8px 34px;font-size:14px;color:var(--text);}
+  .sel{border:1px solid var(--border);border-radius:6px;background:var(--card);padding:8px 28px 8px 12px;font-size:14px;color:var(--text);appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23666' stroke-width='1.5'><path d='M2 4l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 10px center;}
+  input,select,textarea{font-family:inherit;}
+
+  /* Table */
+  .tbl-wrap{border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:var(--card);}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  thead{background:var(--subtle);color:var(--text-2);}
+  th{text-align:left;font-weight:500;padding:8px 16px;font-size:13px;}
+  th.r,td.r{text-align:right;}
+  tbody tr{border-top:1px solid var(--hairline);}
+  td{padding:10px 16px;vertical-align:middle;}
+  tr.inactive{opacity:.5;}
+  .nm{font-weight:500;}
+  .muted{color:var(--text-2);}
+  .hint{color:var(--hint);}
+  .pill{display:inline-flex;align-items:center;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:500;}
+  .pill.in{background:var(--green50);color:var(--green700);}
+  .pill.low{background:var(--orange50);color:var(--orange700);}
+  .pill.out{background:var(--red50);color:var(--red700);}
+  .pill.inactive-tag{background:var(--subtle);color:var(--text-2);}
+
+  /* Cards grid (detail) */
+  .cards2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .card{border:1px solid var(--hairline);border-radius:8px;background:var(--card);padding:24px;}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:16px;}
+  .dl{display:flex;flex-direction:column;gap:8px;}
+  .drow{display:flex;justify-content:space-between;gap:16px;}
+  .drow dt{font-size:14px;color:var(--hint);}
+  .drow dd{font-size:14px;text-align:right;}
+
+  /* Form */
+  .section{margin-bottom:24px;}
+  .section .sh{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:8px;}
+  .section .body{border:1px solid var(--hairline);border-radius:8px;background:var(--card);padding:16px;display:flex;flex-direction:column;gap:16px;}
+  .field label,.field .flabel{display:block;font-size:14px;font-weight:500;margin-bottom:4px;}
+  .inp{width:100%;border:1px solid var(--border);border-radius:6px;background:var(--card);padding:10px 16px;font-size:14px;color:var(--text);}
+  .inp.locked{background:var(--subtle);color:var(--text-2);}
+  .ferr{color:var(--error);font-size:12px;margin-top:4px;display:block;}
+  .fhint{color:var(--hint);font-size:12px;margin-top:4px;display:block;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .chk{display:flex;align-items:center;gap:8px;font-size:14px;}
+  .banner{border-radius:6px;padding:8px 16px;font-size:14px;margin-bottom:12px;}
+  .banner.err{border:1px solid var(--error-l);background:rgba(255,235,238,.5);color:var(--error-d);}
+  .banner.warn{border:1px solid var(--warning-l);background:rgba(255,248,225,.6);color:var(--warning-d);}
+  .chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--subtle);padding:2px 8px;font-size:12px;}
+  .chip .x{color:var(--hint);cursor:default;}
+  .imgbox{width:64px;height:64px;border-radius:6px;object-fit:cover;}
+  .imgbox.empty{border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--hint);}
+  .form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px;}
+
+  /* Segmented */
+  .seg{display:inline-flex;border:1px solid var(--hairline);border-radius:6px;padding:2px;}
+  .seg button{border:0;background:transparent;border-radius:4px;padding:4px 16px;font-size:14px;color:var(--text-2);cursor:default;}
+  .seg button.on{background:var(--subtle);font-weight:600;color:var(--text);}
+
+  /* Sparkline block */
+  .spark-lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);padding-bottom:4px;}
+  .spark svg{height:44px;width:100%;color:var(--primary-dark);display:block;}
+  .delta-up{color:var(--success-d);}
+  .delta-dn{color:var(--error-d);}
+
+  /* Reorder controls */
+  .controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin-bottom:24px;}
+  .ctl-lab{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:4px;display:block;}
+  .ctl{border:1px solid var(--border);border-radius:6px;background:var(--card);padding:6px 12px;font-size:14px;color:var(--text);}
+  .capped{border:1px solid var(--warning-l);background:rgba(255,248,225,.4);color:var(--warning-d);border-radius:6px;padding:8px 16px;font-size:14px;margin-bottom:24px;}
+  .grp{border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:var(--card);margin-bottom:24px;}
+  .grp-h{background:var(--subtle);border-bottom:1px solid var(--hairline);padding:8px 16px;font-size:14px;font-weight:600;}
+  .qtyin{width:80px;border:1px solid var(--border);border-radius:6px;background:var(--card);padding:4px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:14px;}
+
+  /* Autocomplete */
+  .ac{border:1px solid var(--hairline);border-radius:6px;overflow:hidden;background:var(--card);margin-top:4px;max-width:420px;}
+  .ac button{display:flex;width:100%;justify-content:space-between;align-items:center;padding:8px 16px;font-size:14px;text-align:left;border:0;background:transparent;cursor:default;}
+  .ac button:hover{background:var(--subtle);}
+
+  /* States row */
+  .states{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px;}
+  .state-card{border:1px solid var(--hairline);border-radius:8px;background:var(--subtle);padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:150px;justify-content:center;}
+  .state-card .st-title{font-size:15px;font-weight:600;}
+  .state-card .st-desc{font-size:13px;color:var(--text-2);max-width:220px;}
+  .state-tag{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);font-weight:600;margin-bottom:2px;}
+  .spinner{width:22px;height:22px;color:var(--text-2);}
+  .sub-label{font-size:13px;color:var(--text-2);margin:26px 0 10px;font-weight:600;}
+
+  /* Modals */
+  .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .backdrop{background:rgba(10,10,10,.28);border-radius:12px;padding:40px;display:flex;align-items:flex-start;justify-content:center;min-height:280px;}
+  .dialog{width:100%;max-width:420px;background:var(--card);border:1px solid var(--hairline);border-radius:8px;box-shadow:0 20px 40px rgba(0,0,0,.18);overflow:hidden;}
+  .dialog-h{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hairline);padding:16px 24px;}
+  .dialog-h .t{font-size:16px;font-weight:600;}
+  .dialog-h .cl{color:var(--hint);}
+  .dialog-b{padding:24px;display:flex;flex-direction:column;gap:16px;}
+  .dialog-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:8px;}
+  .cropzone{height:190px;border-radius:6px;background:linear-gradient(135deg,#dfe4e5,#c3ccce);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .cropzone .ring{position:absolute;inset:24px;border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 9999px rgba(0,0,0,.28);}
+  .cropzone .ph{width:56px;height:56px;color:#7c8688;position:relative;z-index:1;}
+  .range{width:100%;height:4px;background:var(--border);border-radius:999px;position:relative;}
+  .range::after{content:"";position:absolute;left:30%;top:50%;width:14px;height:14px;border-radius:999px;background:var(--text);transform:translate(-50%,-50%);}
+  .newqty .ok{color:var(--success-d);font-weight:600;}
+  .newqty .warn{color:var(--warning-d);font-weight:600;}
+  .newqty .bad{color:var(--error-d);font-weight:600;}
+  ul.bullets{margin:0;padding-left:20px;font-size:14px;color:var(--text-2);display:flex;flex-direction:column;gap:4px;}
+
+  .section-title{font-size:18px;font-weight:700;letter-spacing:-.01em;margin:44px 0 14px;padding-top:8px;border-top:2px solid var(--hairline);}
+  .note{font-size:12.5px;color:var(--text-2);margin:-6px 0 18px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <div class="kicker">MAKI POS Web Admin — Handoff w03</div>
+    <h1>Inventory — current UI</h1>
+    <div class="meta">Current web UI · light theme · desktop (~1280px, incl. 240px sidebar) · 2026-07-07 · sidebar depicted as <strong>admin</strong></div>
+  </div>
+
+<!-- ============ SCREEN 1: PRODUCT LIST ============ -->
+<div class="frame">
+  <div class="frame-label"><span class="name">Product list</span><span class="route">/inventory</span><span class="who">admin · staff · cashier</span></div>
+  <div class="app">
+    <!-- SIDEBAR (Inventory active) -->
+    <aside class="sb">
+      <div class="sb-brand">MAKI POS</div>
+      <nav class="sb-nav">
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+        <div class="sb-sec">Sell</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.5 12h10l2-8H6"/></svg>POS</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16 4l4 4-11 11-4 1 1-4z"/></svg>Drafts</a>
+        <div class="sb-sec">Stock</div>
+        <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/></svg>Inventory</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h13v13H1z"/><path d="M14 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>Receiving</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H5v16h14V5h-3"/><path d="M9 12h6M9 16h4"/></svg>Reorder</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l1-5h16l1 5M5 9v11h14V9M9 20v-6h6v6"/></svg>Suppliers</a>
+        <div class="sb-sec">Money</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1z"/><path d="M9 8h6M9 12h6"/></svg>Expenses</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+        <div class="sb-sec">Admin</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2"/><path d="M15 20c0-2 1-3 3-3s3 1 3 3"/></svg>Users</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</a>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-acct">
+          <span class="sb-ava">C</span>
+          <span style="min-width:0;">
+            <span class="em">czar@makipos.ph</span><br><span class="rl">Admin</span>
+          </span>
+          <span class="sb-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 15l6-6 6 6"/></svg></span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="main"><div class="content">
+      <div class="head-row">
+        <div>
+          <div class="h-title">Inventory</div>
+          <div class="h-sub">Products, stock levels, and pricing.</div>
+        </div>
+        <span class="btn btn-dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add product</span>
+      </div>
+
+      <div class="counts">
+        <div class="count"><span class="lab"><span class="dot" style="background:var(--green500)"></span>In stock</span><span class="val tnum">128</span></div>
+        <div class="count active"><span class="lab"><span class="dot" style="background:var(--orange500)"></span>Low stock</span><span class="val tnum">9</span></div>
+        <div class="count"><span class="lab"><span class="dot" style="background:var(--red500)"></span>Out of stock</span><span class="val tnum">4</span></div>
+      </div>
+
+      <div class="filters">
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input placeholder="Search by name or SKU…" /></div>
+        <select class="sel"><option>All categories</option><option>Engine Oil</option><option>Brake</option><option>CVT</option></select>
+        <span class="btn btn-out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Show inactive</span>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>SKU</th><th>Category</th><th>Stock</th><th class="r">Price</th><th class="r">Cost</th></tr></thead>
+          <tbody>
+            <tr><td class="nm">Shell Advance AX7 10W-40 1L</td><td class="muted mono">OIL-AX7-1L</td><td class="muted">Engine Oil</td><td><span class="pill in">42 · In stock</span></td><td class="r tnum">₱320.00</td><td class="r tnum">₱248.00</td></tr>
+            <tr><td class="nm">Bendix Brake Pads — Click 125</td><td class="muted mono">BRK-BDX-CL125</td><td class="muted">Brake</td><td><span class="pill low">6 · Low stock</span></td><td class="r tnum">₱480.00</td><td class="r tnum">₱355.00</td></tr>
+            <tr><td class="nm">NGK Spark Plug CPR6EA-9</td><td class="muted mono">SPK-NGK-CPR6</td><td class="muted">Ignition</td><td><span class="pill in">88 · In stock</span></td><td class="r tnum">₱145.00</td><td class="r tnum">₱96.00</td></tr>
+            <tr><td class="nm">CVT Roller Weight Set — Nmax</td><td class="muted mono">CVT-ROL-NMAX</td><td class="muted">CVT</td><td><span class="pill out">0 · Out of stock</span></td><td class="r tnum">₱650.00</td><td class="r tnum">₱470.00</td></tr>
+            <tr><td class="nm">Motolite Bulb 12V 35/35W</td><td class="muted mono">BLB-MTL-3535</td><td class="muted">Electrical</td><td><span class="pill in">54 · In stock</span></td><td class="r tnum">₱85.00</td><td class="r tnum">₱52.00</td></tr>
+            <tr class="inactive"><td class="nm">RK Chain 428H-120L <span class="hint">(inactive)</span></td><td class="muted mono">CHN-RK-428H</td><td class="muted">Drivetrain</td><td><span class="pill low">3 · Low stock</span></td><td class="r tnum">₱720.00</td><td class="r tnum">₱540.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sub-label">States</div>
+      <div class="states">
+        <div class="state-card"><div class="state-tag">Loading</div><svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" opacity=".2"/><path d="M12 3a9 9 0 0 1 9 9"/></svg><div class="st-desc">Loading inventory…</div></div>
+        <div class="state-card"><div class="state-tag">Error</div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div class="st-title">Could not load inventory</div></div>
+        <div class="state-card"><div class="state-tag">Empty</div><div class="st-title">No products found</div><div class="st-desc">No products match these filters. (When searching: “Try a different search.”)</div></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 2: PRODUCT FORM ============ -->
+<div class="frame">
+  <div class="frame-label"><span class="name">Product form — Add / Edit</span><span class="route">/inventory/add · /inventory/edit/:id</span><span class="who admin">add: admin · edit: admin + staff</span></div>
+  <div class="frame-cap">Depicted in <strong>Edit</strong> mode (shows SKU hint, Regenerate hidden, no Initial-quantity field). Add mode adds the “Auto-generate SKU” checkbox + an “Initial quantity” field and hides the SKU hint.</div>
+  <div class="app">
+    <aside class="sb">
+      <div class="sb-brand">MAKI POS</div>
+      <nav class="sb-nav">
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+        <div class="sb-sec">Sell</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.5 12h10l2-8H6"/></svg>POS</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16 4l4 4-11 11-4 1 1-4z"/></svg>Drafts</a>
+        <div class="sb-sec">Stock</div>
+        <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/></svg>Inventory</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h13v13H1z"/><path d="M14 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>Receiving</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H5v16h14V5h-3"/><path d="M9 12h6M9 16h4"/></svg>Reorder</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l1-5h16l1 5M5 9v11h14V9M9 20v-6h6v6"/></svg>Suppliers</a>
+        <div class="sb-sec">Money</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1z"/><path d="M9 8h6M9 12h6"/></svg>Expenses</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+        <div class="sb-sec">Admin</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2"/><path d="M15 20c0-2 1-3 3-3s3 1 3 3"/></svg>Users</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</a>
+      </nav>
+      <div class="sb-foot"><div class="sb-acct"><span class="sb-ava">C</span><span style="min-width:0;"><span class="em">czar@makipos.ph</span><br><span class="rl">Admin</span></span><span class="sb-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 15l6-6 6 6"/></svg></span></div></div>
+    </aside>
+
+    <div class="main"><div class="content" style="max-width:720px;">
+      <div style="margin-bottom:24px;">
+        <a class="backlink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>Inventory</a>
+        <div class="h-title" style="margin-top:8px;">Edit product</div>
+      </div>
+
+      <div class="banner warn">Cost-code mapping is still loading — try again in a moment. <span class="hint">(loadNotice — warning banner)</span></div>
+
+      <!-- Identity -->
+      <div class="section">
+        <div class="sh">Identity</div>
+        <div class="body">
+          <div class="field"><span class="flabel">Name</span><input class="inp" value="Bendix Brake Pads — Click 125" /></div>
+          <div class="field"><span class="flabel">SKU</span><input class="inp" value="BRK-BDX-CL125" /><span class="fhint">Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.</span></div>
+          <div class="field"><span class="flabel">Barcodes</span>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
+              <span class="chip"><span class="mono">4806504801108</span><span class="x">×</span></span>
+              <span class="chip"><span class="mono">4809012345678</span><span class="x">×</span></span>
+            </div>
+            <div style="display:flex;gap:8px;"><input class="inp" placeholder="Add barcode" /><span class="btn btn-out">Add</span></div>
+          </div>
+          <div class="field"><span class="flabel">Image</span>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div class="imgbox empty">No image</div>
+              <div style="display:flex;gap:8px;"><span class="btn btn-out">Upload</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="section">
+        <div class="sh">Pricing</div>
+        <div class="body">
+          <div class="grid2">
+            <div class="field"><span class="flabel">Cost</span><input class="inp" value="355.00" /></div>
+            <div class="field"><span class="flabel">Price</span><input class="inp" value="480.00" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock & classification -->
+      <div class="section">
+        <div class="sh">Stock &amp; classification</div>
+        <div class="body">
+          <div class="grid2">
+            <div class="field"><span class="flabel">Reorder level</span><input class="inp" value="10" /></div>
+            <div class="field"><span class="flabel">Unit</span><select class="inp sel"><option>pcs</option></select></div>
+            <div class="field"><span class="flabel">Category</span><select class="inp sel"><option>Brake</option></select></div>
+            <div class="field"><span class="flabel">Supplier</span><select class="inp sel"><option>JVT Motor Supply</option></select></div>
+          </div>
+          <div class="fhint">Add mode also shows an <strong>Initial quantity</strong> field here.</div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="section">
+        <div class="sh">Notes</div>
+        <div class="body">
+          <div class="field"><span class="flabel">Notes</span><textarea class="inp" rows="3" style="resize:vertical;">Fits Click 125i front caliper.</textarea></div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <span class="btn" style="color:var(--text);">Cancel</span>
+        <span class="btn btn-dark">Save changes</span>
+      </div>
+
+      <div class="sub-label">Validation &amp; states (examples)</div>
+      <div class="section">
+        <div class="body" style="gap:12px;">
+          <div class="field"><span class="flabel">Name</span><input class="inp" style="border-color:var(--error);" /><span class="ferr">Name is required</span></div>
+          <div class="field"><span class="flabel">SKU</span><input class="inp" style="border-color:var(--error);" value="brk bdx!" /><span class="ferr">Use only letters, numbers, and hyphens</span></div>
+          <div class="field"><span class="flabel">Cost</span><input class="inp" style="border-color:var(--error);" /><span class="ferr">Must be ≥ 0</span></div>
+          <div class="banner err" style="margin:0;">SKU already exists <span class="hint">(mutation error banner — hidden when a field-level SKU error shows)</span></div>
+          <div class="chk"><input type="checkbox" checked disabled /> Auto-generate SKU from name <span class="hint">(Add mode only; Regenerate button appears beside a locked SKU)</span></div>
+          <div><span class="btn btn-dark"><svg class="spinner" style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" opacity=".3"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>Saving…</span> <span class="hint">— busy state, submit disabled</span></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 3: PRODUCT DETAIL ============ -->
+<div class="frame">
+  <div class="frame-label"><span class="name">Product detail</span><span class="route">/inventory/:id</span><span class="who">admin · staff · cashier</span></div>
+  <div class="app">
+    <aside class="sb">
+      <div class="sb-brand">MAKI POS</div>
+      <nav class="sb-nav">
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+        <div class="sb-sec">Sell</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.5 12h10l2-8H6"/></svg>POS</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16 4l4 4-11 11-4 1 1-4z"/></svg>Drafts</a>
+        <div class="sb-sec">Stock</div>
+        <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/></svg>Inventory</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h13v13H1z"/><path d="M14 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>Receiving</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H5v16h14V5h-3"/><path d="M9 12h6M9 16h4"/></svg>Reorder</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l1-5h16l1 5M5 9v11h14V9M9 20v-6h6v6"/></svg>Suppliers</a>
+        <div class="sb-sec">Money</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1z"/><path d="M9 8h6M9 12h6"/></svg>Expenses</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+        <div class="sb-sec">Admin</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2"/><path d="M15 20c0-2 1-3 3-3s3 1 3 3"/></svg>Users</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</a>
+      </nav>
+      <div class="sb-foot"><div class="sb-acct"><span class="sb-ava">C</span><span style="min-width:0;"><span class="em">czar@makipos.ph</span><br><span class="rl">Admin</span></span><span class="sb-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 15l6-6 6 6"/></svg></span></div></div>
+    </aside>
+
+    <div class="main"><div class="content">
+      <a class="backlink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>Back to inventory</a>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:16px 0 24px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div class="imgbox empty" style="border-style:solid;">IMG</div>
+          <div>
+            <div class="h-title">Bendix Brake Pads — Click 125</div>
+            <div class="hint" style="margin-top:4px;">BRK-BDX-CL125</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span class="btn btn-out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h11M4 12h7M4 18h13"/><circle cx="18" cy="6" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="20" cy="18" r="2"/></svg>Adjust stock</span>
+          <span class="btn btn-out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16 4l4 4-11 11-4 1 1-4z"/></svg>Edit</span>
+          <span class="btn btn-danger-out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Delete</span>
+        </div>
+      </div>
+
+      <div class="cards2">
+        <div class="card"><h3>Stock</h3><div class="dl">
+          <div class="drow"><dt>Quantity</dt><dd class="tnum">6 pcs</dd></div>
+          <div class="drow"><dt>Reorder level</dt><dd class="tnum">10</dd></div>
+          <div class="drow"><dt>Status</dt><dd>Low stock</dd></div>
+        </div></div>
+        <div class="card"><h3>Pricing</h3><div class="dl">
+          <div class="drow"><dt>Price</dt><dd class="tnum">₱480.00</dd></div>
+          <div class="drow"><dt>Cost</dt><dd class="tnum">₱355.00</dd></div>
+          <div class="drow"><dt>Margin</dt><dd class="tnum">₱125.00 (26.0%)</dd></div>
+        </div></div>
+        <div class="card"><h3>Details</h3><div class="dl">
+          <div class="drow"><dt>Category</dt><dd>Brake</dd></div>
+          <div class="drow"><dt>Unit</dt><dd>pcs</dd></div>
+          <div class="drow"><dt>Supplier</dt><dd>JVT Motor Supply</dd></div>
+          <div class="drow"><dt>Barcodes</dt><dd class="mono">4806504801108, 4809012345678</dd></div>
+          <div class="drow"><dt>Notes</dt><dd>Fits Click 125i front caliper.</dd></div>
+        </div></div>
+        <div class="card"><h3>Audit</h3><div class="dl">
+          <div class="drow"><dt>Created by</dt><dd>Czar B.</dd></div>
+          <div class="drow"><dt>Created at</dt><dd>May 14, 2026, 9:12 AM</dd></div>
+          <div class="drow"><dt>Updated by</dt><dd>Rico M.</dd></div>
+          <div class="drow"><dt>Updated at</dt><dd>Jul 2, 2026, 4:38 PM</dd></div>
+        </div></div>
+      </div>
+
+      <div style="margin-top:24px;"><span class="btn btn-out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>View price history</span></div>
+
+      <div class="sub-label">States &amp; variants</div>
+      <div class="states">
+        <div class="state-card"><div class="state-tag">Inactive header</div><span class="pill inactive-tag">Inactive</span><div class="st-desc">When inactive, a pill shows and <strong>Delete</strong> becomes <strong>Reactivate</strong> (arrow-path, disabled while pending).</div></div>
+        <div class="state-card"><div class="state-tag">Not found</div><div class="st-title">Product not found</div><div class="st-desc">This product may have been removed.</div></div>
+        <div class="state-card"><div class="state-tag">Loading / Error</div><div class="st-desc">“Loading product…” · error “Could not load product”. Reactivate errors render below the header.</div></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 4: PRICE HISTORY ============ -->
+<div class="frame">
+  <div class="frame-label"><span class="name">Price history</span><span class="route">/inventory/price-history</span><span class="who admin">admin only</span></div>
+  <div class="app">
+    <aside class="sb">
+      <div class="sb-brand">MAKI POS</div>
+      <nav class="sb-nav">
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+        <div class="sb-sec">Sell</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.5 12h10l2-8H6"/></svg>POS</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16 4l4 4-11 11-4 1 1-4z"/></svg>Drafts</a>
+        <div class="sb-sec">Stock</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/></svg>Inventory</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h13v13H1z"/><path d="M14 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>Receiving</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H5v16h14V5h-3"/><path d="M9 12h6M9 16h4"/></svg>Reorder</a>
+        <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l1-5h16l1 5M5 9v11h14V9M9 20v-6h6v6"/></svg>Suppliers</a>
+        <div class="sb-sec">Money</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1z"/><path d="M9 8h6M9 12h6"/></svg>Expenses</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+        <div class="sb-sec">Admin</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2"/><path d="M15 20c0-2 1-3 3-3s3 1 3 3"/></svg>Users</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</a>
+      </nav>
+      <div class="sb-foot"><div class="sb-acct"><span class="sb-ava">C</span><span style="min-width:0;"><span class="em">czar@makipos.ph</span><br><span class="rl">Admin</span></span><span class="sb-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 15l6-6 6 6"/></svg></span></div></div>
+    </aside>
+
+    <div class="main"><div class="content">
+      <div style="margin-bottom:24px;">
+        <a class="backlink">← Back to inventory</a>
+        <div class="h-title" style="margin-top:8px;">Price History</div>
+        <div class="h-sub">Search a product to see its cost &amp; selling-price changes over time.</div>
+      </div>
+
+      <div style="max-width:420px;margin-bottom:8px;">
+        <input class="inp" type="search" value="Bendix" />
+        <div class="ac">
+          <button><span>Bendix Brake Pads — Click 125</span><span class="hint">BRK-BDX-CL125</span></button>
+          <button><span>Bendix Brake Shoe — Mio Sporty</span><span class="hint">BRK-BDX-MIO</span></button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <a class="backlink" style="margin-bottom:8px;">← Back to search</a>
+        <div style="margin-top:8px;"><div style="font-size:16px;font-weight:600;">Bendix Brake Pads — Click 125</div><div class="hint">BRK-BDX-CL125</div></div>
+      </div>
+
+      <!-- PriceHistoryView -->
+      <div style="margin-bottom:24px;"><div class="seg"><button class="on">All</button><button>Price</button><button>Cost</button></div></div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px;">
+        <div><div class="spark-lab">Price</div><div class="spark"><svg viewBox="0 0 320 44" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 34 L64 30 L128 30 L192 20 L256 18 L320 8"/></svg></div></div>
+        <div><div class="spark-lab">Cost</div><div class="spark"><svg viewBox="0 0 320 44" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 36 L64 33 L128 33 L192 26 L256 24 L320 16"/></svg></div></div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Price</th><th>Cost</th><th>Source</th><th>By</th></tr></thead>
+          <tbody>
+            <tr><td>Jul 2, 2026, 4:38 PM</td><td><span class="nm">₱480.00</span> <span class="delta-up">▲ ₱30.00</span></td><td><span class="nm">₱355.00</span> <span class="delta-up">▲ ₱20.00</span></td><td class="muted">Manual edit</td><td class="muted">Rico M.</td></tr>
+            <tr><td>Jun 18, 2026, 10:04 AM</td><td><span class="nm">₱450.00</span></td><td><span class="nm">₱335.00</span> <span class="delta-up">▲ ₱15.00</span></td><td class="muted">Receiving (RCV-0148)</td><td class="muted">Czar B.</td></tr>
+            <tr><td>May 30, 2026, 2:20 PM</td><td><span class="nm">₱450.00</span> <span class="delta-dn">▼ ₱20.00</span></td><td><span class="nm">₱320.00</span></td><td class="muted">Manual edit</td><td class="muted">Rico M.</td></tr>
+            <tr><td>May 14, 2026, 9:12 AM</td><td><span class="nm">₱470.00</span></td><td><span class="nm">₱320.00</span></td><td class="muted">Created</td><td class="muted">Czar B.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sub-label">States</div>
+      <div class="states">
+        <div class="state-card"><div class="state-tag">Loading</div><div class="st-desc">“Loading products…” then view shows “Loading…”</div></div>
+        <div class="state-card"><div class="state-tag">Error</div><div class="st-desc">Could not load price history.</div></div>
+        <div class="state-card"><div class="state-tag">Empty / no chart</div><div class="st-desc">“No price changes yet.” · under 2 entries: “Not enough changes to chart”.</div></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 5: REORDER ============ -->
+<div class="frame">
+  <div class="frame-label"><span class="name">Reorder suggestions</span><span class="route">/inventory/reorder</span><span class="who admin">admin only</span></div>
+  <div class="app">
+    <aside class="sb">
+      <div class="sb-brand">MAKI POS</div>
+      <nav class="sb-nav">
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+        <div class="sb-sec">Sell</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.5 12h10l2-8H6"/></svg>POS</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16 4l4 4-11 11-4 1 1-4z"/></svg>Drafts</a>
+        <div class="sb-sec">Stock</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/></svg>Inventory</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h13v13H1z"/><path d="M14 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>Receiving</a>
+        <a class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H5v16h14V5h-3"/><path d="M9 12h6M9 16h4"/></svg>Reorder</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Price History</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l1-5h16l1 5M5 9v11h14V9M9 20v-6h6v6"/></svg>Suppliers</a>
+        <div class="sb-sec">Money</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1z"/><path d="M9 8h6M9 12h6"/></svg>Expenses</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Reports</a>
+        <div class="sb-sec">Admin</div>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2"/><path d="M15 20c0-2 1-3 3-3s3 1 3 3"/></svg>Users</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity Logs</a>
+        <a class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</a>
+      </nav>
+      <div class="sb-foot"><div class="sb-acct"><span class="sb-ava">C</span><span style="min-width:0;"><span class="em">czar@makipos.ph</span><br><span class="rl">Admin</span></span><span class="sb-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 15l6-6 6 6"/></svg></span></div></div>
+    </aside>
+
+    <div class="main"><div class="content">
+      <div style="margin-bottom:24px;">
+        <a class="backlink">← Back to inventory</a>
+        <div class="h-title" style="margin-top:8px;">Reorder suggestions</div>
+        <div class="h-sub">Suggested order quantity from recent sales velocity × days of cover. Velocity uses complete days ending yesterday.</div>
+      </div>
+
+      <div class="controls">
+        <label><span class="ctl-lab">Sales window</span><select class="ctl sel"><option>30 days</option><option>7 days</option><option>14 days</option><option>90 days</option></select></label>
+        <label><span class="ctl-lab">Days of cover</span><input class="ctl" style="width:90px;" value="14" /></label>
+        <span class="btn btn-out" style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Export CSV</span>
+      </div>
+
+      <div class="capped">Velocity is computed from the most recent 10,000 sales — it may be understated for this window.</div>
+
+      <div class="grp">
+        <div class="grp-h">JVT Motor Supply</div>
+        <table>
+          <thead><tr><th>Product</th><th class="r">Current</th><th class="r">Velocity/day</th><th class="r">Order qty</th></tr></thead>
+          <tbody>
+            <tr><td><span class="nm">Bendix Brake Pads — Click 125</span> <span class="hint">BRK-BDX-CL125</span></td><td class="r tnum">6</td><td class="r tnum">1.20</td><td class="r"><input class="qtyin" value="18" /></td></tr>
+            <tr><td><span class="nm">NGK Spark Plug CPR6EA-9</span> <span class="hint">SPK-NGK-CPR6</span></td><td class="r tnum">12</td><td class="r tnum">2.40</td><td class="r"><input class="qtyin" value="34" /></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grp">
+        <div class="grp-h">RPM Parts Trading</div>
+        <table>
+          <thead><tr><th>Product</th><th class="r">Current</th><th class="r">Velocity/day</th><th class="r">Order qty</th></tr></thead>
+          <tbody>
+            <tr><td><span class="nm">CVT Roller Weight Set — Nmax</span> <span class="hint">CVT-ROL-NMAX</span></td><td class="r tnum">0</td><td class="r tnum">0.85</td><td class="r"><input class="qtyin" value="12" /></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grp">
+        <div class="grp-h">No supplier</div>
+        <table>
+          <thead><tr><th>Product</th><th class="r">Current</th><th class="r">Velocity/day</th><th class="r">Order qty</th></tr></thead>
+          <tbody>
+            <tr><td><span class="nm">Motolite Bulb 12V 35/35W</span> <span class="hint">BLB-MTL-3535</span></td><td class="r tnum">4</td><td class="r tnum">0.60</td><td class="r"><input class="qtyin" value="6" /></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sub-label">States</div>
+      <div class="states">
+        <div class="state-card"><div class="state-tag">Loading</div><svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" opacity=".2"/><path d="M12 3a9 9 0 0 1 9 9"/></svg><div class="st-desc">Crunching sales…</div></div>
+        <div class="state-card"><div class="state-tag">Error</div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div class="st-title">Could not load reorder data</div></div>
+        <div class="state-card"><div class="state-tag">Empty</div><div class="st-title">Nothing to reorder</div><div class="st-desc">No products are below their projected demand for this window.</div></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ============ MODALS & OVERLAYS ============ -->
+<div class="section-title">Modals &amp; overlays</div>
+<p class="note">All use the shared <span class="mono">Dialog</span> (portal, max-w-md, rounded-lg, shadow-xl, dimmed backdrop, ESC + click-outside close when dismissable, body-scroll lock). Dialogs marked non-dismissable hide the × while busy.</p>
+
+<div class="modal-grid">
+  <!-- Change SKU? -->
+  <div class="backdrop">
+    <div class="dialog">
+      <div class="dialog-h"><span class="t">Change SKU?</span><span class="cl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+      <div class="dialog-b">
+        <p class="mono" style="font-size:14px;">BRK-BDX-CL125 <span class="hint" style="padding:0 8px;">→</span> BRK-BDX-CL125A</p>
+        <ul class="bullets">
+          <li>Past sales and receiving records keep their original SKU.</li>
+          <li>2 linked variation(s) will be re-pointed to the new SKU.</li>
+        </ul>
+        <div class="dialog-actions"><span class="btn btn-out">Cancel</span><span class="btn btn-dark">Change SKU</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crop image -->
+  <div class="backdrop">
+    <div class="dialog">
+      <div class="dialog-h"><span class="t">Crop image</span><span class="cl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+      <div class="dialog-b">
+        <div class="cropzone"><div class="ring"></div><svg class="ph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;">Zoom<span class="range"></span></label>
+        <div class="dialog-actions"><span class="btn btn-out">Cancel</span><span class="btn btn-dark">Save</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adjust stock -->
+  <div class="backdrop">
+    <div class="dialog">
+      <div class="dialog-h"><span class="t">Adjust stock</span><span class="cl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+      <div class="dialog-b">
+        <div class="seg"><button class="on">Add</button><button>Remove</button><button>Set to</button></div>
+        <div><label style="font-size:14px;color:var(--text-2);display:block;margin-bottom:4px;">Quantity</label><input class="inp" value="24" /></div>
+        <p style="font-size:14px;color:var(--text-2);" class="newqty">New quantity: <span class="ok">30</span> pcs</p>
+        <p style="font-size:12px;color:var(--hint);">Preview color: <span class="newqty"><span class="bad">≤0 red</span> · <span class="warn">≤ reorder amber</span> · <span class="ok">else green</span></span> · “—” when input invalid.</p>
+        <div class="dialog-actions"><span class="btn btn-out">Cancel</span><span class="btn btn-dark">Apply</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete product? -->
+  <div class="backdrop">
+    <div class="dialog">
+      <div class="dialog-h"><span class="t">Delete Product?</span><span class="cl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+      <div class="dialog-b">
+        <p style="font-size:14px;color:var(--text-2);">Delete “Bendix Brake Pads — Click 125”? This product will be hidden from POS and inventory lists. Past sales and receivings that reference it remain intact.</p>
+        <div class="dialog-actions"><span class="btn btn-out">Cancel</span><span class="btn" style="background:var(--error-d);color:#fff;font-weight:600;">Delete</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
