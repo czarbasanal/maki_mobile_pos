@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { CheckoutPage } from './CheckoutPage';
@@ -12,6 +12,11 @@ import type { Product } from '@/domain/entities';
 const product = (o: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, ...o } as Product);
 
+function PosStub() {
+  const { state } = useLocation() as { state: { completedSaleNumber?: string } | null };
+  return <div>POS PAGE {state?.completedSaleNumber ?? ''}</div>;
+}
+
 function harness(saleRepo: Partial<Container['saleRepo']>) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return render(
@@ -20,7 +25,7 @@ function harness(saleRepo: Partial<Container['saleRepo']>) {
         <MemoryRouter initialEntries={['/pos/checkout']}>
           <Routes>
             <Route path="/pos/checkout" element={<CheckoutPage />} />
-            <Route path="/pos" element={<div>POS PAGE {`${history.state}`}</div>} />
+            <Route path="/pos" element={<PosStub />} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>
@@ -48,7 +53,7 @@ describe('CheckoutPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
     await userEvent.click(screen.getByRole('button', { name: /complete sale/i }));
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByText(/POS PAGE/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/POS PAGE S-00100/)).toBeInTheDocument());
     expect(useCartStore.getState().lines).toHaveLength(0);
   });
 });
