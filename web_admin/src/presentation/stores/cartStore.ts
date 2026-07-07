@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import type { Draft, Product } from '@/domain/entities';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { CartLine } from '@/domain/sales/cart';
@@ -25,89 +25,94 @@ interface CartState {
   clear: () => void;
 }
 
-export const useCartStore = create<CartState>((set) => ({
-  lines: [],
-  discountType: DiscountType.amount,
-  laborLines: [],
-  mechanicId: null,
-  mechanicName: null,
-  draftId: null,
-  draftName: null,
-  addLine: (product) =>
-    set((s) => {
-      if (s.lines.some((l) => l.productId === product.id)) {
-        return {
-          lines: s.lines.map((l) =>
-            l.productId === product.id ? { ...l, quantity: l.quantity + 1 } : l,
-          ),
+export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
+  return create<CartState>((set) => ({
+    lines: [],
+    discountType: DiscountType.amount,
+    laborLines: [],
+    mechanicId: null,
+    mechanicName: null,
+    draftId: null,
+    draftName: null,
+    addLine: (product) =>
+      set((s) => {
+        if (s.lines.some((l) => l.productId === product.id)) {
+          return {
+            lines: s.lines.map((l) =>
+              l.productId === product.id ? { ...l, quantity: l.quantity + 1 } : l,
+            ),
+          };
+        }
+        const line: CartLine = {
+          id: product.id,
+          productId: product.id,
+          sku: product.sku,
+          name: product.name,
+          unitPrice: product.price,
+          unitCost: product.cost,
+          quantity: 1,
+          discountValue: 0,
+          unit: product.unit,
         };
-      }
-      const line: CartLine = {
-        id: product.id,
-        productId: product.id,
-        sku: product.sku,
-        name: product.name,
-        unitPrice: product.price,
-        unitCost: product.cost,
-        quantity: 1,
-        discountValue: 0,
-        unit: product.unit,
-      };
-      return { lines: [...s.lines, line] };
-    }),
-  setQty: (productId, quantity) =>
-    set((s) => ({
-      lines: s.lines.map((l) =>
-        l.productId === productId ? { ...l, quantity: Math.max(1, Math.floor(quantity) || 1) } : l,
-      ),
-    })),
-  setLineDiscount: (productId, discountValue) =>
-    set((s) => {
-      // Percentage discounts cap at 100 so a line can't go negative.
-      const max = s.discountType === DiscountType.percentage ? 100 : Infinity;
-      const value = Math.min(max, Math.max(0, discountValue));
-      return {
-        lines: s.lines.map((l) => (l.productId === productId ? { ...l, discountValue: value } : l)),
-      };
-    }),
-  removeLine: (productId) =>
-    set((s) => ({ lines: s.lines.filter((l) => l.productId !== productId) })),
-  setDiscountType: (discountType) =>
-    set((s) => ({ discountType, lines: s.lines.map((l) => ({ ...l, discountValue: 0 })) })),
-  addLaborLine: () =>
-    set((s) => ({
-      laborLines: [...s.laborLines, { id: crypto.randomUUID(), description: '', fee: 0 }],
-    })),
-  setLaborLine: (id, patch) =>
-    set((s) => ({
-      laborLines: s.laborLines.map((l) => {
-        if (l.id !== id) return l;
-        const next = { ...l, ...patch };
-        if (patch.fee !== undefined) next.fee = Math.max(0, patch.fee || 0);
-        return next;
+        return { lines: [...s.lines, line] };
       }),
-    })),
-  removeLaborLine: (id) =>
-    set((s) => ({ laborLines: s.laborLines.filter((l) => l.id !== id) })),
-  setMechanic: (id, name) => set({ mechanicId: id, mechanicName: name }),
-  loadDraft: (draft) =>
-    set({
-      lines: draft.items,
-      discountType: draft.discountType,
-      laborLines: draft.laborLines,
-      mechanicId: draft.mechanicId,
-      mechanicName: draft.mechanicName,
-      draftId: draft.id,
-      draftName: draft.name,
-    }),
-  clear: () =>
-    set({
-      lines: [],
-      discountType: DiscountType.amount,
-      laborLines: [],
-      mechanicId: null,
-      mechanicName: null,
-      draftId: null,
-      draftName: null,
-    }),
-}));
+    setQty: (productId, quantity) =>
+      set((s) => ({
+        lines: s.lines.map((l) =>
+          l.productId === productId ? { ...l, quantity: Math.max(1, Math.floor(quantity) || 1) } : l,
+        ),
+      })),
+    setLineDiscount: (productId, discountValue) =>
+      set((s) => {
+        // Percentage discounts cap at 100 so a line can't go negative.
+        const max = s.discountType === DiscountType.percentage ? 100 : Infinity;
+        const value = Math.min(max, Math.max(0, discountValue));
+        return {
+          lines: s.lines.map((l) => (l.productId === productId ? { ...l, discountValue: value } : l)),
+        };
+      }),
+    removeLine: (productId) =>
+      set((s) => ({ lines: s.lines.filter((l) => l.productId !== productId) })),
+    setDiscountType: (discountType) =>
+      set((s) => ({ discountType, lines: s.lines.map((l) => ({ ...l, discountValue: 0 })) })),
+    addLaborLine: () =>
+      set((s) => ({
+        laborLines: [...s.laborLines, { id: crypto.randomUUID(), description: '', fee: 0 }],
+      })),
+    setLaborLine: (id, patch) =>
+      set((s) => ({
+        laborLines: s.laborLines.map((l) => {
+          if (l.id !== id) return l;
+          const next = { ...l, ...patch };
+          if (patch.fee !== undefined) next.fee = Math.max(0, patch.fee || 0);
+          return next;
+        }),
+      })),
+    removeLaborLine: (id) =>
+      set((s) => ({ laborLines: s.laborLines.filter((l) => l.id !== id) })),
+    setMechanic: (id, name) => set({ mechanicId: id, mechanicName: name }),
+    loadDraft: (draft) =>
+      set({
+        lines: draft.items,
+        discountType: draft.discountType,
+        laborLines: draft.laborLines,
+        mechanicId: draft.mechanicId,
+        mechanicName: draft.mechanicName,
+        draftId: draft.id,
+        draftName: draft.name,
+      }),
+    clear: () =>
+      set({
+        lines: [],
+        discountType: DiscountType.amount,
+        laborLines: [],
+        mechanicId: null,
+        mechanicName: null,
+        draftId: null,
+        draftName: null,
+      }),
+  }));
+}
+
+export const useCartStore = createCartStore();
+export type CartStore = typeof useCartStore;

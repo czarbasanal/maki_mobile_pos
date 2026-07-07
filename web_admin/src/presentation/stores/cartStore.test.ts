@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useCartStore } from './cartStore';
+import { createCartStore, useCartStore } from './cartStore';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { Draft, Product } from '@/domain/entities';
 
@@ -116,5 +116,13 @@ describe('cartStore', () => {
     expect(s.draftId).toBeNull();
     expect(s.draftName).toBeNull();
     expect(s.lines).toHaveLength(0);
+  });
+
+  it('createCartStore() instances are independent', () => {
+    const a = createCartStore();
+    const b = createCartStore();
+    a.getState().addLine(product());
+    expect(a.getState().lines).toHaveLength(1);
+    expect(b.getState().lines).toHaveLength(0);
   });
 });
