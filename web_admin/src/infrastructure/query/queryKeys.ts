@@ -36,10 +36,6 @@ export const queryKeys = {
     all: ['receivings'] as const,
     byId: (id: string) => ['receivings', id] as const,
   },
-  pettyCash: {
-    all: ['pettyCash'] as const,
-    balance: ['pettyCash', 'balance'] as const,
-  },
   logs: {
     all: ['logs'] as const,
   },

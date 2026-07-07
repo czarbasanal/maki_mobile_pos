@@ -14,7 +14,6 @@ export const FirestoreCollections = {
   drafts: 'drafts',
   receivings: 'receivings',
   expenses: 'expenses',
-  pettyCash: 'petty_cash',
   userLogs: 'user_logs',
   settings: 'settings',
   // SKU-uniqueness claim collection (Slice A). Keyed by normalizeSku(sku).

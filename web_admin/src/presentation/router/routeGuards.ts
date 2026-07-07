@@ -42,8 +42,6 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.manageLists, Permission.manageCategories],
   [RoutePaths.mechanics, Permission.manageCategories],
   [RoutePaths.userLogs, Permission.viewUserLogs],
-  [RoutePaths.pettyCash, Permission.managePettyCash],
-  [RoutePaths.pettyCashNew, Permission.managePettyCash],
 ]);
 
 export function isPublicRoute(path: string): boolean {

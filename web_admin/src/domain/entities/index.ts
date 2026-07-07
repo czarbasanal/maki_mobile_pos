@@ -7,7 +7,6 @@ export * from './Draft';
 export * from './Supplier';
 export * from './Expense';
 export * from './Receiving';
-export * from './PettyCash';
 export * from './ActivityLog';
 export * from './CostCode';
 export * from './Category';

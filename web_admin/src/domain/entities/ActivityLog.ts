@@ -7,8 +7,7 @@
 //   / stock_adjustment / receiving / user_management / user_created /
 //   user_updated / user_deactivated / role_changed / security /
 //   password_verified / password_failed / cost_viewed / settings /
-//   cost_code_changed / expense / supplier / petty_cash / petty_cash_cutoff
-//   / other
+//   cost_code_changed / expense / supplier / other
 
 export const ActivityType = {
   authentication: 'authentication',
@@ -33,8 +32,6 @@ export const ActivityType = {
   costCodeChanged: 'cost_code_changed',
   expense: 'expense',
   supplier: 'supplier',
-  pettyCash: 'petty_cash',
-  pettyCashCutOff: 'petty_cash_cutoff',
   other: 'other',
 } as const;
 
@@ -63,8 +60,6 @@ export const activityTypeDisplayName: Record<ActivityType, string> = {
   cost_code_changed: 'Cost Code Changed',
   expense: 'Expense',
   supplier: 'Supplier',
-  petty_cash: 'Petty Cash',
-  petty_cash_cutoff: 'Petty Cash Cut-off',
   other: 'Other',
 };
 

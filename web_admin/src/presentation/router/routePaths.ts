@@ -53,9 +53,6 @@ export const RoutePaths = {
   about: '/settings/about',
 
   userLogs: '/logs',
-
-  pettyCash: '/petty-cash',
-  pettyCashNew: '/petty-cash/new',
 } as const;
 
 export type RoutePath = (typeof RoutePaths)[keyof typeof RoutePaths];

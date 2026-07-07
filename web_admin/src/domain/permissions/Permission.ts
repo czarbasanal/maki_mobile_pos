@@ -38,9 +38,6 @@ export const Permission = {
   addExpense: 'addExpense',
   editExpense: 'editExpense',
   deleteExpense: 'deleteExpense',
-  // Cash
-  managePettyCash: 'managePettyCash',
-  performCutOff: 'performCutOff',
   // Reports
   viewSalesReports: 'viewSalesReports',
   viewProfitReports: 'viewProfitReports',
@@ -129,8 +126,6 @@ const admin: ReadonlySet<Permission> = new Set<Permission>([
   Permission.addExpense,
   Permission.editExpense,
   Permission.deleteExpense,
-  Permission.managePettyCash,
-  Permission.performCutOff,
   Permission.viewSalesReports,
   Permission.viewProfitReports,
   Permission.viewUsers,
