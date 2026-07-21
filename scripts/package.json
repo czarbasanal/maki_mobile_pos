@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "One-off operational scripts (run manually).",
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
     "firebase-admin": "^13.0.0"
   }
