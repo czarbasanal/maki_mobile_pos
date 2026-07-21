@@ -20,6 +20,7 @@ barcodes stay empty until scanned in later.
   The script re-verifies this at run time and warns on any new mismatch.
 - **8 rows with unreadable cost tags** (letters outside the cipher — e.g. `URX`, `0IX`,
   `EX`, `45A`): rows 312, 512, 539, 679, 837, 838, 1044, 1121. Selling prices are known.
+  **RESOLVED 2026-07-21** — user supplied the true tags/costs (see Decisions §2).
 - **13 same-name different-batch pairs** (different cost and sometimes price):
   BELT BANDO SKYDRIVE SPORT 115I, BOLT HENG CNC-5G 6X35 CRANKCASE SILVER,
   DISC PLATE RR RAIDER150, HANDLE SWITCH DOMINO MIO LH, HANDLE SWITCH DOMINO MIO RH,
@@ -44,9 +45,21 @@ barcodes stay empty until scanned in later.
 
 1. **Batch-cost pairs → variations.** First-listed row = base product; second = variation
    (`baseSku` = base's SKU, `variationNumber: 1`, its own SKU, costCode, cost, price, qty).
-2. **Unknown-cost rows → import at cost ₱0**, keep the tag string as `costCode` verbatim,
-   add note `VERIFY COST — tag reads '<tag>'`. Sellable immediately; costs fixed in-app
-   after checking physical tags.
+2. **Unknown-cost rows → RESOLVED with user-supplied corrections** (2026-07-21). All 8
+   decode consistently under the default cipher. The corrections live as an explicit
+   `COST_CORRECTIONS` table in the script lib (keyed by CSV row/name); the master CSV is
+   not edited. No ₱0 imports, no VERIFY-COST notes:
+
+   | CSV row | Item | costCode | cost |
+   |---|---|---|---|
+   | 312 | CARBURETOR SUNTAL CT150BOXER | `ZLS` | 680 |
+   | 512 | FOOTREST ASSY W/ STAND CSL TMX | `BFS` | 250 |
+   | 539 | FRONT FENDER SMASH115 MATTE BLK | `MFS` | 450 |
+   | 679 | HEADLIGHT RS100 | `BQS` | 230 |
+   | 837 | PISTON KIT M.DIALLO SMASH110 | `NZS` | 160 |
+   | 838 | PISTON KIT M.DIALLO SMASH115 | `NZS` | 160 |
+   | 1044 | SPROCKET RR CNKY NIKOYO CT100 45T | `NZF` | 165 |
+   | 1121 | TAIL LIGHT COVER XRM110 BLK | `MS` | 40 |
 3. **Double-listed pairs → merge to one product, qty NOT summed.** Categories:
    oil filters → `LUBE&FLUIDS`, signal-light lenses → `ACCESSORIES` (LENS category
    disappears), center stand → `CHASSIS`.
