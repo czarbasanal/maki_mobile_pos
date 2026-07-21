@@ -3,8 +3,14 @@
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-initializeApp({ credential: applicationDefault(), projectId: 'maki-mobile-pos' });
+const PROJECT_ID = 'maki-mobile-pos';
+initializeApp({ credential: applicationDefault(), projectId: PROJECT_ID });
 const db = getFirestore();
+
+const EMULATOR = process.env.FIRESTORE_EMULATOR_HOST;
+console.log(EMULATOR
+  ? `TARGET: emulator (${EMULATOR})`
+  : `TARGET: PRODUCTION (${PROJECT_ID})`);
 
 let failures = 0;
 function check(label, cond, detail = '') {

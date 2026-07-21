@@ -39,6 +39,9 @@ settings, units, expense_categories, void_reasons, motorcycle_models, mechanics)
 - Import:            add `--execute`
 - Verify afterwards: `node import-inventory-verify.mjs`
 - Emulator rehearsal: prefix commands with `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080`
+- ⚠️ Go-live: freeze ALL shop app/POS usage from the moment the wipe starts until
+  `import-inventory-verify.mjs` passes — a mid-window sale writes to collections
+  being wiped or references vanished products.
 
 Import is idempotent & resumable: existing product names (word-order-insensitive) are
 skipped, the SKU claim + product doc are written atomically, and orphan import claims

@@ -9,7 +9,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 const PROJECT_ID = 'maki-mobile-pos';
 const DELETE = [
-  'products', 'product_skus', 'product_categories', 'suppliers',
+  'products', 'product_skus', 'product_barcodes', 'product_categories', 'suppliers',
   'sales', 'receivings', 'drafts', 'purchase_orders',
   'expenses', 'daily_closings', 'user_logs', 'void_requests',
 ];
@@ -21,6 +21,11 @@ const KEEP = [
 const execute = process.argv.includes('--execute');
 initializeApp({ credential: applicationDefault(), projectId: PROJECT_ID });
 const db = getFirestore();
+
+const EMULATOR = process.env.FIRESTORE_EMULATOR_HOST;
+console.log(EMULATOR
+  ? `TARGET: emulator (${EMULATOR})`
+  : `TARGET: PRODUCTION (${PROJECT_ID})`);
 
 const all = await db.listCollections();
 console.log('--- wipe plan ---');
@@ -39,6 +44,23 @@ if (unknown.length) {
 if (!execute) {
   console.log('\nDRY RUN — nothing deleted. Re-run with --execute to wipe.');
   process.exit(0);
+}
+if (execute && !EMULATOR) {
+  process.stdout.write(`\nIrreversible deletion from PRODUCTION. Type the project id (${PROJECT_ID}) to confirm: `);
+  const line = await new Promise((resolve) => {
+    let buf = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (chunk) => {
+      buf += chunk;
+      const nl = buf.indexOf('\n');
+      if (nl !== -1) { process.stdin.pause(); resolve(buf.slice(0, nl).trim()); }
+    });
+    process.stdin.resume();
+  });
+  if (line !== PROJECT_ID) {
+    console.error('Confirmation mismatch — aborting. Nothing deleted.');
+    process.exit(1);
+  }
 }
 for (const id of DELETE) {
   const ref = db.collection(id);

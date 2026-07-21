@@ -87,15 +87,20 @@ barcodes stay empty until scanned in later.
     entry beside `COST_CORRECTIONS` in the script lib.
 11. **Pre-import wipe** (user-confirmed 2026-07-21, NO backup requested): before the
     import, a `scripts/wipe-db.mjs` script deletes (recursively, including
-    subcollections) `products`, `product_skus`, `product_categories`, `suppliers`,
-    `sales`, `receivings`, `drafts`, `purchase_orders`, `expenses`, `daily_closings`,
-    `user_logs`, `void_requests`. KEPT: `users`, `settings` (cipher + receipt counters —
-    receipt numbers continue, no reuse), `units`, `expense_categories`, `void_reasons`,
-    `motorcycle_models`, `mechanics`. Storage files (product images, expense receipts)
-    become orphans and are left alone. Consequences accepted by user: all transaction
-    history gone; the 4 existing products not in the CSV (RS8 ULTRA 1L ×2-batch,
-    PULLEY SET RS8 NMAX AEROX V1 V2, PULLEY BALL SRF 9G CLICK/PCX 6SET,
-    JVT PIPE V3 NMAX/AEROX) vanish; job-order drafts confirmed all closed.
+    subcollections) `products`, `product_skus`, `product_barcodes`, `product_categories`,
+    `suppliers`, `sales`, `receivings`, `drafts`, `purchase_orders`, `expenses`,
+    `daily_closings`, `user_logs`, `void_requests`. KEPT: `users`, `settings` (cipher +
+    receipt counters — receipt numbers continue, no reuse), `units`, `expense_categories`,
+    `void_reasons`, `motorcycle_models`, `mechanics`. Storage files (product images,
+    expense receipts) become orphans and are left alone. Consequences accepted by user:
+    all transaction history gone; the 4 existing products not in the CSV (RS8 ULTRA 1L
+    ×2-batch, PULLEY SET RS8 NMAX AEROX V1 V2, PULLEY BALL SRF 9G CLICK/PCX 6SET,
+    JVT PIPE V3 NMAX/AEROX) vanish; job-order drafts confirmed all closed. Amended per
+    final review: `product_barcodes` (barcode-uniqueness claims, currently empty) is
+    deleted too — claims are product-coupled; a stranded claim would permanently block
+    its barcode. Prod wipe `--execute` additionally requires typing the project id to
+    confirm; every script prints a TARGET banner (PRODUCTION vs emulator); shop app
+    usage must be frozen from wipe start until the post-import verify passes.
 12. **Units mapped to the app vocabulary** (2026-07-21): PC→`pcs`, SET→`set`,
     RULER→`ruler`, METER→`m` (via a `UNIT_MAP` in the lib). The import creates the
     missing `units` docs (`set`, `ruler`) with the shared CategoryModel shape.

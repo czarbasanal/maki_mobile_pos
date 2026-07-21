@@ -65,6 +65,11 @@ if (report.errors.length > 0) {
 initializeApp({ credential: applicationDefault(), projectId: PROJECT_ID });
 const db = getFirestore();
 
+const EMULATOR = process.env.FIRESTORE_EMULATOR_HOST;
+console.log(EMULATOR
+  ? `TARGET: emulator (${EMULATOR})`
+  : `TARGET: PRODUCTION (${PROJECT_ID})`);
+
 /** Map nameKey -> [{id, sku, name, baseSku}] for every existing product. */
 async function loadExistingProducts() {
   const snap = await db.collection('products').get();
