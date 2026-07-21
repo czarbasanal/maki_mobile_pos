@@ -145,3 +145,31 @@ export function generateSku(name, rand = Math.random) {
 export function normalizeSku(sku) {
   return String(sku ?? '').trim().toUpperCase();
 }
+
+// ==================== SEARCH KEYWORDS ====================
+// Port of lib/core/extensions/string_extensions.dart toSearchKeywords and
+// ProductModel._generateSearchKeywords / SupplierModel._generateSearchKeywords.
+
+export function toSearchKeywords(str, { minLength = 1, maxLength = 10 } = {}) {
+  const keywords = new Set();
+  for (const word of String(str).toLowerCase().split(/\s+/)) {
+    if (!word) continue;
+    for (let i = minLength; i <= word.length && i <= maxLength; i += 1) {
+      keywords.add(word.slice(0, i));
+    }
+  }
+  return [...keywords];
+}
+
+export function productSearchKeywords({ sku, name, category }) {
+  const keywords = new Set([
+    ...toSearchKeywords(sku),
+    ...toSearchKeywords(name),
+    ...(category ? toSearchKeywords(category) : []),
+  ]);
+  return [...keywords];
+}
+
+export function supplierSearchKeywords(name) {
+  return toSearchKeywords(name);
+}

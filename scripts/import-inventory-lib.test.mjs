@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsv, parseMoney, parseQty, encodeCostCode, generateSku, slugifyForSku, normalizeSku, SKU_CHARS } from './import-inventory-lib.mjs';
+import { parseCsv, parseMoney, parseQty, encodeCostCode, generateSku, slugifyForSku, normalizeSku, SKU_CHARS, toSearchKeywords, productSearchKeywords, supplierSearchKeywords } from './import-inventory-lib.mjs';
 
 test('parseCsv handles quoted fields containing commas and a BOM', () => {
   const text = '﻿' + 'NAME,COST\n"TIRE, BIG","₱1,280.00"\nPLAIN,5\n';
@@ -89,4 +89,29 @@ test('normalizeSku is trim + uppercase (claim-key parity)', () => {
 
 test('slugifyForSku strips non-alphanumerics', () => {
   assert.equal(slugifyForSku('W/ Stand (TMX)'), 'WSTANDTMX');
+});
+
+test('toSearchKeywords matches the Dart doc example', () => {
+  assert.deepEqual(
+    [...toSearchKeywords('Hello World')].sort(),
+    ['h', 'he', 'hel', 'hell', 'hello', 'w', 'wo', 'wor', 'worl', 'world'].sort(),
+  );
+});
+
+test('toSearchKeywords caps prefixes at 10 chars', () => {
+  const kw = toSearchKeywords('ADJUSTABLE1234');
+  assert.ok(kw.includes('adjustable')); // length 10
+  assert.ok(!kw.includes('adjustable1')); // length 11 — capped
+});
+
+test('productSearchKeywords unions sku, name, category', () => {
+  const kw = productSearchKeywords({ sku: 'MS-AB', name: 'OIL X', category: 'LUBE&FLUIDS' });
+  for (const expected of ['ms-ab', 'oil', 'x', 'lube&fluid', 'm', 'o', 'l']) {
+    assert.ok(kw.includes(expected), `missing ${expected}`);
+  }
+  assert.equal(new Set(kw).size, kw.length, 'no duplicates');
+});
+
+test('supplierSearchKeywords is name-only prefixes', () => {
+  assert.deepEqual([...supplierSearchKeywords('KS')].sort(), ['k', 'ks'].sort());
 });
