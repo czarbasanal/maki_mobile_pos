@@ -4,7 +4,7 @@
 
 **Goal:** One-shot, verified import of the shop's 1,249-row master inventory CSV into the live `products` collection (plus categories, suppliers, and `product_skus` claims), honoring every invariant the Flutter/web apps maintain.
 
-**Architecture:** A pure, unit-tested transform library (`scripts/import-inventory-lib.mjs`) turns CSV records into a write plan; a CLI (`scripts/import-inventory.mjs`) prints a dry-run report by default and performs idempotent, resumable Firestore writes under `--execute`. A separate verify script (`scripts/import-inventory-verify.mjs`) asserts post-import invariants against emulator or prod.
+**Architecture:** A pure, unit-tested transform library (`scripts/import-inventory-lib.mjs`) turns CSV records into a write plan; a CLI (`scripts/import-inventory.mjs`) prints a dry-run report by default and performs idempotent, resumable Firestore writes under `--execute`. A wipe script (`scripts/wipe-db.mjs`) clears prod transaction/inventory data first (spec §11, user-confirmed keep-list). A separate verify script (`scripts/import-inventory-verify.mjs`) asserts post-import invariants against emulator or prod.
 
 **Tech Stack:** Node ESM (`scripts/` package, `firebase-admin` ^13), built-in `node --test` runner, Firestore emulator for the dress rehearsal. No new dependencies.
 
@@ -17,8 +17,97 @@
 - **Dart/TS parity is non-negotiable** for: `normalizeSku` (= `trim().toUpperCase()`), SKU generation (alphabet `ABCDEFGHJKMNPQRSTUVWXYZ23456789`, name-prefix cap 10, suffix 6, fallback `SKU-` + 8), cost-code cipher (1→N 2→B 3→Q 4→M 5→F 6→Z 7→V 8→L 9→J 0→S, `SC`=00, `SCS`=000, ≤0→`S`), search keywords (lowercase, whitespace-split, per-word prefixes length 1..10, set semantics).
 - Audit tag on every written doc: `createdBy`/`updatedBy` = `initial-inventory-import`; products additionally `createdByName`/`updatedByName` = `Initial Import`.
 - The master CSV is copied into the repo (`scripts/data/master-inventory-2026-07-21.csv`) and never edited — all fixes are code constants.
-- Writes to **prod** happen only in Task 10, after an explicit user "go". Everything before that is tests, dry runs, and the emulator.
+- Writes to **prod** happen only in Task 10, behind TWO explicit user gates: one for the wipe, one for the import. Everything before that is tests, dry runs, and the emulator. NEVER run `wipe-db.mjs --execute` or `import-inventory.mjs --execute` against prod outside Task 10's gated steps.
+- The app's category collection is **`product_categories`** (not `categories`); admin name-lists (`product_categories`, `units`, …) share the CategoryModel doc shape `{name, isActive, createdAt, updatedAt, createdBy, updatedBy}`.
+- Units vocabulary (spec §12): CSV PC→`pcs`, SET→`set`, RULER→`ruler`, METER→`m`; the import creates missing `units` docs.
 - Project ID: `maki-mobile-pos`. Auth: ADC (`gcloud auth application-default login`), already configured on this machine (read-only prod queries ran earlier this session).
+
+---
+
+### Task 0: Database wipe script (build + dry-run only — NO prod execute here)
+
+**Files:**
+- Create: `scripts/wipe-db.mjs`
+
+**Interfaces:**
+- Produces: standalone CLI. `node wipe-db.mjs` = dry run (per-collection counts + planned action, deletes nothing); `--execute` recursively deletes the DELETE list (subcollections included via `db.recursiveDelete`). Refuses to run if an unlisted collection exists (forces a human decision for anything new).
+- The DELETE/KEEP lists are the user-confirmed spec §11 scope — copy verbatim.
+
+- [ ] **Step 1: Write `scripts/wipe-db.mjs`**
+
+```js
+// Pre-import prod wipe — deletes transaction + inventory data, keeps users/defaults.
+// Scope confirmed by user 2026-07-21 — see spec §11. NO backup was requested.
+//
+// Dry run:  node wipe-db.mjs           (prints per-collection plan, deletes nothing)
+// Execute:  node wipe-db.mjs --execute
+// Emulator: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node wipe-db.mjs --execute
+import { initializeApp, applicationDefault } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
+const PROJECT_ID = 'maki-mobile-pos';
+const DELETE = [
+  'products', 'product_skus', 'product_categories', 'suppliers',
+  'sales', 'receivings', 'drafts', 'purchase_orders',
+  'expenses', 'daily_closings', 'user_logs', 'void_requests',
+];
+const KEEP = [
+  'users', 'settings', 'units', 'expense_categories',
+  'void_reasons', 'motorcycle_models', 'mechanics',
+];
+
+const execute = process.argv.includes('--execute');
+initializeApp({ credential: applicationDefault(), projectId: PROJECT_ID });
+const db = getFirestore();
+
+const all = await db.listCollections();
+console.log('--- wipe plan ---');
+const unknown = [];
+for (const col of all.sort((a, b) => a.id.localeCompare(b.id))) {
+  const count = (await col.count().get()).data().count;
+  const action = DELETE.includes(col.id) ? 'DELETE' : KEEP.includes(col.id) ? 'keep' : 'UNKNOWN';
+  if (action === 'UNKNOWN') unknown.push(col.id);
+  console.log(`${action.padEnd(8)} ${col.id.padEnd(22)} ${count}`);
+}
+if (unknown.length) {
+  console.error(`\nUnknown collections not in DELETE or KEEP: ${unknown.join(', ')}`);
+  console.error('Add each to one of the lists (with user sign-off) before running.');
+  process.exit(1);
+}
+if (!execute) {
+  console.log('\nDRY RUN — nothing deleted. Re-run with --execute to wipe.');
+  process.exit(0);
+}
+for (const id of DELETE) {
+  const ref = db.collection(id);
+  const before = (await ref.count().get()).data().count;
+  await db.recursiveDelete(ref); // subcollections too (sale items, price_history)
+  console.log(`deleted ${id} (${before} docs)`);
+}
+console.log('\n--- post-wipe collections ---');
+for (const col of await db.listCollections()) {
+  const count = (await col.count().get()).data().count;
+  console.log(`${col.id.padEnd(22)} ${count}`);
+}
+console.log('\nWipe complete.');
+```
+
+- [ ] **Step 2: Syntax check**
+
+Run: `cd scripts && node --check wipe-db.mjs`
+Expected: no output (OK)
+
+- [ ] **Step 3: Dry run against prod (read-only)**
+
+Run: `cd scripts && node wipe-db.mjs`
+Expected: a table where every existing collection is labeled `DELETE` or `keep` (no `UNKNOWN`), e.g. `DELETE sales 43`, `keep users 3`, ending `DRY RUN — nothing deleted.` Do **NOT** pass `--execute` — the prod wipe happens only in Task 10.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add scripts/wipe-db.mjs
+git commit -m "feat(scripts): pre-import db wipe script (dry-run default)"
+```
 
 ---
 
@@ -496,8 +585,8 @@ git commit -m "feat(scripts): search-keyword generation (app parity)"
 **Interfaces:**
 - Produces:
   - `nameKey(name) -> string` — uppercase sorted-word-set key (`'ASK BRAKE SHOE XRM'` ≡ `'BRAKE SHOE ASK XRM'`).
-  - `COST_CORRECTIONS`, `NAME_CORRECTIONS`, `CATEGORY_NORMALIZE`, `MERGE_CATEGORY_OVERRIDES` constants (values below are user-verified — copy exactly).
-  - `transform(records) -> {standalone: Item[], pairs: {base: Item, variation: Item}[], categories: string[], report}` where `Item = {name, category, costCode, cost, price, quantity, reorderLevel, unit, supplierCode: string|null, notes: string|null}` (no sku/keywords yet — those are generated at write time).
+  - `COST_CORRECTIONS`, `NAME_CORRECTIONS`, `CATEGORY_NORMALIZE`, `MERGE_CATEGORY_OVERRIDES`, `UNIT_MAP` constants (values below are user-verified — copy exactly).
+  - `transform(records) -> {standalone: Item[], pairs: {base: Item, variation: Item}[], categories: string[], units: string[], report}` where `Item = {name, category, costCode, cost, price, quantity, reorderLevel, unit, supplierCode: string|null, notes: string|null}` (no sku/keywords yet — those are generated at write time). `unit` is the MAPPED app-vocabulary value (`pcs`/`set`/`ruler`/`m`); `units` is the sorted distinct list of mapped units used.
   - `report` fields: `recordsTotal, skippedNoName, errors[], cipherMismatches[], costCorrectionsApplied[], nameCorrectionsApplied[], categoryNormalized, decimalQtyRounded[], mergedDoubles[], mergedBatches[], variationPairs[], supplierLinks[], expected: {products, standaloneOrBase, variations, categories, inventoryValue, retailValue}`.
 - Dedup dispatch rules (from the spec): group rows by `nameKey`; group of 2 with **different costCode** → variation pair (first row = base); **same costCode + same qty** → double-listing, keep first row once (category override map applies); **same costCode + different qty** → same-cost batches, sum qty, price = max (TOP GASKET → qty 15, ₱150); group > 2 → error.
 
@@ -525,7 +614,7 @@ test('transform: plain row becomes a standalone item', () => {
   assert.equal(pairs.length, 0);
   assert.deepEqual(standalone[0], {
     name: 'WIDGET A', category: 'ENGINE', costCode: 'FF', cost: 55, price: 100,
-    quantity: 2, reorderLevel: 0, unit: 'PC', supplierCode: null, notes: null,
+    quantity: 2, reorderLevel: 0, unit: 'pcs', supplierCode: null, notes: null,
   });
   assert.equal(report.cipherMismatches.length, 0);
   assert.equal(report.expected.products, 1);
@@ -592,6 +681,19 @@ test('transform: normalizes CHAIN & SPROCKET and floors decimal qty with note', 
   assert.equal(report.decimalQtyRounded.length, 1);
 });
 
+test('transform: maps CSV units to app vocabulary, keeps unknowns verbatim', () => {
+  const mapped = transform([
+    REC({ NAME: 'A1' }), // PC
+    REC({ NAME: 'A2', UNIT: 'SET' }),
+    REC({ NAME: 'A3', UNIT: 'RULER' }),
+    REC({ NAME: 'A4', UNIT: 'METER' }),
+    REC({ NAME: 'A5', UNIT: 'DOZEN' }),
+  ]);
+  assert.deepEqual(mapped.standalone.map((i) => i.unit), ['pcs', 'set', 'ruler', 'm', 'DOZEN']);
+  assert.deepEqual(mapped.units, ['DOZEN', 'm', 'pcs', 'ruler', 'set']);
+  assert.equal(mapped.report.unmappedUnits.length, 1);
+});
+
 test('transform: unparsable cost is a blocking error, >2 group is an error', () => {
   const bad = transform([REC({ 'UNIT COST': 'URX' })]);
   assert.equal(bad.report.errors.length, 1);
@@ -644,6 +746,9 @@ export const MERGE_CATEGORY_OVERRIDES = {
   'SIGNAL LIGHT LENS XRM ORG': 'ACCESSORIES',
 };
 
+// CSV unit -> the app's admin-managed `units` vocabulary (spec §12).
+export const UNIT_MAP = { PC: 'pcs', SET: 'set', RULER: 'ruler', METER: 'm' };
+
 // ==================== NAME MATCHING ====================
 
 /** Word-order-insensitive key: 'ASK BRAKE SHOE XRM' ≡ 'BRAKE SHOE ASK XRM'. */
@@ -667,6 +772,7 @@ export function transform(records) {
     mergedBatches: [],
     variationPairs: [],
     supplierLinks: [],
+    unmappedUnits: [],
   };
 
   const items = [];
@@ -704,6 +810,9 @@ export function transform(records) {
       report.cipherMismatches.push({ line, name, cost, costCode, expected: encodeCostCode(cost) });
     }
     const supplierRaw = (rec.SUPPLIER ?? '').trim();
+    const rawUnit = (rec.UNIT ?? '').trim() || 'PC';
+    const unit = UNIT_MAP[rawUnit] ?? rawUnit;
+    if (!UNIT_MAP[rawUnit]) report.unmappedUnits.push(`${name}: ${rawUnit}`);
     items.push({
       name,
       category,
@@ -712,7 +821,7 @@ export function transform(records) {
       price,
       quantity: parsedQty.qty,
       reorderLevel: Number.parseInt(rec.REORDER_LEVEL, 10) || 0,
-      unit: (rec.UNIT ?? '').trim() || 'PC',
+      unit,
       supplierCode: supplierRaw && supplierRaw !== 'NA' ? supplierRaw : null,
       notes: parsedQty.original ? `Imported qty rounded down from ${parsedQty.original}` : null,
     });
@@ -762,6 +871,7 @@ export function transform(records) {
     if (item.supplierCode) report.supplierLinks.push(`${item.name} -> ${item.supplierCode}`);
   }
   const categories = [...new Set(all.map((i) => i.category))].sort();
+  const units = [...new Set(all.map((i) => i.unit))].sort();
   report.expected = {
     products: all.length,
     standaloneOrBase: standalone.length + pairs.length,
@@ -770,7 +880,7 @@ export function transform(records) {
     inventoryValue: all.reduce((s, i) => s + i.cost * i.quantity, 0),
     retailValue: all.reduce((s, i) => s + i.price * i.quantity, 0),
   };
-  return { standalone, pairs, categories, report };
+  return { standalone, pairs, categories, units, report };
 }
 ```
 
@@ -820,7 +930,7 @@ const CSV = fileURLToPath(new URL('./data/master-inventory-2026-07-21.csv', impo
 
 test('golden: full master CSV transforms to the approved shape', () => {
   const { records } = parseCsv(readFileSync(CSV, 'utf8'));
-  const { standalone, pairs, categories, report } = transform(records);
+  const { standalone, pairs, categories, units, report } = transform(records);
 
   assert.equal(report.recordsTotal, 1250); // 1249 items + totals row
   assert.equal(report.skippedNoName, 1); // the totals row
@@ -834,6 +944,8 @@ test('golden: full master CSV transforms to the approved shape', () => {
   assert.equal(report.mergedBatches.length, 1); // TOP GASKET
   assert.equal(report.variationPairs.length, 12);
   assert.equal(report.supplierLinks.length, 5); // HD, HMJ, HNG, KS×2
+  assert.equal(report.unmappedUnits.length, 0);
+  assert.deepEqual(units, ['m', 'pcs', 'ruler', 'set']);
 
   assert.equal(standalone.length, 1216); // 1207 singles + 9 merges
   assert.equal(pairs.length, 12);
@@ -855,6 +967,7 @@ test('golden: full master CSV transforms to the approved shape', () => {
   assert.ok(!byName.has('HEADLIGHT RS100'));
   const hose = byName.get('FUEL HOSE BLK');
   assert.equal(hose.quantity, 27);
+  assert.equal(hose.unit, 'ruler');
   assert.match(hose.notes, /rounded down from 27\.5/);
   const oilFilter = byName.get('OIL FILTER BAJAJ/CT100');
   assert.deepEqual({ qty: oilFilter.quantity, cat: oilFilter.category }, { qty: 16, cat: 'LUBE&FLUIDS' });
@@ -1027,7 +1140,7 @@ if (!execute) {
   process.exit(0);
 }
 
-await runImport(db, plan, result.categories);
+await runImport(db, plan, result.categories, result.units);
 ```
 
 (`runImport` is added in Task 8 — until then, add a temporary last line `async function runImport() { throw new Error('not implemented — Task 8'); }`.)
@@ -1040,8 +1153,7 @@ Expected output (key lines):
 - `expected products = 1240 (1228 base/standalone + 12 variations)`
 - `expected categories = 24`
 - `CIPHER MISMATCHES (expect none) (0)`, `BLOCKING ERRORS (0)`
-- `SKIPPED — NAME ALREADY IN SYSTEM` contains `BRAKE SHOE ASK XRM (exists as 'ASK BRAKE SHOE XRM' ...)`
-- `products to write = 1239`
+- If prod has NOT been wiped yet when this runs: `SKIPPED — NAME ALREADY IN SYSTEM` contains `BRAKE SHOE ASK XRM (exists as 'ASK BRAKE SHOE XRM' ...)` and `products to write = 1239`. (Post-wipe in Task 10 the same command shows 0 skips / 1240.)
 - ends with `DRY RUN — nothing written.`
 
 - [ ] **Step 3: Run the unit tests to confirm nothing broke**
@@ -1066,7 +1178,8 @@ git commit -m "feat(scripts): inventory import CLI — dry-run report + skip pre
 **Interfaces:**
 - Consumes: `plan = {skips, singles, pairJobs}`, `result.categories`, lib exports.
 - Behavior contract:
-  - Category docs: `{name, isActive: true, createdAt/updatedAt: serverTimestamp, createdBy/updatedBy: IMPORT_TAG}` — mirror of `CategoryModel.toMap(forCreate:)`. Only names not already present (exact trim match).
+  - Category docs go in **`product_categories`** (the app's real collection — there is no `categories` collection): `{name, isActive: true, createdAt/updatedAt: serverTimestamp, createdBy/updatedBy: IMPORT_TAG}` — mirror of `CategoryModel.toMap(forCreate:)`. Only names not already present (exact trim match).
+  - Unit docs: same shape, collection `units`, for every mapped unit in `result.units` not already present (`set` and `ruler` are the expected creations; `pcs`/`m` exist).
   - Supplier docs: full `SupplierModel.toMap(forCreate:)` shape — `{name, address: null, contactPerson: null, contactNumber: null, alternativeNumber: null, email: null, transactionType: 'na', isActive: true, notes: null, productCount: 0, totalInventoryValue: 0, searchKeywords: supplierSearchKeywords(name), createdAt/updatedAt: serverTimestamp, createdBy/updatedBy: IMPORT_TAG}`. Only codes needed by write-list items and not already present (case-insensitive name match).
   - Product + claim written **atomically** (one `WriteBatch` per product: `batch.create(claimRef)` + `batch.create(docRef)`), claim keyed `product_skus/{normalizeSku(sku)}` with `{sku, productId, claimedBy: IMPORT_TAG, claimedAt: serverTimestamp}`. On `ALREADY_EXISTS` (claim collision) regenerate the SKU and retry (max 5).
   - Product doc mirrors `ProductModel.toMap(forCreate:)` — exact field list in the code below (includes `imageUrl: null`, `barcodes: []`, mirrored `createdByName`/`updatedByName`).
@@ -1077,26 +1190,35 @@ git commit -m "feat(scripts): inventory import CLI — dry-run report + skip pre
 - [ ] **Step 1: Replace the stub with the real `runImport`**
 
 ```js
-async function runImport(db, plan, categories) {
+async function runImport(db, plan, categories, unitsUsed) {
   section('EXECUTE');
 
-  // ---- Categories ----
-  const catSnap = await db.collection('categories').get();
-  const existingCats = new Set(catSnap.docs.map((d) => (d.get('name') ?? '').trim()));
-  let catsCreated = 0;
-  for (const name of categories) {
-    if (existingCats.has(name)) continue;
-    await db.collection('categories').add({
-      name,
-      isActive: true,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      createdBy: IMPORT_TAG,
-      updatedBy: IMPORT_TAG,
-    });
-    catsCreated += 1;
+  // Shared helper: admin name-lists (product_categories, units) use the
+  // CategoryModel doc shape.
+  async function ensureNameList(collection, names) {
+    const snap = await db.collection(collection).get();
+    const existingNames = new Set(snap.docs.map((d) => (d.get('name') ?? '').trim()));
+    let created = 0;
+    for (const name of names) {
+      if (existingNames.has(name)) continue;
+      await db.collection(collection).add({
+        name,
+        isActive: true,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        createdBy: IMPORT_TAG,
+        updatedBy: IMPORT_TAG,
+      });
+      created += 1;
+    }
+    return created;
   }
+
+  // ---- Categories + units ----
+  const catsCreated = await ensureNameList('product_categories', categories);
   console.log(`categories created    = ${catsCreated}`);
+  const unitsCreated = await ensureNameList('units', unitsUsed);
+  console.log(`units created         = ${unitsCreated}`);
 
   // ---- Suppliers ----
   const writeItems = [
@@ -1285,7 +1407,7 @@ git commit -m "feat(scripts): idempotent Firestore writer for inventory import"
 
 ---
 
-### Task 9: Verify script + emulator dress rehearsal
+### Task 9: Verify script + emulator dress rehearsal (wipe + import)
 
 **Files:**
 - Create: `scripts/import-inventory-verify.mjs`
@@ -1373,13 +1495,18 @@ console.log('--- decimal qty: FUEL HOSE BLK ---');
 const [hose] = await byName('FUEL HOSE BLK');
 check('exists', Boolean(hose));
 if (hose) {
-  check('qty 27 + note', hose.get('quantity') === 27 && /27\.5/.test(hose.get('notes') ?? ''));
+  check('qty 27 + note + unit ruler',
+    hose.get('quantity') === 27 && /27\.5/.test(hose.get('notes') ?? '') && hose.get('unit') === 'ruler');
 }
 
 console.log('--- merged double-listing: OIL FILTER BAJAJ/CT100 ---');
 const filters = await byName('OIL FILTER BAJAJ/CT100');
 check('single doc, qty 16, LUBE&FLUIDS',
   filters.length === 1 && filters[0].get('quantity') === 16 && filters[0].get('category') === 'LUBE&FLUIDS');
+
+console.log('--- units vocabulary ---');
+const unitNames = (await db.collection('units').get()).docs.map((d) => d.get('name'));
+check('set + ruler unit docs exist', unitNames.includes('set') && unitNames.includes('ruler'));
 
 console.log('--- searchKeywords sanity ---');
 if (carb) {
@@ -1399,7 +1526,45 @@ process.exit(failures === 0 ? 0 : 1);
 Run: `firebase emulators:start --only firestore --project maki-mobile-pos`
 Expected: `All emulators ready!` with firestore on `127.0.0.1:8080`.
 
-- [ ] **Step 3: Seed the known prod conflict into the emulator**
+- [ ] **Step 3: Seed wipe-rehearsal data (keeps AND deletes, with subcollections)**
+
+Run (from `scripts/`):
+
+```bash
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node -e "
+import('firebase-admin/app').then(async ({ initializeApp }) => {
+  const { getFirestore } = await import('firebase-admin/firestore');
+  initializeApp({ projectId: 'maki-mobile-pos' });
+  const db = getFirestore();
+  // keeps
+  await db.collection('users').doc('u1').create({ name: 'Test User', role: 'admin' });
+  await db.collection('settings').doc('sale_counters').create({ '20260721': 3 });
+  await db.collection('units').add({ name: 'pcs', isActive: true });
+  await db.collection('units').add({ name: 'm', isActive: true });
+  // deletes (with subcollections)
+  const sale = db.collection('sales').doc();
+  await sale.create({ total: 100 });
+  await sale.collection('items').doc().create({ qty: 1 });
+  const prod = db.collection('products').doc();
+  await prod.create({ sku: 'junk-1', name: 'JUNK PRODUCT' });
+  await prod.collection('price_history').doc().create({ price: 1 });
+  await db.collection('product_skus').doc('JUNK-1').create({ sku: 'junk-1', productId: prod.id, claimedBy: 'seed' });
+  await db.collection('suppliers').add({ name: 'HD' });
+  console.log('seeded');
+});"
+```
+
+Expected: `seeded`
+
+- [ ] **Step 4: Wipe rehearsal — dry run, execute, verify keeps survive**
+
+Run: `cd scripts && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node wipe-db.mjs`
+Expected: table labels `sales`/`products`/`product_skus`/`suppliers` as `DELETE` and `users`/`settings`/`units` as `keep`, no `UNKNOWN`, ends `DRY RUN — nothing deleted.`
+
+Run: `cd scripts && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node wipe-db.mjs --execute`
+Expected: `deleted` lines for the seeded delete-collections; post-wipe table lists ONLY `users` (1), `settings` (1), `units` (2). Sale items and price_history subcollections are gone with their parents.
+
+- [ ] **Step 5: Seed the skip-machinery test product (post-wipe)**
 
 Run (from `scripts/`):
 
@@ -1416,27 +1581,27 @@ import('firebase-admin/app').then(async ({ initializeApp }) => {
 });"
 ```
 
-Expected: `seeded`
+Expected: `seeded`. (Prod post-wipe has zero products — this seed exists purely to prove the word-order skip/resume machinery works end-to-end.)
 
-- [ ] **Step 4: Emulator dry run, then execute**
+- [ ] **Step 6: Import rehearsal — dry run, then execute**
 
 Run: `cd scripts && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node import-inventory.mjs data/master-inventory-2026-07-21.csv`
 Expected: skip list shows `BRAKE SHOE ASK XRM (exists as 'ASK BRAKE SHOE XRM' ...)`, `products to write = 1239`.
 
 Run: `cd scripts && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node import-inventory.mjs data/master-inventory-2026-07-21.csv --execute`
-Expected: `categories created = 24`, `suppliers created = 4` (the emulator has no HD supplier, unlike prod where it exists and only 3 get created), `products written = 1239`, `products in db = 1240`, `claims in db = 1240`, `OK — import reconciled cleanly.`
+Expected: `categories created = 24`, `units created = 2` (set, ruler — pcs/m were seeded), `suppliers created = 4` (incl. HD, wiped in Step 4), `products written = 1239`, `products in db = 1240`, `claims in db = 1240`, `OK — import reconciled cleanly.`
 
-- [ ] **Step 5: Run the verify script against the emulator**
+- [ ] **Step 7: Run the verify script against the emulator**
 
 Run: `cd scripts && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node import-inventory-verify.mjs`
 Expected: `ALL CHECKS PASSED`
 
-- [ ] **Step 6: Idempotency — re-run execute, expect zero new writes**
+- [ ] **Step 8: Idempotency — re-run execute, expect zero new writes**
 
 Run: `cd scripts && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node import-inventory.mjs data/master-inventory-2026-07-21.csv --execute`
 Expected: every import name now skips (`products to write = 0`), `products written = 0`, counts unchanged (1240/1240), `OK — import reconciled cleanly.`
 
-- [ ] **Step 7: Stop the emulator, commit**
+- [ ] **Step 9: Stop the emulator, commit**
 
 ```bash
 git add scripts/import-inventory-verify.mjs
@@ -1445,7 +1610,7 @@ git commit -m "feat(scripts): post-import verify script; emulator rehearsal pass
 
 ---
 
-### Task 10: README + prod import (USER-GATED)
+### Task 10: README + prod wipe + prod import (TWO USER GATES)
 
 **Files:**
 - Modify: `scripts/README.md`
@@ -1453,20 +1618,25 @@ git commit -m "feat(scripts): post-import verify script; emulator rehearsal pass
 - [ ] **Step 1: Document the script in `scripts/README.md`** (append)
 
 ```markdown
-## import-inventory.mjs (one-shot, 2026-07-21)
+## wipe-db.mjs + import-inventory.mjs (one-shot, 2026-07-21)
 
-Initial bulk import of the master inventory CSV (`data/master-inventory-2026-07-21.csv`)
-into `products` + `product_skus` claims + `categories` + `suppliers`. Spec:
+Fresh-start sequence: `wipe-db.mjs` deletes transaction + inventory data (keeps users,
+settings, units, expense_categories, void_reasons, motorcycle_models, mechanics), then
+`import-inventory.mjs` loads the master inventory CSV
+(`data/master-inventory-2026-07-21.csv`) into `products` + `product_skus` claims +
+`product_categories` + `units` + `suppliers`. Spec:
 `docs/superpowers/specs/2026-07-21-initial-inventory-import-design.md`.
 
-- Dry run (default): `node import-inventory.mjs data/master-inventory-2026-07-21.csv`
+- Wipe dry run:      `node wipe-db.mjs` (add `--execute` to delete — DESTRUCTIVE)
+- Import dry run:    `node import-inventory.mjs data/master-inventory-2026-07-21.csv`
 - Import:            add `--execute`
 - Verify afterwards: `node import-inventory-verify.mjs`
 - Emulator rehearsal: prefix commands with `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080`
 
-Idempotent & resumable: existing product names (word-order-insensitive) are skipped, the
-SKU claim + product doc are written atomically, and orphan import claims are cleaned on
-reconcile. Everything written is tagged `createdBy: 'initial-inventory-import'`.
+Import is idempotent & resumable: existing product names (word-order-insensitive) are
+skipped, the SKU claim + product doc are written atomically, and orphan import claims
+are cleaned on reconcile. Everything written is tagged
+`createdBy: 'initial-inventory-import'`.
 ```
 
 - [ ] **Step 2: Full test suite one last time**
@@ -1481,28 +1651,40 @@ git add scripts/README.md
 git commit -m "docs(scripts): document import-inventory usage"
 ```
 
-- [ ] **Step 4: Prod dry run — present the report to the user**
+- [ ] **Step 4: Prod WIPE dry run — present to the user**
+
+Run: `cd scripts && node wipe-db.mjs`
+Show the user the full table (expected: `DELETE sales 43`, `DELETE products 6`, … `keep users 3`, `keep settings 2`, no `UNKNOWN`).
+
+- [ ] **Step 5: 🛑 GATE 1 — wait for the user's explicit "go" on the WIPE.**
+
+Do NOT run `wipe-db.mjs --execute` against prod without the user confirming Step 4's table. Destructive and irreversible (user declined a backup).
+
+- [ ] **Step 6: Prod wipe execute (only after Gate 1)**
+
+Run: `cd scripts && node wipe-db.mjs --execute`
+Expected: `deleted <collection> (<n> docs)` for all 12 delete-collections; post-wipe table shows only the 7 keep-collections; `Wipe complete.`
+
+- [ ] **Step 7: Prod IMPORT dry run — present to the user**
 
 Run: `cd scripts && node import-inventory.mjs data/master-inventory-2026-07-21.csv`
-Show the user the full report (expected: `products to write = 1239`, 1 skip, 0 errors, 0 mismatches).
+Show the user the full report (expected post-wipe: `SKIPPED — NAME ALREADY IN SYSTEM (0)`, `products to write = 1240`, 0 errors, 0 cipher mismatches).
 
-- [ ] **Step 5: 🛑 STOP — wait for the user's explicit "go" before touching prod.**
+- [ ] **Step 8: 🛑 GATE 2 — wait for the user's explicit "go" on the IMPORT.**
 
-Do NOT run `--execute` against prod without the user confirming the dry-run report in this step. This is the production-write gate required by CLAUDE.md (shared Firestore writes).
-
-- [ ] **Step 6: Prod execute + verify (only after user approval)**
+- [ ] **Step 9: Prod import execute + verify (only after Gate 2)**
 
 Run: `cd scripts && node import-inventory.mjs data/master-inventory-2026-07-21.csv --execute`
-Expected: `products written = 1239`, `products in db = 1245` (6 existing + 1239), `claims in db = 1245`, `OK — import reconciled cleanly.`
+Expected: `categories created = 24`, `units created = 2`, `suppliers created = 4`, `products written = 1240`, `products in db = 1240`, `claims in db = 1240`, `OK — import reconciled cleanly.`
 
 Run: `cd scripts && node import-inventory-verify.mjs`
 Expected: `ALL CHECKS PASSED`
 
-- [ ] **Step 7: User smoke test**
+- [ ] **Step 10: User smoke test**
 
-Ask the user to open the web admin (https://maki-mobile-pos.web.app) inventory list and spot-check: search works (`belt bando` shows 2 rows), a corrected item shows cost ₱680, TOP GASKET shows qty 15 @ ₱150, categories filter shows the new categories.
+Ask the user to open the web admin (https://maki-mobile-pos.web.app) inventory list and spot-check: search works (`belt bando` shows 2 rows), a corrected item shows cost ₱680, TOP GASKET shows qty 15 @ ₱150, categories filter shows the 24 new categories, a mobile product form's unit dropdown includes `set` and `ruler`. Remind the user: BRAKE SHOE ASK XRM imported at qty 9 — physically verify that one item.
 
-- [ ] **Step 8: Final commit + finishing-a-development-branch**
+- [ ] **Step 11: Final commit + finishing-a-development-branch**
 
 Any fixes discovered during prod verification get committed; then use the superpowers:finishing-a-development-branch skill (merge `feat/initial-inventory-import` to `main`, push per user preference).
 
@@ -1510,6 +1692,6 @@ Any fixes discovered during prod verification get committed; then use the superp
 
 ## Self-Review Notes
 
-- **Spec coverage:** corrections table (Task 5 constants + tests), merges/variations (Task 5), SKU/claims/keywords parity (Tasks 3–4 + writer), categories/suppliers (Task 8), idempotency/resume (Tasks 8–9 incl. crashed-run orphan cleanup and partial-pair resume), dry-run gate + prod gate (Tasks 7, 10), emulator rehearsal (Task 9), golden numbers (Task 6). Receivings/barcodes/rules explicitly out of scope — no task touches them.
-- **Numbers:** 1250 records = 1249 items + totals; 21 dup names = 12 variation pairs + 9 merges; products 1240 = 1216 standalone + 12×2; prod skips 1 known → 1239 written, 1245 total (6 existing).
-- **Known emulator/prod difference:** emulator has no HD supplier → `suppliers created = 4` there vs `3` in prod. Called out in Task 9 Step 4.
+- **Spec coverage:** wipe scope §11 (Task 0 + Task 9 rehearsal + Task 10 gates), corrections table (Task 5 constants + tests), merges/variations (Task 5), unit mapping §12 (Task 5 + Task 8 units-ensure + verify), SKU/claims/keywords parity (Tasks 3–4 + writer), `product_categories`/suppliers (Task 8), idempotency/resume (Tasks 8–9 incl. crashed-run orphan cleanup and partial-pair resume), two prod gates (Task 10), emulator rehearsal of wipe AND import (Task 9), golden numbers (Task 6). Receivings/barcodes/rules/Storage explicitly out of scope — no task touches them.
+- **Numbers:** 1250 records = 1249 items + totals; 21 dup names = 12 variation pairs + 9 merges; products 1240 = 1216 standalone + 12×2 pairs. Prod post-wipe: 0 skips → 1240 written, 1240 total. Emulator rehearsal keeps a seeded skip product → 1239 written, 1240 total there.
+- **Emulator/prod parity:** wipe removes HD in both → `suppliers created = 4` everywhere; `units created = 2` (set, ruler) in both (emulator seeds pcs + m).
