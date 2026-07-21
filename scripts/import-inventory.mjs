@@ -138,4 +138,199 @@ if (!execute) {
 
 await runImport(db, plan, result.categories, result.units);
 
-async function runImport() { throw new Error('not implemented — Task 8'); }
+async function runImport(db, plan, categories, unitsUsed) {
+  section('EXECUTE');
+
+  // Shared helper: admin name-lists (product_categories, units) use the
+  // CategoryModel doc shape.
+  async function ensureNameList(collection, names) {
+    const snap = await db.collection(collection).get();
+    const existingNames = new Set(snap.docs.map((d) => (d.get('name') ?? '').trim()));
+    let created = 0;
+    for (const name of names) {
+      if (existingNames.has(name)) continue;
+      await db.collection(collection).add({
+        name,
+        isActive: true,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        createdBy: IMPORT_TAG,
+        updatedBy: IMPORT_TAG,
+      });
+      created += 1;
+    }
+    return created;
+  }
+
+  // ---- Categories + units ----
+  const catsCreated = await ensureNameList('product_categories', categories);
+  console.log(`categories created    = ${catsCreated}`);
+  const unitsCreated = await ensureNameList('units', unitsUsed);
+  console.log(`units created         = ${unitsCreated}`);
+
+  // ---- Suppliers ----
+  const writeItems = [
+    ...plan.singles.map((item) => ({ item, kind: 'single' })),
+    ...plan.pairJobs.flatMap((job) => [
+      ...(job.writeBase ? [{ item: job.writeBase, kind: 'base', job }] : []),
+      { item: job.variation, kind: 'variation', job },
+    ]),
+  ];
+  const neededCodes = new Set(
+    writeItems.map(({ item }) => item.supplierCode).filter(Boolean),
+  );
+  const supSnap = await db.collection('suppliers').get();
+  const suppliers = new Map(
+    supSnap.docs.map((d) => [(d.get('name') ?? '').trim().toUpperCase(), { id: d.id, name: d.get('name') }]),
+  );
+  let supsCreated = 0;
+  for (const code of neededCodes) {
+    if (suppliers.has(code.toUpperCase())) continue;
+    const ref = await db.collection('suppliers').add({
+      name: code,
+      address: null,
+      contactPerson: null,
+      contactNumber: null,
+      alternativeNumber: null,
+      email: null,
+      transactionType: 'na',
+      isActive: true,
+      notes: null,
+      productCount: 0,
+      totalInventoryValue: 0,
+      searchKeywords: supplierSearchKeywords(code),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdBy: IMPORT_TAG,
+      updatedBy: IMPORT_TAG,
+    });
+    suppliers.set(code.toUpperCase(), { id: ref.id, name: code });
+    supsCreated += 1;
+  }
+  console.log(`suppliers created     = ${supsCreated}`);
+
+  // ---- Products (+ claims, atomically per product) ----
+  const aggregates = new Map(); // supplierKey -> {count, value}
+
+  async function writeProduct(item, { baseSku, variationNumber }) {
+    const docRef = db.collection('products').doc();
+    const supplier = item.supplierCode ? suppliers.get(item.supplierCode.toUpperCase()) : null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const sku = generateSku(item.name);
+      const claimRef = db.collection('product_skus').doc(normalizeSku(sku));
+      const batch = db.batch();
+      batch.create(claimRef, {
+        sku,
+        productId: docRef.id,
+        claimedBy: IMPORT_TAG,
+        claimedAt: FieldValue.serverTimestamp(),
+      });
+      batch.create(docRef, {
+        sku,
+        name: item.name,
+        costCode: item.costCode,
+        cost: item.cost,
+        price: item.price,
+        quantity: item.quantity,
+        reorderLevel: item.reorderLevel,
+        unit: item.unit,
+        supplierId: supplier?.id ?? null,
+        supplierName: supplier?.name ?? null,
+        isActive: true,
+        searchKeywords: productSearchKeywords({ sku, name: item.name, category: item.category }),
+        baseSku,
+        variationNumber,
+        barcodes: [],
+        category: item.category,
+        imageUrl: null,
+        notes: item.notes,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        createdBy: IMPORT_TAG,
+        updatedBy: IMPORT_TAG,
+        createdByName: IMPORT_DISPLAY_NAME,
+        updatedByName: IMPORT_DISPLAY_NAME,
+      });
+      try {
+        await batch.commit();
+        if (supplier) {
+          const key = item.supplierCode.toUpperCase();
+          const agg = aggregates.get(key) ?? { count: 0, value: 0 };
+          agg.count += 1;
+          agg.value += item.cost * item.quantity;
+          aggregates.set(key, agg);
+        }
+        return sku;
+      } catch (err) {
+        if (err.code === 6 || err.code === 'already-exists') continue; // claim collision → new suffix
+        throw err;
+      }
+    }
+    throw new Error(`Could not claim a unique SKU for ${item.name} after 5 attempts`);
+  }
+
+  let written = 0;
+  const progress = () => {
+    written += 1;
+    if (written % 100 === 0) console.log(`  ...${written} products written`);
+  };
+  for (const item of plan.singles) {
+    await writeProduct(item, { baseSku: null, variationNumber: null });
+    progress();
+  }
+  for (const job of plan.pairJobs) {
+    let baseSku = job.baseSkuFixed;
+    if (job.writeBase) {
+      baseSku = await writeProduct(job.writeBase, { baseSku: null, variationNumber: null });
+      progress();
+    }
+    await writeProduct(job.variation, { baseSku, variationNumber: 1 });
+    progress();
+  }
+  console.log(`products written      = ${written}`);
+
+  // ---- Supplier aggregates ----
+  for (const [key, agg] of aggregates) {
+    const supplier = suppliers.get(key);
+    await db.collection('suppliers').doc(supplier.id).update({
+      productCount: FieldValue.increment(agg.count),
+      totalInventoryValue: FieldValue.increment(agg.value),
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: IMPORT_TAG,
+    });
+  }
+  console.log(`supplier aggregates   = ${aggregates.size} updated`);
+
+  // ---- Reconciliation ----
+  section('RECONCILIATION');
+  // Orphan claims: import-tagged claims whose product doc is missing (crashed run).
+  const importClaims = await db.collection('product_skus')
+    .where('claimedBy', '==', IMPORT_TAG).get();
+  let orphans = 0;
+  for (const claim of importClaims.docs) {
+    const productRef = db.collection('products').doc(claim.get('productId'));
+    if (!(await productRef.get()).exists) {
+      console.log(`  deleting orphan claim ${claim.id} (product ${claim.get('productId')} missing)`);
+      await claim.ref.delete();
+      orphans += 1;
+    }
+  }
+  if (orphans) console.log(`orphan claims removed = ${orphans}`);
+
+  const productsCount = (await db.collection('products').count().get()).data().count;
+  const claimsCount = (await db.collection('product_skus').count().get()).data().count;
+  console.log(`products in db        = ${productsCount}`);
+  console.log(`claims in db          = ${claimsCount}`);
+  const expectedTotal = existing.count + written;
+  let ok = true;
+  if (claimsCount !== productsCount) {
+    console.error(`MISMATCH: claims (${claimsCount}) != products (${productsCount})`);
+    ok = false;
+  }
+  if (productsCount !== expectedTotal) {
+    console.error(`MISMATCH: products (${productsCount}) != existing ${existing.count} + written ${written}`);
+    ok = false;
+  }
+  if (!ok) process.exit(1);
+  console.log('\nOK — import reconciled cleanly.');
+}
