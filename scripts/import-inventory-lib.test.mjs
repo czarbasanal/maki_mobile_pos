@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsv, parseMoney, parseQty, encodeCostCode, generateSku, slugifyForSku, normalizeSku, SKU_CHARS, toSearchKeywords, productSearchKeywords, supplierSearchKeywords } from './import-inventory-lib.mjs';
+import {
+  parseCsv, parseMoney, parseQty, encodeCostCode, generateSku, slugifyForSku, normalizeSku, SKU_CHARS, toSearchKeywords, productSearchKeywords, supplierSearchKeywords,
+  nameKey, transform, COST_CORRECTIONS, NAME_CORRECTIONS,
+} from './import-inventory-lib.mjs';
 
 test('parseCsv handles quoted fields containing commas and a BOM', () => {
   const text = '﻿' + 'NAME,COST\n"TIRE, BIG","₱1,280.00"\nPLAIN,5\n';
@@ -114,4 +117,115 @@ test('productSearchKeywords unions sku, name, category', () => {
 
 test('supplierSearchKeywords is name-only prefixes', () => {
   assert.deepEqual([...supplierSearchKeywords('KS')].sort(), ['k', 'ks'].sort());
+});
+
+test('nameKey ignores word order', () => {
+  assert.equal(nameKey('ASK BRAKE SHOE XRM'), nameKey('BRAKE SHOE  ASK XRM'));
+  assert.notEqual(nameKey('OIL FILTER SUZUKI'), nameKey('OIL FILTER YAMAHA'));
+});
+
+const REC = (over = {}) => ({
+  NAME: 'WIDGET A', CATEGORY: 'ENGINE', CODE: 'FF', 'UNIT COST': '₱55.00',
+  'SELLING PRICE': '₱100.00', QTY: '2', UNIT: 'PC', REORDER_LEVEL: '0',
+  SUPPLIER: 'NA', ...over,
+});
+
+test('transform: plain row becomes a standalone item', () => {
+  const { standalone, pairs, report } = transform([REC()]);
+  assert.equal(standalone.length, 1);
+  assert.equal(pairs.length, 0);
+  assert.deepEqual(standalone[0], {
+    name: 'WIDGET A', category: 'ENGINE', costCode: 'FF', cost: 55, price: 100,
+    quantity: 2, reorderLevel: 0, unit: 'pcs', supplierCode: null, notes: null,
+  });
+  assert.equal(report.cipherMismatches.length, 0);
+  assert.equal(report.expected.products, 1);
+  assert.equal(report.expected.inventoryValue, 110);
+});
+
+test('transform: skips nameless (totals) rows', () => {
+  const { standalone, report } = transform([REC({ NAME: '  ' })]);
+  assert.equal(standalone.length, 0);
+  assert.equal(report.skippedNoName, 1);
+});
+
+test('transform: different costCode pair becomes base + variation', () => {
+  const { standalone, pairs } = transform([
+    REC({ QTY: '1' }),
+    REC({ CODE: 'ZS', 'UNIT COST': '₱60.00', QTY: '3' }),
+  ]);
+  assert.equal(standalone.length, 0);
+  assert.equal(pairs.length, 1);
+  assert.equal(pairs[0].base.cost, 55);
+  assert.equal(pairs[0].variation.cost, 60);
+  assert.equal(pairs[0].variation.quantity, 3);
+});
+
+test('transform: same code + same qty merges without summing', () => {
+  const { standalone, report } = transform([
+    REC({ NAME: 'SIGNAL LIGHT LENS W100 WHT', CATEGORY: 'LENS', QTY: '20' }),
+    REC({ NAME: 'SIGNAL LIGHT LENS W100 WHT', CATEGORY: 'ACCESSORIES', QTY: '20' }),
+  ]);
+  assert.equal(standalone.length, 1);
+  assert.equal(standalone[0].quantity, 20);
+  assert.equal(standalone[0].category, 'ACCESSORIES'); // MERGE_CATEGORY_OVERRIDES
+  assert.equal(report.mergedDoubles.length, 1);
+});
+
+test('transform: same code + different qty sums and takes max price', () => {
+  const { standalone, report } = transform([
+    REC({ NAME: 'TOP GASKET AMCO W125', CODE: 'QF', 'UNIT COST': '35', QTY: '10', 'SELLING PRICE': '120' }),
+    REC({ NAME: 'TOP GASKET AMCO W125', CODE: 'QF', 'UNIT COST': '35', QTY: '5', 'SELLING PRICE': '150' }),
+  ]);
+  assert.equal(standalone.length, 1);
+  assert.equal(standalone[0].quantity, 15);
+  assert.equal(standalone[0].price, 150);
+  assert.equal(report.mergedBatches.length, 1);
+});
+
+test('transform: applies cost and name corrections', () => {
+  const { standalone } = transform([
+    REC({ NAME: 'HEADLIGHT RS100', CATEGORY: 'LIGHTS', CODE: 'BQX', 'UNIT COST': '23X', 'SELLING PRICE': '₱480.00' }),
+  ]);
+  assert.equal(standalone[0].name, 'HEADLIGHT RS100 BLK');
+  assert.equal(standalone[0].cost, 230);
+  assert.equal(standalone[0].costCode, 'BQS');
+});
+
+test('transform: normalizes CHAIN & SPROCKET and floors decimal qty with note', () => {
+  const { standalone, report } = transform([
+    REC({ NAME: 'FUEL HOSE BLK', CATEGORY: 'CHAIN & SPROCKET', QTY: '27.5', UNIT: 'RULER', CODE: 'Q', 'UNIT COST': '3' }),
+  ]);
+  assert.equal(standalone[0].category, 'CHAIN&SPROCKET');
+  assert.equal(standalone[0].quantity, 27);
+  assert.equal(standalone[0].notes, 'Imported qty rounded down from 27.5');
+  assert.equal(report.categoryNormalized, 1);
+  assert.equal(report.decimalQtyRounded.length, 1);
+});
+
+test('transform: maps CSV units to app vocabulary, keeps unknowns verbatim', () => {
+  const mapped = transform([
+    REC({ NAME: 'A1' }), // PC
+    REC({ NAME: 'A2', UNIT: 'SET' }),
+    REC({ NAME: 'A3', UNIT: 'RULER' }),
+    REC({ NAME: 'A4', UNIT: 'METER' }),
+    REC({ NAME: 'A5', UNIT: 'DOZEN' }),
+  ]);
+  assert.deepEqual(mapped.standalone.map((i) => i.unit), ['pcs', 'set', 'ruler', 'm', 'DOZEN']);
+  assert.deepEqual(mapped.units, ['DOZEN', 'm', 'pcs', 'ruler', 'set']);
+  assert.equal(mapped.report.unmappedUnits.length, 1);
+});
+
+test('transform: unparsable cost is a blocking error, >2 group is an error', () => {
+  const bad = transform([REC({ 'UNIT COST': 'URX' })]);
+  assert.equal(bad.report.errors.length, 1);
+  const triple = transform([REC(), REC(), REC()]);
+  assert.equal(triple.report.errors.length, 1);
+});
+
+test('corrections tables carry the user-verified values', () => {
+  assert.deepEqual(COST_CORRECTIONS['CARBURETOR SUNTAL CT150BOXER'], { costCode: 'ZLS', cost: 680 });
+  assert.deepEqual(COST_CORRECTIONS['TAIL LIGHT COVER XRM110 BLK'], { costCode: 'MS', cost: 40 });
+  assert.equal(Object.keys(COST_CORRECTIONS).length, 8);
+  assert.equal(NAME_CORRECTIONS['HEADLIGHT RS100'], 'HEADLIGHT RS100 BLK');
 });

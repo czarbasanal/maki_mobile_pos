@@ -173,3 +173,169 @@ export function productSearchKeywords({ sku, name, category }) {
 export function supplierSearchKeywords(name) {
   return toSearchKeywords(name);
 }
+
+// ==================== CORRECTIONS (user-verified 2026-07-21) ====================
+// See docs/superpowers/specs/2026-07-21-initial-inventory-import-design.md §Decisions.
+// Keyed by the EXACT trimmed NAME as it appears in the CSV (before renames).
+
+export const COST_CORRECTIONS = {
+  'CARBURETOR SUNTAL CT150BOXER': { costCode: 'ZLS', cost: 680 },
+  'FOOTREST ASSY W/ STAND CSL TMX': { costCode: 'BFS', cost: 250 },
+  'FRONT FENDER SMASH115 MATTE BLK': { costCode: 'MFS', cost: 450 },
+  'HEADLIGHT RS100': { costCode: 'BQS', cost: 230 },
+  'PISTON KIT M.DIALLO SMASH110': { costCode: 'NZS', cost: 160 },
+  'PISTON KIT M.DIALLO SMASH115': { costCode: 'NZS', cost: 160 },
+  'SPROCKET RR CNKY NIKOYO CT100 45T': { costCode: 'NZF', cost: 165 },
+  'TAIL LIGHT COVER XRM110 BLK': { costCode: 'MS', cost: 40 },
+};
+
+export const NAME_CORRECTIONS = {
+  'HEADLIGHT RS100': 'HEADLIGHT RS100 BLK',
+};
+
+export const CATEGORY_NORMALIZE = {
+  'CHAIN & SPROCKET': 'CHAIN&SPROCKET',
+};
+
+// For merged double-listings the FIRST row's category wins unless overridden here.
+export const MERGE_CATEGORY_OVERRIDES = {
+  'SIGNAL LIGHT LENS W100 WHT': 'ACCESSORIES',
+  'SIGNAL LIGHT LENS XRM ORG': 'ACCESSORIES',
+};
+
+// CSV unit -> the app's admin-managed `units` vocabulary (spec §12).
+export const UNIT_MAP = { PC: 'pcs', SET: 'set', RULER: 'ruler', METER: 'm' };
+
+// ==================== NAME MATCHING ====================
+
+/** Word-order-insensitive key: 'ASK BRAKE SHOE XRM' ≡ 'BRAKE SHOE ASK XRM'. */
+export function nameKey(name) {
+  return String(name).trim().toUpperCase().split(/\s+/).filter(Boolean).sort().join(' ');
+}
+
+// ==================== TRANSFORM ====================
+
+export function transform(records) {
+  const report = {
+    recordsTotal: records.length,
+    skippedNoName: 0,
+    errors: [],
+    cipherMismatches: [],
+    costCorrectionsApplied: [],
+    nameCorrectionsApplied: [],
+    categoryNormalized: 0,
+    decimalQtyRounded: [],
+    mergedDoubles: [],
+    mergedBatches: [],
+    variationPairs: [],
+    supplierLinks: [],
+    unmappedUnits: [],
+  };
+
+  const items = [];
+  for (const [idx, rec] of records.entries()) {
+    const line = idx + 2; // line 1 is the header
+    const rawName = (rec.NAME ?? '').trim();
+    if (!rawName) {
+      report.skippedNoName += 1;
+      continue;
+    }
+    const correction = COST_CORRECTIONS[rawName] ?? null;
+    if (correction) report.costCorrectionsApplied.push(rawName);
+    const rename = NAME_CORRECTIONS[rawName] ?? null;
+    if (rename) report.nameCorrectionsApplied.push(`${rawName} -> ${rename}`);
+    const name = rename ?? rawName;
+
+    let category = (rec.CATEGORY ?? '').trim();
+    if (CATEGORY_NORMALIZE[category]) {
+      category = CATEGORY_NORMALIZE[category];
+      report.categoryNormalized += 1;
+    }
+
+    const cost = correction ? correction.cost : parseMoney(rec['UNIT COST']);
+    const costCode = correction ? correction.costCode : (rec.CODE ?? '').trim();
+    const price = parseMoney(rec['SELLING PRICE']);
+    const parsedQty = parseQty(rec.QTY);
+    if (cost === null || price === null || parsedQty === null || !category) {
+      report.errors.push({ line, name, reason: 'unparsable cost/price/qty or missing category' });
+      continue;
+    }
+    if (parsedQty.original) {
+      report.decimalQtyRounded.push(`${name}: ${parsedQty.original} -> ${parsedQty.qty}`);
+    }
+    if (encodeCostCode(cost) !== costCode) {
+      report.cipherMismatches.push({ line, name, cost, costCode, expected: encodeCostCode(cost) });
+    }
+    const supplierRaw = (rec.SUPPLIER ?? '').trim();
+    const rawUnit = (rec.UNIT ?? '').trim() || 'PC';
+    const unit = UNIT_MAP[rawUnit] ?? rawUnit;
+    if (!UNIT_MAP[rawUnit]) report.unmappedUnits.push(`${name}: ${rawUnit}`);
+    items.push({
+      name,
+      category,
+      costCode,
+      cost,
+      price,
+      quantity: parsedQty.qty,
+      reorderLevel: Number.parseInt(rec.REORDER_LEVEL, 10) || 0,
+      unit,
+      supplierCode: supplierRaw && supplierRaw !== 'NA' ? supplierRaw : null,
+      notes: parsedQty.original ? `Imported qty rounded down from ${parsedQty.original}` : null,
+    });
+  }
+
+  // Group by word-set name key and dispatch per the spec's dedup rules.
+  const groups = new Map();
+  for (const item of items) {
+    const key = nameKey(item.name);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+
+  const standalone = [];
+  const pairs = [];
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      standalone.push(group[0]);
+      continue;
+    }
+    if (group.length > 2) {
+      report.errors.push({ name: group[0].name, reason: `${group.length} rows share this name — resolve manually` });
+      continue;
+    }
+    const [a, b] = group; // CSV order preserved by Map insertion order
+    if (a.costCode !== b.costCode) {
+      report.variationPairs.push(`${a.name} (${a.costCode} qty ${a.quantity} / ${b.costCode} qty ${b.quantity})`);
+      pairs.push({ base: a, variation: b });
+    } else if (a.quantity === b.quantity) {
+      const merged = { ...a, category: MERGE_CATEGORY_OVERRIDES[a.name] ?? a.category };
+      report.mergedDoubles.push(`${a.name} (qty kept ${a.quantity}, category ${merged.category})`);
+      standalone.push(merged);
+    } else {
+      const merged = {
+        ...a,
+        quantity: a.quantity + b.quantity,
+        price: Math.max(a.price, b.price),
+        category: MERGE_CATEGORY_OVERRIDES[a.name] ?? a.category,
+      };
+      report.mergedBatches.push(`${a.name} (qty ${a.quantity}+${b.quantity}=${merged.quantity}, price ${merged.price})`);
+      standalone.push(merged);
+    }
+  }
+
+  const all = [...standalone, ...pairs.flatMap((p) => [p.base, p.variation])];
+  for (const item of all) {
+    if (item.supplierCode) report.supplierLinks.push(`${item.name} -> ${item.supplierCode}`);
+  }
+  const categories = [...new Set(all.map((i) => i.category))].sort();
+  const units = [...new Set(all.map((i) => i.unit))].sort();
+  report.expected = {
+    products: all.length,
+    standaloneOrBase: standalone.length + pairs.length,
+    variations: pairs.length,
+    categories: categories.length,
+    inventoryValue: all.reduce((s, i) => s + i.cost * i.quantity, 0),
+    retailValue: all.reduce((s, i) => s + i.price * i.quantity, 0),
+  };
+  return { standalone, pairs, categories, units, report };
+}
