@@ -71,3 +71,38 @@ export function parseQty(value) {
   const qty = Math.floor(n);
   return { qty, original: qty === n ? null : String(value).trim() };
 }
+
+// ==================== COST-CODE CIPHER ====================
+// Port of lib/domain/entities/cost_code_entity.dart `encode` with the
+// default mapping (CostCodeModel.defaultMapping — matches prod).
+
+export const DIGIT_TO_LETTER = {
+  1: 'N', 2: 'B', 3: 'Q', 4: 'M', 5: 'F',
+  6: 'Z', 7: 'V', 8: 'L', 9: 'J', 0: 'S',
+};
+const DOUBLE_ZERO = 'SC';
+const TRIPLE_ZERO = 'SCS';
+
+export function encodeCostCode(cost) {
+  const whole = Math.trunc(cost);
+  if (whole <= 0) return DIGIT_TO_LETTER[0];
+  const s = String(whole);
+  let out = '';
+  let i = 0;
+  while (i < s.length) {
+    const remaining = s.length - i;
+    if (remaining >= 3 && s[i] === '0' && s[i + 1] === '0' && s[i + 2] === '0') {
+      out += TRIPLE_ZERO;
+      i += 3;
+      continue;
+    }
+    if (remaining >= 2 && s[i] === '0' && s[i + 1] === '0') {
+      out += DOUBLE_ZERO;
+      i += 2;
+      continue;
+    }
+    out += DIGIT_TO_LETTER[s[i]];
+    i += 1;
+  }
+  return out;
+}

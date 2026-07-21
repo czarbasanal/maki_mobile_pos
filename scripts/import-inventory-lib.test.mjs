@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsv, parseMoney, parseQty } from './import-inventory-lib.mjs';
+import { parseCsv, parseMoney, parseQty, encodeCostCode } from './import-inventory-lib.mjs';
 
 test('parseCsv handles quoted fields containing commas and a BOM', () => {
   const text = '﻿' + 'NAME,COST\n"TIRE, BIG","₱1,280.00"\nPLAIN,5\n';
@@ -41,4 +41,25 @@ test('parseQty floors decimals and reports the original', () => {
   assert.equal(parseQty('abc'), null);
   assert.equal(parseQty('-3'), null);
   assert.equal(parseQty(''), null);
+});
+
+test('encodeCostCode matches real rows from the master CSV', () => {
+  // Every pair below is a real (cost, CODE) row verified during data profiling.
+  assert.equal(encodeCostCode(55), 'FF');
+  assert.equal(encodeCostCode(285), 'BLF');
+  assert.equal(encodeCostCode(80), 'LS');
+  assert.equal(encodeCostCode(110), 'NNS');
+  assert.equal(encodeCostCode(100), 'NSC');
+  assert.equal(encodeCostCode(400), 'MSC');
+  assert.equal(encodeCostCode(1204), 'NBSM');
+  assert.equal(encodeCostCode(1688), 'NZLL');
+  assert.equal(encodeCostCode(1750), 'NVFS');
+  assert.equal(encodeCostCode(360), 'QZS');
+});
+
+test('encodeCostCode zero runs and edge cases (algorithm-derived)', () => {
+  assert.equal(encodeCostCode(1000), 'NSCS'); // N + '000'→SCS
+  assert.equal(encodeCostCode(10000), 'NSCSS'); // N + '000'→SCS + '0'→S
+  assert.equal(encodeCostCode(0), 'S');
+  assert.equal(encodeCostCode(680.75), 'ZLS'); // decimals truncated
 });
