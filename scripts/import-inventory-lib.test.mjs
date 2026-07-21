@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsv, parseMoney, parseQty, encodeCostCode } from './import-inventory-lib.mjs';
+import { parseCsv, parseMoney, parseQty, encodeCostCode, generateSku, slugifyForSku, normalizeSku, SKU_CHARS } from './import-inventory-lib.mjs';
 
 test('parseCsv handles quoted fields containing commas and a BOM', () => {
   const text = '﻿' + 'NAME,COST\n"TIRE, BIG","₱1,280.00"\nPLAIN,5\n';
@@ -62,4 +62,31 @@ test('encodeCostCode zero runs and edge cases (algorithm-derived)', () => {
   assert.equal(encodeCostCode(10000), 'NSCSS'); // N + '000'→SCS + '0'→S
   assert.equal(encodeCostCode(0), 'S');
   assert.equal(encodeCostCode(680.75), 'ZLS'); // decimals truncated
+});
+
+test('SKU alphabet excludes ambiguous chars', () => {
+  assert.equal(SKU_CHARS, 'ABCDEFGHJKMNPQRSTUVWXYZ23456789');
+});
+
+test('generateSku matches the Dart generateForName contract', () => {
+  const zeros = () => 0; // always picks 'A'
+  // Dart doc example: 'Milk Chocolate 500g Box' -> prefix MLKCHCLT50
+  assert.equal(generateSku('Milk Chocolate 500g Box', zeros), 'MLKCHCLT50-AAAAAA');
+  // First char kept even if vowel; later vowels dropped.
+  assert.equal(generateSku('Ice', zeros), 'IC-AAAAAA');
+  // Empty slug falls back to SKU- + 8 random chars.
+  assert.equal(generateSku('///', zeros), 'SKU-AAAAAAAA');
+  // Real item name.
+  assert.equal(
+    generateSku('BELT BANDO SKYDRIVE SPORT 115I', zeros),
+    'BLTBNDSKYD-AAAAAA',
+  );
+});
+
+test('normalizeSku is trim + uppercase (claim-key parity)', () => {
+  assert.equal(normalizeSku('  abC-12 '), 'ABC-12');
+});
+
+test('slugifyForSku strips non-alphanumerics', () => {
+  assert.equal(slugifyForSku('W/ Stand (TMX)'), 'WSTANDTMX');
 });

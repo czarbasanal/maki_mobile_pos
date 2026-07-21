@@ -106,3 +106,42 @@ export function encodeCostCode(cost) {
   }
   return out;
 }
+
+// ==================== SKU GENERATION ====================
+// Port of lib/core/utils/sku_generator.dart generateForName / the identical
+// web port web_admin/src/domain/products/sku.ts.
+
+export const SKU_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const SKU_PREFIX = 'SKU';
+const SKU_RANDOM_LENGTH = 8;
+const SKU_PREFIXED_RANDOM_LENGTH = 6;
+const SKU_NAME_PREFIX_LENGTH = 10;
+
+function randomString(length, rand) {
+  let out = '';
+  for (let i = 0; i < length; i += 1) {
+    out += SKU_CHARS[Math.floor(rand() * SKU_CHARS.length)];
+  }
+  return out;
+}
+
+export function slugifyForSku(name) {
+  return name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+export function generateSku(name, rand = Math.random) {
+  const slug = slugifyForSku(name ?? '');
+  if (slug.length === 0) return `${SKU_PREFIX}-${randomString(SKU_RANDOM_LENGTH, rand)}`;
+  const first = slug[0];
+  const rest = slug.slice(1).replace(/[AEIOU]/g, '');
+  const base = first + rest;
+  const prefix = base.length > SKU_NAME_PREFIX_LENGTH
+    ? base.slice(0, SKU_NAME_PREFIX_LENGTH)
+    : base;
+  return `${prefix}-${randomString(SKU_PREFIXED_RANDOM_LENGTH, rand)}`;
+}
+
+/** MUST stay byte-identical to backfill-product-skus.mjs / Dart / web. */
+export function normalizeSku(sku) {
+  return String(sku ?? '').trim().toUpperCase();
+}
