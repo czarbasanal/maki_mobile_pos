@@ -21,14 +21,14 @@ barcodes stay empty until scanned in later.
 - **8 rows with unreadable cost tags** (letters outside the cipher — e.g. `URX`, `0IX`,
   `EX`, `45A`): rows 312, 512, 539, 679, 837, 838, 1044, 1121. Selling prices are known.
   **RESOLVED 2026-07-21** — user supplied the true tags/costs (see Decisions §2).
-- **13 same-name different-batch pairs** (different cost and sometimes price):
+- **12 same-name different-batch pairs** (different cost and sometimes price):
   BELT BANDO SKYDRIVE SPORT 115I, BOLT HENG CNC-5G 6X35 CRANKCASE SILVER,
   DISC PLATE RR RAIDER150, HANDLE SWITCH DOMINO MIO LH, HANDLE SWITCH DOMINO MIO RH,
   MODULE LED WHT, TIRE TL BEAST 48P 110/70-13, TIRE TL MAXXIS MAG1 43P 80/80-14,
   TIRE TL MAXXIS MAV6 46P 90/90-14, TIRE TT IZUMI SPECIAL 2.75-17,
-  TIRE TT LEO LAZER 70/80-17, TIRE TT LEO LAZER 80/80-17, TOP GASKET AMCO W125.
-  (TOP GASKET is the odd one: same cost, different price/qty — still treated as a
-  variation, flagged in the report.)
+  TIRE TT LEO LAZER 70/80-17, TIRE TT LEO LAZER 80/80-17.
+  (TOP GASKET AMCO W125 — same cost ₱35/QF both rows, only price differed — is NOT a
+  variation; merged per Decisions §9.)
 - **8 double-listed pairs** (same physical stock entered under two categories; identical
   qty — importing both would double-count): 5× OIL FILTER (LUBE&FLUIDS vs FUEL SYSTEM),
   2× SIGNAL LIGHT LENS (LENS vs ACCESSORIES), 1× CENTER STAND STEEL CSL XRM110
@@ -43,8 +43,9 @@ barcodes stay empty until scanned in later.
 
 ## Decisions (user-approved)
 
-1. **Batch-cost pairs → variations.** First-listed row = base product; second = variation
-   (`baseSku` = base's SKU, `variationNumber: 1`, its own SKU, costCode, cost, price, qty).
+1. **Batch-cost pairs → variations** (12 pairs). First-listed row = base product; second =
+   variation (`baseSku` = base's SKU, `variationNumber: 1`, its own SKU, costCode, cost,
+   price, qty).
 2. **Unknown-cost rows → RESOLVED with user-supplied corrections** (2026-07-21). All 8
    decode consistently under the default cipher. The corrections live as an explicit
    `COST_CORRECTIONS` table in the script lib (keyed by CSV row/name); the master CSV is
@@ -72,6 +73,12 @@ barcodes stay empty until scanned in later.
 7. The June "verify onsite" list (4 HEADLIGHT items, CENTER STAND NMAX V1) is assumed
    verified in this latest CSV — those rows import normally.
 8. Totals row (and any nameless row) skipped.
+9. **TOP GASKET AMCO W125 → merged, qty summed** (2026-07-21): one product, qty 15
+   (10+5, genuinely two batches of the same-cost stock), price unified to ₱150,
+   cost ₱35/`QF`.
+10. **Rename** (2026-07-21): row 679 `HEADLIGHT RS100` → `HEADLIGHT RS100 BLK`
+    (item is black; matches the CSV's BLK naming style). Lives in a `NAME_CORRECTIONS`
+    entry beside `COST_CORRECTIONS` in the script lib.
 
 ## Architecture
 
@@ -123,9 +130,10 @@ Order matters; each step is idempotent so a crashed run is safely re-runnable:
    count (existing 6 + new), categories, suppliers, skipped lists. Non-zero exit on any
    mismatch.
 
-Expected volume: ~1,241 product docs (1,228 standalone/base + 13 variations) minus
-existing-name skips (1 known). Exact numbers come from the dry-run report — it is the
-source of truth the user approves before `--execute`.
+Expected volume: ~1,240 product docs (1,228 standalone/base + 12 variations; 1,249 rows
+minus 8 double-listed merges minus the TOP GASKET merge) minus existing-name skips
+(1 known). Exact numbers come from the dry-run report — it is the source of truth the
+user approves before `--execute`.
 
 ## Error handling
 
