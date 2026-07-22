@@ -170,7 +170,7 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
   });
 
   const canGenerate = !!employee && draft.isValid && !generate.isPending;
-  const canSaveDefaults = !!employee && !saveDefaults.isPending;
+  const canSaveDefaults = !!employee && draft.isValid && !saveDefaults.isPending;
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
