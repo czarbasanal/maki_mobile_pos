@@ -24,3 +24,26 @@ node backfill-product-skus.mjs
 
 Exit code 0 + "Backfill complete" when every product owns a unique claim. Exit code 1 +
 a collision report if two SKUs normalize to the same key — rename one product and re-run.
+
+## wipe-db.mjs + import-inventory.mjs (one-shot, 2026-07-21)
+
+Fresh-start sequence: `wipe-db.mjs` deletes transaction + inventory data (keeps users,
+settings, units, expense_categories, void_reasons, motorcycle_models, mechanics), then
+`import-inventory.mjs` loads the master inventory CSV
+(`data/master-inventory-2026-07-21.csv`) into `products` + `product_skus` claims +
+`product_categories` + `units` + `suppliers`. Spec:
+`docs/superpowers/specs/2026-07-21-initial-inventory-import-design.md`.
+
+- Wipe dry run:      `node wipe-db.mjs` (add `--execute` to delete — DESTRUCTIVE)
+- Import dry run:    `node import-inventory.mjs data/master-inventory-2026-07-21.csv`
+- Import:            add `--execute`
+- Verify afterwards: `node import-inventory-verify.mjs`
+- Emulator rehearsal: prefix commands with `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080`
+- ⚠️ Go-live: freeze ALL shop app/POS usage from the moment the wipe starts until
+  `import-inventory-verify.mjs` passes — a mid-window sale writes to collections
+  being wiped or references vanished products.
+
+Import is idempotent & resumable: existing product names (word-order-insensitive) are
+skipped, the SKU claim + product doc are written atomically, and orphan import claims
+are cleaned on reconcile. Everything written is tagged
+`createdBy: 'initial-inventory-import'`.
