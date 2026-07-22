@@ -18,7 +18,7 @@ layout.
 ## Data model (Firestore — shared with future mobile slice)
 
 - **`employees`** (new): `{name: string, dailyRate: number, isActive: bool,
-  createdAt/updatedAt/createdBy/updatedBy}` + `searchKeywords` (name prefixes, reuse the
+  createdAt/updatedAt}` (actor attribution dropped during implementation — admin-only collection, accepted 2026-07-22) + `searchKeywords` (name prefixes, reuse the
   keyword idiom). Admin-managed list mirroring the Mechanics data layer. No SSS/TIN/etc.
   numbers in this slice (YAGNI).
 - **`settings/hr`** (new doc in existing `settings` collection):
