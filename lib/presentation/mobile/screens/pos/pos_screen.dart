@@ -623,7 +623,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   Future<void> _showClearCartDialog() async {
     final ok = await context.showConfirmDialog(
       title: 'Clear Cart?',
-      message: 'This will remove all items from the cart.',
+      message:
+          'This clears the whole sale — items, labor & service, mechanic, and payment amounts.',
       confirmText: 'Clear',
       icon: LucideIcons.trash2,
       isDangerous: true,
