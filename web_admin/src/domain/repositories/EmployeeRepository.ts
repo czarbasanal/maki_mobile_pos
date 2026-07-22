@@ -13,7 +13,11 @@ export interface EmployeeUpdateInput {
 }
 
 export interface EmployeeRepository {
-  watchAll(cb: (employees: Employee[]) => void, opts?: { includeInactive?: boolean }): Unsubscribe;
+  watchAll(
+    cb: (employees: Employee[]) => void,
+    opts?: { includeInactive?: boolean },
+    onError?: (err: Error) => void,
+  ): Unsubscribe;
   create(input: EmployeeCreateInput): Promise<Employee>;
   update(id: string, input: EmployeeUpdateInput): Promise<void>;
 }

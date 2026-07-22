@@ -30,7 +30,7 @@ export function EmployeesPage() {
     isLoading,
     error,
   } = useFirestoreSubscription<Employee[]>(
-    (onData) => repo.watchAll(onData, { includeInactive: true }),
+    (onData, onError) => repo.watchAll(onData, { includeInactive: true }, onError),
     [repo],
   );
 
@@ -52,6 +52,8 @@ export function EmployeesPage() {
   const rateIsValid = Number.isFinite(parsedRate) && parsedRate > 0;
 
   const openAdd = () => {
+    create.reset();
+    update.reset();
     setEditing(null);
     setName('');
     setDailyRate('');
@@ -59,27 +61,49 @@ export function EmployeesPage() {
     setDialogOpen(true);
   };
   const openEdit = (e: Employee) => {
+    create.reset();
+    update.reset();
     setEditing(e);
     setName(e.name);
     setDailyRate(String(e.dailyRate));
     setActive(e.isActive);
     setDialogOpen(true);
   };
+  const closeDialog = () => {
+    setDialogOpen(false);
+    create.reset();
+    update.reset();
+  };
 
   const onSave = async () => {
     const trimmed = name.trim();
     if (!trimmed || !rateIsValid) return;
-    if (editing) {
-      await update.mutateAsync({ id: editing.id, name: trimmed, dailyRate: parsedRate, isActive: active });
-    } else {
-      await create.mutateAsync({ name: trimmed, dailyRate: parsedRate });
+    try {
+      if (editing) {
+        await update.mutateAsync({ id: editing.id, name: trimmed, dailyRate: parsedRate, isActive: active });
+      } else {
+        await create.mutateAsync({ name: trimmed, dailyRate: parsedRate });
+      }
+      setDialogOpen(false);
+    } catch {
+      // Surfaced via create.error / update.error below; dialog stays open
+      // with the entered data intact so the user can retry.
     }
-    setDialogOpen(false);
   };
 
   const toggleActive = async (e: Employee) => {
-    await update.mutateAsync({ id: e.id, isActive: !e.isActive });
+    try {
+      await update.mutateAsync({ id: e.id, isActive: !e.isActive });
+    } catch {
+      // Surfaced via update.error below.
+    }
   };
+
+  // While the dialog is open, an error came from Save (create or edit).
+  // While it's closed, an update error can only be from the list's
+  // toggle-active action.
+  const dialogError = dialogOpen ? (editing ? update.error : create.error) : null;
+  const listError = !dialogOpen ? update.error : null;
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
@@ -98,6 +122,12 @@ export function EmployeesPage() {
           <PlusIcon className="h-3.5 w-3.5" /> Add
         </button>
       </header>
+
+      {listError ? (
+        <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+          {listError.message}
+        </p>
+      ) : null}
 
       {error ? (
         <ErrorView title="Could not load employees" message={error.message} />
@@ -152,12 +182,17 @@ export function EmployeesPage() {
       <Dialog
         open={dialogOpen}
         onClose={() => {
-          if (!busy) setDialogOpen(false);
+          if (!busy) closeDialog();
         }}
         title={editing ? 'Edit employee' : 'Add employee'}
         dismissable={!busy}
       >
         <div className="space-y-tk-md">
+          {dialogError ? (
+            <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+              {dialogError.message}
+            </p>
+          ) : null}
           <div>
             <label htmlFor="employee-name" className="mb-tk-xs block text-bodySmall text-light-text-secondary">
               Name
@@ -197,7 +232,7 @@ export function EmployeesPage() {
           <div className="flex justify-end gap-tk-sm pt-tk-sm">
             <button
               type="button"
-              onClick={() => setDialogOpen(false)}
+              onClick={closeDialog}
               disabled={busy}
               className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
             >

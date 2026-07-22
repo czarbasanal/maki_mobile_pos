@@ -32,10 +32,18 @@ export class FirestoreEmployeeRepository implements EmployeeRepository {
     return out.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  watchAll(cb: (employees: Employee[]) => void, opts?: { includeInactive?: boolean }): Unsubscribe {
-    return onSnapshot(this.col(), (snap) => {
-      cb(this.shape(snap.docs.map((d) => d.data()), opts?.includeInactive ?? false));
-    });
+  watchAll(
+    cb: (employees: Employee[]) => void,
+    opts?: { includeInactive?: boolean },
+    onError?: (err: Error) => void,
+  ): Unsubscribe {
+    return onSnapshot(
+      this.col(),
+      (snap) => {
+        cb(this.shape(snap.docs.map((d) => d.data()), opts?.includeInactive ?? false));
+      },
+      onError,
+    );
   }
 
   async create(input: EmployeeCreateInput): Promise<Employee> {

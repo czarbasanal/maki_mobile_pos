@@ -51,7 +51,10 @@ export function PayrollPage() {
     data: employees,
     isLoading: employeesLoading,
     error: employeesError,
-  } = useFirestoreSubscription<Employee[]>((onData) => employeeRepo.watchAll(onData), [employeeRepo]);
+  } = useFirestoreSubscription<Employee[]>(
+    (onData, onError) => employeeRepo.watchAll(onData, undefined, onError),
+    [employeeRepo],
+  );
 
   const {
     data: settings,

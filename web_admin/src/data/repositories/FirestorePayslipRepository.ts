@@ -31,10 +31,14 @@ export class FirestorePayslipRepository implements PayslipRepository {
     });
   }
 
-  watchAll(cb: (payslips: Payslip[]) => void): Unsubscribe {
-    return onSnapshot(this.col(), (snap) => {
-      cb(this.sort(snap.docs.map((d) => d.data())));
-    });
+  watchAll(cb: (payslips: Payslip[]) => void, onError?: (err: Error) => void): Unsubscribe {
+    return onSnapshot(
+      this.col(),
+      (snap) => {
+        cb(this.sort(snap.docs.map((d) => d.data())));
+      },
+      onError,
+    );
   }
 
   async getById(id: string): Promise<Payslip | null> {

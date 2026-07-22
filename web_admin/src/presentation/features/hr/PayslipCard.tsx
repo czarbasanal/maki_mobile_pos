@@ -124,7 +124,7 @@ export function PayslipCard({ payslip }: { payslip: Payslip }) {
       </div>
 
       <p className="pt-tk-sm text-center text-[10px] text-neutral-500">
-        Generated {generatedDateLabel(payslip.createdAt)} · placeholder layout
+        Generated {generatedDateLabel(payslip.createdAt)}
       </p>
     </div>
   );

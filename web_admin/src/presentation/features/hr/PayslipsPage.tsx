@@ -41,7 +41,7 @@ export function PayslipsPage() {
     data: payslips,
     isLoading,
     error,
-  } = useFirestoreSubscription<Payslip[]>((onData) => repo.watchAll(onData), [repo]);
+  } = useFirestoreSubscription<Payslip[]>((onData, onError) => repo.watchAll(onData, onError), [repo]);
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">

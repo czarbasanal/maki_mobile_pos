@@ -168,6 +168,6 @@ describe('PayslipCard', () => {
   it('renders the footer caption with the generated date', () => {
     render(<PayslipCard payslip={payslip()} />);
 
-    expect(screen.getByText('Generated Jul 22, 2026 · placeholder layout')).toBeInTheDocument();
+    expect(screen.getByText('Generated Jul 22, 2026')).toBeInTheDocument();
   });
 });
