@@ -39,6 +39,11 @@ import { PosPage } from '@/presentation/features/pos/PosPage';
 import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
 import { DraftsPage } from '@/presentation/features/drafts/DraftsPage';
 import { DraftEditPage } from '@/presentation/features/drafts/DraftEditPage';
+import { EmployeesPage } from '@/presentation/features/hr/EmployeesPage';
+import { PayrollPage } from '@/presentation/features/hr/PayrollPage';
+import { PayslipsPage } from '@/presentation/features/hr/PayslipsPage';
+import { PayslipDetailPage } from '@/presentation/features/hr/PayslipDetailPage';
+import { HrSettingsPage } from '@/presentation/features/hr/HrSettingsPage';
 import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
 
 const placeholder = (title: string, phase: string) => (
@@ -99,6 +104,11 @@ export const router = createBrowserRouter(
         { path: RoutePaths.manageLists, element: <ManageListsPage /> },
         { path: RoutePaths.mechanics, element: <MechanicsPage /> },
         { path: RoutePaths.about, element: <AboutPage /> },
+        { path: RoutePaths.hrEmployees, element: <EmployeesPage /> },
+        { path: RoutePaths.hrPayroll, element: <PayrollPage /> },
+        { path: RoutePaths.hrPayslips, element: <PayslipsPage /> },
+        { path: RoutePaths.hrPayslipDetail, element: <PayslipDetailPage /> },
+        { path: RoutePaths.hrSettings, element: <HrSettingsPage /> },
       ],
     },
     { path: '*', element: <Navigate to={RoutePaths.dashboard} replace /> },

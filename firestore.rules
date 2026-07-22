@@ -323,6 +323,18 @@ service cloud.firestore {
       allow write: if isAdmin() && isActiveUser();
     }
 
+    // ==================== HR COLLECTION ====================
+
+    // HR — salary data: admin-only for BOTH read and write (stricter than
+    // mechanics' all-user read). See docs/superpowers/specs/2026-07-22-hr-payroll-web-design.md.
+    match /employees/{employeeId} {
+      allow read, write: if isAdmin() && isActiveUser();
+    }
+    match /payslips/{payslipId} {
+      allow read, create, delete: if isAdmin() && isActiveUser();
+      allow update: if false; // payslips are frozen records
+    }
+
     // ==================== MOTORCYCLE MODELS COLLECTION ====================
 
     match /motorcycle_models/{modelId} {

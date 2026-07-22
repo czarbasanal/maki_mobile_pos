@@ -9,6 +9,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, type ComponentType, type SVGProps } from 'react';
 import {
   ArrowRightStartOnRectangleIcon,
+  BanknotesIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
   ChevronUpIcon,
@@ -16,6 +17,8 @@ import {
   ClockIcon,
   Cog6ToothIcon,
   CubeIcon,
+  DocumentTextIcon,
+  IdentificationIcon,
   PencilSquareIcon,
   ReceiptPercentIcon,
   ShoppingCartIcon,
@@ -67,6 +70,15 @@ const sections: NavSection[] = [
     items: [
       { label: 'Expenses', path: RoutePaths.expenses, icon: ReceiptPercentIcon },
       { label: 'Reports', path: RoutePaths.reports, icon: ChartBarIcon },
+    ],
+  },
+  {
+    label: 'HR',
+    items: [
+      { label: 'Employees', path: RoutePaths.hrEmployees, icon: IdentificationIcon },
+      { label: 'Payroll', path: RoutePaths.hrPayroll, icon: BanknotesIcon },
+      { label: 'Payslips', path: RoutePaths.hrPayslips, icon: DocumentTextIcon },
+      { label: 'HR Settings', path: RoutePaths.hrSettings, icon: Cog6ToothIcon },
     ],
   },
   {
