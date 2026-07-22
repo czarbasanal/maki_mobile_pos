@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { describedLaborLines } from '@/domain/sales/labor';
 import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
@@ -26,6 +27,8 @@ export function PosPage() {
   );
   const [saveOpen, setSaveOpen] = useState(false);
   const [draftNameInput, setDraftNameInput] = useState('');
+  const [confirmReset, setConfirmReset] = useState(false);
+  const hasTicket = lines.length > 0 || laborLines.length > 0;
 
   useEffect(() => {
     document.title = 'POS';
@@ -78,7 +81,20 @@ export function PosPage() {
 
   return (
     <div className="space-y-tk-md px-tk-xl py-tk-lg">
-      <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">POS</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">POS</h1>
+        {hasTicket ? (
+          <button
+            type="button"
+            aria-label="Reset sale"
+            title="Reset sale"
+            onClick={() => setConfirmReset(true)}
+            className="rounded-md border border-light-hairline p-tk-sm text-light-text-secondary hover:bg-light-card"
+          >
+            <ArrowPathIcon className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
 
       {done ? (
         <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
@@ -153,6 +169,37 @@ export function PosPage() {
               className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
             >
               Save
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        title="Clear this sale?"
+      >
+        <div className="space-y-tk-md">
+          <p className="text-bodySmall text-light-text-secondary">
+            This clears the whole sale — items, labor & service, and mechanic.
+          </p>
+          <div className="flex justify-end gap-tk-sm">
+            <button
+              type="button"
+              onClick={() => setConfirmReset(false)}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clear();
+                setConfirmReset(false);
+              }}
+              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
+            >
+              Clear
             </button>
           </div>
         </div>
