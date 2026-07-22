@@ -11,6 +11,7 @@ import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import type { Employee } from '@/domain/hr/types';
 import type { EmployeeUpdateInput } from '@/domain/repositories/EmployeeRepository';
+import { WEEKDAYS, weekdayLabel } from '@/domain/hr/weekdays';
 
 // Blank -> NaN so a cleared/never-filled field fails the > 0 check instead of
 // silently passing as 0 (Number('') === 0).
@@ -39,8 +40,14 @@ export function EmployeesPage() {
   const [name, setName] = useState('');
   const [dailyRate, setDailyRate] = useState('');
   const [active, setActive] = useState(true);
+  // '' = Default (use settings/hr.weekStartDay); '1'..'7' = an override.
+  const [weekStartDay, setWeekStartDay] = useState('');
 
-  const create = useMutation<Employee, Error, { name: string; dailyRate: number }>({
+  const create = useMutation<
+    Employee,
+    Error,
+    { name: string; dailyRate: number; weekStartDay: number | null }
+  >({
     mutationFn: (input) => repo.create(input),
   });
   const update = useMutation<void, Error, { id: string } & EmployeeUpdateInput>({
@@ -58,6 +65,7 @@ export function EmployeesPage() {
     setName('');
     setDailyRate('');
     setActive(true);
+    setWeekStartDay('');
     setDialogOpen(true);
   };
   const openEdit = (e: Employee) => {
@@ -67,6 +75,7 @@ export function EmployeesPage() {
     setName(e.name);
     setDailyRate(String(e.dailyRate));
     setActive(e.isActive);
+    setWeekStartDay(e.weekStartDay != null ? String(e.weekStartDay) : '');
     setDialogOpen(true);
   };
   const closeDialog = () => {
@@ -78,11 +87,18 @@ export function EmployeesPage() {
   const onSave = async () => {
     const trimmed = name.trim();
     if (!trimmed || !rateIsValid) return;
+    const weekStartDayValue = weekStartDay === '' ? null : Number(weekStartDay);
     try {
       if (editing) {
-        await update.mutateAsync({ id: editing.id, name: trimmed, dailyRate: parsedRate, isActive: active });
+        await update.mutateAsync({
+          id: editing.id,
+          name: trimmed,
+          dailyRate: parsedRate,
+          isActive: active,
+          weekStartDay: weekStartDayValue,
+        });
       } else {
-        await create.mutateAsync({ name: trimmed, dailyRate: parsedRate });
+        await create.mutateAsync({ name: trimmed, dailyRate: parsedRate, weekStartDay: weekStartDayValue });
       }
       setDialogOpen(false);
     } catch {
@@ -152,6 +168,7 @@ export function EmployeesPage() {
                   </span>
                   <span className="mt-0.5 block truncate text-xs text-light-text-secondary">
                     <span>{formatMoney(e.dailyRate)}</span> / day
+                    {e.weekStartDay != null ? ` · Week starts ${weekdayLabel(e.weekStartDay)}` : ''}
                   </span>
                 </div>
                 <span className="flex shrink-0 items-center gap-tk-xs">
@@ -222,6 +239,27 @@ export function EmployeesPage() {
               onChange={(e) => setDailyRate(e.target.value)}
               className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
             />
+          </div>
+          <div>
+            <label
+              htmlFor="employee-week-start-day"
+              className="mb-tk-xs block text-bodySmall text-light-text-secondary"
+            >
+              Week starts on
+            </label>
+            <select
+              id="employee-week-start-day"
+              value={weekStartDay}
+              onChange={(e) => setWeekStartDay(e.target.value)}
+              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+            >
+              <option value="">Default</option>
+              {WEEKDAYS.map((day) => (
+                <option key={day.value} value={day.value}>
+                  {day.label}
+                </option>
+              ))}
+            </select>
           </div>
           {editing ? (
             <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">

@@ -126,6 +126,22 @@ New "HR" nav section in the AdminShell sidebar:
 - `npm run typecheck` + `npm run test`. JPG download = user browser smoke (html2canvas
   is DOM-dependent; not unit-tested beyond a renders-without-error test).
 
+## Amendment 1 — per-employee pay periods (approved 2026-07-22, same day)
+
+Employees' pay cycles don't all share one week boundary (day-offs already flexible via
+the grid; the WINDOW start was the gap). Decisions:
+
+- `employees` docs gain optional `weekStartDay: number|null` (ISO 1-7; null = use
+  `settings/hr.weekStartDay`). Employee dialog gets a "Week starts on" select with a
+  "Default" blank option; list shows the override when set.
+- Payroll form: picking an employee re-anchors the period to their effective start day
+  (`employee.weekStartDay ?? settings.weekStartDay`) AND the form gains its own
+  start-day selector (prefilled with that effective value, freely overridable per slip
+  — same prefill-but-editable pattern as dailyRate). Changing it re-derives the 7-day
+  window via `payPeriodFor` and re-seeds the grid.
+- Payslip storage unchanged (explicit dates already stored) — zero downstream impact on
+  card/JPG/history. No rules change.
+
 ## Out of scope (this slice)
 
 - Mobile UI (slice 2), payslip visual design (handoff later), automation/time-in-out,

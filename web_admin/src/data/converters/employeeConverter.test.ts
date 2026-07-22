@@ -14,6 +14,7 @@ describe('employeeConverter.toFirestore', () => {
       name: 'Juan',
       dailyRate: 640,
       isActive: true,
+      weekStartDay: null,
       createdAt: null,
       updatedAt: null,
     };
@@ -21,6 +22,25 @@ describe('employeeConverter.toFirestore', () => {
       name: 'Juan',
       dailyRate: 640,
       isActive: true,
+      weekStartDay: null,
+    });
+  });
+
+  it('round-trips a weekStartDay override', () => {
+    const e: Employee = {
+      id: 'ignored-on-write',
+      name: 'Juan',
+      dailyRate: 640,
+      isActive: true,
+      weekStartDay: 3,
+      createdAt: null,
+      updatedAt: null,
+    };
+    expect(employeeConverter.toFirestore(e as never)).toEqual({
+      name: 'Juan',
+      dailyRate: 640,
+      isActive: true,
+      weekStartDay: 3,
     });
   });
 });
@@ -43,6 +63,7 @@ describe('employeeConverter.fromFirestore', () => {
       name: 'Juan',
       dailyRate: 640,
       isActive: true,
+      weekStartDay: null,
       createdAt: created.toDate(),
       updatedAt: updated.toDate(),
     });
@@ -53,7 +74,18 @@ describe('employeeConverter.fromFirestore', () => {
     expect(e.name).toBe('');
     expect(e.dailyRate).toBe(0);
     expect(e.isActive).toBe(true);
+    expect(e.weekStartDay).toBeNull();
     expect(e.createdAt).toBeNull();
     expect(e.updatedAt).toBeNull();
+  });
+
+  it('round-trips an explicit weekStartDay of 3', () => {
+    const e = employeeConverter.fromFirestore(snap('e3', { name: 'Juan', weekStartDay: 3 }));
+    expect(e.weekStartDay).toBe(3);
+  });
+
+  it('treats an explicit null weekStartDay the same as missing', () => {
+    const e = employeeConverter.fromFirestore(snap('e4', { name: 'Juan', weekStartDay: null }));
+    expect(e.weekStartDay).toBeNull();
   });
 });

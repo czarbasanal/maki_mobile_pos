@@ -19,6 +19,8 @@ export interface PayslipComputed {
 }
 export interface Employee {
   id: string; name: string; dailyRate: number; isActive: boolean;
+  // ISO 1-7 (1=Mon..7=Sun); null = use settings/hr.weekStartDay.
+  weekStartDay: number | null;
   createdAt: Date | null; updatedAt: Date | null;
 }
 export interface HrSettings { weekStartDay: number; regularHolidayPct: number; specialHolidayPct: number }

@@ -4,7 +4,7 @@
 // everything — including the holiday-pay settings percentages — into one
 // immutable payslip snapshot and hands off to its detail page.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 import { formatMoney } from '@/core/utils/money';
 import { payPeriodFor, shiftPeriod, type PayPeriod } from '@/domain/hr/payPeriod';
+import { WEEKDAYS } from '@/domain/hr/weekdays';
 import type { Employee, HrSettings } from '@/domain/hr/types';
 import { usePayslipDraft } from './usePayslipDraft';
 import { WeekGrid } from './WeekGrid';
@@ -78,9 +79,22 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
   const actor = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
+  // The anchor date used to seed the period on MOUNT ONLY — fixed at "today"
+  // for the life of this form (mirrors the settings seed-once comment
+  // below). It is never read again after the initial useState below: prev/
+  // next navigation moves `period` directly via shiftPeriod, and a
+  // start-day change (picking an employee or the select, see setStartDay)
+  // re-anchors from the CURRENTLY DISPLAYED period's start instead — using
+  // this mount-time anchor there would silently discard whatever week the
+  // admin had navigated to (that was the bug).
+  const anchorRef = useRef(new Date());
+
   // Settings seed the period's week-start-day exactly once, at mount — this
   // component only exists once settings have loaded (see PayrollPage above).
-  const [period, setPeriod] = useState<PayPeriod>(() => payPeriodFor(new Date(), settings.weekStartDay));
+  const [startDay, setStartDayState] = useState(settings.weekStartDay);
+  const [period, setPeriod] = useState<PayPeriod>(() =>
+    payPeriodFor(anchorRef.current, settings.weekStartDay),
+  );
   const [employeeId, setEmployeeId] = useState('');
   const employee = employees.find((e) => e.id === employeeId) ?? null;
 
@@ -89,10 +103,33 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
     specialHolidayPct: settings.specialHolidayPct,
   });
 
+  // Re-anchors from the period the admin is CURRENTLY LOOKING AT — its END
+  // (parseIsoLocal(period.end)), not from mount-time "today" and not from
+  // its start — so switching employees (or the manual select) never
+  // discards prev/next navigation. payPeriodFor snaps to the most recent
+  // `day`-start on or before that anchor; anchoring on the END rather than
+  // the START guarantees the new window overlaps the displayed one (the new
+  // start always falls in [end-6, end]). Anchoring on the start instead
+  // can walk a full window earlier than what's on screen whenever `day`
+  // falls later in the week than the current start — a "wrong week"
+  // footgun for payroll — so end is the correct choice here.
+  //
+  // No-op when `day` already matches the current startDay: an employee
+  // pick with no override (or a re-select of the same option) must not
+  // touch the period or reseed the grid.
+  const setStartDay = (day: number) => {
+    if (day === startDay) return;
+    setStartDayState(day);
+    setPeriod(payPeriodFor(parseIsoLocal(period.end), day));
+  };
+
   const onEmployeeChange = (id: string) => {
     setEmployeeId(id);
     const picked = employees.find((e) => e.id === id);
-    if (picked) draft.setDailyRateText(String(picked.dailyRate));
+    if (picked) {
+      draft.setDailyRateText(String(picked.dailyRate));
+      setStartDay(picked.weekStartDay ?? settings.weekStartDay);
+    }
   };
 
   const generate = useMutation<string, Error, void>({
@@ -131,7 +168,7 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
         </p>
       ) : null}
 
-      <section className="grid gap-tk-md sm:grid-cols-2">
+      <section className="grid gap-tk-md sm:grid-cols-3">
         <div>
           <label
             htmlFor="payroll-employee"
@@ -149,6 +186,27 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
             {employees.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="payroll-week-start-day"
+            className="mb-tk-xs block text-bodySmall text-light-text-secondary"
+          >
+            Week starts on
+          </label>
+          <select
+            id="payroll-week-start-day"
+            value={startDay}
+            onChange={(e) => setStartDay(Number(e.target.value))}
+            className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+          >
+            {WEEKDAYS.map((day) => (
+              <option key={day.value} value={day.value}>
+                {day.label}
               </option>
             ))}
           </select>

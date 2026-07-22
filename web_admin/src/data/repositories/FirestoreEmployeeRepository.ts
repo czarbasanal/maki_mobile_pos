@@ -51,6 +51,7 @@ export class FirestoreEmployeeRepository implements EmployeeRepository {
       name: input.name,
       dailyRate: input.dailyRate,
       isActive: true,
+      weekStartDay: input.weekStartDay ?? null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -67,6 +68,7 @@ export class FirestoreEmployeeRepository implements EmployeeRepository {
     if (input.name !== undefined) data.name = input.name;
     if (input.dailyRate !== undefined) data.dailyRate = input.dailyRate;
     if (input.isActive !== undefined) data.isActive = input.isActive;
+    if (input.weekStartDay !== undefined) data.weekStartDay = input.weekStartDay;
     await updateDoc(doc(this.db, FirestoreCollections.employees, id), data);
   }
 }

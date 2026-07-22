@@ -12,6 +12,7 @@ const employee = (o: Partial<Employee> = {}): Employee => ({
   name: 'Juan',
   dailyRate: 640,
   isActive: true,
+  weekStartDay: null,
   createdAt: null,
   updatedAt: null,
   ...o,
@@ -30,11 +31,12 @@ function harness(opts?: {
     }),
     create:
       opts?.create ??
-      vi.fn(async (input: { name: string; dailyRate: number }) => ({
+      vi.fn(async (input: { name: string; dailyRate: number; weekStartDay: number | null }) => ({
         id: 'e-new',
         name: input.name,
         dailyRate: input.dailyRate,
         isActive: true,
+        weekStartDay: input.weekStartDay,
         createdAt: null,
         updatedAt: null,
       })),
@@ -65,12 +67,27 @@ describe('EmployeesPage', () => {
     expect(screen.getByText(formatMoney(750.5))).toBeInTheDocument();
   });
 
-  it('submits {name, dailyRate} from the create dialog', async () => {
-    const create = vi.fn(async (input: { name: string; dailyRate: number }) => ({
+  it('shows the week-start override on the row when set, and nothing when null', () => {
+    harness({
+      employees: [
+        employee({ id: 'e1', name: 'Juan', weekStartDay: null }),
+        employee({ id: 'e2', name: 'Maria', weekStartDay: 3 }),
+      ],
+    });
+
+    expect(screen.getByText(/wednesday/i)).toBeInTheDocument();
+    // Juan's row has no weekday override text at all.
+    const juanRow = screen.getByText('Juan').closest('li');
+    expect(juanRow).not.toHaveTextContent(/monday|tuesday|wednesday|thursday|friday|saturday|sunday/i);
+  });
+
+  it('submits weekStartDay: null when Default is left selected', async () => {
+    const create = vi.fn(async (input: { name: string; dailyRate: number; weekStartDay: number | null }) => ({
       id: 'e-new',
       name: input.name,
       dailyRate: input.dailyRate,
       isActive: true,
+      weekStartDay: input.weekStartDay,
       createdAt: null,
       updatedAt: null,
     }));
@@ -81,7 +98,32 @@ describe('EmployeesPage', () => {
     await userEvent.type(screen.getByLabelText(/daily rate/i), '500');
     await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
 
-    await waitFor(() => expect(create).toHaveBeenCalledWith({ name: 'Pedro', dailyRate: 500 }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({ name: 'Pedro', dailyRate: 500, weekStartDay: null }),
+    );
+  });
+
+  it('submits weekStartDay: 3 when an override is selected', async () => {
+    const create = vi.fn(async (input: { name: string; dailyRate: number; weekStartDay: number | null }) => ({
+      id: 'e-new',
+      name: input.name,
+      dailyRate: input.dailyRate,
+      isActive: true,
+      weekStartDay: input.weekStartDay,
+      createdAt: null,
+      updatedAt: null,
+    }));
+    harness({ create });
+
+    await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+    await userEvent.type(screen.getByLabelText(/name/i), 'Pedro');
+    await userEvent.type(screen.getByLabelText(/daily rate/i), '500');
+    await userEvent.selectOptions(screen.getByLabelText(/week starts on/i), '3');
+    await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({ name: 'Pedro', dailyRate: 500, weekStartDay: 3 }),
+    );
   });
 
   it('blocks save when name is empty', async () => {
