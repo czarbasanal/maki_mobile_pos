@@ -79,12 +79,14 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
   const actor = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
-  // The anchor date the period is computed around — fixed at "today" for the
-  // life of this form (mirrors the settings seed-once comment below). Prev/
-  // next navigation moves `period` directly via shiftPeriod and never touches
-  // this; only a start-day change (picking an employee or the select) re-runs
-  // payPeriodFor(anchor, startDay), so navigation keeps working regardless of
-  // which weekday the period currently starts on.
+  // The anchor date used to seed the period on MOUNT ONLY — fixed at "today"
+  // for the life of this form (mirrors the settings seed-once comment
+  // below). It is never read again after the initial useState below: prev/
+  // next navigation moves `period` directly via shiftPeriod, and a
+  // start-day change (picking an employee or the select, see setStartDay)
+  // re-anchors from the CURRENTLY DISPLAYED period's start instead — using
+  // this mount-time anchor there would silently discard whatever week the
+  // admin had navigated to (that was the bug).
   const anchorRef = useRef(new Date());
 
   // Settings seed the period's week-start-day exactly once, at mount — this
@@ -101,9 +103,22 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
     specialHolidayPct: settings.specialHolidayPct,
   });
 
+  // Re-anchors from the period the admin is CURRENTLY LOOKING AT
+  // (parseIsoLocal(period.start)), not from mount-time "today" — so
+  // switching employees (or the manual select) never discards prev/next
+  // navigation. payPeriodFor snaps to the most recent `day`-start on or
+  // before that anchor, which may land a few days earlier than the
+  // displayed week if `day` falls later in the week than the current
+  // start — that's expected: it's the closest same-neighborhood window to
+  // what's on screen, not a jump back to today.
+  //
+  // No-op when `day` already matches the current startDay: an employee
+  // pick with no override (or a re-select of the same option) must not
+  // touch the period or reseed the grid.
   const setStartDay = (day: number) => {
+    if (day === startDay) return;
     setStartDayState(day);
-    setPeriod(payPeriodFor(anchorRef.current, day));
+    setPeriod(payPeriodFor(parseIsoLocal(period.start), day));
   };
 
   const onEmployeeChange = (id: string) => {

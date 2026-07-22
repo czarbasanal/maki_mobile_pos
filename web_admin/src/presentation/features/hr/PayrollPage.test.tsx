@@ -107,12 +107,17 @@ describe('PayrollPage', () => {
     await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e2');
 
     expect(screen.getByLabelText('Week starts on')).toHaveValue('3');
-    // 2026-07-22 (the fixed "today") is itself a Wednesday, so a
-    // Wednesday-start period begins and ends on it, not the previous Monday.
-    const lastDay = screen.getByRole('button', { name: /7\/28/ });
+    // The mounted period is Mon 7/20 - Sun 7/26. Re-anchoring to a
+    // Wednesday start is now derived from that DISPLAYED period's own start
+    // (7/20, a Monday) rather than from mount-time "today" — the most
+    // recent Wednesday on/before 7/20 is 7/15, giving 7/15-7/21. (Before the
+    // fix this asserted 7/22-7/28, i.e. payPeriodFor(today, 3) — that was
+    // only correct by coincidence of "today" itself landing inside the
+    // mounted period, and is exactly the mount-anchor bug this fix removes.)
+    const lastDay = screen.getByRole('button', { name: /7\/21/ });
     expect(lastDay).toHaveTextContent(/day off/i);
-    // The old Mon-start period's first day (7/20) is outside the new window.
-    expect(screen.queryByRole('button', { name: /7\/20/ })).not.toBeInTheDocument();
+    // The old Mon-start period's last day (7/26) is outside the new window.
+    expect(screen.queryByRole('button', { name: /7\/26/ })).not.toBeInTheDocument();
   });
 
   it('manually changing the week-start-day select re-derives the period window', async () => {
@@ -122,10 +127,59 @@ describe('PayrollPage', () => {
 
     await userEvent.selectOptions(screen.getByLabelText('Week starts on'), '3');
 
-    const lastDay = screen.getByRole('button', { name: /7\/28/ });
+    // See the previous test for why this is 7/15-7/21 rather than 7/22-7/28:
+    // re-anchored from the displayed period's start (7/20), not from today.
+    const lastDay = screen.getByRole('button', { name: /7\/21/ });
     expect(lastDay).toHaveTextContent(/day off/i);
-    // The old Mon-start period's first day (7/20) is outside the new window.
-    expect(screen.queryByRole('button', { name: /7\/20/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /7\/26/ })).not.toBeInTheDocument();
+  });
+
+  it('navigating to next week then picking a no-override employee keeps the displayed period and grid taps', async () => {
+    await renderForm();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next week' }));
+    // Shifted to the following week: Mon 7/27 - Sun 8/2.
+    expect(screen.getByRole('button', { name: /8\/2/ })).toHaveTextContent(/day off/i);
+
+    // Tap a day cell before switching employees, to prove the grid isn't reseeded.
+    const firstDay = screen.getByRole('button', { name: /7\/27/ });
+    expect(firstDay).toHaveTextContent(/present/i);
+    await userEvent.click(firstDay);
+    expect(firstDay).toHaveTextContent(/absent/i);
+
+    // e1 has no weekStartDay override, so it resolves to settings.weekStartDay
+    // (1) — the same as the current startDay. Picking it must not touch the
+    // period or the grid at all.
+    await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e1');
+
+    expect(screen.getByLabelText('Daily rate')).toHaveValue(640);
+    expect(screen.getByLabelText('Week starts on')).toHaveValue('1');
+    expect(screen.getByRole('button', { name: /7\/27/ })).toHaveTextContent(/absent/i);
+    expect(screen.getByRole('button', { name: /8\/2/ })).toHaveTextContent(/day off/i);
+    // The mount-time period's days must not have come back.
+    expect(screen.queryByRole('button', { name: /7\/26/ })).not.toBeInTheDocument();
+  });
+
+  it('navigating to next week then picking an employee with a different override re-anchors from the displayed period, not today', async () => {
+    const fridayOverride = employee({ id: 'e2', name: 'Maria', weekStartDay: 5 });
+    await renderForm({ employees: [employee(), fridayOverride] });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next week' }));
+    // Shifted to the following week: Mon 7/27 - Sun 8/2.
+    expect(screen.getByRole('button', { name: /8\/2/ })).toHaveTextContent(/day off/i);
+
+    await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e2');
+
+    expect(screen.getByLabelText('Week starts on')).toHaveValue('5');
+    // Re-anchored from the DISPLAYED period's start (7/27, the Monday the
+    // admin navigated to) — the most recent Friday on/before it is 7/24,
+    // giving 7/24-7/30. The mount-time-anchor bug would instead reproduce
+    // payPeriodFor(today=7/22, 5) = 7/17-7/23, discarding the navigation.
+    expect(screen.getByRole('button', { name: /7\/24/ })).toBeInTheDocument();
+    const lastDay = screen.getByRole('button', { name: /7\/30/ });
+    expect(lastDay).toHaveTextContent(/day off/i);
+    expect(screen.queryByRole('button', { name: /7\/17/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /8\/2/ })).not.toBeInTheDocument();
   });
 
   it('cycles a day cell present -> absent -> dayOff -> present on click', async () => {
