@@ -61,6 +61,12 @@
    Profit) — mobile between the filter row and the product list, neutral card per the
    color discipline; web above the inventory table.
 7. No Firestore schema, rules, or route changes.
+8. **Totals strip vs the mobile cost-lock (final-review finding, user-signed-off
+   2026-07-22):** the mobile inventory screen's password-gated `showCost` toggle
+   (5-min auto-hide) does NOT gate the totals strip — the user explicitly chose
+   "always show for admins", accepting the on-screen glance exposure (including the
+   filter-to-one-product cost inference). Revisit only if the shop's screen-privacy
+   needs change.
 
 ## Testing
 
