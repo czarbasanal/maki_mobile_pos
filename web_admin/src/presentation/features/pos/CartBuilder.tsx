@@ -41,7 +41,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
           placeholder="Search products by name or SKU"
           className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none focus:border-light-text"
         />
-        <div className="divide-y divide-light-hairline rounded-lg border border-light-hairline bg-light-card">
+        <div className="max-h-[50vh] divide-y divide-light-hairline overflow-y-auto rounded-lg border border-light-hairline bg-light-card">
           {results.length === 0 ? (
             <p className="px-tk-md py-tk-lg text-center text-bodySmall text-light-text-hint">
               {search.trim() ? 'No matches.' : 'Type to search products.'}
