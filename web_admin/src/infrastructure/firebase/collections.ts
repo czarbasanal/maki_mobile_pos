@@ -10,6 +10,8 @@ export const FirestoreCollections = {
   voidReasons: 'void_reasons',
   suppliers: 'suppliers',
   mechanics: 'mechanics',
+  employees: 'employees',
+  payslips: 'payslips',
   sales: 'sales',
   drafts: 'drafts',
   receivings: 'receivings',
@@ -25,6 +27,7 @@ export const FirestoreCollections = {
 export const SettingsDocs = {
   costCodeMapping: 'cost_code_mapping',
   general: 'general',
+  hr: 'hr',
 } as const;
 
 export const Subcollections = {
