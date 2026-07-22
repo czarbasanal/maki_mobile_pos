@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -6,6 +6,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PayslipDetailPage } from './PayslipDetailPage';
 import type { Payslip } from '@/domain/hr/types';
+import { downloadElementAsJpg } from '@/core/utils/downloadJpg';
+
+vi.mock('@/core/utils/downloadJpg', () => ({
+  downloadElementAsJpg: vi.fn(async () => {}),
+}));
 
 const payslip = (overrides: Partial<Payslip> = {}): Payslip => ({
   id: 'ps1',
@@ -75,6 +80,10 @@ function harness(opts?: {
 }
 
 describe('PayslipDetailPage', () => {
+  beforeEach(() => {
+    vi.mocked(downloadElementAsJpg).mockClear();
+  });
+
   it('loads the payslip by route id and renders the PayslipCard', async () => {
     const getById = vi.fn(async (id: string) => payslip({ id }));
     harness({ getById });
@@ -83,11 +92,34 @@ describe('PayslipDetailPage', () => {
     expect(getById).toHaveBeenCalledWith('ps1');
   });
 
-  it('has a disabled Download JPG button', async () => {
+  it('has an enabled Download JPG button that downloads the card as a JPG', async () => {
     harness();
 
     await screen.findByText('NET PAY');
-    expect(screen.getByRole('button', { name: /download jpg/i })).toBeDisabled();
+    const button = screen.getByRole('button', { name: /download jpg/i });
+    expect(button).toBeEnabled();
+
+    await userEvent.click(button);
+
+    await waitFor(() => expect(downloadElementAsJpg).toHaveBeenCalledTimes(1));
+    const [el, filename] = vi.mocked(downloadElementAsJpg).mock.calls[0];
+    expect(el).toBeInstanceOf(HTMLElement);
+    expect(el.textContent).toContain('NET PAY');
+    expect(filename).toBe('payslip-juan-dela-cruz-2026-07-20.jpg');
+  });
+
+  it('slugifies the employee name for the filename (non-alphanumerics collapse to a single dash, edges trimmed)', async () => {
+    const getById = vi.fn(async (id: string) =>
+      payslip({ id, employeeName: '  Ana   O’Brien-Santos!! ' }),
+    );
+    harness({ getById });
+
+    await screen.findByText('NET PAY');
+    await userEvent.click(screen.getByRole('button', { name: /download jpg/i }));
+
+    await waitFor(() => expect(downloadElementAsJpg).toHaveBeenCalledTimes(1));
+    const [, filename] = vi.mocked(downloadElementAsJpg).mock.calls[0];
+    expect(filename).toBe('payslip-ana-o-brien-santos-2026-07-20.jpg');
   });
 
   it('deletes the payslip on confirm and navigates back to the list', async () => {

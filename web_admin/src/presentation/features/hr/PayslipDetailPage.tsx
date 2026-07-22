@@ -1,8 +1,8 @@
 // /hr/payslips/:id — renders the frozen payslip as a PayslipCard, plus
-// Delete (with confirm) and a Download JPG action. Download JPG is wired in
-// a later task (html2canvas); the button is a disabled placeholder here.
+// Delete (with confirm) and a Download JPG action (html2canvas, via
+// downloadElementAsJpg on the PayslipCard container).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TrashIcon } from '@heroicons/react/24/outline';
@@ -12,7 +12,17 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { RoutePaths } from '@/presentation/router/routePaths';
+import { downloadElementAsJpg } from '@/core/utils/downloadJpg';
 import { PayslipCard } from './PayslipCard';
+
+// Lowercases and replaces runs of non-alphanumerics with a single dash,
+// trimming any leading/trailing dash left behind.
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 export function PayslipDetailPage() {
   const { id = '' } = useParams();
@@ -20,6 +30,7 @@ export function PayslipDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const {
     data: payslip,
@@ -66,8 +77,14 @@ export function PayslipDetailPage() {
         <div className="flex flex-wrap items-center gap-tk-sm">
           <button
             type="button"
-            disabled
-            className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text-hint opacity-60"
+            onClick={() => {
+              if (!cardRef.current) return;
+              void downloadElementAsJpg(
+                cardRef.current,
+                `payslip-${slugify(payslip.employeeName)}-${payslip.periodStart}.jpg`,
+              );
+            }}
+            className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
           >
             Download JPG
           </button>
@@ -83,7 +100,9 @@ export function PayslipDetailPage() {
 
       {del.error ? <p className="text-bodySmall text-error-dark">{del.error.message}</p> : null}
 
-      <PayslipCard payslip={payslip} />
+      <div ref={cardRef}>
+        <PayslipCard payslip={payslip} />
+      </div>
 
       <Dialog
         open={confirmDelete}
