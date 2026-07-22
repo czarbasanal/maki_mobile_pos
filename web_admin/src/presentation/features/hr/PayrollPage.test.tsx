@@ -14,6 +14,7 @@ const employee = (o: Partial<Employee> = {}): Employee => ({
   name: 'Juan',
   dailyRate: 640,
   isActive: true,
+  weekStartDay: null,
   createdAt: null,
   updatedAt: null,
   ...o,
@@ -95,6 +96,36 @@ describe('PayrollPage', () => {
     await userEvent.type(screen.getByLabelText('Hours worked'), '48');
 
     await waitFor(() => expect(screen.getAllByText(formatMoney(3840)).length).toBeGreaterThan(0));
+  });
+
+  it('defaults the week-start-day select to settings.weekStartDay, then re-anchors the period when an employee with an override is picked', async () => {
+    const withOverride = employee({ id: 'e2', name: 'Maria', weekStartDay: 3 });
+    await renderForm({ employees: [employee(), withOverride] });
+
+    expect(screen.getByLabelText('Week starts on')).toHaveValue('1');
+
+    await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e2');
+
+    expect(screen.getByLabelText('Week starts on')).toHaveValue('3');
+    // 2026-07-22 (the fixed "today") is itself a Wednesday, so a
+    // Wednesday-start period begins and ends on it, not the previous Monday.
+    const lastDay = screen.getByRole('button', { name: /7\/28/ });
+    expect(lastDay).toHaveTextContent(/day off/i);
+    // The old Mon-start period's first day (7/20) is outside the new window.
+    expect(screen.queryByRole('button', { name: /7\/20/ })).not.toBeInTheDocument();
+  });
+
+  it('manually changing the week-start-day select re-derives the period window', async () => {
+    await renderForm();
+
+    expect(screen.getByRole('button', { name: /7\/26/ })).toHaveTextContent(/day off/i);
+
+    await userEvent.selectOptions(screen.getByLabelText('Week starts on'), '3');
+
+    const lastDay = screen.getByRole('button', { name: /7\/28/ });
+    expect(lastDay).toHaveTextContent(/day off/i);
+    // The old Mon-start period's first day (7/20) is outside the new window.
+    expect(screen.queryByRole('button', { name: /7\/20/ })).not.toBeInTheDocument();
   });
 
   it('cycles a day cell present -> absent -> dayOff -> present on click', async () => {

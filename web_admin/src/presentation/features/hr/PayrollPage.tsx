@@ -4,7 +4,7 @@
 // everything — including the holiday-pay settings percentages — into one
 // immutable payslip snapshot and hands off to its detail page.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 import { formatMoney } from '@/core/utils/money';
 import { payPeriodFor, shiftPeriod, type PayPeriod } from '@/domain/hr/payPeriod';
+import { WEEKDAYS } from '@/domain/hr/weekdays';
 import type { Employee, HrSettings } from '@/domain/hr/types';
 import { usePayslipDraft } from './usePayslipDraft';
 import { WeekGrid } from './WeekGrid';
@@ -78,9 +79,20 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
   const actor = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
+  // The anchor date the period is computed around — fixed at "today" for the
+  // life of this form (mirrors the settings seed-once comment below). Prev/
+  // next navigation moves `period` directly via shiftPeriod and never touches
+  // this; only a start-day change (picking an employee or the select) re-runs
+  // payPeriodFor(anchor, startDay), so navigation keeps working regardless of
+  // which weekday the period currently starts on.
+  const anchorRef = useRef(new Date());
+
   // Settings seed the period's week-start-day exactly once, at mount — this
   // component only exists once settings have loaded (see PayrollPage above).
-  const [period, setPeriod] = useState<PayPeriod>(() => payPeriodFor(new Date(), settings.weekStartDay));
+  const [startDay, setStartDayState] = useState(settings.weekStartDay);
+  const [period, setPeriod] = useState<PayPeriod>(() =>
+    payPeriodFor(anchorRef.current, settings.weekStartDay),
+  );
   const [employeeId, setEmployeeId] = useState('');
   const employee = employees.find((e) => e.id === employeeId) ?? null;
 
@@ -89,10 +101,18 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
     specialHolidayPct: settings.specialHolidayPct,
   });
 
+  const setStartDay = (day: number) => {
+    setStartDayState(day);
+    setPeriod(payPeriodFor(anchorRef.current, day));
+  };
+
   const onEmployeeChange = (id: string) => {
     setEmployeeId(id);
     const picked = employees.find((e) => e.id === id);
-    if (picked) draft.setDailyRateText(String(picked.dailyRate));
+    if (picked) {
+      draft.setDailyRateText(String(picked.dailyRate));
+      setStartDay(picked.weekStartDay ?? settings.weekStartDay);
+    }
   };
 
   const generate = useMutation<string, Error, void>({
@@ -131,7 +151,7 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
         </p>
       ) : null}
 
-      <section className="grid gap-tk-md sm:grid-cols-2">
+      <section className="grid gap-tk-md sm:grid-cols-3">
         <div>
           <label
             htmlFor="payroll-employee"
@@ -149,6 +169,27 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
             {employees.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="payroll-week-start-day"
+            className="mb-tk-xs block text-bodySmall text-light-text-secondary"
+          >
+            Week starts on
+          </label>
+          <select
+            id="payroll-week-start-day"
+            value={startDay}
+            onChange={(e) => setStartDay(Number(e.target.value))}
+            className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+          >
+            {WEEKDAYS.map((day) => (
+              <option key={day.value} value={day.value}>
+                {day.label}
               </option>
             ))}
           </select>

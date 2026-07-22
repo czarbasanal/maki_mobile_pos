@@ -12,16 +12,7 @@ import { useHrSettingsRepo } from '@/infrastructure/di/container';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import type { HrSettings } from '@/domain/hr/types';
-
-const WEEKDAYS: { value: number; label: string }[] = [
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
-  { value: 7, label: 'Sunday' },
-];
+import { WEEKDAYS } from '@/domain/hr/weekdays';
 
 interface EditedSettings {
   weekStartDay: number;

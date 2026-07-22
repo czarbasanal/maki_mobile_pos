@@ -14,6 +14,7 @@ export const employeeConverter: FirestoreDataConverter<Employee> = {
       name: e.name,
       dailyRate: e.dailyRate,
       isActive: e.isActive,
+      weekStartDay: e.weekStartDay,
     };
   },
   fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Employee {
@@ -23,6 +24,8 @@ export const employeeConverter: FirestoreDataConverter<Employee> = {
       name: d.name ?? '',
       dailyRate: d.dailyRate ?? 0,
       isActive: d.isActive ?? true,
+      // Missing or explicit null both mean "use settings/hr.weekStartDay".
+      weekStartDay: d.weekStartDay ?? null,
       createdAt: toDate(d.createdAt),
       updatedAt: toDate(d.updatedAt),
     };

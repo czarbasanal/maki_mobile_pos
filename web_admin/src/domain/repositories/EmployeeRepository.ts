@@ -4,12 +4,15 @@ import type { Unsubscribe } from './AuthRepository';
 export interface EmployeeCreateInput {
   name: string;
   dailyRate: number;
+  // ISO 1-7 (1=Mon..7=Sun); null/omitted = use settings/hr.weekStartDay.
+  weekStartDay?: number | null;
 }
 
 export interface EmployeeUpdateInput {
   name?: string;
   dailyRate?: number;
   isActive?: boolean;
+  weekStartDay?: number | null;
 }
 
 export interface EmployeeRepository {
