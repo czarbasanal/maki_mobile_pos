@@ -4,6 +4,7 @@
 import { useEffect, useState, type ComponentType, type SVGProps } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  BanknotesIcon,
   ChevronRightIcon,
   ClockIcon,
   CodeBracketSquareIcon,
@@ -119,6 +120,13 @@ export function SettingsPage() {
           tone="orange"
           title="Mechanics"
           subtitle="Mechanics for labor on service sales"
+        />
+        <Row
+          to={RoutePaths.hrSettings}
+          icon={BanknotesIcon}
+          tone="green"
+          title="HR settings"
+          subtitle="Pay-period week start and holiday pay percentages"
         />
       </Section>
 
