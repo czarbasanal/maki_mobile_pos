@@ -69,6 +69,7 @@ export class FirestoreEmployeeRepository implements EmployeeRepository {
     if (input.dailyRate !== undefined) data.dailyRate = input.dailyRate;
     if (input.isActive !== undefined) data.isActive = input.isActive;
     if (input.weekStartDay !== undefined) data.weekStartDay = input.weekStartDay;
+    if (input.payslipDefaults !== undefined) data.payslipDefaults = input.payslipDefaults;
     await updateDoc(doc(this.db, FirestoreCollections.employees, id), data);
   }
 }

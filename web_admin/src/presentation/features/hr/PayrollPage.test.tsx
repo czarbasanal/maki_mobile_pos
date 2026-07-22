@@ -7,7 +7,7 @@ import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PayrollPage } from './PayrollPage';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { formatMoney } from '@/core/utils/money';
-import { DEFAULT_HR_SETTINGS, type Employee, type HrSettings } from '@/domain/hr/types';
+import { DEFAULT_HR_SETTINGS, type Employee, type HrSettings, type PayslipDefaults } from '@/domain/hr/types';
 
 const employee = (o: Partial<Employee> = {}): Employee => ({
   id: 'e1',
@@ -15,6 +15,7 @@ const employee = (o: Partial<Employee> = {}): Employee => ({
   dailyRate: 640,
   isActive: true,
   weekStartDay: null,
+  payslipDefaults: null,
   createdAt: null,
   updatedAt: null,
   ...o,
@@ -29,6 +30,7 @@ function harness(opts?: {
   employees?: Employee[];
   settings?: HrSettings;
   create?: ReturnType<typeof vi.fn>;
+  update?: ReturnType<typeof vi.fn>;
 }) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const employeeRepo: Partial<Container['employeeRepo']> = {
@@ -36,6 +38,7 @@ function harness(opts?: {
       cb(opts?.employees ?? [employee()]);
       return () => {};
     }),
+    update: opts?.update ?? vi.fn(async () => {}),
   };
   const hrSettingsRepo: Partial<Container['hrSettingsRepo']> = {
     get: vi.fn(async () => opts?.settings ?? { ...DEFAULT_HR_SETTINGS }),
@@ -134,29 +137,34 @@ describe('PayrollPage', () => {
     expect(screen.queryByRole('button', { name: /7\/20/ })).not.toBeInTheDocument();
   });
 
-  it('navigating to next week then picking a no-override employee keeps the displayed period and grid taps', async () => {
+  it('navigating to next week then picking a no-override employee keeps the displayed period but resets the grid to the default seed (Amendment 2 auto-apply)', async () => {
     await renderForm();
 
     await userEvent.click(screen.getByRole('button', { name: 'Next week' }));
     // Shifted to the following week: Mon 7/27 - Sun 8/2.
     expect(screen.getByRole('button', { name: /8\/2/ })).toHaveTextContent(/day off/i);
 
-    // Tap a day cell before switching employees, to prove the grid isn't reseeded.
+    // Tap a day cell before picking an employee.
     const firstDay = screen.getByRole('button', { name: /7\/27/ });
     expect(firstDay).toHaveTextContent(/present/i);
     await userEvent.click(firstDay);
     expect(firstDay).toHaveTextContent(/absent/i);
 
     // e1 has no weekStartDay override, so it resolves to settings.weekStartDay
-    // (1) — the same as the current startDay. Picking it must not touch the
-    // period or the grid at all.
+    // (1) — the same as the current startDay, so picking it must not touch
+    // the period window. But (Amendment 2) picking an employee always
+    // auto-applies their payslipDefaults onto the form, including the grid —
+    // e1 has none, so the pre-pick tap is discarded back to the default seed
+    // (this is the fix for the latent cross-employee-carryover bug, not a
+    // carve-out for "same window" picks).
     await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e1');
 
     expect(screen.getByLabelText('Daily rate')).toHaveValue(640);
     expect(screen.getByLabelText('Week starts on')).toHaveValue('1');
-    expect(screen.getByRole('button', { name: /7\/27/ })).toHaveTextContent(/absent/i);
+    expect(screen.getByRole('button', { name: /7\/27/ })).toHaveTextContent(/present/i);
     expect(screen.getByRole('button', { name: /8\/2/ })).toHaveTextContent(/day off/i);
-    // The mount-time period's days must not have come back.
+    // The mount-time period's days must not have come back — still the
+    // navigated-to window, just reseeded.
     expect(screen.queryByRole('button', { name: /7\/26/ })).not.toBeInTheDocument();
   });
 
@@ -257,5 +265,92 @@ describe('PayrollPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /remove other deduction/i }));
     expect(screen.queryByLabelText('Other deduction label')).not.toBeInTheDocument();
+  });
+
+  describe('per-employee payslip defaults (Amendment 2)', () => {
+    const SAVED_DEFAULTS: PayslipDefaults = {
+      hoursWorked: 40,
+      overtimeHours: 4,
+      overtimeRatePerHour: 90,
+      regularHolidayDays: 1,
+      specialHolidayDays: 0,
+      incentives: 200,
+      deductions: {
+        sss: 100,
+        philhealth: 50,
+        pagibig: 25,
+        late: 0,
+        absences: 0,
+        cashAdvance: 0,
+        others: [],
+      },
+      // Mounted period is Mon 7/20 - Sun 7/26; e2 has no weekStartDay
+      // override so it doesn't re-anchor — index 0 lands on 7/20 (Monday).
+      dayPattern: ['absent', 'present', 'present', 'present', 'present', 'present', 'present'],
+    };
+
+    it('picking an employee with saved defaults fills the numeric fields and applies the day pattern positionally', async () => {
+      const withDefaults = employee({ id: 'e2', name: 'Maria', payslipDefaults: SAVED_DEFAULTS });
+      await renderForm({ employees: [employee(), withDefaults] });
+
+      await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e2');
+
+      expect(screen.getByLabelText('Hours worked')).toHaveValue(40);
+      expect(screen.getByLabelText('Incentives')).toHaveValue(200);
+      expect(screen.getByLabelText('SSS')).toHaveValue(100);
+      // dayPattern[0] = 'absent' -> the period's first date, 2026-07-20.
+      expect(screen.getByRole('button', { name: /7\/20/ })).toHaveTextContent(/absent/i);
+    });
+
+    it('picking an employee with no defaults after one with defaults clears the form (no carryover)', async () => {
+      const withDefaults = employee({ id: 'e2', name: 'Maria', payslipDefaults: SAVED_DEFAULTS });
+      const noDefaults = employee({ id: 'e3', name: 'Pedro', payslipDefaults: null });
+      await renderForm({ employees: [employee(), withDefaults, noDefaults] });
+
+      await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e2');
+      expect(screen.getByLabelText('Hours worked')).toHaveValue(40);
+
+      await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e3');
+
+      expect(screen.getByLabelText('Hours worked')).toHaveValue(null);
+      expect(screen.getByLabelText('Incentives')).toHaveValue(null);
+      expect(screen.getByLabelText('SSS')).toHaveValue(null);
+      // The default seed: every day present except the last, which is off.
+      expect(screen.getByRole('button', { name: /7\/20/ })).toHaveTextContent(/present/i);
+      expect(screen.getByRole('button', { name: /7\/26/ })).toHaveTextContent(/day off/i);
+    });
+
+    it('Save as defaults writes the current form snapshot onto the picked employee', async () => {
+      const update = vi.fn(async () => {});
+      await renderForm({ update });
+
+      await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e1');
+      await userEvent.type(screen.getByLabelText('Hours worked'), '48');
+      await userEvent.type(screen.getByLabelText('Incentives'), '150');
+
+      await userEvent.click(screen.getByRole('button', { name: /save as defaults/i }));
+
+      await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
+      expect(update).toHaveBeenCalledWith(
+        'e1',
+        expect.objectContaining({
+          payslipDefaults: expect.objectContaining({
+            hoursWorked: 48,
+            incentives: 150,
+            dayPattern: expect.any(Array),
+          }),
+        }),
+      );
+      await waitFor(() =>
+        expect(screen.getByText(/saved as this employee's defaults/i)).toBeInTheDocument(),
+      );
+    });
+
+    it('disables Save as defaults until an employee is picked', async () => {
+      await renderForm();
+      expect(screen.getByRole('button', { name: /save as defaults/i })).toBeDisabled();
+      await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e1');
+      expect(screen.getByRole('button', { name: /save as defaults/i })).toBeEnabled();
+    });
   });
 });

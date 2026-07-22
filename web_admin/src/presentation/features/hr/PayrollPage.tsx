@@ -76,6 +76,7 @@ export function PayrollPage() {
 
 function PayrollForm({ employees, settings }: { employees: Employee[]; settings: HrSettings }) {
   const payslipRepo = usePayslipRepo();
+  const employeeRepo = useEmployeeRepo();
   const actor = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
@@ -127,8 +128,18 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
     setEmployeeId(id);
     const picked = employees.find((e) => e.id === id);
     if (picked) {
+      generate.reset();
+      saveDefaults.reset();
       draft.setDailyRateText(String(picked.dailyRate));
-      setStartDay(picked.weekStartDay ?? settings.weekStartDay);
+      const day = picked.weekStartDay ?? settings.weekStartDay;
+      // Same window setStartDay would land on — computed locally so it can
+      // be handed to applyDefaults synchronously, in this same handler,
+      // instead of reading `period` after setStartDay's state update (which
+      // wouldn't be reflected until next render). setStartDay itself still
+      // runs below and no-ops on an equal day, unchanged from before.
+      const nextPeriod = day === startDay ? period : payPeriodFor(parseIsoLocal(period.end), day);
+      setStartDay(day);
+      draft.applyDefaults(picked.payslipDefaults, nextPeriod);
     }
   };
 
@@ -151,7 +162,15 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
     onSuccess: (id) => navigate(`${RoutePaths.hrPayslips}/${id}`),
   });
 
+  const saveDefaults = useMutation<void, Error, void>({
+    mutationFn: async () => {
+      if (!employee) throw new Error('Select an employee');
+      await employeeRepo.update(employee.id, { payslipDefaults: draft.snapshotDefaults() });
+    },
+  });
+
   const canGenerate = !!employee && draft.isValid && !generate.isPending;
+  const canSaveDefaults = !!employee && draft.isValid && !saveDefaults.isPending;
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
@@ -351,18 +370,44 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
         <SummaryRow label="Net pay" value={draft.computed.net} emphasize />
       </section>
 
-      <button
-        type="button"
-        disabled={!canGenerate}
-        onClick={() => generate.mutate()}
-        className={cn(
-          'w-full rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark sm:w-auto',
-          !canGenerate && 'cursor-not-allowed opacity-60',
-        )}
-      >
-        {generate.isPending ? <Spinner className="mr-tk-xs inline h-3.5 w-3.5" /> : null}
-        Generate Payslip
-      </button>
+      {saveDefaults.error ? (
+        <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+          {saveDefaults.error.message}
+        </p>
+      ) : null}
+      {saveDefaults.isSuccess ? (
+        <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
+          Saved as this employee&apos;s defaults.
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap gap-tk-sm">
+        <button
+          type="button"
+          disabled={!canGenerate}
+          onClick={() => generate.mutate()}
+          className={cn(
+            'w-full rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark sm:w-auto',
+            !canGenerate && 'cursor-not-allowed opacity-60',
+          )}
+        >
+          {generate.isPending ? <Spinner className="mr-tk-xs inline h-3.5 w-3.5" /> : null}
+          Generate Payslip
+        </button>
+
+        <button
+          type="button"
+          disabled={!canSaveDefaults}
+          onClick={() => saveDefaults.mutate()}
+          className={cn(
+            'w-full rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-semibold text-light-text hover:bg-light-subtle sm:w-auto',
+            !canSaveDefaults && 'cursor-not-allowed opacity-60',
+          )}
+        >
+          {saveDefaults.isPending ? <Spinner className="mr-tk-xs inline h-3.5 w-3.5" /> : null}
+          Save as defaults
+        </button>
+      </div>
     </div>
   );
 }

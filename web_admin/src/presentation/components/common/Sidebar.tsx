@@ -78,7 +78,6 @@ const sections: NavSection[] = [
       { label: 'Employees', path: RoutePaths.hrEmployees, icon: IdentificationIcon },
       { label: 'Payroll', path: RoutePaths.hrPayroll, icon: BanknotesIcon },
       { label: 'Payslips', path: RoutePaths.hrPayslips, icon: DocumentTextIcon },
-      { label: 'HR Settings', path: RoutePaths.hrSettings, icon: Cog6ToothIcon },
     ],
   },
   {

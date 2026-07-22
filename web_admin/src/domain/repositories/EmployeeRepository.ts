@@ -1,4 +1,4 @@
-import type { Employee } from '@/domain/hr/types';
+import type { Employee, PayslipDefaults } from '@/domain/hr/types';
 import type { Unsubscribe } from './AuthRepository';
 
 export interface EmployeeCreateInput {
@@ -13,6 +13,7 @@ export interface EmployeeUpdateInput {
   dailyRate?: number;
   isActive?: boolean;
   weekStartDay?: number | null;
+  payslipDefaults?: PayslipDefaults | null;
 }
 
 export interface EmployeeRepository {

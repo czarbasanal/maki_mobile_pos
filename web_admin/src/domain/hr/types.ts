@@ -17,10 +17,22 @@ export interface PayslipComputed {
   hourlyRate: number; basePay: number; overtimePay: number; holidayPay: number;
   gross: number; totalDeductions: number; net: number;
 }
+// One saved "profile" of payslip-form values per employee, auto-applied when
+// picked on the payroll form (Amendment 2). Holiday PERCENTAGES are excluded
+// on purpose — those stay settings-seeded, not per-employee.
+export interface PayslipDefaults {
+  hoursWorked: number; overtimeHours: number; overtimeRatePerHour: number;
+  regularHolidayDays: number; specialHolidayDays: number; incentives: number;
+  deductions: PayslipDeductions;
+  // Positional: index 0 = the employee's effective week-start day. Applied
+  // onto whatever period is on screen when loaded (index i -> period.dates[i]).
+  dayPattern: DayStatus[];
+}
 export interface Employee {
   id: string; name: string; dailyRate: number; isActive: boolean;
   // ISO 1-7 (1=Mon..7=Sun); null = use settings/hr.weekStartDay.
   weekStartDay: number | null;
+  payslipDefaults: PayslipDefaults | null;
   createdAt: Date | null; updatedAt: Date | null;
 }
 export interface HrSettings { weekStartDay: number; regularHolidayPct: number; specialHolidayPct: number }

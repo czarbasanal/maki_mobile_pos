@@ -14,7 +14,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { computePayslip } from '@/domain/hr/computePayslip';
 import type { PayPeriod } from '@/domain/hr/payPeriod';
-import type { DayStatus, PayslipComputed, PayslipDay, PayslipInputs } from '@/domain/hr/types';
+import type {
+  DayStatus,
+  PayslipComputed,
+  PayslipDay,
+  PayslipDefaults,
+  PayslipInputs,
+} from '@/domain/hr/types';
 
 export interface OtherRow {
   id: string;
@@ -85,6 +91,25 @@ export interface UsePayslipDraftResult {
   inputs: PayslipInputs;
   computed: PayslipComputed;
   isValid: boolean;
+  /**
+   * Fills (or, for `null`, blanks) every field from a saved
+   * PayslipDefaults profile — numeric fields, other-deduction rows, and the
+   * day grid, positionally onto `applyPeriod.dates` (index i of
+   * dayPattern -> applyPeriod.dates[i]; a short/missing pattern leaves the
+   * remaining days at the default seed). Takes `applyPeriod` as an
+   * argument rather than reading this hook's own `period` prop: the caller
+   * (PayrollPage.onEmployeeChange) may re-anchor the period in the SAME
+   * event handler that picks the employee, and the hook's `period` prop
+   * won't reflect that until the next render — passing the freshly
+   * computed value here avoids applying defaults onto a stale window.
+   * Also updates the internal reseed-tracking ref to the applied period's
+   * start so the effect that reseeds on period-prop change doesn't
+   * immediately stomp what was just applied once the parent's `period`
+   * state catches up on the next render.
+   */
+  applyDefaults: (defaults: PayslipDefaults | null, applyPeriod: PayPeriod) => void;
+  /** Snapshot of the current form (minus pcts) shaped as a PayslipDefaults, for "Save as defaults". */
+  snapshotDefaults: () => PayslipDefaults;
 }
 
 /** WeekGrid's own cycle order (present -> absent -> dayOff -> present). */
@@ -126,6 +151,73 @@ export function usePayslipDraft(period: PayPeriod, seedPcts: PayslipPctSeed): Us
   const setDay = (date: string, status: DayStatus) => {
     setDays((prev) => prev.map((d) => (d.date === date ? { ...d, status } : d)));
   };
+
+  const applyDefaults = (defaults: PayslipDefaults | null, applyPeriod: PayPeriod) => {
+    // Mark this period as already seeded BEFORE setDays below, so that if
+    // the caller is also mid-flight re-anchoring the period (parent's
+    // `period` prop hasn't updated yet), the reseed effect that fires once
+    // it does won't see a mismatch and overwrite what we're about to set.
+    seededPeriodStart.current = applyPeriod.start;
+    const base = seedDays(applyPeriod);
+
+    if (!defaults) {
+      setDays(base);
+      setHoursWorkedText('');
+      setOvertimeHoursText('');
+      setOvertimeRatePerHourText('');
+      setRegularHolidayDaysText('');
+      setSpecialHolidayDaysText('');
+      setIncentivesText('');
+      setSssText('');
+      setPhilhealthText('');
+      setPagibigText('');
+      setLateText('');
+      setAbsencesText('');
+      setCashAdvanceText('');
+      setOthers([]);
+      return;
+    }
+
+    setDays(base.map((d, i) => (i < defaults.dayPattern.length ? { ...d, status: defaults.dayPattern[i] } : d)));
+    setHoursWorkedText(String(defaults.hoursWorked));
+    setOvertimeHoursText(String(defaults.overtimeHours));
+    setOvertimeRatePerHourText(String(defaults.overtimeRatePerHour));
+    setRegularHolidayDaysText(String(defaults.regularHolidayDays));
+    setSpecialHolidayDaysText(String(defaults.specialHolidayDays));
+    setIncentivesText(String(defaults.incentives));
+    setSssText(String(defaults.deductions.sss));
+    setPhilhealthText(String(defaults.deductions.philhealth));
+    setPagibigText(String(defaults.deductions.pagibig));
+    setLateText(String(defaults.deductions.late));
+    setAbsencesText(String(defaults.deductions.absences));
+    setCashAdvanceText(String(defaults.deductions.cashAdvance));
+    setOthers(
+      defaults.deductions.others.map((o) => ({
+        id: crypto.randomUUID(),
+        label: o.label,
+        amountText: String(o.amount),
+      })),
+    );
+  };
+
+  const snapshotDefaults = (): PayslipDefaults => ({
+    hoursWorked: parseNum(hoursWorkedText),
+    overtimeHours: parseNum(overtimeHoursText),
+    overtimeRatePerHour: parseNum(overtimeRatePerHourText),
+    regularHolidayDays: parseNum(regularHolidayDaysText),
+    specialHolidayDays: parseNum(specialHolidayDaysText),
+    incentives: parseNum(incentivesText),
+    deductions: {
+      sss: parseNum(sssText),
+      philhealth: parseNum(philhealthText),
+      pagibig: parseNum(pagibigText),
+      late: parseNum(lateText),
+      absences: parseNum(absencesText),
+      cashAdvance: parseNum(cashAdvanceText),
+      others: others.map((o) => ({ label: o.label, amount: parseNum(o.amountText) })),
+    },
+    dayPattern: days.map((d) => d.status),
+  });
 
   const addOther = () => {
     setOthers((prev) => [...prev, { id: crypto.randomUUID(), label: '', amountText: '' }]);
@@ -218,5 +310,7 @@ export function usePayslipDraft(period: PayPeriod, seedPcts: PayslipPctSeed): Us
     inputs,
     computed,
     isValid,
+    applyDefaults,
+    snapshotDefaults,
   };
 }

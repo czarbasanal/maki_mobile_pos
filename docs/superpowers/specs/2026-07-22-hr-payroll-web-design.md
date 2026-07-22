@@ -142,6 +142,29 @@ the grid; the WINDOW start was the gap). Decisions:
 - Payslip storage unchanged (explicit dates already stored) — zero downstream impact on
   card/JPG/history. No rules change.
 
+## Amendment 2 — per-employee payslip defaults (approved 2026-07-22, same day)
+
+One "defaults" profile per employee, auto-applied when picked on the payroll form.
+
+- `employees` docs gain `payslipDefaults: object|null`:
+  `{hoursWorked, overtimeHours, overtimeRatePerHour, regularHolidayDays,
+  specialHolidayDays, incentives, deductions (full PayslipDeductions incl. others),
+  dayPattern: DayStatus[7]}` — dayPattern is positional (index 0 = the employee's
+  effective week-start day), applied onto the current period's dates when loaded.
+  Holiday PERCENTAGES stay settings-seeded (policy-level, not per-employee); dailyRate
+  stays a top-level employee field (already exists).
+- **Auto-apply on pick**: selecting an employee fills the whole form (numeric fields,
+  others rows, day grid) from their defaults; an employee with NO defaults resets the
+  form to blank/zeros — this also fixes the latent cross-employee carryover (previously
+  the prior employee's deductions persisted when switching).
+- **"Save as defaults"** button on the payroll form: writes the CURRENT form values
+  (minus pcts) + the grid's statuses (positionally, relative to the displayed window)
+  to the picked employee's doc. Overwrite is the only management op (no separate clear
+  UI — out of scope).
+- Storage on the employee doc means NO new collections and NO rules change (employees
+  is already admin-only both directions). Converter tolerates missing/partial maps
+  (missing → null; missing others → []; missing/short dayPattern → ignored).
+
 ## Out of scope (this slice)
 
 - Mobile UI (slice 2), payslip visual design (handoff later), automation/time-in-out,

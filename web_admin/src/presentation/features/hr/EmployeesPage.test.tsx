@@ -13,6 +13,7 @@ const employee = (o: Partial<Employee> = {}): Employee => ({
   dailyRate: 640,
   isActive: true,
   weekStartDay: null,
+  payslipDefaults: null,
   createdAt: null,
   updatedAt: null,
   ...o,
