@@ -103,14 +103,16 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
     specialHolidayPct: settings.specialHolidayPct,
   });
 
-  // Re-anchors from the period the admin is CURRENTLY LOOKING AT
-  // (parseIsoLocal(period.start)), not from mount-time "today" — so
-  // switching employees (or the manual select) never discards prev/next
-  // navigation. payPeriodFor snaps to the most recent `day`-start on or
-  // before that anchor, which may land a few days earlier than the
-  // displayed week if `day` falls later in the week than the current
-  // start — that's expected: it's the closest same-neighborhood window to
-  // what's on screen, not a jump back to today.
+  // Re-anchors from the period the admin is CURRENTLY LOOKING AT — its END
+  // (parseIsoLocal(period.end)), not from mount-time "today" and not from
+  // its start — so switching employees (or the manual select) never
+  // discards prev/next navigation. payPeriodFor snaps to the most recent
+  // `day`-start on or before that anchor; anchoring on the END rather than
+  // the START guarantees the new window overlaps the displayed one (the new
+  // start always falls in [end-6, end]). Anchoring on the start instead
+  // can walk a full window earlier than what's on screen whenever `day`
+  // falls later in the week than the current start — a "wrong week"
+  // footgun for payroll — so end is the correct choice here.
   //
   // No-op when `day` already matches the current startDay: an employee
   // pick with no override (or a re-select of the same option) must not
@@ -118,7 +120,7 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
   const setStartDay = (day: number) => {
     if (day === startDay) return;
     setStartDayState(day);
-    setPeriod(payPeriodFor(parseIsoLocal(period.start), day));
+    setPeriod(payPeriodFor(parseIsoLocal(period.end), day));
   };
 
   const onEmployeeChange = (id: string) => {
