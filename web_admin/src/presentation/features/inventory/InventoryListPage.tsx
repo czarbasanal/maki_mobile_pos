@@ -5,11 +5,14 @@ import { useProducts } from '@/presentation/hooks/useProducts';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { getStockStatus, StockStatus } from '@/domain/entities';
 import { filterProducts, type ProductFilter } from '@/domain/products/filterProducts';
+import { stockTotals } from '@/domain/products/stockTotals';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { UserRole } from '@/domain/enums';
 
 const STOCK_LABEL: Record<StockStatus, string> = {
   [StockStatus.inStock]: 'In stock',
@@ -62,6 +65,10 @@ export function InventoryListPage() {
     () => filterProducts(active, { search, stock, category }),
     [active, search, stock, category],
   );
+
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === UserRole.admin;
+  const totals = useMemo(() => stockTotals(filtered), [filtered]);
 
   // If the selected category drops out of the option set (e.g. it only existed
   // among inactive products and "Show inactive" was turned off), reset to All so
@@ -130,6 +137,14 @@ export function InventoryListPage() {
           {showInactive ? 'Hide inactive' : 'Show inactive'}
         </button>
       </div>
+
+      {isAdmin ? (
+        <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-3">
+          <TotalCard label="Stock Cost" value={formatMoney(totals.cost)} />
+          <TotalCard label="Retail Value" value={formatMoney(totals.retail)} />
+          <TotalCard label="Expected Profit" value={formatMoney(totals.profit)} />
+        </div>
+      ) : null}
 
       {isLoading || !products ? (
         <LoadingView label="Loading inventory…" />
@@ -213,6 +228,15 @@ function CountCard({
       </span>
       <span className="text-headingMedium font-semibold text-light-text">{value}</span>
     </button>
+  );
+}
+
+function TotalCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-light-hairline bg-light-card px-tk-lg py-tk-md">
+      <span className="text-bodySmall text-light-text-secondary">{label}</span>
+      <span className="text-headingMedium font-semibold tabular-nums text-light-text">{value}</span>
+    </div>
   );
 }
 

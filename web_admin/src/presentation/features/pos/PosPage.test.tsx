@@ -1,11 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PosPage } from './PosPage';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import type { Product, Mechanic } from '@/domain/entities';
+
+const product = (o: Partial<Product> = {}): Product =>
+  ({ id: 'p1', sku: 'A', name: 'Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, ...o } as Product);
 
 function harness(state?: { completedSaleNumber?: string }) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
@@ -58,5 +62,37 @@ describe('PosPage', () => {
     harness();
     const link = screen.getByRole('link', { name: /checkout/i });
     expect(link.className).toContain('pointer-events-none');
+  });
+
+  it('hides the reset-sale button when the cart is empty', () => {
+    useCartStore.getState().clear();
+    harness();
+    expect(screen.queryByLabelText('Reset sale')).toBeNull();
+  });
+
+  it('clears the whole ticket when reset is confirmed', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    useCartStore.getState().setMechanic('m1', 'Juan');
+    harness();
+
+    await userEvent.click(screen.getByLabelText('Reset sale'));
+    expect(screen.getByText('Clear this sale?')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^clear$/i }));
+
+    expect(useCartStore.getState().lines).toHaveLength(0);
+    expect(useCartStore.getState().laborLines).toHaveLength(0);
+    expect(useCartStore.getState().mechanicId).toBeNull();
+  });
+
+  it('leaves the ticket untouched when reset is cancelled', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    harness();
+
+    await userEvent.click(screen.getByLabelText('Reset sale'));
+    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+
+    expect(useCartStore.getState().lines).toHaveLength(1);
   });
 });

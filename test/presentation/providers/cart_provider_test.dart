@@ -270,18 +270,66 @@ void main() {
       expect(container.read(cartProvider).draftName, isNull);
     });
 
-    test('reset should clear all state', () {
-      final product = createTestProduct();
-      cartNotifier.addProduct(product);
-      cartNotifier.setAmountReceived(100);
+    test(
+        'reset should clear all state '
+        '(items, labor, mechanic, payment, notes, draft link, checkout id)',
+        () {
+      // Seed via loadFromDraft so items/laborLines/mechanic/sourceDraftId are
+      // all populated at once, then layer on the remaining cart-only fields.
+      final draft = DraftEntity(
+        id: 'draft-reset-1',
+        name: 'Reset Test Draft',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100,
+            unitCost: 60,
+            quantity: 1,
+          ),
+        ],
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan',
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John',
+        createdAt: DateTime.now(),
+      );
+      cartNotifier.loadFromDraft(draft);
+      cartNotifier.setAmountReceived(500);
+      cartNotifier.setSplitAmount(200);
       cartNotifier.setNotes('Test notes');
+      cartNotifier.ensureCheckoutId();
+
+      // Sanity-check the seed actually stuck before asserting reset clears it.
+      final seeded = container.read(cartProvider);
+      expect(seeded.items, isNotEmpty);
+      expect(seeded.laborLines, isNotEmpty);
+      expect(seeded.mechanicId, isNotNull);
+      expect(seeded.mechanicName, isNotNull);
+      expect(seeded.amountReceived, 500);
+      expect(seeded.splitAmount, 200);
+      expect(seeded.notes, 'Test notes');
+      expect(seeded.sourceDraftId, isNotNull);
+      expect(seeded.checkoutId, isNotEmpty);
 
       cartNotifier.reset();
 
       final state = container.read(cartProvider);
       expect(state.isEmpty, true);
+      expect(state.laborLines, isEmpty);
+      expect(state.mechanicId, isNull);
+      expect(state.mechanicName, isNull);
       expect(state.amountReceived, 0);
+      expect(state.splitAmount, 0);
       expect(state.notes, isNull);
+      expect(state.sourceDraftId, isNull);
+      expect(state.checkoutId, isEmpty);
     });
 
     test('toSale should create valid SaleEntity', () {

@@ -7,9 +7,11 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/inventory_export.dart';
 import 'package:maki_mobile_pos/core/utils/report_export.dart';
+import 'package:maki_mobile_pos/core/utils/stock_totals.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
@@ -124,6 +126,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           // Active filters display
           if (_hasActiveFilters(inventoryState))
             _buildActiveFilters(inventoryState),
+
+          // Inventory valuation strip (admin only)
+          if (isAdmin) const _InventoryTotalsStrip(),
 
           // Product list
           Expanded(
@@ -642,5 +647,85 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     } catch (e) {
       if (mounted) context.showErrorSnackBar('Export failed: $e');
     }
+  }
+}
+
+/// Admin-only inventory valuation strip — stock cost, retail value, and
+/// expected profit over whatever [filteredProductsProvider] is currently
+/// returning (i.e. respects the active search/stock/category filters).
+class _InventoryTotalsStrip extends ConsumerWidget {
+  const _InventoryTotalsStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final products = ref.watch(filteredProductsProvider).valueOrNull;
+    if (products == null || products.isEmpty) return const SizedBox.shrink();
+
+    final totals = StockTotals.of(products);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
+      child: AppCard(
+        radius: AppRadius.md,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: _TotalsFigure(
+                label: 'Stock Cost',
+                value: totals.cost.toCurrency(),
+              ),
+            ),
+            Expanded(
+              child: _TotalsFigure(
+                label: 'Retail Value',
+                value: totals.retail.toCurrency(),
+              ),
+            ),
+            Expanded(
+              child: _TotalsFigure(
+                label: 'Expected Profit',
+                value: totals.profit.toCurrency(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One cost/retail/profit figure within [_InventoryTotalsStrip].
+class _TotalsFigure extends StatelessWidget {
+  const _TotalsFigure({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontSize: 10,
+            color: muted,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+      ],
+    );
   }
 }
