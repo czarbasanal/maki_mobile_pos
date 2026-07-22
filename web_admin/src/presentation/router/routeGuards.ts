@@ -42,6 +42,10 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.manageLists, Permission.manageCategories],
   [RoutePaths.mechanics, Permission.manageCategories],
   [RoutePaths.userLogs, Permission.viewUserLogs],
+  [RoutePaths.hrEmployees, Permission.manageHr],
+  [RoutePaths.hrPayroll, Permission.manageHr],
+  [RoutePaths.hrPayslips, Permission.manageHr],
+  [RoutePaths.hrSettings, Permission.manageHr],
 ]);
 
 export function isPublicRoute(path: string): boolean {
@@ -99,6 +103,11 @@ function checkDynamicRoute(path: string, user: User): boolean {
   }
   if (path === RoutePaths.about) {
     return hasPermission(user.role, Permission.viewSettings);
+  }
+  // /hr/payslips/:id — the concrete payslip detail (the static /hr/payslips
+  // list is matched as an exact route first).
+  if (path.startsWith('/hr/payslips/')) {
+    return hasPermission(user.role, Permission.manageHr);
   }
   return false;
 }

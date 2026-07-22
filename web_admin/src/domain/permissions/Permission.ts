@@ -55,6 +55,8 @@ export const Permission = {
   manageCategories: 'manageCategories',
   // Logs
   viewUserLogs: 'viewUserLogs',
+  // HR / Payroll
+  manageHr: 'manageHr',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -138,6 +140,7 @@ const admin: ReadonlySet<Permission> = new Set<Permission>([
   Permission.editCostCodeMapping,
   Permission.manageCategories,
   Permission.viewUserLogs,
+  Permission.manageHr,
 ]);
 
 const rolePermissions: Record<UserRole, ReadonlySet<Permission>> = {
