@@ -29,6 +29,11 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   final _formKey = GlobalKey<FormState>();
   final _floatController = TextEditingController();
   final _countedController = TextEditingController();
+  // Pending (not-yet-Added) Plate No amount inputs — owned here (same
+  // pattern as every other ClosingField controller) so Close Day can read
+  // and auto-commit/block on them; see _submit.
+  final _plateDpPendingController = TextEditingController();
+  final _plateDeliveryPendingController = TextEditingController();
   final _notesController = TextEditingController();
   bool _busy = false;
 
@@ -52,6 +57,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   void dispose() {
     _floatController.dispose();
     _countedController.dispose();
+    _plateDpPendingController.dispose();
+    _plateDeliveryPendingController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -220,6 +227,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                     ClosingAmountList(
                       label: 'Plate No DP',
                       amounts: _plateDpAmounts,
+                      controller: _plateDpPendingController,
                       enabled: !_busy,
                       onChanged: (next) =>
                           setState(() => _plateDpAmounts = next),
@@ -228,6 +236,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                     ClosingAmountList(
                       label: 'Plate No Delivery',
                       amounts: _plateDeliveryAmounts,
+                      controller: _plateDeliveryPendingController,
                       enabled: !_busy,
                       onChanged: (next) =>
                           setState(() => _plateDeliveryAmounts = next),
@@ -373,8 +382,55 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   String _peso(double v) =>
       '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
 
+  /// True when the pending (typed-but-not-Added) text is empty (nothing to
+  /// commit) or parses to a positive number (safe to auto-commit). False
+  /// means the field has text that isn't a usable amount — Close Day must
+  /// block on it rather than silently drop it.
+  bool _pendingAmountIsValid(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return true;
+    final parsed = double.tryParse(text);
+    return parsed != null && parsed > 0;
+  }
+
+  /// Appends the pending text (already validated) as a new entry and clears
+  /// the field; a no-op when the field is empty.
+  void _commitPendingAmount(
+    TextEditingController controller,
+    List<double> current,
+    ValueChanged<List<double>> apply,
+  ) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return;
+    apply([...current, double.parse(text)]);
+    controller.clear();
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _busy) return;
+
+    // A Plate No amount typed but never committed via its own Add button
+    // used to be silently discarded on Close Day — into an immutable
+    // closing doc. Auto-commit valid pending text before confirming; block
+    // (no confirm dialog, nothing saved) if either field has invalid
+    // pending text, so nothing is lost or misread.
+    if (!_pendingAmountIsValid(_plateDpPendingController) ||
+        !_pendingAmountIsValid(_plateDeliveryPendingController)) {
+      context.showWarningSnackBar(
+          'Tap Add to include the typed Plate No amount, or clear it');
+      return;
+    }
+    _commitPendingAmount(
+      _plateDpPendingController,
+      _plateDpAmounts,
+      (next) => setState(() => _plateDpAmounts = next),
+    );
+    _commitPendingAmount(
+      _plateDeliveryPendingController,
+      _plateDeliveryAmounts,
+      (next) => setState(() => _plateDeliveryAmounts = next),
+    );
+
     final confirmed = await context.showConfirmDialog(
       title: 'Close this day?',
       message:

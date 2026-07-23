@@ -3,24 +3,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/closing_widgets.dart';
 
 void main() {
-  Future<void> pump(
+  Future<TextEditingController> pump(
     WidgetTester tester, {
     required List<double> amounts,
     required ValueChanged<List<double>> onChanged,
-  }) {
-    return tester.pumpWidget(
+  }) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
             child: ClosingAmountList(
               label: 'Plate No DP',
               amounts: amounts,
+              controller: controller,
               onChanged: onChanged,
             ),
           ),
         ),
       ),
     );
+    return controller;
   }
 
   testWidgets('adding an amount reports the appended list', (tester) async {
@@ -64,5 +68,24 @@ void main() {
     await tester.tap(find.byTooltip('Remove amount').first);
     await tester.pump();
     expect(changed, [250]);
+  });
+
+  testWidgets(
+      'the caller-owned controller carries the pending text and is cleared on Add',
+      (tester) async {
+    List<double>? changed;
+    final controller = await pump(tester,
+        amounts: const [], onChanged: (v) => changed = v);
+
+    await tester.enterText(find.byType(TextFormField), '75');
+    // The parent can read the pending (not-yet-Added) text off its own
+    // controller — this is the whole point of hoisting it out.
+    expect(controller.text, '75');
+
+    await tester.tap(find.byKey(const Key('add-amount-Plate No DP')));
+    await tester.pump();
+
+    expect(changed, [75]);
+    expect(controller.text, isEmpty);
   });
 }

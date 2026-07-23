@@ -160,8 +160,6 @@ void main() {
       await _pump(tester, _salesWithProducts(2));
       await tester.pumpAndSettle();
 
-      // Rows show the product name over its units-sold (rank numbers were
-      // replaced by thumbnails in the refreshed list card).
       expect(find.text('Item 1'), findsOneWidget);
       expect(find.text('Item 2'), findsOneWidget);
       expect(find.text('2 sold'), findsOneWidget);

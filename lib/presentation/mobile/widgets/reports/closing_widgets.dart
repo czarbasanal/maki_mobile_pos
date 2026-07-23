@@ -400,46 +400,41 @@ String _plainPeso(double v) =>
 /// The amount input + Add appends to [amounts]; each row is removable while
 /// the day is open; a live sum line totals the entries. The parent owns the
 /// list state — only ADDED rows count toward the sums.
-class ClosingAmountList extends StatefulWidget {
+///
+/// [controller] is owned by the caller (same pattern as every other
+/// `ClosingField` on the EOD form), not created internally — the caller
+/// needs to read the pending (not-yet-Added) text off it, e.g. to
+/// auto-commit or block on Close Day so a typed-but-not-Added amount is
+/// never silently dropped.
+class ClosingAmountList extends StatelessWidget {
   const ClosingAmountList({
     super.key,
     required this.label,
     required this.amounts,
+    required this.controller,
     required this.onChanged,
     this.enabled = true,
   });
 
   final String label;
   final List<double> amounts;
+  final TextEditingController controller;
   final ValueChanged<List<double>> onChanged;
   final bool enabled;
 
-  @override
-  State<ClosingAmountList> createState() => _ClosingAmountListState();
-}
-
-class _ClosingAmountListState extends State<ClosingAmountList> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   void _add() {
-    final parsed = double.tryParse(_controller.text.trim());
+    final parsed = double.tryParse(controller.text.trim());
     if (parsed == null || parsed <= 0) return;
-    widget.onChanged([...widget.amounts, parsed]);
-    _controller.clear();
+    onChanged([...amounts, parsed]);
+    controller.clear();
   }
 
   void _removeAt(int index) {
-    final next = List<double>.of(widget.amounts)..removeAt(index);
-    widget.onChanged(next);
+    final next = List<double>.of(amounts)..removeAt(index);
+    onChanged(next);
   }
 
-  double get _sum => widget.amounts.fold(0.0, (a, b) => a + b);
+  double get _sum => amounts.fold(0.0, (a, b) => a + b);
 
   @override
   Widget build(BuildContext context) {
@@ -452,9 +447,9 @@ class _ClosingAmountListState extends State<ClosingAmountList> {
           children: [
             Expanded(
               child: ClosingField(
-                label: widget.label,
-                controller: _controller,
-                enabled: widget.enabled,
+                label: label,
+                controller: controller,
+                enabled: enabled,
                 hintText: '0',
               ),
             ),
@@ -462,8 +457,8 @@ class _ClosingAmountListState extends State<ClosingAmountList> {
             SizedBox(
               height: 48,
               child: OutlinedButton.icon(
-                key: Key('add-amount-${widget.label}'),
-                onPressed: widget.enabled ? _add : null,
+                key: Key('add-amount-$label'),
+                onPressed: enabled ? _add : null,
                 style: OutlinedButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                 ),
@@ -473,7 +468,7 @@ class _ClosingAmountListState extends State<ClosingAmountList> {
             ),
           ],
         ),
-        for (var i = 0; i < widget.amounts.length; i++)
+        for (var i = 0; i < amounts.length; i++)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Row(
@@ -485,25 +480,25 @@ class _ClosingAmountListState extends State<ClosingAmountList> {
                   ),
                 ),
                 Text(
-                  _plainPeso(widget.amounts[i]),
+                  _plainPeso(amounts[i]),
                   style: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 IconButton(
                   icon: Icon(LucideIcons.x, size: 15, color: muted),
                   visualDensity: VisualDensity.compact,
-                  onPressed: widget.enabled ? () => _removeAt(i) : null,
+                  onPressed: enabled ? () => _removeAt(i) : null,
                   tooltip: 'Remove amount',
                 ),
               ],
             ),
           ),
-        if (widget.amounts.isNotEmpty)
+        if (amounts.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: ClosingKvRow(
-              label: '${widget.label} total (${widget.amounts.length} '
-                  '${widget.amounts.length == 1 ? 'entry' : 'entries'})',
+              label: '$label total (${amounts.length} '
+                  '${amounts.length == 1 ? 'entry' : 'entries'})',
               value: _plainPeso(_sum),
             ),
           ),
