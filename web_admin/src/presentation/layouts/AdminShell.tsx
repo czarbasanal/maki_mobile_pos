@@ -5,6 +5,7 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@/presentation/components/common/Sidebar';
 import { OfflineBanner } from '@/presentation/components/common/OfflineBanner';
+import { AccountDeactivationGuard } from '@/presentation/components/common/AccountDeactivationGuard';
 
 export function AdminShell() {
   return (
@@ -16,6 +17,7 @@ export function AdminShell() {
           <Outlet />
         </div>
       </main>
+      <AccountDeactivationGuard />
     </div>
   );
 }

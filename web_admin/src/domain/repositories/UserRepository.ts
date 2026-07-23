@@ -30,7 +30,11 @@ export interface UserRepository {
   getByEmail(email: string): Promise<User | null>;
   list(opts?: UserListOptions): Promise<User[]>;
   listByRole(role: UserRole): Promise<User[]>;
-  watchOne(id: string, callback: (user: User | null) => void): Unsubscribe;
+  watchOne(
+    id: string,
+    callback: (user: User | null) => void,
+    onError?: (error: { code?: string; message?: string }) => void,
+  ): Unsubscribe;
   watchAll(callback: (users: User[]) => void, opts?: UserListOptions): Unsubscribe;
 
   // Write

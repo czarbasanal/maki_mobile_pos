@@ -92,10 +92,15 @@ export class FirestoreUserRepository implements UserRepository {
     return snap.docs.map((d) => d.data());
   }
 
-  watchOne(id: string, callback: (user: User | null) => void): Unsubscribe {
+  watchOne(
+    id: string,
+    callback: (user: User | null) => void,
+    onError?: (error: { code?: string; message?: string }) => void,
+  ): Unsubscribe {
     return onSnapshot(
       doc(this.db, FirestoreCollections.users, id).withConverter(userConverter),
       (snap) => callback(snap.exists() ? snap.data() : null),
+      (err) => onError?.(err),
     );
   }
 
