@@ -11,6 +11,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/cost_code_pill.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/pending_void_banner.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/request_void_dialog.dart';
@@ -59,9 +60,7 @@ class SaleDetailScreen extends ConsumerWidget {
               title: 'Sale not found',
             );
           }
-          final costMapping = ref.watch(costCodeMappingProvider).valueOrNull ??
-              CostCodeEntity.defaultMapping();
-          return _buildSaleDetails(context, ref, sale, costMapping);
+          return _buildSaleDetails(context, ref, sale);
         },
         loading: () => const LoadingView(),
         error: (error, _) => ErrorStateView(
@@ -76,7 +75,6 @@ class SaleDetailScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     SaleEntity sale,
-    CostCodeEntity costMapping,
   ) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('EEEE, MMMM d, y • h:mm a');
@@ -98,7 +96,7 @@ class SaleDetailScreen extends ConsumerWidget {
           // Items section
           _buildSectionHeader(theme, 'Items'),
           const SizedBox(height: 8),
-          _buildItemsList(theme, sale, costMapping),
+          _buildItemsList(theme, sale),
 
           const SizedBox(height: 24),
 
@@ -264,7 +262,6 @@ class SaleDetailScreen extends ConsumerWidget {
   Widget _buildItemsList(
     ThemeData theme,
     SaleEntity sale,
-    CostCodeEntity costMapping,
   ) {
     final isDark = theme.brightness == Brightness.dark;
     final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
@@ -326,11 +323,10 @@ class SaleDetailScreen extends ConsumerWidget {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        Text(
-                          'Code: ${costMapping.encode(item.unitCost)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child:
+                              CostCodePill(cost: item.unitCost, compact: true),
                         ),
                         if (item.hasDiscount)
                           Text(
@@ -344,11 +340,25 @@ class SaleDetailScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  Text(
-                    netAmount.toCurrency(),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        netAmount.toCurrency(),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (item.hasDiscount)
+                        Text(
+                          (item.unitPrice * item.quantity).toCurrency(),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
