@@ -62,9 +62,14 @@ service cloud.firestore {
         isAdmin()
       );
 
-      allow delete: if isAdmin() && isActiveUser();
+      // Delete is deactivate-first and never self: only an active admin may
+      // delete ANOTHER user's doc, and only after that user is deactivated.
+      // The Auth credential is removed separately (scripts/delete-auth-user.mjs).
+      allow delete: if isAdmin() && isActiveUser()
+        && request.auth.uid != userId
+        && resource.data.isActive == false;
     }
-    
+
     // ==================== PRODUCTS COLLECTION ====================
     
     match /products/{productId} {
