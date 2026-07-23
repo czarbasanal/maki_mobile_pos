@@ -11,11 +11,11 @@ import type { Product, Mechanic } from '@/domain/entities';
 const product = (o: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, ...o } as Product);
 
-function harness(state?: { completedSaleNumber?: string }) {
+function harness(state?: { completedSaleNumber?: string }, products: Product[] = []) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const productRepo: Partial<Container['productRepo']> = {
-    watchAll: (cb: (products: Product[]) => void) => {
-      cb([]);
+    watchAll: (cb: (p: Product[]) => void) => {
+      cb(products);
       return () => {};
     },
   };
@@ -94,5 +94,23 @@ describe('PosPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
 
     expect(useCartStore.getState().lines).toHaveLength(1);
+  });
+
+  it('search results render as an overlay dropdown, only while searching', async () => {
+    useCartStore.getState().clear();
+    harness(undefined, [product()]);
+
+    // Idle: no results panel in the layout at all (the old always-present
+    // in-flow panel pushed the Checkout/Save-draft card down).
+    expect(screen.queryByText(/type to search/i)).not.toBeInTheDocument();
+
+    const input = screen.getByPlaceholderText(/search products/i);
+    await userEvent.type(input, 'plug');
+    const result = await screen.findByRole('button', { name: /plug/i });
+    // The panel overlays (absolute positioning) instead of occupying flow.
+    expect(result.closest('div[class*="absolute"]')).not.toBeNull();
+
+    await userEvent.clear(input);
+    expect(screen.queryByRole('button', { name: /plug/i })).not.toBeInTheDocument();
   });
 });

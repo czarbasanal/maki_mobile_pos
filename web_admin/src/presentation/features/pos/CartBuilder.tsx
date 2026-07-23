@@ -33,31 +33,38 @@ export function CartBuilder({ store }: { store: CartStore }) {
 
   return (
     <div className="grid grid-cols-1 gap-tk-lg lg:grid-cols-2">
-      <section className="space-y-tk-md">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search products by name or SKU"
-          className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none focus:border-light-text"
-        />
-        <div className="max-h-[50vh] divide-y divide-light-hairline overflow-y-auto rounded-lg border border-light-hairline bg-light-card">
-          {results.length === 0 ? (
-            <p className="px-tk-md py-tk-lg text-center text-bodySmall text-light-text-hint">
-              {search.trim() ? 'No matches.' : 'Type to search products.'}
-            </p>
-          ) : (
-            results.map((p) => (
-              <button key={p.id} type="button" onClick={() => addLine(p)}
-                className="flex w-full items-center justify-between gap-tk-md px-tk-md py-tk-sm text-left hover:bg-light-subtle">
-                <span>
-                  <span className="block text-bodySmall text-light-text">{p.name}</span>
-                  <span className="block text-[12px] text-light-text-hint">{p.sku} · {p.quantity} on hand</span>
-                </span>
-                <span className="text-bodySmall font-medium text-light-text">{formatMoney(p.price)}</span>
-              </button>
-            ))
-          )}
+      <section>
+        {/* The results panel overlays the content below (absolute, anchored
+            to the input) — an in-flow panel here grows the column and shoves
+            the Checkout/Save-draft card down the page. */}
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products by name or SKU"
+            className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none focus:border-light-text"
+          />
+          {search.trim() ? (
+            <div className="absolute left-0 right-0 top-full z-20 mt-tk-xs max-h-[50vh] divide-y divide-light-hairline overflow-y-auto rounded-lg border border-light-hairline bg-light-card shadow-lg">
+              {results.length === 0 ? (
+                <p className="px-tk-md py-tk-lg text-center text-bodySmall text-light-text-hint">
+                  No matches.
+                </p>
+              ) : (
+                results.map((p) => (
+                  <button key={p.id} type="button" onClick={() => addLine(p)}
+                    className="flex w-full items-center justify-between gap-tk-md px-tk-md py-tk-sm text-left hover:bg-light-subtle">
+                    <span>
+                      <span className="block text-bodySmall text-light-text">{p.name}</span>
+                      <span className="block text-[12px] text-light-text-hint">{p.sku} · {p.quantity} on hand</span>
+                    </span>
+                    <span className="text-bodySmall font-medium text-light-text">{formatMoney(p.price)}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          ) : null}
         </div>
       </section>
 
