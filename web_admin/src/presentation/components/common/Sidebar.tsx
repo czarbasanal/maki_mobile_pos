@@ -12,6 +12,7 @@ import {
   BanknotesIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
+  ChevronDownIcon,
   ChevronUpIcon,
   ClipboardDocumentListIcon,
   ClockIcon,
@@ -38,6 +39,8 @@ interface NavItem {
   label: string;
   path: string;
   icon: IconComponent;
+  /** Sub-items rendered as an expandable group under this item. */
+  children?: NavItem[];
 }
 
 interface NavSection {
@@ -56,12 +59,18 @@ const sections: NavSection[] = [
   {
     label: 'Stock',
     items: [
-      { label: 'Inventory', path: RoutePaths.inventory, icon: CubeIcon },
+      {
+        label: 'Inventory',
+        path: RoutePaths.inventory,
+        icon: CubeIcon,
+        children: [
+          { label: 'Reorder', path: RoutePaths.reorder, icon: ClipboardDocumentListIcon },
+          { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
+        ],
+      },
       // Receiving is the dashboard at /receiving; New Receiving and Import CSV
       // (bulk) are actions inside it, so they have no standalone nav entries.
       { label: 'Receiving', path: RoutePaths.receiving, icon: TruckIcon },
-      { label: 'Reorder', path: RoutePaths.reorder, icon: ClipboardDocumentListIcon },
-      { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
       { label: 'Suppliers', path: RoutePaths.suppliers, icon: BuildingStorefrontIcon },
     ],
   },
@@ -123,15 +132,30 @@ export function Sidebar() {
               <div className="px-tk-sm pb-tk-xs text-[11px] font-medium uppercase tracking-wider text-light-text-hint">
                 {section.label}
               </div>
-              {allowed.map((item) => (
-                <SidebarLink
-                  key={item.path}
-                  label={item.label}
-                  path={item.path}
-                  icon={item.icon}
-                  active={isActive(location.pathname, item.path)}
-                />
-              ))}
+              {allowed.map((item) => {
+                const children = (item.children ?? []).filter((c) =>
+                  canAccess(c.path, user),
+                );
+                if (children.length > 0) {
+                  return (
+                    <SidebarGroup
+                      key={item.path}
+                      item={item}
+                      childItems={children}
+                      currentPath={location.pathname}
+                    />
+                  );
+                }
+                return (
+                  <SidebarLink
+                    key={item.path}
+                    label={item.label}
+                    path={item.path}
+                    icon={item.icon}
+                    active={isActive(location.pathname, item.path)}
+                  />
+                );
+              })}
             </div>
           );
         })}
@@ -139,6 +163,61 @@ export function Sidebar() {
 
       {user ? <SidebarAccount email={user.email} role={user.role} /> : null}
     </aside>
+  );
+}
+
+function SidebarGroup({
+  item,
+  childItems,
+  currentPath,
+}: {
+  item: NavItem;
+  childItems: NavItem[];
+  currentPath: string;
+}) {
+  // Pinned open anywhere in the subtree (an active sub-item must stay
+  // visible); the chevron lets the user peek-open from outside it.
+  const inSubtree = isActive(currentPath, item.path);
+  const [manualOpen, setManualOpen] = useState(false);
+  const open = inSubtree || manualOpen;
+  const childActive = childItems.some((c) => isActive(currentPath, c.path));
+
+  return (
+    <div>
+      <div className="flex items-center">
+        <div className="min-w-0 flex-1">
+          <SidebarLink
+            label={item.label}
+            path={item.path}
+            icon={item.icon}
+            active={inSubtree && !childActive}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setManualOpen((v) => !v)}
+          aria-label={`${open ? 'Collapse' : 'Expand'} ${item.label}`}
+          className="rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
+        >
+          <ChevronDownIcon
+            className={cn('h-3.5 w-3.5 transition-transform', open ? 'rotate-180' : '')}
+          />
+        </button>
+      </div>
+      {open ? (
+        <div className="ml-[15px] border-l border-light-hairline pl-tk-xs">
+          {childItems.map((child) => (
+            <SidebarLink
+              key={child.path}
+              label={child.label}
+              path={child.path}
+              icon={child.icon}
+              active={isActive(currentPath, child.path)}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
