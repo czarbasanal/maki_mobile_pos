@@ -391,8 +391,9 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
               date: _today,
               openingFloat: _float,
               countedCash: _counted ?? 0,
-              plateNoDp: _plateDp,
-              plateNoDelivery: _plateDelivery,
+              plateNoDpAmounts: _plateDp > 0 ? [_plateDp] : const <double>[],
+              plateNoDeliveryAmounts:
+                  _plateDelivery > 0 ? [_plateDelivery] : const <double>[],
               excludedExpenseIds: Set.of(_excludedIds),
               notes: notes.isEmpty ? null : notes,
             );

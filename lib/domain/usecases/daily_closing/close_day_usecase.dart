@@ -37,8 +37,8 @@ class CloseDayUseCase {
     required DateTime date,
     required double openingFloat,
     required double countedCash,
-    double plateNoDp = 0,
-    double plateNoDelivery = 0,
+    List<double> plateNoDpAmounts = const [],
+    List<double> plateNoDeliveryAmounts = const [],
     Set<String> excludedExpenseIds = const {},
     String? notes,
   }) async {
@@ -80,6 +80,12 @@ class CloseDayUseCase {
         summary: summary,
         expenses: includedExpenses,
       );
+      // Sums are computed ONCE here; the scalars remain the single source
+      // for expected-cash math and back-compat reads.
+      final plateNoDp =
+          plateNoDpAmounts.fold(0.0, (total, amount) => total + amount);
+      final plateNoDelivery =
+          plateNoDeliveryAmounts.fold(0.0, (total, amount) => total + amount);
       final expectedCash = draft.expectedCashFor(
         openingFloat,
         plateNoDp: plateNoDp,
@@ -104,6 +110,8 @@ class CloseDayUseCase {
         laborRevenue: draft.laborRevenue,
         plateNoDp: plateNoDp,
         plateNoDelivery: plateNoDelivery,
+        plateNoDpAmounts: List.of(plateNoDpAmounts),
+        plateNoDeliveryAmounts: List.of(plateNoDeliveryAmounts),
         openingFloat: openingFloat,
         expectedCash: expectedCash,
         countedCash: countedCash,

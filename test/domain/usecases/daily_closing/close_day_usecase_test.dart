@@ -150,7 +150,7 @@ void main() {
     verify(() => logRepo.logActivity(any())).called(1);
   });
 
-  test('plate-no DP adds and delivery subtracts from expected cash', () async {
+  test('plate lists are summed into scalars and persisted itemized', () async {
     final captured = <DailyClosingEntity>[];
     when(() => closings.saveClosing(any())).thenAnswer((inv) async {
       final c = inv.positionalArguments.first as DailyClosingEntity;
@@ -163,14 +163,17 @@ void main() {
       date: DateTime(2026, 5, 28),
       openingFloat: 2000,
       countedCash: 0,
-      plateNoDp: 300,
-      plateNoDelivery: 50,
+      plateNoDpAmounts: const [100, 200],
+      plateNoDeliveryAmounts: const [50],
     );
 
     expect(result.success, true);
     final saved = captured.single;
+    // Scalars are the sums of their lists — single source for cash math.
     expect(saved.plateNoDp, 300);
     expect(saved.plateNoDelivery, 50);
+    expect(saved.plateNoDpAmounts, [100, 200]);
+    expect(saved.plateNoDeliveryAmounts, [50]);
     // 2000 float + 700 cash - 100 cash exp + 300 dp - 50 delivery = 2850
     expect(saved.expectedCash, 2850);
   });

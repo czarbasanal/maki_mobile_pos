@@ -128,8 +128,8 @@ class DailyClosingOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     required DateTime date,
     required double openingFloat,
     required double countedCash,
-    double plateNoDp = 0,
-    double plateNoDelivery = 0,
+    List<double> plateNoDpAmounts = const [],
+    List<double> plateNoDeliveryAmounts = const [],
     Set<String> excludedExpenseIds = const {},
     String? notes,
   }) async {
@@ -141,8 +141,8 @@ class DailyClosingOperationsNotifier extends StateNotifier<AsyncValue<void>> {
             date: date,
             openingFloat: openingFloat,
             countedCash: countedCash,
-            plateNoDp: plateNoDp,
-            plateNoDelivery: plateNoDelivery,
+            plateNoDpAmounts: plateNoDpAmounts,
+            plateNoDeliveryAmounts: plateNoDeliveryAmounts,
             excludedExpenseIds: excludedExpenseIds,
             notes: notes,
           );

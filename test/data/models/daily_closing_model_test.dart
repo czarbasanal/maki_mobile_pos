@@ -19,6 +19,8 @@ void main() {
       salmonReceivable: 600,
       plateNoDp: 300,
       plateNoDelivery: 50,
+      plateNoDpAmounts: const [100, 200],
+      plateNoDeliveryAmounts: const [50],
       openingFloat: 2000,
       expectedCash: 2630, // 2000 + 600 - 220 + 300 - 50
       countedCash: 2375,
@@ -46,6 +48,8 @@ void main() {
       expect(back.variance, -5);
       expect(back.plateNoDp, 300);
       expect(back.plateNoDelivery, 50);
+      expect(back.plateNoDpAmounts, [100, 200]);
+      expect(back.plateNoDeliveryAmounts, [50]);
       expect(back.notes, 'short by 5');
       expect(back.closedByName, 'Cashier One');
     });
@@ -57,6 +61,8 @@ void main() {
       expect(model.salesCount, 0);
       expect(model.plateNoDp, 0);
       expect(model.plateNoDelivery, 0);
+      expect(model.plateNoDpAmounts, isEmpty);
+      expect(model.plateNoDeliveryAmounts, isEmpty);
       expect(model.notes, isNull);
     });
   });

@@ -18,6 +18,8 @@ class DailyClosingModel {
   final double laborRevenue;
   final double plateNoDp;
   final double plateNoDelivery;
+  final List<double> plateNoDpAmounts;
+  final List<double> plateNoDeliveryAmounts;
   final double openingFloat;
   final double expectedCash;
   final double countedCash;
@@ -46,6 +48,8 @@ class DailyClosingModel {
     this.laborRevenue = 0,
     this.plateNoDp = 0,
     this.plateNoDelivery = 0,
+    this.plateNoDpAmounts = const [],
+    this.plateNoDeliveryAmounts = const [],
     required this.openingFloat,
     required this.expectedCash,
     required this.countedCash,
@@ -67,6 +71,9 @@ class DailyClosingModel {
   factory DailyClosingModel.fromMap(Map<String, dynamic> map, String id) {
     double d(String k) => (map[k] as num?)?.toDouble() ?? 0.0;
     int i(String k) => (map[k] as num?)?.toInt() ?? 0;
+    List<double> dl(String k) =>
+        (map[k] as List?)?.map((e) => (e as num).toDouble()).toList() ??
+        const [];
     return DailyClosingModel(
       id: id,
       businessDate:
@@ -84,6 +91,8 @@ class DailyClosingModel {
       laborRevenue: d('laborRevenue'),
       plateNoDp: d('plateNoDp'),
       plateNoDelivery: d('plateNoDelivery'),
+      plateNoDpAmounts: dl('plateNoDpAmounts'),
+      plateNoDeliveryAmounts: dl('plateNoDeliveryAmounts'),
       openingFloat: d('openingFloat'),
       expectedCash: d('expectedCash'),
       countedCash: d('countedCash'),
@@ -116,6 +125,8 @@ class DailyClosingModel {
       laborRevenue: e.laborRevenue,
       plateNoDp: e.plateNoDp,
       plateNoDelivery: e.plateNoDelivery,
+      plateNoDpAmounts: e.plateNoDpAmounts,
+      plateNoDeliveryAmounts: e.plateNoDeliveryAmounts,
       openingFloat: e.openingFloat,
       expectedCash: e.expectedCash,
       countedCash: e.countedCash,
@@ -146,6 +157,8 @@ class DailyClosingModel {
       'laborRevenue': laborRevenue,
       'plateNoDp': plateNoDp,
       'plateNoDelivery': plateNoDelivery,
+      'plateNoDpAmounts': plateNoDpAmounts,
+      'plateNoDeliveryAmounts': plateNoDeliveryAmounts,
       'openingFloat': openingFloat,
       'expectedCash': expectedCash,
       'countedCash': countedCash,
@@ -184,6 +197,8 @@ class DailyClosingModel {
       laborRevenue: laborRevenue,
       plateNoDp: plateNoDp,
       plateNoDelivery: plateNoDelivery,
+      plateNoDpAmounts: plateNoDpAmounts,
+      plateNoDeliveryAmounts: plateNoDeliveryAmounts,
       openingFloat: openingFloat,
       expectedCash: expectedCash,
       countedCash: countedCash,
