@@ -427,7 +427,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         context.showSuccessSnackBar(
           widget.isEditing ? 'Expense updated' : 'Expense added',
         );
-        context.go(RoutePaths.expenses);
+        // Return to wherever the form was opened from (expense list OR the
+        // End-of-Day closing screen) instead of force-resetting to the list.
+        context.goBackOr(RoutePaths.expenses);
       }
     } catch (e) {
       if (mounted) {

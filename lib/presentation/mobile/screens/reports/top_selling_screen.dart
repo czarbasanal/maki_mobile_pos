@@ -9,7 +9,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/top_products
 /// Granular drill-down for top-selling products.
 ///
 /// Reuses the project-wide [DateRangePicker] (preset dropdown + custom date
-/// pill) — defaults to "This Month". The body is the same [TopProductsCard]
+/// pill) — defaults to "Today". The body is the same [TopProductsCard]
 /// the sales report uses, capped at 20 entries here so quarterly / yearly
 /// windows surface more of the long-tail than the dashboard's 10.
 class TopSellingScreen extends ConsumerStatefulWidget {
@@ -24,13 +24,13 @@ class _TopSellingScreenState extends ConsumerState<TopSellingScreen> {
 
   late DateTime _startDate;
   late DateTime _endDate;
-  DateRangePreset _selectedPreset = DateRangePreset.thisMonth;
+  DateRangePreset _selectedPreset = DateRangePreset.today;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _startDate = DateTime(now.year, now.month, 1);
+    _startDate = DateTime(now.year, now.month, now.day);
     _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
   }
 
