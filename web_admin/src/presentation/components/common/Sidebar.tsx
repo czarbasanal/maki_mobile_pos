@@ -175,11 +175,12 @@ function SidebarGroup({
   childItems: NavItem[];
   currentPath: string;
 }) {
-  // Pinned open anywhere in the subtree (an active sub-item must stay
-  // visible); the chevron lets the user peek-open from outside it.
+  // Auto-open anywhere in the subtree, but the chevron always wins — the
+  // override clears on every navigation so the next page re-derives it.
   const inSubtree = isActive(currentPath, item.path);
-  const [manualOpen, setManualOpen] = useState(false);
-  const open = inSubtree || manualOpen;
+  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
+  useEffect(() => setManualOpen(null), [currentPath]);
+  const open = manualOpen ?? inSubtree;
   const childActive = childItems.some((c) => isActive(currentPath, c.path));
 
   return (
@@ -195,7 +196,7 @@ function SidebarGroup({
         </div>
         <button
           type="button"
-          onClick={() => setManualOpen((v) => !v)}
+          onClick={() => setManualOpen(!open)}
           aria-label={`${open ? 'Collapse' : 'Expand'} ${item.label}`}
           className="rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
         >
