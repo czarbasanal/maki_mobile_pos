@@ -68,7 +68,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -111,6 +110,23 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             text: 'Send reset link',
             onPressed: _handleSend,
             isFullWidth: true,
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => context.pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              icon: const Icon(LucideIcons.arrowLeft, size: 16),
+              label: const Text(
+                'Login',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ],
       ),
