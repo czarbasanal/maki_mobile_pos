@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -190,6 +191,10 @@ export class FirestoreUserRepository implements UserRepository {
     await updateDoc(doc(this.db, FirestoreCollections.users, id), {
       lastLoginAt: serverTimestamp(),
     });
+  }
+
+  async delete(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, FirestoreCollections.users, id));
   }
 }
 

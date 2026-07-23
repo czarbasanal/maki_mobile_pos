@@ -6,6 +6,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { useUserRepo } from '@/infrastructure/di/container';
 import {
   assertDeactivateAllowed,
+  assertDeleteAllowed,
   assertUpdateAllowed,
 } from '@/application/use-cases/userGuards';
 import type { User } from '@/domain/entities';
@@ -75,6 +76,18 @@ export function useReactivateUser() {
     mutationFn: async (target) => {
       if (!actor) throw new Error('Not signed in');
       await repo.reactivate(target.id, actor.id);
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const repo = useUserRepo();
+  const actor = useAuthStore((s) => s.user);
+  return useMutation<void, Error, User>({
+    mutationFn: async (target) => {
+      if (!actor) throw new Error('Not signed in');
+      assertDeleteAllowed(actor, target);
+      await repo.delete(target.id);
     },
   });
 }

@@ -39,6 +39,10 @@ export interface UserRepository {
   deactivate(id: string, actorId: string): Promise<void>;
   reactivate(id: string, actorId: string): Promise<void>;
   recordLogin(id: string): Promise<void>;
+  // Removes the users/{uid} Firestore doc only — the Auth credential is
+  // cleaned up out-of-band (scripts/delete-auth-user.mjs). Deactivate-first
+  // and no-self-delete are enforced by the guard + Firestore rules.
+  delete(id: string): Promise<void>;
 
   // Utility
   emailExists(email: string): Promise<boolean>;

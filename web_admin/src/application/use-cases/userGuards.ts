@@ -73,3 +73,15 @@ export async function assertDeactivateAllowed(
     }
   }
 }
+
+export function assertDeleteAllowed(actor: User, target: User): void {
+  if (target.id === actor.id) {
+    throw new UserGuardError('You cannot delete yourself.', 'self-delete');
+  }
+  if (target.isActive) {
+    throw new UserGuardError(
+      'Deactivate this user before deleting them.',
+      'active-target',
+    );
+  }
+}
