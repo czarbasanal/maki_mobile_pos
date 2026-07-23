@@ -7,6 +7,7 @@ import { AuthLayout } from '@/presentation/layouts/AuthLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RoutePaths } from './routePaths';
 import { LoginPage } from '@/presentation/features/auth/LoginPage';
+import { ForgotPasswordPage } from '@/presentation/features/auth/ForgotPasswordPage';
 import { AccessDeniedPage } from '@/presentation/features/access-denied/AccessDeniedPage';
 import { DashboardPage } from '@/presentation/features/dashboard/DashboardPage';
 import { SettingsPage } from '@/presentation/features/settings/SettingsPage';
@@ -56,6 +57,7 @@ export const router = createBrowserRouter(
       element: <AuthLayout />,
       children: [
         { path: RoutePaths.login, element: <LoginPage /> },
+        { path: RoutePaths.forgotPassword, element: <ForgotPasswordPage /> },
         { path: RoutePaths.accessDenied, element: <AccessDeniedPage /> },
       ],
     },
