@@ -291,4 +291,45 @@ void main() {
       expect(state.errorMessage, contains('timed out'));
     });
   });
+
+  group('initNewReceiving — stale-state guard', () {
+    test(
+        'clears the previous state and flags loading for the whole '
+        'ref-number fetch window, then lands on a fresh receiving', () async {
+      final receivingRepo = _MockReceivingRepository();
+      final productRepo = _MockProductRepository();
+      final refNumber = Completer<String>();
+      when(() => receivingRepo.generateReferenceNumber())
+          .thenAnswer((_) => refNumber.future);
+
+      final c = ProviderContainer(
+        overrides: [
+          receivingRepositoryProvider.overrideWith((ref) => receivingRepo),
+          productRepositoryProvider.overrideWith((ref) => productRepo),
+        ],
+      );
+      addTearDown(c.dispose);
+      final n = c.read(currentReceivingProvider.notifier);
+
+      // A previous session's abandoned in-progress receiving.
+      n.addItem(_line(productId: 'p1', quantity: 2, unitCost: 50));
+      expect(c.read(currentReceivingProvider).items, isNotEmpty);
+
+      final init = n.initNewReceiving();
+
+      // Mid-fetch: the old items must be gone and the screen must be on the
+      // loading skeleton — NOT rendering the previous user's receiving.
+      final mid = c.read(currentReceivingProvider);
+      expect(mid.items, isEmpty);
+      expect(mid.isLoading, isTrue);
+
+      refNumber.complete('RCV-100');
+      await init;
+
+      final done = c.read(currentReceivingProvider);
+      expect(done.referenceNumber, 'RCV-100');
+      expect(done.isLoading, isFalse);
+      expect(done.items, isEmpty);
+    });
+  });
 }
