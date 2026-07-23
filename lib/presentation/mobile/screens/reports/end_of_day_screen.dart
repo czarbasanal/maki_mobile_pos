@@ -29,8 +29,6 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   final _formKey = GlobalKey<FormState>();
   final _floatController = TextEditingController();
   final _countedController = TextEditingController();
-  final _plateDpController = TextEditingController();
-  final _plateDeliveryController = TextEditingController();
   final _notesController = TextEditingController();
   bool _busy = false;
 
@@ -43,21 +41,23 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     return DateTime(n.year, n.month, n.day);
   }
 
+  List<double> _plateDpAmounts = const [];
+  List<double> _plateDeliveryAmounts = const [];
+
+  double get _plateDp => _plateDpAmounts.fold(0.0, (a, b) => a + b);
+  double get _plateDelivery =>
+      _plateDeliveryAmounts.fold(0.0, (a, b) => a + b);
+
   @override
   void dispose() {
     _floatController.dispose();
     _countedController.dispose();
-    _plateDpController.dispose();
-    _plateDeliveryController.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
   double get _float => double.tryParse(_floatController.text) ?? 0;
   double? get _counted => double.tryParse(_countedController.text);
-  double get _plateDp => double.tryParse(_plateDpController.text) ?? 0;
-  double get _plateDelivery =>
-      double.tryParse(_plateDeliveryController.text) ?? 0;
 
   @override
   Widget build(BuildContext context) {
@@ -217,20 +217,20 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                   icon: LucideIcons.clipboardList,
                   title: 'Plate No Orders',
                   children: [
-                    ClosingField(
+                    ClosingAmountList(
                       label: 'Plate No DP',
-                      controller: _plateDpController,
+                      amounts: _plateDpAmounts,
                       enabled: !_busy,
-                      hintText: '0',
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (next) =>
+                          setState(() => _plateDpAmounts = next),
                     ),
                     const SizedBox(height: 12),
-                    ClosingField(
+                    ClosingAmountList(
                       label: 'Plate No Delivery',
-                      controller: _plateDeliveryController,
+                      amounts: _plateDeliveryAmounts,
                       enabled: !_busy,
-                      hintText: '0',
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (next) =>
+                          setState(() => _plateDeliveryAmounts = next),
                     ),
                   ],
                 ),
@@ -391,9 +391,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
               date: _today,
               openingFloat: _float,
               countedCash: _counted ?? 0,
-              plateNoDpAmounts: _plateDp > 0 ? [_plateDp] : const <double>[],
-              plateNoDeliveryAmounts:
-                  _plateDelivery > 0 ? [_plateDelivery] : const <double>[],
+              plateNoDpAmounts: List.of(_plateDpAmounts),
+              plateNoDeliveryAmounts: List.of(_plateDeliveryAmounts),
               excludedExpenseIds: Set.of(_excludedIds),
               notes: notes.isEmpty ? null : notes,
             );
@@ -496,11 +495,10 @@ class _ClosedView extends ConsumerWidget {
               icon: LucideIcons.clipboardList,
               title: 'Plate No Orders',
               children: [
-                ClosingKvRow(
-                    label: 'Plate No DP', value: _peso(closing.plateNoDp)),
-                ClosingKvRow(
-                    label: 'Plate No Delivery',
-                    value: _peso(closing.plateNoDelivery)),
+                ..._plateRows('Plate No DP', closing.plateNoDp,
+                    closing.plateNoDpAmounts),
+                ..._plateRows('Plate No Delivery', closing.plateNoDelivery,
+                    closing.plateNoDeliveryAmounts),
               ],
             ),
           ],
@@ -604,4 +602,25 @@ class _ClosedView extends ConsumerWidget {
 
   String _peso(double v) =>
       '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
+
+  /// Itemized rows when the closing carries per-order amounts; the single
+  /// KV row for docs saved before itemization (scalars only).
+  List<Widget> _plateRows(String label, double total, List<double> amounts) {
+    if (amounts.isEmpty) {
+      return [ClosingKvRow(label: label, value: _peso(total))];
+    }
+    return [
+      ClosingKvRow(
+        label:
+            '$label · ${amounts.length} ${amounts.length == 1 ? 'entry' : 'entries'}',
+        value: _peso(total),
+      ),
+      for (var i = 0; i < amounts.length; i++)
+        ClosingKvRow(
+          label: 'Entry ${i + 1}',
+          value: _peso(amounts[i]),
+          indented: true,
+        ),
+    ];
+  }
 }

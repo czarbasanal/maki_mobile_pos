@@ -392,3 +392,122 @@ class ClosedByBanner extends StatelessWidget {
     );
   }
 }
+
+String _plainPeso(double v) =>
+    '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
+
+/// Add-a-row peso amount list (Plate No DP / Delivery on the EOD form).
+/// The amount input + Add appends to [amounts]; each row is removable while
+/// the day is open; a live sum line totals the entries. The parent owns the
+/// list state — only ADDED rows count toward the sums.
+class ClosingAmountList extends StatefulWidget {
+  const ClosingAmountList({
+    super.key,
+    required this.label,
+    required this.amounts,
+    required this.onChanged,
+    this.enabled = true,
+  });
+
+  final String label;
+  final List<double> amounts;
+  final ValueChanged<List<double>> onChanged;
+  final bool enabled;
+
+  @override
+  State<ClosingAmountList> createState() => _ClosingAmountListState();
+}
+
+class _ClosingAmountListState extends State<ClosingAmountList> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _add() {
+    final parsed = double.tryParse(_controller.text.trim());
+    if (parsed == null || parsed <= 0) return;
+    widget.onChanged([...widget.amounts, parsed]);
+    _controller.clear();
+  }
+
+  void _removeAt(int index) {
+    final next = List<double>.of(widget.amounts)..removeAt(index);
+    widget.onChanged(next);
+  }
+
+  double get _sum => widget.amounts.fold(0.0, (a, b) => a + b);
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: ClosingField(
+                label: widget.label,
+                controller: _controller,
+                enabled: widget.enabled,
+                hintText: '0',
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                key: Key('add-amount-${widget.label}'),
+                onPressed: widget.enabled ? _add : null,
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: const Icon(LucideIcons.plus, size: 14),
+                label: const Text('Add'),
+              ),
+            ),
+          ],
+        ),
+        for (var i = 0; i < widget.amounts.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Entry ${i + 1}',
+                    style: TextStyle(fontSize: 13, color: muted),
+                  ),
+                ),
+                Text(
+                  _plainPeso(widget.amounts[i]),
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                IconButton(
+                  icon: Icon(LucideIcons.x, size: 15, color: muted),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: widget.enabled ? () => _removeAt(i) : null,
+                  tooltip: 'Remove amount',
+                ),
+              ],
+            ),
+          ),
+        if (widget.amounts.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: ClosingKvRow(
+              label: '${widget.label} total (${widget.amounts.length} '
+                  '${widget.amounts.length == 1 ? 'entry' : 'entries'})',
+              value: _plainPeso(_sum),
+            ),
+          ),
+      ],
+    );
+  }
+}
