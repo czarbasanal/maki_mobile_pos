@@ -62,4 +62,13 @@ describe('Sidebar — Inventory dropdown', () => {
     await userEvent.click(screen.getByRole('button', { name: /collapse inventory/i }));
     expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
   });
+
+  it('can collapse the group even while a sub-item is active', async () => {
+    harness('/inventory/reorder');
+    expect(screen.getByRole('link', { name: /reorder/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /collapse inventory/i }));
+    expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /expand inventory/i }));
+    expect(screen.getByRole('link', { name: /reorder/i })).toBeInTheDocument();
+  });
 });
