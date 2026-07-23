@@ -155,6 +155,22 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                 ClosingSectionCard(
                   icon: LucideIcons.arrowDownCircle,
                   title: 'Expenses',
+                  trailing: OutlinedButton.icon(
+                    onPressed: _busy
+                        ? null
+                        : () => context.push(RoutePaths.expenseAdd),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    icon: const Icon(LucideIcons.plus, size: 14),
+                    label: const Text('Add Expense'),
+                  ),
                   children: [
                     if (data.expenses.isEmpty)
                       Padding(
@@ -194,26 +210,6 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                           label: 'Cash expenses',
                           value: _peso(draft.cashExpenses)),
                     ],
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        onPressed: _busy
-                            ? null
-                            : () => context.push(RoutePaths.expenseAdd),
-                        style: OutlinedButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        icon: const Icon(LucideIcons.plus, size: 14),
-                        label: const Text('Add Expense'),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 12),

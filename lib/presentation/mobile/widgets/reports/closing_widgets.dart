@@ -10,6 +10,8 @@ String _signedPeso(double v) =>
     '${v < 0 ? '-' : '+'}${AppConstants.currencySymbol}${v.abs().toCurrencyWithoutSymbol()}';
 
 /// `AppCard` section with a Lucide icon header — the closing-flow card shell.
+/// [trailing] (optional) renders right-aligned in the header row, e.g. the
+/// Expenses card's compact Add Expense button.
 class ClosingSectionCard extends StatelessWidget {
   const ClosingSectionCard({
     super.key,
@@ -17,12 +19,14 @@ class ClosingSectionCard extends StatelessWidget {
     required this.title,
     required this.children,
     this.iconColor,
+    this.trailing,
   });
 
   final IconData icon;
   final String title;
   final List<Widget> children;
   final Color? iconColor;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +47,10 @@ class ClosingSectionCard extends StatelessWidget {
                   fontSize: 15,
                 ),
               ),
+              if (trailing != null) ...[
+                const Spacer(),
+                trailing!,
+              ],
             ],
           ),
           const SizedBox(height: 10),
