@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 
 // Auth screens (shared)
 import 'package:maki_mobile_pos/presentation/shared/screens/auth/login_screen.dart';
+import 'package:maki_mobile_pos/presentation/shared/screens/auth/forgot_password_screen.dart';
 
 // Mobile feature screens.
 import 'package:maki_mobile_pos/presentation/mobile/screens/dashboard/dashboard_screen.dart';
@@ -153,6 +154,12 @@ List<RouteBase> authRoutes() => [
         path: RoutePaths.login,
         name: RouteNames.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.forgotPassword,
+        name: RouteNames.forgotPassword,
+        builder: (context, state) =>
+            ForgotPasswordScreen(initialEmail: state.extra as String?),
       ),
       GoRoute(
         path: RoutePaths.accessDenied,

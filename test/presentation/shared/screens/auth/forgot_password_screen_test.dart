@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/config/router/app_routes.dart';
+import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/errors/errors.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/screens/auth/forgot_password_screen.dart';
@@ -64,5 +67,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('No account found for that email'), findsOneWidget);
     expect(find.textContaining('Reset email sent to'), findsNothing);
+  });
+
+  testWidgets('login "Forgot password?" opens the screen with the typed email',
+      (tester) async {
+    final router = GoRouter(
+      initialLocation: RoutePaths.login,
+      routes: authRoutes(),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authActionsProvider.overrideWithValue(auth)],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.enterText(find.byType(TextField).first, 'shop@maki.ph');
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
+    expect(find.text('shop@maki.ph'), findsOneWidget);
   });
 }
