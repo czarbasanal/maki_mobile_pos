@@ -59,3 +59,11 @@ describe('canAccess — HR routes', () => {
     expect(canAccess('/hr/payslips/abc123', staff)).toBe(false);
   });
 });
+
+describe('canAccess — forgot-password', () => {
+  it('is public: reachable signed out and by any role', () => {
+    expect(canAccess(RoutePaths.forgotPassword, null)).toBe(true);
+    expect(canAccess(RoutePaths.forgotPassword, admin)).toBe(true);
+    expect(canAccess(RoutePaths.forgotPassword, cashier)).toBe(true);
+  });
+});

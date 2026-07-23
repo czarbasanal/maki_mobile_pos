@@ -4,6 +4,7 @@
 
 export const RoutePaths = {
   login: '/login',
+  forgotPassword: '/forgot-password',
   accessDenied: '/access-denied',
 
   dashboard: '/',

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/errors/errors.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/utils.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -59,47 +58,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _handleForgotPassword() async {
-    final email = _emailController.text.trim();
-
-    if (email.isEmpty) {
-      context.showWarningSnackBar('Please enter your email address first');
-      _emailFocusNode.requestFocus();
-      return;
-    }
-
-    final emailError = Validators.email(email);
-    if (emailError != null) {
-      context.showErrorSnackBar(emailError);
-      return;
-    }
-
-    final shouldSend = await context.showConfirmDialog(
-      title: 'Reset password',
-      message: 'Send password reset email to:\n$email',
-      confirmText: 'Send',
-      icon: LucideIcons.mail,
+  void _handleForgotPassword() {
+    context.pushNamed(
+      RouteNames.forgotPassword,
+      extra: _emailController.text.trim(),
     );
-
-    if (!shouldSend || !mounted) return;
-
-    try {
-      await context.runWithWaiting(
-        () => ref.read(authActionsProvider).sendPasswordResetEmail(email),
-        message: 'Sending…',
-      );
-      if (mounted) {
-        context.showSuccessSnackBar(
-          'Password reset email sent. Check your inbox.',
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        context.showErrorSnackBar(
-          'Failed to send reset email. Please try again.',
-        );
-      }
-    }
   }
 
   @override

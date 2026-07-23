@@ -7,19 +7,13 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { useSignIn } from '@/presentation/hooks/useSignIn';
-import { useSendPasswordReset } from '@/presentation/hooks/useSendPasswordReset';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { cn } from '@/core/utils/cn';
+import { ErrorBanner, Field, inputCls } from './authUi';
 
 const loginSchema = z.object({
   email: z.string().trim().min(1, 'Email is required').email('Invalid email address'),
@@ -35,11 +29,8 @@ export function LoginPage() {
   const from = (location.state as { from?: string } | null)?.from ?? RoutePaths.dashboard;
 
   const [showPassword, setShowPassword] = useState(false);
-  const [resetMode, setResetMode] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
   const signIn = useSignIn();
-  const sendReset = useSendPasswordReset();
 
   const {
     register,
@@ -63,7 +54,6 @@ export function LoginPage() {
 
   const onSubmit = async (values: LoginValues) => {
     signIn.reset();
-    setResetSuccess(null);
     try {
       const signedIn = await signIn.mutateAsync(values);
       if (signedIn.role !== 'admin') {
@@ -77,37 +67,14 @@ export function LoginPage() {
     }
   };
 
-  const onSendReset = async () => {
-    const email = getValues('email').trim();
-    if (!email) {
-      setFieldError('email', { type: 'manual', message: 'Enter your email first' });
-      return;
-    }
-    if (!z.string().email().safeParse(email).success) {
-      setFieldError('email', { type: 'manual', message: 'Invalid email address' });
-      return;
-    }
-    sendReset.reset();
-    try {
-      await sendReset.mutateAsync(email);
-      setResetSuccess(`Password reset email sent to ${email}. Check your inbox.`);
-      setResetMode(false);
-    } catch {
-      // Error surfaces via sendReset.error below.
-    }
-  };
-
   const submitting = isSubmitting || signIn.isPending;
-  const banner = signIn.error?.message ?? sendReset.error?.message ?? null;
+  const banner = signIn.error?.message ?? null;
 
   return (
     <div className="space-y-tk-xl">
       <Header />
 
       {banner ? <ErrorBanner message={banner} onDismiss={() => signIn.reset()} /> : null}
-      {resetSuccess ? (
-        <SuccessBanner message={resetSuccess} onDismiss={() => setResetSuccess(null)} />
-      ) : null}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-tk-md" noValidate>
         <Field
@@ -161,58 +128,22 @@ export function LoginPage() {
         </button>
 
         <div className="flex justify-center pt-tk-xs">
-          {resetMode ? (
-            <ResetConfirm
-              email={getValues('email').trim()}
-              pending={sendReset.isPending}
-              onSend={onSendReset}
-              onCancel={() => {
-                setResetMode(false);
-                sendReset.reset();
-              }}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setResetMode(true)}
-              className="text-bodySmall text-light-text-secondary underline-offset-2 hover:text-light-text hover:underline"
-            >
-              Forgot password?
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() =>
+              navigate(RoutePaths.forgotPassword, {
+                state: { email: getValues('email').trim() },
+              })
+            }
+            className="text-bodySmall text-light-text-secondary underline-offset-2 hover:text-light-text hover:underline"
+          >
+            Forgot password?
+          </button>
         </div>
       </form>
 
       <Footer />
     </div>
-  );
-}
-
-function inputCls(hasError: boolean): string {
-  return cn(
-    'w-full rounded-md border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none transition-colors',
-    // Thicker outline on focus, no glow: drop the soft ring shadow and use a
-    // real CSS outline (no layout shift) layered just outside the border.
-    'focus:border-light-text focus:outline focus:outline-1 focus:outline-light-text focus:outline-offset-0',
-    hasError ? 'border-error focus:border-error focus:outline-error' : 'border-light-border',
-  );
-}
-
-function Field({
-  label,
-  error,
-  input,
-}: {
-  label: string;
-  error?: string;
-  input: React.ReactNode;
-}) {
-  return (
-    <label className="block space-y-tk-xs">
-      <span className="text-bodySmall font-medium text-light-text">{label}</span>
-      {input}
-      {error ? <span className="block text-[12px] text-error">{error}</span> : null}
-    </label>
   );
 }
 
@@ -238,70 +169,3 @@ function Footer() {
   );
 }
 
-function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
-  return (
-    <div className="flex items-start gap-tk-sm rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-error-dark">
-      <ExclamationCircleIcon className="mt-[2px] h-4 w-4 shrink-0 text-error" />
-      <p className="flex-1 text-[13px]">{message}</p>
-      <button type="button" onClick={onDismiss} aria-label="Dismiss">
-        <XMarkIcon className="h-4 w-4 text-error" />
-      </button>
-    </div>
-  );
-}
-
-function SuccessBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
-  return (
-    <div className="flex items-start gap-tk-sm rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-success-dark">
-      <CheckCircleIcon className="mt-[2px] h-4 w-4 shrink-0 text-success" />
-      <p className="flex-1 text-[13px]">{message}</p>
-      <button type="button" onClick={onDismiss} aria-label="Dismiss">
-        <XMarkIcon className="h-4 w-4 text-success" />
-      </button>
-    </div>
-  );
-}
-
-function ResetConfirm({
-  email,
-  pending,
-  onSend,
-  onCancel,
-}: {
-  email: string;
-  pending: boolean;
-  onSend: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="flex w-full flex-col items-center gap-tk-sm rounded-md border border-light-hairline bg-light-subtle p-tk-md text-center">
-      <p className="text-bodySmall text-light-text">
-        {email ? (
-          <>
-            Send password reset email to <span className="font-semibold">{email}</span>?
-          </>
-        ) : (
-          'Enter your email above first.'
-        )}
-      </p>
-      <div className="flex gap-tk-sm">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-md px-tk-md py-tk-xs text-bodySmall text-light-text hover:bg-light-hairline"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={onSend}
-          disabled={pending || !email}
-          className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-xs text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {pending ? <Spinner className="h-3 w-3" /> : null}
-          {pending ? 'Sending…' : 'Send'}
-        </button>
-      </div>
-    </div>
-  );
-}

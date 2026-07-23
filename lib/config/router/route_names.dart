@@ -8,6 +8,9 @@ abstract class RouteNames {
   /// Login screen route
   static const String login = 'login';
 
+  /// Forgot-password screen route — requests a Firebase reset email.
+  static const String forgotPassword = 'forgotPassword';
+
   /// Access denied route — landing for authenticated users hitting a route
   /// they don't have permission to view.
   static const String accessDenied = 'accessDenied';
@@ -189,6 +192,7 @@ abstract class RoutePaths {
   // ==================== AUTH PATHS ====================
 
   static const String login = '/login';
+  static const String forgotPassword = '/forgot-password';
   static const String accessDenied = '/access-denied';
 
   // ==================== MAIN PATHS ====================

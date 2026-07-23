@@ -19,6 +19,10 @@ void main() {
       expect(RouteGuards.isPublicRoute(RoutePaths.login), true);
     });
 
+    test('forgot-password is public', () {
+      expect(RouteGuards.isPublicRoute(RoutePaths.forgotPassword), true);
+    });
+
     test('any authenticated path is not public', () {
       expect(RouteGuards.isPublicRoute(RoutePaths.dashboard), false);
       expect(RouteGuards.isPublicRoute(RoutePaths.pos), false);
@@ -29,6 +33,10 @@ void main() {
   group('RouteGuards.canAccess — unauthenticated', () {
     test('null user can access /login', () {
       expect(RouteGuards.canAccess(RoutePaths.login, null), true);
+    });
+
+    test('null user can access /forgot-password', () {
+      expect(RouteGuards.canAccess(RoutePaths.forgotPassword, null), true);
     });
 
     test('null user cannot access any protected route', () {
