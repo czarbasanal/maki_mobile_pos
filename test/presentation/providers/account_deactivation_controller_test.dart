@@ -164,6 +164,41 @@ void main() {
     verifyNever(() => auth.signOut());
   });
 
+  testWidgets(
+      'a deleted status trailing a normal sign-out does not flash the modal',
+      (tester) async {
+    final status = StreamController<AccountStatus>();
+    final authCtrl = StreamController<UserEntity?>();
+    final container = makeContainer(
+      statusStream: status.stream,
+      authStream: authCtrl.stream,
+    );
+    addTearDown(container.dispose);
+    addTearDown(status.close);
+    addTearDown(authCtrl.close);
+
+    authCtrl.add(_admin()); // signed in
+    await tester.pump();
+
+    authCtrl.add(null); // user signs out normally (no deactivation involved)
+    await tester.pump();
+    expect(
+      container.read(accountDeactivationControllerProvider),
+      const AccountDeactivationState.hidden(),
+    );
+
+    // Trailing permission-denied → deleted status arrives on the real
+    // accountStatusProvider stream *after* the sign-out reset already ran.
+    status.add(AccountStatus.deleted);
+    await tester.pump();
+
+    expect(
+      container.read(accountDeactivationControllerProvider),
+      const AccountDeactivationState.hidden(),
+    );
+    verifyNever(() => auth.signOut());
+  });
+
   testWidgets('falls back to the raw repo sign-out if the use case throws',
       (tester) async {
     when(() => auth.signOut()).thenAnswer(

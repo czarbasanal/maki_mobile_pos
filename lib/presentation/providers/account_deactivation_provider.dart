@@ -88,10 +88,19 @@ class AccountDeactivationController
   bool _fired = false;
   bool _signedOut = false;
 
+  /// Set by [reset] (a normal sign-out transition) and cleared by
+  /// [onSignedIn]. While true, [onDeactivated]/[onDeleted] are ignored — this
+  /// closes the race where a trailing `accountStatusProvider` emission (e.g.
+  /// the doc-watcher's permission-denied → deleted mapping) arrives *after*
+  /// the user has already signed out normally. Correctness here must not
+  /// depend on the relative ordering of the two `ref.listen` callbacks below;
+  /// this flag makes it explicit state instead of an ordering assumption.
+  bool _signedOutSession = false;
+
   /// isActive flipped false → show the modal with a 10s countdown, then sign
   /// out. Idempotent: repeated stream emissions never restart the countdown.
   void onDeactivated() {
-    if (_fired) return;
+    if (_signedOutSession || _fired) return;
     _fired = true;
     state = const AccountDeactivationState.countdown(
         accountDeactivationCountdownSeconds);
@@ -110,19 +119,31 @@ class AccountDeactivationController
   /// Own doc gone (or stream permission-denied) → same modal, immediate
   /// sign-out. Escalates a running countdown without double-firing.
   void onDeleted() {
+    if (_signedOutSession) return;
     _fired = true;
     _timer?.cancel();
+    _timer = null;
     state = const AccountDeactivationState.immediate();
     _doSignOut();
   }
 
-  /// Any sign-out transition (ours or a normal one) tears everything down.
+  /// Any sign-out transition (ours or a normal one) tears everything down and
+  /// marks the session as signed-out, so any deactivation/deletion event
+  /// arriving after this point (trailing stream noise) is ignored until the
+  /// next sign-in.
   void reset() {
     _timer?.cancel();
     _timer = null;
     _fired = false;
     _signedOut = false;
+    _signedOutSession = true;
     state = const AccountDeactivationState.hidden();
+  }
+
+  /// Clears the post-sign-out guard set by [reset] once a new user signs in,
+  /// so the next session's deactivation/deletion events are handled normally.
+  void onSignedIn() {
+    _signedOutSession = false;
   }
 
   void _doSignOut() {
@@ -170,6 +191,8 @@ final accountDeactivationControllerProvider = StateNotifierProvider<
     final nowSignedOut = next.valueOrNull == null && !next.isLoading;
     if (wasSignedIn && nowSignedOut) {
       controller.reset();
+    } else if (next.valueOrNull != null) {
+      controller.onSignedIn();
     }
   });
 
