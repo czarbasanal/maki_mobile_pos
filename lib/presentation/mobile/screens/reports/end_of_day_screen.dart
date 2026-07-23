@@ -194,14 +194,23 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                           label: 'Cash expenses',
                           value: _peso(draft.cashExpenses)),
                     ],
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: OutlinedButton.icon(
                         onPressed: _busy
                             ? null
                             : () => context.push(RoutePaths.expenseAdd),
-                        icon: const Icon(LucideIcons.plus, size: 16),
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        icon: const Icon(LucideIcons.plus, size: 14),
                         label: const Text('Add Expense'),
                       ),
                     ),
