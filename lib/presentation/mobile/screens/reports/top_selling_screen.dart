@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_warning_banner.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/top_products_card.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Granular drill-down for top-selling products.
 ///
 /// Reuses the project-wide [DateRangePicker] (preset dropdown + custom date
-/// pill) — defaults to "Today". The body is the same [TopProductsCard]
+/// pill) — defaults to "Today". Daily-only roles (cashier/staff) are locked
+/// to today: the picker is replaced by the same warning banner the other
+/// report screens show. The body is the same [TopProductsCard]
 /// the sales report uses, capped at 20 entries here so quarterly / yearly
 /// windows surface more of the long-tail than the dashboard's 10.
 class TopSellingScreen extends ConsumerStatefulWidget {
@@ -36,6 +41,19 @@ class _TopSellingScreenState extends ConsumerState<TopSellingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider).valueOrNull;
+    final dailyOnly =
+        user != null && RolePermissions.isDailyReportsOnly(user.role);
+
+    if (dailyOnly) {
+      // Force today regardless of any prior state — non-admin roles cannot
+      // view historical data.
+      final now = DateTime.now();
+      _startDate = DateTime(now.year, now.month, now.day);
+      _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      _selectedPreset = DateRangePreset.today;
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -47,13 +65,21 @@ class _TopSellingScreenState extends ConsumerState<TopSellingScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            DateRangePicker(
-              startDate: _startDate,
-              endDate: _endDate,
-              selectedPreset: _selectedPreset,
-              onPresetChanged: _handlePresetChange,
-              onCustomRangeSelected: _handleCustomRange,
-            ),
+            // Date range picker — replaced by a warning for today-only roles.
+            if (dailyOnly)
+              const ReportsWarningBanner(
+                icon: LucideIcons.lock,
+                title: "Showing today's sales only. "
+                    'Contact an admin for historical reports.',
+              )
+            else
+              DateRangePicker(
+                startDate: _startDate,
+                endDate: _endDate,
+                selectedPreset: _selectedPreset,
+                onPresetChanged: _handlePresetChange,
+                onCustomRangeSelected: _handleCustomRange,
+              ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: TopProductsCard(
