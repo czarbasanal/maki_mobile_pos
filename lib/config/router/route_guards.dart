@@ -13,6 +13,7 @@ abstract class RouteGuards {
   /// Routes that don't require authentication
   static const Set<String> publicRoutes = {
     '/login',
+    '/forgot-password',
   };
 
   /// Routes accessible by all authenticated users
