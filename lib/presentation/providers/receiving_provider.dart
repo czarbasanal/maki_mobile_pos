@@ -269,6 +269,10 @@ class CurrentReceivingNotifier extends StateNotifier<CurrentReceivingState> {
   /// caller (`_startNewReceiving`) catches it to show a snackbar and abort
   /// navigation. Swallowing it here would make that guard dead code.
   Future<void> initNewReceiving() async {
+    // Wipe any lingering state BEFORE the async gap — without this, a
+    // previous session's abandoned in-progress receiving stays rendered
+    // (and interactive) for the whole reference-number round-trip.
+    state = const CurrentReceivingState(isLoading: true);
     final refNumber = await _repository.generateReferenceNumber();
     state = CurrentReceivingState(referenceNumber: refNumber);
   }

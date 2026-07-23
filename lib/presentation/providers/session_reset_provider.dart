@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cart_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/draft_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/inventory_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/supplier_provider.dart';
 
 /// Clears all user-scoped session state when the signed-in user transitions
@@ -25,6 +26,9 @@ final sessionResetProvider = Provider<void>((ref) {
       // Search/category/sort/cost-visibility carry no data themselves but
       // must not leak from one operator's session into the next.
       ref.invalidate(inventoryStateProvider);
+      // An abandoned in-progress receiving is real data — items, supplier,
+      // costs — and must never survive into the next operator's session.
+      ref.invalidate(currentReceivingProvider);
     }
   });
 });
