@@ -37,7 +37,7 @@ own email input, from which the Firebase reset link is sent. Same UX on both sur
 | Piece | Change |
 |---|---|
 | `lib/presentation/shared/screens/auth/forgot_password_screen.dart` | **New** `ForgotPasswordScreen({String? initialEmail})` — styled like the login screen (same header/card idioms, Lucide icons, `Validators.email`, `runWithWaiting` while sending). Success flips the body to the sent-state with "Back to login" (`context.pop()`). |
-| `lib/config/router/route_names.dart` | `RouteNames.forgotPassword = 'forgot-password'`, `RoutePaths.forgotPassword = '/forgot-password'`. |
+| `lib/config/router/route_names.dart` | `RouteNames.forgotPassword = 'forgotPassword'` (camelCase, matching `accessDenied`), `RoutePaths.forgotPassword = '/forgot-password'`. |
 | `lib/config/router/app_routes.dart` | `authRoutes()` gains a `GoRoute` for it; prefill email passed via `state.extra as String?`. |
 | `lib/config/router/route_guards.dart` | Add `/forgot-password` to `publicRoutes` (else the guard bounces unauthenticated users to `/login`). |
 | `lib/presentation/shared/screens/auth/login_screen.dart` | `_handleForgotPassword` shrinks to `context.pushNamed(RouteNames.forgotPassword, extra: <typed email>)`. Empty-email nag, confirm dialog, and inline send are deleted. |
