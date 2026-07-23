@@ -211,107 +211,125 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       ),
       body: Column(
         children: [
-          // Draft info header
-          Builder(builder: (context) {
-            final muted = theme.colorScheme.onSurfaceVariant;
-            final isDark = theme.brightness == Brightness.dark;
-            final hairline =
-                isDark ? AppColors.darkHairline : AppColors.lightHairline;
-            return Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: hairline)),
-              ),
+          // ONE scroll region — header, parts and labor scroll together
+          // (POS cart pattern); the summary + Bill out stay pinned below.
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Motorcycle model — the bill-out gate, editable in place
-                  // (the serviced bike can change mid-job).
-                  MotorcycleModelPicker(
-                    selectedModel: draft.motorcycleModel,
-                    onChanged: _onModelChanged,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    children: [
-                      Icon(LucideIcons.clock, size: 14, color: muted),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        'Created ${dateFormat.format(draft.createdAt)}',
-                        style:
-                            theme.textTheme.bodySmall?.copyWith(color: muted),
+                  // Draft info header
+                  Builder(builder: (context) {
+                    final muted = theme.colorScheme.onSurfaceVariant;
+                    final isDark = theme.brightness == Brightness.dark;
+                    final hairline = isDark
+                        ? AppColors.darkHairline
+                        : AppColors.lightHairline;
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: hairline)),
                       ),
-                    ],
-                  ),
-                  if (draft.updatedAt != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Motorcycle model — the bill-out gate, editable in
+                          // place (the serviced bike can change mid-job).
+                          MotorcycleModelPicker(
+                            selectedModel: draft.motorcycleModel,
+                            onChanged: _onModelChanged,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            children: [
+                              Icon(LucideIcons.clock, size: 14, color: muted),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                'Created ${dateFormat.format(draft.createdAt)}',
+                                style: theme.textTheme.bodySmall
+                                    ?.copyWith(color: muted),
+                              ),
+                            ],
+                          ),
+                          if (draft.updatedAt != null) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(LucideIcons.squarePen,
+                                    size: 14, color: muted),
+                                const SizedBox(width: AppSpacing.sm),
+                                Text(
+                                  'Updated ${dateFormat.format(draft.updatedAt!)}',
+                                  style: theme.textTheme.bodySmall
+                                      ?.copyWith(color: muted),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (draft.notes != null &&
+                              draft.notes!.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(draft.notes!,
+                                style: theme.textTheme.bodyMedium),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+
+                  // Parts header + Add action
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
+                    child: Row(
                       children: [
-                        Icon(LucideIcons.squarePen, size: 14, color: muted),
+                        Icon(LucideIcons.package,
+                            size: 16,
+                            color: theme.colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSpacing.sm),
                         Text(
-                          'Updated ${dateFormat.format(draft.updatedAt!)}',
-                          style:
-                              theme.textTheme.bodySmall?.copyWith(color: muted),
+                          'Parts',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: _onAddParts,
+                          icon: const Icon(LucideIcons.plus, size: 16),
+                          label: const Text('Add parts'),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                  if (draft.notes != null && draft.notes!.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(draft.notes!, style: theme.textTheme.bodyMedium),
-                  ],
+                  ),
+
+                  // Items list — inline, not separately scrollable.
+                  draft.items.isEmpty
+                      ? SizedBox(height: 220, child: _buildEmptyItems())
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: draft.items.length,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemBuilder: (context, index) {
+                            return _buildDraftItem(draft, draft.items[index]);
+                          },
+                        ),
+
+                  // Labor & Service (mechanic + labor lines) — editable
+                  // anytime.
+                  _buildLaborSection(draft),
                 ],
               ),
-            );
-          }),
-
-          // Parts header + Add action
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
-            child: Row(
-              children: [
-                Icon(LucideIcons.package,
-                    size: 16, color: theme.colorScheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'Parts',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _onAddParts,
-                  icon: const Icon(LucideIcons.plus, size: 16),
-                  label: const Text('Add parts'),
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ],
             ),
           ),
-          // Items list
-          Expanded(
-            child: draft.items.isEmpty
-                ? _buildEmptyItems()
-                : ListView.builder(
-                    itemCount: draft.items.length,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemBuilder: (context, index) {
-                      return _buildDraftItem(draft, draft.items[index]);
-                    },
-                  ),
-          ),
 
-          // Labor & Service (mechanic + labor lines) — editable anytime.
-          _buildLaborSection(draft),
-
-          // Summary and actions
+          // Sticky footer: summary + Bill out.
           _buildSummarySection(draft),
         ],
       ),
@@ -445,13 +463,12 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   Widget _buildSummarySection(DraftEntity draft) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(top: BorderSide(color: hairline)),
+        color: theme.appBarTheme.backgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
       ),
       child: SafeArea(
         child: Column(
