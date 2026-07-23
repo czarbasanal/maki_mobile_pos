@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/data/repositories/user_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/user_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/user/create_user_usecase.dart';
+import 'package:maki_mobile_pos/domain/usecases/user/delete_user_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/user/update_user_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
@@ -28,6 +29,13 @@ final createUserUseCaseProvider = Provider<CreateUserUseCase>((ref) {
 
 final updateUserUseCaseProvider = Provider<UpdateUserUseCase>((ref) {
   return UpdateUserUseCase(
+    repository: ref.watch(userRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
+});
+
+final deleteUserUseCaseProvider = Provider<DeleteUserUseCase>((ref) {
+  return DeleteUserUseCase(
     repository: ref.watch(userRepositoryProvider),
     logger: ref.watch(activityLoggerProvider),
   );
@@ -107,14 +115,17 @@ class UserOperationsState extends Equatable {
 class UserOperationsNotifier extends StateNotifier<UserOperationsState> {
   final CreateUserUseCase _createUseCase;
   final UpdateUserUseCase _updateUseCase;
+  final DeleteUserUseCase _deleteUseCase;
   final Ref _ref;
 
   UserOperationsNotifier({
     required CreateUserUseCase createUseCase,
     required UpdateUserUseCase updateUseCase,
+    required DeleteUserUseCase deleteUseCase,
     required Ref ref,
   })  : _createUseCase = createUseCase,
         _updateUseCase = updateUseCase,
+        _deleteUseCase = deleteUseCase,
         _ref = ref,
         super(const UserOperationsState());
 
@@ -205,6 +216,29 @@ class UserOperationsNotifier extends StateNotifier<UserOperationsState> {
     return updated != null;
   }
 
+  /// Permanently deletes an (already-deactivated) user's Firestore doc.
+  /// Returns true on success; on failure errorMessage is set.
+  Future<bool> deleteUser({
+    required UserEntity actor,
+    required UserEntity user,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    final result = await _deleteUseCase.execute(actor: actor, userId: user.id);
+
+    if (result.success) {
+      state = state.copyWith(isLoading: false);
+      _invalidateProviders();
+      _ref.invalidate(userByIdProvider(user.id));
+      return true;
+    } else {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: result.errorMessage,
+      );
+      return false;
+    }
+  }
 
   void clearError() {
     state = state.copyWith(clearError: true);
@@ -223,6 +257,7 @@ final userOperationsProvider =
   return UserOperationsNotifier(
     createUseCase: ref.watch(createUserUseCaseProvider),
     updateUseCase: ref.watch(updateUserUseCaseProvider),
+    deleteUseCase: ref.watch(deleteUserUseCaseProvider),
     ref: ref,
   );
 });

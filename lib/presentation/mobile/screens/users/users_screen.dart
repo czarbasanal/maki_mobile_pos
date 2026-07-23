@@ -262,6 +262,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
             onToggleActive: user.id != currentUser.id
                 ? () => _toggleUserActive(user)
                 : null,
+            onDelete: user.id != currentUser.id && !user.isActive
+                ? () => _deleteUser(user)
+                : null,
           );
         },
       ),
@@ -347,6 +350,37 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           context.showSuccessSnackBar('${user.displayName} reactivated');
         }
       }
+    }
+  }
+
+  Future<void> _deleteUser(UserEntity user) async {
+    final confirmed = await context.showConfirmDialog(
+      title: 'Delete user?',
+      message: '${user.displayName} will be permanently removed from the '
+          'user list. Past sales and activity logs keep their name.',
+      confirmText: 'Delete',
+      icon: LucideIcons.trash2,
+      isDangerous: true,
+    );
+
+    if (!confirmed) return;
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null || !mounted) return;
+
+    final ok = await context.runWithWaiting(
+      () => ref.read(userOperationsProvider.notifier).deleteUser(
+            actor: currentUser,
+            user: user,
+          ),
+      message: 'Deleting…',
+    );
+
+    if (!mounted) return;
+    if (ok) {
+      context.showSuccessSnackBar('${user.displayName} deleted');
+    } else {
+      final error = ref.read(userOperationsProvider).errorMessage;
+      context.showErrorSnackBar(error ?? 'Failed to delete user');
     }
   }
 }

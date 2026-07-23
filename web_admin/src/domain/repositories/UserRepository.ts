@@ -30,7 +30,11 @@ export interface UserRepository {
   getByEmail(email: string): Promise<User | null>;
   list(opts?: UserListOptions): Promise<User[]>;
   listByRole(role: UserRole): Promise<User[]>;
-  watchOne(id: string, callback: (user: User | null) => void): Unsubscribe;
+  watchOne(
+    id: string,
+    callback: (user: User | null) => void,
+    onError?: (error: { code?: string; message?: string }) => void,
+  ): Unsubscribe;
   watchAll(callback: (users: User[]) => void, opts?: UserListOptions): Unsubscribe;
 
   // Write
@@ -39,6 +43,10 @@ export interface UserRepository {
   deactivate(id: string, actorId: string): Promise<void>;
   reactivate(id: string, actorId: string): Promise<void>;
   recordLogin(id: string): Promise<void>;
+  // Removes the users/{uid} Firestore doc only — the Auth credential is
+  // cleaned up out-of-band (scripts/delete-auth-user.mjs). Deactivate-first
+  // and no-self-delete are enforced by the guard + Firestore rules.
+  delete(id: string): Promise<void>;
 
   // Utility
   emailExists(email: string): Promise<boolean>;

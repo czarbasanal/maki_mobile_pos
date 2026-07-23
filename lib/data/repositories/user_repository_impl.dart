@@ -280,6 +280,21 @@ class UserRepositoryImpl implements UserRepository {
     }
   }
 
+  // ==================== DELETE ====================
+
+  @override
+  Future<void> deleteUser(String userId) async {
+    try {
+      await _usersRef.doc(userId).delete();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to delete user: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
   // ==================== UTILITY ====================
 
   @override

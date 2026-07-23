@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/config/router/mobile_router.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/account_deactivation_overlay.dart';
 
 /// Root widget of the mobile POS app (admin / staff / cashier).
 class MAKIPOSMobileApp extends ConsumerWidget {
@@ -26,7 +27,9 @@ class MAKIPOSMobileApp extends ConsumerWidget {
           data: MediaQuery.of(context).copyWith(
             textScaler: TextScaler.noScaling,
           ),
-          child: _OfflineBanner(child: child ?? const SizedBox.shrink()),
+          child: AccountDeactivationOverlay(
+            child: _OfflineBanner(child: child ?? const SizedBox.shrink()),
+          ),
         );
       },
     );

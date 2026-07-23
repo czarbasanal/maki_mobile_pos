@@ -17,6 +17,7 @@ class UserListTile extends StatelessWidget {
   final bool isCurrentUser;
   final VoidCallback onTap;
   final VoidCallback? onToggleActive;
+  final VoidCallback? onDelete;
 
   const UserListTile({
     super.key,
@@ -24,6 +25,7 @@ class UserListTile extends StatelessWidget {
     required this.isCurrentUser,
     required this.onTap,
     this.onToggleActive,
+    this.onDelete,
   });
 
   @override
@@ -130,6 +132,7 @@ class UserListTile extends StatelessWidget {
                   icon: Icon(LucideIcons.moreVertical, color: muted, size: 20),
                   onSelected: (action) {
                     if (action == 'toggle') onToggleActive?.call();
+                    if (action == 'delete') onDelete?.call();
                   },
                   itemBuilder: (context) => [
                     PopupMenuItem(
@@ -150,6 +153,25 @@ class UserListTile extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (!user.isActive && onDelete != null)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.trash2,
+                              size: 18,
+                              color: AppColors.errorText(dark),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Delete',
+                              style:
+                                  TextStyle(color: AppColors.errorText(dark)),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 )
               else

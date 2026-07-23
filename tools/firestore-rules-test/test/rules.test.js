@@ -148,10 +148,41 @@ describe("/users", () => {
     );
   });
 
-  it("only admin can delete users", async () => {
-    await assertFails(as("staff").collection("users").doc(USERS.cashier.uid).delete());
-    await assertFails(as("cashier").collection("users").doc(USERS.staff.uid).delete());
-    await assertSucceeds(as("admin").collection("users").doc(USERS.cashier.uid).delete());
+  it("admin cannot delete an ACTIVE user (deactivate-first)", async () => {
+    await assertFails(
+      as("admin").collection("users").doc(USERS.cashier.uid).delete()
+    );
+  });
+
+  it("admin cannot delete themselves", async () => {
+    await assertFails(
+      as("admin").collection("users").doc(USERS.admin.uid).delete()
+    );
+  });
+
+  it("admin can delete an inactive other user", async () => {
+    await assertSucceeds(
+      as("admin").collection("users").doc(USERS.inactiveStaff.uid).delete()
+    );
+  });
+
+  it("staff and cashier cannot delete users, even inactive ones", async () => {
+    await assertFails(
+      as("staff").collection("users").doc(USERS.inactiveStaff.uid).delete()
+    );
+    await assertFails(
+      as("cashier").collection("users").doc(USERS.inactiveStaff.uid).delete()
+    );
+  });
+
+  it("inactive admin cannot delete an inactive other user", async () => {
+    // Isolates the isActiveUser() conjunct on the actor: the target is
+    // already deactivated (satisfies deactivate-first) and the actor role
+    // is admin (satisfies the role check), so this can only fail because
+    // the acting admin's own isActive is false.
+    await assertFails(
+      as("inactiveAdmin").collection("users").doc(USERS.inactiveStaff.uid).delete()
+    );
   });
 });
 
