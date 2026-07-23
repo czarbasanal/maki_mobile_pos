@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/payment_method_style.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -212,8 +213,8 @@ class _VoidBadge extends StatelessWidget {
   }
 }
 
-/// Payment-method chip — cash/gcash carry their brand tints (per the handoff
-/// token table); other methods fall back to a neutral chip.
+/// Payment-method chip — delegates to [PaymentMethodStyle] so the dashboard
+/// always matches the report pills (Maya green, Cash muted grey, GCash blue).
 class _PaymentChip extends StatelessWidget {
   final PaymentMethod method;
 
@@ -221,27 +222,9 @@ class _PaymentChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    late final Color bg;
-    late final Color fg;
-    switch (method) {
-      case PaymentMethod.cash:
-        bg = isDark ? const Color(0x2E4CAF50) : const Color(0xFFE8F5E9);
-        fg = isDark ? const Color(0xFF8FE39A) : const Color(0xFF2E7D32);
-        break;
-      case PaymentMethod.gcash:
-        bg = isDark ? const Color(0x33007DFE) : const Color(0xFFE3F0FF);
-        fg = isDark ? const Color(0xFF7FB6FF) : const Color(0xFF024A99);
-        break;
-      case PaymentMethod.maya:
-      case PaymentMethod.salmon:
-      case PaymentMethod.mixed:
-        bg = isDark ? AppColors.darkHairline : AppColors.lightCanvas;
-        fg = theme.colorScheme.onSurfaceVariant;
-        break;
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = PaymentMethodStyle.pillBg(method, dark: isDark);
+    final fg = PaymentMethodStyle.pillFg(method, dark: isDark);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
