@@ -100,6 +100,35 @@ describe('AccountDeactivationGuard', () => {
     expect(h.authRepo.signOut).toHaveBeenCalledTimes(1);
   });
 
+  // Pre-merge review fix — parity with the mobile twin's onDeleted (no
+  // fired-guard): a doc-gone/permission-denied event arriving mid-countdown
+  // must escalate to the immediate variant right away, not ride out the
+  // remaining seconds.
+  it('doc-gone mid-countdown escalates to immediate sign-out instead of waiting out the countdown', async () => {
+    const h = harness();
+    h.snapshot(user({ isActive: false }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText(/7s/)).toBeInTheDocument();
+    expect(h.authRepo.signOut).not.toHaveBeenCalled();
+
+    h.snapshot(null); // doc-gone arrives mid-countdown
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(h.authRepo.signOut).toHaveBeenCalledTimes(1);
+
+    // The remaining ~7s of the (now-superseded) countdown must not do
+    // anything further — no second sign-out.
+    await act(async () => {
+      vi.advanceTimersByTime(7000);
+    });
+    expect(h.authRepo.signOut).toHaveBeenCalledTimes(1);
+  });
+
   it('repeat inactive snapshots do not restart the countdown', async () => {
     const h = harness();
     h.snapshot(user({ isActive: false }));

@@ -174,6 +174,16 @@ describe("/users", () => {
       as("cashier").collection("users").doc(USERS.inactiveStaff.uid).delete()
     );
   });
+
+  it("inactive admin cannot delete an inactive other user", async () => {
+    // Isolates the isActiveUser() conjunct on the actor: the target is
+    // already deactivated (satisfies deactivate-first) and the actor role
+    // is admin (satisfies the role check), so this can only fail because
+    // the acting admin's own isActive is false.
+    await assertFails(
+      as("inactiveAdmin").collection("users").doc(USERS.inactiveStaff.uid).delete()
+    );
+  });
 });
 
 // ===================================================================

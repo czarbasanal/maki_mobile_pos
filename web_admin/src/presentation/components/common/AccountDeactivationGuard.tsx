@@ -29,6 +29,17 @@
 // made. Kept out of that effect's dependency array via refs for that reason;
 // `didSignOutRef` additionally makes the sign-out call itself idempotent as
 // defense-in-depth (mirrors the mobile twin's own `_signedOut` bool guard).
+//
+// Mid-countdown escalation (pre-merge review fix — parity with the mobile
+// twin's `onDeleted`, which has no fired-guard of its own): a doc-gone or
+// permission-denied event arriving *while the 10s countdown is already
+// running* must switch straight to the immediate variant instead of riding
+// out the remaining seconds. `deactivated` only suppresses *repeat*
+// isActive:false snapshots (so the countdown never restarts); `escalated`
+// gates the one-way move to the immediate modal so a stream that keeps
+// reporting doc-gone/permission-denied after we've already escalated doesn't
+// keep re-triggering `setModal`/`signOut` (the latter is already idempotent
+// via `didSignOutRef`, but there's no reason to thrash state for it).
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -68,23 +79,25 @@ export function AccountDeactivationGuard() {
       return;
     }
     signedOutSessionRef.current = false;
-    let fired = false; // must not double-fire on repeated snapshots
+    let deactivated = false; // suppresses repeat isActive:false snapshots only
+    let escalated = false; // one-way switch to the immediate (doc-gone/denied) modal
     const unsubscribe = userRepo.watchOne(
       uid,
       (user) => {
-        if (fired || signedOutSessionRef.current) return;
+        if (signedOutSessionRef.current || escalated) return;
         if (user === null) {
-          fired = true;
+          escalated = true;
           setModal({ countdown: false });
         } else if (!user.isActive) {
-          fired = true;
+          if (deactivated) return; // stream noise — countdown already running
+          deactivated = true;
           setModal({ countdown: true });
         }
       },
       (error) => {
-        if (fired || signedOutSessionRef.current) return;
+        if (signedOutSessionRef.current || escalated) return;
         if (error.code === 'permission-denied') {
-          fired = true;
+          escalated = true;
           setModal({ countdown: false });
         }
       },
