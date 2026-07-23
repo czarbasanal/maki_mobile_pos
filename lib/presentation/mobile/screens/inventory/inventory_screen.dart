@@ -89,30 +89,32 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               );
             }).toList(),
           ),
-          // More options
-          PopupMenuButton<String>(
-            onSelected: _handleMenuAction,
-            itemBuilder: (context) => [
-              if (canAddProduct)
-                const PopupMenuItem(
-                  value: 'add',
-                  child: ListTile(
-                    leading: Icon(LucideIcons.plus),
-                    title: Text('Add Product'),
-                    contentPadding: EdgeInsets.zero,
+          // More options — hidden entirely for roles with no available
+          // actions (e.g. cashier), where the menu would open empty.
+          if (canAddProduct || isAdmin)
+            PopupMenuButton<String>(
+              onSelected: _handleMenuAction,
+              itemBuilder: (context) => [
+                if (canAddProduct)
+                  const PopupMenuItem(
+                    value: 'add',
+                    child: ListTile(
+                      leading: Icon(LucideIcons.plus),
+                      title: Text('Add Product'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
-                ),
-              if (isAdmin)
-                const PopupMenuItem(
-                  value: 'export',
-                  child: ListTile(
-                    leading: Icon(LucideIcons.download),
-                    title: Text('Export CSV'),
-                    contentPadding: EdgeInsets.zero,
+                if (isAdmin)
+                  const PopupMenuItem(
+                    value: 'export',
+                    child: ListTile(
+                      leading: Icon(LucideIcons.download),
+                      title: Text('Export CSV'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
       body: Column(

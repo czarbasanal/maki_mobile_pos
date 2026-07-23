@@ -35,7 +35,16 @@ final _admin = UserEntity(
   createdAt: DateTime(2026, 1, 1),
 );
 
-Future<void> _pump(WidgetTester tester) async {
+final _cashier = UserEntity(
+  id: 'u2',
+  email: 'c@test',
+  displayName: 'Cashier',
+  role: UserRole.cashier,
+  isActive: true,
+  createdAt: DateTime(2026, 1, 1),
+);
+
+Future<void> _pump(WidgetTester tester, {UserEntity? user}) async {
   tester.view.physicalSize = const Size(1200, 2600);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
@@ -50,7 +59,7 @@ Future<void> _pump(WidgetTester tester) async {
     ProviderScope(
       overrides: [
         productsProvider.overrideWith((ref) => Stream.value(products)),
-        currentUserProvider.overrideWith((ref) => Stream.value(_admin)),
+        currentUserProvider.overrideWith((ref) => Stream.value(user ?? _admin)),
         activeCategoriesProvider(CategoryKind.product)
             .overrideWith((ref) => Stream.value(const [])),
         costCodeMappingProvider
@@ -84,5 +93,16 @@ void main() {
     await _pump(tester);
     expect(find.text('In Stock Part'), findsOneWidget);
     expect(find.text('Low Stock Part'), findsOneWidget);
+  });
+
+  testWidgets('three-dot menu is hidden for cashier (no available actions)',
+      (tester) async {
+    await _pump(tester, user: _cashier);
+    expect(find.byType(PopupMenuButton<String>), findsNothing);
+  });
+
+  testWidgets('three-dot menu shows for admin', (tester) async {
+    await _pump(tester);
+    expect(find.byType(PopupMenuButton<String>), findsOneWidget);
   });
 }

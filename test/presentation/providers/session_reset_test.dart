@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cart_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/draft_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/inventory_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/session_reset_provider.dart';
 
 UserEntity _admin() => UserEntity(
@@ -55,14 +56,23 @@ void main() {
 
     container.read(cartProvider.notifier).addItem(_item);
     container.read(selectedDraftProvider.notifier).state = _draft();
+    container.read(inventoryStateProvider.notifier)
+      ..setSearchQuery('brake')
+      ..setCategoryFilter('Brakes')
+      ..toggleCostVisibility(true);
     expect(container.read(cartProvider).isNotEmpty, isTrue);
     expect(container.read(selectedDraftProvider), isNotNull);
+    expect(container.read(inventoryStateProvider).searchQuery, 'brake');
 
     auth.add(null); // sign out
     await Future<void>.delayed(Duration.zero);
 
     expect(container.read(cartProvider).isEmpty, isTrue);
     expect(container.read(selectedDraftProvider), isNull);
+    final inv = container.read(inventoryStateProvider);
+    expect(inv.searchQuery, isEmpty);
+    expect(inv.categoryFilter, isNull);
+    expect(inv.showCost, isFalse);
   });
 
   test('does NOT reset across a signed-out-at-boot -> sign-in transition',
