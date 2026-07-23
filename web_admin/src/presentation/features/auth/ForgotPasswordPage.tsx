@@ -58,8 +58,7 @@ export function ForgotPasswordPage() {
             Check your inbox
           </h1>
           <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Reset email sent to <span className="font-semibold">{sentTo}</span> — check
-            your inbox.
+            Reset email sent to <span className="font-semibold">{sentTo}</span>.
           </p>
         </div>
         <div className="flex justify-center">

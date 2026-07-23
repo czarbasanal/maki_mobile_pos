@@ -136,7 +136,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Reset email sent to $_sentTo — check your inbox.',
+          'Reset email sent to $_sentTo.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: scheme.onSurfaceVariant),
         ),
