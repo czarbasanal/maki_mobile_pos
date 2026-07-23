@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/draft_edit_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 
 void main() {
   DraftEntity buildDraft() => DraftEntity(
@@ -43,7 +44,18 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
 
+    // Exactly ONE scroll region — a split (or a second nested scroll view)
+    // would silently satisfy the per-section descendant checks below.
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+
     // Header, parts and labor all live INSIDE the single scroll region.
+    expect(
+      find.descendant(
+        of: find.byType(SingleChildScrollView),
+        matching: find.byType(MotorcycleModelPicker),
+      ),
+      findsOneWidget,
+    );
     expect(
       find.descendant(
         of: find.byType(SingleChildScrollView),
