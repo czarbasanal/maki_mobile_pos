@@ -6,7 +6,6 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -17,7 +16,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.d
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/save_job_order_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/job_order_badge_button.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
@@ -378,7 +377,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               shrinkWrap: true,
               children: cart.laborLines
                   .map(
-                    (line) => LaborLineTile(
+                    (line) => LaborLineRow(
                       line: line,
                       onEdited: (description, fee) => ref
                           .read(cartProvider.notifier)
@@ -436,73 +435,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
   }
 
-  void _showAddLaborDialog() {
-    final descController = TextEditingController();
-    final feeController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      barrierColor:
-          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
-      builder: (context) => AppDialog(
-        title: 'Add Labor / Service',
-        leadingIcon: LucideIcons.wrench,
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                style: AppTextStyles.fieldInput,
-                controller: descController,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  hintText: 'e.g., Engine tune-up',
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                style: AppTextStyles.fieldInput,
-                controller: feeController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-                decoration: const InputDecoration(
-                  labelText: 'Fee',
-                  prefixText: '${AppConstants.currencySymbol} ',
-                ),
-                validator: (v) {
-                  final parsed = double.tryParse(v?.trim() ?? '');
-                  if (parsed == null || parsed <= 0) {
-                    return 'Fee must be greater than 0';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          appDialogCancel(context, 'Cancel',
-              onTap: () => Navigator.pop(context)),
-          appDialogPrimary(context, 'Add', onTap: () {
-            if (!formKey.currentState!.validate()) return;
-            ref.read(cartProvider.notifier).addLaborLine(
-                  description: descController.text.trim(),
-                  fee: double.parse(feeController.text.trim()),
-                );
-            Navigator.pop(context);
-          }),
-        ],
-      ),
-    );
+  Future<void> _showAddLaborDialog() async {
+    final result = await showLaborLineDialog(context);
+    if (result == null || !mounted) return;
+    ref.read(cartProvider.notifier).addLaborLine(
+          description: result.description,
+          fee: result.fee,
+        );
   }
 
   /// Action buttons side by side — Save Draft (secondary, left) and

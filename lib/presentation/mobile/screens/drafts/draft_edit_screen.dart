@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
-import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/job_order_bill_out.dart';
@@ -17,6 +16,7 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_inpu
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/add_products_sheet.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -88,19 +88,14 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     _persist(next);
   }
 
-  Future<void> _addOrEditLabor(DraftEntity draft,
-      [LaborLineEntity? existing]) async {
-    final result = await showDialog<LaborLineEntity>(
-      context: context,
-      barrierColor:
-          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
-      builder: (_) => _LaborLineDialog(line: existing),
-    );
+  Future<void> _addLabor(DraftEntity draft) async {
+    final result = await showLaborLineDialog(context);
     if (result == null) return;
-    final next = existing == null
-        ? draft.addLaborLine(result)
-        : draft.updateLaborLine(result);
-    await _persist(next);
+    await _persist(draft.addLaborLine(LaborLineEntity(
+      id: const Uuid().v4(),
+      description: result.description,
+      fee: result.fee,
+    )));
   }
 
   Future<void> _removeLabor(DraftEntity draft, String lineId) async {
@@ -406,7 +401,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               ),
               const Spacer(),
               TextButton.icon(
-                onPressed: () => _addOrEditLabor(draft),
+                onPressed: () => _addLabor(draft),
                 icon: const Icon(LucideIcons.plus, size: 16),
                 label: const Text('Add Labor'),
                 style: TextButton.styleFrom(
@@ -428,52 +423,21 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             child: ListView(
               shrinkWrap: true,
               children: draft.laborLines
-                  .map((line) => _buildLaborLineRow(draft, line))
+                  .map(
+                    (line) => LaborLineRow(
+                      line: line,
+                      onEdited: (description, fee) => _persist(
+                        draft.updateLaborLine(
+                          line.copyWith(description: description, fee: fee),
+                        ),
+                      ),
+                      onRemove: () => _removeLabor(draft, line.id),
+                    ),
+                  )
                   .toList(),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLaborLineRow(DraftEntity draft, LaborLineEntity line) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
-      child: AppCard(
-        radius: AppRadius.md,
-        onTap: () => _addOrEditLabor(draft, line),
-        padding: const EdgeInsets.fromLTRB(
-            AppSpacing.sm + 4, AppSpacing.xs, AppSpacing.xs, AppSpacing.xs),
-        child: Row(
-          children: [
-            Icon(LucideIcons.wrench, size: 14, color: muted),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                line.description,
-                style: theme.textTheme.bodyMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Text(
-              line.fee.toCurrency(),
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500),
-            ),
-            IconButton(
-              icon: const Icon(LucideIcons.x, size: 16),
-              visualDensity: VisualDensity.compact,
-              color: muted,
-              onPressed: () => _removeLabor(draft, line.id),
-              tooltip: 'Remove labor line',
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -636,101 +600,5 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
         context.showErrorSnackBar('Error deleting job order: $e');
       }
     }
-  }
-}
-
-/// Add/edit a single free-form labor line (description + fee). Fee must be > 0.
-class _LaborLineDialog extends StatefulWidget {
-  const _LaborLineDialog({this.line});
-
-  final LaborLineEntity? line;
-
-  @override
-  State<_LaborLineDialog> createState() => _LaborLineDialogState();
-}
-
-class _LaborLineDialogState extends State<_LaborLineDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _descCtrl;
-  late final TextEditingController _feeCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _descCtrl = TextEditingController(text: widget.line?.description ?? '');
-    _feeCtrl = TextEditingController(
-      text: (widget.line?.fee ?? 0) > 0
-          ? widget.line!.fee.toStringAsFixed(2)
-          : '',
-    );
-  }
-
-  @override
-  void dispose() {
-    _descCtrl.dispose();
-    _feeCtrl.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    final fee = double.parse(_feeCtrl.text.trim());
-    final existing = widget.line;
-    final line = LaborLineEntity(
-      id: existing?.id ?? const Uuid().v4(),
-      description: _descCtrl.text.trim(),
-      fee: fee,
-    );
-    Navigator.pop(context, line);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AppDialog(
-      title: widget.line == null ? 'Add Labor' : 'Edit Labor',
-      leadingIcon: LucideIcons.wrench,
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              style: AppTextStyles.fieldInput,
-              controller: _descCtrl,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                hintText: 'e.g. Engine tune-up',
-              ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Description is required'
-                  : null,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            TextFormField(
-              style: AppTextStyles.fieldInput,
-              controller: _feeCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Fee',
-                prefixText: AppConstants.currencySymbol,
-              ),
-              validator: (v) {
-                final parsed = double.tryParse((v ?? '').trim());
-                if (parsed == null) return 'Enter a valid amount';
-                if (parsed <= 0) return 'Fee must be greater than 0';
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        appDialogCancel(context, 'Cancel', onTap: () => Navigator.pop(context)),
-        appDialogPrimary(context, widget.line == null ? 'Add' : 'Save',
-            onTap: _submit),
-      ],
-    );
   }
 }

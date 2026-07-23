@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/draft_edit_screen.dart';
 
@@ -75,6 +76,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.text('Engine tune-up'), findsOneWidget);
+    expect(find.byType(LaborLineRow), findsOneWidget);
     expect(find.text('Labor (1 service)'), findsOneWidget);
     // Grand total = parts 200 + labor 450 = 650.00 (appears in summary).
     expect(find.textContaining('650.00'), findsWidgets);
