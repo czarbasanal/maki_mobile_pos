@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/rank_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/top_selling_today_widget.dart';
 
 SaleEntity _saleWithItems(List<SaleItemEntity> items) {
@@ -165,6 +166,22 @@ void main() {
       expect(find.text('Item 2'), findsOneWidget);
       expect(find.text('2 sold'), findsOneWidget);
       expect(find.text('1 sold'), findsOneWidget);
+    });
+
+    testWidgets('rows use the shared ranked/bar visual with no profit pill',
+        (tester) async {
+      await _pump(tester, _salesWithProducts(3));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RankRow), findsNWidgets(3));
+      // Medal rank numbers 1–3 render.
+      expect(find.text('1'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      // One share bar per row.
+      expect(find.byType(LinearProgressIndicator), findsNWidgets(3));
+      // The dashboard never shows the profit pill.
+      expect(find.textContaining('+₱'), findsNothing);
     });
   });
 }
