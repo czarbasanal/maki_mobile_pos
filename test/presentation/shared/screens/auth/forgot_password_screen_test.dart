@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/errors/errors.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/screens/auth/forgot_password_screen.dart';
+import 'package:maki_mobile_pos/presentation/shared/screens/auth/login_screen.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockAuthNotifier extends Mock implements AuthNotifier {}
@@ -86,5 +87,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ForgotPasswordScreen), findsOneWidget);
     expect(find.text('shop@maki.ph'), findsOneWidget);
+  });
+
+  testWidgets('has no app-bar back icon; Login button returns to login',
+      (tester) async {
+    final router = GoRouter(
+      initialLocation: RoutePaths.login,
+      routes: authRoutes(),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authActionsProvider.overrideWithValue(auth)],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppBar), findsNothing);
+    await tester.tap(find.text('Login'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsOneWidget);
   });
 }
