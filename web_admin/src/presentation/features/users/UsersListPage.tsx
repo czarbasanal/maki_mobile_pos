@@ -10,6 +10,7 @@ import {
   EyeSlashIcon,
   PencilIcon,
   PlusIcon,
+  TrashIcon,
   UserIcon,
   UserMinusIcon,
   UserPlusIcon,
@@ -17,6 +18,7 @@ import {
 import { useUsers } from '@/presentation/hooks/useUsers';
 import {
   useDeactivateUser,
+  useDeleteUser,
   useReactivateUser,
 } from '@/presentation/hooks/useUserMutations';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -164,17 +166,34 @@ function SummaryTile({
 function UsersTable({ users, myId }: { users: User[]; myId: string }) {
   const deactivate = useDeactivateUser();
   const reactivate = useReactivateUser();
-  const [confirm, setConfirm] = useState<null | { user: User; mode: 'deactivate' | 'reactivate' }>(null);
+  const deleteUser = useDeleteUser();
+  const [confirm, setConfirm] = useState<null | {
+    user: User;
+    mode: 'deactivate' | 'reactivate' | 'delete';
+  }>(null);
+
+  const pending =
+    deactivate.isPending || reactivate.isPending || deleteUser.isPending;
+  const mutationError = deactivate.error ?? reactivate.error ?? deleteUser.error;
 
   const onConfirm = async () => {
     if (!confirm) return;
     if (confirm.mode === 'deactivate') {
       await deactivate.mutateAsync(confirm.user);
-    } else {
+    } else if (confirm.mode === 'reactivate') {
       await reactivate.mutateAsync(confirm.user);
+    } else {
+      await deleteUser.mutateAsync(confirm.user);
     }
     setConfirm(null);
   };
+
+  const confirmLabel =
+    confirm?.mode === 'deactivate'
+      ? 'Deactivate'
+      : confirm?.mode === 'delete'
+        ? 'Delete'
+        : 'Reactivate';
 
   return (
     <>
@@ -197,6 +216,7 @@ function UsersTable({ users, myId }: { users: User[]; myId: string }) {
                 isMe={user.id === myId}
                 onDeactivate={() => setConfirm({ user, mode: 'deactivate' })}
                 onReactivate={() => setConfirm({ user, mode: 'reactivate' })}
+                onDelete={() => setConfirm({ user, mode: 'delete' })}
               />
             ))}
           </tbody>
@@ -206,31 +226,40 @@ function UsersTable({ users, myId }: { users: User[]; myId: string }) {
       <Dialog
         open={confirm !== null}
         onClose={() => {
-          if (deactivate.isPending || reactivate.isPending) return;
+          if (pending) return;
           setConfirm(null);
           deactivate.reset();
           reactivate.reset();
+          deleteUser.reset();
         }}
-        title={confirm?.mode === 'deactivate' ? 'Deactivate user' : 'Reactivate user'}
+        title={
+          confirm?.mode === 'deactivate'
+            ? 'Deactivate user'
+            : confirm?.mode === 'delete'
+              ? 'Delete user'
+              : 'Reactivate user'
+        }
         description={
           confirm
             ? confirm.mode === 'deactivate'
               ? `${confirm.user.displayName || confirm.user.email} will no longer be able to sign in.`
-              : `${confirm.user.displayName || confirm.user.email} will be able to sign in again.`
+              : confirm.mode === 'delete'
+                ? `${confirm.user.displayName || confirm.user.email} will be permanently deleted. Past sales and activity logs keep their name.`
+                : `${confirm.user.displayName || confirm.user.email} will be able to sign in again.`
             : undefined
         }
-        dismissable={!deactivate.isPending && !reactivate.isPending}
+        dismissable={!pending}
       >
-        {(deactivate.error || reactivate.error) ? (
+        {mutationError ? (
           <p className="mb-tk-md text-bodySmall text-error">
-            {(deactivate.error ?? reactivate.error)!.message}
+            {mutationError.message}
           </p>
         ) : null}
         <div className="flex justify-end gap-tk-sm">
           <button
             type="button"
             onClick={() => setConfirm(null)}
-            disabled={deactivate.isPending || reactivate.isPending}
+            disabled={pending}
             className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
           >
             Cancel
@@ -238,16 +267,16 @@ function UsersTable({ users, myId }: { users: User[]; myId: string }) {
           <button
             type="button"
             onClick={onConfirm}
-            disabled={deactivate.isPending || reactivate.isPending}
+            disabled={pending}
             className={cn(
               'flex items-center gap-tk-xs rounded-md px-tk-md py-tk-sm text-bodySmall font-semibold disabled:opacity-60',
-              confirm?.mode === 'deactivate'
-                ? 'bg-error text-white hover:bg-error-dark'
-                : 'bg-light-text text-light-background hover:bg-primary-dark',
+              confirm?.mode === 'reactivate'
+                ? 'bg-light-text text-light-background hover:bg-primary-dark'
+                : 'bg-error text-white hover:bg-error-dark',
             )}
           >
-            {(deactivate.isPending || reactivate.isPending) ? <Spinner className="h-3.5 w-3.5" /> : null}
-            {confirm?.mode === 'deactivate' ? 'Deactivate' : 'Reactivate'}
+            {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
+            {confirmLabel}
           </button>
         </div>
       </Dialog>
@@ -273,11 +302,13 @@ function UserRow({
   isMe,
   onDeactivate,
   onReactivate,
+  onDelete,
 }: {
   user: User;
   isMe: boolean;
   onDeactivate: () => void;
   onReactivate: () => void;
+  onDelete: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -352,6 +383,10 @@ function UserRow({
                     setMenuOpen(false);
                     onReactivate();
                   }}
+                  onDelete={() => {
+                    setMenuOpen(false);
+                    onDelete();
+                  }}
                 />
               ) : null}
             </>
@@ -367,11 +402,13 @@ function RowMenu({
   onClose,
   onDeactivate,
   onReactivate,
+  onDelete,
 }: {
   user: User;
   onClose: () => void;
   onDeactivate: () => void;
   onReactivate: () => void;
+  onDelete: () => void;
 }) {
   useEffect(() => {
     const onClick = () => onClose();
@@ -394,14 +431,24 @@ function RowMenu({
           Deactivate
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={onReactivate}
-          className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-left text-bodySmall text-light-text hover:bg-light-subtle"
-        >
-          <UserPlusIcon className="h-4 w-4" />
-          Reactivate
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={onReactivate}
+            className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-left text-bodySmall text-light-text hover:bg-light-subtle"
+          >
+            <UserPlusIcon className="h-4 w-4" />
+            Reactivate
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-left text-bodySmall text-error-dark hover:bg-error-light/40"
+          >
+            <TrashIcon className="h-4 w-4" />
+            Delete
+          </button>
+        </>
       )}
       <Link
         to={`/users/edit/${user.id}`}
