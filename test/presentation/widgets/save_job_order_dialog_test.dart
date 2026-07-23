@@ -41,6 +41,7 @@ void main() {
                 child: ElevatedButton(
                   onPressed: () async => result = await showSaveJobOrderDialog(
                     ctx,
+                    jobOrderNo: 'JO-072326-004',
                     initialModel: initialModel,
                     initialMechanicId: initialMechanicId,
                   ),
@@ -66,13 +67,16 @@ void main() {
     expect(find.text('Nmax'), findsOneWidget);
     expect(find.text('— Optional —'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField).first, 'Juan / ABC-123');
+    // The auto-generated number is displayed read-only — no text input.
+    expect(find.text('JO-072326-004'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     final result = getResult();
     expect(result, isNotNull);
-    expect(result!.label, 'Juan / ABC-123');
+    expect(result!.label, 'JO-072326-004');
     expect(result.model, 'Nmax');
     expect(result.mechanicId, isNull);
   });
@@ -87,7 +91,8 @@ void main() {
     expect(find.text('Rey'), findsOneWidget);
   });
 
-  testWidgets('requires a label', (tester) async {
+  testWidgets('saves immediately under the generated number (no label gate)',
+      (tester) async {
     final getResult = await harness(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('open'));
@@ -95,7 +100,6 @@ void main() {
 
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(find.text('Save as Job Order'), findsOneWidget); // still open
-    expect(getResult(), isNull);
+    expect(getResult()!.label, 'JO-072326-004');
   });
 }

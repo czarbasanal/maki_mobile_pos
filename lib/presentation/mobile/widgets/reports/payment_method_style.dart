@@ -27,11 +27,13 @@ class PaymentMethodStyle {
   static Color pillFg(PaymentMethod m, {required bool dark}) {
     switch (m) {
       case PaymentMethod.cash:
-        return dark ? const Color(0xFF8FE39A) : const Color(0xFF2E7D32);
+        // Muted grey pill — darker grey text on a subtle grey tint.
+        return dark ? const Color(0xFFB0BABA) : const Color(0xFF474F53);
       case PaymentMethod.gcash:
         return dark ? const Color(0xFF7FB6FF) : const Color(0xFF024A99);
       case PaymentMethod.maya:
-        return dark ? const Color(0xFFB8C4C4) : const Color(0xFF283E46);
+        // Maya brand: green on green.
+        return dark ? const Color(0xFF8FE39A) : const Color(0xFF2E7D32);
       case PaymentMethod.mixed:
         return dark ? const Color(0xFF9FB0B0) : const Color(0xFF5A6468);
       case PaymentMethod.salmon:
@@ -43,11 +45,11 @@ class PaymentMethodStyle {
   static Color pillBg(PaymentMethod m, {required bool dark}) {
     switch (m) {
       case PaymentMethod.cash:
-        return dark ? const Color(0x294CAF50) : const Color(0xFFE8F5E9);
+        return dark ? const Color(0x14FFFFFF) : const Color(0x14283E46);
       case PaymentMethod.gcash:
         return dark ? const Color(0x33007DFE) : const Color(0xFFE3F0FF);
       case PaymentMethod.maya:
-        return dark ? const Color(0x12FFFFFF) : const Color(0x12283E46);
+        return dark ? const Color(0x294CAF50) : const Color(0xFFE8F5E9);
       case PaymentMethod.mixed:
         return dark ? const Color(0x0FFFFFFF) : const Color(0x0F283E46);
       case PaymentMethod.salmon:

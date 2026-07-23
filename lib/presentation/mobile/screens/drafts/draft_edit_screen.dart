@@ -422,7 +422,16 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             selectedMechanicId: draft.mechanicId,
             onChanged: (m) => _onMechanicChanged(m?.id, m?.name),
           ),
-          ...draft.laborLines.map((line) => _buildLaborLineRow(draft, line)),
+          // Bounded + scrollable — same treatment as the POS labor section.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 260),
+            child: ListView(
+              shrinkWrap: true,
+              children: draft.laborLines
+                  .map((line) => _buildLaborLineRow(draft, line))
+                  .toList(),
+            ),
+          ),
         ],
       ),
     );
