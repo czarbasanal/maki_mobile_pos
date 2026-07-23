@@ -35,8 +35,14 @@ async function main() {
   try {
     user = await lookup(target);
   } catch (e) {
-    console.error(`No auth account found for "${target}": ${e.message}`);
-    process.exit(1);
+    // Only a genuine not-found may read as "account gone" — any other
+    // failure (permission, network, malformed id) must surface as itself,
+    // never as a safe-looking absence. Same convention as create-user.mjs.
+    if (e.code === 'auth/user-not-found') {
+      console.error(`No auth account found for "${target}".`);
+      process.exit(1);
+    }
+    throw e;
   }
 
   console.log('Found auth account:');
