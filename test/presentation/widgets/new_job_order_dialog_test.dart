@@ -6,7 +6,7 @@ import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/motorcycle_model_provider.dart';
 
 void main() {
-  testWidgets('requires a label and returns the entered input', (tester) async {
+  Future<NewJobOrderInput? Function()> harness(WidgetTester tester) async {
     NewJobOrderInput? result;
     await tester.pumpWidget(
       ProviderScope(
@@ -20,7 +20,10 @@ void main() {
             builder: (ctx) => Scaffold(
               body: Center(
                 child: ElevatedButton(
-                  onPressed: () async => result = await showNewJobOrderDialog(ctx),
+                  onPressed: () async => result = await showNewJobOrderDialog(
+                    ctx,
+                    jobOrderNo: 'JO-072326-005',
+                  ),
                   child: const Text('open'),
                 ),
               ),
@@ -29,24 +32,34 @@ void main() {
         ),
       ),
     );
+    return () => result;
+  }
 
+  testWidgets('shows the number read-only with no label field', (tester) async {
+    await harness(tester);
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    // Mechanic is optional at create — the picker says so.
+    // The auto-generated number is displayed read-only — no text input.
+    expect(find.text('JO-072326-005'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    // Mechanic stays optional at create.
     expect(find.text('— Optional —'), findsOneWidget);
+  });
 
-    // Empty label → blocked (dialog stays open, no result yet).
+  testWidgets('creates immediately under the generated number (no label gate)',
+      (tester) async {
+    final getResult = await harness(tester);
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
-    expect(find.text('New Job Order'), findsOneWidget);
-    expect(result, isNull);
 
-    // Enter a label → Create returns the input.
-    await tester.enterText(find.byType(TextField).first, 'ABC-123');
-    await tester.tap(find.text('Create'));
-    await tester.pumpAndSettle();
+    final result = getResult();
     expect(result, isNotNull);
-    expect(result!.label, 'ABC-123');
+    expect(result!.label, 'JO-072326-005');
+    expect(result.model, isNull);
+    expect(result.mechanicId, isNull);
   });
 }

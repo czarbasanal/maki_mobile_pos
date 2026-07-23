@@ -10,6 +10,8 @@ String _signedPeso(double v) =>
     '${v < 0 ? '-' : '+'}${AppConstants.currencySymbol}${v.abs().toCurrencyWithoutSymbol()}';
 
 /// `AppCard` section with a Lucide icon header — the closing-flow card shell.
+/// [trailing] (optional) renders right-aligned in the header row, e.g. the
+/// Expenses card's compact Add Expense button.
 class ClosingSectionCard extends StatelessWidget {
   const ClosingSectionCard({
     super.key,
@@ -17,12 +19,14 @@ class ClosingSectionCard extends StatelessWidget {
     required this.title,
     required this.children,
     this.iconColor,
+    this.trailing,
   });
 
   final IconData icon;
   final String title;
   final List<Widget> children;
   final Color? iconColor;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +47,10 @@ class ClosingSectionCard extends StatelessWidget {
                   fontSize: 15,
                 ),
               ),
+              if (trailing != null) ...[
+                const Spacer(),
+                trailing!,
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -381,6 +389,120 @@ class ClosedByBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+String _plainPeso(double v) =>
+    '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
+
+/// Add-a-row peso amount list (Plate No DP / Delivery on the EOD form).
+/// The amount input + Add appends to [amounts]; each row is removable while
+/// the day is open; a live sum line totals the entries. The parent owns the
+/// list state — only ADDED rows count toward the sums.
+///
+/// [controller] is owned by the caller (same pattern as every other
+/// `ClosingField` on the EOD form), not created internally — the caller
+/// needs to read the pending (not-yet-Added) text off it, e.g. to
+/// auto-commit or block on Close Day so a typed-but-not-Added amount is
+/// never silently dropped.
+class ClosingAmountList extends StatelessWidget {
+  const ClosingAmountList({
+    super.key,
+    required this.label,
+    required this.amounts,
+    required this.controller,
+    required this.onChanged,
+    this.enabled = true,
+  });
+
+  final String label;
+  final List<double> amounts;
+  final TextEditingController controller;
+  final ValueChanged<List<double>> onChanged;
+  final bool enabled;
+
+  void _add() {
+    final parsed = double.tryParse(controller.text.trim());
+    if (parsed == null || parsed <= 0) return;
+    onChanged([...amounts, parsed]);
+    controller.clear();
+  }
+
+  void _removeAt(int index) {
+    final next = List<double>.of(amounts)..removeAt(index);
+    onChanged(next);
+  }
+
+  double get _sum => amounts.fold(0.0, (a, b) => a + b);
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: ClosingField(
+                label: label,
+                controller: controller,
+                enabled: enabled,
+                hintText: '0',
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                key: Key('add-amount-$label'),
+                onPressed: enabled ? _add : null,
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: const Icon(LucideIcons.plus, size: 14),
+                label: const Text('Add'),
+              ),
+            ),
+          ],
+        ),
+        for (var i = 0; i < amounts.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Entry ${i + 1}',
+                    style: TextStyle(fontSize: 13, color: muted),
+                  ),
+                ),
+                Text(
+                  _plainPeso(amounts[i]),
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                IconButton(
+                  icon: Icon(LucideIcons.x, size: 15, color: muted),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: enabled ? () => _removeAt(i) : null,
+                  tooltip: 'Remove amount',
+                ),
+              ],
+            ),
+          ),
+        if (amounts.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: ClosingKvRow(
+              label: '$label total (${amounts.length} '
+                  '${amounts.length == 1 ? 'entry' : 'entries'})',
+              value: _plainPeso(_sum),
+            ),
+          ),
+      ],
     );
   }
 }

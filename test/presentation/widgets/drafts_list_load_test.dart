@@ -1,9 +1,12 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
+import 'package:maki_mobile_pos/core/utils/job_order_number.dart';
+import 'package:maki_mobile_pos/data/repositories/draft_repository_impl.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/motorcycle_model_provider.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -63,6 +66,9 @@ void main() {
               .overrideWith((ref) => Stream.value(const [])),
           activeMechanicsProvider
               .overrideWith((ref) => Stream.value(const [])),
+          draftRepositoryProvider.overrideWithValue(
+            DraftRepositoryImpl(firestore: FakeFirebaseFirestore()),
+          ),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -84,6 +90,13 @@ void main() {
     await tester.tap(find.byIcon(LucideIcons.plus));
     await tester.pumpAndSettle();
     expect(find.text('New Job Order'), findsOneWidget);
+    // Read-only number derived from today's drafts (empty repo → -001);
+    // no free-text label field remains.
+    expect(
+      find.text('${jobOrderPrefixFor(DateTime.now())}001'),
+      findsOneWidget,
+    );
+    expect(find.byType(TextField), findsNothing);
   });
 
   testWidgets('tapping Open navigates to the ticket editor', (tester) async {

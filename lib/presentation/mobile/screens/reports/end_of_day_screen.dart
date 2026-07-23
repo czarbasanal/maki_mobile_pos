@@ -29,8 +29,11 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   final _formKey = GlobalKey<FormState>();
   final _floatController = TextEditingController();
   final _countedController = TextEditingController();
-  final _plateDpController = TextEditingController();
-  final _plateDeliveryController = TextEditingController();
+  // Pending (not-yet-Added) Plate No amount inputs — owned here (same
+  // pattern as every other ClosingField controller) so Close Day can read
+  // and auto-commit/block on them; see _submit.
+  final _plateDpPendingController = TextEditingController();
+  final _plateDeliveryPendingController = TextEditingController();
   final _notesController = TextEditingController();
   bool _busy = false;
 
@@ -43,21 +46,25 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     return DateTime(n.year, n.month, n.day);
   }
 
+  List<double> _plateDpAmounts = const [];
+  List<double> _plateDeliveryAmounts = const [];
+
+  double get _plateDp => _plateDpAmounts.fold(0.0, (a, b) => a + b);
+  double get _plateDelivery =>
+      _plateDeliveryAmounts.fold(0.0, (a, b) => a + b);
+
   @override
   void dispose() {
     _floatController.dispose();
     _countedController.dispose();
-    _plateDpController.dispose();
-    _plateDeliveryController.dispose();
+    _plateDpPendingController.dispose();
+    _plateDeliveryPendingController.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
   double get _float => double.tryParse(_floatController.text) ?? 0;
   double? get _counted => double.tryParse(_countedController.text);
-  double get _plateDp => double.tryParse(_plateDpController.text) ?? 0;
-  double get _plateDelivery =>
-      double.tryParse(_plateDeliveryController.text) ?? 0;
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +162,22 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                 ClosingSectionCard(
                   icon: LucideIcons.arrowDownCircle,
                   title: 'Expenses',
+                  trailing: OutlinedButton.icon(
+                    onPressed: _busy
+                        ? null
+                        : () => context.push(RoutePaths.expenseAdd),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    icon: const Icon(LucideIcons.plus, size: 14),
+                    label: const Text('Add Expense'),
+                  ),
                   children: [
                     if (data.expenses.isEmpty)
                       Padding(
@@ -194,26 +217,6 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                           label: 'Cash expenses',
                           value: _peso(draft.cashExpenses)),
                     ],
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        onPressed: _busy
-                            ? null
-                            : () => context.push(RoutePaths.expenseAdd),
-                        style: OutlinedButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        icon: const Icon(LucideIcons.plus, size: 14),
-                        label: const Text('Add Expense'),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -221,20 +224,22 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                   icon: LucideIcons.clipboardList,
                   title: 'Plate No Orders',
                   children: [
-                    ClosingField(
+                    ClosingAmountList(
                       label: 'Plate No DP',
-                      controller: _plateDpController,
+                      amounts: _plateDpAmounts,
+                      controller: _plateDpPendingController,
                       enabled: !_busy,
-                      hintText: '0',
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (next) =>
+                          setState(() => _plateDpAmounts = next),
                     ),
                     const SizedBox(height: 12),
-                    ClosingField(
+                    ClosingAmountList(
                       label: 'Plate No Delivery',
-                      controller: _plateDeliveryController,
+                      amounts: _plateDeliveryAmounts,
+                      controller: _plateDeliveryPendingController,
                       enabled: !_busy,
-                      hintText: '0',
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (next) =>
+                          setState(() => _plateDeliveryAmounts = next),
                     ),
                   ],
                 ),
@@ -377,8 +382,55 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   String _peso(double v) =>
       '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
 
+  /// True when the pending (typed-but-not-Added) text is empty (nothing to
+  /// commit) or parses to a positive number (safe to auto-commit). False
+  /// means the field has text that isn't a usable amount — Close Day must
+  /// block on it rather than silently drop it.
+  bool _pendingAmountIsValid(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return true;
+    final parsed = double.tryParse(text);
+    return parsed != null && parsed > 0;
+  }
+
+  /// Appends the pending text (already validated) as a new entry and clears
+  /// the field; a no-op when the field is empty.
+  void _commitPendingAmount(
+    TextEditingController controller,
+    List<double> current,
+    ValueChanged<List<double>> apply,
+  ) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return;
+    apply([...current, double.parse(text)]);
+    controller.clear();
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _busy) return;
+
+    // A Plate No amount typed but never committed via its own Add button
+    // used to be silently discarded on Close Day — into an immutable
+    // closing doc. Auto-commit valid pending text before confirming; block
+    // (no confirm dialog, nothing saved) if either field has invalid
+    // pending text, so nothing is lost or misread.
+    if (!_pendingAmountIsValid(_plateDpPendingController) ||
+        !_pendingAmountIsValid(_plateDeliveryPendingController)) {
+      context.showWarningSnackBar(
+          'Tap Add to include the typed Plate No amount, or clear it');
+      return;
+    }
+    _commitPendingAmount(
+      _plateDpPendingController,
+      _plateDpAmounts,
+      (next) => setState(() => _plateDpAmounts = next),
+    );
+    _commitPendingAmount(
+      _plateDeliveryPendingController,
+      _plateDeliveryAmounts,
+      (next) => setState(() => _plateDeliveryAmounts = next),
+    );
+
     final confirmed = await context.showConfirmDialog(
       title: 'Close this day?',
       message:
@@ -395,8 +447,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
               date: _today,
               openingFloat: _float,
               countedCash: _counted ?? 0,
-              plateNoDp: _plateDp,
-              plateNoDelivery: _plateDelivery,
+              plateNoDpAmounts: List.of(_plateDpAmounts),
+              plateNoDeliveryAmounts: List.of(_plateDeliveryAmounts),
               excludedExpenseIds: Set.of(_excludedIds),
               notes: notes.isEmpty ? null : notes,
             );
@@ -499,11 +551,10 @@ class _ClosedView extends ConsumerWidget {
               icon: LucideIcons.clipboardList,
               title: 'Plate No Orders',
               children: [
-                ClosingKvRow(
-                    label: 'Plate No DP', value: _peso(closing.plateNoDp)),
-                ClosingKvRow(
-                    label: 'Plate No Delivery',
-                    value: _peso(closing.plateNoDelivery)),
+                ..._plateRows('Plate No DP', closing.plateNoDp,
+                    closing.plateNoDpAmounts),
+                ..._plateRows('Plate No Delivery', closing.plateNoDelivery,
+                    closing.plateNoDeliveryAmounts),
               ],
             ),
           ],
@@ -607,4 +658,25 @@ class _ClosedView extends ConsumerWidget {
 
   String _peso(double v) =>
       '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
+
+  /// Itemized rows when the closing carries per-order amounts; the single
+  /// KV row for docs saved before itemization (scalars only).
+  List<Widget> _plateRows(String label, double total, List<double> amounts) {
+    if (amounts.isEmpty) {
+      return [ClosingKvRow(label: label, value: _peso(total))];
+    }
+    return [
+      ClosingKvRow(
+        label:
+            '$label · ${amounts.length} ${amounts.length == 1 ? 'entry' : 'entries'}',
+        value: _peso(total),
+      ),
+      for (var i = 0; i < amounts.length; i++)
+        ClosingKvRow(
+          label: 'Entry ${i + 1}',
+          value: _peso(amounts[i]),
+          indented: true,
+        ),
+    ];
+  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/core/utils/job_order_number.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
@@ -46,7 +47,31 @@ class DraftsListScreen extends ConsumerWidget {
   }
 
   Future<void> _createJobOrder(BuildContext context, WidgetRef ref) async {
-    final input = await showNewJobOrderDialog(context);
+    // Sequential per-day number derived from today's existing job orders
+    // (converted ones included so billed-out numbers are never reissued) —
+    // mirrors pos_screen._showSaveDraftDialog.
+    final now = DateTime.now();
+    final String jobOrderNo;
+    try {
+      final todaysDrafts = await context.runWithWaiting(
+        () => ref.read(draftRepositoryProvider).getDraftsByDateRange(
+              startDate: now,
+              endDate: now,
+              includeConverted: true,
+            ),
+        message: 'Preparing…',
+      );
+      jobOrderNo =
+          nextJobOrderNumber(now, todaysDrafts.map((d) => d.name));
+    } catch (_) {
+      if (context.mounted) {
+        context.showErrorSnackBar('Could not prepare a job order number');
+      }
+      return;
+    }
+    if (!context.mounted) return;
+
+    final input = await showNewJobOrderDialog(context, jobOrderNo: jobOrderNo);
     if (input == null) return;
     final user = ref.read(currentUserProvider).valueOrNull;
     if (user == null) return;

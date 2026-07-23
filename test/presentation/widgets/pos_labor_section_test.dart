@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/cart_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/pos/pos_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 
 ProductEntity _product() => ProductEntity(
@@ -102,6 +103,19 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.textContaining('Assign a mechanic'), findsOneWidget);
+    // Labor lines render with the shared Job Order-style row — no more
+    // swipe-to-dismiss for labor specifically. (The cart's product list
+    // still uses Dismissible for its own item tiles, so scope the check
+    // to the labor list rather than asserting zero Dismissibles screen-wide.)
+    expect(find.byType(LaborLineRow), findsOneWidget);
+    final laborList = find.ancestor(
+      of: find.byType(LaborLineRow),
+      matching: find.byType(ListView),
+    );
+    expect(
+      find.descendant(of: laborList, matching: find.byType(Dismissible)),
+      findsNothing,
+    );
     // Save-as-Draft is gated off while labor is invalid.
     final saveButton = tester.widget<OutlinedButton>(
       find.widgetWithText(OutlinedButton, 'Save Job Order'),

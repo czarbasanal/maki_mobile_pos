@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
-import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/rank_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/dashboard_list_card.dart';
 
 /// Top Selling Items Today on the mobile admin dashboard.
@@ -65,7 +64,18 @@ class _TopSellingTodayWidgetState
             children: [
               for (var i = 0; i < visible.length; i++) ...[
                 if (i > 0) divider,
-                _Row(item: visible[i]),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  child: RankRow(
+                    index: i,
+                    name: visible[i].name,
+                    subtitle: visible[i].sku,
+                    quantitySold: visible[i].quantitySold,
+                    revenue: visible[i].totalRevenue,
+                    maxQuantity: ranked.first.quantitySold,
+                  ),
+                ),
               ],
               if (canExpand) ...[
                 divider,
@@ -94,80 +104,6 @@ class _TopSellingTodayWidgetState
           'Error loading top sellers: $error',
           style: TextStyle(color: theme.colorScheme.error),
         ),
-      ),
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  final TopSellingItem item;
-
-  const _Row({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          const _Thumb(),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: AppTextStyles.productName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${item.quantitySold} sold',
-                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            item.totalRevenue.toCurrency(),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 40×40 product thumbnail placeholder (radius 11). Wire to real product
-/// images later; for now a quiet tile with a package glyph.
-class _Thumb extends StatelessWidget {
-  const _Thumb();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkHairline : AppColors.lightCanvas,
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(
-          color: isDark ? AppColors.darkHairline : AppColors.lightHairline,
-        ),
-      ),
-      child: Icon(
-        LucideIcons.package,
-        size: 18,
-        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }

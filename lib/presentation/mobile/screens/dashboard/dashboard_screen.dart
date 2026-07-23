@@ -182,19 +182,9 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Pinned header — date strip + role-based QuickActions stay
-            // visible while the user scrolls the dashboard sections below.
-            _buildPinnedHeader(),
-            // Scrollable region — Today's Sales onward.
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _handleRefresh,
-                child: _buildScrollableSections(),
-              ),
-            ),
-          ],
+        child: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: _buildScrollableSections(),
         ),
       ),
     );
@@ -234,42 +224,6 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     return (first + last).toUpperCase();
   }
 
-  Widget _buildPinnedHeader() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
-        boxShadow: AppShadows.pinnedHeader(dark: isDark),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildDateHeader(),
-          const SizedBox(height: 16),
-          QuickActions(
-            onNewSale: () => context.go(RoutePaths.pos),
-            onReceiving: _canAccessReceiving
-                ? () => context.go(RoutePaths.receiving)
-                : null,
-            onInventory: _canViewInventory
-                ? () => context.go(RoutePaths.inventory)
-                : null,
-            onReorder: _canAccessReceiving
-                ? () => context.go(RoutePaths.purchaseOrders)
-                : null,
-            onExpenses:
-                _canViewExpenses ? () => context.go(RoutePaths.expenses) : null,
-            onReports:
-                _canViewReports ? () => context.go(RoutePaths.reports) : null,
-            onCloseDay:
-                _canCloseDay ? () => context.push(RoutePaths.endOfDay) : null,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildScrollableSections() {
     return CustomScrollView(
       slivers: [
@@ -277,6 +231,33 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
+              // Date strip + role-based QuickActions — scroll with the page
+              // (unpinned; only the AppBar stays fixed).
+              _buildDateHeader(),
+              const SizedBox(height: 16),
+              QuickActions(
+                onNewSale: () => context.go(RoutePaths.pos),
+                onReceiving: _canAccessReceiving
+                    ? () => context.go(RoutePaths.receiving)
+                    : null,
+                onInventory: _canViewInventory
+                    ? () => context.go(RoutePaths.inventory)
+                    : null,
+                onReorder: _canAccessReceiving
+                    ? () => context.go(RoutePaths.purchaseOrders)
+                    : null,
+                onExpenses: _canViewExpenses
+                    ? () => context.go(RoutePaths.expenses)
+                    : null,
+                onReports: _canViewReports
+                    ? () => context.go(RoutePaths.reports)
+                    : null,
+                onCloseDay: _canCloseDay
+                    ? () => context.push(RoutePaths.endOfDay)
+                    : null,
+              ),
+              const SizedBox(height: 24),
+
               // Sales summary section - all roles can see today's sales
               _buildSectionHeader('Today\'s Sales'),
               const SizedBox(height: 12),

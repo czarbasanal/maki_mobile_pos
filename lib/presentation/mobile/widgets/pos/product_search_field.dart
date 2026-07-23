@@ -52,26 +52,45 @@ class ProductSearchField extends ConsumerStatefulWidget {
   ConsumerState<ProductSearchField> createState() => _ProductSearchFieldState();
 }
 
-class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
+class _ProductSearchFieldState extends ConsumerState<ProductSearchField>
+    with WidgetsBindingObserver {
   final _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   Timer? _debounceTimer;
   String _debouncedQuery = '';
+  double _lastBottomInset = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.controller.addListener(_onSearchChanged);
     widget.focusNode.addListener(_onFocusChanged);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _debounceTimer?.cancel();
     widget.controller.removeListener(_onSearchChanged);
     widget.focusNode.removeListener(_onFocusChanged);
     _removeOverlay();
     super.dispose();
+  }
+
+  /// Keyboard-dismiss → unfocus: when the software keyboard collapses to
+  /// ~0 while this field still holds focus (system back / swipe-down),
+  /// drop the focus so the cursor and any results overlay dismiss with it.
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final view = View.of(context);
+    final bottomInset = view.viewInsets.bottom / view.devicePixelRatio;
+    final collapsed = _lastBottomInset > 1 && bottomInset <= 1;
+    _lastBottomInset = bottomInset;
+    if (collapsed && widget.focusNode.hasFocus) {
+      widget.focusNode.unfocus();
+    }
   }
 
   void _onSearchChanged() {

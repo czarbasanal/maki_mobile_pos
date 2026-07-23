@@ -184,6 +184,13 @@ class DailyClosingEntity extends Equatable {
   final double laborRevenue;
   final double plateNoDp;
   final double plateNoDelivery;
+
+  /// Itemized Plate-No amounts (one entry per order), persisted so the
+  /// closed-day view can show each amount. [plateNoDp]/[plateNoDelivery]
+  /// always equal the sum of their list; docs saved before itemization
+  /// carry scalars only and read back with empty lists.
+  final List<double> plateNoDpAmounts;
+  final List<double> plateNoDeliveryAmounts;
   final double openingFloat;
   final double expectedCash;
   final double countedCash;
@@ -217,6 +224,8 @@ class DailyClosingEntity extends Equatable {
     this.laborRevenue = 0,
     this.plateNoDp = 0,
     this.plateNoDelivery = 0,
+    this.plateNoDpAmounts = const [],
+    this.plateNoDeliveryAmounts = const [],
     required this.openingFloat,
     required this.expectedCash,
     required this.countedCash,
@@ -247,6 +256,8 @@ class DailyClosingEntity extends Equatable {
         laborRevenue,
         plateNoDp,
         plateNoDelivery,
+        plateNoDpAmounts,
+        plateNoDeliveryAmounts,
         openingFloat,
         expectedCash,
         countedCash,
