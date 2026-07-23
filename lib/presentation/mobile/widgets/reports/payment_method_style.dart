@@ -57,14 +57,15 @@ class PaymentMethodStyle {
     }
   }
 
-  /// Sales-Report payment-breakdown progress-bar fill.
+  /// Sales-Report payment-breakdown progress-bar fill — same per-method
+  /// language as the pills: Maya green, GCash blue, the rest slate.
   static Color barFill(PaymentMethod m, {required bool dark}) {
     switch (m) {
-      case PaymentMethod.cash:
+      case PaymentMethod.maya:
         return dark ? const Color(0xFF5FC86A) : const Color(0xFF4CAF50);
       case PaymentMethod.gcash:
         return dark ? const Color(0xFF5AA9F0) : const Color(0xFF007DFE);
-      case PaymentMethod.maya:
+      case PaymentMethod.cash:
       case PaymentMethod.mixed:
       case PaymentMethod.salmon:
         return dark ? const Color(0xFF9FB0B0) : const Color(0xFF283E46);

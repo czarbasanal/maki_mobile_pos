@@ -3,7 +3,13 @@
 /// The date is embedded in the prefix, so "today's sequence" is derived
 /// purely from names carrying today's prefix — legacy customer/plate names
 /// and other days' numbers never collide. Sequence gaps (deleted tickets)
-/// are never reused: the next number is always max(today) + 1.
+/// are not reused: the next number is max(today) + 1 as of the read.
+///
+/// DELIBERATE TRADE-OFF: the read-then-write is not transactional, so two
+/// devices saving within the same read/write window can mint the same
+/// number. Accepted for this label (small shop, 1-2 registers) — if JO
+/// numbers ever become load-bearing references, move to a claim doc like
+/// the SKU/barcode guards.
 library;
 
 /// `JO-MMDDYY-` for [now]'s date, e.g. `JO-072326-` on 2026-07-23.

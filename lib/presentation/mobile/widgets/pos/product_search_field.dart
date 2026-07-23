@@ -127,6 +127,9 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
     }
 
     _overlayEntry = OverlayEntry(
+      // Deliberately ignores the overlay's own context: every lookup below
+      // (render box for the field's x, theme, screen size) must resolve
+      // against the FIELD's context, not the overlay subtree's.
       builder: (overlayContext) {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
