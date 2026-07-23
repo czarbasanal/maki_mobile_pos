@@ -127,19 +127,30 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
     }
 
     _overlayEntry = OverlayEntry(
-      builder: (context) {
+      // Deliberately ignores the overlay's own context: every lookup below
+      // (render box for the field's x, theme, screen size) must resolve
+      // against the FIELD's context, not the overlay subtree's.
+      builder: (overlayContext) {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
         final hairline =
             isDark ? AppColors.darkHairline : AppColors.lightHairline;
+        final muted = theme.colorScheme.onSurfaceVariant;
+        // Full-screen-width dropdown: anchor to the field via the layer
+        // link, then shift left by the field's own x so the panel spans
+        // the screen regardless of how the field is inset.
+        const edgeMargin = 8.0;
+        final fieldBox = context.findRenderObject() as RenderBox?;
+        final fieldDx =
+            fieldBox?.localToGlobal(Offset.zero).dx ?? edgeMargin;
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        final hasQuery = widget.controller.text.trim().isNotEmpty;
         return Positioned(
-          width: context.findRenderObject() != null
-              ? (context.findRenderObject() as RenderBox).size.width
-              : 300,
+          width: screenWidth - edgeMargin * 2,
           child: CompositedTransformFollower(
             link: _layerLink,
             showWhenUnlinked: false,
-            offset: const Offset(0, 60),
+            offset: Offset(edgeMargin - fieldDx, 60),
             child: Container(
               decoration: BoxDecoration(
                 color: theme.cardColor,
@@ -150,7 +161,31 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
               clipBehavior: Clip.antiAlias,
               child: Material(
                 type: MaterialType.transparency,
-                child: _buildSearchResults(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (hasQuery)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.sm + 4,
+                          AppSpacing.sm + 2,
+                          AppSpacing.sm + 4,
+                          4,
+                        ),
+                        child: Text(
+                          'Search results',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: muted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ),
+                    Flexible(child: _buildSearchResults()),
+                  ],
+                ),
               ),
             ),
           ),
@@ -343,12 +378,12 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Wraps instead of truncating — the dropdown now spans
+                    // the full screen width, so long part names stay legible.
                     Text(
                       product.name,
                       style: const TextStyle(
-                          fontSize: 14.5, fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                          fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -368,7 +403,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField> {
                   '${AppConstants.currencySymbol}'
                   '${product.price.toStringAsFixed(2)}',
                   style: const TextStyle(
-                      fontSize: 14.5, fontWeight: FontWeight.w700),
+                      fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ],
               // Already-added rows chip instead of the + button; otherwise a

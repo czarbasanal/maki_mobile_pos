@@ -20,10 +20,13 @@ void main() {
     });
 
     test('pill colors differ by theme', () {
-      expect(PaymentMethodStyle.pillFg(PaymentMethod.cash, dark: false),
+      // Maya carries the green treatment; cash is the muted grey pill.
+      expect(PaymentMethodStyle.pillFg(PaymentMethod.maya, dark: false),
           const Color(0xFF2E7D32));
-      expect(PaymentMethodStyle.pillFg(PaymentMethod.cash, dark: true),
+      expect(PaymentMethodStyle.pillFg(PaymentMethod.maya, dark: true),
           const Color(0xFF8FE39A));
+      expect(PaymentMethodStyle.pillFg(PaymentMethod.cash, dark: false),
+          const Color(0xFF474F53));
       expect(PaymentMethodStyle.pillBg(PaymentMethod.gcash, dark: false),
           const Color(0xFFE3F0FF));
     });

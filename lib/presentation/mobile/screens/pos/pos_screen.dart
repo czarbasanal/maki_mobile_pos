@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/job_order_number.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
@@ -369,14 +370,26 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             },
           ),
           const SizedBox(height: AppSpacing.sm),
-          ...cart.laborLines.map(
-            (line) => LaborLineTile(
-              line: line,
-              onEdited: (description, fee) => ref
-                  .read(cartProvider.notifier)
-                  .updateLaborLine(line.id, description: description, fee: fee),
-              onRemove: () =>
-                  ref.read(cartProvider.notifier).removeLaborLine(line.id),
+          // Bounded + scrollable so a long service list doesn't stretch the
+          // whole register column — ~4 tiles visible, rest scroll.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 260),
+            child: ListView(
+              shrinkWrap: true,
+              children: cart.laborLines
+                  .map(
+                    (line) => LaborLineTile(
+                      line: line,
+                      onEdited: (description, fee) => ref
+                          .read(cartProvider.notifier)
+                          .updateLaborLine(line.id,
+                              description: description, fee: fee),
+                      onRemove: () => ref
+                          .read(cartProvider.notifier)
+                          .removeLaborLine(line.id),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
           if (cart.laborValidationError != null) ...[
@@ -643,9 +656,33 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       return;
     }
 
+    // Sequential per-day number derived from today's existing job orders
+    // (converted ones included so billed-out numbers are never reissued).
+    final now = DateTime.now();
+    final String jobOrderNo;
+    try {
+      final todaysDrafts = await context.runWithWaiting(
+        () => ref.read(draftRepositoryProvider).getDraftsByDateRange(
+              startDate: now,
+              endDate: now,
+              includeConverted: true,
+            ),
+        message: 'Preparing…',
+      );
+      jobOrderNo =
+          nextJobOrderNumber(now, todaysDrafts.map((d) => d.name));
+    } catch (_) {
+      if (mounted) {
+        context.showErrorSnackBar('Could not prepare a job order number');
+      }
+      return;
+    }
+    if (!mounted) return;
+
     // Prefilled from the cart so choices made in Labor & Service carry over.
     final input = await showSaveJobOrderDialog(
       context,
+      jobOrderNo: jobOrderNo,
       initialModel: cart.motorcycleModel,
       initialMechanicId: cart.mechanicId,
       initialMechanicName: cart.mechanicName,
