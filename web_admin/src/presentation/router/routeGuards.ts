@@ -6,7 +6,7 @@ import type { User } from '@/domain/entities';
 import { Permission, hasPermission } from '@/domain/permissions/Permission';
 import { RoutePaths } from './routePaths';
 
-const publicRoutes: ReadonlySet<string> = new Set([RoutePaths.login]);
+const publicRoutes: ReadonlySet<string> = new Set([RoutePaths.login, RoutePaths.forgotPassword]);
 
 const commonRoutes: ReadonlySet<string> = new Set([
   RoutePaths.dashboard,
