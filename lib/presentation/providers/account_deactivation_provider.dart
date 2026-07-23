@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:equatable/equatable.dart';
 import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/user_provider.dart';
 
@@ -40,4 +44,134 @@ final accountStatusProvider = StreamProvider<AccountStatus>((ref) {
       }
     }
   });
+});
+
+/// Countdown length for the deactivation modal (spec-bound: 10 seconds).
+const accountDeactivationCountdownSeconds = 10;
+
+/// UI state for the blocking "Account deactivated" modal.
+class AccountDeactivationState extends Equatable {
+  /// Whether the blocking modal is showing.
+  final bool visible;
+
+  /// Seconds left on the countdown; null in the doc-gone (immediate) variant.
+  final int? secondsLeft;
+
+  const AccountDeactivationState.hidden()
+      : visible = false,
+        secondsLeft = null;
+
+  const AccountDeactivationState.countdown(int seconds)
+      : visible = true,
+        secondsLeft = seconds;
+
+  const AccountDeactivationState.immediate()
+      : visible = true,
+        secondsLeft = null;
+
+  @override
+  List<Object?> get props => [visible, secondsLeft];
+}
+
+/// Owns the countdown timer + sign-out sequence for mid-session
+/// deactivation/deletion. Fed by [accountStatusProvider]; reset on any
+/// sign-out transition so the modal never leaks onto the login screen and a
+/// normal sign-out tears the machinery down without showing the modal.
+class AccountDeactivationController
+    extends StateNotifier<AccountDeactivationState> {
+  AccountDeactivationController({required Future<void> Function() signOut})
+      : _signOut = signOut,
+        super(const AccountDeactivationState.hidden());
+
+  final Future<void> Function() _signOut;
+  Timer? _timer;
+  bool _fired = false;
+  bool _signedOut = false;
+
+  /// isActive flipped false → show the modal with a 10s countdown, then sign
+  /// out. Idempotent: repeated stream emissions never restart the countdown.
+  void onDeactivated() {
+    if (_fired) return;
+    _fired = true;
+    state = const AccountDeactivationState.countdown(
+        accountDeactivationCountdownSeconds);
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final seconds = (state.secondsLeft ?? 1) - 1;
+      if (seconds <= 0) {
+        timer.cancel();
+        state = const AccountDeactivationState.countdown(0);
+        _doSignOut();
+      } else {
+        state = AccountDeactivationState.countdown(seconds);
+      }
+    });
+  }
+
+  /// Own doc gone (or stream permission-denied) → same modal, immediate
+  /// sign-out. Escalates a running countdown without double-firing.
+  void onDeleted() {
+    _fired = true;
+    _timer?.cancel();
+    state = const AccountDeactivationState.immediate();
+    _doSignOut();
+  }
+
+  /// Any sign-out transition (ours or a normal one) tears everything down.
+  void reset() {
+    _timer?.cancel();
+    _timer = null;
+    _fired = false;
+    _signedOut = false;
+    state = const AccountDeactivationState.hidden();
+  }
+
+  void _doSignOut() {
+    if (_signedOut) return;
+    _signedOut = true;
+    _signOut();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
+
+final accountDeactivationControllerProvider = StateNotifierProvider<
+    AccountDeactivationController, AccountDeactivationState>((ref) {
+  final controller = AccountDeactivationController(
+    signOut: () async {
+      try {
+        await ref.read(authActionsProvider).signOut();
+      } catch (_) {
+        // The use-case path can throw for an already-deactivated/deleted user
+        // — fall back to the raw repository sign-out so the session always
+        // ends. If even that fails the next app start lands on login anyway
+        // (the profile is inactive or gone).
+        try {
+          await ref.read(authRepositoryProvider).signOut();
+        } catch (_) {}
+      }
+    },
+  );
+
+  ref.listen<AsyncValue<AccountStatus>>(accountStatusProvider, (prev, next) {
+    final status = next.valueOrNull;
+    if (status == AccountStatus.deactivated) {
+      controller.onDeactivated();
+    } else if (status == AccountStatus.deleted) {
+      controller.onDeleted();
+    }
+  });
+
+  ref.listen<AsyncValue<UserEntity?>>(currentUserProvider, (prev, next) {
+    final wasSignedIn = prev?.valueOrNull != null;
+    final nowSignedOut = next.valueOrNull == null && !next.isLoading;
+    if (wasSignedIn && nowSignedOut) {
+      controller.reset();
+    }
+  });
+
+  return controller;
 });
