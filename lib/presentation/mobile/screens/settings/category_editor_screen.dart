@@ -98,15 +98,6 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
     'pack',
   ];
 
-  static const _voidReasonDefaults = [
-    'Customer changed mind',
-    'Wrong items entered',
-    'Payment issue',
-    'Duplicate transaction',
-    'Price error',
-    'Other',
-  ];
-
   List<String>? _defaultsFor(CategoryKind kind) {
     switch (kind) {
       case CategoryKind.product:
@@ -115,8 +106,10 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
         return _expenseDefaults;
       case CategoryKind.unit:
         return _unitDefaults;
+      // Void reasons: no seed set — the list is curated by hand, so the
+      // editor shows no overflow menu (user request 2026-07-24).
       case CategoryKind.voidReason:
-        return _voidReasonDefaults;
+        return null;
     }
   }
 

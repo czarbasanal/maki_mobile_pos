@@ -95,4 +95,35 @@ void main() {
     expect(find.byIcon(LucideIcons.archive), findsNothing);
     expect(find.byIcon(LucideIcons.rotateCcw), findsNothing);
   });
+
+  testWidgets('void-reasons editor has no seed-defaults overflow menu',
+      (tester) async {
+    final override = allCategoriesProvider(CategoryKind.voidReason).overrideWith(
+      (ref) => Stream.value(const <CategoryEntity>[]),
+    );
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        override,
+        currentUserProvider
+            .overrideWith((ref) => Stream.value(currentUser(UserRole.admin))),
+      ],
+      child: const MaterialApp(
+        home: CategoryEditorScreen(kind: CategoryKind.voidReason),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(LucideIcons.moreVertical), findsNothing);
+  });
+
+  testWidgets('unit editor still offers the seed-defaults overflow menu',
+      (tester) async {
+    final override = allCategoriesProvider(kind).overrideWith(
+      (ref) => Stream.value(const <CategoryEntity>[]),
+    );
+    await tester.pumpWidget(harness(override));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(LucideIcons.moreVertical), findsOneWidget);
+  });
 }
