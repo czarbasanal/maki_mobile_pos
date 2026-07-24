@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -25,6 +26,8 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider).value;
     final isAdmin = currentUser?.role == UserRole.admin;
+    final canEditLists =
+        currentUser?.hasPermission(Permission.editLists) ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -81,6 +84,13 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Configure cost encoding',
                   onTap: () => context.push(RoutePaths.costCodeSettings),
                 ),
+              ],
+            ),
+          ],
+          if (canEditLists) ...[
+            const _SectionHeader('Lists'),
+            _SectionCard(
+              children: [
                 SettingsTile(
                   icon: LucideIcons.tag,
                   title: 'Manage Lists',
