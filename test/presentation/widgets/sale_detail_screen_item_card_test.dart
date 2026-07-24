@@ -88,4 +88,12 @@ void main() {
     );
     expect(skuText.style?.fontFamily, 'RobotoMono');
   });
+
+  testWidgets('item SKU line renders at 10px', (tester) async {
+    await pump(tester, buildSale());
+    final skuText = tester.widget<Text>(
+      find.textContaining('SKU-001'),
+    );
+    expect(skuText.style?.fontSize, 10);
+  });
 }

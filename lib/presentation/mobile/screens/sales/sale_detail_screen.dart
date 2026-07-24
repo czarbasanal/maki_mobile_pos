@@ -320,9 +320,8 @@ class SaleDetailScreen extends ConsumerWidget {
                         ),
                         Text(
                           '${item.sku} • ${item.unitPrice.toCurrency()}',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          style: AppTextStyles.code.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontFamily: AppTextStyles.monoFontFamily,
                           ),
                         ),
                         Padding(

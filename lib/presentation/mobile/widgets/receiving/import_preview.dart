@@ -211,11 +211,7 @@ class _ClassifiedRowTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${row.sku} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontFamily: AppTextStyles.monoFontFamily,
-                    fontSize: 12,
-                    color: muted,
-                  ),
+                  style: AppTextStyles.code.copyWith(color: muted),
                 ),
               ],
             ),

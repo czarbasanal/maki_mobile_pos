@@ -128,12 +128,14 @@ abstract class AppTextStyles {
   /// bodyMedium, so forms read at one size. Labels/hints follow automatically.
   static const TextStyle fieldInput = TextStyle(fontSize: 14);
 
-  /// Code/SKU display - monospace
+  /// Identifier sub-line display - monospace (SKU / sale no / JO no) shown
+  /// beneath a product/entity name. 10px keeps it visually subordinate to
+  /// the 12px name it sits under.
   static const TextStyle code = TextStyle(
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: FontWeight.w500,
-    letterSpacing: 1.0,
     fontFamily: monoFontFamily,
+    height: 1.35,
   );
 
   /// Cost code display - monospace, for encoded costs
@@ -186,7 +188,7 @@ abstract class AppTextStyles {
   /// less vertical real estate, and intended to be paired with
   /// `maxLines: 2, overflow: TextOverflow.ellipsis` at every call site.
   static const TextStyle productName = TextStyle(
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: FontWeight.w600,
     height: 1.25,
   );

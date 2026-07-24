@@ -159,11 +159,7 @@ class PurchaseOrderDetailScreenState
                     const SizedBox(height: 3),
                     Text(
                       po.referenceNumber,
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.monoFontFamily,
-                        fontSize: 11,
-                        color: secondary,
-                      ),
+                      style: AppTextStyles.code.copyWith(color: secondary),
                     ),
                   ],
                 ),
@@ -246,11 +242,7 @@ class PurchaseOrderDetailScreenState
                   const SizedBox(height: 3),
                   Text(
                     'SKU: ${item.sku}',
-                    style: TextStyle(
-                      fontFamily: AppTextStyles.monoFontFamily,
-                      fontSize: 11,
-                      color: secondary,
-                    ),
+                    style: AppTextStyles.code.copyWith(color: secondary),
                   ),
                   const SizedBox(height: 3),
                   // Subtotal line (user-approved totals addition).

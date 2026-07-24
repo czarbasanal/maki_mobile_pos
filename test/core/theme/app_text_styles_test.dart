@@ -10,4 +10,13 @@ void main() {
     expect(AppTextStyles.code.fontFamily, 'RobotoMono');
     expect(AppTextStyles.costCode.fontFamily, 'RobotoMono');
   });
+
+  test('identifier sub-line token is 10px mono', () {
+    expect(AppTextStyles.code.fontSize, 10);
+    expect(AppTextStyles.code.fontFamily, 'RobotoMono');
+  });
+
+  test('product names are 12px', () {
+    expect(AppTextStyles.productName.fontSize, 12);
+  });
 }
