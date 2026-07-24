@@ -16,6 +16,7 @@ class DailyClosingModel {
   final double cashExpenses;
   final double salmonReceivable;
   final double laborRevenue;
+  final double feesRevenue;
   final double plateNoDp;
   final double plateNoDelivery;
   final List<double> plateNoDpAmounts;
@@ -46,6 +47,7 @@ class DailyClosingModel {
     required this.cashExpenses,
     required this.salmonReceivable,
     this.laborRevenue = 0,
+    this.feesRevenue = 0,
     this.plateNoDp = 0,
     this.plateNoDelivery = 0,
     this.plateNoDpAmounts = const [],
@@ -89,6 +91,7 @@ class DailyClosingModel {
       cashExpenses: d('cashExpenses'),
       salmonReceivable: d('salmonReceivable'),
       laborRevenue: d('laborRevenue'),
+      feesRevenue: d('feesRevenue'),
       plateNoDp: d('plateNoDp'),
       plateNoDelivery: d('plateNoDelivery'),
       plateNoDpAmounts: dl('plateNoDpAmounts'),
@@ -123,6 +126,7 @@ class DailyClosingModel {
       cashExpenses: e.cashExpenses,
       salmonReceivable: e.salmonReceivable,
       laborRevenue: e.laborRevenue,
+      feesRevenue: e.feesRevenue,
       plateNoDp: e.plateNoDp,
       plateNoDelivery: e.plateNoDelivery,
       plateNoDpAmounts: e.plateNoDpAmounts,
@@ -155,6 +159,7 @@ class DailyClosingModel {
       'cashExpenses': cashExpenses,
       'salmonReceivable': salmonReceivable,
       'laborRevenue': laborRevenue,
+      'feesRevenue': feesRevenue,
       'plateNoDp': plateNoDp,
       'plateNoDelivery': plateNoDelivery,
       'plateNoDpAmounts': plateNoDpAmounts,
@@ -195,6 +200,7 @@ class DailyClosingModel {
       cashExpenses: cashExpenses,
       salmonReceivable: salmonReceivable,
       laborRevenue: laborRevenue,
+      feesRevenue: feesRevenue,
       plateNoDp: plateNoDp,
       plateNoDelivery: plateNoDelivery,
       plateNoDpAmounts: plateNoDpAmounts,

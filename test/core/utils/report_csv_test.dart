@@ -13,6 +13,7 @@ SaleEntity _sale({
   required double unitPrice,
   required int qty,
   bool voided = false,
+  List<FeeLineEntity> feeLines = const [],
 }) =>
     SaleEntity(
       id: number,
@@ -28,9 +29,11 @@ SaleEntity _sale({
           quantity: qty,
         ),
       ],
+      feeLines: feeLines,
       discountType: DiscountType.amount,
       paymentMethod: PaymentMethod.cash,
-      amountReceived: unitPrice * qty,
+      amountReceived: unitPrice * qty +
+          feeLines.fold<double>(0, (s, f) => s + f.amount),
       changeGiven: 0,
       cashierId: 'c1',
       cashierName: 'Cashier',
@@ -47,11 +50,28 @@ void main() {
       ]);
       final lines = csv.trim().split('\n');
       expect(lines.first,
-          'Sale #,Date,Cashier,Subtotal,Discount,Total,Payment');
+          'Sale #,Date,Cashier,Subtotal,Discount,Fees,Total,Payment');
       expect(lines.length, 3); // header + 1 completed + totals
       expect(lines[1], contains('S-1'));
       expect(lines.last, startsWith('TOTAL,'));
       expect(lines.last, contains('200.00'));
+    });
+
+    test('breaks out shop fees beside the parts subtotal, without touching '
+        'it or the grand total', () {
+      final csv = buildSalesReportCsv([
+        _sale(
+          number: 'S-1',
+          unitPrice: 100,
+          qty: 2,
+          feeLines: const [FeeLineEntity(id: 'f1', name: 'Electric', amount: 50)],
+        ),
+      ]);
+      final lines = csv.trim().split('\n');
+      // Subtotal,Discount,Fees,Total,Payment
+      expect(lines[1], contains(',200.00,0.00,50.00,250.00,Cash'));
+      // TOTAL row also carries the fees column.
+      expect(lines.last, 'TOTAL,,,200.00,0.00,50.00,250.00,');
     });
   });
 

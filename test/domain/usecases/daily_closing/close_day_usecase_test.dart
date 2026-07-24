@@ -259,6 +259,59 @@ void main() {
     expect(saved.variance, 0);
   });
 
+  test('closing carries fees revenue; netSales stays parts-only; fee cash in expectedCash',
+      () async {
+    // Summary: parts net 1000, fees 150, all paid cash (1150 total cash in drawer)
+    const feesSummary = SalesSummary(
+      totalSalesCount: 1,
+      voidedSalesCount: 0,
+      grossAmount: 1000,
+      totalDiscounts: 0,
+      netAmount: 1000, // parts-only
+      totalCost: 0,
+      totalProfit: 1000,
+      byPaymentMethod: {PaymentMethod.cash: 1150}, // parts + fees cash
+      feesRevenue: 150,
+    );
+
+    when(() => sales.getSalesSummary(
+        startDate: any(named: 'startDate'),
+        endDate: any(named: 'endDate'))).thenAnswer((_) async => feesSummary);
+    // No expenses for this test
+    when(() => expenses.getExpenses(
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          category: any(named: 'category'),
+          limit: any(named: 'limit'),
+        )).thenAnswer((_) async => []);
+
+    final captured = <DailyClosingEntity>[];
+    when(() => closings.saveClosing(any())).thenAnswer((inv) async {
+      final c = inv.positionalArguments.first as DailyClosingEntity;
+      captured.add(c);
+      return c;
+    });
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      date: DateTime(2026, 5, 28),
+      openingFloat: 2000,
+      countedCash: 3150, // 2000 float + 1150 cash (parts+fees)
+    );
+
+    expect(result.success, true);
+    final saved = captured.single;
+
+    // Fees revenue is persisted as its own reporting track
+    expect(saved.feesRevenue, 150);
+    // netSales stays PARTS-ONLY (fees are NOT folded in)
+    expect(saved.netSales, 1000);
+    // expectedCash includes fee cash (float + cashSales - cashExpenses = 2000 + 1150 - 0)
+    // — unchanged formula, fees are already inside cashSales like labor.
+    expect(saved.expectedCash, 3150);
+    expect(saved.variance, 0);
+  });
+
   test('excluded expenses are removed from the math and persisted', () async {
     when(() => expenses.getExpenses(
           startDate: any(named: 'startDate'),

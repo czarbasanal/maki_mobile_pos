@@ -486,6 +486,7 @@ class SaleRepositoryImpl implements SaleRepository {
     double netAmount = 0;
     double totalCost = 0;
     double laborRevenue = 0;
+    double feesRevenue = 0;
     final byPaymentMethod = <PaymentMethod, double>{};
 
     // Seed only real tender buckets (never `mixed`, which is a label).
@@ -506,6 +507,7 @@ class SaleRepositoryImpl implements SaleRepository {
       netAmount += sale.partsRevenue;
       totalCost += sale.totalCost;
       laborRevenue += sale.laborRevenue;
+      feesRevenue += sale.feesTotal;
       sale.effectiveTenders.forEach((method, amount) {
         byPaymentMethod[method] = (byPaymentMethod[method] ?? 0) + amount;
       });
@@ -522,6 +524,7 @@ class SaleRepositoryImpl implements SaleRepository {
       byPaymentMethod: byPaymentMethod,
       laborRevenue: laborRevenue,
       laborProfit: laborRevenue, // labor has zero cost
+      feesRevenue: feesRevenue,
     );
   }
 

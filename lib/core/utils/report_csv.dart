@@ -10,15 +10,27 @@ import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 const _converter = ListToCsvConverter(eol: '\n');
 final _dateFmt = DateFormat('yyyy-MM-dd HH:mm');
 
-/// One row per completed (non-voided) sale, plus a TOTAL row.
+/// One row per completed (non-voided) sale, plus a TOTAL row. [Fees] breaks
+/// out shop-fee revenue (management's, separate track like labor) without
+/// touching [Subtotal] (parts-only) or [Total] (grand total, fees-inclusive).
 String buildSalesReportCsv(List<SaleEntity> sales) {
-  var subtotal = 0.0, discount = 0.0, total = 0.0;
+  var subtotal = 0.0, discount = 0.0, fees = 0.0, total = 0.0;
   final rows = <List<dynamic>>[
-    ['Sale #', 'Date', 'Cashier', 'Subtotal', 'Discount', 'Total', 'Payment'],
+    [
+      'Sale #',
+      'Date',
+      'Cashier',
+      'Subtotal',
+      'Discount',
+      'Fees',
+      'Total',
+      'Payment',
+    ],
   ];
   for (final s in sales.where((s) => !s.isVoided)) {
     subtotal += s.partsSubtotal;
     discount += s.totalDiscount;
+    fees += s.feesTotal;
     total += s.grandTotal;
     rows.add([
       s.saleNumber,
@@ -26,6 +38,7 @@ String buildSalesReportCsv(List<SaleEntity> sales) {
       s.cashierName,
       s.partsSubtotal.toStringAsFixed(2),
       s.totalDiscount.toStringAsFixed(2),
+      s.feesTotal.toStringAsFixed(2),
       s.grandTotal.toStringAsFixed(2),
       s.paymentMethod.displayName,
     ]);
@@ -36,6 +49,7 @@ String buildSalesReportCsv(List<SaleEntity> sales) {
     '',
     subtotal.toStringAsFixed(2),
     discount.toStringAsFixed(2),
+    fees.toStringAsFixed(2),
     total.toStringAsFixed(2),
     '',
   ]);
