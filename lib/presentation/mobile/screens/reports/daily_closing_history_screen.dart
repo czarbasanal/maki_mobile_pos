@@ -54,16 +54,16 @@ class DailyClosingHistoryScreen extends ConsumerWidget {
   }
 }
 
-class _ClosingTile extends StatefulWidget {
+class _ClosingTile extends ConsumerStatefulWidget {
   final DailyClosingEntity closing;
 
   const _ClosingTile({required this.closing});
 
   @override
-  State<_ClosingTile> createState() => _ClosingTileState();
+  ConsumerState<_ClosingTile> createState() => _ClosingTileState();
 }
 
-class _ClosingTileState extends State<_ClosingTile> {
+class _ClosingTileState extends ConsumerState<_ClosingTile> {
   bool _expanded = false;
 
   @override
@@ -146,6 +146,15 @@ class _ClosingTileState extends State<_ClosingTile> {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
+    // Live drift check — the same diff the closed EOD view performs. The
+    // comparison draft must honor the snapshot's exclusions. Loading and
+    // error states simply omit the After-close block.
+    final liveData =
+        ref.watch(dailyClosingDataProvider(c.businessDate)).valueOrNull;
+    final liveDraft = liveData?.draftExcluding(c.excludedExpenseIds.toSet());
+    final activity = liveDraft == null
+        ? null
+        : PostCloseActivity.between(closing: c, current: liveDraft);
     return Container(
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.hairline(isDark))),
@@ -199,6 +208,16 @@ class _ClosingTileState extends State<_ClosingTile> {
               label: 'Counted cash',
               value: _peso(c.countedCash),
               dense: true),
+          ClosingHandoffRows(
+            laborFees: c.forMechanics,
+            forManagement: c.forManagement,
+            dense: true,
+          ),
+          if (activity != null && activity.hasChanged)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: AfterCloseCard(activity: activity),
+            ),
           Padding(
             padding: const EdgeInsets.only(top: 10),
             child: Row(
