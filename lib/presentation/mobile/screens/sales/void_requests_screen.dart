@@ -178,7 +178,7 @@ class _RequestRow extends ConsumerWidget {
                       child: Text(
                         request.saleNumber,
                         style: const TextStyle(
-                          fontFamily: 'RobotoMono',
+                          fontFamily: AppTextStyles.monoFontFamily,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -418,6 +418,7 @@ class _Receipt extends StatelessWidget {
         name: item.name,
         sub: '${item.sku} · ${item.unitPrice.toCurrency()}/pc',
         amount: net.toCurrency(),
+        mono: true,
       ));
     }
     for (var i = 0; i < sale.laborLines.length; i++) {
@@ -446,7 +447,7 @@ class _Receipt extends StatelessWidget {
               Text(
                 sale.saleNumber,
                 style: TextStyle(
-                  fontFamily: 'RobotoMono',
+                  fontFamily: AppTextStyles.monoFontFamily,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
@@ -530,6 +531,7 @@ class _Receipt extends StatelessWidget {
     required String name,
     required String sub,
     required String amount,
+    bool mono = false,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
@@ -549,7 +551,14 @@ class _Receipt extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 13.5, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(sub, style: TextStyle(fontSize: 12, color: muted)),
+                Text(
+                  sub,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: muted,
+                    fontFamily: mono ? AppTextStyles.monoFontFamily : null,
+                  ),
+                ),
               ],
             ),
           ),

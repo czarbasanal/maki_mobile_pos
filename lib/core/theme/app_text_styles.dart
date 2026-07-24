@@ -16,10 +16,10 @@ abstract class AppTextStyles {
   /// Primary font family
   static const String fontFamily = 'Roboto';
 
-  /// Monospace font family — uses the platform monospace fallback so the
-  /// existing 'fontFamily: monospace' call sites (cost codes, SKUs, CSV
-  /// previews) keep their tabular look.
-  static const String monoFontFamily = 'monospace';
+  /// Bundled monospace family (RobotoMono Medium/SemiBold in pubspec) — the
+  /// canonical font for identifiers (SKU / sale no / JO no), cost codes,
+  /// and any code-like UI text. Always use this token, never a literal.
+  static const String monoFontFamily = 'RobotoMono';
 
   // ==================== HEADING STYLES ====================
 

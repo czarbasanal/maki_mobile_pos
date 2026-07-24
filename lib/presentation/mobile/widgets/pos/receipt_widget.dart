@@ -149,7 +149,7 @@ class ReceiptWidget extends ConsumerWidget {
   Widget _buildTransactionInfo(ThemeData theme, DateFormat dateFormat) {
     return Column(
       children: [
-        _buildInfoRow('Receipt #', sale.saleNumber),
+        _buildInfoRow('Receipt #', sale.saleNumber, mono: true),
         const SizedBox(height: 4),
         _buildInfoRow('Date', dateFormat.format(sale.createdAt)),
         const SizedBox(height: 4),
@@ -166,7 +166,7 @@ class ReceiptWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, {bool mono = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -176,10 +176,11 @@ class ReceiptWidget extends ConsumerWidget {
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 12,
             color: Colors.black,
+            fontFamily: mono ? AppTextStyles.monoFontFamily : null,
           ),
         ),
       ],

@@ -69,6 +69,7 @@ class DraftListTile extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
+                        fontFamily: AppTextStyles.monoFontFamily,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

@@ -80,4 +80,12 @@ void main() {
     await pump(tester, buildSale());
     expect(struckThroughText(), findsNothing);
   });
+
+  testWidgets('item SKU line renders in RobotoMono', (tester) async {
+    await pump(tester, buildSale());
+    final skuText = tester.widget<Text>(
+      find.textContaining('SKU-001'),
+    );
+    expect(skuText.style?.fontFamily, 'RobotoMono');
+  });
 }

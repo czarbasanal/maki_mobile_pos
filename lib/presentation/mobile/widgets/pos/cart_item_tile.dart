@@ -83,8 +83,10 @@ class CartItemTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '${item.sku} • ${item.unitPrice.toCurrency()} / ${item.unit}',
-                      style:
-                          theme.textTheme.bodySmall?.copyWith(color: muted),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: muted,
+                        fontFamily: AppTextStyles.monoFontFamily,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

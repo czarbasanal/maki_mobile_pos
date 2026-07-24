@@ -241,7 +241,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                           sale.saleNumber,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontFamily: 'RobotoMono',
+                            fontFamily: AppTextStyles.monoFontFamily,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.2,

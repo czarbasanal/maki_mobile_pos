@@ -187,7 +187,11 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
           draft.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            fontFamily: AppTextStyles.monoFontFamily,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),

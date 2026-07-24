@@ -212,7 +212,7 @@ class _ClassifiedRowTile extends StatelessWidget {
                 Text(
                   '${row.sku} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
                   style: TextStyle(
-                    fontFamily: 'RobotoMono',
+                    fontFamily: AppTextStyles.monoFontFamily,
                     fontSize: 12,
                     color: muted,
                   ),

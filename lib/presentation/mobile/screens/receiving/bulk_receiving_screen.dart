@@ -117,7 +117,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             Text(
               receivingState.referenceNumber,
               style: theme.textTheme.bodySmall?.copyWith(
-                fontFamily: 'RobotoMono',
+                fontFamily: AppTextStyles.monoFontFamily,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
@@ -329,7 +329,14 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                              '${product.sku} • Stock: ${product.quantity}'),
+                            '${product.sku} • Stock: ${product.quantity}',
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontFamily: AppTextStyles.monoFontFamily,
+                            ),
+                          ),
                           trailing: _isAdmin
                               ? Text(
                                   product.cost.toCurrency(),

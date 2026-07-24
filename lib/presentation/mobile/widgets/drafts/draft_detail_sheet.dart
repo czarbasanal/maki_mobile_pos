@@ -44,6 +44,7 @@ class DraftDetailSheet extends StatelessWidget {
         return AppBottomSheet(
           leadingIcon: LucideIcons.shoppingCart,
           title: draft.name,
+          titleStyle: const TextStyle(fontFamily: AppTextStyles.monoFontFamily),
           subtitle: dateFormat.format(draft.updatedAt ?? draft.createdAt),
           onClose: () => Navigator.pop(context),
           bodyExpands: true,

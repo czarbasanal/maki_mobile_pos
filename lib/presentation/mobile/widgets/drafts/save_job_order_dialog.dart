@@ -100,8 +100,11 @@ class _SaveJobOrderDialogState extends ConsumerState<_SaveJobOrderDialog> {
                 const Spacer(),
                 Text(
                   widget.jobOrderNo,
-                  style: AppTextStyles.fieldInput
-                      .copyWith(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: AppTextStyles.fieldInput.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontFamily: AppTextStyles.monoFontFamily,
+                  ),
                 ),
               ],
             ),

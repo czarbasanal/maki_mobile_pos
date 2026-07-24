@@ -18,6 +18,7 @@ class AppBottomSheet extends StatelessWidget {
     this.onClose,
     this.footer,
     this.bodyExpands = false,
+    this.titleStyle,
   });
 
   final String title;
@@ -26,6 +27,10 @@ class AppBottomSheet extends StatelessWidget {
   final IconData? leadingIcon;
   final VoidCallback? onClose;
   final Widget? footer;
+
+  /// Optional override merged over the default title style (e.g. mono for
+  /// identifier titles like JO numbers). Null = unchanged default.
+  final TextStyle? titleStyle;
 
   /// When true the body is wrapped in [Expanded] (for draggable/full-height
   /// sheets); otherwise the sheet hugs its content (action/radio/picker).
@@ -55,8 +60,12 @@ class AppBottomSheet extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700, fontSize: 18, height: 1.2)),
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            height: 1.2)
+                        .merge(titleStyle)),
                 if (subtitle != null) ...[
                   const SizedBox(height: 3),
                   Text(subtitle!,
