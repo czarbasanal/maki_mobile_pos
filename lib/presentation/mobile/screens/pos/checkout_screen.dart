@@ -199,8 +199,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ),
                         Text(
                           item.sku,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: muted),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: muted,
+                            fontFamily: AppTextStyles.monoFontFamily,
+                          ),
                         ),
                         if (item.hasDiscount)
                           Text(

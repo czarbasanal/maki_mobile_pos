@@ -173,6 +173,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
                 widget.sale.saleNumber,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
+                  fontFamily: AppTextStyles.monoFontFamily,
                 ),
               ),
               Text(

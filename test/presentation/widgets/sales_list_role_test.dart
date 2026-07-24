@@ -76,4 +76,12 @@ void main() {
     expect(find.byType(DateRangePicker), findsOneWidget);
     expect(find.text("Showing today's sales only"), findsNothing);
   });
+
+  testWidgets('sale number renders in RobotoMono', (tester) async {
+    await tester.pumpWidget(_harness(UserRole.admin));
+    await tester.pump(const Duration(seconds: 1));
+
+    final noText = tester.widget<Text>(find.text('SALE-20260627-1'));
+    expect(noText.style?.fontFamily, 'RobotoMono');
+  });
 }

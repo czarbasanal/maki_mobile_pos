@@ -650,7 +650,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             TextFormField(
                               key: const Key('product-sku-field'),
                               controller: _skuController,
-                              style: AppTextStyles.fieldInput,
+                              style: AppTextStyles.fieldInput.copyWith(
+                                fontFamily: AppTextStyles.monoFontFamily,
+                              ),
                               decoration: InputDecoration(
                                 labelText: 'SKU *',
                                 prefixIcon: const Icon(LucideIcons.qrCode),

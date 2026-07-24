@@ -202,6 +202,7 @@ class SaleDetailScreen extends ConsumerWidget {
               sale.saleNumber,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                fontFamily: AppTextStyles.monoFontFamily,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -321,6 +322,7 @@ class SaleDetailScreen extends ConsumerWidget {
                           '${item.sku} • ${item.unitPrice.toCurrency()}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
+                            fontFamily: AppTextStyles.monoFontFamily,
                           ),
                         ),
                         Padding(

@@ -227,6 +227,24 @@ void main() {
       expect(find.byIcon(LucideIcons.bike), findsNothing);
     });
 
+    testWidgets('JO number renders in RobotoMono', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DraftListTile(
+              draft: testDraft,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      final nameText = tester.widget<Text>(find.text('Table 5'));
+      expect(nameText.style?.fontFamily, 'RobotoMono');
+    });
+
     testWidgets('preview lines show the discounted net amount', (tester) async {
       // 2 × 100 gross = 200, minus 50 discount → line shows 150 so the
       // preview sums to the tile's (net) total.
