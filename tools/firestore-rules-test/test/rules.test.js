@@ -908,6 +908,21 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
     it(`${coll}: inactive staff cannot create`, async () => {
       await assertFails(as("inactiveStaff").collection(coll).add(entry));
     });
+
+    it(`${coll}: inactive staff/admin cannot flip isActive`, async () => {
+      await seed(coll, "e1", entry);
+      await assertFails(
+        as("inactiveStaff").collection(coll).doc("e1").update({ isActive: false })
+      );
+      await assertFails(
+        as("inactiveAdmin").collection(coll).doc("e1").update({ isActive: false })
+      );
+    });
+
+    it(`${coll}: cashier cannot delete`, async () => {
+      await seed(coll, "e1", entry);
+      await assertFails(as("cashier").collection(coll).doc("e1").delete());
+    });
   }
 
   describe("motorcycle_models", () => {
