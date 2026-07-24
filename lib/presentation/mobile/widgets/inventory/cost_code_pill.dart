@@ -68,7 +68,7 @@ class CostCodePill extends ConsumerWidget {
             style: TextStyle(
               fontSize: textSize,
               fontWeight: FontWeight.w600,
-              fontFamily: 'monospace',
+              fontFamily: AppTextStyles.monoFontFamily,
               color: muted,
             ),
           ),

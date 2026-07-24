@@ -56,7 +56,7 @@ class ProductListTile extends StatelessWidget {
                     product.sku,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: muted,
-                      fontFamily: 'monospace',
+                      fontFamily: AppTextStyles.monoFontFamily,
                     ),
                   ),
                   if (product.category != null) ...[

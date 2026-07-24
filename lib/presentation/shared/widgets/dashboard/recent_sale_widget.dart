@@ -130,7 +130,7 @@ class _RecentSaleItem extends StatelessWidget {
                         child: Text(
                           sale.saleNumber,
                           style: TextStyle(
-                            fontFamily: 'RobotoMono',
+                            fontFamily: AppTextStyles.monoFontFamily,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,

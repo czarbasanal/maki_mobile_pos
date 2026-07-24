@@ -117,7 +117,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
             Text(
               receivingState.referenceNumber,
               style: theme.textTheme.bodySmall?.copyWith(
-                fontFamily: 'RobotoMono',
+                fontFamily: AppTextStyles.monoFontFamily,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),

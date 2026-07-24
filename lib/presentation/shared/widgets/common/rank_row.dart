@@ -94,7 +94,7 @@ class RankRow extends StatelessWidget {
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: muted,
                         fontSize: 11.5,
-                        fontFamily: 'RobotoMono',
+                        fontFamily: AppTextStyles.monoFontFamily,
                       ),
                     ),
                   ],

@@ -99,7 +99,7 @@ class CostDisplay extends ConsumerWidget {
           Text(
             costCode,
             style: (style ?? const TextStyle()).copyWith(
-              fontFamily: 'monospace',
+              fontFamily: AppTextStyles.monoFontFamily,
               color: AppColors.warningDark,
             ),
           ),

@@ -136,7 +136,7 @@ class _CheckoutSuccessDialogState extends State<CheckoutSuccessDialog>
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: muted,
-                    fontFamily: 'monospace',
+                    fontFamily: AppTextStyles.monoFontFamily,
                   ),
                 ),
               ),

@@ -188,7 +188,7 @@ class ReceivingItemRow extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: muted,
-                    fontFamily: 'RobotoMono',
+                    fontFamily: AppTextStyles.monoFontFamily,
                   ),
                 ),
               ),

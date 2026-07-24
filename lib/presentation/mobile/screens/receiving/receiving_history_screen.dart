@@ -171,7 +171,7 @@ class _ReceivingHistoryItem extends StatelessWidget {
                 Text(
                   receiving.referenceNumber,
                   style: TextStyle(
-                    fontFamily: 'RobotoMono',
+                    fontFamily: AppTextStyles.monoFontFamily,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface,

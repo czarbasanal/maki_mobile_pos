@@ -178,7 +178,7 @@ class _RequestRow extends ConsumerWidget {
                       child: Text(
                         request.saleNumber,
                         style: const TextStyle(
-                          fontFamily: 'RobotoMono',
+                          fontFamily: AppTextStyles.monoFontFamily,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -446,7 +446,7 @@ class _Receipt extends StatelessWidget {
               Text(
                 sale.saleNumber,
                 style: TextStyle(
-                  fontFamily: 'RobotoMono',
+                  fontFamily: AppTextStyles.monoFontFamily,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
