@@ -17,7 +17,7 @@ void main() {
         createdAt: DateTime(2026, 7, 1),
       );
 
-  testWidgets('Administration shows a Motorcycle Models tile for admins',
+  testWidgets('Lists section shows a Motorcycle Models tile for admins',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
