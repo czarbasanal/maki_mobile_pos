@@ -64,7 +64,8 @@ enum Permission {
   viewSettings,
   editOwnProfile, // Edit own display name and password
   editCostCodeMapping,
-  manageCategories, // Manage product/expense category lists
+  manageCategories, // Full shared-list manage incl. deactivate/reactivate (staff + admin)
+  editLists, // Add/edit shared list entries — categories, units, void reasons, mechanics, motorcycle models (all roles)
 
   // Logs
   viewUserLogs,
@@ -107,6 +108,9 @@ abstract class RolePermissions {
     // Settings (own profile only)
     Permission.viewSettings,
     Permission.editOwnProfile,
+    // Shared lists (2026-07-24): cashiers add and edit entries; deactivate /
+    // reactivate stays staff+admin (manageCategories).
+    Permission.editLists,
   };
 
   // ==================== STAFF PERMISSIONS ====================
@@ -152,6 +156,9 @@ abstract class RolePermissions {
     // Settings (own profile only)
     Permission.viewSettings,
     Permission.editOwnProfile,
+    // Shared lists (2026-07-24): staff fully manage incl. deactivate.
+    Permission.editLists,
+    Permission.manageCategories,
   };
 
   // ==================== ADMIN PERMISSIONS ====================
@@ -208,6 +215,7 @@ abstract class RolePermissions {
     Permission.editOwnProfile,
     Permission.editCostCodeMapping,
     Permission.manageCategories,
+    Permission.editLists,
     // Logs
     Permission.viewUserLogs,
   };
