@@ -61,6 +61,8 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.text('Environmental Fee'), findsOneWidget);
+    // Totals recap shows a Shop fees row alongside the fee-inclusive TOTAL.
+    expect(find.text('Shop fees'), findsOneWidget);
     // TOTAL = 100 (parts) + 450 (labor) + 50 (fee) = 600.
     expect(find.text('₱600.00'), findsWidgets);
   });
@@ -82,6 +84,7 @@ void main() {
 
     expect(find.textContaining('SHOP FEES'), findsNothing);
     expect(find.text('Environmental Fee'), findsNothing);
+    expect(find.text('Shop fees'), findsNothing);
     // Grand total stays labor-inclusive only: 100 + 450 = 550.
     expect(find.text('₱550.00'), findsWidgets);
   });

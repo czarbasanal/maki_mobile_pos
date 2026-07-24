@@ -403,6 +403,10 @@ class ReceiptWidget extends ConsumerWidget {
           const SizedBox(height: 4),
           _buildTotalRow('Labor', sale.laborSubtotal),
         ],
+        if (sale.feeLines.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          _buildTotalRow('Shop fees', sale.feesTotal),
+        ],
         const SizedBox(height: AppSpacing.sm),
         _buildTotalRow('TOTAL', sale.grandTotal, isGrandTotal: true),
       ],

@@ -462,8 +462,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.lg),
     );
-    // Save Job Order: drafts don't support fee lines yet, so this stays
-    // items-based (canSaveAsDraft).
+    // Save Job Order: fee-only carts can be saved as JOs and billed out —
+    // gate on billable content (items or fees); labor alone is still
+    // blocked (canSaveAsDraft).
     final canSaveDraft = cart.canSaveAsDraft;
     // Checkout: fee-only carts (no items, one or more fee lines) must be
     // able to proceed too. canProceedToCheckout doesn't require
