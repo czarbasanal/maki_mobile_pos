@@ -70,4 +70,5 @@ size lives in one place.
 
 ## Not changing
 
-Name styles, standalone identifiers, receipt print rows, web admin.
+Name weight/height (only size 13→12), standalone identifiers, receipt print
+rows, web admin (mobile-only per user — web parity is a possible follow-up).
