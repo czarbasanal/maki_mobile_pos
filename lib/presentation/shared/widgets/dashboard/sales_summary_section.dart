@@ -75,6 +75,16 @@ class SalesSummarySection extends ConsumerWidget {
                   subtitle: '${_money(summary.laborProfit)} profit',
                 ),
               ],
+              // Shop fees have zero cost (like labor), so revenue == profit.
+              if (summary.feesRevenue > 0) ...[
+                const SizedBox(height: 12),
+                _StatCard(
+                  icon: LucideIcons.receipt,
+                  label: 'Shop Fees',
+                  value: _money(summary.feesRevenue),
+                  subtitle: '${_money(summary.feesRevenue)} profit',
+                ),
+              ],
             ],
           ],
         );

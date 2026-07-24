@@ -14,6 +14,7 @@ SaleEntity _sale({
   required int qty,
   bool voided = false,
   List<FeeLineEntity> feeLines = const [],
+  List<LaborLineEntity> laborLines = const [],
 }) =>
     SaleEntity(
       id: number,
@@ -29,11 +30,13 @@ SaleEntity _sale({
           quantity: qty,
         ),
       ],
+      laborLines: laborLines,
       feeLines: feeLines,
       discountType: DiscountType.amount,
       paymentMethod: PaymentMethod.cash,
       amountReceived: unitPrice * qty +
-          feeLines.fold<double>(0, (s, f) => s + f.amount),
+          feeLines.fold<double>(0, (s, f) => s + f.amount) +
+          laborLines.fold<double>(0, (s, l) => s + l.fee),
       changeGiven: 0,
       cashierId: 'c1',
       cashierName: 'Cashier',
@@ -50,7 +53,7 @@ void main() {
       ]);
       final lines = csv.trim().split('\n');
       expect(lines.first,
-          'Sale #,Date,Cashier,Subtotal,Discount,Fees,Total,Payment');
+          'Sale #,Date,Cashier,Subtotal,Discount,Labor,Fees,Total,Payment');
       expect(lines.length, 3); // header + 1 completed + totals
       expect(lines[1], contains('S-1'));
       expect(lines.last, startsWith('TOTAL,'));
@@ -68,10 +71,29 @@ void main() {
         ),
       ]);
       final lines = csv.trim().split('\n');
-      // Subtotal,Discount,Fees,Total,Payment
-      expect(lines[1], contains(',200.00,0.00,50.00,250.00,Cash'));
+      // Subtotal,Discount,Labor,Fees,Total,Payment
+      expect(lines[1], contains(',200.00,0.00,0.00,50.00,250.00,Cash'));
       // TOTAL row also carries the fees column.
-      expect(lines.last, 'TOTAL,,,200.00,0.00,50.00,250.00,');
+      expect(lines.last, 'TOTAL,,,200.00,0.00,0.00,50.00,250.00,');
+    });
+
+    test('breaks out labor beside fees so Subtotal − Discount + Labor + '
+        'Fees reconciles with Total', () {
+      final csv = buildSalesReportCsv([
+        _sale(
+          number: 'S-1',
+          unitPrice: 100,
+          qty: 2,
+          laborLines: const [
+            LaborLineEntity(id: 'l1', description: 'Tune-up', fee: 40),
+          ],
+          feeLines: const [FeeLineEntity(id: 'f1', name: 'Electric', amount: 50)],
+        ),
+      ]);
+      final lines = csv.trim().split('\n');
+      // Subtotal,Discount,Labor,Fees,Total,Payment
+      expect(lines[1], contains(',200.00,0.00,40.00,50.00,290.00,Cash'));
+      expect(lines.last, 'TOTAL,,,200.00,0.00,40.00,50.00,290.00,');
     });
   });
 

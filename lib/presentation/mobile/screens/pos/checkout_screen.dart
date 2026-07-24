@@ -310,6 +310,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     cart.laborSubtotal.toCurrency(),
               ),
             ],
+            if (cart.feeLines.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              SummaryRow(
+                label: 'Shop fees',
+                value:
+                    cart.feesTotal.toCurrency(),
+              ),
+            ],
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.sm + 1),
               child: Divider(height: 1),
