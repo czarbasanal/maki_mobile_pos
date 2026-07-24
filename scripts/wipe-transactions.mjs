@@ -18,7 +18,6 @@ const DELETE = [
   'expenses',
   'receivings',
   'purchase_orders',
-  'counters', // sale/JO numbering restarts from 1 (absent = no-op)
 ];
 const KEEP = [
   'users', 'settings',
