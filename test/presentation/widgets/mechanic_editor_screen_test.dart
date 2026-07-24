@@ -2,6 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/data/repositories/mechanic_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -14,19 +15,20 @@ void main() {
   late FakeFirebaseFirestore fakeFirestore;
   late MechanicRepository repo;
 
-  UserEntity admin() => UserEntity(
+  UserEntity currentUser(UserRole role) => UserEntity(
         id: 'admin-1',
         email: 'admin@x.com',
         displayName: 'Admin',
-        role: UserRole.admin,
+        role: role,
         isActive: true,
         createdAt: DateTime(2026, 5, 30),
       );
 
-  Widget harness() => ProviderScope(
+  Widget harness({UserRole role = UserRole.admin}) => ProviderScope(
         overrides: [
           mechanicRepositoryProvider.overrideWithValue(repo),
-          currentUserProvider.overrideWith((ref) => Stream.value(admin())),
+          currentUserProvider
+              .overrideWith((ref) => Stream.value(currentUser(role))),
         ],
         child: const MaterialApp(home: MechanicEditorScreen()),
       );
@@ -112,5 +114,47 @@ void main() {
 
     expect(find.text('456 Mabini St'), findsOneWidget);
     expect(find.text('0999 000 1111'), findsOneWidget);
+  });
+
+  testWidgets('cashier sees edit but no deactivate toggle', (tester) async {
+    await repo.createMechanic(
+      mechanic: MechanicEntity(
+        id: '',
+        name: 'Juan Dela Cruz',
+        isActive: true,
+        createdAt: DateTime(2026, 5, 30),
+      ),
+      createdBy: 'admin-1',
+    );
+
+    await tester.pumpWidget(harness(role: UserRole.cashier));
+    await tester.pumpAndSettle();
+
+    // Edit affordance still present on every row…
+    expect(find.byIcon(LucideIcons.squarePen), findsWidgets);
+    // …but the archive (deactivate) affordance is gone.
+    expect(find.byIcon(LucideIcons.archive), findsNothing);
+    expect(find.byIcon(LucideIcons.rotateCcw), findsNothing);
+  });
+
+  testWidgets('cashier edit dialog has no Active switch', (tester) async {
+    await repo.createMechanic(
+      mechanic: MechanicEntity(
+        id: '',
+        name: 'Juan Dela Cruz',
+        isActive: true,
+        createdAt: DateTime(2026, 5, 30),
+      ),
+      createdBy: 'admin-1',
+    );
+
+    await tester.pumpWidget(harness(role: UserRole.cashier));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(LucideIcons.squarePen).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Mechanic'), findsOneWidget);
+    expect(find.text('Active'), findsNothing);
   });
 }

@@ -3,9 +3,11 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/utils/motorcycle_model_name.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/motorcycle_model_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
@@ -64,6 +66,10 @@ class _MotorcycleModelEditorScreenState
       );
     }
 
+    final canManage = ref.watch(currentUserProvider).valueOrNull
+            ?.hasPermission(Permission.manageCategories) ??
+        false;
+
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 90),
       itemCount: models.length,
@@ -75,7 +81,7 @@ class _MotorcycleModelEditorScreenState
           isActive: m.isActive,
           leadingIcon: LucideIcons.bike,
           onEdit: () => _showModelDialog(context, existing: m),
-          onToggleActive: () => _toggleActive(m),
+          onToggleActive: canManage ? () => _toggleActive(m) : null,
         );
       },
     );

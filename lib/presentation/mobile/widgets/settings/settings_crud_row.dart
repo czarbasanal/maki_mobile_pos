@@ -16,14 +16,17 @@ class SettingsCrudRow extends StatelessWidget {
     required this.name,
     required this.isActive,
     required this.onEdit,
-    required this.onToggleActive,
+    this.onToggleActive,
     this.leadingIcon,
   });
 
   final String name;
   final bool isActive;
   final VoidCallback onEdit;
-  final VoidCallback onToggleActive;
+
+  /// Archive/reactivate action; null hides the toggle button entirely
+  /// (users without full list-manage permission).
+  final VoidCallback? onToggleActive;
 
   /// When non-null, a neutral glyph tile is shown before the title (mechanics
   /// use `wrench`; category rows have none).
@@ -92,12 +95,13 @@ class SettingsCrudRow extends StatelessWidget {
               tooltip: 'Edit',
               onPressed: onEdit,
             ),
-            _RowIconButton(
-              icon: isActive ? LucideIcons.archive : LucideIcons.rotateCcw,
-              color: isActive ? muted : reactivate,
-              tooltip: isActive ? 'Deactivate' : 'Reactivate',
-              onPressed: onToggleActive,
-            ),
+            if (onToggleActive != null)
+              _RowIconButton(
+                icon: isActive ? LucideIcons.archive : LucideIcons.rotateCcw,
+                color: isActive ? muted : reactivate,
+                tooltip: isActive ? 'Deactivate' : 'Reactivate',
+                onPressed: onToggleActive!,
+              ),
           ],
         ),
       ),
