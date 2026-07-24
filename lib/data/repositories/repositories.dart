@@ -16,3 +16,4 @@ export 'user_repository_impl.dart';
 export 'expense_repository_impl.dart';
 export 'daily_closing_repository_impl.dart';
 export 'void_request_repository_impl.dart';
+export 'shop_fee_repository_impl.dart';

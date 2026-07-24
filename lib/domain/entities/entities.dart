@@ -22,5 +22,6 @@ export 'purchase_order_entity.dart';
 export 'activity_log_entity.dart';
 export 'category_entity.dart';
 export 'mechanic_entity.dart';
+export 'shop_fee_entity.dart';
 export 'motorcycle_model_entity.dart';
 export 'void_request_entity.dart';
