@@ -30,6 +30,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Mechanics'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
     expect(find.text('Mechanics'), findsOneWidget);
     expect(
       find.text('Assign a mechanic to a service draft'),

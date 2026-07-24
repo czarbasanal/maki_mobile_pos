@@ -30,6 +30,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Motorcycle Models'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
     expect(find.text('Motorcycle Models'), findsOneWidget);
     expect(find.text('Models picked on job orders'), findsOneWidget);
   });
