@@ -549,6 +549,78 @@ void main() {
       expect(sale.mechanicName, 'Maria');
       expect(sale.grandTotal, 300); // parts 100 + labor 200
     });
+
+    test('loadFromDraft copies feeLines into the cart', () {
+      final draft = DraftEntity(
+        id: 'draft-1',
+        name: 'Service job',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100,
+            unitCost: 60,
+            quantity: 1,
+          ),
+        ],
+        feeLines: const [
+          FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20),
+        ],
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John',
+        createdAt: DateTime.now(),
+      );
+
+      cartNotifier.loadFromDraft(draft);
+
+      final state = container.read(cartProvider);
+      expect(state.feeLines.length, 1);
+      expect(state.feeLines.first.name, 'Electric charge');
+      expect(state.feeLines.first.amount, 20);
+    });
+
+    test('toDraft carries feeLines', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 20,
+      ));
+
+      final draft = cartNotifier.toDraft(
+        name: 'My Draft',
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+      );
+
+      expect(draft.feeLines.length, 1);
+      expect(draft.feeLines.first.name, 'Electric charge');
+      expect(draft.feeLines.first.amount, 20);
+      expect(draft.grandTotal, 120); // parts 100 + fees 20
+    });
+
+    test('toSale carries feeLines', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 20,
+      ));
+      cartNotifier.setAmountReceived(120);
+
+      final sale = cartNotifier.toSale(
+        saleNumber: 'SALE-001',
+        cashierId: 'cashier-1',
+        cashierName: 'John Doe',
+      );
+
+      expect(sale.feeLines.length, 1);
+      expect(sale.feeLines.first.amount, 20);
+      expect(sale.grandTotal, 120); // parts 100 + fees 20
+    });
   });
 
   group('Derived Providers', () {
@@ -657,6 +729,21 @@ void main() {
       cartNotifier.reset();
       state = container.read(cartProvider);
       expect(state.canCheckout, false);
+    });
+
+    test('canSaveAsDraft: fee-only cart can save as JO', () {
+      // No items, no labor, one fee line -> billable content exists, so
+      // saving as a Job Order is allowed even though the cart has no items.
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Air',
+        amount: 10,
+      ));
+
+      final state = container.read(cartProvider);
+      expect(state.isNotEmpty, false); // no items
+      expect(state.hasBillableContent, true); // but has a fee
+      expect(state.canSaveAsDraft, true);
     });
 
     test('addFeeLine, updateFeeLine, removeFeeLine mutate feeLines', () {

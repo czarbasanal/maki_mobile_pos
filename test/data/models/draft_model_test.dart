@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/data/models/draft_model.dart';
 import 'package:maki_mobile_pos/data/models/labor_line_model.dart';
+import 'package:maki_mobile_pos/data/models/fee_line_model.dart';
 import 'package:maki_mobile_pos/data/models/sale_item_model.dart';
 
 void main() {
@@ -20,11 +21,18 @@ void main() {
     fee: 450.0,
   );
 
+  const fee = FeeLineModel(
+    id: 'fee-1',
+    name: 'Electric charge',
+    amount: 20.0,
+  );
+
   DraftModel buildModel() => DraftModel(
         id: 'draft-1',
         name: 'Service Job',
         items: const [item],
         laborLines: const [labor],
+        feeLines: const [fee],
         mechanicId: 'mech-1',
         mechanicName: 'Juan Dela Cruz',
         createdBy: 'cashier-1',
@@ -33,12 +41,13 @@ void main() {
       );
 
   group('DraftModel labor + mechanic', () {
-    test('laborSubtotal sums labor fees; grandTotal adds labor to net parts',
+    test(
+        'laborSubtotal sums labor fees; grandTotal adds labor + fees to net parts',
         () {
       final model = buildModel();
       expect(model.laborSubtotal, 450.0);
-      // parts: 100*2 = 200, no discount; +450 labor
-      expect(model.grandTotal, 650.0);
+      // parts: 100*2 = 200, no discount; +450 labor +20 fees
+      expect(model.grandTotal, 670.0);
     });
 
     test('toMap emits inline laborLines + mechanic fields', () {
@@ -105,6 +114,56 @@ void main() {
       expect(cleared.mechanicName, isNull);
       // labor untouched
       expect(cleared.laborLines.length, 1);
+    });
+  });
+
+  group('DraftModel fee lines', () {
+    test('toMap emits inline feeLines', () {
+      final map = buildModel().toMap();
+      final feeMaps = map['feeLines'] as List<dynamic>;
+      expect(feeMaps.length, 1);
+      final f = feeMaps.first as Map<String, dynamic>;
+      expect(f['id'], 'fee-1');
+      expect(f['name'], 'Electric charge');
+      expect(f['amount'], 20.0);
+    });
+
+    test('fromMap parses feeLines array', () {
+      final model = DraftModel.fromMap({
+        'name': 'Service Job',
+        'items': [item.toMap(includeId: true)],
+        'feeLines': [fee.toMap(includeId: true)],
+        'discountType': 'amount',
+        'createdBy': 'cashier-1',
+        'createdByName': 'John Doe',
+      }, 'draft-1');
+
+      expect(model.feeLines.length, 1);
+      expect(model.feeLines.first.name, 'Electric charge');
+      expect(model.feeLines.first.amount, 20.0);
+    });
+
+    test('fromMap defaults feeLines to [] for legacy docs (no feeLines key)',
+        () {
+      final model = DraftModel.fromMap({
+        'name': 'Legacy Draft',
+        'items': [item.toMap(includeId: true)],
+        'discountType': 'amount',
+        'createdBy': 'cashier-1',
+        'createdByName': 'John Doe',
+      }, 'draft-legacy');
+
+      expect(model.feeLines, isEmpty);
+    });
+
+    test('toEntity / fromEntity round-trips feeLines', () {
+      final entity = buildModel().toEntity();
+      expect(entity.feeLines.single.name, 'Electric charge');
+      expect(entity.feeLines.single.amount, 20.0);
+
+      final back = DraftModel.fromEntity(entity);
+      expect(back.feeLines.single.name, 'Electric charge');
+      expect(back.feeLines.single.amount, 20.0);
     });
   });
 

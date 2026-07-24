@@ -3,6 +3,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/data/models/sale_model.dart';
 import 'package:maki_mobile_pos/data/models/sale_item_model.dart';
 import 'package:maki_mobile_pos/data/models/labor_line_model.dart';
+import 'package:maki_mobile_pos/data/models/fee_line_model.dart';
 
 void main() {
   const item = SaleItemModel(
@@ -21,15 +22,22 @@ void main() {
     fee: 450.0,
   );
 
+  const fee = FeeLineModel(
+    id: 'fee-1',
+    name: 'Electric charge',
+    amount: 20.0,
+  );
+
   SaleModel buildModel() => SaleModel(
         id: 'sale-1',
         saleNumber: 'SALE-20260530-001',
         items: const [item],
         laborLines: const [labor],
+        feeLines: const [fee],
         mechanicId: 'mech-1',
         mechanicName: 'Juan Dela Cruz',
         paymentMethod: PaymentMethod.cash,
-        amountReceived: 650.0,
+        amountReceived: 670.0,
         changeGiven: 0.0,
         cashierId: 'cashier-1',
         cashierName: 'John Doe',
@@ -37,10 +45,11 @@ void main() {
       );
 
   group('SaleModel labor + mechanic', () {
-    test('laborSubtotal sums fees; grandTotal adds labor to net parts', () {
+    test('laborSubtotal sums fees; grandTotal adds labor + fees to net parts',
+        () {
       final model = buildModel();
       expect(model.laborSubtotal, 450.0);
-      expect(model.grandTotal, 650.0); // 200 parts + 450 labor
+      expect(model.grandTotal, 670.0); // 200 parts + 450 labor + 20 fees
     });
 
     test('toMap emits inline laborLines + mechanic fields', () {
@@ -118,6 +127,71 @@ void main() {
       expect(cleared.mechanicId, isNull);
       expect(cleared.mechanicName, isNull);
       expect(cleared.laborLines.length, 1);
+    });
+  });
+
+  group('SaleModel fee lines', () {
+    test('toMap emits inline feeLines', () {
+      final map = buildModel().toMap();
+      final feeMaps = map['feeLines'] as List<dynamic>;
+      expect(feeMaps.length, 1);
+      final f = feeMaps.first as Map<String, dynamic>;
+      expect(f['id'], 'fee-1');
+      expect(f['name'], 'Electric charge');
+      expect(f['amount'], 20.0);
+    });
+
+    test('fromMap parses feeLines DIRECTLY off the map, not via items param',
+        () {
+      final model = SaleModel.fromMap(
+        {
+          'saleNumber': 'SALE-20260530-001',
+          'feeLines': [fee.toMap(includeId: true)],
+          'discountType': 'amount',
+          'paymentMethod': 'cash',
+          'amountReceived': 220.0,
+          'changeGiven': 0.0,
+          'status': 'completed',
+          'cashierId': 'cashier-1',
+          'cashierName': 'John Doe',
+        },
+        'sale-1',
+        items: const [item],
+      );
+
+      expect(model.feeLines.length, 1);
+      expect(model.feeLines.first.name, 'Electric charge');
+      expect(model.feeLines.first.amount, 20.0);
+    });
+
+    test('fromMap defaults feeLines to [] for legacy docs (no feeLines key)',
+        () {
+      final model = SaleModel.fromMap(
+        {
+          'saleNumber': 'SALE-LEGACY',
+          'discountType': 'amount',
+          'paymentMethod': 'cash',
+          'amountReceived': 200.0,
+          'changeGiven': 0.0,
+          'status': 'completed',
+          'cashierId': 'cashier-1',
+          'cashierName': 'John Doe',
+        },
+        'sale-legacy',
+        items: const [item],
+      );
+
+      expect(model.feeLines, isEmpty);
+    });
+
+    test('toEntity / fromEntity round-trips feeLines', () {
+      final entity = buildModel().toEntity();
+      expect(entity.feeLines.single.amount, 20.0);
+      expect(entity.feeLines.single.name, 'Electric charge');
+
+      final back = SaleModel.fromEntity(entity);
+      expect(back.feeLines.single.name, 'Electric charge');
+      expect(back.feeLines.single.amount, 20.0);
     });
   });
 

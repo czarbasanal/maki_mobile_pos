@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/domain/entities/fee_line_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/labor_line_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/sale_item_entity.dart';
 
@@ -28,6 +29,11 @@ class DraftEntity extends Equatable {
 
   /// Free-form labor/service lines (full price, never discounted)
   final List<LaborLineEntity> laborLines;
+
+  /// Shop-fee lines on this ticket (outside-item charges: electric charge,
+  /// tire changer, air, ...). Belongs to the shop, never discounted, zero
+  /// cost.
+  final List<FeeLineEntity> feeLines;
 
   /// Mechanic assigned to this job (one per ticket); null until assigned
   final String? mechanicId;
@@ -74,6 +80,7 @@ class DraftEntity extends Equatable {
     required this.name,
     required this.items,
     this.laborLines = const [],
+    this.feeLines = const [],
     this.mechanicId,
     this.mechanicName,
     this.motorcycleModel,
@@ -131,8 +138,12 @@ class DraftEntity extends Equatable {
   /// Labor revenue (pure margin — zero cost).
   double get laborRevenue => laborSubtotal;
 
-  /// Grand total after discounts, including labor.
-  double get grandTotal => partsRevenue + laborRevenue;
+  /// Total of all shop-fee lines. Belongs to the shop; never discounted;
+  /// zero cost (pure margin, like labor).
+  double get feesTotal => feeLines.fold(0.0, (s, f) => s + f.amount);
+
+  /// Grand total after discounts, including labor and shop fees.
+  double get grandTotal => partsRevenue + laborRevenue + feesTotal;
 
   /// Merchandise profit (parts revenue minus parts cost).
   double get partsProfit => partsRevenue - totalCost;
@@ -286,6 +297,7 @@ class DraftEntity extends Equatable {
     String? name,
     List<SaleItemEntity>? items,
     List<LaborLineEntity>? laborLines,
+    List<FeeLineEntity>? feeLines,
     String? mechanicId,
     String? mechanicName,
     String? motorcycleModel,
@@ -310,6 +322,7 @@ class DraftEntity extends Equatable {
       name: name ?? this.name,
       items: items ?? this.items,
       laborLines: laborLines ?? this.laborLines,
+      feeLines: feeLines ?? this.feeLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
       motorcycleModel:
@@ -346,6 +359,7 @@ class DraftEntity extends Equatable {
         name,
         items,
         laborLines,
+        feeLines,
         mechanicId,
         mechanicName,
         motorcycleModel,

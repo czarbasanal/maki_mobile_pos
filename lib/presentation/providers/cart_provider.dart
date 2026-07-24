@@ -274,9 +274,10 @@ class CartState extends Equatable {
   bool get canProceedToCheckout =>
       hasBillableContent && laborValid && !isProcessing;
 
-  /// Whether cart can be saved as draft. Drafts do not yet support fee
-  /// lines (see spec), so this stays items-based.
-  bool get canSaveAsDraft => isNotEmpty && laborValid && !isProcessing;
+  /// Whether cart can be saved as draft. Fee-only carts (no items, one or
+  /// more fee lines) CAN be saved as a Job Order — same content gate as
+  /// [hasBillableContent], mirroring [canProceedToCheckout].
+  bool get canSaveAsDraft => hasBillableContent && laborValid && !isProcessing;
 
   /// Whether any item has a discount
   bool get hasDiscount => totalDiscount > 0;
@@ -667,6 +668,7 @@ class CartNotifier extends StateNotifier<CartState> {
       sourceDraftId: draft.id,
       draftName: draft.name,
       laborLines: List<LaborLineEntity>.from(draft.laborLines),
+      feeLines: List<FeeLineEntity>.from(draft.feeLines),
       mechanicId: draft.mechanicId,
       mechanicName: draft.mechanicName,
       motorcycleModel: draft.motorcycleModel,
@@ -689,6 +691,7 @@ class CartNotifier extends StateNotifier<CartState> {
       createdAt: DateTime.now(),
       notes: state.notes,
       laborLines: state.laborLines,
+      feeLines: state.feeLines,
       mechanicId: state.mechanicId,
       mechanicName: state.mechanicName,
       motorcycleModel: state.motorcycleModel,
@@ -716,6 +719,7 @@ class CartNotifier extends StateNotifier<CartState> {
       draftId: state.sourceDraftId,
       notes: state.notes,
       laborLines: state.laborLines,
+      feeLines: state.feeLines,
       mechanicId: state.mechanicId,
       mechanicName: state.mechanicName,
       motorcycleModel: state.motorcycleModel,
