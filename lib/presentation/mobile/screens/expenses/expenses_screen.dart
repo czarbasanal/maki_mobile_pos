@@ -356,15 +356,24 @@ class _TotalCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final totalAsync = ref.watch(totalExpensesProvider(params));
-    return SummaryCard(
-      title: title,
-      value: totalAsync.maybeWhen(
-        data: (total) => _ExpenseTotalsRow._currencyFormat.format(total),
-        orElse: () => '—',
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Same soft drop shadow as the inventory summary cards (AppCard's
+    // AppShadows.card) — the themed Material Card underneath is flat.
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.card(dark: isDark),
       ),
-      icon: icon,
-      compact: true,
-      loading: totalAsync.isLoading,
+      child: SummaryCard(
+        title: title,
+        value: totalAsync.maybeWhen(
+          data: (total) => _ExpenseTotalsRow._currencyFormat.format(total),
+          orElse: () => '—',
+        ),
+        icon: icon,
+        compact: true,
+        loading: totalAsync.isLoading,
+      ),
     );
   }
 }
