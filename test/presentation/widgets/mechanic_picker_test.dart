@@ -175,5 +175,25 @@ void main() {
       expect(fake?.createdWith?.name, 'Mang Kanor');
       expect(picked?.id, 'new-1');
     });
+
+    testWidgets('cancelling the add dialog fires no onChanged and resets '
+        'the dropdown off the sentinel', (tester) async {
+      var changedCalls = 0;
+      await tester.pumpWidget(host(onChanged: (_) => changedCalls++));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(MechanicPicker));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('➕ Add mechanic…').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(changedCalls, 0);
+      // Dropdown display is back on the placeholder, not stuck on the sentinel.
+      expect(find.text('— None —'), findsOneWidget);
+      expect(find.text('➕ Add mechanic…'), findsNothing);
+    });
   });
 }
