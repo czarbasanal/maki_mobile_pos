@@ -290,6 +290,34 @@ class DraftEntity extends Equatable {
     );
   }
 
+  // ==================== FEE MANAGEMENT ====================
+
+  /// Adds a shop-fee line to the draft (returns new instance)
+  DraftEntity addFeeLine(FeeLineEntity line) {
+    return copyWith(
+      feeLines: [...feeLines, line],
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Updates a shop-fee line by id (returns new instance; no-op if not found)
+  DraftEntity updateFeeLine(FeeLineEntity line) {
+    final index = feeLines.indexWhere((f) => f.id == line.id);
+    if (index < 0) return this;
+
+    final updated = List<FeeLineEntity>.from(feeLines);
+    updated[index] = line;
+    return copyWith(feeLines: updated, updatedAt: DateTime.now());
+  }
+
+  /// Removes a shop-fee line by id (returns new instance)
+  DraftEntity removeFeeLine(String lineId) {
+    return copyWith(
+      feeLines: feeLines.where((f) => f.id != lineId).toList(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
   // ==================== COPY WITH ====================
 
   DraftEntity copyWith({

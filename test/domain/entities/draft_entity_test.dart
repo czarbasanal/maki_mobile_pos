@@ -226,6 +226,52 @@ void main() {
       expect(updated.laborSubtotal, 150.0);
     });
 
+    test('addFeeLine adds a fee line and feeds feesTotal', () {
+      final updated = draft.addFeeLine(
+        const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+      );
+      expect(updated.feeLines.length, 1);
+      expect(updated.feesTotal, 20.0);
+      // Original is unchanged (immutability).
+      expect(draft.feeLines, isEmpty);
+    });
+
+    test('updateFeeLine replaces a matching line by id', () {
+      final updated = draft
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+          )
+          .updateFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 35.0),
+          );
+      expect(updated.feeLines.single.amount, 35.0);
+      expect(updated.feesTotal, 35.0);
+    });
+
+    test('updateFeeLine on a missing id is a no-op', () {
+      final updated = draft
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+          )
+          .updateFeeLine(
+            const FeeLineEntity(id: 'nope', name: 'X', amount: 999.0),
+          );
+      expect(updated.feeLines.single.amount, 20.0);
+    });
+
+    test('removeFeeLine drops the matching line', () {
+      final updated = draft
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+          )
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-2', name: 'Air', amount: 5.0),
+          )
+          .removeFeeLine('fee-1');
+      expect(updated.feeLines.single.id, 'fee-2');
+      expect(updated.feesTotal, 5.0);
+    });
+
     test('copyWith sets and clears mechanic fields', () {
       final assigned =
           draft.copyWith(mechanicId: 'mech-1', mechanicName: 'Juan Dela Cruz');

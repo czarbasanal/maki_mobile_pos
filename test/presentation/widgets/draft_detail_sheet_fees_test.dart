@@ -4,12 +4,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_detail_sheet.dart';
 
 void main() {
-  DraftEntity buildDraft({
-    List<LaborLineEntity> labor = const [],
-    List<FeeLineEntity> fees = const [],
-    String? mechanic,
-  }) =>
-      DraftEntity(
+  DraftEntity buildDraft({List<FeeLineEntity> fees = const []}) => DraftEntity(
         id: 'draft-1',
         name: 'Plate ABC-123',
         items: const [
@@ -23,10 +18,7 @@ void main() {
             quantity: 2,
           ),
         ],
-        laborLines: labor,
         feeLines: fees,
-        mechanicName: mechanic,
-        mechanicId: mechanic == null ? null : 'mech-1',
         createdBy: 'cashier-1',
         createdByName: 'John Doe',
         createdAt: DateTime(2026, 5, 30, 10, 0),
@@ -42,30 +34,24 @@ void main() {
         ),
       );
 
-  testWidgets('shows labor lines, labor subtotal, and mechanic row',
+  testWidgets('shows fee lines, fees total, and grand total includes fees',
       (tester) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(harness(buildDraft(
-      labor: const [
-        LaborLineEntity(id: 'l1', description: 'Engine tune-up', fee: 450.0),
-      ],
-      mechanic: 'Juan Dela Cruz',
-    )));
+    await tester.pumpWidget(harness(buildDraft(fees: const [
+      FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+    ])));
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Engine tune-up'), findsOneWidget);
-    expect(find.text('Labor'), findsWidgets);
-    expect(find.text('Mechanic'), findsOneWidget);
-    expect(find.text('Juan Dela Cruz'), findsOneWidget);
-    // Grand total = parts 200 + labor 450 = 650.00.
-    expect(find.textContaining('650.00'), findsWidgets);
+    expect(find.text('Electric charge'), findsOneWidget);
+    expect(find.text('Shop Fees'), findsWidgets);
+    // Grand total = parts 200 + fee 20 = 220.00.
+    expect(find.textContaining('220.00'), findsWidgets);
   });
 
-  testWidgets('hides labor and mechanic rows when none present',
-      (tester) async {
+  testWidgets('hides Shop Fees row when none present', (tester) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -73,7 +59,7 @@ void main() {
     await tester.pumpWidget(harness(buildDraft()));
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Mechanic'), findsNothing);
-    expect(find.text('Engine tune-up'), findsNothing);
+    expect(find.text('Shop Fees'), findsNothing);
+    expect(find.text('Electric charge'), findsNothing);
   });
 }

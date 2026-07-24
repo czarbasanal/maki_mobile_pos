@@ -296,6 +296,25 @@ class DraftDetailSheet extends StatelessWidget {
               value: draft.laborSubtotal.toCurrency(),
             ),
           ],
+          if (draft.feeLines.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Divider(height: 1, color: innerDivider),
+            ),
+            ...draft.feeLines.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: SummaryRow(
+                  label: line.name,
+                  value: line.amount.toCurrency(),
+                ),
+              ),
+            ),
+            SummaryRow(
+              label: 'Shop Fees',
+              value: draft.feesTotal.toCurrency(),
+            ),
+          ],
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Divider(height: 1, color: innerDivider),
