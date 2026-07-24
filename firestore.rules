@@ -368,6 +368,23 @@ service cloud.firestore {
       allow delete: if isAdmin() && isActiveUser();
     }
 
+    // ==================== SHOP FEES COLLECTION ====================
+
+    match /shop_fees/{feeId} {
+      // Cashier-facing fee picker streams active fees — all-user read.
+      allow read: if isValidUser() && isActiveUser();
+
+      // Shared-list grants (2026-07-24): any active user may add or edit
+      // entries; only staff/admin may flip isActive (deactivate/reactivate);
+      // delete stays admin-only (nothing in-app hard-deletes).
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isAdmin() && isActiveUser();
+    }
+
     // ==================== HR COLLECTION ====================
 
     // HR — salary data: admin-only for BOTH read and write (stricter than
