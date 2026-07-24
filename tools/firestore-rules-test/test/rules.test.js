@@ -852,3 +852,109 @@ describe("cross-cutting", () => {
     assert.ok(true);
   });
 });
+
+// ===================================================================
+// Shared list collections (2026-07-24): cashier add/edit, staff full
+// ===================================================================
+describe("shared list collections (cashier add/edit, staff full)", () => {
+  const LISTS = [
+    "product_categories",
+    "expense_categories",
+    "units",
+    "void_reasons",
+    "mechanics",
+  ];
+
+  const entry = { name: "Test Entry", isActive: true };
+
+  async function seed(coll, id, data) {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection(coll).doc(id).set(data)
+    );
+  }
+
+  for (const coll of LISTS) {
+    it(`${coll}: cashier can create`, async () => {
+      await assertSucceeds(as("cashier").collection(coll).add(entry));
+    });
+
+    it(`${coll}: cashier can edit the name`, async () => {
+      await seed(coll, "e1", entry);
+      await assertSucceeds(
+        as("cashier").collection(coll).doc("e1").update({ name: "Renamed" })
+      );
+    });
+
+    it(`${coll}: cashier cannot flip isActive`, async () => {
+      await seed(coll, "e1", entry);
+      await assertFails(
+        as("cashier").collection(coll).doc("e1").update({ isActive: false })
+      );
+    });
+
+    it(`${coll}: staff can flip isActive`, async () => {
+      await seed(coll, "e1", entry);
+      await assertSucceeds(
+        as("staff").collection(coll).doc("e1").update({ isActive: false })
+      );
+    });
+
+    it(`${coll}: staff cannot delete; admin can`, async () => {
+      await seed(coll, "e1", entry);
+      await assertFails(as("staff").collection(coll).doc("e1").delete());
+      await assertSucceeds(as("admin").collection(coll).doc("e1").delete());
+    });
+
+    it(`${coll}: inactive staff cannot create`, async () => {
+      await assertFails(as("inactiveStaff").collection(coll).add(entry));
+    });
+  }
+
+  describe("motorcycle_models", () => {
+    const model = (uid) => ({
+      name: "Nmax",
+      isActive: true,
+      createdBy: uid,
+    });
+
+    it("cashier create with createdBy=self still allowed", async () => {
+      await assertSucceeds(
+        as("cashier")
+          .collection("motorcycle_models")
+          .add(model(USERS.cashier.uid))
+      );
+    });
+
+    it("cashier can rename but not flip isActive; staff can flip", async () => {
+      await seed("motorcycle_models", "m1", model(USERS.admin.uid));
+      await assertSucceeds(
+        as("cashier")
+          .collection("motorcycle_models")
+          .doc("m1")
+          .update({ name: "Nmax v2" })
+      );
+      await assertFails(
+        as("cashier")
+          .collection("motorcycle_models")
+          .doc("m1")
+          .update({ isActive: false })
+      );
+      await assertSucceeds(
+        as("staff")
+          .collection("motorcycle_models")
+          .doc("m1")
+          .update({ isActive: false })
+      );
+    });
+
+    it("delete stays admin-only", async () => {
+      await seed("motorcycle_models", "m1", model(USERS.admin.uid));
+      await assertFails(
+        as("staff").collection("motorcycle_models").doc("m1").delete()
+      );
+      await assertSucceeds(
+        as("admin").collection("motorcycle_models").doc("m1").delete()
+      );
+    });
+  });
+});
