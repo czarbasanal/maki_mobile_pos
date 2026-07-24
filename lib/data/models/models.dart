@@ -12,6 +12,7 @@ export 'supplier_model.dart';
 export 'sale_model.dart';
 export 'sale_item_model.dart';
 export 'labor_line_model.dart';
+export 'fee_line_model.dart';
 export 'draft_model.dart';
 export 'expense_model.dart';
 export 'daily_closing_model.dart';

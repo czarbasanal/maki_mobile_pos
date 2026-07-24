@@ -45,6 +45,10 @@ class CartState extends Equatable {
   /// Labor/service lines on this ticket. Full price, never discounted.
   final List<LaborLineEntity> laborLines;
 
+  /// Shop-fee lines on this ticket (outside-item charges — electric charge,
+  /// tire changer, air, …). Belongs to the shop, never discounted.
+  final List<FeeLineEntity> feeLines;
+
   /// Assigned mechanic id (null until a mechanic is picked).
   final String? mechanicId;
 
@@ -75,6 +79,7 @@ class CartState extends Equatable {
     this.sourceDraftId,
     this.draftName,
     this.laborLines = const [],
+    this.feeLines = const [],
     this.mechanicId,
     this.mechanicName,
     this.motorcycleModel,
@@ -95,6 +100,7 @@ class CartState extends Equatable {
         sourceDraftId,
         draftName,
         laborLines,
+        feeLines,
         mechanicId,
         mechanicName,
         motorcycleModel,
@@ -149,8 +155,14 @@ class CartState extends Equatable {
   /// Labor revenue (pure margin — zero cost).
   double get laborRevenue => laborSubtotal;
 
-  /// Grand total after discounts, including labor.
-  double get grandTotal => partsRevenue + laborRevenue;
+  /// Total of all shop-fee lines. Belongs to the shop; never discounted;
+  /// zero cost (pure margin, like labor).
+  double get feesTotal => feeLines.fold(0.0, (s, f) => s + f.amount);
+
+  /// Grand total after discounts, including labor and shop fees. Parts
+  /// fields ([partsSubtotal], [partsRevenue], [totalCost], [partsProfit])
+  /// stay parts-only — fees never flow into them.
+  double get grandTotal => partsRevenue + laborRevenue + feesTotal;
 
   /// Total cost of all items
   double get totalCost {
@@ -202,9 +214,14 @@ class CartState extends Equatable {
     return 0;
   }
 
+  /// Whether the cart has any billable content — items or shop fees. Labor
+  /// alone does not count: a labor-only cart must still be blocked from
+  /// checkout (labor belongs to a mechanic, not a stand-alone sale).
+  bool get hasBillableContent => items.isNotEmpty || feeLines.isNotEmpty;
+
   /// Whether the selected payment is valid for checkout.
   bool get isPaymentValid {
-    if (isEmpty) return false;
+    if (!hasBillableContent) return false;
     switch (paymentMethod) {
       case PaymentMethod.cash:
         return amountReceived >= grandTotal;
@@ -244,11 +261,21 @@ class CartState extends Equatable {
     return null;
   }
 
-  /// Whether cart can be checked out
+  /// Whether cart can be checked out. Fee-only carts (no items, one or more
+  /// fee lines) CAN check out; labor-only carts (no items, no fees, only
+  /// labor lines) still CANNOT — labor belongs to a mechanic, not a
+  /// stand-alone sale.
   bool get canCheckout =>
-      isNotEmpty && isPaymentValid && laborValid && !isProcessing;
+      hasBillableContent && isPaymentValid && laborValid && !isProcessing;
 
-  /// Whether cart can be saved as draft
+  /// Whether cart is ready to move on to the payment/checkout screen. Same
+  /// content gate as [canCheckout] but does not require [isPaymentValid] —
+  /// payment amounts are entered on the next screen, not this one.
+  bool get canProceedToCheckout =>
+      hasBillableContent && laborValid && !isProcessing;
+
+  /// Whether cart can be saved as draft. Drafts do not yet support fee
+  /// lines (see spec), so this stays items-based.
   bool get canSaveAsDraft => isNotEmpty && laborValid && !isProcessing;
 
   /// Whether any item has a discount
@@ -271,6 +298,7 @@ class CartState extends Equatable {
     String? sourceDraftId,
     String? draftName,
     List<LaborLineEntity>? laborLines,
+    List<FeeLineEntity>? feeLines,
     String? mechanicId,
     String? mechanicName,
     String? motorcycleModel,
@@ -298,6 +326,7 @@ class CartState extends Equatable {
           clearSourceDraftId ? null : (sourceDraftId ?? this.sourceDraftId),
       draftName: clearDraftName ? null : (draftName ?? this.draftName),
       laborLines: laborLines ?? this.laborLines,
+      feeLines: feeLines ?? this.feeLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
       motorcycleModel: clearMotorcycleModel
@@ -509,6 +538,34 @@ class CartNotifier extends StateNotifier<CartState> {
   void removeLaborLine(String id) {
     state = state.copyWith(
       laborLines: state.laborLines.where((l) => l.id != id).toList(),
+      clearErrorMessage: true,
+    );
+  }
+
+  // ==================== SHOP-FEE OPERATIONS ====================
+
+  /// Adds a shop-fee line to the cart.
+  void addFeeLine(FeeLineEntity line) {
+    state = state.copyWith(
+      feeLines: [...state.feeLines, line],
+      clearErrorMessage: true,
+    );
+  }
+
+  /// Updates a fee line by id (matches on [line.id]). No-op if not found.
+  void updateFeeLine(FeeLineEntity line) {
+    final index = state.feeLines.indexWhere((f) => f.id == line.id);
+    if (index < 0) return;
+
+    final updatedLines = List<FeeLineEntity>.from(state.feeLines);
+    updatedLines[index] = line;
+    state = state.copyWith(feeLines: updatedLines, clearErrorMessage: true);
+  }
+
+  /// Removes a fee line by id.
+  void removeFeeLine(String id) {
+    state = state.copyWith(
+      feeLines: state.feeLines.where((f) => f.id != id).toList(),
       clearErrorMessage: true,
     );
   }
