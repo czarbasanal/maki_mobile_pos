@@ -59,8 +59,16 @@ class MotorcycleModelOperationsNotifier
           await _repo.findByNormalizedKey(normalizedModelKey(rawName));
       if (existing != null) {
         if (!existing.isActive) {
-          await _repo.setActive(
-              id: existing.id, active: true, updatedBy: actorId);
+          // Best-effort reactivation: cashiers are denied the isActive flip
+          // by firestore rules. The JO stores a name snapshot, so an
+          // archived model resolving by name is still correct; staff can
+          // reactivate later from the admin editor.
+          try {
+            await _repo.setActive(
+                id: existing.id, active: true, updatedBy: actorId);
+          } catch (_) {
+            // Non-fatal — fall through and resolve to the existing name.
+          }
         }
         state = const AsyncValue.data(null);
         return existing.name;
