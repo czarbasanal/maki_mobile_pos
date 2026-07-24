@@ -109,6 +109,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Models picked on job orders',
                   onTap: () => context.push(RoutePaths.motorcycleModels),
                 ),
+                SettingsTile(
+                  icon: LucideIcons.circleDollarSign,
+                  title: 'Shop Fees',
+                  subtitle: 'Charges for outside items, air, charging',
+                  onTap: () => context.push(RoutePaths.shopFees),
+                ),
               ],
             ),
           ],

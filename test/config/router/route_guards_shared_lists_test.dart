@@ -37,4 +37,23 @@ void main() {
       );
     });
   });
+
+  group('RouteGuards — shop fees editor open to every active role', () {
+    for (final role in UserRole.values) {
+      test('$role can access the shop fees editor', () {
+        expect(
+          RouteGuards.canAccess(RoutePaths.shopFees, user(role)),
+          true,
+        );
+      });
+    }
+
+    test('inactive user is denied', () {
+      expect(
+        RouteGuards.canAccess(
+            RoutePaths.shopFees, user(UserRole.staff, isActive: false)),
+        false,
+      );
+    });
+  });
 }

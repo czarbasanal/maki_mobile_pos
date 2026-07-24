@@ -65,6 +65,7 @@ abstract class RouteGuards {
     '/settings/cost-codes': Permission.editCostCodeMapping,
     '/settings/categories': Permission.editLists,
     '/settings/mechanics': Permission.editLists,
+    '/settings/shop-fees': Permission.editLists,
     '/settings/motorcycle-models': Permission.editLists,
     // Logs
     '/logs': Permission.viewUserLogs,
