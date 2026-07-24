@@ -465,9 +465,7 @@ class NewPurchaseOrderScreenState
                     const SizedBox(height: 3),
                     Text(
                       p.sku,
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.monoFontFamily,
-                        fontSize: 11,
+                      style: AppTextStyles.code.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),

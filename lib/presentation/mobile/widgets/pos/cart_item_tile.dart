@@ -62,7 +62,7 @@ class CartItemTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.name,
-                      style: AppTextStyles.productName.copyWith(fontSize: 14),
+                      style: AppTextStyles.productName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -83,10 +83,7 @@ class CartItemTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '${item.sku} • ${item.unitPrice.toCurrency()} / ${item.unit}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: muted,
-                        fontFamily: AppTextStyles.monoFontFamily,
-                      ),
+                      style: AppTextStyles.code.copyWith(color: muted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

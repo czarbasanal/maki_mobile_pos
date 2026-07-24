@@ -185,11 +185,7 @@ class ReceivingItemRow extends ConsumerWidget {
                   item.sku,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: muted,
-                    fontFamily: AppTextStyles.monoFontFamily,
-                  ),
+                  style: AppTextStyles.code.copyWith(color: muted),
                 ),
               ),
               if (item.isNewVariation) ...[

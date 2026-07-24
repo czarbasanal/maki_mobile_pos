@@ -84,18 +84,13 @@ class RankRow extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style:
-                          AppTextStyles.productName.copyWith(fontSize: 13.5),
+                      style: AppTextStyles.productName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: muted,
-                        fontSize: 11.5,
-                        fontFamily: AppTextStyles.monoFontFamily,
-                      ),
+                      style: AppTextStyles.code.copyWith(color: muted),
                     ),
                   ],
                 ),

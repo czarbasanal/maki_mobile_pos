@@ -216,11 +216,7 @@ class DraftDetailSheet extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${item.sku} • ${item.unitPrice.toCurrency()} / ${item.unit}',
-                  style: TextStyle(
-                    fontFamily: AppTextStyles.monoFontFamily,
-                    fontSize: 11.5,
-                    color: muted,
-                  ),
+                  style: AppTextStyles.code.copyWith(color: muted),
                 ),
                 if (hasDiscount)
                   Text(

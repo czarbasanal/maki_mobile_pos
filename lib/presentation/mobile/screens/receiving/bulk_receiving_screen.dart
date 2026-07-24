@@ -330,11 +330,10 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                           ),
                           subtitle: Text(
                             '${product.sku} • Stock: ${product.quantity}',
-                            style: TextStyle(
+                            style: AppTextStyles.code.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
-                              fontFamily: AppTextStyles.monoFontFamily,
                             ),
                           ),
                           trailing: _isAdmin

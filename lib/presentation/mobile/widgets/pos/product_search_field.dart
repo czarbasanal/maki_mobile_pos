@@ -407,11 +407,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField>
                     const SizedBox(height: 3),
                     Text(
                       '${product.sku} · ${product.quantity} in stock',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.monoFontFamily,
-                        fontSize: 11,
-                        color: muted,
-                      ),
+                      style: AppTextStyles.code.copyWith(color: muted),
                     ),
                   ],
                 ),

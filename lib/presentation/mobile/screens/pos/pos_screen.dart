@@ -203,10 +203,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               ),
               subtitle: Text(
                 '${product.sku} • ${product.price.toCurrency()}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: muted,
-                  fontFamily: AppTextStyles.monoFontFamily,
-                ),
+                style: AppTextStyles.code.copyWith(color: muted),
               ),
               trailing: Text(
                 'Stock: ${product.quantity}',

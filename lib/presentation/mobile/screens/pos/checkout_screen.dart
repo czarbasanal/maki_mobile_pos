@@ -192,17 +192,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       children: [
                         Text(
                           item.name,
-                          style:
-                              AppTextStyles.productName.copyWith(fontSize: 14),
+                          style: AppTextStyles.productName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           item.sku,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: muted,
-                            fontFamily: AppTextStyles.monoFontFamily,
-                          ),
+                          style: AppTextStyles.code.copyWith(color: muted),
                         ),
                         if (item.hasDiscount)
                           Text(
@@ -259,7 +255,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   Expanded(
                     child: Text(
                       line.description.isEmpty ? 'Service' : line.description,
-                      style: AppTextStyles.productName.copyWith(fontSize: 14),
+                      style: AppTextStyles.productName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

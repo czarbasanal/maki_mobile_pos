@@ -553,11 +553,9 @@ class _Receipt extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   sub,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: muted,
-                    fontFamily: mono ? AppTextStyles.monoFontFamily : null,
-                  ),
+                  style: mono
+                      ? AppTextStyles.code.copyWith(color: muted)
+                      : TextStyle(fontSize: 12, color: muted),
                 ),
               ],
             ),
