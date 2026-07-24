@@ -16,6 +16,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.d
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/save_job_order_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/job_order_badge_button.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/fee_section.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
@@ -267,6 +268,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                           horizontal: AppSpacing.md,
                         ),
                         child: AppCard(child: _buildLaborSection(cart)),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      // Shop Fees — collapsible; empty for normal sales.
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: AppCard(child: FeeSection(cart: cart)),
                       ),
                       const SizedBox(height: AppSpacing.sm + 2),
                       // Cart Summary — payment is now collected on the
