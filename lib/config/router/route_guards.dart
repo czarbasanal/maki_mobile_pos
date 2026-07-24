@@ -63,9 +63,9 @@ abstract class RouteGuards {
     // Settings
     '/settings': Permission.viewSettings,
     '/settings/cost-codes': Permission.editCostCodeMapping,
-    '/settings/categories': Permission.manageCategories,
-    '/settings/mechanics': Permission.manageCategories,
-    '/settings/motorcycle-models': Permission.manageCategories,
+    '/settings/categories': Permission.editLists,
+    '/settings/mechanics': Permission.editLists,
+    '/settings/motorcycle-models': Permission.editLists,
     // Logs
     '/logs': Permission.viewUserLogs,
   };
@@ -199,7 +199,7 @@ abstract class RouteGuards {
     // Per-kind editors live under /settings/categories/<kind> — same gate as
     // the hub.
     if (path.startsWith('${RoutePaths.categorySettings}/')) {
-      return user.hasPermission(Permission.manageCategories);
+      return user.hasPermission(Permission.editLists);
     }
 
     // Fail-safe: deny everything not explicitly allowlisted above. Any new
