@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/domain/repositories/mechanic_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 
@@ -9,13 +10,17 @@ MechanicEntity _mech(String id, String name) =>
     MechanicEntity(id: id, name: name, isActive: true, createdAt: DateTime(2026, 1, 1));
 
 class _FakeMechanicOps extends MechanicOperationsNotifier {
-  _FakeMechanicOps(super.ref);
+  _FakeMechanicOps(super.ref, {this.createDelay});
+  final Duration? createDelay;
 
   MechanicEntity? createdWith;
+  int createCallCount = 0;
 
   @override
   Future<MechanicEntity?> create({required MechanicEntity mechanic}) async {
+    createCallCount++;
     createdWith = mechanic;
+    if (createDelay != null) await Future<void>.delayed(createDelay!);
     return MechanicEntity(
       id: 'new-1',
       name: mechanic.name,
@@ -23,6 +28,51 @@ class _FakeMechanicOps extends MechanicOperationsNotifier {
       createdAt: DateTime(2026, 1, 1),
     );
   }
+}
+
+/// Fake [MechanicRepository] — only [nameExists] is exercised by the picker;
+/// the rest throw if ever called.
+class _FakeMechanicRepo implements MechanicRepository {
+  _FakeMechanicRepo({this.archivedNames = const {}});
+  final Set<String> archivedNames;
+
+  @override
+  Future<bool> nameExists({
+    required String name,
+    String? excludeMechanicId,
+  }) async =>
+      archivedNames.contains(name);
+
+  @override
+  Stream<List<MechanicEntity>> watchActive() => const Stream.empty();
+
+  @override
+  Stream<List<MechanicEntity>> watchAll() => const Stream.empty();
+
+  @override
+  Future<MechanicEntity?> getMechanicById(String mechanicId) async => null;
+
+  @override
+  Future<MechanicEntity> createMechanic({
+    required MechanicEntity mechanic,
+    required String createdBy,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<MechanicEntity> updateMechanic({
+    required MechanicEntity mechanic,
+    required String updatedBy,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> setActive({
+    required String mechanicId,
+    required bool active,
+    required String updatedBy,
+  }) =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -155,6 +205,7 @@ void main() {
       await tester.pumpWidget(host(
         onChanged: (m) => picked = m,
         extraOverrides: [
+          mechanicRepositoryProvider.overrideWithValue(_FakeMechanicRepo()),
           mechanicOperationsProvider.overrideWith((ref) {
             fake = _FakeMechanicOps(ref);
             return fake!;
@@ -174,6 +225,81 @@ void main() {
 
       expect(fake?.createdWith?.name, 'Mang Kanor');
       expect(picked?.id, 'new-1');
+    });
+
+    testWidgets(
+        'an archived-twin name shows an error and does not create a duplicate',
+        (tester) async {
+      _FakeMechanicOps? fake;
+      MechanicEntity? picked;
+      await tester.pumpWidget(host(
+        onChanged: (m) => picked = m,
+        extraOverrides: [
+          mechanicRepositoryProvider.overrideWithValue(
+            _FakeMechanicRepo(archivedNames: {'Old Juan'}),
+          ),
+          mechanicOperationsProvider.overrideWith((ref) {
+            fake = _FakeMechanicOps(ref);
+            return fake!;
+          }),
+        ],
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(MechanicPicker));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('➕ Add mechanic…').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).last, 'Old Juan');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      expect(fake?.createdWith, isNull); // no create call
+      expect(picked, isNull); // onChanged not fired
+      expect(
+        find.text(
+          'A mechanic with this name is archived — ask staff to reactivate '
+          'them in Settings',
+        ),
+        findsOneWidget,
+      );
+      // Dialog stays open on the failed attempt.
+      expect(find.text('Add'), findsOneWidget);
+    });
+
+    testWidgets('double-tapping Add only creates once', (tester) async {
+      _FakeMechanicOps? fake;
+      await tester.pumpWidget(host(
+        onChanged: (_) {},
+        extraOverrides: [
+          mechanicRepositoryProvider.overrideWithValue(_FakeMechanicRepo()),
+          mechanicOperationsProvider.overrideWith((ref) {
+            fake = _FakeMechanicOps(
+              ref,
+              createDelay: const Duration(milliseconds: 50),
+            );
+            return fake!;
+          }),
+        ],
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(MechanicPicker));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('➕ Add mechanic…').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).last, 'Mang Kanor');
+      // Find the primary "Add" button by type — once saving starts its label
+      // swaps for a spinner, so a text finder would no longer match.
+      final addButton = find.byType(FilledButton);
+      await tester.tap(addButton);
+      await tester.pump(const Duration(milliseconds: 10));
+      await tester.tap(addButton); // second tap while saving
+      await tester.pumpAndSettle();
+
+      expect(fake?.createCallCount, 1);
     });
 
     testWidgets('cancelling the add dialog fires no onChanged and resets '

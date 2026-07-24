@@ -95,65 +95,114 @@ class _MechanicPickerState extends ConsumerState<MechanicPicker> {
   }
 
   Future<void> _onAddNew(List<MechanicEntity> mechanics) async {
-    final picked = await _showAddDialog(mechanics);
+    final picked = await showDialog<MechanicEntity>(
+      context: context,
+      barrierColor: AppDialog.scrimColor(
+          Theme.of(context).brightness == Brightness.dark),
+      builder: (ctx) => _AddMechanicDialog(activeMechanics: mechanics),
+    );
     if (!mounted) return;
     setState(() => _rev++); // reset the dropdown display off the sentinel
     if (picked != null) widget.onChanged(picked);
   }
+}
 
-  Future<MechanicEntity?> _showAddDialog(List<MechanicEntity> mechanics) {
-    final controller = TextEditingController();
-    return showDialog<MechanicEntity>(
-      context: context,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
-      builder: (ctx) => AppDialog(
-        title: 'Add mechanic',
-        leadingIcon: LucideIcons.wrench,
-        content: TextField(
-          style: AppTextStyles.fieldInput,
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            prefixIcon: Icon(LucideIcons.wrench),
-          ),
+/// Inline "Add mechanic" dialog. Reuses an existing ACTIVE mechanic on a
+/// case-insensitive name match; otherwise checks for an ARCHIVED twin (via
+/// [MechanicRepository.nameExists], which sees active + inactive rows) and
+/// refuses to create a duplicate, since only staff can reactivate one from
+/// Settings. Guards double-tap with an [_isSaving] busy state, matching the
+/// pattern in `mechanic_editor_screen.dart`'s form dialog.
+class _AddMechanicDialog extends ConsumerStatefulWidget {
+  const _AddMechanicDialog({required this.activeMechanics});
+
+  final List<MechanicEntity> activeMechanics;
+
+  @override
+  ConsumerState<_AddMechanicDialog> createState() =>
+      _AddMechanicDialogState();
+}
+
+class _AddMechanicDialogState extends ConsumerState<_AddMechanicDialog> {
+  final _controller = TextEditingController();
+  bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
+      title: 'Add mechanic',
+      leadingIcon: LucideIcons.wrench,
+      content: TextField(
+        style: AppTextStyles.fieldInput,
+        controller: _controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        decoration: const InputDecoration(
+          labelText: 'Name',
+          prefixIcon: Icon(LucideIcons.wrench),
         ),
-        actions: [
-          appDialogCancel(ctx, 'Cancel', onTap: () => Navigator.pop(ctx)),
-          appDialogPrimary(ctx, 'Add', onTap: () async {
-            final name = controller.text.trim();
-            if (name.length < 2) return;
-
-            // Reuse an existing active mechanic on a case-insensitive match
-            // instead of creating a duplicate.
-            final lower = name.toLowerCase();
-            for (final m in mechanics) {
-              if (m.name.toLowerCase() == lower) {
-                Navigator.pop(ctx, m);
-                return;
-              }
-            }
-
-            final created = await ref
-                .read(mechanicOperationsProvider.notifier)
-                .create(
-                  mechanic: MechanicEntity(
-                    id: '',
-                    name: name,
-                    isActive: true,
-                    createdAt: DateTime.now(),
-                  ),
-                );
-            if (!ctx.mounted) return;
-            Navigator.pop(ctx, created);
-            if (created == null && mounted) {
-              context.showErrorSnackBar('Failed to add mechanic');
-            }
-          }),
-        ],
       ),
+      actions: [
+        appDialogCancel(context, 'Cancel',
+            onTap: _isSaving ? () {} : () => Navigator.pop(context)),
+        appDialogPrimary(context, 'Add', onTap: _onAdd, loading: _isSaving),
+      ],
     );
+  }
+
+  Future<void> _onAdd() async {
+    if (_isSaving) return;
+    final name = _controller.text.trim();
+    if (name.length < 2) return;
+
+    // Reuse an existing active mechanic on a case-insensitive match instead
+    // of creating a duplicate.
+    final lower = name.toLowerCase();
+    for (final m in widget.activeMechanics) {
+      if (m.name.toLowerCase() == lower) {
+        Navigator.pop(context, m);
+        return;
+      }
+    }
+
+    setState(() => _isSaving = true);
+
+    // No active twin above — an exact-name hit here must be an archived one
+    // (the active scan is already case-insensitive, so it would have caught
+    // any active match regardless of case).
+    final archived =
+        await ref.read(mechanicRepositoryProvider).nameExists(name: name);
+    if (archived) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      context.showErrorSnackBar(
+        'A mechanic with this name is archived — ask staff to reactivate '
+        'them in Settings',
+      );
+      return;
+    }
+
+    final created =
+        await ref.read(mechanicOperationsProvider.notifier).create(
+              mechanic: MechanicEntity(
+                id: '',
+                name: name,
+                isActive: true,
+                createdAt: DateTime.now(),
+              ),
+            );
+    if (!mounted) return;
+    if (created == null) {
+      setState(() => _isSaving = false);
+      context.showErrorSnackBar('Failed to add mechanic');
+      return;
+    }
+    Navigator.pop(context, created);
   }
 }
