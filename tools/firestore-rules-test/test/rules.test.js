@@ -971,5 +971,28 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
         as("admin").collection("motorcycle_models").doc("m1").delete()
       );
     });
+
+    it("inactive staff/admin cannot flip isActive", async () => {
+      await seed("motorcycle_models", "m1", model(USERS.admin.uid));
+      await assertFails(
+        as("inactiveStaff")
+          .collection("motorcycle_models")
+          .doc("m1")
+          .update({ isActive: false })
+      );
+      await assertFails(
+        as("inactiveAdmin")
+          .collection("motorcycle_models")
+          .doc("m1")
+          .update({ isActive: false })
+      );
+    });
+
+    it("cashier cannot delete", async () => {
+      await seed("motorcycle_models", "m1", model(USERS.admin.uid));
+      await assertFails(
+        as("cashier").collection("motorcycle_models").doc("m1").delete()
+      );
+    });
   });
 });
