@@ -84,4 +84,72 @@ void main() {
     final ops = c.read(motorcycleModelOperationsProvider.notifier);
     expect(await ops.resolveOrCreate('   '), isNull);
   });
+
+  test(
+      'resolveOrCreate: inactive match + reactivation failure still resolves '
+      'to the existing canonical name (no create)', () async {
+    final m = await repo.create(model: model('Beat'), createdBy: 'u');
+    await repo.setActive(id: m.id, active: false, updatedBy: 'u');
+
+    final failingRepo = _SetActiveFailingRepository(repo);
+    final c = ProviderContainer(overrides: [
+      motorcycleModelRepositoryProvider.overrideWithValue(failingRepo),
+      currentUserProvider.overrideWith((ref) => Stream.value(admin())),
+    ]);
+    addTearDown(c.dispose);
+    await c.read(currentUserProvider.future);
+    final ops = c.read(motorcycleModelOperationsProvider.notifier);
+
+    final name = await ops.resolveOrCreate('beat');
+    expect(name, 'Beat'); // resolves to the existing canonical name
+
+    // Still archived (reactivation failed) and no duplicate was created.
+    expect((await repo.getById(m.id))!.isActive, isFalse);
+    final all = await repo.watchAll().first;
+    expect(all.where((e) => normalizedModelKey(e.name) == 'beat').length, 1);
+  });
+}
+
+/// Delegates everything to a wrapped [MotorcycleModelRepository] except
+/// [setActive], which always throws — used to pin the best-effort
+/// reactivation behavior in [MotorcycleModelOperationsNotifier.resolveOrCreate].
+class _SetActiveFailingRepository implements MotorcycleModelRepository {
+  final MotorcycleModelRepository _inner;
+  _SetActiveFailingRepository(this._inner);
+
+  @override
+  Stream<List<MotorcycleModelEntity>> watchActive() => _inner.watchActive();
+
+  @override
+  Stream<List<MotorcycleModelEntity>> watchAll() => _inner.watchAll();
+
+  @override
+  Future<MotorcycleModelEntity?> getById(String id) => _inner.getById(id);
+
+  @override
+  Future<MotorcycleModelEntity> create({
+    required MotorcycleModelEntity model,
+    required String createdBy,
+  }) =>
+      _inner.create(model: model, createdBy: createdBy);
+
+  @override
+  Future<MotorcycleModelEntity> update({
+    required MotorcycleModelEntity model,
+    required String updatedBy,
+  }) =>
+      _inner.update(model: model, updatedBy: updatedBy);
+
+  @override
+  Future<void> setActive({
+    required String id,
+    required bool active,
+    required String updatedBy,
+  }) async {
+    throw Exception('permission-denied: cashiers cannot flip isActive');
+  }
+
+  @override
+  Future<MotorcycleModelEntity?> findByNormalizedKey(String normalizedKey) =>
+      _inner.findByNormalizedKey(normalizedKey);
 }

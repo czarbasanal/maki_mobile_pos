@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/settings/settings_crud_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dialog.dart';
@@ -127,6 +129,10 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
       );
     }
 
+    final canManage = ref.watch(currentUserProvider).valueOrNull
+            ?.hasPermission(Permission.manageCategories) ??
+        false;
+
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 90),
       itemCount: categories.length,
@@ -137,7 +143,7 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
           name: category.name,
           isActive: category.isActive,
           onEdit: () => _showCategoryDialog(context, existing: category),
-          onToggleActive: () => _toggleActive(category),
+          onToggleActive: canManage ? () => _toggleActive(category) : null,
         );
       },
     );
@@ -294,6 +300,9 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final canManage = ref.watch(currentUserProvider).valueOrNull
+            ?.hasPermission(Permission.manageCategories) ??
+        false;
     return AppDialog(
       title: _isEdit
           ? 'Edit ${widget.kind.singularLabel}'
@@ -322,7 +331,7 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
                 return null;
               },
             ),
-            if (_isEdit) ...[
+            if (_isEdit && canManage) ...[
               const SizedBox(height: AppSpacing.sm),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,

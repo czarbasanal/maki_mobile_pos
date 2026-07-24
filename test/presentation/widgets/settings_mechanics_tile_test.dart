@@ -17,7 +17,7 @@ void main() {
         createdAt: DateTime(2026, 5, 30),
       );
 
-  testWidgets('Administration section shows a Mechanics tile for admins',
+  testWidgets('Lists section shows a Mechanics tile for admins',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -29,6 +29,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Mechanics'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
 
     expect(find.text('Mechanics'), findsOneWidget);
     expect(

@@ -130,8 +130,14 @@ service cloud.firestore {
     // ==================== SUPPLIERS COLLECTION ====================
     
     match /suppliers/{supplierId} {
-      // Only admin can access suppliers
-      allow read, write: if isAdmin() && isActiveUser();
+      // Staff need to READ suppliers: the Receiving flow's supplier picker
+      // streams the list for anyone with receiving access (2026-07-24 fix —
+      // read was admin-only since init, breaking staff bulk receiving).
+      allow read: if isStaffOrAdmin() && isActiveUser();
+
+      // Managing suppliers (add/edit/delete) stays admin-only, matching the
+      // in-app viewSuppliers gating.
+      allow write: if isAdmin() && isActiveUser();
     }
     
     // ==================== SALES COLLECTION ====================
@@ -281,8 +287,15 @@ service cloud.firestore {
       // All valid users can read categories (product form, inventory filter)
       allow read: if isValidUser() && isActiveUser();
 
-      // Only admin can manage the category list
-      allow write: if isAdmin() && isActiveUser();
+      // Shared-list grants (2026-07-24): any active user may add or edit
+      // entries; only staff/admin may flip isActive (deactivate/reactivate);
+      // delete stays admin-only (nothing in-app hard-deletes).
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isAdmin() && isActiveUser();
     }
 
     // ==================== EXPENSE CATEGORIES COLLECTION ====================
@@ -291,8 +304,15 @@ service cloud.firestore {
       // All valid users can read categories (expense form)
       allow read: if isValidUser() && isActiveUser();
 
-      // Only admin can manage the category list
-      allow write: if isAdmin() && isActiveUser();
+      // Shared-list grants (2026-07-24): any active user may add or edit
+      // entries; only staff/admin may flip isActive (deactivate/reactivate);
+      // delete stays admin-only (nothing in-app hard-deletes).
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isAdmin() && isActiveUser();
     }
 
     // ==================== UNITS COLLECTION ====================
@@ -301,8 +321,15 @@ service cloud.firestore {
       // All valid users can read units (product form, inventory display)
       allow read: if isValidUser() && isActiveUser();
 
-      // Only admin can manage the unit list
-      allow write: if isAdmin() && isActiveUser();
+      // Shared-list grants (2026-07-24): any active user may add or edit
+      // entries; only staff/admin may flip isActive (deactivate/reactivate);
+      // delete stays admin-only (nothing in-app hard-deletes).
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isAdmin() && isActiveUser();
     }
 
     // ==================== VOID REASONS COLLECTION ====================
@@ -311,8 +338,15 @@ service cloud.firestore {
       // All valid users can read void reasons (void-sale dialog dropdown)
       allow read: if isValidUser() && isActiveUser();
 
-      // Only admin can manage the void-reason list
-      allow write: if isAdmin() && isActiveUser();
+      // Shared-list grants (2026-07-24): any active user may add or edit
+      // entries; only staff/admin may flip isActive (deactivate/reactivate);
+      // delete stays admin-only (nothing in-app hard-deletes).
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isAdmin() && isActiveUser();
     }
 
     // ==================== MECHANICS COLLECTION ====================
@@ -323,9 +357,15 @@ service cloud.firestore {
       // intentionally NOT admin-only (mirrors void_reasons / categories).
       allow read: if isValidUser() && isActiveUser();
 
-      // Only admin can manage the mechanic list (Settings → Mechanics editor,
-      // gated by the manageCategories permission at the route layer).
-      allow write: if isAdmin() && isActiveUser();
+      // Shared-list grants (2026-07-24): any active user may add or edit
+      // entries; only staff/admin may flip isActive (deactivate/reactivate);
+      // delete stays admin-only (nothing in-app hard-deletes).
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isAdmin() && isActiveUser();
     }
 
     // ==================== HR COLLECTION ====================
@@ -351,9 +391,13 @@ service cloud.firestore {
       allow create: if isValidUser() && isActiveUser() &&
         request.resource.data.createdBy == request.auth.uid;
 
-      // Only admin manages the list (Settings → Motorcycle Models: rename /
-      // archive), gated by manageCategories at the route layer.
-      allow update, delete: if isAdmin() && isActiveUser();
+      // Shared-list grants (2026-07-24): any active user may rename; only
+      // staff/admin may flip isActive; delete stays admin-only.
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isAdmin() && isActiveUser();
     }
 
     // ==================== VOID REQUESTS COLLECTION ====================

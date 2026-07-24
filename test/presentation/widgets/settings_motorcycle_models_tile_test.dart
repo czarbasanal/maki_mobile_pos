@@ -17,7 +17,7 @@ void main() {
         createdAt: DateTime(2026, 7, 1),
       );
 
-  testWidgets('Administration shows a Motorcycle Models tile for admins',
+  testWidgets('Lists section shows a Motorcycle Models tile for admins',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -29,6 +29,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Motorcycle Models'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
 
     expect(find.text('Motorcycle Models'), findsOneWidget);
     expect(find.text('Models picked on job orders'), findsOneWidget);

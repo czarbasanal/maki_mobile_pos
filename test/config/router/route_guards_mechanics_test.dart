@@ -27,10 +27,14 @@ void main() {
       );
     });
 
-    test('cashier cannot access mechanics editor', () {
+    test('cashier and staff can access mechanics editor (editLists)', () {
       expect(
         RouteGuards.canAccess(RoutePaths.mechanics, user(UserRole.cashier)),
-        false,
+        true,
+      );
+      expect(
+        RouteGuards.canAccess(RoutePaths.mechanics, user(UserRole.staff)),
+        true,
       );
     });
   });

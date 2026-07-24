@@ -77,4 +77,34 @@ void main() {
       );
     });
   });
+
+  group('RolePermissions — shared lists (editLists / manageCategories)', () {
+    test('all roles hold editLists', () {
+      for (final role in UserRole.values) {
+        expect(
+          RolePermissions.hasPermission(role, Permission.editLists),
+          isTrue,
+          reason: '$role should hold editLists',
+        );
+      }
+    });
+
+    test('staff and admin hold manageCategories; cashier does not', () {
+      expect(
+        RolePermissions.hasPermission(
+            UserRole.cashier, Permission.manageCategories),
+        isFalse,
+      );
+      expect(
+        RolePermissions.hasPermission(
+            UserRole.staff, Permission.manageCategories),
+        isTrue,
+      );
+      expect(
+        RolePermissions.hasPermission(
+            UserRole.admin, Permission.manageCategories),
+        isTrue,
+      );
+    });
+  });
 }

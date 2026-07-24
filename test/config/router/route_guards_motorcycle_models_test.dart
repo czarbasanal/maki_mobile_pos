@@ -27,11 +27,16 @@ void main() {
       );
     });
 
-    test('cashier cannot access the editor', () {
+    test('cashier and staff can access models editor (editLists)', () {
       expect(
         RouteGuards.canAccess(
             RoutePaths.motorcycleModels, user(UserRole.cashier)),
-        false,
+        true,
+      );
+      expect(
+        RouteGuards.canAccess(
+            RoutePaths.motorcycleModels, user(UserRole.staff)),
+        true,
       );
     });
   });
