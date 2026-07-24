@@ -418,6 +418,7 @@ class _Receipt extends StatelessWidget {
         name: item.name,
         sub: '${item.sku} · ${item.unitPrice.toCurrency()}/pc',
         amount: net.toCurrency(),
+        mono: true,
       ));
     }
     for (var i = 0; i < sale.laborLines.length; i++) {
@@ -530,6 +531,7 @@ class _Receipt extends StatelessWidget {
     required String name,
     required String sub,
     required String amount,
+    bool mono = false,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
@@ -554,7 +556,7 @@ class _Receipt extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: muted,
-                    fontFamily: AppTextStyles.monoFontFamily,
+                    fontFamily: mono ? AppTextStyles.monoFontFamily : null,
                   ),
                 ),
               ],
