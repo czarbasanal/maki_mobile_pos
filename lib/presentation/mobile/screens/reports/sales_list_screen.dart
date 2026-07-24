@@ -54,13 +54,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           onPressed: () => context.goBackOr(RoutePaths.dashboard),
         ),
         title: const Text('Sales History'),
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.barChart3),
-            tooltip: 'Reports',
-            onPressed: () => _navigateToReports(context),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -376,10 +369,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
 
   void _navigateToSaleDetail(SaleEntity sale) {
     context.push('${RoutePaths.reports}/sale/${sale.id}');
-  }
-
-  void _navigateToReports(BuildContext context) {
-    context.push(RoutePaths.salesReport);
   }
 
   Map<DateTime, List<SaleEntity>> _groupSalesByDate(List<SaleEntity> sales) {

@@ -239,6 +239,15 @@ class DailyClosingEntity extends Equatable {
     required this.closedAt,
   });
 
+  /// Labor fees owed to mechanics from the drawer — the whole day, all
+  /// tenders, since mechanics are settled in cash from the drawer even when
+  /// the customer paid labor digitally.
+  double get forMechanics => laborRevenue;
+
+  /// Cash handed to management at close: everything counted minus the labor
+  /// owed to mechanics. The opening float is not held back.
+  double get forManagement => countedCash - laborRevenue;
+
   @override
   List<Object?> get props => [
         id,
@@ -295,12 +304,21 @@ class PostCloseActivity extends Equatable {
   /// collected after close, minus any cash expenses after close.
   final double updatedCashOnHand;
 
+  /// Labor revenue recorded after close (current minus snapshot).
+  final double laborDelta;
+
+  /// Whole-day labor revenue including post-close sales — what the
+  /// mechanics are owed out of the drawer.
+  final double currentLaborRevenue;
+
   const PostCloseActivity({
     required this.extraSales,
     required this.grossDelta,
     required this.cashSalesDelta,
     required this.cashExpensesDelta,
     required this.updatedCashOnHand,
+    this.laborDelta = 0,
+    this.currentLaborRevenue = 0,
   });
 
   factory PostCloseActivity.between({
@@ -316,15 +334,22 @@ class PostCloseActivity extends Equatable {
       cashExpensesDelta: cashExpensesDelta,
       updatedCashOnHand:
           closing.countedCash + cashSalesDelta - cashExpensesDelta,
+      laborDelta: current.laborRevenue - closing.laborRevenue,
+      currentLaborRevenue: current.laborRevenue,
     );
   }
+
+  /// [updatedCashOnHand] minus the whole-day labor owed to mechanics —
+  /// what management should receive after post-close drift.
+  double get updatedForManagement => updatedCashOnHand - currentLaborRevenue;
 
   /// True when current figures differ from the snapshot (sub-cent noise ignored).
   bool get hasChanged =>
       extraSales != 0 ||
       grossDelta.abs() > 0.005 ||
       cashSalesDelta.abs() > 0.005 ||
-      cashExpensesDelta.abs() > 0.005;
+      cashExpensesDelta.abs() > 0.005 ||
+      laborDelta.abs() > 0.005;
 
   /// True when the drift is additional sales (vs a void/refund reducing totals).
   bool get isAdditional => extraSales > 0 || grossDelta > 0.005;
@@ -336,5 +361,7 @@ class PostCloseActivity extends Equatable {
         cashSalesDelta,
         cashExpensesDelta,
         updatedCashOnHand,
+        laborDelta,
+        currentLaborRevenue,
       ];
 }

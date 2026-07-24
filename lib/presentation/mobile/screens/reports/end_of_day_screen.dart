@@ -258,6 +258,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                     _expectedCashPanel(expected),
                     const SizedBox(height: 12),
                     ClosingField(
+                      key: const ValueKey('counted-cash'),
                       label: 'Counted cash',
                       controller: _countedController,
                       enabled: !_busy,
@@ -274,9 +275,13 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                       },
                       onChanged: (_) => setState(() {}),
                     ),
-                    if (variance != null) ...[
+                    if (counted != null && variance != null) ...[
                       const SizedBox(height: 12),
                       VariancePanel(variance: variance),
+                      ClosingHandoffRows(
+                        laborFees: draft.laborRevenue,
+                        forManagement: counted - draft.laborRevenue,
+                      ),
                     ],
                   ],
                 ),
@@ -571,11 +576,15 @@ class _ClosedView extends ConsumerWidget {
                   label: 'Counted cash', value: _peso(closing.countedCash)),
               const SizedBox(height: 6),
               VariancePanel(variance: closing.variance),
+              ClosingHandoffRows(
+                laborFees: closing.forMechanics,
+                forManagement: closing.forManagement,
+              ),
             ],
           ),
           if (showActivity) ...[
             const SizedBox(height: 12),
-            _afterCloseCard(context, activity),
+            AfterCloseCard(activity: activity),
           ],
           if (closing.notes != null) ...[
             const SizedBox(height: 12),
@@ -605,55 +614,6 @@ class _ClosedView extends ConsumerWidget {
             '$closedTime. See "After close" below for the updated cash on hand.'
         : 'Activity changed after this day was closed at $closedTime. '
             'See "After close" below for the updated cash on hand.';
-  }
-
-  Widget _afterCloseCard(BuildContext context, PostCloseActivity activity) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    String signed(double v) =>
-        '${v >= 0 ? '+' : '-'}${AppConstants.currencySymbol}${v.abs().toCurrencyWithoutSymbol()}';
-
-    return ClosingSectionCard(
-      icon: LucideIcons.clock,
-      title: 'After close',
-      iconColor: AppColors.warningIcon(isDark),
-      children: [
-        ClosingKvRow(
-          label: 'Sales after close',
-          value: '${activity.extraSales >= 0 ? '+' : ''}${activity.extraSales}'
-              ' · ${signed(activity.grossDelta)}',
-        ),
-        ClosingKvRow(
-            label: 'Cash collected after close',
-            value: signed(activity.cashSalesDelta)),
-        if (activity.cashExpensesDelta.abs() > 0.005)
-          ClosingKvRow(
-              label: 'Cash expenses after close',
-              value: signed(-activity.cashExpensesDelta)),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          child: Divider(height: 1, color: AppColors.hairline(isDark)),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Updated cash on hand',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
-            ),
-            Text(
-              _peso(activity.updatedCashOnHand),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 
   String _peso(double v) =>
