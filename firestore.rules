@@ -130,8 +130,14 @@ service cloud.firestore {
     // ==================== SUPPLIERS COLLECTION ====================
     
     match /suppliers/{supplierId} {
-      // Only admin can access suppliers
-      allow read, write: if isAdmin() && isActiveUser();
+      // Staff need to READ suppliers: the Receiving flow's supplier picker
+      // streams the list for anyone with receiving access (2026-07-24 fix —
+      // read was admin-only since init, breaking staff bulk receiving).
+      allow read: if isStaffOrAdmin() && isActiveUser();
+
+      // Managing suppliers (add/edit/delete) stays admin-only, matching the
+      // in-app viewSuppliers gating.
+      allow write: if isAdmin() && isActiveUser();
     }
     
     // ==================== SALES COLLECTION ====================

@@ -397,8 +397,11 @@ describe("/products", () => {
 // /suppliers
 // ===================================================================
 describe("/suppliers", () => {
-  it("only admin can read", async () => {
-    await assertFails(as("staff").collection("suppliers").doc("s-1").get());
+  // Staff can READ suppliers — the Receiving flow's supplier picker streams
+  // the list for staff (2026-07-24 fix: read was admin-only since init, which
+  // broke "Failed to load suppliers" on the staff bulk-receiving screen).
+  it("staff and admin can read; cashier cannot", async () => {
+    await assertSucceeds(as("staff").collection("suppliers").doc("s-1").get());
     await assertFails(as("cashier").collection("suppliers").doc("s-1").get());
     await assertSucceeds(as("admin").collection("suppliers").doc("s-1").get());
   });
@@ -406,6 +409,9 @@ describe("/suppliers", () => {
   it("only admin can write", async () => {
     await assertFails(
       as("staff").collection("suppliers").doc("s-1").set({ name: "ACME" })
+    );
+    await assertFails(
+      as("cashier").collection("suppliers").doc("s-1").set({ name: "ACME" })
     );
     await assertSucceeds(
       as("admin").collection("suppliers").doc("s-1").set({ name: "ACME" })
@@ -607,14 +613,16 @@ describe("/expenses", () => {
     );
   });
 
-  it("cashier CANNOT update an expense", async () => {
-    await assertFails(
+  // Shop policy 2026-07-04 (rules 45c19d9): cashier/staff fix and remove
+  // their own entry mistakes; the activity log keeps the audit trail.
+  it("cashier can update an expense", async () => {
+    await assertSucceeds(
       as("cashier").collection("expenses").doc("e-1").update({ amount: 99 })
     );
   });
 
-  it("staff CANNOT update an expense", async () => {
-    await assertFails(
+  it("staff can update an expense", async () => {
+    await assertSucceeds(
       as("staff").collection("expenses").doc("e-1").update({ amount: 99 })
     );
   });
@@ -626,8 +634,10 @@ describe("/expenses", () => {
     await assertSucceeds(as("admin").collection("expenses").doc("e-1").delete());
   });
 
-  it("cashier CANNOT delete an expense", async () => {
-    await assertFails(as("cashier").collection("expenses").doc("e-1").delete());
+  it("cashier can delete an expense", async () => {
+    await assertSucceeds(
+      as("cashier").collection("expenses").doc("e-1").delete()
+    );
   });
 });
 
