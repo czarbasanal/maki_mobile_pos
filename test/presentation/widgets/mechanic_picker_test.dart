@@ -8,11 +8,29 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.
 MechanicEntity _mech(String id, String name) =>
     MechanicEntity(id: id, name: name, isActive: true, createdAt: DateTime(2026, 1, 1));
 
+class _FakeMechanicOps extends MechanicOperationsNotifier {
+  _FakeMechanicOps(super.ref);
+
+  MechanicEntity? createdWith;
+
+  @override
+  Future<MechanicEntity?> create({required MechanicEntity mechanic}) async {
+    createdWith = mechanic;
+    return MechanicEntity(
+      id: 'new-1',
+      name: mechanic.name,
+      isActive: true,
+      createdAt: DateTime(2026, 1, 1),
+    );
+  }
+}
+
 void main() {
   Widget host({
     String? selectedId,
     required void Function(MechanicEntity?) onChanged,
     List<MechanicEntity>? mechanics,
+    List<Override> extraOverrides = const [],
   }) {
     return ProviderScope(
       overrides: [
@@ -21,6 +39,7 @@ void main() {
             mechanics ?? [_mech('m1', 'Juan Dela Cruz'), _mech('m2', 'Pedro Santos')],
           ),
         ),
+        ...extraOverrides,
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -89,6 +108,72 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(MechanicPicker), findsOneWidget);
       expect(find.text('Mechanic'), findsOneWidget);
+    });
+  });
+
+  group('MechanicPicker — inline add', () {
+    testWidgets('menu offers Add mechanic…', (tester) async {
+      await tester.pumpWidget(host(onChanged: (_) {}));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(MechanicPicker));
+      await tester.pumpAndSettle();
+      expect(find.text('➕ Add mechanic…'), findsWidgets);
+    });
+
+    testWidgets('existing name (case-insensitive) is reused, not recreated',
+        (tester) async {
+      _FakeMechanicOps? fake;
+      MechanicEntity? picked;
+      await tester.pumpWidget(host(
+        onChanged: (m) => picked = m,
+        extraOverrides: [
+          mechanicOperationsProvider.overrideWith((ref) {
+            fake = _FakeMechanicOps(ref);
+            return fake!;
+          }),
+        ],
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(MechanicPicker));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('➕ Add mechanic…').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).last, 'juan dela cruz');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      expect(picked?.id, 'm1'); // existing Juan Dela Cruz reused
+      expect(fake?.createdWith, isNull); // no create call
+    });
+
+    testWidgets('new name is created and selected', (tester) async {
+      _FakeMechanicOps? fake;
+      MechanicEntity? picked;
+      await tester.pumpWidget(host(
+        onChanged: (m) => picked = m,
+        extraOverrides: [
+          mechanicOperationsProvider.overrideWith((ref) {
+            fake = _FakeMechanicOps(ref);
+            return fake!;
+          }),
+        ],
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(MechanicPicker));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('➕ Add mechanic…').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).last, 'Mang Kanor');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      expect(fake?.createdWith?.name, 'Mang Kanor');
+      expect(picked?.id, 'new-1');
     });
   });
 }
