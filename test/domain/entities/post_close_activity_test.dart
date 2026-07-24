@@ -7,6 +7,7 @@ DailyClosingEntity _closing({
   double cashSales = 600,
   double cashExpenses = 100,
   double countedCash = 2500,
+  double labor = 0,
 }) =>
     DailyClosingEntity(
       id: '2026-05-28',
@@ -21,6 +22,7 @@ DailyClosingEntity _closing({
       totalExpenses: cashExpenses,
       cashExpenses: cashExpenses,
       salmonReceivable: 0,
+      laborRevenue: labor,
       openingFloat: 2000,
       expectedCash: 2000 + cashSales - cashExpenses,
       countedCash: countedCash,
@@ -37,6 +39,7 @@ DailyClosingDraft _draft({
   int salesCount = 5,
   double cashSales = 600,
   double cashExpenses = 100,
+  double labor = 0,
 }) =>
     DailyClosingDraft(
       businessDate: DateTime(2026, 5, 28),
@@ -50,6 +53,7 @@ DailyClosingDraft _draft({
       totalExpenses: cashExpenses,
       cashExpenses: cashExpenses,
       salmonReceivable: 0,
+      laborRevenue: labor,
       salesCount: salesCount,
       voidedCount: 0,
     );
@@ -129,6 +133,55 @@ void main() {
         current: _draft(gross: 1000.0001, cashSales: 600.0001),
       );
       expect(a.hasChanged, false);
+    });
+  });
+
+  group('labor handoff split', () {
+    test('closing exposes forMechanics / forManagement', () {
+      final c = _closing(labor: 450, countedCash: 2500);
+      expect(c.forMechanics, 450);
+      // Management takes everything counted minus labor; float not held back.
+      expect(c.forManagement, 2050);
+    });
+
+    test('computes laborDelta and updated handoff figures', () {
+      final a = PostCloseActivity.between(
+        closing: _closing(labor: 200, cashSales: 600, countedCash: 2500),
+        current: _draft(labor: 450, cashSales: 850, salesCount: 6),
+      );
+      expect(a.laborDelta, 250);
+      expect(a.currentLaborRevenue, 450);
+      expect(a.cashSalesDelta, 250);
+      // Updated cash on hand 2750 minus whole-day labor 450.
+      expect(a.updatedForManagement, 2300);
+    });
+
+    test('cash labor-only sale after close: sale-items split is zero', () {
+      final a = PostCloseActivity.between(
+        closing: _closing(
+            gross: 1000, salesCount: 5, cashSales: 600, countedCash: 2500),
+        current:
+            _draft(gross: 1000, salesCount: 6, cashSales: 1050, labor: 450),
+      );
+      expect(a.extraSales, 1);
+      expect(a.grossDelta, 0); // labor is never in parts gross
+      expect(a.cashSalesDelta, 450);
+      expect(a.laborDelta, 450);
+      expect(a.cashSalesDelta - a.laborDelta, 0);
+      expect(a.updatedCashOnHand, 2950);
+      expect(a.updatedForManagement, 2500); // 2950 − 450 whole-day labor
+    });
+
+    test('labor-only drift flags hasChanged; digital labor goes negative', () {
+      // Digital (GCash) labor after close moves labor but not drawer cash.
+      final a = PostCloseActivity.between(
+        closing: _closing(labor: 0),
+        current: _draft(labor: 300),
+      );
+      expect(a.hasChanged, true);
+      expect(a.cashSalesDelta, 0);
+      // Sale-items sub-line (cash − labor) can go negative — shown as-is.
+      expect(a.cashSalesDelta - a.laborDelta, -300);
     });
   });
 }
