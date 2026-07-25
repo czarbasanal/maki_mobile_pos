@@ -86,6 +86,7 @@ class _ShopFeeEditorScreenState extends ConsumerState<ShopFeeEditorScreen> {
               leadingIcon: LucideIcons.circleDollarSign,
               onEdit: () => _showShopFeeDialog(context, existing: shopFee),
               onToggleActive: canManage ? () => _toggleActive(shopFee) : null,
+              onDelete: canManage ? () => _confirmDelete(shopFee) : null,
             ),
             Padding(
               padding: const EdgeInsets.only(left: 12, top: 4),
@@ -118,6 +119,27 @@ class _ShopFeeEditorScreenState extends ConsumerState<ShopFeeEditorScreen> {
     } else {
       context.showErrorSnackBar('Operation failed');
     }
+  }
+
+  Future<void> _confirmDelete(ShopFeeEntity shopFee) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete this entry?',
+      message: '"${shopFee.name}" will be permanently deleted. '
+          'Past records that used it keep the name. '
+          'Use Deactivate instead to just hide it.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      icon: LucideIcons.trash2,
+    );
+    if (!confirmed || !mounted) return;
+    final ok = await ref
+        .read(shopFeeOperationsProvider.notifier)
+        .delete(shopFee.id);
+    if (!mounted) return;
+    ok
+        ? context.showSuccessSnackBar('Deleted')
+        : context.showErrorSnackBar('Failed to delete');
   }
 
   Future<void> _showShopFeeDialog(

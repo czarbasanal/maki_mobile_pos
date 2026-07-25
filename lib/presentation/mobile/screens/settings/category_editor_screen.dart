@@ -137,6 +137,7 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
           isActive: category.isActive,
           onEdit: () => _showCategoryDialog(context, existing: category),
           onToggleActive: canManage ? () => _toggleActive(category) : null,
+          onDelete: canManage ? () => _confirmDelete(category) : null,
         );
       },
     );
@@ -158,6 +159,27 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
     } else {
       context.showErrorSnackBar('Operation failed');
     }
+  }
+
+  Future<void> _confirmDelete(CategoryEntity category) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete this entry?',
+      message: '"${category.name}" will be permanently deleted. '
+          'Past records that used it keep the name. '
+          'Use Deactivate instead to just hide it.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      icon: LucideIcons.trash2,
+    );
+    if (!confirmed || !mounted) return;
+    final ok = await ref
+        .read(categoryOperationsProvider(_kind).notifier)
+        .delete(category.id);
+    if (!mounted) return;
+    ok
+        ? context.showSuccessSnackBar('Deleted')
+        : context.showErrorSnackBar('Failed to delete');
   }
 
   Future<void> _showCategoryDialog(
