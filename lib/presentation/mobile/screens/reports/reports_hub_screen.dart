@@ -75,6 +75,13 @@ class ReportsHubScreen extends ConsumerWidget {
               onTap: () => context.pushNamed(RouteNames.priceChangeReport),
             ),
           ],
+          const SizedBox(height: 10),
+          _ReportCard(
+            icon: LucideIcons.history,
+            title: 'End-of-Day History',
+            subtitle: 'Review past closing records',
+            onTap: () => context.pushNamed(RouteNames.endOfDayHistory),
+          ),
         ],
       ),
     );
