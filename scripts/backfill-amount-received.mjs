@@ -13,6 +13,7 @@ const PROJECT_ID = 'maki-mobile-pos';
 const BATCH_SIZE = 400;
 
 const execute = process.argv.includes('--execute');
+const skipPrompt = process.argv.includes('--yes');
 initializeApp({ credential: applicationDefault(), projectId: PROJECT_ID });
 const db = getFirestore();
 
@@ -27,6 +28,7 @@ const patches = []; // { docId, data: { amountReceived: newValue } }
 console.log('\n--- scanning sales for patches ---');
 
 // Stream all sales docs
+// Deliberately patches ALL sales regardless of status (incl. voided): the bug lives in the doc's own fields and voided sales are excluded from report math — record accuracy only.
 const salesRef = db.collection('sales');
 const snapshot = await salesRef.get();
 
@@ -49,22 +51,37 @@ if (!execute) {
   process.exit(0);
 }
 
+// Zero-patch early exit
+if (patches.length === 0) {
+  console.log('No patches to apply. Exiting.');
+  process.exit(0);
+}
+
 // Execute mode: write patches in batches
 if (!EMULATOR) {
-  process.stdout.write(`\nIrreversible update to PRODUCTION. Type the project id (${PROJECT_ID}) to confirm: `);
-  const line = await new Promise((resolve) => {
-    let buf = '';
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', (chunk) => {
-      buf += chunk;
-      const nl = buf.indexOf('\n');
-      if (nl !== -1) { process.stdin.pause(); resolve(buf.slice(0, nl).trim()); }
+  if (!skipPrompt) {
+    process.stdout.write(`\nIrreversible update to PRODUCTION. Type the project id (${PROJECT_ID}) to confirm: `);
+    const line = await new Promise((resolve, reject) => {
+      let buf = '';
+      process.stdin.setEncoding('utf8');
+      process.stdin.on('data', (chunk) => {
+        buf += chunk;
+        const nl = buf.indexOf('\n');
+        if (nl !== -1) { process.stdin.pause(); resolve(buf.slice(0, nl).trim()); }
+      });
+      process.stdin.on('end', () => {
+        process.stdin.pause();
+        reject(new Error('stdin closed — use --yes for non-interactive runs'));
+      });
+      process.stdin.resume();
+    }).catch((err) => {
+      console.error(err.message);
+      process.exit(1);
     });
-    process.stdin.resume();
-  });
-  if (line !== PROJECT_ID) {
-    console.error('Confirmation mismatch — aborting. Nothing written.');
-    process.exit(1);
+    if (line !== PROJECT_ID) {
+      console.error('Confirmation mismatch — aborting. Nothing written.');
+      process.exit(1);
+    }
   }
 }
 

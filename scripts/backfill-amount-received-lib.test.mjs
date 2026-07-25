@@ -22,3 +22,7 @@ test('zero-change and non-cash docs are skipped', () => {
   assert.equal(planPatch({ paymentMethod: 'gcash', amountReceived: 320,
                            changeGiven: 680, tenders: { gcash: 320 } }), null);
 });
+
+test('docs missing amountReceived or tenders are rejected by NaN guard', () => {
+  assert.equal(planPatch({ paymentMethod: 'cash', changeGiven: 5 }), null);
+});
