@@ -16,6 +16,7 @@ import {
   saleStatusFromString,
 } from '@/domain/enums';
 import { requireDate, toDate } from './timestamps';
+import { parseFeeLines } from './feeLines';
 import { parseLaborLines } from './laborLines';
 
 export const saleConverter: FirestoreDataConverter<Sale> = {
@@ -35,6 +36,7 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       voidedByName: sale.voidedByName,
       voidReason: sale.voidReason,
       laborLines: sale.laborLines,
+      feeLines: sale.feeLines,
       mechanicId: sale.mechanicId,
       mechanicName: sale.mechanicName,
       tenders: sale.tenders,
@@ -47,6 +49,7 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       saleNumber: d.saleNumber ?? '',
       items: [], // loaded separately from the items subcollection
       laborLines: parseLaborLines(d.laborLines),
+      feeLines: parseFeeLines(d.feeLines),
       mechanicId: d.mechanicId ?? null,
       mechanicName: d.mechanicName ?? null,
       tenders: parseTenders(d.tenders),

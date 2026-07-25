@@ -14,6 +14,7 @@ export function CheckoutPage() {
   const lines = useCartStore((s) => s.lines);
   const discountType = useCartStore((s) => s.discountType);
   const laborLines = useCartStore((s) => s.laborLines);
+  const feeLines = useCartStore((s) => s.feeLines);
   const mechanicId = useCartStore((s) => s.mechanicId);
   const mechanicName = useCartStore((s) => s.mechanicName);
   const draftId = useCartStore((s) => s.draftId);
@@ -21,7 +22,7 @@ export function CheckoutPage() {
   const checkout = useCheckout();
   const navigate = useNavigate();
 
-  const grandTotal = cartGrandTotal(lines, laborLines, discountType);
+  const grandTotal = cartGrandTotal(lines, laborLines, discountType, feeLines);
   const pay = usePaymentDraft(grandTotal);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function CheckoutPage() {
         amountReceived: pay.amountReceived,
         changeGiven: pay.changeGiven,
         laborLines: describedLaborLines(laborLines),
+        feeLines,
         mechanicId,
         mechanicName,
         draftId,
@@ -66,7 +68,7 @@ export function CheckoutPage() {
         </p>
       ) : null}
 
-      <OrderSummary lines={lines} discountType={discountType} laborLines={laborLines} />
+      <OrderSummary lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
 
       <div className="space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-md">
         <PaymentSection pay={pay} grandTotal={grandTotal} />

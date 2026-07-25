@@ -17,6 +17,7 @@ import type { Draft } from '@/domain/entities';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { draftConverter, draftItemsToMaps } from '@/data/converters/draftConverter';
 import { laborLinesToMaps } from '@/data/converters/laborLines';
+import { feeLinesToMaps } from '@/data/converters/feeLines';
 
 export class FirestoreDraftRepository implements DraftRepository {
   constructor(private readonly db: Firestore) {}
@@ -43,6 +44,7 @@ export class FirestoreDraftRepository implements DraftRepository {
       name: draft.name,
       items: draftItemsToMaps(draft.items),
       laborLines: laborLinesToMaps(draft.laborLines),
+      feeLines: feeLinesToMaps(draft.feeLines),
       mechanicId: draft.mechanicId ?? null,
       mechanicName: draft.mechanicName ?? null,
       discountType: draft.discountType,
@@ -73,6 +75,7 @@ export class FirestoreDraftRepository implements DraftRepository {
     if (patch.name !== undefined) data.name = patch.name;
     if (patch.items !== undefined) data.items = draftItemsToMaps(patch.items);
     if (patch.laborLines !== undefined) data.laborLines = laborLinesToMaps(patch.laborLines);
+    if (patch.feeLines !== undefined) data.feeLines = feeLinesToMaps(patch.feeLines);
     if (patch.mechanicId !== undefined) data.mechanicId = patch.mechanicId;
     if (patch.mechanicName !== undefined) data.mechanicName = patch.mechanicName;
     if (patch.discountType !== undefined) data.discountType = patch.discountType;

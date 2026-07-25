@@ -3,6 +3,7 @@ import { DiscountType, PaymentMethod, SaleStatus } from '../enums';
 import {
   type Sale,
   saleEffectiveTenders,
+  saleFeesTotal,
   saleGrandTotal,
   saleLaborProfit,
   saleLaborRevenue,
@@ -32,6 +33,7 @@ function baseSale(overrides: Partial<Sale> = {}): Sale {
       },
     ],
     laborLines: [],
+    feeLines: [],
     mechanicId: null,
     mechanicName: null,
     discountType: DiscountType.amount,
@@ -95,5 +97,34 @@ describe('Sale money math (labor-aware)', () => {
       tenders: { cash: 120, gcash: 80 },
     });
     expect(saleEffectiveTenders(s)).toEqual({ cash: 120, gcash: 80 });
+  });
+
+  it('saleFeesTotal sums fee lines; saleGrandTotal includes them', () => {
+    const s = baseSale({
+      items: [
+        {
+          id: 'i1',
+          productId: 'p1',
+          sku: 'SKU-1',
+          name: 'Brake Pad',
+          unitPrice: 1000,
+          unitCost: 700,
+          quantity: 1,
+          discountValue: 100,
+          unit: 'pcs',
+        },
+      ],
+      laborLines: [{ id: 'l1', description: 'Tune-up', fee: 300 }],
+      feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
+    });
+    expect(saleFeesTotal(s)).toBe(150);
+    expect(saleGrandTotal(s)).toBe(1350); // 900 parts + 300 labor + 150 fees
+    expect(saleTotalProfit(s)).toBe(500); // 200 parts profit + 300 labor profit, unchanged by fees
+  });
+
+  it('legacy sale without feeLines totals as before', () => {
+    const s = baseSale();
+    expect(saleFeesTotal(s)).toBe(0);
+    expect(saleGrandTotal(s)).toBe(200); // unchanged: no labor, no fees
   });
 });

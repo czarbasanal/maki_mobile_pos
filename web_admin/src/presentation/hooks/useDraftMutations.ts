@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useDraftRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import type { Draft, LaborLine, SaleItem } from '@/domain/entities';
+import type { Draft, FeeLine, LaborLine, SaleItem } from '@/domain/entities';
 import type { DiscountType } from '@/domain/enums/DiscountType';
 
 export interface SaveDraftInput {
@@ -10,6 +10,7 @@ export interface SaveDraftInput {
   items: SaleItem[];
   discountType: DiscountType;
   laborLines: LaborLine[];
+  feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
 }
@@ -29,6 +30,7 @@ export function useSaveDraft() {
             items: input.items,
             discountType: input.discountType,
             laborLines: input.laborLines,
+            feeLines: input.feeLines,
             mechanicId: input.mechanicId,
             mechanicName: input.mechanicName,
           },
@@ -42,6 +44,7 @@ export function useSaveDraft() {
         items: input.items,
         discountType: input.discountType,
         laborLines: input.laborLines,
+        feeLines: input.feeLines,
         mechanicId: input.mechanicId,
         mechanicName: input.mechanicName,
         createdBy: actor.id,

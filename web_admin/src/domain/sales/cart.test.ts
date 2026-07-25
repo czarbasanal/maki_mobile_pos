@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cartGrandTotal, lowStockLines } from './cart';
+import { cartFeesTotal, cartGrandTotal, lowStockLines } from './cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { Product } from '@/domain/entities';
 import type { CartLine } from './cart';
@@ -33,6 +33,33 @@ describe('cartGrandTotal', () => {
         DiscountType.amount,
       ),
     ).toBe(200 + 300);
+  });
+  it('adds carried shop fees on top of parts + labor (money-correctness carry from a resumed draft)', () => {
+    expect(
+      cartGrandTotal(
+        [line({ quantity: 2 })],
+        [{ id: 'l1', description: 'Tune-up', fee: 300 }],
+        DiscountType.amount,
+        [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
+      ),
+    ).toBe(200 + 300 + 50);
+  });
+  it('defaults to no fees when feeLines is omitted (a plain non-draft cart)', () => {
+    expect(cartGrandTotal([line()], [], DiscountType.amount)).toBe(100);
+  });
+});
+
+describe('cartFeesTotal', () => {
+  it('sums fee line amounts', () => {
+    expect(
+      cartFeesTotal([
+        { id: 'f1', name: 'Convenience fee', amount: 50 },
+        { id: 'f2', name: 'Disposal fee', amount: 25 },
+      ]),
+    ).toBe(75);
+  });
+  it('returns 0 for an empty list', () => {
+    expect(cartFeesTotal([])).toBe(0);
   });
 });
 

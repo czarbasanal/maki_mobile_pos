@@ -22,6 +22,7 @@ export function DraftEditPage() {
   const lines = useDraftEditStore((s) => s.lines);
   const discountType = useDraftEditStore((s) => s.discountType);
   const laborLines = useDraftEditStore((s) => s.laborLines);
+  const feeLines = useDraftEditStore((s) => s.feeLines);
   const mechanicId = useDraftEditStore((s) => s.mechanicId);
   const mechanicName = useDraftEditStore((s) => s.mechanicName);
 
@@ -69,6 +70,7 @@ export function DraftEditPage() {
         items: lines,
         discountType,
         laborLines: describedLaborLines(laborLines),
+        feeLines,
         mechanicId,
         mechanicName,
       });

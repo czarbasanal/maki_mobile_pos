@@ -7,6 +7,7 @@ import type { Draft, SaleItem } from '@/domain/entities';
 import { discountTypeFromString } from '@/domain/enums';
 import { requireDate, toDate } from './timestamps';
 import { parseLaborLines } from './laborLines';
+import { parseFeeLines } from './feeLines';
 
 /** Serialize cart/draft items to inline Firestore maps (id included). */
 export function draftItemsToMaps(items: SaleItem[]): object[] {
@@ -57,6 +58,7 @@ export const draftConverter: FirestoreDataConverter<Draft> = {
       name: typeof d.name === 'string' && d.name ? d.name : 'Unnamed Draft',
       items: parseDraftItems(d.items),
       laborLines: parseLaborLines(d.laborLines),
+      feeLines: parseFeeLines(d.feeLines),
       mechanicId: d.mechanicId ?? null,
       mechanicName: d.mechanicName ?? null,
       discountType: discountTypeFromString(d.discountType),

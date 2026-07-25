@@ -3,6 +3,7 @@ import { describedLaborLines } from '@/domain/sales/labor';
 import { saleItemNet } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { LaborLine } from '@/domain/entities/LaborLine';
+import type { FeeLine } from '@/domain/entities/FeeLine';
 import { formatMoney } from '@/core/utils/money';
 import { CartTotals } from './CartTotals';
 
@@ -10,10 +11,12 @@ export function OrderSummary({
   lines,
   discountType,
   laborLines,
+  feeLines = [],
 }: {
   lines: CartLine[];
   discountType: DiscountType;
   laborLines: LaborLine[];
+  feeLines?: FeeLine[];
 }) {
   const isPct = discountType === DiscountType.percentage;
   const described = describedLaborLines(laborLines);
@@ -41,8 +44,14 @@ export function OrderSummary({
             <span className="font-medium text-light-text tabular-nums">{formatMoney(l.fee)}</span>
           </li>
         ))}
+        {feeLines.map((l) => (
+          <li key={l.id} className="flex items-center justify-between gap-tk-md bg-light-subtle px-tk-md py-tk-sm text-bodySmall">
+            <span className="text-light-text">{l.name || 'Shop fee'}</span>
+            <span className="font-medium text-light-text tabular-nums">{formatMoney(l.amount)}</span>
+          </li>
+        ))}
       </ul>
-      <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} />
+      <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { SaleStatus } from '@/domain/enums/SaleStatus';
 import { UserRole } from '@/domain/enums';
 import type { User } from '@/domain/entities/User';
 import type { LaborLine } from '@/domain/entities/LaborLine';
+import type { FeeLine } from '@/domain/entities/FeeLine';
 
 const actor = (over: Partial<User> = {}): User => ({
   id: 'u1',
@@ -31,6 +32,7 @@ const input = (over: Partial<CheckoutInput> = {}): CheckoutInput => ({
   amountReceived: 100,
   changeGiven: 0,
   laborLines: [],
+  feeLines: [],
   mechanicId: null,
   mechanicName: null,
   draftId: null,
@@ -70,5 +72,26 @@ describe('buildSaleInput', () => {
   it('carries draftId onto the sale (sale originated from a draft)', () => {
     const s = buildSaleInput(input({ draftId: 'd1' }), actor());
     expect(s.draftId).toBe('d1');
+  });
+  it('carries fee lines through verbatim (mirrors labor)', () => {
+    const fees: FeeLine[] = [{ id: 'f1', name: 'Convenience fee', amount: 50 }];
+    const s = buildSaleInput(input({ feeLines: fees }), actor());
+    expect(s.feeLines).toEqual(fees);
+  });
+  it('defaults to no fees for a plain non-draft sale', () => {
+    const s = buildSaleInput(input(), actor());
+    expect(s.feeLines).toEqual([]);
+  });
+  it('a draft-with-fees survives bill-out: the built sale input carries the draft-sourced fee lines', () => {
+    // Simulates the resumed-draft → checkout path: CheckoutPage sources
+    // feeLines from the cart store (hydrated by loadDraft(draft)), not a
+    // hardcoded []. This is the carried money-correctness finding.
+    const draftFeeLines: FeeLine[] = [{ id: 'f1', name: 'Shop fee', amount: 75 }];
+    const s = buildSaleInput(
+      input({ draftId: 'd1', feeLines: draftFeeLines }),
+      actor(),
+    );
+    expect(s.draftId).toBe('d1');
+    expect(s.feeLines).toEqual(draftFeeLines);
   });
 });

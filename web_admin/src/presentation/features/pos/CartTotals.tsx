@@ -1,7 +1,8 @@
-import { cartSubtotal, cartDiscount, cartGrandTotal, type CartLine } from '@/domain/sales/cart';
+import { cartSubtotal, cartDiscount, cartGrandTotal, cartFeesTotal, type CartLine } from '@/domain/sales/cart';
 import { cartLaborSubtotal } from '@/domain/sales/labor';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { LaborLine } from '@/domain/entities/LaborLine';
+import type { FeeLine } from '@/domain/entities/FeeLine';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 
@@ -9,20 +10,24 @@ export function CartTotals({
   lines,
   discountType,
   laborLines,
+  feeLines = [],
 }: {
   lines: CartLine[];
   discountType: DiscountType;
   laborLines: LaborLine[];
+  feeLines?: FeeLine[];
 }) {
   const subtotal = cartSubtotal(lines, discountType);
   const discount = cartDiscount(lines, discountType);
   const labor = cartLaborSubtotal(laborLines);
-  const total = cartGrandTotal(lines, laborLines, discountType);
+  const fees = cartFeesTotal(feeLines);
+  const total = cartGrandTotal(lines, laborLines, discountType, feeLines);
   return (
     <dl className="space-y-tk-xs border-t border-light-hairline px-tk-md py-tk-sm text-bodySmall">
       <Row label="Subtotal" value={formatMoney(subtotal)} />
       <Row label="Discount" value={`− ${formatMoney(discount)}`} />
       {labor > 0 ? <Row label="Labor" value={formatMoney(labor)} /> : null}
+      {fees > 0 ? <Row label="Shop fees" value={formatMoney(fees)} /> : null}
       <Row label="Total" value={formatMoney(total)} strong />
     </dl>
   );

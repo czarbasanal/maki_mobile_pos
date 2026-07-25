@@ -79,6 +79,10 @@ export function SalesReportPage() {
                   <dt className="text-light-text-secondary">Service / Labor</dt>
                   <dd className="tabular-nums">{formatMoney(summary.laborRevenue)}</dd>
                 </div>
+                <div className="flex justify-between">
+                  <dt className="text-light-text-secondary">Shop fees</dt>
+                  <dd className="tabular-nums">{formatMoney(summary.feesRevenue)}</dd>
+                </div>
               </dl>
             </Panel>
             <Panel title="Top products" className="lg:col-span-2">

@@ -9,6 +9,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
     saleNumber: 'S',
     items: [],
     laborLines: [],
+    feeLines: [],
     mechanicId: null,
     mechanicName: null,
     discountType: DiscountType.amount,

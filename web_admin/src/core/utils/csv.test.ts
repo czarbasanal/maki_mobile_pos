@@ -21,6 +21,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
       },
     ],
     laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
+    feeLines: [],
     mechanicId: 'm1',
     mechanicName: 'Juan Dela Cruz',
     discountType: DiscountType.amount,
@@ -49,19 +50,28 @@ describe('salesToCsv', () => {
     const lines = csv.trim().split('\n');
     expect(lines).toHaveLength(2);
     expect(lines[0]).toBe(
-      'saleNumber,date,items,paymentMethod,grossSales,discount,labor,total,cashier,mechanic',
+      'saleNumber,date,items,paymentMethod,grossSales,discount,labor,fees,total,cashier,mechanic',
     );
   });
 
   it('computes the money columns and quotes fields with commas', () => {
     const row = salesToCsv([sale()]).trim().split('\n')[1];
-    // gross 200, discount 0, labor 450, total 650
+    // gross 200, discount 0, labor 450, fees 0, total 650
     expect(row).toContain('OR-0001');
     expect(row).toContain('200');
     expect(row).toContain('450');
     expect(row).toContain('650');
     expect(row).toContain('"Cashier, A."'); // quoted because of the comma
     expect(row).toContain('Juan Dela Cruz');
+  });
+
+  it('includes the fees column and folds fees into the total', () => {
+    const withFees = sale({ feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }] });
+    const row = salesToCsv([withFees]).trim().split('\n')[1];
+    const cells = row.split(',');
+    // header: saleNumber,date,items,paymentMethod,grossSales,discount,labor,fees,total,cashier,mechanic
+    expect(cells[7]).toBe('50'); // fees
+    expect(cells[8]).toBe('700'); // total = 200 gross - 0 discount + 450 labor + 50 fees
   });
 
   it('handles empty input (header only)', () => {

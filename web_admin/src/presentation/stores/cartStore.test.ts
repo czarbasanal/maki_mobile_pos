@@ -87,6 +87,7 @@ describe('cartStore', () => {
         { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs' },
       ],
       laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
+      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
       mechanicId: 'm1',
       mechanicName: 'Juan',
       discountType: DiscountType.percentage,
@@ -106,6 +107,9 @@ describe('cartStore', () => {
     expect(s.lines).toHaveLength(1);
     expect(s.discountType).toBe(DiscountType.percentage);
     expect(s.laborLines).toEqual(draft.laborLines);
+    // Money-correctness carry: a fee-bearing draft's feeLines must survive
+    // resume, or the shop-fee money is lost when the draft is billed out.
+    expect(s.feeLines).toEqual(draft.feeLines);
     expect(s.mechanicId).toBe('m1');
     expect(s.mechanicName).toBe('Juan');
     expect(s.draftId).toBe('d1');
@@ -116,6 +120,7 @@ describe('cartStore', () => {
     expect(s.draftId).toBeNull();
     expect(s.draftName).toBeNull();
     expect(s.lines).toHaveLength(0);
+    expect(s.feeLines).toHaveLength(0);
   });
 
   it('createCartStore() instances are independent', () => {

@@ -2,6 +2,7 @@
 // `sales/{id}/items` subcollection and are loaded separately.
 
 import { DiscountType, type PaymentMethod, SaleStatus } from '../enums';
+import type { FeeLine } from './FeeLine';
 import type { LaborLine } from './LaborLine';
 import {
   saleItemDiscountAmount,
@@ -16,6 +17,7 @@ export interface Sale {
   saleNumber: string;
   items: SaleItem[];
   laborLines: LaborLine[];
+  feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
   tenders: Partial<Record<PaymentMethod, number>>;
@@ -60,8 +62,9 @@ export function saleTotalDiscount(sale: Sale): number {
 }
 
 // ==================== LABOR-AWARE MONEY MATH ====================
-// Mirrors the Dart contract: grandTotal = partsRevenue + laborRevenue, where
-// labor is full price (never discounted) and zero cost.
+// Mirrors the Dart contract: grandTotal = partsRevenue + laborRevenue +
+// feesTotal. Labor and shop fees are both full price (never discounted) and
+// zero cost; fees are a third revenue track and are NOT profit.
 
 export function salePartsSubtotal(sale: Sale): number {
   return saleSubtotal(sale);
@@ -79,8 +82,12 @@ export function saleLaborRevenue(sale: Sale): number {
   return saleLaborSubtotal(sale);
 }
 
+export function saleFeesTotal(sale: Sale): number {
+  return sale.feeLines.reduce((sum, line) => sum + line.amount, 0);
+}
+
 export function saleGrandTotal(sale: Sale): number {
-  return salePartsRevenue(sale) + saleLaborRevenue(sale);
+  return salePartsRevenue(sale) + saleLaborRevenue(sale) + saleFeesTotal(sale);
 }
 
 export function salePartsProfit(sale: Sale): number {
