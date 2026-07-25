@@ -19,6 +19,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
   const removeLine = store((s) => s.removeLine);
   const setDiscountType = store((s) => s.setDiscountType);
   const laborLines = store((s) => s.laborLines);
+  const feeLines = store((s) => s.feeLines);
 
   const [search, setSearch] = useState('');
   const isPct = discountType === DiscountType.percentage;
@@ -114,7 +115,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
             </ul>
           )}
           <LaborSection store={store} />
-          <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} />
+          <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
         </div>
       </section>
     </div>

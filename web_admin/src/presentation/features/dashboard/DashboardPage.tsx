@@ -21,7 +21,7 @@ import { formatMoney } from '@/core/utils/money';
 export function DashboardPage() {
   const { data: sales, isLoading, error } = useTodaysSales();
   const summary = useMemo(() => summarizeSales(sales ?? []), [sales]);
-  const revenue = summary.netAmount + summary.laborRevenue;
+  const revenue = summary.netAmount + summary.laborRevenue + summary.feesRevenue;
   const profit = summary.totalProfit;
   const count = summary.totalSalesCount;
   const averageOrder = count === 0 ? 0 : revenue / count;

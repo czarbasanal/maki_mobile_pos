@@ -13,6 +13,7 @@ export function PosPage() {
   const lines = useCartStore((s) => s.lines);
   const discountType = useCartStore((s) => s.discountType);
   const laborLines = useCartStore((s) => s.laborLines);
+  const feeLines = useCartStore((s) => s.feeLines);
   const mechanicId = useCartStore((s) => s.mechanicId);
   const mechanicName = useCartStore((s) => s.mechanicName);
   const draftId = useCartStore((s) => s.draftId);
@@ -69,6 +70,7 @@ export function PosPage() {
         items: lines,
         discountType,
         laborLines: describedLaborLines(laborLines),
+        feeLines,
         mechanicId,
         mechanicName,
       });

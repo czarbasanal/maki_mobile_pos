@@ -1,6 +1,7 @@
 import type { Sale } from '@/domain/entities/Sale';
 import type { User } from '@/domain/entities/User';
 import type { LaborLine } from '@/domain/entities/LaborLine';
+import type { FeeLine } from '@/domain/entities/FeeLine';
 import type { CartLine } from '@/domain/sales/cart';
 import type { DiscountType } from '@/domain/enums/DiscountType';
 import type { PaymentMethod } from '@/domain/enums/PaymentMethod';
@@ -14,6 +15,9 @@ export interface CheckoutInput {
   amountReceived: number;
   changeGiven: number;
   laborLines: LaborLine[];
+  // Carried from a resumed draft (a plain non-draft web sale passes []) — see
+  // web_admin/src/presentation/stores/cartStore.ts `feeLines`.
+  feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
   draftId: string | null;
@@ -30,7 +34,7 @@ export function buildSaleInput(
     saleNumber: '', // generated inside the repo transaction
     items: input.lines,
     laborLines: input.laborLines,
-    feeLines: [], // wired through checkout in a follow-up task
+    feeLines: input.feeLines,
     mechanicId: input.mechanicId,
     mechanicName: input.mechanicName,
     tenders: input.tenders,

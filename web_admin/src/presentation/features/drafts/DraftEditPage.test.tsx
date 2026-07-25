@@ -13,7 +13,7 @@ import type { Draft, Product, Mechanic } from '@/domain/entities';
 import type { ReactNode } from 'react';
 
 const draft = (o: Partial<Draft> = {}): Draft => ({
-  id: 'd1', name: 'Mr Cruz — Mio', items: [], laborLines: [], mechanicId: null, mechanicName: null,
+  id: 'd1', name: 'Mr Cruz — Mio', items: [], laborLines: [], feeLines: [], mechanicId: null, mechanicName: null,
   discountType: DiscountType.amount, createdBy: 'u1', createdByName: 'C', createdAt: new Date(),
   updatedAt: null, updatedBy: null, isConverted: false, convertedToSaleId: null, convertedAt: null, notes: null, ...o,
 });
@@ -141,5 +141,26 @@ describe('DraftEditPage', () => {
 
     // The live POS cart must remain untouched by editing/saving a draft.
     expect(useCartStore.getState().lines).toHaveLength(0);
+  });
+
+  it('preserves a fee-bearing draft\'s shop fees when saved (money must not be dropped on edit)', async () => {
+    useCartStore.getState().clear();
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
+    });
+    const update = vi.fn().mockResolvedValue(undefined);
+    const feeLines = [{ id: 'f1', name: 'Convenience fee', amount: 50 }];
+
+    harness({
+      getById: vi.fn().mockResolvedValue(draft({ id: 'd1', name: 'Draft One', feeLines })),
+      update,
+    });
+
+    await screen.findByDisplayValue('Draft One');
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    const [, patch] = update.mock.calls[0] as [string, { feeLines: unknown }];
+    expect(patch.feeLines).toEqual(feeLines);
   });
 });

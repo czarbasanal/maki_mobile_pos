@@ -17,6 +17,7 @@ describe('draftConverter.fromFirestore', () => {
           { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs' },
         ],
         laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
+        feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
         mechanicId: 'm1',
         mechanicName: 'Juan',
         discountType: 'percentage',
@@ -33,6 +34,7 @@ describe('draftConverter.fromFirestore', () => {
     expect(d.items).toHaveLength(1);
     expect(d.items[0]).toMatchObject({ id: 'i1', productId: 'p1', quantity: 2 });
     expect(d.laborLines).toEqual([{ id: 'l1', description: 'Tune-up', fee: 500 }]);
+    expect(d.feeLines).toEqual([{ id: 'f1', name: 'Convenience fee', amount: 50 }]);
     expect(d.mechanicId).toBe('m1');
     expect(d.mechanicName).toBe('Juan');
     expect(d.discountType).toBe(DiscountType.percentage);
@@ -47,5 +49,16 @@ describe('draftConverter.fromFirestore', () => {
     expect(d.items).toEqual([]);
     expect(d.mechanicId).toBeNull();
     expect(d.isConverted).toBe(false);
+  });
+
+  it('defaults feeLines to [] for a legacy draft written before shop fees existed', () => {
+    const d = draftConverter.fromFirestore(
+      snap('d3', {
+        name: 'Legacy draft',
+        laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
+        createdAt: createdTs,
+      }),
+    );
+    expect(d.feeLines).toEqual([]);
   });
 });

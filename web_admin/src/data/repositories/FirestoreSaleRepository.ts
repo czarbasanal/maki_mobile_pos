@@ -164,6 +164,7 @@ export class FirestoreSaleRepository implements SaleRepository {
         cashierId: input.cashierId,
         cashierName: input.cashierName,
         laborLines: input.laborLines,
+        feeLines: input.feeLines,
         mechanicId: input.mechanicId,
         mechanicName: input.mechanicName,
         draftId: input.draftId,

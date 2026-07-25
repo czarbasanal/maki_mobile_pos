@@ -61,7 +61,7 @@ export function DraftsPage() {
           <ul className="divide-y divide-light-hairline">
             {open.map((d) => {
               const count = d.items.reduce((s, i) => s + i.quantity, 0);
-              const total = cartGrandTotal(d.items, d.laborLines, d.discountType);
+              const total = cartGrandTotal(d.items, d.laborLines, d.discountType, d.feeLines);
               return (
                 <li key={d.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm">
                   <div className="min-w-0">

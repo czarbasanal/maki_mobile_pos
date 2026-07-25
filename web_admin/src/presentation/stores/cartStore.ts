@@ -1,6 +1,7 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import type { Draft, Product } from '@/domain/entities';
 import type { LaborLine } from '@/domain/entities/LaborLine';
+import type { FeeLine } from '@/domain/entities/FeeLine';
 import type { CartLine } from '@/domain/sales/cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
 
@@ -8,6 +9,9 @@ interface CartState {
   lines: CartLine[];
   discountType: DiscountType;
   laborLines: LaborLine[];
+  // Shop fees carried from a resumed draft (no web POS entry UI yet — this
+  // exists so a fee-bearing mobile JO doesn't lose its fee money on bill-out).
+  feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
   draftId: string | null;
@@ -30,6 +34,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     lines: [],
     discountType: DiscountType.amount,
     laborLines: [],
+    feeLines: [],
     mechanicId: null,
     mechanicName: null,
     draftId: null,
@@ -96,6 +101,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         lines: draft.items,
         discountType: draft.discountType,
         laborLines: draft.laborLines,
+        feeLines: draft.feeLines,
         mechanicId: draft.mechanicId,
         mechanicName: draft.mechanicName,
         draftId: draft.id,
@@ -106,6 +112,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         lines: [],
         discountType: DiscountType.amount,
         laborLines: [],
+        feeLines: [],
         mechanicId: null,
         mechanicName: null,
         draftId: null,

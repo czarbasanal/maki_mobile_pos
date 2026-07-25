@@ -7,7 +7,8 @@ import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { CheckoutPage } from './CheckoutPage';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import type { Product } from '@/domain/entities';
+import type { Draft, Product } from '@/domain/entities';
+import { DiscountType } from '@/domain/enums/DiscountType';
 
 const product = (o: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, ...o } as Product);
@@ -55,5 +56,44 @@ describe('CheckoutPage', () => {
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByText(/POS PAGE S-00100/)).toBeInTheDocument());
     expect(useCartStore.getState().lines).toHaveLength(0);
+  });
+
+  it('carries a resumed draft\'s shop fees through to the created sale (money must not be lost on bill-out)', async () => {
+    useCartStore.getState().clear();
+    useAuthStore.setState({ user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never });
+
+    const draft: Draft = {
+      id: 'd1',
+      name: 'Mr Cruz bike',
+      items: [
+        { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 1, discountValue: 0, unit: 'pcs' },
+      ],
+      laborLines: [],
+      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
+      mechanicId: null,
+      mechanicName: null,
+      discountType: DiscountType.amount,
+      createdBy: 'u1',
+      createdByName: 'Cashier',
+      createdAt: new Date('2026-02-01'),
+      updatedAt: null,
+      updatedBy: null,
+      isConverted: false,
+      convertedToSaleId: null,
+      convertedAt: null,
+      notes: null,
+    };
+    useCartStore.getState().loadDraft(draft);
+
+    const create = vi.fn().mockResolvedValue({ id: 's1', saleNumber: 'S-00101' });
+    harness({ create });
+
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /complete sale/i }));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+
+    const [saleInput] = create.mock.calls[0] as [{ feeLines: unknown; draftId: string | null }];
+    expect(saleInput.draftId).toBe('d1');
+    expect(saleInput.feeLines).toEqual(draft.feeLines);
   });
 });

@@ -2,12 +2,14 @@
 import type { DiscountType } from '../enums';
 import type { SaleItem } from './SaleItem';
 import type { LaborLine } from './LaborLine';
+import type { FeeLine } from './FeeLine';
 
 export interface Draft {
   id: string;
   name: string;
   items: SaleItem[];
   laborLines: LaborLine[];
+  feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
   discountType: DiscountType;

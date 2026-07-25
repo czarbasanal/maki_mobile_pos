@@ -2,6 +2,7 @@
 
 import {
   type Sale,
+  saleFeesTotal,
   saleGrandTotal,
   saleLaborSubtotal,
   salePartsSubtotal,
@@ -16,6 +17,7 @@ const SALE_HEADERS = [
   'grossSales',
   'discount',
   'labor',
+  'fees',
   'total',
   'cashier',
   'mechanic',
@@ -38,6 +40,7 @@ export function salesToCsv(sales: Sale[]): string {
       cell(salePartsSubtotal(s)),
       cell(saleTotalDiscount(s)),
       cell(saleLaborSubtotal(s)),
+      cell(saleFeesTotal(s)),
       cell(saleGrandTotal(s)),
       cell(s.cashierName),
       cell(s.mechanicName ?? ''),

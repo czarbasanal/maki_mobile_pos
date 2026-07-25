@@ -10,6 +10,7 @@ import { Dialog } from '@/presentation/components/common/Dialog';
 import { Receipt } from './Receipt';
 import {
   saleEffectiveTenders,
+  saleFeesTotal,
   saleGrandTotal,
   saleIsPercentageDiscount,
   saleItemNet,
@@ -147,6 +148,14 @@ export function SaleDetailPage() {
                 <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(l.fee)}</td>
               </tr>
             ))}
+            {sale.feeLines.map((f) => (
+              <tr key={f.id} className="bg-light-subtle">
+                <td className="px-tk-md py-tk-sm" colSpan={3}>
+                  <span className="text-light-text">🔧 {f.name || 'Shop fee'}</span>
+                </td>
+                <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(f.amount)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </section>
@@ -155,6 +164,9 @@ export function SaleDetailPage() {
         <Row label="Gross Sales" value={formatMoney(salePartsSubtotal(sale))} />
         <Row label="Discount" value={`-${formatMoney(saleTotalDiscount(sale))}`} />
         <Row label="Labor" value={formatMoney(saleLaborSubtotal(sale))} />
+        {sale.feeLines.length > 0 ? (
+          <Row label="Shop fees" value={formatMoney(saleFeesTotal(sale))} />
+        ) : null}
         <div className="border-t border-light-hairline pt-tk-xs">
           <Row label="Total" value={formatMoney(saleGrandTotal(sale))} bold />
         </div>

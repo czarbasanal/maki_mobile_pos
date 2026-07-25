@@ -1,5 +1,6 @@
 import {
   saleEffectiveTenders,
+  saleFeesTotal,
   saleGrandTotal,
   saleIsPercentageDiscount,
   saleIsVoided,
@@ -55,12 +56,21 @@ export function Receipt({ sale }: { sale: Sale }) {
           <span className="tabular-nums">{formatMoney(l.fee)}</span>
         </div>
       ))}
+      {sale.feeLines.map((f) => (
+        <div key={f.id} className="flex justify-between gap-tk-sm">
+          <span className="min-w-0 truncate">🔧 {f.name || 'Shop fee'}</span>
+          <span className="tabular-nums">{formatMoney(f.amount)}</span>
+        </div>
+      ))}
 
       <Divider />
 
       <Line label="Subtotal" value={formatMoney(salePartsSubtotal(sale))} />
       <Line label="Discount" value={`-${formatMoney(saleTotalDiscount(sale))}`} />
       <Line label="Labor" value={formatMoney(saleLaborSubtotal(sale))} />
+      {sale.feeLines.length > 0 ? (
+        <Line label="Shop fees" value={formatMoney(saleFeesTotal(sale))} />
+      ) : null}
       <Line label="TOTAL" value={formatMoney(saleGrandTotal(sale))} bold />
 
       <Divider />
