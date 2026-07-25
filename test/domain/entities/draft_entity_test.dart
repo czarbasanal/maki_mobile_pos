@@ -99,6 +99,20 @@ void main() {
       expect(converted.canCheckout, false);
     });
 
+    test('canCheckout false when converted even with billable content', () {
+      // Policy change: canCheckout now gates on hasBillableContent (items OR
+      // labor OR fees), not items alone — but a converted draft must still
+      // be blocked regardless of what content it carries.
+      final laborOnly = draft.clearItems().addLaborLine(
+            const LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300),
+          );
+      expect(laborOnly.hasBillableContent, true);
+      expect(laborOnly.canCheckout, true);
+
+      final converted = laborOnly.markAsConverted('sale-1');
+      expect(converted.canCheckout, false);
+    });
+
     test('markAsConverted sets conversion info', () {
       final converted = draft.markAsConverted('sale-1');
       expect(converted.isConverted, true);
@@ -345,6 +359,48 @@ void main() {
         ],
       );
       expect(withFees == draft, false);
+    });
+  });
+
+  group('DraftEntity hasBillableContent', () {
+    DraftEntity base() => DraftEntity(
+          id: 'draft-1',
+          name: 'Table 5',
+          items: const [],
+          createdBy: 'cashier-1',
+          createdByName: 'John Doe',
+          createdAt: DateTime(2026, 7, 1),
+        );
+
+    test('items-only is billable', () {
+      final d = base().addItem(const SaleItemEntity(
+        id: 'item-1',
+        productId: 'prod-1',
+        sku: 'SKU-001',
+        name: 'Product 1',
+        unitPrice: 100.0,
+        unitCost: 60.0,
+        quantity: 1,
+      ));
+      expect(d.hasBillableContent, true);
+    });
+
+    test('labor-only is billable (policy change)', () {
+      final d = base().addLaborLine(
+        const LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300),
+      );
+      expect(d.hasBillableContent, true);
+    });
+
+    test('fees-only is billable', () {
+      final d = base().addFeeLine(
+        const FeeLineEntity(id: 'fee-1', name: 'Air', amount: 10),
+      );
+      expect(d.hasBillableContent, true);
+    });
+
+    test('truly empty (no items, no labor, no fees) is not billable', () {
+      expect(base().hasBillableContent, false);
     });
   });
 

@@ -165,8 +165,14 @@ class DraftEntity extends Equatable {
   /// Whether this draft is empty
   bool get isEmpty => items.isEmpty;
 
-  /// Whether this draft can be checked out
-  bool get canCheckout => items.isNotEmpty && !isConverted;
+  /// Whether this draft has any billable content — items, labor, or shop
+  /// fees. Only a truly empty ticket (nothing at all) has none.
+  bool get hasBillableContent =>
+      items.isNotEmpty || laborLines.isNotEmpty || feeLines.isNotEmpty;
+
+  /// Whether this draft can be checked out. Any billable content (items,
+  /// labor, or shop fees) is enough — labor alone can bill out.
+  bool get canCheckout => hasBillableContent && !isConverted;
 
   /// Whether this draft can be deleted
   /// Drafts can always be deleted, but UI may warn if not converted

@@ -249,5 +249,48 @@ void main() {
       );
       expect(withFees == sale, false);
     });
+
+    test('isValid for labor-only sale with valid payment', () {
+      // Labor-only sale: no items, no fees, one labor line
+      final laborOnly = SaleEntity(
+        id: 'sale-labor-1',
+        saleNumber: 'SALE-20250205-002',
+        items: const [],
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
+        ],
+        feeLines: const [],
+        discountType: DiscountType.amount,
+        paymentMethod: PaymentMethod.cash,
+        amountReceived: 300.0,
+        changeGiven: 0.0,
+        cashierId: 'cashier-1',
+        cashierName: 'John Doe',
+        createdAt: DateTime.now(),
+      );
+
+      // Should be valid: has labor, amountReceived >= grandTotal, changeGiven >= 0
+      expect(laborOnly.isValid, true);
+    });
+
+    test('isValid returns false for all-empty sale', () {
+      // Sale with no items, no labor, no fees — violates billable policy
+      final empty = SaleEntity(
+        id: 'sale-empty',
+        saleNumber: 'SALE-20250205-003',
+        items: const [],
+        laborLines: const [],
+        feeLines: const [],
+        discountType: DiscountType.amount,
+        paymentMethod: PaymentMethod.cash,
+        amountReceived: 0.0,
+        changeGiven: 0.0,
+        cashierId: 'cashier-1',
+        cashierName: 'John Doe',
+        createdAt: DateTime.now(),
+      );
+
+      expect(empty.isValid, false);
+    });
   });
 }

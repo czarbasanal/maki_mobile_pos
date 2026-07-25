@@ -221,9 +221,10 @@ class SaleEntity extends Equatable {
 
   // ==================== VALIDATION ====================
 
-  /// Validates that the sale data is consistent
+  /// Validates that the sale data is consistent and follows the billable policy
+  /// (items OR labor OR fees must be present).
   bool get isValid {
-    if (items.isEmpty) return false;
+    if (items.isEmpty && laborLines.isEmpty && feeLines.isEmpty) return false;
     if (amountReceived < grandTotal) return false;
     if (changeGiven < 0) return false;
     return true;

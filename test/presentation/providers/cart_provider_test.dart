@@ -704,7 +704,7 @@ void main() {
       expect(state.grandTotal, 180);
     });
 
-    test('canCheckout: fee-only true, labor-only false, empty false', () {
+    test('canCheckout: fee-only true, labor-only true, empty false', () {
       // Fee-only: no items, no labor, one fee line -> can check out (once
       // the (default cash) payment covers the fee total).
       cartNotifier.addFeeLine(const FeeLineEntity(
@@ -717,13 +717,15 @@ void main() {
       expect(state.canCheckout, true);
 
       // Labor-only: remove the fee, add a labor line with a mechanic
-      // assigned (so laborValid holds) -> still cannot check out.
+      // assigned (so laborValid holds) -> policy change — labor alone CAN
+      // check out now (items OR labor OR fees).
       cartNotifier.removeFeeLine('fee-1');
       cartNotifier.addLaborLine(description: 'Tune-up', fee: 100);
       cartNotifier.setMechanic('mech-1', 'Juan');
+      cartNotifier.setAmountReceived(100);
       state = container.read(cartProvider);
       expect(state.laborValid, true);
-      expect(state.canCheckout, false);
+      expect(state.canCheckout, true);
 
       // Empty: clear everything -> cannot check out.
       cartNotifier.reset();
@@ -744,6 +746,20 @@ void main() {
       expect(state.isNotEmpty, false); // no items
       expect(state.hasBillableContent, true); // but has a fee
       expect(state.canSaveAsDraft, true);
+    });
+
+    test('hasBillableContent / canSaveAsDraft: labor-only cart is billable',
+        () {
+      // No items, no fees, one labor line with a mechanic assigned -> labor
+      // alone now counts as billable content (policy change).
+      cartNotifier.addLaborLine(description: 'Tune-up', fee: 100);
+      cartNotifier.setMechanic('mech-1', 'Juan');
+
+      final state = container.read(cartProvider);
+      expect(state.isNotEmpty, false); // no items
+      expect(state.hasBillableContent, true); // but has labor
+      expect(state.canSaveAsDraft, true);
+      expect(state.canProceedToCheckout, true);
     });
 
     test('addFeeLine, updateFeeLine, removeFeeLine mutate feeLines', () {

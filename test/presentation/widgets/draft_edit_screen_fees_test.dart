@@ -216,4 +216,85 @@ void main() {
 
     expect(find.text('Register in use'), findsOneWidget);
   });
+
+  // Policy change: items OR labor OR fees — labor alone is now billable.
+  // The reported bug was a stale items-only gate on the Bill out button that
+  // left a labor+fee ticket (no parts) permanently disabled.
+  testWidgets(
+      'Bill out is enabled for a labor+fee ticket with no items',
+      (tester) async {
+    final draft = DraftEntity(
+      id: 'draft-1',
+      name: 'Plate ABC-123',
+      items: const [],
+      laborLines: const [
+        LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
+      ],
+      feeLines: const [
+        FeeLineEntity(id: 'fee-1', name: 'Air', amount: 20.0),
+      ],
+      mechanicId: 'mech-1',
+      mechanicName: 'Juan Dela Cruz',
+      motorcycleModel: 'Nmax',
+      createdBy: 'cashier-1',
+      createdByName: 'John Doe',
+      createdAt: DateTime(2026, 5, 30),
+    );
+
+    await pump(tester, draft);
+
+    final button = tester.widget<FilledButton>(find.ancestor(
+      of: find.text('Bill out'),
+      matching: find.byWidgetPredicate((w) => w is FilledButton),
+    ));
+    expect(button.onPressed, isNotNull);
+  });
+
+  testWidgets('Bill out is disabled for a truly empty ticket', (tester) async {
+    final draft = DraftEntity(
+      id: 'draft-1',
+      name: 'Plate ABC-123',
+      items: const [],
+      motorcycleModel: 'Nmax',
+      createdBy: 'cashier-1',
+      createdByName: 'John Doe',
+      createdAt: DateTime(2026, 5, 30),
+    );
+
+    await pump(tester, draft);
+
+    final button = tester.widget<FilledButton>(find.ancestor(
+      of: find.text('Bill out'),
+      matching: find.byWidgetPredicate((w) => w is FilledButton),
+    ));
+    expect(button.onPressed, isNull);
+  });
+
+  // Policy change: items OR labor OR fees — labor alone is now billable.
+  // The "register in use" clobber-warning must check hasBillableContent,
+  // not isNotEmpty, to catch labor-only carts just as it does fee-only ones.
+  testWidgets(
+      'labor-only register cart still triggers the clobber warning',
+      (tester) async {
+    final (container, _) = await pump(
+      tester,
+      buildDraft(motorcycleModel: 'Nmax'),
+    );
+
+    // Register has NO items and NO fees but a labor line — hasBillableContent
+    // is true, isNotEmpty is false.
+    container.read(cartProvider.notifier).addLaborLine(
+          description: 'Tune-up',
+          fee: 300.0,
+        );
+    expect(container.read(cartProvider).isNotEmpty, isFalse);
+    expect(container.read(cartProvider).hasBillableContent, isTrue);
+    expect(container.read(cartProvider).items, isEmpty);
+    expect(container.read(cartProvider).feeLines, isEmpty);
+
+    await tester.tap(find.text('Bill out'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Register in use'), findsOneWidget);
+  });
 }

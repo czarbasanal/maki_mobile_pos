@@ -648,7 +648,8 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: draft.items.isEmpty ? null : () => _billOut(draft),
+                onPressed:
+                    draft.hasBillableContent ? () => _billOut(draft) : null,
                 icon: const Icon(LucideIcons.shoppingCart),
                 label: const Text('Bill out'),
               ),
