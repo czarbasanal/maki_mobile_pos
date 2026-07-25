@@ -30,3 +30,4 @@ export 'motorcycle_model_provider.dart';
 export 'void_request_provider.dart';
 export 'session_reset_provider.dart';
 export 'account_deactivation_provider.dart';
+export 'unsettled_day_provider.dart';

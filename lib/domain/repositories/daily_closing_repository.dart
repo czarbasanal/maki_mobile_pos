@@ -6,6 +6,10 @@ abstract class DailyClosingRepository {
   /// has not been closed yet.
   Future<DailyClosingEntity?> getClosing(DateTime date);
 
+  /// Returns the most recently closed business day (by `businessDate`), or
+  /// null if no day has ever been closed.
+  Future<DailyClosingEntity?> latestClosing();
+
   /// Persists a closing. The document id is the business date (`YYYY-MM-DD`).
   Future<DailyClosingEntity> saveClosing(DailyClosingEntity closing);
 

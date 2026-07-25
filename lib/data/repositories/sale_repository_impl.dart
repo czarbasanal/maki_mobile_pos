@@ -216,6 +216,29 @@ class SaleRepositoryImpl implements SaleRepository {
   }
 
   @override
+  Future<bool> hasCompletedSaleOn(DateTime date) async {
+    try {
+      final start = DateTime(date.year, date.month, date.day);
+      final end = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+      final snapshot = await _salesRef
+          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(end))
+          .where('status', isEqualTo: SaleStatus.completed.value)
+          .limit(1)
+          .get();
+
+      return snapshot.docs.isNotEmpty;
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to check for sales on date: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<List<SaleEntity>> getRecentSales({
     int limit = 20,
     String? startAfterSaleId,

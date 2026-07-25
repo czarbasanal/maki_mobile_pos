@@ -43,6 +43,24 @@ class DailyClosingRepositoryImpl implements DailyClosingRepository {
   }
 
   @override
+  Future<DailyClosingEntity?> latestClosing() async {
+    try {
+      final snapshot = await _ref
+          .orderBy('businessDate', descending: true)
+          .limit(1)
+          .get();
+      if (snapshot.docs.isEmpty) return null;
+      return DailyClosingModel.fromFirestore(snapshot.docs.first).toEntity();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to load latest closing: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<DailyClosingEntity> saveClosing(DailyClosingEntity closing) async {
     try {
       debugPrint('DailyClosingRepository: saving closing ${closing.id}');

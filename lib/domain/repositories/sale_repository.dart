@@ -73,6 +73,14 @@ abstract class SaleRepository {
     String? cashierId,
   });
 
+  /// Cheaply checks whether at least one completed sale exists on [date].
+  ///
+  /// A `limit(1)` existence probe — used by the unsettled-day detector to
+  /// tell "nothing happened this day" (skip) apart from "sales happened but
+  /// the day was never closed" (flag), without paying for a full day's
+  /// worth of sales + items.
+  Future<bool> hasCompletedSaleOn(DateTime date);
+
   /// Retrieves recent sales with pagination.
   ///
   /// [limit] - Number of sales to retrieve
