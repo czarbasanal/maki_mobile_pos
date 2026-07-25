@@ -214,10 +214,11 @@ class CartState extends Equatable {
     return 0;
   }
 
-  /// Whether the cart has any billable content — items or shop fees. Labor
-  /// alone does not count: a labor-only cart must still be blocked from
-  /// checkout (labor belongs to a mechanic, not a stand-alone sale).
-  bool get hasBillableContent => items.isNotEmpty || feeLines.isNotEmpty;
+  /// Whether the cart has any billable content — items, labor, or shop
+  /// fees. Only a truly empty cart (nothing at all) is blocked from
+  /// checkout; labor alone can bill out (policy change).
+  bool get hasBillableContent =>
+      items.isNotEmpty || laborLines.isNotEmpty || feeLines.isNotEmpty;
 
   /// Whether the selected payment is valid for checkout.
   bool get isPaymentValid {
@@ -261,10 +262,8 @@ class CartState extends Equatable {
     return null;
   }
 
-  /// Whether cart can be checked out. Fee-only carts (no items, one or more
-  /// fee lines) CAN check out; labor-only carts (no items, no fees, only
-  /// labor lines) still CANNOT — labor belongs to a mechanic, not a
-  /// stand-alone sale.
+  /// Whether cart can be checked out. Any billable content (items, labor,
+  /// or shop fees) is enough — only a truly empty cart is blocked.
   bool get canCheckout =>
       hasBillableContent && isPaymentValid && laborValid && !isProcessing;
 

@@ -210,8 +210,11 @@ void main() {
     // "truly-empty sale still throws" is already covered by 'should fail
     // when cart is empty' above (items: [], feeLines: []).
 
-    test('a labor-only sale (no items, no fee lines, labor only) is still '
-        'rejected', () async {
+    test(
+        'a labor-only sale (no items, no fee lines, labor only) passes '
+        'validation', () async {
+      // Policy change: labor alone is billable — items OR labor OR fees.
+      // grandTotal = laborRevenue(450) only; tenders must reconcile.
       final sale = createTestSale(items: [], amountReceived: 450).copyWith(
         laborLines: const [
           LaborLineEntity(id: 'lab-1', description: 'Engine tune-up', fee: 450),
@@ -221,10 +224,21 @@ void main() {
         tenders: const {PaymentMethod.cash: 450},
       );
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
+      when(() => mockSaleRepo.generateSaleNumber(any()))
+          .thenAnswer((_) async => 'SALE-004');
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
+          .thenAnswer((inv) async =>
+              (inv.positionalArguments.first as SaleEntity)
+                  .copyWith(id: 'sale-400', saleNumber: 'SALE-004'));
 
-      expect(result.success, false);
-      expect(result.errorMessage, contains('empty'));
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-labor');
+
+      expect(result.success, true, reason: result.errorMessage);
+      expect(result.sale!.laborRevenue, 450);
+      expect(result.sale!.grandTotal, 450);
+      verifyNever(() => mockProductRepo.getProductById(any()));
     });
 
     test('should fail when the tender breakdown does not reconcile', () async {

@@ -143,11 +143,10 @@ class ProcessSaleUseCase {
 
   /// Validates the sale before processing.
   void _validateSale(SaleEntity sale) {
-    // Fee-only sales (no items, one or more fee lines) are billable and must
-    // not dead-end here — only reject when there is truly nothing to bill.
-    // Labor alone does NOT count: a labor-only ticket is still rejected
-    // (mirrors CartState.hasBillableContent, which also excludes laborLines).
-    if (sale.items.isEmpty && sale.feeLines.isEmpty) {
+    // Items, labor, or shop fees — any one is enough to bill out. Only
+    // reject when there is truly nothing to bill (mirrors
+    // CartState.hasBillableContent).
+    if (sale.items.isEmpty && sale.laborLines.isEmpty && sale.feeLines.isEmpty) {
       throw const EmptyCartException();
     }
 

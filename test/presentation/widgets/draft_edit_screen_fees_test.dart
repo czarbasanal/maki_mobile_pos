@@ -216,4 +216,57 @@ void main() {
 
     expect(find.text('Register in use'), findsOneWidget);
   });
+
+  // Policy change: items OR labor OR fees — labor alone is now billable.
+  // The reported bug was a stale items-only gate on the Bill out button that
+  // left a labor+fee ticket (no parts) permanently disabled.
+  testWidgets(
+      'Bill out is enabled for a labor+fee ticket with no items',
+      (tester) async {
+    final draft = DraftEntity(
+      id: 'draft-1',
+      name: 'Plate ABC-123',
+      items: const [],
+      laborLines: const [
+        LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
+      ],
+      feeLines: const [
+        FeeLineEntity(id: 'fee-1', name: 'Air', amount: 20.0),
+      ],
+      mechanicId: 'mech-1',
+      mechanicName: 'Juan Dela Cruz',
+      motorcycleModel: 'Nmax',
+      createdBy: 'cashier-1',
+      createdByName: 'John Doe',
+      createdAt: DateTime(2026, 5, 30),
+    );
+
+    await pump(tester, draft);
+
+    final button = tester.widget<FilledButton>(find.ancestor(
+      of: find.text('Bill out'),
+      matching: find.byWidgetPredicate((w) => w is FilledButton),
+    ));
+    expect(button.onPressed, isNotNull);
+  });
+
+  testWidgets('Bill out is disabled for a truly empty ticket', (tester) async {
+    final draft = DraftEntity(
+      id: 'draft-1',
+      name: 'Plate ABC-123',
+      items: const [],
+      motorcycleModel: 'Nmax',
+      createdBy: 'cashier-1',
+      createdByName: 'John Doe',
+      createdAt: DateTime(2026, 5, 30),
+    );
+
+    await pump(tester, draft);
+
+    final button = tester.widget<FilledButton>(find.ancestor(
+      of: find.text('Bill out'),
+      matching: find.byWidgetPredicate((w) => w is FilledButton),
+    ));
+    expect(button.onPressed, isNull);
+  });
 }
