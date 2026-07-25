@@ -59,9 +59,10 @@ class _MechanicPickerState extends ConsumerState<MechanicPicker> {
         return AppDropdown<String>(
           key: ValueKey('$_rev|${widget.selectedMechanicId}'),
           initialValue: hasSelected ? widget.selectedMechanicId : null,
+          compact: true,
           decoration: const InputDecoration(
             labelText: 'Mechanic',
-            prefixIcon: Icon(LucideIcons.wrench),
+            prefixIcon: Icon(LucideIcons.wrench, size: 18),
           ),
           items: [
             DropdownMenuItem<String>(

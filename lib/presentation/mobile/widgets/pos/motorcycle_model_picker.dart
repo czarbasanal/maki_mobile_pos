@@ -46,9 +46,10 @@ class _MotorcycleModelPickerState extends ConsumerState<MotorcycleModelPicker> {
         return AppDropdown<String>(
           key: ValueKey('$_rev|${widget.selectedModel}'),
           initialValue: widget.selectedModel,
+          compact: true,
           decoration: const InputDecoration(
             labelText: 'Motorcycle model',
-            prefixIcon: Icon(LucideIcons.bike),
+            prefixIcon: Icon(LucideIcons.bike, size: 18),
           ),
           items: [
             const DropdownMenuItem<String>(value: null, child: Text('— None —')),

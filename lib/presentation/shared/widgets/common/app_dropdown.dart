@@ -27,6 +27,7 @@ class AppDropdown<T> extends StatelessWidget {
     this.menuMaxWidth = 360,
     this.menuMaxHeight = 320,
     this.menuHorizontalMargin = 16,
+    this.compact = false,
   });
 
   /// Initial selected value. May be null for "no selection".
@@ -58,6 +59,12 @@ class AppDropdown<T> extends StatelessWidget {
   /// the popup's left/right edges. Default 16.
   final double menuHorizontalMargin;
 
+  /// Dense variant for space-tight hosts (mechanic / motorcycle-model
+  /// pickers): isDense + tighter padding (~40px closed height) and 13px
+  /// text for the closed value and menu items. Caller-set decoration
+  /// values and explicit item text styles always win.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     return FormField<T>(
@@ -86,6 +93,7 @@ class AppDropdown<T> extends StatelessWidget {
               menuMaxHeight: menuMaxHeight,
               enabled: onChanged != null,
               onSelect: handleSelect,
+              compact: compact,
             );
           },
         );
@@ -103,6 +111,7 @@ class _AppDropdownButton<T> extends StatefulWidget {
     required this.menuMaxHeight,
     required this.enabled,
     required this.onSelect,
+    required this.compact,
   });
 
   final FormFieldState<T> state;
@@ -112,6 +121,7 @@ class _AppDropdownButton<T> extends StatefulWidget {
   final double menuMaxHeight;
   final bool enabled;
   final ValueChanged<T?> onSelect;
+  final bool compact;
 
   @override
   State<_AppDropdownButton<T>> createState() => _AppDropdownButtonState<T>();
@@ -128,12 +138,24 @@ class _AppDropdownButtonState<T> extends State<_AppDropdownButton<T>> {
     return null;
   }
 
+  Widget _compactText(Widget child) => widget.compact
+      ? DefaultTextStyle.merge(
+          style: const TextStyle(fontSize: 13), child: child)
+      : child;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final decoration = widget.decoration.copyWith(
+    var decoration = widget.decoration.copyWith(
       errorText: widget.state.errorText,
     );
+    if (widget.compact) {
+      decoration = decoration.copyWith(
+        isDense: widget.decoration.isDense ?? true,
+        contentPadding: widget.decoration.contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      );
+    }
     final selected = _selectedChild();
 
     return MenuAnchor(
@@ -152,7 +174,7 @@ class _AppDropdownButtonState<T> extends State<_AppDropdownButton<T>> {
           onPressed: widget.enabled ? () => widget.onSelect(item.value) : null,
           child: SizedBox(
             width: widget.menuWidth,
-            child: item.child,
+            child: _compactText(item.child),
           ),
         );
       }).toList(),
@@ -182,13 +204,13 @@ class _AppDropdownButtonState<T> extends State<_AppDropdownButton<T>> {
           child: Row(
             children: [
               Expanded(
-                child: selected ?? const SizedBox.shrink(),
+                child: _compactText(selected ?? const SizedBox.shrink()),
               ),
               Icon(
                 _menuOpen
                     ? LucideIcons.chevronUp
                     : LucideIcons.chevronDown,
-                size: 16,
+                size: widget.compact ? 14 : 16,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ],

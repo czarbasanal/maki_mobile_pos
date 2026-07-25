@@ -159,6 +159,17 @@ void main() {
       expect(find.byType(MechanicPicker), findsOneWidget);
       expect(find.text('Mechanic'), findsOneWidget);
     });
+
+    testWidgets('selected mechanic name renders compact (13px)',
+        (tester) async {
+      await tester.pumpWidget(host(selectedId: 'm1', onChanged: (_) {}));
+      await tester.pumpAndSettle();
+
+      final valueStyle = DefaultTextStyle.of(
+        tester.element(find.text('Juan Dela Cruz').first),
+      ).style;
+      expect(valueStyle.fontSize, 13);
+    });
   });
 
   group('MechanicPicker — inline add', () {
