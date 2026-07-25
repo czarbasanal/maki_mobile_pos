@@ -269,4 +269,32 @@ void main() {
     ));
     expect(button.onPressed, isNull);
   });
+
+  // Policy change: items OR labor OR fees — labor alone is now billable.
+  // The "register in use" clobber-warning must check hasBillableContent,
+  // not isNotEmpty, to catch labor-only carts just as it does fee-only ones.
+  testWidgets(
+      'labor-only register cart still triggers the clobber warning',
+      (tester) async {
+    final (container, _) = await pump(
+      tester,
+      buildDraft(motorcycleModel: 'Nmax'),
+    );
+
+    // Register has NO items and NO fees but a labor line — hasBillableContent
+    // is true, isNotEmpty is false.
+    container.read(cartProvider.notifier).addLaborLine(
+          description: 'Tune-up',
+          fee: 300.0,
+        );
+    expect(container.read(cartProvider).isNotEmpty, isFalse);
+    expect(container.read(cartProvider).hasBillableContent, isTrue);
+    expect(container.read(cartProvider).items, isEmpty);
+    expect(container.read(cartProvider).feeLines, isEmpty);
+
+    await tester.tap(find.text('Bill out'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Register in use'), findsOneWidget);
+  });
 }
