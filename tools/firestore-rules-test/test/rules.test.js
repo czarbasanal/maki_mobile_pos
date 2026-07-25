@@ -1026,6 +1026,39 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
     it("cashier can still create an expense category (unchanged)", async () => {
       await assertSucceeds(as("cashier").collection("expense_categories").add(entry));
     });
+
+    it("product_categories: admin can create and rename", async () => {
+      const docRef = as("admin").collection("product_categories").doc("e1");
+      await assertSucceeds(docRef.set(entry));
+      await assertSucceeds(docRef.update({ name: "Renamed" }));
+    });
+
+    it("product_categories: staff can flip isActive", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertSucceeds(
+        as("staff").collection("product_categories").doc("e1").update({ isActive: false })
+      );
+    });
+
+    it("product_categories: staff cannot delete; admin can", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertFails(as("staff").collection("product_categories").doc("e1").delete());
+      await assertSucceeds(as("admin").collection("product_categories").doc("e1").delete());
+    });
+
+    it("product_categories: inactive staff cannot create", async () => {
+      await assertFails(as("inactiveStaff").collection("product_categories").add(entry));
+    });
+
+    it("product_categories: inactive staff/admin cannot flip isActive", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertFails(
+        as("inactiveStaff").collection("product_categories").doc("e1").update({ isActive: false })
+      );
+      await assertFails(
+        as("inactiveAdmin").collection("product_categories").doc("e1").update({ isActive: false })
+      );
+    });
   });
 });
 
