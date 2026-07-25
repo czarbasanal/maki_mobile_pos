@@ -3,16 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/void_request_notification_sheet.dart';
 
 /// Admin notification bell for pending void requests, with an unread badge.
 ///
 /// The badge is wrapped in [IgnorePointer] so a tap anywhere on the bell —
 /// including the red count itself — reaches the button (#11: the badge used
-/// to swallow the tap).
+/// to swallow the tap). Tapping the bell opens the notification sheet
+/// (Task 12) instead of navigating directly.
 class VoidRequestsBell extends ConsumerWidget {
-  const VoidRequestsBell({super.key, required this.onPressed});
-
-  final VoidCallback onPressed;
+  const VoidRequestsBell({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,7 +23,7 @@ class VoidRequestsBell extends ConsumerWidget {
         IconButton(
           icon: const Icon(LucideIcons.bell),
           tooltip: 'Void requests',
-          onPressed: onPressed,
+          onPressed: () => showVoidRequestNotificationSheet(context),
         ),
         if (unread > 0)
           Positioned(
