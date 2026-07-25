@@ -331,7 +331,8 @@ service cloud.firestore {
       // other shared lists but not product categories.
       allow create: if isStaffOrAdmin() && isActiveUser();
       allow update: if isStaffOrAdmin() && isActiveUser();
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== EXPENSE CATEGORIES COLLECTION ====================
@@ -348,7 +349,8 @@ service cloud.firestore {
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== UNITS COLLECTION ====================
@@ -365,7 +367,8 @@ service cloud.firestore {
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== VOID REASONS COLLECTION ====================
@@ -382,7 +385,8 @@ service cloud.firestore {
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== MECHANICS COLLECTION ====================
@@ -401,7 +405,8 @@ service cloud.firestore {
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== SHOP FEES COLLECTION ====================
@@ -418,7 +423,8 @@ service cloud.firestore {
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== HR COLLECTION ====================
@@ -450,7 +456,8 @@ service cloud.firestore {
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== VOID REQUESTS COLLECTION ====================
