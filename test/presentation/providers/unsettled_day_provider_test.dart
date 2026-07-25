@@ -7,12 +7,17 @@
 // is skipped. A day with no closing AND at least one completed sale is the
 // oldest unsettled day — return it immediately. A day with no closing and no
 // sales is skipped (nothing to settle). If nothing qualifies, return null.
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/daily_closing_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
@@ -20,18 +25,29 @@ import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.da
 
 /// Fake [DailyClosingRepository] — extends [Mock] so unstubbed members
 /// (not exercised by this provider) fall back to Mock's `noSuchMethod`,
-/// while the two members the algorithm actually calls are given real,
-/// mutable in-memory behavior.
+/// while the members the algorithm (and its reactive re-run wiring) actually
+/// call are given real, mutable in-memory behavior.
+///
+/// [watchClosings] is backed by a real [StreamController] so the tests can
+/// drive [dailyClosingHistoryProvider] — and through its
+/// `ref.watch(dailyClosingHistoryProvider)` link,
+/// [unsettledBusinessDayProvider] — the same way `closeDay` does in
+/// production: mutate the repo, then invalidate
+/// `dailyClosingHistoryProvider` (never the detector itself).
 class _FakeDailyClosingRepository extends Mock
     implements DailyClosingRepository {
   final Map<String, DailyClosingEntity> _closings = {};
+  final _controller = StreamController<List<DailyClosingEntity>>.broadcast();
 
   static String _key(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   void addClosing(DateTime date) {
     _closings[_key(date)] = _closingFor(date);
+    _controller.add(_closings.values.toList());
   }
+
+  void disposeStream() => _controller.close();
 
   @override
   Future<DailyClosingEntity?> getClosing(DateTime date) async =>
@@ -43,6 +59,14 @@ class _FakeDailyClosingRepository extends Mock
     final sorted = _closings.values.toList()
       ..sort((a, b) => b.businessDate.compareTo(a.businessDate));
     return sorted.first;
+  }
+
+  // Mirrors a real Firestore snapshot stream: yields the current state
+  // immediately on subscription, then forwards subsequent mutations.
+  @override
+  Stream<List<DailyClosingEntity>> watchClosings({int limit = 60}) async* {
+    yield _closings.values.toList();
+    yield* _controller.stream;
   }
 }
 
@@ -93,6 +117,15 @@ class _FixedBusinessDayNotifier extends BusinessDayNotifier {
   DateTime build() => _initial;
 }
 
+UserEntity _admin() => UserEntity(
+      id: 'u-admin',
+      email: 'admin@x.com',
+      displayName: 'Admin',
+      role: UserRole.admin,
+      isActive: true,
+      createdAt: DateTime(2026, 1, 1),
+    );
+
 void main() {
   final today = DateTime(2026, 7, 25);
 
@@ -105,10 +138,15 @@ void main() {
           .overrideWith(() => _FixedBusinessDayNotifier(today)),
       dailyClosingRepositoryProvider.overrideWithValue(closingRepo),
       saleRepositoryProvider.overrideWithValue(saleRepo),
-      // dailyClosingHistoryProvider streams from the same repo override —
-      // give it a value so the provider doesn't hit real Firestore/auth.
-      dailyClosingHistoryProvider
-          .overrideWith((ref) => Stream.value(const <DailyClosingEntity>[])),
+      // currentUserProvider needs an active user: dailyClosingHistoryProvider
+      // is NOT stubbed here (unlike before) — it's the real provider, gated
+      // by authGatedStream on `ref.watch(currentUserProvider.future)`, and
+      // it streams from closingRepo.watchClosings() via the
+      // dailyClosingRepositoryProvider override above. This is what lets the
+      // tests below drive the detector's re-run purely by mutating the fake
+      // repo + invalidating dailyClosingHistoryProvider, exactly like
+      // closeDay does — instead of invalidating the detector directly.
+      currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
     ]);
     addTearDown(container.dispose);
     return container;
@@ -117,6 +155,7 @@ void main() {
   setUp(() {
     closingRepo = _FakeDailyClosingRepository();
     saleRepo = _FakeSaleRepository();
+    addTearDown(() => closingRepo.disposeStream());
   });
 
   // The provider watches [dailyClosingHistoryProvider] (a StreamProvider)
@@ -147,12 +186,37 @@ void main() {
     expect(result, gapDay);
   });
 
-  test('a gap day with zero sales is skipped, not flagged', () async {
-    // No closings, no sales anywhere in the window -> null, even though
-    // every day in [today-14, today) is technically "open".
+  test(
+      'a gap day with zero sales is skipped, not flagged (mixed scan window)',
+      () async {
+    // today-3: has sales, unclosed -> the initial unsettled day.
+    // today-2: NO sales at all -> must be skipped, not returned.
+    // today-1: has sales, unclosed -> becomes unsettled only once today-3
+    //          is closed, proving today-2 was scanned past, not flagged.
+    final saleDay1 = today.subtract(const Duration(days: 3));
+    final zeroSaleDay = today.subtract(const Duration(days: 2));
+    final saleDay2 = today.subtract(const Duration(days: 1));
+    saleRepo.addSaleOn(saleDay1);
+    saleRepo.addSaleOn(saleDay2);
+    // zeroSaleDay deliberately gets no sale — confirm that, then confirm
+    // it's never what the detector reports below.
+    expect(await saleRepo.hasCompletedSaleOn(zeroSaleDay), isFalse);
+
     final container = makeContainer();
-    final result = await readUnsettled(container);
-    expect(result, isNull);
+    final before = await readUnsettled(container);
+    expect(before, saleDay1);
+    expect(before, isNot(zeroSaleDay));
+
+    // Simulate closeDay(): mutate the repo, then invalidate
+    // dailyClosingHistoryProvider only (never the detector directly).
+    closingRepo.addClosing(saleDay1);
+    container.invalidate(dailyClosingHistoryProvider);
+
+    final after = await readUnsettled(container);
+    expect(after, isNot(zeroSaleDay));
+    expect(after, saleDay2,
+        reason: 'zeroSaleDay (today-2) has no sales at all and must be '
+            'skipped by the scan, never returned as unsettled');
   });
 
   test('two unsettled gaps with sales -> the OLDEST is returned', () async {
@@ -176,10 +240,32 @@ void main() {
     expect(result, isNull);
   });
 
-  test(
-      'closing the unsettled day (repo mutated + closing history '
-      'invalidated) advances the detector to the next gap / clears it',
+  test('a closing already exists for TODAY -> detector returns null',
       () async {
+    // An earlier day has an unclosed completed sale — it would normally
+    // be flagged as unsettled — but latestClosing() resolves to `today`,
+    // which pushes the scan's start date to today+1 (past the < today scan
+    // window entirely), so nothing is ever scanned.
+    final earlierDay = today.subtract(const Duration(days: 2));
+    saleRepo.addSaleOn(earlierDay);
+    closingRepo.addClosing(today);
+
+    final container = makeContainer();
+    final result = await readUnsettled(container);
+    expect(result, isNull);
+  });
+
+  test(
+      'closing the unsettled day (repo mutated + dailyClosingHistoryProvider '
+      'invalidated — detector itself never invalidated) advances the '
+      'detector to the next gap', () async {
+    // This proves the REACTIVE link: unsettledBusinessDayProvider's own
+    // `ref.watch(dailyClosingHistoryProvider)` line is what picks up the
+    // change below — production's closeDay never invalidates the detector
+    // directly, only dailyClosingHistoryProvider. (Verified manually during
+    // RED: commenting out that `ref.watch(dailyClosingHistoryProvider)` line
+    // in unsettled_day_provider.dart makes this test fail — `after` stays
+    // stuck at `firstGap`.)
     final firstGap = today.subtract(const Duration(days: 5));
     final secondGap = today.subtract(const Duration(days: 2));
     saleRepo.addSaleOn(firstGap);
@@ -189,18 +275,20 @@ void main() {
     final before = await readUnsettled(container);
     expect(before, firstGap);
 
-    // Simulate closeDay(): the closing lands in the repo and the same
-    // invalidation closeDay already fires (dailyClosingHistoryProvider).
+    // Simulate closeDay(): the closing lands in the repo (which pushes the
+    // updated list through the fake's StreamController) and — exactly like
+    // closeDay's own invalidation list — dailyClosingHistoryProvider is
+    // invalidated. unsettledBusinessDayProvider is NEVER invalidated here.
     closingRepo.addClosing(firstGap);
     container.invalidate(dailyClosingHistoryProvider);
-    container.invalidate(unsettledBusinessDayProvider);
 
     final after = await readUnsettled(container);
     expect(after, secondGap);
   });
 
-  test('closing the only unsettled day clears the detector to null',
-      () async {
+  test(
+      'closing the only unsettled day clears the detector to null — '
+      'reactive link only, detector never invalidated directly', () async {
     final onlyGap = today.subtract(const Duration(days: 1));
     saleRepo.addSaleOn(onlyGap);
 
@@ -210,7 +298,6 @@ void main() {
 
     closingRepo.addClosing(onlyGap);
     container.invalidate(dailyClosingHistoryProvider);
-    container.invalidate(unsettledBusinessDayProvider);
 
     final after = await readUnsettled(container);
     expect(after, isNull);
