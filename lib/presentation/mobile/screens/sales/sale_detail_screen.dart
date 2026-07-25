@@ -433,7 +433,7 @@ class SaleDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          line.name,
+                          line.displayLabel,
                           style: AppTextStyles.productName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

@@ -11,11 +11,13 @@ class FeeLineModel {
   final String id;
   final String name;
   final double amount;
+  final String? description;
 
   const FeeLineModel({
     required this.id,
     required this.name,
     this.amount = 0,
+    this.description,
   });
 
   // ==================== FIRESTORE SERIALIZATION ====================
@@ -23,12 +25,14 @@ class FeeLineModel {
   /// Creates from a Map (an element of the inline `feeLines` array).
   ///
   /// Defaults [name] to `''` and [amount] to `0` so legacy / partial docs
-  /// deserialize without throwing.
+  /// deserialize without throwing. [description] defaults to `null` (older
+  /// docs written before this field existed).
   factory FeeLineModel.fromMap(Map<String, dynamic> map, String documentId) {
     return FeeLineModel(
       id: documentId,
       name: map['name'] as String? ?? '',
       amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
+      description: map['description'] as String?,
     );
   }
 
@@ -43,6 +47,7 @@ class FeeLineModel {
   ///
   /// Emits `name` and `amount`; includes `id` only when [includeId] is true
   /// (set when serializing inline inside the parent's `feeLines` array).
+  /// Emits `description` only when non-null, so old docs stay untouched.
   Map<String, dynamic> toMap({bool includeId = false}) {
     final map = <String, dynamic>{
       'name': name,
@@ -51,6 +56,10 @@ class FeeLineModel {
 
     if (includeId) {
       map['id'] = id;
+    }
+
+    if (description != null) {
+      map['description'] = description;
     }
 
     return map;
@@ -64,6 +73,7 @@ class FeeLineModel {
       id: id,
       name: name,
       amount: amount,
+      description: description,
     );
   }
 
@@ -73,6 +83,7 @@ class FeeLineModel {
       id: entity.id,
       name: entity.name,
       amount: entity.amount,
+      description: entity.description,
     );
   }
 
@@ -82,16 +93,19 @@ class FeeLineModel {
     String? id,
     String? name,
     double? amount,
+    String? description,
   }) {
     return FeeLineModel(
       id: id ?? this.id,
       name: name ?? this.name,
       amount: amount ?? this.amount,
+      description: description ?? this.description,
     );
   }
 
   @override
   String toString() {
-    return 'FeeLineModel(id: $id, name: $name, amount: $amount)';
+    return 'FeeLineModel(id: $id, name: $name, amount: $amount, '
+        'description: $description)';
   }
 }

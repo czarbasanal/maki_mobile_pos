@@ -74,6 +74,27 @@ void main() {
     expect(find.textContaining('700.00'), findsWidgets);
   });
 
+  testWidgets(
+      'Charge Item fee row shows "Charge Item — description" instead of the bare name',
+      (tester) async {
+    await pump(
+      tester,
+      buildSale(
+        feeLines: const [
+          FeeLineEntity(
+            id: 'f1',
+            name: 'Charge Item',
+            amount: 100,
+            description: 'Battery replacement',
+          ),
+        ],
+      ),
+    );
+
+    expect(find.text('Charge Item — Battery replacement'), findsOneWidget);
+    expect(find.text('Charge Item'), findsNothing);
+  });
+
   testWidgets('legacy sale without fee lines renders no shop-fee row',
       (tester) async {
     await pump(tester, buildSale());

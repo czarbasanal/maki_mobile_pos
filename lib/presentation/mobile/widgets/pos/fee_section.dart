@@ -39,20 +39,29 @@ class _AddFeeLineDialog extends StatefulWidget {
   State<_AddFeeLineDialog> createState() => _AddFeeLineDialogState();
 }
 
+/// Fee name that requires a cashier-entered description of what's being
+/// charged (an outside-item charge with no fixed catalog meaning).
+const _chargeItemFeeName = 'Charge Item';
+
 class _AddFeeLineDialogState extends State<_AddFeeLineDialog> {
   final _formKey = GlobalKey<FormState>();
   ShopFeeEntity? _selected;
   late TextEditingController _amountCtrl;
+  late TextEditingController _descriptionCtrl;
+
+  bool get _requiresDescription => _selected?.name == _chargeItemFeeName;
 
   @override
   void initState() {
     super.initState();
     _amountCtrl = TextEditingController();
+    _descriptionCtrl = TextEditingController();
   }
 
   @override
   void dispose() {
     _amountCtrl.dispose();
+    _descriptionCtrl.dispose();
     super.dispose();
   }
 
@@ -64,6 +73,7 @@ class _AddFeeLineDialogState extends State<_AddFeeLineDialog> {
           (defaultAmount != null && defaultAmount > 0)
               ? defaultAmount.toStringAsFixed(2)
               : '';
+      _descriptionCtrl.text = '';
     });
   }
 
@@ -77,6 +87,9 @@ class _AddFeeLineDialogState extends State<_AddFeeLineDialog> {
         id: _uuid.v4(),
         name: fee.name,
         amount: double.parse(_amountCtrl.text.trim()),
+        description: _requiresDescription
+            ? _descriptionCtrl.text.trim()
+            : null,
       ),
     );
   }
@@ -141,6 +154,24 @@ class _AddFeeLineDialogState extends State<_AddFeeLineDialog> {
                 return null;
               },
             ),
+            if (_requiresDescription) ...[
+              const SizedBox(height: AppSpacing.sm),
+              TextFormField(
+                style: AppTextStyles.fieldInput,
+                key: const Key('fee-description-field'),
+                controller: _descriptionCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  hintText: 'What is being charged?',
+                ),
+                validator: (v) {
+                  if ((v ?? '').trim().isEmpty) {
+                    return 'Description is required';
+                  }
+                  return null;
+                },
+              ),
+            ],
           ],
         ),
       ),

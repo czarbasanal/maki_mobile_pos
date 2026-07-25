@@ -54,8 +54,63 @@ void main() {
       expect(line.copyWith(), line);
     });
 
-    test('props expose id, name, amount', () {
-      expect(line.props, ['fee-1', 'Electric charge', 50.0]);
+    test('props expose id, name, amount, description', () {
+      expect(line.props, ['fee-1', 'Electric charge', 50.0, null]);
+    });
+
+    test('description defaults to null when omitted', () {
+      expect(line.description, isNull);
+    });
+
+    test('holds description when provided', () {
+      const withDescription = FeeLineEntity(
+        id: 'fee-3',
+        name: 'Charge Item',
+        amount: 100.0,
+        description: 'Battery replacement',
+      );
+      expect(withDescription.description, 'Battery replacement');
+    });
+
+    test('copyWith overrides description', () {
+      final updated = line.copyWith(description: 'Custom note');
+      expect(updated.description, 'Custom note');
+      expect(updated.name, 'Electric charge'); // unchanged
+    });
+
+    test('value equality accounts for description', () {
+      const withDescription = FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 50.0,
+        description: 'note',
+      );
+      expect(line == withDescription, isFalse);
+    });
+
+    test('displayLabel returns name when description is null', () {
+      expect(line.displayLabel, 'Electric charge');
+    });
+
+    test('displayLabel returns name when description is empty/blank', () {
+      const blank = FeeLineEntity(
+        id: 'fee-4',
+        name: 'Charge Item',
+        amount: 100.0,
+        description: '   ',
+      );
+      expect(blank.displayLabel, 'Charge Item');
+    });
+
+    test('displayLabel returns "name — description" when description is set',
+        () {
+      const withDescription = FeeLineEntity(
+        id: 'fee-3',
+        name: 'Charge Item',
+        amount: 100.0,
+        description: 'Battery replacement',
+      );
+      expect(withDescription.displayLabel, 'Charge Item — Battery replacement');
     });
   });
 }

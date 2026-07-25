@@ -368,7 +368,7 @@ class ReceiptWidget extends ConsumerWidget {
                   Expanded(
                     flex: 3,
                     child: Text(
-                      line.name,
+                      line.displayLabel,
                       style: const TextStyle(
                           fontSize: 12, color: Colors.black),
                     ),
