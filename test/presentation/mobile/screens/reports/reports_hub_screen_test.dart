@@ -40,4 +40,10 @@ void main() {
     expect(find.text('Labor'), findsOneWidget);
     expect(find.text('Price Changes'), findsNothing);
   });
+
+  testWidgets('hub renders End-of-Day History tile', (tester) async {
+    await tester.pumpWidget(_harness(UserRole.admin));
+    await tester.pumpAndSettle();
+    expect(find.text('End-of-Day History'), findsOneWidget);
+  });
 }

@@ -165,6 +165,35 @@ void main() {
       expect(back.feeLines.single.name, 'Electric charge');
       expect(back.feeLines.single.amount, 20.0);
     });
+
+    test('feeLines description round-trips through toMap/fromMap/toEntity',
+        () {
+      const chargeItemFee = FeeLineModel(
+        id: 'fee-2',
+        name: 'Charge Item',
+        amount: 100.0,
+        description: 'Battery replacement',
+      );
+      final model = DraftModel(
+        id: 'draft-2',
+        name: 'Service Job',
+        items: const [item],
+        feeLines: const [chargeItemFee],
+        createdBy: 'cashier-1',
+        createdByName: 'John Doe',
+        createdAt: DateTime(2026, 5, 30),
+      );
+
+      final map = model.toMap();
+      final feeMap = (map['feeLines'] as List<dynamic>).first
+          as Map<String, dynamic>;
+      expect(feeMap['description'], 'Battery replacement');
+
+      final restored = DraftModel.fromMap(map, 'draft-2');
+      expect(restored.feeLines.single.description, 'Battery replacement');
+      expect(restored.toEntity().feeLines.single.description,
+          'Battery replacement');
+    });
   });
 
   group('motorcycleModel', () {

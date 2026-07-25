@@ -67,6 +67,39 @@ void main() {
     expect(find.text('₱600.00'), findsWidgets);
   });
 
+  testWidgets(
+      'Charge Item fee prints "Charge Item — description" instead of the bare name',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: ReceiptWidget(
+              sale: _sale(
+                feeLines: const [
+                  FeeLineEntity(
+                    id: 'f1',
+                    name: 'Charge Item',
+                    amount: 100,
+                    description: 'Battery replacement',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('Charge Item — Battery replacement'), findsOneWidget);
+    expect(find.text('Charge Item'), findsNothing);
+  });
+
   testWidgets('legacy sale without fee lines renders no shop-fee section',
       (tester) async {
     tester.view.physicalSize = const Size(1200, 2400);

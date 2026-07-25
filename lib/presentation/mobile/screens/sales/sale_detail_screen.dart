@@ -190,6 +190,26 @@ class SaleDetailScreen extends ConsumerWidget {
     DateFormat dateFormat,
   ) {
     final voided = sale.status == SaleStatus.voided;
+
+    // Build mechanic · model row only if at least one is present
+    final mechanicDisplay = (sale.mechanicName?.trim() ?? '').isEmpty
+        ? null
+        : sale.mechanicName!.trim();
+    final modelDisplay = (sale.motorcycleModel?.trim() ?? '').isEmpty
+        ? null
+        : sale.motorcycleModel!.trim();
+
+    final mechanicModelText = () {
+      if (mechanicDisplay != null && modelDisplay != null) {
+        return '$mechanicDisplay · $modelDisplay';
+      } else if (mechanicDisplay != null) {
+        return mechanicDisplay;
+      } else if (modelDisplay != null) {
+        return modelDisplay;
+      }
+      return null;
+    }();
+
     return AppCard(
       radius: AppRadius.xl,
       padding: const EdgeInsets.all(20),
@@ -213,6 +233,16 @@ class SaleDetailScreen extends ConsumerWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            // Mechanic · Model (if present)
+            if (mechanicModelText != null) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                mechanicModelText,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.md),
             // Grand total
             Text(
@@ -403,7 +433,7 @@ class SaleDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          line.name,
+                          line.displayLabel,
                           style: AppTextStyles.productName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

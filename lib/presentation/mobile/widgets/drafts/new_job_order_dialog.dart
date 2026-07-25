@@ -81,8 +81,11 @@ class _NewJobOrderDialogState extends ConsumerState<_NewJobOrderDialog> {
                 const Spacer(),
                 Text(
                   widget.jobOrderNo,
-                  style: AppTextStyles.fieldInput
-                      .copyWith(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: AppTextStyles.fieldInput.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontFamily: AppTextStyles.monoFontFamily,
+                  ),
                 ),
               ],
             ),

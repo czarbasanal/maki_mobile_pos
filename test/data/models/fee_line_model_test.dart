@@ -85,4 +85,77 @@ void main() {
       expect(restored, entity);
     });
   });
+
+  group('FeeLineModel description', () {
+    test('fromMap reads description', () {
+      final m = FeeLineModel.fromMap(
+        {
+          'name': 'Charge Item',
+          'amount': 100.0,
+          'description': 'Battery replacement',
+        },
+        'fee-desc',
+      );
+      expect(m.description, 'Battery replacement');
+    });
+
+    test('fromMap defaults description to null when absent (legacy docs)',
+        () {
+      final m = FeeLineModel.fromMap(
+        {'name': 'Electric charge', 'amount': 50.0},
+        'fee-legacy',
+      );
+      expect(m.description, isNull);
+    });
+
+    test('toMap omits description when null', () {
+      const noDescription = FeeLineModel(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 50.0,
+      );
+      final map = noDescription.toMap();
+      expect(map.containsKey('description'), isFalse);
+    });
+
+    test('toMap includes description when non-null', () {
+      const withDescription = FeeLineModel(
+        id: 'fee-desc',
+        name: 'Charge Item',
+        amount: 100.0,
+        description: 'Battery replacement',
+      );
+      final map = withDescription.toMap(includeId: true);
+      expect(map['description'], 'Battery replacement');
+    });
+
+    test('toEntity / fromEntity map description', () {
+      const withDescription = FeeLineModel(
+        id: 'fee-desc',
+        name: 'Charge Item',
+        amount: 100.0,
+        description: 'Battery replacement',
+      );
+      final entity = withDescription.toEntity();
+      expect(entity.description, 'Battery replacement');
+
+      final back = FeeLineModel.fromEntity(entity);
+      expect(back.description, 'Battery replacement');
+    });
+
+    test(
+        'round-trips entity -> model -> map(includeId) -> model -> entity, description preserved',
+        () {
+      const entity = FeeLineEntity(
+        id: 'fee-desc',
+        name: 'Charge Item',
+        amount: 100.0,
+        description: 'Battery replacement',
+      );
+      final map = FeeLineModel.fromEntity(entity).toMap(includeId: true);
+      final restored =
+          FeeLineModel.fromMap(map, map['id'] as String).toEntity();
+      expect(restored, entity);
+    });
+  });
 }

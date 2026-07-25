@@ -51,6 +51,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         RolePermissions.hasPermission(userRole, Permission.editExpense);
     final canDelete =
         RolePermissions.hasPermission(userRole, Permission.deleteExpense);
+    // Cashiers get a view scoped to today: no Week/Month totals and the
+    // recent list only shows today's business-day expenses. This is a
+    // client-side view policy, not a permissions/rules change — cashiers
+    // still read the full expenses collection (needed for EOD).
+    final isCashier = userRole.isCashier;
+    final businessDay = ref.watch(businessDayProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -61,8 +67,13 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         title: const Text('Expenses'),
       ),
       body: expensesAsync.when(
-        data: (expenses) =>
-            _buildBody(expenses, canEdit: canEdit, canDelete: canDelete),
+        data: (expenses) => _buildBody(
+          expenses,
+          canEdit: canEdit,
+          canDelete: canDelete,
+          isCashier: isCashier,
+          businessDay: businessDay,
+        ),
         loading: () => const ListSkeleton(),
         error: (error, _) => ErrorStateView(
           message: 'Error: $error',
@@ -89,13 +100,19 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     List<ExpenseEntity> expenses, {
     required bool canEdit,
     required bool canDelete,
+    required bool isCashier,
+    required DateTime businessDay,
   }) {
+    // Cashiers only ever see today's expenses in this list.
+    final scoped = isCashier
+        ? expenses.where((e) => e.date.isSameDay(businessDay)).toList()
+        : expenses;
     // Apply the active category filter to the displayed list. Totals refresh
     // automatically because they are bound to ExpenseDateRangeParams that
     // include the same category.
     final filtered = _selectedCategory == null
-        ? expenses
-        : expenses.where((e) => e.category == _selectedCategory).toList();
+        ? scoped
+        : scoped.where((e) => e.category == _selectedCategory).toList();
     final recent = filtered.take(_recentLimit).toList();
 
     final headerItems = <Widget>[
@@ -118,7 +135,10 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           AppSpacing.md,
           AppSpacing.sm,
         ),
-        child: _ExpenseTotalsRow(category: _selectedCategory),
+        child: _ExpenseTotalsRow(
+          category: _selectedCategory,
+          isCashier: isCashier,
+        ),
       ),
       Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -274,14 +294,20 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
   }
 }
 
-/// Three-up summary row — Today / Week-to-date / Month-to-date totals.
+/// Summary row above the expense list.
+///
+/// Staff/admin see the full three-up Today / Week-to-date / Month-to-date
+/// totals. Cashiers get a view scoped to today (N3): Week and Month are
+/// hidden and the Today card fills the row alone, so the layout still reads
+/// as intentional rather than a gap.
 ///
 /// Each card watches [totalExpensesProvider] with its own date range. The
 /// optional [category] threads through [ExpenseDateRangeParams.category].
 class _ExpenseTotalsRow extends ConsumerWidget {
-  const _ExpenseTotalsRow({this.category});
+  const _ExpenseTotalsRow({this.category, required this.isCashier});
 
   final String? category;
+  final bool isCashier;
 
   static final _currencyFormat = NumberFormat.currency(
     symbol: AppConstants.currencySymbol,
@@ -300,6 +326,24 @@ class _ExpenseTotalsRow extends ConsumerWidget {
       endDate: endOfToday,
       category: category,
     );
+
+    final todayCard = Expanded(
+      child: _TotalCard(
+        title: 'Today',
+        icon: LucideIcons.sun,
+        params: todayParams,
+      ),
+    );
+
+    if (isCashier) {
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [todayCard],
+        ),
+      );
+    }
+
     final weekParams = ExpenseDateRangeParams(
       startDate: now.startOfWeek,
       endDate: endOfToday,
@@ -315,13 +359,7 @@ class _ExpenseTotalsRow extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: _TotalCard(
-              title: 'Today',
-              icon: LucideIcons.sun,
-              params: todayParams,
-            ),
-          ),
+          todayCard,
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: _TotalCard(

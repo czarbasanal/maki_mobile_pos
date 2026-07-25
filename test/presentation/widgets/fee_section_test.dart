@@ -125,6 +125,92 @@ void main() {
     });
   });
 
+  group('FeeSection — Charge Item description', () {
+    testWidgets(
+        'Charge Item shows a description field and blocks Add until non-empty',
+        (tester) async {
+      final container = ProviderContainer(overrides: [
+        activeShopFeesProvider.overrideWith(
+          (ref) => Stream.value([
+            _shopFee(id: 'f3', name: 'Charge Item', defaultAmount: 100),
+          ]),
+        ),
+      ]);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(host(container));
+      await tester.pump();
+
+      await tester.tap(find.text('Shop Fees'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add fee line'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Charge Item'));
+      await tester.pumpAndSettle();
+
+      // Description field is present for Charge Item.
+      final descriptionField = find.byKey(const Key('fee-description-field'));
+      expect(descriptionField, findsOneWidget);
+
+      // Blocked while description is empty.
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+      expect(find.text('Description is required'), findsOneWidget);
+      expect(container.read(cartProvider).feeLines, isEmpty);
+
+      // Blocked while description is whitespace-only.
+      await tester.enterText(descriptionField, '   ');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+      expect(find.text('Description is required'), findsOneWidget);
+      expect(container.read(cartProvider).feeLines, isEmpty);
+
+      // Filling it in unblocks the add.
+      await tester.enterText(descriptionField, 'Battery replacement');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(cartProvider).feeLines.single.name, 'Charge Item');
+      expect(container.read(cartProvider).feeLines.single.description,
+          'Battery replacement');
+      // Itemized on the cart row.
+      expect(find.text('Charge Item — Battery replacement'), findsOneWidget);
+    });
+
+    testWidgets('other fees show no description field and add without one',
+        (tester) async {
+      final container = ProviderContainer(overrides: [
+        activeShopFeesProvider.overrideWith(
+          (ref) => Stream.value([
+            _shopFee(id: 'f1', name: 'Electric charge', defaultAmount: 50),
+          ]),
+        ),
+      ]);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(host(container));
+      await tester.pump();
+
+      await tester.tap(find.text('Shop Fees'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add fee line'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Electric charge'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('fee-description-field')), findsNothing);
+
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(cartProvider).feeLines.single.name,
+          'Electric charge');
+      expect(container.read(cartProvider).feeLines.single.description, isNull);
+    });
+  });
+
   testWidgets('remove clears the fee line from the cart', (tester) async {
     final container = ProviderContainer(overrides: [
       activeShopFeesProvider.overrideWith(

@@ -7,10 +7,14 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/sale_detail_screen.dart';
 
 void main() {
-  SaleEntity buildSale({List<FeeLineEntity> feeLines = const []}) => SaleEntity(
+  SaleEntity buildSale({
+    String? mechanicName,
+    String? motorcycleModel,
+  }) =>
+      SaleEntity(
         id: 'sale-1',
         saleNumber: 'S-0001',
-        items: const [
+        items: [
           SaleItemEntity(
             id: 'item-1',
             productId: 'prod-1',
@@ -19,21 +23,18 @@ void main() {
             unitPrice: 100.0,
             unitCost: 60.0,
             quantity: 2,
+            discountValue: 0,
           ),
         ],
-        laborLines: const [
-          LaborLineEntity(id: 'l1', description: 'Engine tune-up', fee: 450.0),
-        ],
-        feeLines: feeLines,
-        mechanicId: 'mech-1',
-        mechanicName: 'Juan Dela Cruz',
         paymentMethod: PaymentMethod.cash,
-        amountReceived: 700.0,
+        amountReceived: 200.0,
         changeGiven: 0.0,
         cashierId: 'cashier-1',
         cashierName: 'John Doe',
+        mechanicName: mechanicName,
+        motorcycleModel: motorcycleModel,
         status: SaleStatus.completed,
-        createdAt: DateTime(2026, 5, 30, 10, 0),
+        createdAt: DateTime(2026, 7, 23, 10, 0),
       );
 
   Widget harness(SaleEntity sale) => ProviderScope(
@@ -57,48 +58,54 @@ void main() {
   }
 
   testWidgets(
-      'renders a shop-fee row between items and labor with name and amount',
+      'sale header shows mechanic and motorcycle model when both present',
       (tester) async {
     await pump(
       tester,
-      buildSale(
-        feeLines: const [
-          FeeLineEntity(id: 'f1', name: 'Environmental Fee', amount: 50),
-        ],
-      ),
+      buildSale(mechanicName: 'Jeric', motorcycleModel: 'Rusi'),
     );
-
-    expect(find.text('Environmental Fee'), findsOneWidget);
-    expect(find.text('Shop Fee'), findsOneWidget);
-    // grandTotal = parts 200 + labor 450 + fee 50 = 700.
-    expect(find.textContaining('700.00'), findsWidgets);
+    expect(find.textContaining('Jeric · Rusi'), findsOneWidget);
   });
 
   testWidgets(
-      'Charge Item fee row shows "Charge Item — description" instead of the bare name',
+      'sale header shows only mechanic name when only mechanic is present',
       (tester) async {
     await pump(
       tester,
-      buildSale(
-        feeLines: const [
-          FeeLineEntity(
-            id: 'f1',
-            name: 'Charge Item',
-            amount: 100,
-            description: 'Battery replacement',
-          ),
-        ],
-      ),
+      buildSale(mechanicName: 'Jeric', motorcycleModel: null),
     );
-
-    expect(find.text('Charge Item — Battery replacement'), findsOneWidget);
-    expect(find.text('Charge Item'), findsNothing);
+    expect(find.textContaining('Jeric'), findsWidgets);
+    expect(find.textContaining('Jeric · '), findsNothing);
   });
 
-  testWidgets('legacy sale without fee lines renders no shop-fee row',
+  testWidgets(
+      'sale header shows only motorcycle model when only model is present',
       (tester) async {
-    await pump(tester, buildSale());
+    await pump(
+      tester,
+      buildSale(mechanicName: null, motorcycleModel: 'Rusi'),
+    );
+    expect(find.textContaining('Rusi'), findsWidgets);
+    expect(find.textContaining('· Rusi'), findsNothing);
+  });
 
-    expect(find.text('Shop Fee'), findsNothing);
+  testWidgets(
+      'sale header shows no mechanic/model row when both are absent',
+      (tester) async {
+    await pump(
+      tester,
+      buildSale(mechanicName: null, motorcycleModel: null),
+    );
+    expect(find.textContaining('·'), findsNothing);
+  });
+
+  testWidgets(
+      'sale header shows no mechanic/model row when both are empty strings',
+      (tester) async {
+    await pump(
+      tester,
+      buildSale(mechanicName: '', motorcycleModel: ''),
+    );
+    expect(find.textContaining('·'), findsNothing);
   });
 }

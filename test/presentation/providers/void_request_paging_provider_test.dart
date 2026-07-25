@@ -140,12 +140,23 @@ VoidRequestEntity _req(String id, {
       createdAt: createdAt ?? DateTime(2026, 7, 25, 10),
       );
 
-ProviderContainer _container(List<VoidRequestEntity> seed) {
+/// Fixed range covering the fixtures' seed dates (all `DateTime(2026, 7,
+/// 25, ...)`). Pinning this — instead of relying on
+/// [voidRequestDateRangeProvider]'s default, which is derived from
+/// `DateTime.now()` — keeps these tests passing on every future run date.
+final _fixedSeedDateRange = DateTimeRange(
+  start: DateTime(2026, 7, 25),
+  end: DateTime(2026, 7, 25, 23, 59, 59, 999),
+);
+
+ProviderContainer _container(List<VoidRequestEntity> seed,
+    {List<Override> overrides = const []}) {
   return ProviderContainer(
     overrides: [
       currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
       voidRequestRepositoryProvider
           .overrideWithValue(_FakeVoidRequestRepository(seed)),
+      ...overrides,
     ],
   );
 }
@@ -158,7 +169,9 @@ void main() {
         25,
         (i) => _req('r$i', createdAt: DateTime(2026, 7, 25, 10, i)),
       );
-      final c = _container(seed);
+      final c = _container(seed, overrides: [
+        voidRequestDateRangeProvider.overrideWith((ref) => _fixedSeedDateRange),
+      ]);
       addTearDown(c.dispose);
 
       final result = await c.read(pagedVoidRequestsProvider.future);
@@ -175,7 +188,9 @@ void main() {
         25,
         (i) => _req('r$i', createdAt: DateTime(2026, 7, 25, 10, i)),
       );
-      final c = _container(seed);
+      final c = _container(seed, overrides: [
+        voidRequestDateRangeProvider.overrideWith((ref) => _fixedSeedDateRange),
+      ]);
       addTearDown(c.dispose);
 
       await c.read(pagedVoidRequestsProvider.future);
@@ -193,7 +208,9 @@ void main() {
         ..._pendingBatch(3),
         _req('approved-1', status: VoidRequestStatus.approved),
       ];
-      final c = _container(seed);
+      final c = _container(seed, overrides: [
+        voidRequestDateRangeProvider.overrideWith((ref) => _fixedSeedDateRange),
+      ]);
       addTearDown(c.dispose);
 
       await c.read(pagedVoidRequestsProvider.future);
@@ -217,6 +234,7 @@ void main() {
         currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
         voidRequestRepositoryProvider.overrideWithValue(
             _StallingFakeVoidRequestRepository(seed, stall)),
+        voidRequestDateRangeProvider.overrideWith((ref) => _fixedSeedDateRange),
       ]);
       addTearDown(c.dispose);
 
@@ -253,7 +271,9 @@ void main() {
         ..._pendingBatch(3),
         _req('approved-1', status: VoidRequestStatus.approved),
       ];
-      final c = _container(seed);
+      final c = _container(seed, overrides: [
+        voidRequestDateRangeProvider.overrideWith((ref) => _fixedSeedDateRange),
+      ]);
       addTearDown(c.dispose);
 
       final count = await c
@@ -269,12 +289,15 @@ void main() {
         _req('new', createdAt: DateTime(2026, 7, 25, 10),
             status: VoidRequestStatus.pending),
       ];
-      final c = _container(seed);
+      final c = _container(seed, overrides: [
+        voidRequestDateRangeProvider.overrideWith((ref) => _fixedSeedDateRange),
+      ]);
       addTearDown(c.dispose);
 
       final before = await c
           .read(voidRequestStatusCountProvider(VoidRequestStatus.pending).future);
-      expect(before, 1, reason: 'default range is today only, so just "new"');
+      expect(before, 1,
+          reason: 'initial fixed range only covers "new"');
 
       c.read(voidRequestDateRangeProvider.notifier).state = DateTimeRange(
         start: DateTime(2020, 1, 1),
