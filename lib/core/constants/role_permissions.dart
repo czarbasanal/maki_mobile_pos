@@ -66,6 +66,7 @@ enum Permission {
   editCostCodeMapping,
   manageCategories, // Full shared-list manage incl. deactivate/reactivate (staff + admin)
   editLists, // Add/edit shared list entries — categories, units, void reasons, mechanics, motorcycle models (all roles)
+  editProductCategories, // Product Categories editor — staff + admin (2026-07-25)
 
   // Logs
   viewUserLogs,
@@ -159,6 +160,7 @@ abstract class RolePermissions {
     // Shared lists (2026-07-24): staff fully manage incl. deactivate.
     Permission.editLists,
     Permission.manageCategories,
+    Permission.editProductCategories,
   };
 
   // ==================== ADMIN PERMISSIONS ====================
@@ -216,6 +218,7 @@ abstract class RolePermissions {
     Permission.editCostCodeMapping,
     Permission.manageCategories,
     Permission.editLists,
+    Permission.editProductCategories,
     // Logs
     Permission.viewUserLogs,
   };
