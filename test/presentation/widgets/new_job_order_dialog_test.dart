@@ -62,4 +62,20 @@ void main() {
     expect(result.model, isNull);
     expect(result.mechanicId, isNull);
   });
+
+  testWidgets('renders JO number with mono fontFamily', (tester) async {
+    await harness(tester);
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    // Find the Text widget that displays the JO number.
+    final textWidget = find.byWidgetPredicate(
+      (widget) =>
+          widget is Text &&
+          widget.data == 'JO-072326-005' &&
+          widget.style?.fontFamily?.contains('RobotoMono') == true,
+    );
+
+    expect(textWidget, findsOneWidget);
+  });
 }
