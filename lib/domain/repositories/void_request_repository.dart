@@ -28,4 +28,21 @@ abstract class VoidRequestRepository {
 
   /// Marks all requests read.
   Future<void> markAllRead();
+
+  /// One page of requests within [start, end], newest first. [status] null =
+  /// all statuses. Pass the last item's id as [startAfterId] for the next page.
+  Future<List<VoidRequestEntity>> getRequestsPage({
+    VoidRequestStatus? status,
+    required DateTime start,
+    required DateTime end,
+    int limit = 20,
+    String? startAfterId,
+  });
+
+  /// Count of requests with [status] within [start, end] (aggregate query).
+  Future<int> countByStatus({
+    required VoidRequestStatus status,
+    required DateTime start,
+    required DateTime end,
+  });
 }

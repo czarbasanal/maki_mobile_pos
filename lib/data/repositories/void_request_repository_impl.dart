@@ -98,4 +98,62 @@ class VoidRequestRepositoryImpl implements VoidRequestRepository {
     }
     await batch.commit();
   }
+
+  Query _pageQuery({
+    VoidRequestStatus? status,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    Query q = _ref
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(end));
+    if (status != null) q = q.where('status', isEqualTo: status.value);
+    return q.orderBy('createdAt', descending: true);
+  }
+
+  @override
+  Future<List<VoidRequestEntity>> getRequestsPage({
+    VoidRequestStatus? status,
+    required DateTime start,
+    required DateTime end,
+    int limit = 20,
+    String? startAfterId,
+  }) async {
+    try {
+      var q = _pageQuery(status: status, start: start, end: end);
+      if (startAfterId != null) {
+        final cursor = await _ref.doc(startAfterId).get();
+        if (cursor.exists) q = q.startAfterDocument(cursor);
+      }
+      final snap = await q.limit(limit).get();
+      return snap.docs.map(VoidRequestModel.fromFirestore).toList();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to get void requests page: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
+  Future<int> countByStatus({
+    required VoidRequestStatus status,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    try {
+      final agg = await _pageQuery(status: status, start: start, end: end)
+          .count()
+          .get();
+      return agg.count ?? 0;
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to count void requests: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
 }
