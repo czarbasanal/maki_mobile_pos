@@ -85,23 +85,13 @@ final voidRequestStatusFilterProvider =
 final voidRequestDatePresetProvider =
     StateProvider.autoDispose<DateRangePreset>((_) => DateRangePreset.today);
 
-/// `dateRangeForPreset` returns `end` at 23:59:59.000 (no milliseconds),
-/// which would exclude any request created in the last second of the day
-/// from an inclusive `<=` Firestore query. Normalize to true end-of-day
-/// (23:59:59.999) so paging/count queries never drop it.
-DateTimeRange _endOfDayNormalized(DateTimeRange range) {
-  final end = range.end;
-  return DateTimeRange(
-    start: range.start,
-    end: DateTime(end.year, end.month, end.day, 23, 59, 59, 999),
-  );
-}
-
 /// Concrete date range for the admin void-request list, derived from
 /// [voidRequestDatePresetProvider]'s default (today) at construction time.
+/// `dateRangeForPreset` already returns `end` at true end-of-day
+/// (23:59:59.999) so paging/count queries never drop a request created in
+/// the last second of the day.
 final voidRequestDateRangeProvider = StateProvider.autoDispose<DateTimeRange>(
-    (_) => _endOfDayNormalized(
-        dateRangeForPreset(DateRangePreset.today, DateTime.now())));
+    (_) => dateRangeForPreset(DateRangePreset.today, DateTime.now()));
 
 /// One page of void requests plus whether another page is available.
 class PagedVoidRequests {
@@ -130,6 +120,7 @@ class PagedVoidRequestsNotifier
   Future<void> loadMore() async {
     final current = state.valueOrNull;
     if (current == null || !current.hasMore) return;
+    final before = state;
     final status = ref.read(voidRequestStatusFilterProvider);
     final range = ref.read(voidRequestDateRangeProvider);
     final next = await ref.read(voidRequestRepositoryProvider).getRequestsPage(
@@ -138,9 +129,23 @@ class PagedVoidRequestsNotifier
         end: range.end,
         limit: _pageSize,
         startAfterId: current.items.last.id);
-    state = AsyncValue.data(PagedVoidRequests(
-        items: [...current.items, ...next],
-        hasMore: next.length == _pageSize));
+    // The filter/range may have changed (or this notifier may have been
+    // invalidated/disposed) while the fetch above was in flight. Appending
+    // `next` on top of `current` in that case would splice a stale page
+    // onto a list the user never asked for. Abandon rather than write.
+    try {
+      final filterUnchanged =
+          ref.read(voidRequestStatusFilterProvider) == status &&
+              ref.read(voidRequestDateRangeProvider) == range;
+      if (!identical(state, before) || !filterUnchanged) return;
+      state = AsyncValue.data(PagedVoidRequests(
+          items: [...current.items, ...next],
+          hasMore: next.length == _pageSize));
+    } on StateError {
+      // autoDispose tore this notifier down mid-flight; ref reads/state
+      // writes on a disposed notifier throw StateError. Treat as abandoned.
+      return;
+    }
   }
 }
 

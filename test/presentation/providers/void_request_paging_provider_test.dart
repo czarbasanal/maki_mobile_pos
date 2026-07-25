@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -81,6 +83,35 @@ class _FakeVoidRequestRepository implements VoidRequestRepository {
 
   @override
   Future<void> markAllRead() => throw UnimplementedError();
+}
+
+/// Same paging behaviour as [_FakeVoidRequestRepository], but the
+/// *continuation* call (the one `loadMore()` issues, identified by a
+/// non-null [startAfterId]) doesn't resolve until [stall] completes — lets a
+/// test hold a `loadMore()` fetch in flight while it changes filters out
+/// from under it.
+class _StallingFakeVoidRequestRepository extends _FakeVoidRequestRepository {
+  final Completer<void> stall;
+  _StallingFakeVoidRequestRepository(super.all, this.stall);
+
+  @override
+  Future<List<VoidRequestEntity>> getRequestsPage({
+    VoidRequestStatus? status,
+    required DateTime start,
+    required DateTime end,
+    int limit = 20,
+    String? startAfterId,
+  }) async {
+    if (startAfterId != null) {
+      await stall.future;
+    }
+    return super.getRequestsPage(
+        status: status,
+        start: start,
+        end: end,
+        limit: limit,
+        startAfterId: startAfterId);
+  }
 }
 
 UserEntity _admin() => UserEntity(
@@ -172,6 +203,47 @@ void main() {
 
       expect(result.items.length, 1);
       expect(result.items.single.id, 'approved-1');
+    });
+
+    test('loadMore abandons a stale page when the filter changes '
+        'mid-flight', () async {
+      final seed = [
+        ..._pendingBatch(25),
+        _req('approved-1', status: VoidRequestStatus.approved,
+            createdAt: DateTime(2026, 7, 25, 11)),
+      ];
+      final stall = Completer<void>();
+      final c = ProviderContainer(overrides: [
+        currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
+        voidRequestRepositoryProvider.overrideWithValue(
+            _StallingFakeVoidRequestRepository(seed, stall)),
+      ]);
+      addTearDown(c.dispose);
+
+      // Page 1 under the default (all-statuses) filter: 20 of 25 pending.
+      await c.read(pagedVoidRequestsProvider.future);
+
+      // Kick off loadMore() — its continuation fetch (startAfterId set)
+      // stalls until `stall` completes.
+      final loadMoreFuture =
+          c.read(pagedVoidRequestsProvider.notifier).loadMore();
+
+      // While that fetch is in flight, switch to the approved filter and
+      // let its (unstalled, no startAfterId) fetch resolve.
+      c.read(voidRequestStatusFilterProvider.notifier).state =
+          VoidRequestStatus.approved;
+      final newFilterResult = await c.read(pagedVoidRequestsProvider.future);
+      expect(newFilterResult.items.single.id, 'approved-1');
+
+      // Now release the stalled loadMore continuation.
+      stall.complete();
+      await loadMoreFuture;
+
+      final finalState = c.read(pagedVoidRequestsProvider).value!;
+      expect(finalState.items.length, 1,
+          reason: 'the stale pending-filter continuation must not be '
+              'appended on top of the approved-filter page');
+      expect(finalState.items.single.id, 'approved-1');
     });
   });
 
