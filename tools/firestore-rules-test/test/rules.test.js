@@ -78,6 +78,13 @@ const unauth = () => testEnv.unauthenticatedContext().firestore();
 const newDocId = (prefix) =>
   `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 
+// PH business day (UTC+8, no DST) as a yyyymmdd int — mirrors the rules'
+// phDay() so tests can seed/assert against "today" without a fixed clock.
+const phDay = (d = new Date()) => {
+  const t = new Date(d.getTime() + 8 * 3600 * 1000);
+  return t.getUTCFullYear() * 10000 + (t.getUTCMonth() + 1) * 100 + t.getUTCDate();
+};
+
 // ===================================================================
 // /users
 // ===================================================================
@@ -995,5 +1002,194 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
         as("cashier").collection("motorcycle_models").doc("m1").delete()
       );
     });
+  });
+});
+
+// ===================================================================
+// /drawer_state
+// ===================================================================
+describe("/drawer_state", () => {
+  async function seedRaw(data) {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("drawer_state").doc("state").set(data)
+    );
+  }
+
+  it("active user can read the state doc", async () => {
+    await seedRaw({ lastSaleDay: phDay() });
+    await assertSucceeds(as("cashier").collection("drawer_state").doc("state").get());
+  });
+
+  it("inactive user cannot read the state doc", async () => {
+    await seedRaw({ lastSaleDay: phDay() });
+    await assertFails(
+      as("inactiveStaff").collection("drawer_state").doc("state").get()
+    );
+  });
+
+  it("cashier can stamp lastSaleDay to today's PH day (create)", async () => {
+    await assertSucceeds(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastSaleDay: phDay() }, { merge: true })
+    );
+  });
+
+  it("cashier cannot stamp lastSaleDay to a past day (create)", async () => {
+    await assertFails(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastSaleDay: phDay() - 1 }, { merge: true })
+    );
+  });
+
+  it("cashier cannot stamp lastSaleDay to a future day (create)", async () => {
+    await assertFails(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastSaleDay: phDay() + 1 }, { merge: true })
+    );
+  });
+
+  it("cashier can set lastClosedDay to a past day (create)", async () => {
+    await assertSucceeds(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastClosedDay: phDay() - 1 }, { merge: true })
+    );
+  });
+
+  it("cashier can set lastClosedDay to today (create)", async () => {
+    await assertSucceeds(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastClosedDay: phDay() }, { merge: true })
+    );
+  });
+
+  it("cashier cannot set lastClosedDay to a future day (create)", async () => {
+    await assertFails(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastClosedDay: phDay() + 1 }, { merge: true })
+    );
+  });
+
+  it("update: lastSaleDay can be advanced to today", async () => {
+    await seedRaw({ lastSaleDay: phDay() - 1 });
+    await assertSucceeds(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastSaleDay: phDay() }, { merge: true })
+    );
+  });
+
+  it("update: lastSaleDay cannot be rewritten to a past day", async () => {
+    await seedRaw({ lastSaleDay: phDay() });
+    await assertFails(
+      as("cashier")
+        .collection("drawer_state")
+        .doc("state")
+        .set({ lastSaleDay: phDay() - 1 }, { merge: true })
+    );
+  });
+
+  it("update: lastClosedDay can be set to a past day", async () => {
+    await seedRaw({ lastSaleDay: phDay() });
+    await assertSucceeds(
+      as("staff")
+        .collection("drawer_state")
+        .doc("state")
+        .update({ lastClosedDay: phDay() - 1 })
+    );
+  });
+
+  it("update: lastClosedDay cannot be set to a future day", async () => {
+    await seedRaw({ lastSaleDay: phDay() });
+    await assertFails(
+      as("staff")
+        .collection("drawer_state")
+        .doc("state")
+        .update({ lastClosedDay: phDay() + 1 })
+    );
+  });
+
+  it("nobody can delete the state doc", async () => {
+    await seedRaw({ lastSaleDay: phDay() });
+    await assertFails(as("admin").collection("drawer_state").doc("state").delete());
+  });
+});
+
+// ===================================================================
+// /sales create gating (drawerSettled)
+// ===================================================================
+describe("/sales create gating (drawerSettled)", () => {
+  const saleData = (id) => ({
+    saleNumber: `SALE-GATE-${id}`,
+    cashierId: USERS.cashier.uid,
+    status: "completed",
+    grandTotal: 10,
+  });
+
+  async function seedDrawerState(data) {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("drawer_state").doc("state").set(data)
+    );
+  }
+
+  it("no drawer_state doc: sale create allowed (fresh DB / pre-rollout)", async () => {
+    await assertSucceeds(
+      as("cashier")
+        .collection("sales")
+        .doc(newDocId("sale"))
+        .set(saleData("a"))
+    );
+  });
+
+  it("lastSaleDay == today: sale create allowed (day is live)", async () => {
+    await seedDrawerState({ lastSaleDay: phDay() });
+    await assertSucceeds(
+      as("cashier")
+        .collection("sales")
+        .doc(newDocId("sale"))
+        .set(saleData("b"))
+    );
+  });
+
+  it("lastSaleDay is a past day with no lastClosedDay: sale create DENIED", async () => {
+    await seedDrawerState({ lastSaleDay: phDay() - 1 });
+    await assertFails(
+      as("cashier")
+        .collection("sales")
+        .doc(newDocId("sale"))
+        .set(saleData("c"))
+    );
+  });
+
+  it("lastSaleDay is a past day but already closed (lastClosedDay >= lastSaleDay): sale create allowed", async () => {
+    await seedDrawerState({ lastSaleDay: phDay() - 1, lastClosedDay: phDay() - 1 });
+    await assertSucceeds(
+      as("cashier")
+        .collection("sales")
+        .doc(newDocId("sale"))
+        .set(saleData("d"))
+    );
+  });
+
+  it("gate applies to every active role, not just cashier", async () => {
+    await seedDrawerState({ lastSaleDay: phDay() - 1 });
+    await assertFails(
+      as("staff").collection("sales").doc(newDocId("sale")).set(saleData("e"))
+    );
+    await assertFails(
+      as("admin").collection("sales").doc(newDocId("sale")).set(saleData("f"))
+    );
   });
 });
