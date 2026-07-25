@@ -7,6 +7,17 @@ import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
+/// A [businessDayProvider] override with no timer — see
+/// end_of_day_plate_amount_submit_test.dart for why a real (unoverridden)
+/// build would trip flutter_test's "no pending timers" invariant.
+class _FixedBusinessDayNotifier extends BusinessDayNotifier {
+  _FixedBusinessDayNotifier(this._fixed);
+  final DateTime _fixed;
+
+  @override
+  DateTime build() => _fixed;
+}
+
 /// Day with parts ₱1,000 + shop fees ₱150, all cash (drawer holds ₱1,150).
 SalesSummary _summary() => const SalesSummary(
       totalSalesCount: 2,
@@ -53,6 +64,9 @@ DailyClosingEntity _closing(DateTime date) => DailyClosingEntity(
 
 Widget _harness({DailyClosingEntity? closing}) => ProviderScope(
       overrides: [
+        businessDayProvider.overrideWith(
+            () => _FixedBusinessDayNotifier(DateTime(2026, 7, 24))),
+        unsettledBusinessDayProvider.overrideWith((ref) async => null),
         dailyClosingForDateProvider.overrideWith((ref, date) async => closing),
         dailyClosingDataProvider.overrideWith((ref, date) async => _data(date)),
       ],
@@ -64,6 +78,10 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_harness(closing: null));
     await tester.pump();
+    await tester.pump();
+    // Fix 1: the target now resolves via the (async) unsettled-day detector
+    // first, one extra hop before the closing/live-data providers even get
+    // watched — needs one more pump than before that fix.
     await tester.pump();
 
     expect(find.text('Shop fees'), findsOneWidget);

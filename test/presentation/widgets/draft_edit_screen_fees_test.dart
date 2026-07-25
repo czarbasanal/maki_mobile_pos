@@ -76,6 +76,7 @@ void main() {
       activeShopFeesProvider.overrideWith((ref) => Stream.value(activeFees)),
       currentUserProvider.overrideWith((ref) => Stream.value(admin())),
       draftRepositoryProvider.overrideWithValue(repo),
+      unsettledBusinessDayProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);
     await tester.pumpWidget(

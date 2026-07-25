@@ -50,6 +50,7 @@ void main() {
           draftRepositoryProvider.overrideWithValue(
             DraftRepositoryImpl(firestore: FakeFirebaseFirestore()),
           ),
+          unsettledBusinessDayProvider.overrideWith((ref) async => null),
         ],
         child: const MaterialApp(home: DraftEditScreen(draftId: 'draft-1')),
       );

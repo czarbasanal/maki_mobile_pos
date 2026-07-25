@@ -185,9 +185,16 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
         ],
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _handleRefresh,
-          child: _buildScrollableSections(),
+        child: Column(
+          children: [
+            const UnsettledDrawerBanner(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _handleRefresh,
+                child: _buildScrollableSections(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -325,7 +332,10 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
   }
 
   Widget _buildDateHeader() {
-    final now = DateTime.now();
+    // Watch the clock (not a raw DateTime.now() snapshot) so the header
+    // flips onto the new date at midnight instead of staying stale for
+    // the lifetime of the widget.
+    final today = ref.watch(businessDayProvider);
     final dateFormat = DateFormat('EEEE, MMMM d, y');
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
@@ -335,7 +345,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
         Icon(LucideIcons.calendar, color: muted, size: 18),
         const SizedBox(width: AppSpacing.sm),
         Text(
-          dateFormat.format(now),
+          dateFormat.format(today),
           style: theme.textTheme.bodyMedium?.copyWith(
             color: muted,
             fontWeight: FontWeight.w500,

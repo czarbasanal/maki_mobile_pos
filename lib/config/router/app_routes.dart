@@ -395,7 +395,9 @@ List<RouteBase> featureRoutes() => [
           GoRoute(
             path: 'end-of-day',
             name: RouteNames.endOfDay,
-            builder: (context, state) => const EndOfDayScreen(),
+            builder: (context, state) => EndOfDayScreen(
+              targetDate: state.extra as DateTime?,
+            ),
             routes: [
               GoRoute(
                 path: 'history',

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/dashboard/dashboard_screen.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/quick_actions.dart';
 
@@ -33,7 +36,7 @@ void main() {
     byPaymentMethod: {},
   );
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {List<Override> extra = const []}) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -46,6 +49,8 @@ void main() {
               .overrideWith((ref) => Stream.value(const <SaleEntity>[])),
           todaysSalesSummaryProvider.overrideWith((ref) async => emptySummary),
           monthToDateSummaryProvider.overrideWith((ref) async => emptySummary),
+          unsettledBusinessDayProvider.overrideWith((ref) async => null),
+          ...extra,
         ],
         child: const MaterialApp(home: DashboardScreen()),
       ),
@@ -76,4 +81,25 @@ void main() {
     // Body is the refresh + scroll view directly.
     expect(find.byType(RefreshIndicator), findsOneWidget);
   });
+
+  testWidgets('date header shows the businessDayProvider-overridden date',
+      (tester) async {
+    await pump(tester, extra: [
+      businessDayProvider
+          .overrideWith(() => _FixedBusinessDayNotifier(DateTime(2026, 3, 5))),
+    ]);
+
+    expect(find.text(DateFormat('EEEE, MMMM d, y').format(DateTime(2026, 3, 5))),
+        findsOneWidget);
+  });
+}
+
+/// A [businessDayProvider] override that returns a fixed date, so a widget
+/// test can assert on a known, non-wall-clock "today".
+class _FixedBusinessDayNotifier extends BusinessDayNotifier {
+  _FixedBusinessDayNotifier(this._fixed);
+  final DateTime _fixed;
+
+  @override
+  DateTime build() => _fixed;
 }

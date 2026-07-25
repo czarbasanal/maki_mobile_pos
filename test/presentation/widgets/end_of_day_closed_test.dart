@@ -6,8 +6,21 @@ import 'package:maki_mobile_pos/core/enums/payment_method.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
+import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
+
+/// A [businessDayProvider] override with no timer — see
+/// end_of_day_plate_amount_submit_test.dart for why a real (unoverridden)
+/// build would trip flutter_test's "no pending timers" invariant.
+class _FixedBusinessDayNotifier extends BusinessDayNotifier {
+  _FixedBusinessDayNotifier(this._fixed);
+  final DateTime _fixed;
+
+  @override
+  DateTime build() => _fixed;
+}
 
 DailyClosingEntity _closing(DateTime d) => DailyClosingEntity(
       id: 'd1',
@@ -73,6 +86,9 @@ void main() {
 
   Widget harness() => ProviderScope(
         overrides: [
+          businessDayProvider
+              .overrideWith(() => _FixedBusinessDayNotifier(dayStart)),
+          unsettledBusinessDayProvider.overrideWith((ref) async => null),
           dailyClosingForDateProvider
               .overrideWith((ref, date) async => _closing(dayStart)),
           dailyClosingDataProvider

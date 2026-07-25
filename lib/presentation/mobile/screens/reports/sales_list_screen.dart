@@ -41,9 +41,12 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     final dailyOnly =
         user != null && RolePermissions.isDailyReportsOnly(user.role);
     if (dailyOnly) {
-      final now = DateTime.now();
-      _startDate = DateTime(now.year, now.month, now.day);
-      _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      // Watch the clock (not a raw DateTime.now() snapshot) so the forced
+      // range follows a midnight rollover instead of pinning a role that's
+      // restricted to "today" onto whatever day the screen was opened.
+      final today = ref.watch(businessDayProvider);
+      _startDate = today;
+      _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
       _selectedPreset = DateRangePreset.today;
     }
 
@@ -385,10 +388,12 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   }
 
   bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
+    // Watch the clock so a group labeled "Today" flips to its dated label
+    // if the screen is left open across a midnight rollover.
+    final today = ref.watch(businessDayProvider);
+    return date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day;
   }
 }
 

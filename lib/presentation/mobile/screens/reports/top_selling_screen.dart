@@ -46,11 +46,12 @@ class _TopSellingScreenState extends ConsumerState<TopSellingScreen> {
         user != null && RolePermissions.isDailyReportsOnly(user.role);
 
     if (dailyOnly) {
-      // Force today regardless of any prior state — non-admin roles cannot
-      // view historical data.
-      final now = DateTime.now();
-      _startDate = DateTime(now.year, now.month, now.day);
-      _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      // Watch the clock (not a raw DateTime.now() snapshot) so the forced
+      // range follows a midnight rollover instead of pinning a role that's
+      // restricted to "today" onto whatever day the screen was opened.
+      final today = ref.watch(businessDayProvider);
+      _startDate = today;
+      _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
       _selectedPreset = DateRangePreset.today;
     }
 

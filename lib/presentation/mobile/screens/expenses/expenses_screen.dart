@@ -290,7 +290,9 @@ class _ExpenseTotalsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final now = DateTime.now();
+    // Business-day clock (not a raw now snapshot) so the Today/Week/Month
+    // windows roll over at midnight while the screen is open.
+    final now = ref.watch(businessDayProvider);
     final endOfToday = now.endOfDay;
 
     final todayParams = ExpenseDateRangeParams(

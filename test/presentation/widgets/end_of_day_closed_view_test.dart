@@ -4,7 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
+import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
+
+/// A [businessDayProvider] override with no timer — see
+/// end_of_day_plate_amount_submit_test.dart for why a real (unoverridden)
+/// build would trip flutter_test's "no pending timers" invariant. Fixed to
+/// exactly [today] since this file's overrides are keyed to that specific
+/// family instance.
+class _FixedBusinessDayNotifier extends BusinessDayNotifier {
+  _FixedBusinessDayNotifier(this._fixed);
+  final DateTime _fixed;
+
+  @override
+  DateTime build() => _fixed;
+}
 
 void main() {
   final now = DateTime.now();
@@ -70,6 +85,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          businessDayProvider
+              .overrideWith(() => _FixedBusinessDayNotifier(today)),
+          unsettledBusinessDayProvider.overrideWith((ref) async => null),
           dailyClosingForDateProvider(today)
               .overrideWith((ref) async => saved),
           dailyClosingDataProvider(today)

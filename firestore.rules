@@ -39,7 +39,23 @@ service cloud.firestore {
     function isActiveUser() {
       return isAuthenticated() && getUserData().isActive == true;
     }
-    
+
+    // PH business day (UTC+8, no DST) as a yyyymmdd int for drawer_state math.
+    function phDay() {
+      let t = request.time + duration.value(8, 'h');
+      return t.year() * 10000 + t.month() * 100 + t.day();
+    }
+
+    // True when no past sales-day is awaiting closing: the state doc is
+    // missing (fresh DB / pre-rollout), today already has sales (day is
+    // live), or the latest sales-day has been closed.
+    function drawerSettled() {
+      let data = get(/databases/$(database)/documents/drawer_state/state).data;
+      return !exists(/databases/$(database)/documents/drawer_state/state) ||
+        data.get('lastSaleDay', 0) == phDay() ||
+        (data.get('lastClosedDay', 0) >= data.get('lastSaleDay', 0));
+    }
+
     // ==================== USERS COLLECTION ====================
     
     match /users/{userId} {
@@ -147,8 +163,9 @@ service cloud.firestore {
       // App-level logic restricts cashier/staff to today's sales only
       allow read: if isValidUser() && isActiveUser();
       
-      // All valid users can create sales (POS)
-      allow create: if isValidUser() && isActiveUser();
+      // All valid users can create sales (POS), gated on the drawer being
+      // settled server-side (no past unclosed sales-day).
+      allow create: if isValidUser() && isActiveUser() && drawerSettled();
       
       // Only admin can update sales (for voiding)
       // Staff and cashier CANNOT void sales
@@ -279,6 +296,29 @@ service cloud.firestore {
       // one doc — otherwise non-admin checkouts fail with permission-denied.
       allow write: if settingId == 'sale_counters' &&
         isValidUser() && isActiveUser();
+    }
+
+    // ==================== DRAWER STATE (single doc) ====================
+    // Denormalized latest-sale-day / latest-closed-day so the sales-create
+    // rule can enforce "no new sales on an unsettled drawer" server-side.
+    match /drawer_state/{docId} {
+      allow read: if isValidUser() && isActiveUser();
+      // lastSaleDay may only be stamped to the CURRENT PH day; lastClosedDay
+      // may only be set to today or a past day. No delete.
+      // Bare `request.resource.data.lastSaleDay` / `.lastClosedDay` throw
+      // (== deny) if a non-merged write drops the field while still
+      // touching the other one; read via .get(...) with a sentinel that can
+      // never satisfy its check instead, so a dropped field is an explicit
+      // deny rather than an evaluation-error deny (same outcome, no crash
+      // risk if the compiler ever changes error handling).
+      allow create, update: if isValidUser() && isActiveUser() &&
+        (!request.resource.data.diff(resource == null ? {} : resource.data)
+            .affectedKeys().hasAny(['lastSaleDay']) ||
+          request.resource.data.get('lastSaleDay', -1) == phDay()) &&
+        (!request.resource.data.diff(resource == null ? {} : resource.data)
+            .affectedKeys().hasAny(['lastClosedDay']) ||
+          request.resource.data.get('lastClosedDay', 99999999) <= phDay());
+      allow delete: if false;
     }
 
     // ==================== PRODUCT CATEGORIES COLLECTION ====================

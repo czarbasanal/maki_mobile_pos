@@ -22,6 +22,11 @@ export const FirestoreCollections = {
   productSkus: 'product_skus',
   // Barcode-uniqueness claim collection. Keyed by normalizeBarcode(code).
   productBarcodes: 'product_barcodes',
+  // Drawer-state collection. Single doc (id 'state') tracking the
+  // business-day rollover: lastSaleDay/lastClosedDay (yyyymmdd ints, see
+  // core/utils/businessDay.ts), merge-written by sale creation / day
+  // closing. Mirrors lib/core/constants/firestore_collections.dart.
+  drawerState: 'drawer_state',
 } as const;
 
 export const SettingsDocs = {

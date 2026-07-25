@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/activity_log_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/logs/activity_log_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/logs/activity_log_style.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -291,15 +292,18 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
     );
   }
 
+  // Group labels compare against the business-day clock so "Today" /
+  // "Yesterday" headers stay correct across a midnight rollover.
   bool _isToday(DateTime date) {
-    final now = DateTime.now();
+    final now = ref.watch(businessDayProvider);
     return date.year == now.year &&
         date.month == now.month &&
         date.day == now.day;
   }
 
   bool _isYesterday(DateTime date) {
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final yesterday =
+        ref.watch(businessDayProvider).subtract(const Duration(days: 1));
     return date.year == yesterday.year &&
         date.month == yesterday.month &&
         date.day == yesterday.day;

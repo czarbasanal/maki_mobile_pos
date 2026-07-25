@@ -54,6 +54,7 @@ void main() {
       activeMechanicsProvider.overrideWith((ref) => Stream.value(const [])),
       currentUserProvider.overrideWith((ref) => Stream.value(admin())),
       draftRepositoryProvider.overrideWithValue(repo),
+      unsettledBusinessDayProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);
     await tester.pumpWidget(
@@ -129,6 +130,7 @@ void main() {
           draftRepositoryProvider.overrideWithValue(
             DraftRepositoryImpl(firestore: FakeFirebaseFirestore()),
           ),
+          unsettledBusinessDayProvider.overrideWith((ref) async => null),
         ],
         child: const MaterialApp(home: DraftEditScreen(draftId: 'draft-1')),
       ),

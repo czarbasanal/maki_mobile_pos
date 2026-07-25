@@ -12,9 +12,25 @@ import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
 import 'package:maki_mobile_pos/domain/usecases/daily_closing/close_day_usecase.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
+
+/// A [businessDayProvider] override with no timer — closeDay()'s invalidate
+/// fan-out now reaches todaysSalesSummaryProvider, which watches the clock;
+/// without this override that would arm a REAL midnight [Timer] the first
+/// time it's built here, which trips flutter_test's "no pending timers"
+/// invariant (the timer only gets cancelled on container disposal, which
+/// runs in an `addTearDown` after that invariant check).
+class _FixedBusinessDayNotifier extends BusinessDayNotifier {
+  _FixedBusinessDayNotifier(this._fixed);
+  final DateTime _fixed;
+
+  @override
+  DateTime build() => _fixed;
+}
 
 /// Covers the pre-merge review fix: a Plate No amount TYPED into a field but
 /// never committed via its own "Add" button used to be silently dropped when
@@ -105,6 +121,8 @@ void main() {
       dailyClosingForDateProvider(today).overrideWith((ref) async => null),
       dailyClosingDataProvider(today).overrideWith((ref) async => data),
       closeDayUseCaseProvider.overrideWithValue(useCase),
+      businessDayProvider.overrideWith(() => _FixedBusinessDayNotifier(today)),
+      unsettledBusinessDayProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);
 
