@@ -343,7 +343,7 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
@@ -361,7 +361,7 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
@@ -379,7 +379,7 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
@@ -399,7 +399,7 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
@@ -417,7 +417,7 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
@@ -451,7 +451,7 @@ service cloud.firestore {
         request.resource.data.createdBy == request.auth.uid;
 
       // Shared-list grants (2026-07-24): any active user may rename; only
-      // staff/admin may flip isActive; delete stays admin-only.
+      // staff/admin may flip isActive; delete is staff/admin (2026-07-25).
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()

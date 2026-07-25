@@ -916,6 +916,11 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
       await assertSucceeds(as("admin").collection(coll).doc("e2").delete());
     });
 
+    it(`${coll}: cashier cannot delete`, async () => {
+      await seed(coll, "e9", entry);
+      await assertFails(as("cashier").collection(coll).doc("e9").delete());
+    });
+
     it(`${coll}: inactive staff cannot create`, async () => {
       await assertFails(as("inactiveStaff").collection(coll).add(entry));
     });
