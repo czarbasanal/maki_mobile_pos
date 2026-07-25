@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// A [businessDayProvider] override with no timer — see
 /// end_of_day_plate_amount_submit_test.dart for why a real (unoverridden)
@@ -116,6 +119,10 @@ void main() {
     await tester.pumpWidget(_harness(closing: null));
     await tester.pump();
     await tester.pump();
+    // Fix 1: the target now resolves via the (async) unsettled-day detector
+    // first, one extra hop before the closing/live-data providers even get
+    // watched — needs one more pump than before that fix.
+    await tester.pump();
 
     expect(find.text('Labor fees → mechanics'), findsNothing);
 
@@ -159,6 +166,10 @@ void main() {
       liveSummary: _summary(salesCount: 3, cash: 1750, labor: 750),
     ));
     await tester.pump();
+    await tester.pump();
+    // Fix 1: the target now resolves via the (async) unsettled-day detector
+    // first, one extra hop before the closing/live-data providers even get
+    // watched — needs one more pump than before that fix.
     await tester.pump();
 
     expect(find.text('After close'), findsOneWidget);
@@ -278,6 +289,52 @@ void main() {
       expect(find.text('End-of-Day Closing'), findsOneWidget);
       expect(find.text('Closing Jul 25'), findsNothing);
       expect(requested, [_businessToday]);
+    });
+
+    testWidgets(
+        'default (no targetDate), detector STILL LOADING at open: shows the '
+        'skeleton (never defaults to today) and locks onto the unsettled '
+        "day once the detector's first value arrives (Fix 1)",
+        (tester) async {
+      final unsettled = DateTime(2026, 7, 20);
+      final completer = Completer<DateTime?>();
+      final requested = <DateTime>[];
+      final container = ProviderContainer(overrides: [
+        businessDayProvider
+            .overrideWith(() => _FixedBusinessDayNotifier(_businessToday)),
+        // Never resolved until the test completes it below — simulates the
+        // detector still being AsyncLoading when initState runs.
+        unsettledBusinessDayProvider.overrideWith((ref) => completer.future),
+        dailyClosingForDateProvider.overrideWith((ref, date) async {
+          requested.add(date);
+          return null;
+        }),
+        dailyClosingDataProvider
+            .overrideWith((ref, date) async => _data(date)),
+      ]);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: EndOfDayScreen()),
+      ));
+      await tester.pump();
+
+      // Still loading: generic title + skeleton, and NEITHER closing
+      // provider has been watched with any date yet — proves the screen did
+      // not silently lock onto today while the detector was still pending.
+      expect(find.text('End-of-Day Closing'), findsOneWidget);
+      expect(find.byType(FormSkeleton), findsOneWidget);
+      expect(requested, isEmpty);
+
+      // The detector resolves AFTER the first frame, reporting a past
+      // unsettled day.
+      completer.complete(unsettled);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Closing Jul 20'), findsOneWidget);
+      expect(requested, [unsettled]);
     });
   });
 }

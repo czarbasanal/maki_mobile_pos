@@ -48,24 +48,66 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   /// state only — persisted onto the closing when the day is closed.
   final Set<String> _excludedIds = {};
 
-  /// The day this screen closes. Resolved ONCE in [initState] — widget
-  /// arg, else the already-loaded oldest-unsettled day, else today — and
-  /// never re-derived afterward, so a midnight flip or a detector change
-  /// can't retarget a form the user already has open.
-  late final DateTime _target;
+  /// The day this screen closes. Resolved ONCE — widget arg, else the
+  /// already-loaded oldest-unsettled day, else today — and never re-derived
+  /// afterward, so a midnight flip or a detector change can't retarget a
+  /// form the user already has open.
+  ///
+  /// Null means "not resolved yet": only possible when [widget.targetDate]
+  /// is omitted AND [unsettledBusinessDayProvider] is still `AsyncLoading`
+  /// at open. Defaulting to today in that window would be wrong — the
+  /// detector might still report an unsettled PAST day — so the screen
+  /// shows [FormSkeleton] and waits (see [_unsettledSub]) instead of
+  /// guessing. Resolved permanently on the detector's FIRST value/error.
+  DateTime? _target;
 
   /// Whether [_target] was "today" (the current business day) at the
-  /// moment this screen opened — drives the AppBar title. Captured
-  /// alongside [_target] so it, too, is immune to a later clock flip.
-  late final bool _targetIsToday;
+  /// moment this screen resolved its target — drives the AppBar title.
+  /// Set alongside [_target] so it, too, is immune to a later clock flip.
+  bool? _targetIsToday;
+
+  /// Listens for the detector's first resolution when [_target] couldn't be
+  /// decided synchronously in [initState] (still `AsyncLoading`). Closed as
+  /// soon as it fires once — the target locks on that first value and is
+  /// never revisited.
+  ProviderSubscription<AsyncValue<DateTime?>>? _unsettledSub;
 
   @override
   void initState() {
     super.initState();
     final today = ref.read(businessDayProvider);
-    final unsettled = ref.read(unsettledBusinessDayProvider).valueOrNull;
-    _target = widget.targetDate ?? unsettled ?? today;
-    _targetIsToday = _target == today;
+
+    final explicit = widget.targetDate;
+    if (explicit != null) {
+      _target = explicit;
+      _targetIsToday = explicit == today;
+      return;
+    }
+
+    final detector = ref.read(unsettledBusinessDayProvider);
+    if (detector is AsyncLoading<DateTime?>) {
+      // Detector hasn't produced a value yet — do NOT default to today (see
+      // the race this fix closes on [_target]'s doc comment). Wait for its
+      // first non-loading state and lock onto whatever it says then.
+      _unsettledSub = ref.listenManual<AsyncValue<DateTime?>>(
+        unsettledBusinessDayProvider,
+        (previous, next) {
+          if (next is AsyncLoading<DateTime?>) return; // still loading
+          _unsettledSub?.close();
+          _unsettledSub = null;
+          if (!mounted) return;
+          setState(() {
+            _target = next.valueOrNull ?? today;
+            _targetIsToday = _target == today;
+          });
+        },
+      );
+    } else {
+      // Already loaded (or errored) by the time initState ran — resolve
+      // synchronously, same as before this fix.
+      _target = detector.valueOrNull ?? today;
+      _targetIsToday = _target == today;
+    }
   }
 
   List<double> _plateDpAmounts = const [];
@@ -77,6 +119,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
 
   @override
   void dispose() {
+    _unsettledSub?.close();
     _floatController.dispose();
     _countedController.dispose();
     _plateDpPendingController.dispose();
@@ -90,7 +133,24 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final existingAsync = ref.watch(dailyClosingForDateProvider(_target));
+    final target = _target;
+    // Target not resolved yet (detector still loading at open, see
+    // [_target]'s doc comment) — show the skeleton under a generic title
+    // rather than guessing today, and wait for [_unsettledSub] to fire.
+    if (target == null) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(LucideIcons.chevronLeft),
+            onPressed: () => context.goBackOr(RoutePaths.reports),
+          ),
+          title: const Text('End-of-Day Closing'),
+        ),
+        body: const FormSkeleton(),
+      );
+    }
+
+    final existingAsync = ref.watch(dailyClosingForDateProvider(target));
 
     return Scaffold(
       appBar: AppBar(
@@ -98,9 +158,9 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
-        title: Text(_targetIsToday
+        title: Text(_targetIsToday!
             ? 'End-of-Day Closing'
-            : 'Closing ${DateFormat('MMM d').format(_target)}'),
+            : 'Closing ${DateFormat('MMM d').format(target)}'),
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.history),
@@ -113,22 +173,24 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
         loading: () => const FormSkeleton(),
         error: (e, _) => ErrorStateView(
           message: 'Error: $e',
-          onRetry: () => ref.invalidate(dailyClosingForDateProvider(_target)),
+          onRetry: () => ref.invalidate(dailyClosingForDateProvider(target)),
         ),
         data: (existing) => existing != null
-            ? _ClosedView(closing: existing, date: _target)
+            ? _ClosedView(closing: existing, date: target)
             : _buildReview(),
       ),
     );
   }
 
   Widget _buildReview() {
-    final dataAsync = ref.watch(dailyClosingDataProvider(_target));
+    // Only reached once [_target] has been resolved (see [build]).
+    final target = _target!;
+    final dataAsync = ref.watch(dailyClosingDataProvider(target));
     return dataAsync.when(
       loading: () => const FormSkeleton(),
       error: (e, _) => ErrorStateView(
         message: 'Error: $e',
-        onRetry: () => ref.invalidate(dailyClosingDataProvider(_target)),
+        onRetry: () => ref.invalidate(dailyClosingDataProvider(target)),
       ),
       data: (data) {
         final draft = data.draftExcluding(_excludedIds);
@@ -476,7 +538,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     final notes = _notesController.text.trim();
     final saved =
         await ref.read(dailyClosingOperationsProvider.notifier).closeDay(
-              date: _target,
+              date: _target!,
               openingFloat: _float,
               countedCash: _counted ?? 0,
               plateNoDpAmounts: List.of(_plateDpAmounts),

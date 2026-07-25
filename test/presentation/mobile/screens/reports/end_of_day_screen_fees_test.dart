@@ -79,6 +79,10 @@ void main() {
     await tester.pumpWidget(_harness(closing: null));
     await tester.pump();
     await tester.pump();
+    // Fix 1: the target now resolves via the (async) unsettled-day detector
+    // first, one extra hop before the closing/live-data providers even get
+    // watched — needs one more pump than before that fix.
+    await tester.pump();
 
     expect(find.text('Shop fees'), findsOneWidget);
     expect(find.text('₱150.00'), findsOneWidget);
