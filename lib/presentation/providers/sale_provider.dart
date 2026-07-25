@@ -14,6 +14,7 @@ import 'package:maki_mobile_pos/domain/usecases/reports/get_profit_report_usecas
 import 'package:maki_mobile_pos/domain/usecases/reports/get_sales_report_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/reports/get_top_selling_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -24,10 +25,14 @@ final saleRepositoryProvider = Provider<SaleRepository>((ref) {
 
 // ==================== SALE QUERIES ====================
 
-/// Provides today's sales as a real-time stream.
+/// Provides today's sales as a real-time stream. Watches
+/// [businessDayProvider] (not a raw `DateTime.now()` snapshot) so a
+/// midnight rollover re-subscribes to the new day's range instead of
+/// leaving yesterday's stream open.
 final todaysSalesProvider = StreamProvider<List<SaleEntity>>((ref) {
+  final day = ref.watch(businessDayProvider);
   return authGatedStream(ref, (_) {
-    return ref.watch(saleRepositoryProvider).watchTodaysSales();
+    return ref.watch(saleRepositoryProvider).watchSalesForDay(date: day);
   });
 });
 
@@ -137,9 +142,12 @@ UserEntity _requireActor(Ref ref) {
 /// (not just by the UI date picker).
 final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
-  final today = DateTime.now();
-  final dayStart = DateTime(today.year, today.month, today.day);
-  final dayEnd = DateTime(today.year, today.month, today.day, 23, 59, 59, 999);
+  // businessDayProvider is already midnight-truncated, so it doubles as
+  // dayStart; watching it (not a raw DateTime.now() snapshot) means a
+  // midnight rollover re-runs this query for the new day.
+  final dayStart = ref.watch(businessDayProvider);
+  final dayEnd =
+      DateTime(dayStart.year, dayStart.month, dayStart.day, 23, 59, 59, 999);
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
@@ -159,12 +167,17 @@ final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
 /// any other month-scoped totals.
 final monthToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
-  final m = monthToDate(DateTime.now());
+  // Watch the clock (not a raw DateTime.now() snapshot) so a midnight
+  // rollover re-runs this query with tomorrow's wider end-of-day bound.
+  final today = ref.watch(businessDayProvider);
+  final m = monthToDate(today);
+  final dayEnd =
+      DateTime(today.year, today.month, today.day, 23, 59, 59, 999);
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
         startDate: m.start,
-        endDate: m.end,
+        endDate: dayEnd,
       );
   if (!result.success) {
     throw AppExceptionWrapper(
@@ -182,7 +195,8 @@ final monthToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
 /// 1st of the month. Recomputes daily as the day count advances.
 final avgDailySalesProvider = Provider<AsyncValue<double>>((ref) {
   final summaryAsync = ref.watch(monthToDateSummaryProvider);
-  final daysElapsed = monthToDate(DateTime.now()).daysElapsed;
+  final today = ref.watch(businessDayProvider);
+  final daysElapsed = monthToDate(today).daysElapsed;
   return summaryAsync.whenData(
     (summary) => avgDailyFromGross(summary.grossAmount, daysElapsed),
   );

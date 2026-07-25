@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/usecases/daily_closing/close_day_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/daily_closing/get_daily_closing_summary_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/expense_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
@@ -50,8 +51,10 @@ final dailyClosingDataProvider =
     FutureProvider.family<DailyClosingData, DateTime>((ref, date) async {
   final dayStart = DateTime(date.year, date.month, date.day);
   final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
-  final now = DateTime.now();
-  final isToday = dayStart == DateTime(now.year, now.month, now.day);
+  // Watch the clock (not a raw DateTime.now() snapshot) so a midnight
+  // rollover flips a stale "today" family entry onto the past-day path.
+  final businessDay = ref.watch(businessDayProvider);
+  final isToday = dayStart == businessDay;
 
   if (isToday) {
     final summary = await ref.watch(todaysSalesSummaryProvider.future);
