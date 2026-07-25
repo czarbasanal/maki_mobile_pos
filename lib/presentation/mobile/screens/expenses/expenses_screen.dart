@@ -148,7 +148,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           AppSpacing.xs,
         ),
         child: _RecentSectionHeader(
-          onViewAll: () => _openHistory(context),
+          // Cashiers are scoped to today — no link into the full history.
+          onViewAll: isCashier ? null : () => _openHistory(context),
         ),
       ),
     ];
@@ -489,7 +490,8 @@ class _CategoryFilterDropdown extends ConsumerWidget {
 class _RecentSectionHeader extends StatelessWidget {
   const _RecentSectionHeader({required this.onViewAll});
 
-  final VoidCallback onViewAll;
+  /// Null hides the link entirely (cashiers — today-only view).
+  final VoidCallback? onViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -503,26 +505,27 @@ class _RecentSectionHeader extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        TextButton(
-          onPressed: onViewAll,
-          style: TextButton.styleFrom(
-            textStyle: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
+        if (onViewAll != null)
+          TextButton(
+            onPressed: onViewAll,
+            style: TextButton.styleFrom(
+              textStyle: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              minimumSize: const Size(0, 36),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            minimumSize: const Size(0, 36),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('View all'),
+                SizedBox(width: 4),
+                Icon(LucideIcons.chevronRight, size: 14),
+              ],
+            ),
           ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('View all'),
-              SizedBox(width: 4),
-              Icon(LucideIcons.chevronRight, size: 14),
-            ],
-          ),
-        ),
       ],
     );
   }

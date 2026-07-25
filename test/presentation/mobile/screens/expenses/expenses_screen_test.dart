@@ -78,6 +78,15 @@ void main() {
       expect(find.text('This Month'), findsNothing);
     });
 
+    testWidgets('does not see the View all link into full history',
+        (tester) async {
+      await pump(tester, role: UserRole.cashier, expenses: [
+        expense(id: 'e-today', date: businessToday),
+      ]);
+
+      expect(find.textContaining('View all'), findsNothing);
+    });
+
     testWidgets("list omits yesterday's expense but shows today's",
         (tester) async {
       final yesterday = businessToday.subtract(const Duration(days: 1));
@@ -93,6 +102,14 @@ void main() {
   });
 
   group('staff', () {
+    testWidgets('still sees the View all link', (tester) async {
+      await pump(tester, role: UserRole.staff, expenses: [
+        expense(id: 'e-today', date: businessToday),
+      ]);
+
+      expect(find.textContaining('View all'), findsOneWidget);
+    });
+
     testWidgets('still sees all three summary cards', (tester) async {
       await pump(tester, role: UserRole.staff, expenses: [
         expense(id: 'e-today', date: businessToday),
