@@ -21,6 +21,7 @@ class VoidRequestModel {
       resolvedByName: map['resolvedByName'] as String?,
       resolvedAt: (map['resolvedAt'] as Timestamp?)?.toDate(),
       rejectionReason: map['rejectionReason'] as String?,
+      itemsSummary: map['itemsSummary'] as String?,
     );
   }
 
@@ -37,6 +38,7 @@ class VoidRequestModel {
       'status': VoidRequestStatus.pending.value,
       'read': false,
       'createdAt': FieldValue.serverTimestamp(),
+      if (e.itemsSummary != null) 'itemsSummary': e.itemsSummary,
     };
   }
 }
