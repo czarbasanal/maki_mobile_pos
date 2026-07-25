@@ -32,6 +32,10 @@ abstract class MechanicRepository {
     required String updatedBy,
   });
 
+  /// Permanently deletes the entry. Historical records keep the snapshotted
+  /// name; prefer setActive(false) to merely hide an entry.
+  Future<void> deleteMechanic(String mechanicId);
+
   /// Checks whether a mechanic name already exists (exact match).
   Future<bool> nameExists({
     required String name,

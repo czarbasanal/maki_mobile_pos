@@ -129,6 +129,19 @@ class ShopFeeRepositoryImpl implements ShopFeeRepository {
   }
 
   @override
+  Future<void> deleteShopFee(String shopFeeId) async {
+    try {
+      await _ref.doc(shopFeeId).delete();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to delete: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<bool> nameExists({
     required String name,
     String? excludeShopFeeId,

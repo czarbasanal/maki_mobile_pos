@@ -20,6 +20,10 @@ abstract class MotorcycleModelRepository {
     required String updatedBy,
   });
 
+  /// Permanently deletes the entry. Historical records keep the snapshotted
+  /// name; prefer setActive(false) to merely hide an entry.
+  Future<void> delete(String id);
+
   /// Finds a model by its case-insensitive dedup key (see `normalizedModelKey`).
   /// Returns null when none matches. Used by pick-or-add to reuse a row.
   Future<MotorcycleModelEntity?> findByNormalizedKey(String normalizedKey);

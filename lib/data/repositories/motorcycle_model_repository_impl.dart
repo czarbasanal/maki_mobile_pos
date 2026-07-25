@@ -97,6 +97,18 @@ class MotorcycleModelRepositoryImpl implements MotorcycleModelRepository {
   }
 
   @override
+  Future<void> delete(String id) async {
+    try {
+      await _ref.doc(id).delete();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+          message: 'Failed to delete: ${e.message}',
+          code: e.code,
+          originalError: e);
+    }
+  }
+
+  @override
   Future<MotorcycleModelEntity?> findByNormalizedKey(
       String normalizedKey) async {
     try {

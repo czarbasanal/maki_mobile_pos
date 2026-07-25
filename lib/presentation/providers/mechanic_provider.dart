@@ -112,6 +112,20 @@ class MechanicOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  /// Permanently deletes the entry. Returns true on success.
+  Future<bool> delete(String mechanicId) async {
+    state = const AsyncValue.loading();
+    try {
+      _requireUserId();
+      await _repository.deleteMechanic(mechanicId);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
 }
 
 final mechanicOperationsProvider =

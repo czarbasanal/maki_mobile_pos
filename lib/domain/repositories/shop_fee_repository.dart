@@ -32,6 +32,10 @@ abstract class ShopFeeRepository {
     required String updatedBy,
   });
 
+  /// Permanently deletes the entry. Historical records keep the snapshotted
+  /// name; prefer setActive(false) to merely hide an entry.
+  Future<void> deleteShopFee(String shopFeeId);
+
   /// Checks whether a shop fee name already exists (case-insensitive).
   Future<bool> nameExists({
     required String name,

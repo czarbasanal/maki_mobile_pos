@@ -73,6 +73,9 @@ class _FakeMechanicRepo implements MechanicRepository {
     required String updatedBy,
   }) =>
       throw UnimplementedError();
+
+  @override
+  Future<void> deleteMechanic(String mechanicId) => throw UnimplementedError();
 }
 
 void main() {

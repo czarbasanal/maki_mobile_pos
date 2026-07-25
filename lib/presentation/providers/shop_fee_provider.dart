@@ -109,6 +109,20 @@ class ShopFeeOperationsNotifier extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
+
+  /// Permanently deletes the entry. Returns true on success.
+  Future<bool> delete(String shopFeeId) async {
+    state = const AsyncValue.loading();
+    try {
+      _requireUserId();
+      await _repository.deleteShopFee(shopFeeId);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
 }
 
 final shopFeeOperationsProvider =

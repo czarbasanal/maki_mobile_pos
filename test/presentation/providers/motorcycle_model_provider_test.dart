@@ -108,6 +108,19 @@ void main() {
     final all = await repo.watchAll().first;
     expect(all.where((e) => normalizedModelKey(e.name) == 'beat').length, 1);
   });
+
+  test('delete removes the model and returns true', () async {
+    final c = makeContainer();
+    addTearDown(c.dispose);
+    await c.read(currentUserProvider.future);
+    final m = await repo.create(model: model('Beat'), createdBy: 'u');
+
+    final ops = c.read(motorcycleModelOperationsProvider.notifier);
+    final result = await ops.delete(m.id);
+
+    expect(result, isTrue);
+    expect(await repo.getById(m.id), isNull);
+  });
 }
 
 /// Delegates everything to a wrapped [MotorcycleModelRepository] except
@@ -152,4 +165,7 @@ class _SetActiveFailingRepository implements MotorcycleModelRepository {
   @override
   Future<MotorcycleModelEntity?> findByNormalizedKey(String normalizedKey) =>
       _inner.findByNormalizedKey(normalizedKey);
+
+  @override
+  Future<void> delete(String id) => _inner.delete(id);
 }
