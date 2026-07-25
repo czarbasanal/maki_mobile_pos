@@ -826,4 +826,50 @@ void main() {
       expect(sale.draftId, 'draft-9');
     });
   });
+
+  group('amountReceivedForSale (2026-07-25 received-amount fix)', () {
+    test('cash stores the typed tender, not the total', () {
+      cartNotifier.addProduct(createTestProduct(price: 320));
+      cartNotifier.setPaymentMethod(PaymentMethod.cash);
+      cartNotifier.setAmountReceived(1000);
+
+      final state = container.read(cartProvider);
+      expect(state.grandTotal, 320);
+      expect(state.amountReceivedForSale, 1000);
+      expect(state.change, 680);
+    });
+
+    test('digital methods store the collected total', () {
+      cartNotifier.addProduct(createTestProduct(price: 320));
+      cartNotifier.setPaymentMethod(PaymentMethod.gcash);
+
+      final state = container.read(cartProvider);
+      expect(state.amountReceivedForSale, state.grandTotal);
+    });
+
+    test('salmon stores the split (collected-today) amount', () {
+      cartNotifier.addProduct(createTestProduct(price: 320));
+      cartNotifier.setPaymentMethod(PaymentMethod.salmon);
+      cartNotifier.setSplitAmount(120);
+
+      final state = container.read(cartProvider);
+      expect(state.amountReceivedForSale, 120);
+      expect(state.amountReceivedForSale, state.splitAmount);
+    });
+
+    test('toSale persists amountReceivedForSale', () {
+      cartNotifier.addProduct(createTestProduct(price: 320));
+      cartNotifier.setPaymentMethod(PaymentMethod.cash);
+      cartNotifier.setAmountReceived(1000);
+
+      final sale = cartNotifier.toSale(
+        saleNumber: 'S1',
+        cashierId: 'c',
+        cashierName: 'C',
+      );
+
+      expect(sale.amountReceived, 1000);
+      expect(sale.changeGiven, 680);
+    });
+  });
 }
