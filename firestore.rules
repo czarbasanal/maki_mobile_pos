@@ -50,11 +50,10 @@ service cloud.firestore {
     // missing (fresh DB / pre-rollout), today already has sales (day is
     // live), or the latest sales-day has been closed.
     function drawerSettled() {
+      let data = get(/databases/$(database)/documents/drawer_state/state).data;
       return !exists(/databases/$(database)/documents/drawer_state/state) ||
-        get(/databases/$(database)/documents/drawer_state/state).data.lastSaleDay == phDay() ||
-        (get(/databases/$(database)/documents/drawer_state/state).data
-            .get('lastClosedDay', 0) >=
-         get(/databases/$(database)/documents/drawer_state/state).data.lastSaleDay);
+        data.get('lastSaleDay', 0) == phDay() ||
+        (data.get('lastClosedDay', 0) >= data.get('lastSaleDay', 0));
     }
 
     // ==================== USERS COLLECTION ====================
@@ -306,13 +305,19 @@ service cloud.firestore {
       allow read: if isValidUser() && isActiveUser();
       // lastSaleDay may only be stamped to the CURRENT PH day; lastClosedDay
       // may only be set to today or a past day. No delete.
+      // Bare `request.resource.data.lastSaleDay` / `.lastClosedDay` throw
+      // (== deny) if a non-merged write drops the field while still
+      // touching the other one; read via .get(...) with a sentinel that can
+      // never satisfy its check instead, so a dropped field is an explicit
+      // deny rather than an evaluation-error deny (same outcome, no crash
+      // risk if the compiler ever changes error handling).
       allow create, update: if isValidUser() && isActiveUser() &&
         (!request.resource.data.diff(resource == null ? {} : resource.data)
             .affectedKeys().hasAny(['lastSaleDay']) ||
-          request.resource.data.lastSaleDay == phDay()) &&
+          request.resource.data.get('lastSaleDay', -1) == phDay()) &&
         (!request.resource.data.diff(resource == null ? {} : resource.data)
             .affectedKeys().hasAny(['lastClosedDay']) ||
-          request.resource.data.lastClosedDay <= phDay());
+          request.resource.data.get('lastClosedDay', 99999999) <= phDay());
       allow delete: if false;
     }
 

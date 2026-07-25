@@ -1183,6 +1183,26 @@ describe("/sales create gating (drawerSettled)", () => {
     );
   });
 
+  it("drawer_state doc exists with lastClosedDay only (no lastSaleDay): sale create allowed (close-before-first-sale)", async () => {
+    await seedDrawerState({ lastClosedDay: phDay() - 1 });
+    await assertSucceeds(
+      as("cashier")
+        .collection("sales")
+        .doc(newDocId("sale"))
+        .set(saleData("g"))
+    );
+  });
+
+  it("drawer_state doc exists but empty (neither field set): sale create allowed", async () => {
+    await seedDrawerState({});
+    await assertSucceeds(
+      as("cashier")
+        .collection("sales")
+        .doc(newDocId("sale"))
+        .set(saleData("h"))
+    );
+  });
+
   it("gate applies to every active role, not just cashier", async () => {
     await seedDrawerState({ lastSaleDay: phDay() - 1 });
     await assertFails(
