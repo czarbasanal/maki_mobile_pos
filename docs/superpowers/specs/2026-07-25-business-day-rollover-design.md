@@ -112,10 +112,14 @@ Boundaries (documented):
   promptly via App Distribution.
 - Missing doc ⇒ allow (lazy creation on the first post-update sale/close;
   no backfill needed).
-- Rules deploy is a separate, user-confirmed step; deploy BEFORE/WITH the
-  APK that writes `drawer_state` (the rule tolerates the missing doc, so
-  ordering is safe either way — but the guard only bites once the doc
-  exists).
+- Rules deploy is a separate, user-confirmed step. Required order: rules →
+  hosting (web) → APK, and the APK must land on ALL devices in the SAME
+  session — not a rolling rollout. An old APK that doesn't write
+  `drawer_state` can still close a day after the new rules + doc exist,
+  which bricks sales on every device (old or new) with no banner, since
+  `drawerSettled()` denies with a bare `permission-denied` and nothing
+  local ever told the old APK a day needed closing. Retire old installs
+  the same day the rules deploy.
 
 ### E. EOD screen closes a TARGET day (not always today)
 

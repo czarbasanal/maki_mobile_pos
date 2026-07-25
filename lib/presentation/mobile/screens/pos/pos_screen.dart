@@ -479,6 +479,10 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     // are entered on the next screen. Also blocked while an earlier
     // business day is unsettled (CartState stays a pure value object, so
     // this reads the provider here at the screen layer instead).
+    // valueOrNull: loading -> unblocked deliberately; server rule
+    // (drawerSettled()) is the hard backstop, so a still-loading detector
+    // here just means the client-side gate hasn't caught up yet — it never
+    // lets an actually-blocked sale through.
     final unsettled = ref.watch(unsettledBusinessDayProvider).valueOrNull;
     final canGoCheckout = cart.canProceedToCheckout && unsettled == null;
     return Container(

@@ -179,9 +179,11 @@ export class FirestoreSaleRepository implements SaleRepository {
       });
       // Stamp the business-day rollover marker (mirrors mobile's
       // sale_repository_impl.dart). Reuses the same `now` already used above
-      // for the counter's dateKey, so this matches the rules' UTC+8 phDay()
-      // as long as the device clock is PH-local (same assumption the rest
-      // of the app makes).
+      // for the counter's dateKey, so this matches the rules' UTC+8 phDay().
+      // Unlike mobile's businessDayInt (which reads the device's local
+      // DateTime fields and so assumes a PH-local device clock), phDayInt
+      // does epoch (UTC) math with a fixed +8h offset — it's correct
+      // regardless of the browser's timezone.
       tx.set(drawerStateRef, { lastSaleDay: phDayInt(now) }, { merge: true });
       input.items.forEach((item, i) => {
         tx.set(itemRefs[i], {

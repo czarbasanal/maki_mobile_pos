@@ -235,7 +235,8 @@ class SaleRepositoryImpl implements SaleRepository {
   Future<bool> hasCompletedSaleOn(DateTime date) async {
     try {
       final start = DateTime(date.year, date.month, date.day);
-      final end = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      final end =
+          DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
 
       final snapshot = await _salesRef
           .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
