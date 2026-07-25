@@ -14,3 +14,11 @@ DateTime businessDateOf(DateTime t) => DateTime(t.year, t.month, t.day);
 
 /// yyyymmdd int for the drawer_state doc / rules comparisons.
 int businessDayInt(DateTime t) => t.year * 10000 + t.month * 100 + t.day;
+
+/// Inverse of [businessDayInt] — parses a yyyymmdd int back into a
+/// midnight-truncated [DateTime].
+DateTime dateFromBusinessDayInt(int yyyymmdd) => DateTime(
+      yyyymmdd ~/ 10000,
+      (yyyymmdd ~/ 100) % 100,
+      yyyymmdd % 100,
+    );

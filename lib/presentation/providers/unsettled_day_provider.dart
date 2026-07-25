@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
@@ -35,5 +36,21 @@ final unsettledBusinessDayProvider = FutureProvider<DateTime?>((ref) async {
     if (await closingRepo.getClosing(d) != null) continue; // gap already closed
     if (await saleRepo.hasCompletedSaleOn(d)) return d; // oldest unsettled
   }
+
+  // Fallback (Fix 2b): the scan above can miss unsettled days it never
+  // walked — a gap older than the 14-day cap, or a stale [latestClosing]
+  // that pushed `start` too far forward. drawer_state/state is the same
+  // doc the `drawerSettled()` rule reads server-side, so if IT says the
+  // latest sale day is a past day that's never been closed, trust it even
+  // though the scan came up empty.
+  final drawerState = await closingRepo.getDrawerState();
+  final lastSaleDay = drawerState.lastSaleDay ?? 0;
+  final lastClosedDay = drawerState.lastClosedDay ?? 0;
+  if (lastSaleDay > 0 &&
+      lastSaleDay < businessDayInt(today) &&
+      lastSaleDay > lastClosedDay) {
+    return dateFromBusinessDayInt(lastSaleDay);
+  }
+
   return null;
 });

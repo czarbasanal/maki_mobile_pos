@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/daily_closing_repository.dart';
@@ -39,12 +40,22 @@ class _FakeDailyClosingRepository extends Mock
   final Map<String, DailyClosingEntity> _closings = {};
   final _controller = StreamController<List<DailyClosingEntity>>.broadcast();
 
+  /// Task 6 / Fix 2b: the raw `drawer_state/state` doc backing
+  /// [getDrawerState]. Defaults to "never written" — the same as a fresh
+  /// DB — until a test calls [setDrawerState].
+  DrawerState _drawerState = const DrawerState.empty();
+
   static String _key(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   void addClosing(DateTime date) {
     _closings[_key(date)] = _closingFor(date);
     _controller.add(_closings.values.toList());
+  }
+
+  void setDrawerState({int? lastSaleDay, int? lastClosedDay}) {
+    _drawerState =
+        DrawerState(lastSaleDay: lastSaleDay, lastClosedDay: lastClosedDay);
   }
 
   void disposeStream() => _controller.close();
@@ -60,6 +71,9 @@ class _FakeDailyClosingRepository extends Mock
       ..sort((a, b) => b.businessDate.compareTo(a.businessDate));
     return sorted.first;
   }
+
+  @override
+  Future<DrawerState> getDrawerState() async => _drawerState;
 
   // Mirrors a real Firestore snapshot stream: yields the current state
   // immediately on subscription, then forwards subsequent mutations.
@@ -301,5 +315,82 @@ void main() {
 
     final after = await readUnsettled(container);
     expect(after, isNull);
+  });
+
+  group('drawer_state fallback (Fix 2b)', () {
+    // The 14-day scan can't see everything the rules-authoritative
+    // drawer_state doc knows about (older gaps, a stale lastClosedDay from a
+    // closing whose own drawer_state write raced/failed). When the scan
+    // finds nothing, read drawer_state/state directly as a second signal.
+
+    test(
+        'scan finds nothing, but drawer_state says a past day had a sale '
+        'and was never closed -> fallback returns that day', () async {
+      final staleDay = today.subtract(const Duration(days: 2));
+      closingRepo.setDrawerState(lastSaleDay: businessDayInt(staleDay));
+
+      final container = makeContainer();
+      final result = await readUnsettled(container);
+      expect(result, staleDay);
+    });
+
+    test(
+        'fallback reaches a gap OLDER than the 14-day scan cap that the scan '
+        'itself can never see', () async {
+      final beyondCap = today.subtract(const Duration(days: 20));
+      closingRepo.setDrawerState(lastSaleDay: businessDayInt(beyondCap));
+
+      final container = makeContainer();
+      final result = await readUnsettled(container);
+      expect(result, beyondCap);
+    });
+
+    test(
+        'drawer_state says the last sale day is already closed -> fallback '
+        'stays null', () async {
+      final staleDay = today.subtract(const Duration(days: 2));
+      closingRepo.setDrawerState(
+        lastSaleDay: businessDayInt(staleDay),
+        lastClosedDay: businessDayInt(staleDay),
+      );
+
+      final container = makeContainer();
+      final result = await readUnsettled(container);
+      expect(result, isNull);
+    });
+
+    test(
+        'drawer_state says the last sale day is TODAY (still live, nothing '
+        'to close yet) -> fallback stays null', () async {
+      closingRepo.setDrawerState(lastSaleDay: businessDayInt(today));
+
+      final container = makeContainer();
+      final result = await readUnsettled(container);
+      expect(result, isNull);
+    });
+
+    test('missing drawer_state doc -> fallback stays null (fresh DB)',
+        () async {
+      // No setDrawerState call: _drawerState defaults to DrawerState.empty().
+      final container = makeContainer();
+      final result = await readUnsettled(container);
+      expect(result, isNull);
+    });
+
+    test(
+        'the 14-day scan result wins even when drawer_state also flags an '
+        'unsettled day — the scan is authoritative for OLDEST, the fallback '
+        'only fires when the scan itself is empty', () async {
+      final scanGap = today.subtract(const Duration(days: 5));
+      saleRepo.addSaleOn(scanGap);
+      // A different (newer) day per drawer_state — must NOT override the
+      // scan's oldest-day answer.
+      final newerStaleDay = today.subtract(const Duration(days: 1));
+      closingRepo.setDrawerState(lastSaleDay: businessDayInt(newerStaleDay));
+
+      final container = makeContainer();
+      final result = await readUnsettled(container);
+      expect(result, scanGap);
+    });
   });
 }

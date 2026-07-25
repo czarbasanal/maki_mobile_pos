@@ -107,4 +107,23 @@ class DailyClosingRepositoryImpl implements DailyClosingRepository {
             .map((doc) => DailyClosingModel.fromFirestore(doc).toEntity())
             .toList());
   }
+
+  @override
+  Future<DrawerState> getDrawerState() async {
+    try {
+      final doc = await _drawerStateRef.get();
+      if (!doc.exists) return const DrawerState.empty();
+      final data = doc.data() ?? const {};
+      return DrawerState(
+        lastSaleDay: data['lastSaleDay'] as int?,
+        lastClosedDay: data['lastClosedDay'] as int?,
+      );
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to read drawer state: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
 }

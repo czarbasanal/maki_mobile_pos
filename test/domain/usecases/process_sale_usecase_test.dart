@@ -318,6 +318,52 @@ void main() {
           )).called(1);
     });
 
+    test(
+        'a rules permission-denied on sale create surfaces the '
+        'drawer-must-close message instead of the raw Firestore error',
+        () async {
+      final sale = createTestSale();
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
+          .thenThrow(const DatabaseException(
+        message: 'Failed to create sale: PERMISSION_DENIED: Missing or '
+            'insufficient permissions.',
+        code: 'permission-denied',
+      ));
+
+      final result =
+          await useCase.execute(sale: sale, checkoutId: 'chk-blocked');
+
+      expect(result.success, isFalse);
+      expect(
+        result.errorMessage,
+        "Sale blocked: the previous day's drawer must be closed first.",
+      );
+    });
+
+    test('a non-permission database error keeps its original message',
+        () async {
+      final sale = createTestSale();
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
+          .thenThrow(const DatabaseException(
+        message: 'Failed to create sale: network blip',
+        code: 'unavailable',
+      ));
+
+      final result =
+          await useCase.execute(sale: sale, checkoutId: 'chk-other');
+
+      expect(result.success, isFalse);
+      expect(result.errorMessage, 'Failed to create sale: network blip');
+    });
+
     test('a walk-in sale (no draftId) converts nothing', () async {
       final sale = createTestSale();
       when(() => mockSaleRepo.createSale(any(),

@@ -75,9 +75,16 @@ class ProcessSaleUseCase {
         warnings: warnings,
       );
     } on AppException catch (e) {
+      // The server-side drawerSettled() rule (business-day rollover gate)
+      // denies sale creation when an earlier day's drawer is still open.
+      // Firestore's raw 'permission-denied' is meaningless to a cashier —
+      // map it to the actionable message; every other AppException keeps
+      // its own message unchanged.
       return ProcessSaleResult(
         success: false,
-        errorMessage: e.message,
+        errorMessage: e.code == 'permission-denied'
+            ? "Sale blocked: the previous day's drawer must be closed first."
+            : e.message,
         errors: [e.message],
       );
     } catch (e) {

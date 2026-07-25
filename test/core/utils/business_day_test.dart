@@ -49,4 +49,15 @@ void main() {
       expect(businessDayInt(DateTime(2026, 7, 25, 23, 59)), 20260725);
     });
   });
+
+  group('dateFromBusinessDayInt', () {
+    test('inverts businessDayInt', () {
+      expect(dateFromBusinessDayInt(20260725), DateTime(2026, 7, 25));
+    });
+
+    test('round-trips through businessDayInt', () {
+      final d = DateTime(2026, 1, 5);
+      expect(dateFromBusinessDayInt(businessDayInt(d)), d);
+    });
+  });
 }
