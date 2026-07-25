@@ -29,6 +29,7 @@ import { saleItemConverter } from '@/data/converters/saleItemConverter';
 import { counterKey, formatSaleNumber } from '@/domain/sales/saleNumber';
 import { SaleStatus } from '@/domain/enums/SaleStatus';
 import { draftConversionOutcome } from '@/domain/sales/draftConversion';
+import { phDayInt } from '@/core/utils/businessDay';
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
@@ -133,6 +134,7 @@ export class FirestoreSaleRepository implements SaleRepository {
     const draftRef = input.draftId
       ? doc(this.db, FirestoreCollections.drafts, input.draftId)
       : null;
+    const drawerStateRef = doc(this.db, FirestoreCollections.drawerState, 'state');
 
     await runTransaction(this.db, async (tx) => {
       // Reads first — must precede every write.
@@ -175,6 +177,12 @@ export class FirestoreSaleRepository implements SaleRepository {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      // Stamp the business-day rollover marker (mirrors mobile's
+      // sale_repository_impl.dart). Reuses the same `now` already used above
+      // for the counter's dateKey, so this matches the rules' UTC+8 phDay()
+      // as long as the device clock is PH-local (same assumption the rest
+      // of the app makes).
+      tx.set(drawerStateRef, { lastSaleDay: phDayInt(now) }, { merge: true });
       input.items.forEach((item, i) => {
         tx.set(itemRefs[i], {
           productId: item.productId,
