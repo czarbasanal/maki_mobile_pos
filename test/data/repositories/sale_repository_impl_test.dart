@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/data/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -268,6 +269,31 @@ void main() {
       expect(sales.first.laborLines.length, 1);
       expect(sales.first.mechanicName, 'Juan Dela Cruz');
     });
+
+    // ==================== DRAWER STATE STAMPING ====================
+
+    test(
+        'createSale stamps drawer_state/state.lastSaleDay with the sale day\'s int',
+        () async {
+      final createdAt = DateTime(2026, 7, 24, 10, 30);
+      final sale = createTestSale().copyWith(createdAt: createdAt);
+
+      await repository.createSale(sale, id: 'drawer-1');
+
+      final doc =
+          await fakeFirestore.collection('drawer_state').doc('state').get();
+      expect(doc.exists, isTrue);
+      expect(doc.data()!['lastSaleDay'], businessDayInt(createdAt));
+    });
+
+    // NOTE: a "merge doesn't clobber lastClosedDay" test is intentionally
+    // omitted here — fake_cloud_firestore (4.1.1) does not honor
+    // SetOptions(merge: true) on Transaction.set (it replaces the doc
+    // instead), so that assertion can't be verified against the fake even
+    // though real Firestore merges correctly. The batch-based write path
+    // (DailyClosingRepositoryImpl.saveClosing) IS covered for merge
+    // preservation in daily_closing_repository_impl_test.dart, since
+    // Firestore's WriteBatch.set merge behavior is faithfully emulated.
 
     test('legacy sale doc without laborLines loads as []', () async {
       // Write a doc directly with no labor/mechanic fields.

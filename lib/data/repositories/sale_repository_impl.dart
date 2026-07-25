@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -29,6 +30,10 @@ class SaleRepositoryImpl implements SaleRepository {
   /// Reference to the products collection (for atomic stock decrement).
   CollectionReference<Map<String, dynamic>> get _productsRef =>
       _firestore.collection(FirestoreCollections.products);
+
+  /// Reference to the drawer_state/state doc (business-day rollover marker).
+  DocumentReference<Map<String, dynamic>> get _drawerStateRef =>
+      _firestore.collection(FirestoreCollections.drawerState).doc('state');
 
   // ==================== CREATE ====================
 
@@ -65,6 +70,17 @@ class SaleRepositoryImpl implements SaleRepository {
 
         // Set the sale document
         transaction.set(saleDocRef, saleModel.toCreateMap());
+
+        // Stamp the business-day rollover marker. Reuses sale.createdAt — the
+        // same "now" already used above for the counter's dateKey — as the
+        // write-time reference. Assumes the device clock is PH-local (same
+        // assumption the rest of the app makes), so businessDayInt() here
+        // matches the rules' UTC+8 computation (Task 6).
+        transaction.set(
+          _drawerStateRef,
+          {'lastSaleDay': businessDayInt(sale.createdAt)},
+          SetOptions(merge: true),
+        );
 
         // Create items in subcollection
         final itemsRef = saleDocRef.collection(FirestoreCollections.saleItems);

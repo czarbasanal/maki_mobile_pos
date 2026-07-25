@@ -76,6 +76,12 @@ abstract class FirestoreCollections {
   /// product create / barcode edit. See docs/superpowers/specs/2026-06-18-barcode-guard-*.
   static const String productBarcodes = 'product_barcodes';
 
+  /// Drawer-state collection. Single doc (id `'state'`) tracking the
+  /// business-day rollover: `lastSaleDay`/`lastClosedDay` (yyyymmdd ints,
+  /// see [businessDayInt]), merge-written by sale creation / day closing.
+  /// See docs/superpowers/sdd/ business-day-rollover spec.
+  static const String drawerState = 'drawer_state';
+
   // ==================== SETTINGS DOCUMENTS ====================
 
   /// Document ID for cost code mapping settings
