@@ -80,5 +80,15 @@ void main() {
       expect(called, true);
       expect(picked, isNull);
     });
+
+    testWidgets('selected model name renders compact (13px)', (tester) async {
+      await tester.pumpWidget(host(selected: 'Nmax', onChanged: (_) {}));
+      await tester.pumpAndSettle();
+
+      final valueStyle = DefaultTextStyle.of(
+        tester.element(find.text('Nmax').first),
+      ).style;
+      expect(valueStyle.fontSize, 13);
+    });
   });
 }
