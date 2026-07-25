@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 
 /// Defines which roles can access which routes.
 ///
@@ -197,9 +198,14 @@ abstract class RouteGuards {
       return user.hasPermission(Permission.viewSettings);
     }
 
-    // Per-kind editors live under /settings/categories/<kind> — same gate as
-    // the hub.
+    // Per-kind editors live under /settings/categories/<kind> — editLists,
+    // except Product Categories which is staff+admin (2026-07-25).
     if (path.startsWith('${RoutePaths.categorySettings}/')) {
+      final kindSegment =
+          path.substring('${RoutePaths.categorySettings}/'.length);
+      if (kindSegment == CategoryKind.product.name) {
+        return user.hasPermission(Permission.editProductCategories);
+      }
       return user.hasPermission(Permission.editLists);
     }
 

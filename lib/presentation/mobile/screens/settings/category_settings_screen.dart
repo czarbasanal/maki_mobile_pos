@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 
@@ -14,6 +16,12 @@ class CategorySettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(currentUserProvider).valueOrNull?.role;
+    final canEditProductCats = role != null &&
+        RolePermissions.hasPermission(role, Permission.editProductCategories);
+    final kinds = CategoryKind.values
+        .where((k) => k != CategoryKind.product || canEditProductCats)
+        .toList();
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -24,10 +32,10 @@ class CategorySettingsScreen extends ConsumerWidget {
       ),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-        itemCount: CategoryKind.values.length,
+        itemCount: kinds.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
-          final kind = CategoryKind.values[index];
+          final kind = kinds[index];
           return _ManageListTile(
             kind: kind,
             onTap: () =>
