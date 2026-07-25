@@ -238,10 +238,16 @@ class SaleRepositoryImpl implements SaleRepository {
       final end =
           DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
 
+      // orderBy DESC is load-bearing: it makes this query use the existing
+      // (status ASC, createdAt DESC) composite index. Without an orderBy the
+      // implicit ASCENDING order would demand a (status, createdAt ASC)
+      // index that prod does not have — the emulator doesn't enforce
+      // composite indexes, so only prod would fail.
       final snapshot = await _salesRef
           .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
           .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(end))
           .where('status', isEqualTo: SaleStatus.completed.value)
+          .orderBy('createdAt', descending: true)
           .limit(1)
           .get();
 
