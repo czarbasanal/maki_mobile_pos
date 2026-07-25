@@ -3,28 +3,35 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
+import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
 
 /// Itemized expense rows inside the EOD "Expenses" card. Every same-day
 /// expense is included in the closing by default; removing one excludes it
 /// from the reconciliation (the expense record itself is untouched) and the
 /// row stays visible, greyed with a Restore action, until the day is closed.
+///
+/// When [onDelete] is provided, the remove button opens a menu offering
+/// either exclusion or permanent deletion of the expense record.
 class ClosingExpenseList extends StatelessWidget {
   const ClosingExpenseList({
     super.key,
     required this.expenses,
     required this.excludedIds,
     required this.onToggle,
+    this.onDelete,
     this.enabled = true,
   });
 
   final List<ExpenseEntity> expenses;
   final Set<String> excludedIds;
   final void Function(String expenseId) onToggle;
+  final void Function(String expenseId)? onDelete;
   final bool enabled;
 
   @override
   Widget build(BuildContext context) {
+    final onDelete = this.onDelete;
     return Column(
       children: [
         for (final e in expenses)
@@ -33,6 +40,7 @@ class ClosingExpenseList extends StatelessWidget {
             excluded: excludedIds.contains(e.id),
             enabled: enabled,
             onToggle: () => onToggle(e.id),
+            onDelete: onDelete == null ? null : () => onDelete(e.id),
           ),
       ],
     );
@@ -45,12 +53,14 @@ class _ExpenseRow extends StatelessWidget {
     required this.excluded,
     required this.enabled,
     required this.onToggle,
+    this.onDelete,
   });
 
   final ExpenseEntity expense;
   final bool excluded;
   final bool enabled;
   final VoidCallback onToggle;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +115,50 @@ class _ExpenseRow extends StatelessWidget {
                     fontSize: 12.5, fontWeight: FontWeight.w600),
               ),
               child: const Text('Restore'),
+            )
+          else if (onDelete != null)
+            PopupMenuButton<String>(
+              icon: Icon(LucideIcons.x, size: 16, color: muted),
+              tooltip: 'Expense options',
+              enabled: enabled,
+              onSelected: (action) {
+                if (action == 'exclude') onToggle();
+                if (action == 'delete') onDelete!();
+              },
+              itemBuilder: (context) {
+                final dark = theme.brightness == Brightness.dark;
+                return [
+                  PopupMenuItem(
+                    value: 'exclude',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.circleMinus, size: 18, color: muted),
+                        const SizedBox(width: 12),
+                        const Flexible(
+                          child: Text('Remove from closing',
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.trash2,
+                            size: 18, color: AppColors.errorText(dark)),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text('Delete expense',
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  TextStyle(color: AppColors.errorText(dark))),
+                        ),
+                      ],
+                    ),
+                  ),
+                ];
+              },
             )
           else
             IconButton(
