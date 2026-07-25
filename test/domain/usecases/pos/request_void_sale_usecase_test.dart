@@ -223,6 +223,71 @@ void main() {
     expect(captured.itemsSummary, endsWith('…'));
   });
 
+  test('items summary of exactly 80 chars is not truncated', () async {
+    final name80 = 'a' * 77; // 77 chars
+    final saleWith80CharSummary = _sale().copyWith(items: [
+      SaleItemEntity(
+        id: 'i-1',
+        productId: 'p-1',
+        sku: 'SKU-001',
+        name: name80,
+        unitPrice: 100.0,
+        unitCost: 60.0,
+        quantity: 1,
+      ),
+    ]);
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      sale: saleWith80CharSummary,
+      reason: 'wrong item rung up',
+    );
+
+    expect(result.success, isTrue);
+
+    final captured =
+        verify(() => repo.createRequest(captureAny())).captured.single
+            as VoidRequestEntity;
+    final expectedSummary = '1× $name80';
+    expect(expectedSummary.length, 80);
+    expect(captured.itemsSummary, expectedSummary);
+    expect(captured.itemsSummary, isNot(endsWith('…')));
+  });
+
+  test('items summary of exactly 81 chars is truncated to 80 with ellipsis',
+      () async {
+    final name81 = 'a' * 78; // 78 chars
+    final saleWith81CharSummary = _sale().copyWith(items: [
+      SaleItemEntity(
+        id: 'i-1',
+        productId: 'p-1',
+        sku: 'SKU-001',
+        name: name81,
+        unitPrice: 100.0,
+        unitCost: 60.0,
+        quantity: 1,
+      ),
+    ]);
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.cashier),
+      sale: saleWith81CharSummary,
+      reason: 'wrong item rung up',
+    );
+
+    expect(result.success, isTrue);
+
+    final captured =
+        verify(() => repo.createRequest(captureAny())).captured.single
+            as VoidRequestEntity;
+    final untruncatedSummary = '1× $name81';
+    expect(untruncatedSummary.length, 81);
+    expect(captured.itemsSummary!.length, 80);
+    expect(captured.itemsSummary, endsWith('…'));
+    expect(captured.itemsSummary,
+        equals('${untruncatedSummary.substring(0, 79)}…'));
+  });
+
   test('items summary falls back to "Service / labor" when items are empty',
       () async {
     final laborOnlySale = _sale().copyWith(
