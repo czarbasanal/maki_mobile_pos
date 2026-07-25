@@ -21,6 +21,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
       },
     ],
     laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
+    feeLines: [],
     mechanicId: 'm1',
     mechanicName: 'Juan Dela Cruz',
     discountType: DiscountType.amount,

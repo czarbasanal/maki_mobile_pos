@@ -5,6 +5,7 @@
 import {
   type Sale,
   saleEffectiveTenders,
+  saleFeesTotal,
   saleIsVoided,
   saleLaborRevenue,
   salePartsRevenue,
@@ -24,6 +25,7 @@ export interface SalesSummary {
   totalProfit: number;
   laborRevenue: number;
   laborProfit: number;
+  feesRevenue: number;
   byPaymentMethod: Record<PaymentMethod, number>;
   averageSaleAmount: number;
   profitMargin: number;
@@ -46,6 +48,7 @@ export function summarizeSales(sales: Sale[]): SalesSummary {
   let netAmount = 0;
   let totalCost = 0;
   let laborRevenue = 0;
+  let feesRevenue = 0;
 
   for (const s of completed) {
     grossAmount += salePartsSubtotal(s);
@@ -53,6 +56,7 @@ export function summarizeSales(sales: Sale[]): SalesSummary {
     netAmount += salePartsRevenue(s);
     totalCost += saleTotalCost(s);
     laborRevenue += saleLaborRevenue(s);
+    feesRevenue += saleFeesTotal(s);
     const eff = saleEffectiveTenders(s);
     for (const method of realTenderMethods) {
       byPaymentMethod[method] += eff[method] ?? 0;
@@ -72,6 +76,7 @@ export function summarizeSales(sales: Sale[]): SalesSummary {
     totalProfit,
     laborRevenue,
     laborProfit: laborRevenue, // labor has zero cost
+    feesRevenue,
     byPaymentMethod,
     averageSaleAmount: count === 0 ? 0 : netAmount / count,
     profitMargin: netAmount === 0 ? 0 : (totalProfit / netAmount) * 100,

@@ -30,6 +30,7 @@ export function buildSaleInput(
     saleNumber: '', // generated inside the repo transaction
     items: input.lines,
     laborLines: input.laborLines,
+    feeLines: [], // wired through checkout in a follow-up task
     mechanicId: input.mechanicId,
     mechanicName: input.mechanicName,
     tenders: input.tenders,

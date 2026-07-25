@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { Sale } from '@/domain/entities';
+import { DiscountType, PaymentMethod, SaleStatus } from '@/domain/enums';
 import { saleConverter } from './saleConverter';
 
 // Minimal QueryDocumentSnapshot stub — the converter only reads `.id`/`.data()`.
@@ -21,6 +23,7 @@ describe('saleConverter.fromFirestore', () => {
         cashierName: 'Cashier',
         createdAt: new Date('2026-05-30T10:00:00Z'),
         laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
+        feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
         mechanicId: 'mech-1',
         mechanicName: 'Juan',
         tenders: { cash: 400, gcash: 250 },
@@ -33,6 +36,12 @@ describe('saleConverter.fromFirestore', () => {
       id: 'l1',
       description: 'Tune-up',
       fee: 450,
+    });
+    expect(sale.feeLines).toHaveLength(1);
+    expect(sale.feeLines[0]).toEqual({
+      id: 'f1',
+      name: 'Electric charge',
+      amount: 150,
     });
     expect(sale.mechanicId).toBe('mech-1');
     expect(sale.mechanicName).toBe('Juan');
@@ -54,7 +63,7 @@ describe('saleConverter.fromFirestore', () => {
     expect(sale.tenders).toEqual({ maya: 300, salmon: 100 });
   });
 
-  it('legacy doc without labor/mechanic/tenders defaults to []/null/{}', () => {
+  it('legacy doc without labor/fees/mechanic/tenders defaults to []/[]/null/{}', () => {
     const sale = saleConverter.fromFirestore(
       snap('s3', {
         paymentMethod: 'cash',
@@ -64,8 +73,43 @@ describe('saleConverter.fromFirestore', () => {
       opts,
     );
     expect(sale.laborLines).toEqual([]);
+    expect(sale.feeLines).toEqual([]);
     expect(sale.mechanicId).toBeNull();
     expect(sale.mechanicName).toBeNull();
     expect(sale.tenders).toEqual({});
+  });
+});
+
+describe('saleConverter.toFirestore', () => {
+  it('writes feeLines alongside laborLines', () => {
+    const sale: Sale = {
+      id: 's1',
+      saleNumber: 'S-1',
+      items: [],
+      laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
+      feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
+      mechanicId: null,
+      mechanicName: null,
+      tenders: {},
+      discountType: DiscountType.amount,
+      paymentMethod: PaymentMethod.cash,
+      amountReceived: 0,
+      changeGiven: 0,
+      status: SaleStatus.completed,
+      cashierId: 'c1',
+      cashierName: 'Cashier',
+      createdAt: new Date('2026-05-30T10:00:00Z'),
+      updatedAt: null,
+      draftId: null,
+      notes: null,
+      voidedAt: null,
+      voidedBy: null,
+      voidedByName: null,
+      voidReason: null,
+    };
+
+    const data = saleConverter.toFirestore(sale);
+    expect(data.feeLines).toEqual([{ id: 'f1', name: 'Electric charge', amount: 150 }]);
+    expect(data.laborLines).toEqual([{ id: 'l1', description: 'Tune-up', fee: 450 }]);
   });
 });

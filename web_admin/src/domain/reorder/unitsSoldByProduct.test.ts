@@ -5,7 +5,7 @@ import type { Sale } from '../entities';
 
 function sale(over: Partial<Sale> = {}): Sale {
   return {
-    id: 's', saleNumber: 'S', items: [], laborLines: [], mechanicId: null, mechanicName: null,
+    id: 's', saleNumber: 'S', items: [], laborLines: [], feeLines: [], mechanicId: null, mechanicName: null,
     discountType: DiscountType.amount, paymentMethod: PaymentMethod.cash, tenders: {},
     amountReceived: 0, changeGiven: 0, status: SaleStatus.completed, cashierId: 'c1',
     cashierName: 'Cashier', createdAt: new Date('2026-06-01T10:00:00Z'), updatedAt: null,

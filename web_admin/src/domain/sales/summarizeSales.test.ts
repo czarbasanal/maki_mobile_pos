@@ -21,6 +21,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
       },
     ],
     laborLines: [],
+    feeLines: [],
     mechanicId: null,
     mechanicName: null,
     discountType: DiscountType.amount,
@@ -73,6 +74,21 @@ describe('summarizeSales', () => {
     expect(tenderTotal).toBe(s.netAmount + s.laborRevenue); // 650
   });
 
+  it('fee sale: parts-only top-line + fees track; fees roll up separately from labor', () => {
+    const s = summarizeSales([
+      sale({ feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }] }),
+    ]);
+    // Parts-only top-line (NOT 350).
+    expect(s.grossAmount).toBe(200);
+    expect(s.netAmount).toBe(200);
+    expect(s.totalProfit).toBe(80);
+    // Fees track.
+    expect(s.feesRevenue).toBe(150);
+    expect(s.laborRevenue).toBe(0);
+    // Cash bucket holds the whole fee-inclusive grandTotal.
+    expect(s.byPaymentMethod.cash).toBe(350);
+  });
+
   it('mixed-tender sale splits into real buckets; mixed never holds money', () => {
     const s = summarizeSales([
       sale({ paymentMethod: PaymentMethod.mixed, tenders: { cash: 120, gcash: 80 } }),
@@ -87,5 +103,16 @@ describe('summarizeSales', () => {
     expect(s.totalSalesCount).toBe(1);
     expect(s.voidedSalesCount).toBe(1);
     expect(s.netAmount).toBe(200);
+  });
+
+  it('excludes voided sales fees from the feesRevenue track', () => {
+    const s = summarizeSales([
+      sale({ feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }] }),
+      sale({
+        status: SaleStatus.voided,
+        feeLines: [{ id: 'f2', name: 'Cleanup', amount: 999 }],
+      }),
+    ]);
+    expect(s.feesRevenue).toBe(150);
   });
 });

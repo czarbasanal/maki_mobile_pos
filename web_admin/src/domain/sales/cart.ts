@@ -12,7 +12,7 @@ export type CartLine = SaleItem;
 // Reuse the Sale money helpers by shaping a minimal Sale — they read only
 // items/laborLines/discountType — so cart and sale math stay single-sourced.
 function asSale(lines: CartLine[], discountType: DiscountType): Sale {
-  return { items: lines, laborLines: [], discountType } as unknown as Sale;
+  return { items: lines, laborLines: [], feeLines: [], discountType } as unknown as Sale;
 }
 
 export function cartSubtotal(lines: CartLine[], discountType: DiscountType): number {
