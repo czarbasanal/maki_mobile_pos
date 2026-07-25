@@ -327,15 +327,12 @@ service cloud.firestore {
       // All valid users can read categories (product form, inventory filter)
       allow read: if isValidUser() && isActiveUser();
 
-      // Shared-list grants (2026-07-24): any active user may add or edit
-      // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
-      allow create: if isValidUser() && isActiveUser();
-      allow update: if isValidUser() && isActiveUser() &&
-        (isStaffOrAdmin() ||
-          !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Product Categories (2026-07-25): staff/admin only — cashiers keep
+      // other shared lists but not product categories.
+      allow create: if isStaffOrAdmin() && isActiveUser();
+      allow update: if isStaffOrAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== EXPENSE CATEGORIES COLLECTION ====================
@@ -346,13 +343,14 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== UNITS COLLECTION ====================
@@ -363,13 +361,14 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== VOID REASONS COLLECTION ====================
@@ -380,13 +379,14 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== MECHANICS COLLECTION ====================
@@ -399,13 +399,14 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== SHOP FEES COLLECTION ====================
@@ -416,13 +417,14 @@ service cloud.firestore {
 
       // Shared-list grants (2026-07-24): any active user may add or edit
       // entries; only staff/admin may flip isActive (deactivate/reactivate);
-      // delete stays admin-only (nothing in-app hard-deletes).
+      // delete is staff/admin (2026-07-25).
       allow create: if isValidUser() && isActiveUser();
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== HR COLLECTION ====================
@@ -449,12 +451,13 @@ service cloud.firestore {
         request.resource.data.createdBy == request.auth.uid;
 
       // Shared-list grants (2026-07-24): any active user may rename; only
-      // staff/admin may flip isActive; delete stays admin-only.
+      // staff/admin may flip isActive; delete is staff/admin (2026-07-25).
       allow update: if isValidUser() && isActiveUser() &&
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
-      allow delete: if isAdmin() && isActiveUser();
+      // Hard delete (2026-07-25): staff+admin — in-app delete shipped.
+      allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
     // ==================== VOID REQUESTS COLLECTION ====================

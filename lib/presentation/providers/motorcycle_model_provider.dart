@@ -132,6 +132,20 @@ class MotorcycleModelOperationsNotifier
       return false;
     }
   }
+
+  /// Permanently deletes the entry. Returns true on success.
+  Future<bool> delete(String id) async {
+    state = const AsyncValue.loading();
+    try {
+      _requireUserId();
+      await _repo.delete(id);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
 }
 
 final motorcycleModelOperationsProvider = StateNotifierProvider<

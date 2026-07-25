@@ -33,6 +33,10 @@ abstract class CategoryRepository {
     required String updatedBy,
   });
 
+  /// Permanently deletes the entry. Historical records keep the snapshotted
+  /// name; prefer setActive(false) to merely hide an entry.
+  Future<void> deleteCategory(String categoryId);
+
   /// Checks whether a category name already exists (case-insensitive match
   /// is left to the repository implementation; current impl uses exact match).
   Future<bool> nameExists({

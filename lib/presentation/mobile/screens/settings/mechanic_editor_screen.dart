@@ -80,6 +80,7 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
           leadingIcon: LucideIcons.wrench,
           onEdit: () => _showMechanicDialog(context, existing: mechanic),
           onToggleActive: canManage ? () => _toggleActive(mechanic) : null,
+          onDelete: canManage ? () => _confirmDelete(mechanic) : null,
         );
       },
     );
@@ -101,6 +102,26 @@ class _MechanicEditorScreenState extends ConsumerState<MechanicEditorScreen> {
     } else {
       context.showErrorSnackBar('Operation failed');
     }
+  }
+
+  Future<void> _confirmDelete(MechanicEntity mechanic) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete this entry?',
+      message: '"${mechanic.name}" will be permanently deleted. '
+          'Past records that used it keep the name. '
+          'Use Deactivate instead to just hide it.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      icon: LucideIcons.trash2,
+    );
+    if (!confirmed || !mounted) return;
+    final ok =
+        await ref.read(mechanicOperationsProvider.notifier).delete(mechanic.id);
+    if (!mounted) return;
+    ok
+        ? context.showSuccessSnackBar('Deleted')
+        : context.showErrorSnackBar('Failed to delete');
   }
 
   Future<void> _showMechanicDialog(

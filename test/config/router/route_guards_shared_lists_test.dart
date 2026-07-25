@@ -38,6 +38,51 @@ void main() {
     });
   });
 
+  group('RouteGuards — product categories editor is staff+admin only', () {
+    test('cashier is blocked from /settings/categories/product', () {
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/product', user(UserRole.cashier)),
+        isFalse,
+      );
+    });
+    test('staff can access /settings/categories/product', () {
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/product', user(UserRole.staff)),
+        isTrue,
+      );
+    });
+    test('cashier still accesses other kind editors', () {
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/expense', user(UserRole.cashier)),
+        isTrue,
+      );
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/unit', user(UserRole.cashier)),
+        isTrue,
+      );
+    });
+
+    test(
+        'unknown kind segment falls back to the product-editor gate '
+        '(builder falls back to CategoryKind.product for unknown segments)',
+        () {
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/bogus', user(UserRole.cashier)),
+        isFalse,
+      );
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/bogus', user(UserRole.staff)),
+        isTrue,
+      );
+    });
+  });
+
   group('RouteGuards — shop fees editor open to every active role', () {
     for (final role in UserRole.values) {
       test('$role can access the shop fees editor', () {

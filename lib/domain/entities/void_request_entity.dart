@@ -33,6 +33,7 @@ class VoidRequestEntity extends Equatable {
   final String? resolvedByName;
   final DateTime? resolvedAt;
   final String? rejectionReason;
+  final String? itemsSummary;
 
   const VoidRequestEntity({
     required this.id,
@@ -50,6 +51,7 @@ class VoidRequestEntity extends Equatable {
     this.resolvedByName,
     this.resolvedAt,
     this.rejectionReason,
+    this.itemsSummary,
   });
 
   bool get isPending => status == VoidRequestStatus.pending;
@@ -79,6 +81,7 @@ class VoidRequestEntity extends Equatable {
       resolvedByName: resolvedByName ?? this.resolvedByName,
       resolvedAt: resolvedAt ?? this.resolvedAt,
       rejectionReason: rejectionReason ?? this.rejectionReason,
+      itemsSummary: itemsSummary,
     );
   }
 
@@ -99,5 +102,6 @@ class VoidRequestEntity extends Equatable {
         resolvedByName,
         resolvedAt,
         rejectionReason,
+        itemsSummary,
       ];
 }

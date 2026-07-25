@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/config/router/route_names.dart';
 import 'package:maki_mobile_pos/core/constants/constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 
 /// Defines which roles can access which routes.
 ///
@@ -197,10 +198,20 @@ abstract class RouteGuards {
       return user.hasPermission(Permission.viewSettings);
     }
 
-    // Per-kind editors live under /settings/categories/<kind> — same gate as
-    // the hub.
+    // Per-kind editors live under /settings/categories/<kind> — editLists,
+    // except Product Categories which is staff+admin (2026-07-25).
     if (path.startsWith('${RoutePaths.categorySettings}/')) {
-      return user.hasPermission(Permission.editLists);
+      final kindSegment =
+          path.substring('${RoutePaths.categorySettings}/'.length);
+      // Unknown segments fall through to CategoryKind.product in the
+      // route builder's orElse (app_routes.dart), so treat any segment
+      // that isn't a *known* non-product kind as the product editor gate.
+      final isKnownNonProduct = CategoryKind.values.any(
+        (k) => k != CategoryKind.product && k.name == kindSegment,
+      );
+      return isKnownNonProduct
+          ? user.hasPermission(Permission.editLists)
+          : user.hasPermission(Permission.editProductCategories);
     }
 
     // Fail-safe: deny everything not explicitly allowlisted above. Any new

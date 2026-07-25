@@ -865,7 +865,6 @@ describe("cross-cutting", () => {
 // ===================================================================
 describe("shared list collections (cashier add/edit, staff full)", () => {
   const LISTS = [
-    "product_categories",
     "expense_categories",
     "units",
     "void_reasons",
@@ -907,10 +906,19 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
       );
     });
 
-    it(`${coll}: staff cannot delete; admin can`, async () => {
+    it(`${coll}: staff can delete`, async () => {
       await seed(coll, "e1", entry);
-      await assertFails(as("staff").collection(coll).doc("e1").delete());
-      await assertSucceeds(as("admin").collection(coll).doc("e1").delete());
+      await assertSucceeds(as("staff").collection(coll).doc("e1").delete());
+    });
+
+    it(`${coll}: admin can delete`, async () => {
+      await seed(coll, "e2", entry);
+      await assertSucceeds(as("admin").collection(coll).doc("e2").delete());
+    });
+
+    it(`${coll}: cashier cannot delete`, async () => {
+      await seed(coll, "e9", entry);
+      await assertFails(as("cashier").collection(coll).doc("e9").delete());
     });
 
     it(`${coll}: inactive staff cannot create`, async () => {
@@ -970,13 +978,17 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
       );
     });
 
-    it("delete stays admin-only", async () => {
+    it("staff can delete", async () => {
       await seed("motorcycle_models", "m1", model(USERS.admin.uid));
-      await assertFails(
+      await assertSucceeds(
         as("staff").collection("motorcycle_models").doc("m1").delete()
       );
+    });
+
+    it("admin can delete", async () => {
+      await seed("motorcycle_models", "m2", model(USERS.admin.uid));
       await assertSucceeds(
-        as("admin").collection("motorcycle_models").doc("m1").delete()
+        as("admin").collection("motorcycle_models").doc("m2").delete()
       );
     });
 
@@ -1000,6 +1012,73 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
       await seed("motorcycle_models", "m1", model(USERS.admin.uid));
       await assertFails(
         as("cashier").collection("motorcycle_models").doc("m1").delete()
+      );
+    });
+  });
+
+  describe("product_categories (2026-07-25: staff/admin only, not shared-list)", () => {
+    it("cashier can no longer create a product category", async () => {
+      await assertFails(as("cashier").collection("product_categories").add(entry));
+    });
+
+    it("cashier can no longer rename a product category", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertFails(
+        as("cashier").collection("product_categories").doc("e1").update({ name: "New Name" })
+      );
+    });
+
+    it("staff can still create and rename product categories", async () => {
+      await assertSucceeds(as("staff").collection("product_categories").add(entry));
+      await seed("product_categories", "e1", entry);
+      await assertSucceeds(
+        as("staff").collection("product_categories").doc("e1").update({ name: "New Name" })
+      );
+    });
+
+    it("cashier can still create an expense category (unchanged)", async () => {
+      await assertSucceeds(as("cashier").collection("expense_categories").add(entry));
+    });
+
+    it("product_categories: admin can create and rename", async () => {
+      const docRef = as("admin").collection("product_categories").doc("e1");
+      await assertSucceeds(docRef.set(entry));
+      await assertSucceeds(docRef.update({ name: "Renamed" }));
+    });
+
+    it("product_categories: staff can flip isActive", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertSucceeds(
+        as("staff").collection("product_categories").doc("e1").update({ isActive: false })
+      );
+    });
+
+    it("product_categories: staff can delete", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertSucceeds(as("staff").collection("product_categories").doc("e1").delete());
+    });
+
+    it("product_categories: admin can delete", async () => {
+      await seed("product_categories", "e2", entry);
+      await assertSucceeds(as("admin").collection("product_categories").doc("e2").delete());
+    });
+
+    it("product_categories: cashier cannot delete", async () => {
+      await seed("product_categories", "e3", entry);
+      await assertFails(as("cashier").collection("product_categories").doc("e3").delete());
+    });
+
+    it("product_categories: inactive staff cannot create", async () => {
+      await assertFails(as("inactiveStaff").collection("product_categories").add(entry));
+    });
+
+    it("product_categories: inactive staff/admin cannot flip isActive", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertFails(
+        as("inactiveStaff").collection("product_categories").doc("e1").update({ isActive: false })
+      );
+      await assertFails(
+        as("inactiveAdmin").collection("product_categories").doc("e1").update({ isActive: false })
       );
     });
   });

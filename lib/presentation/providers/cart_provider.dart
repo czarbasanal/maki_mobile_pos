@@ -204,6 +204,17 @@ class CartState extends Equatable {
     return grandTotal;
   }
 
+  /// What the customer actually handed over — persisted as the sale's
+  /// amountReceived. Cash keeps the typed tender (change comes out of it);
+  /// salmon/digital collect exactly collectedToday. (Regression ae42b75
+  /// stored collectedToday for cash, losing the tendered amount.)
+  double get amountReceivedForSale {
+    if (paymentMethod == PaymentMethod.cash && secondaryMethod == null) {
+      return amountReceived;
+    }
+    return collectedToday;
+  }
+
   /// Change to give customer (only meaningful for single cash).
   double get change {
     if (paymentMethod == PaymentMethod.cash &&
@@ -710,7 +721,7 @@ class CartNotifier extends StateNotifier<CartState> {
       discountType: state.discountType,
       paymentMethod: state.paymentMethod,
       tenders: state.tenders,
-      amountReceived: state.collectedToday,
+      amountReceived: state.amountReceivedForSale,
       changeGiven: state.change,
       cashierId: cashierId,
       cashierName: cashierName,

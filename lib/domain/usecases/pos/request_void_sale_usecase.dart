@@ -38,6 +38,16 @@ class RequestVoidSaleUseCase {
         );
       }
 
+      String? itemsSummary;
+      if (sale.items.isNotEmpty) {
+        final joined =
+            sale.items.map((i) => '${i.quantity}× ${i.name}').join(', ');
+        itemsSummary =
+            joined.length <= 80 ? joined : '${joined.substring(0, 79)}…';
+      } else if (sale.laborLines.isNotEmpty) {
+        itemsSummary = 'Service / labor';
+      }
+
       final created = await _repository.createRequest(VoidRequestEntity(
         id: '',
         saleId: sale.id,
@@ -48,6 +58,7 @@ class RequestVoidSaleUseCase {
         requestedByRole: actor.role.value,
         reason: trimmed,
         createdAt: DateTime.now(),
+        itemsSummary: itemsSummary,
       ));
 
       return UseCaseResult.successData(created);

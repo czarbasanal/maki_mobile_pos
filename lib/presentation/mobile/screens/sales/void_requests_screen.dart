@@ -6,9 +6,12 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_style.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_summary_cards.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Admin queue of void requests (opened from the dashboard notification bell).
@@ -17,8 +20,27 @@ class VoidRequestsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(voidRequestsProvider);
+    final paged = ref.watch(pagedVoidRequestsProvider);
     final unread = ref.watch(unreadVoidRequestCountProvider);
+    final selectedStatus = ref.watch(voidRequestStatusFilterProvider);
+    final preset = ref.watch(voidRequestDatePresetProvider);
+    final range = ref.watch(voidRequestDateRangeProvider);
+    // AsyncError (e.g. FAILED_PRECONDITION from a missing composite index,
+    // or a permission error) is surfaced as `null` so the card renders a
+    // dash instead of a misleading '0' — see VoidStatusSummaryCards' doc
+    // comment. Loading still shows '0'.
+    final pendingAsync =
+        ref.watch(voidRequestStatusCountProvider(VoidRequestStatus.pending));
+    final approvedAsync =
+        ref.watch(voidRequestStatusCountProvider(VoidRequestStatus.approved));
+    final rejectedAsync =
+        ref.watch(voidRequestStatusCountProvider(VoidRequestStatus.rejected));
+    final pendingCount =
+        pendingAsync.hasError ? null : (pendingAsync.valueOrNull ?? 0);
+    final approvedCount =
+        approvedAsync.hasError ? null : (approvedAsync.valueOrNull ?? 0);
+    final rejectedCount =
+        rejectedAsync.hasError ? null : (rejectedAsync.valueOrNull ?? 0);
 
     return Scaffold(
       appBar: AppBar(
@@ -29,29 +51,76 @@ class VoidRequestsScreen extends ConsumerWidget {
         title: const Text('Void Requests'),
         actions: [_MarkAllReadAction(enabled: unread > 0)],
       ),
-      body: async.when(
-        loading: () => const ListSkeleton(),
-        error: (e, _) => ErrorStateView(message: 'Error: $e'),
-        data: (list) {
-          if (list.isEmpty) {
-            return const EmptyStateView(
-              icon: LucideIcons.bell,
-              title: 'No void requests',
-              subtitle:
-                  'When a cashier requests a void, it appears here for your review.',
-            );
-          }
-          final sorted = [...list]
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          final pending = sorted.where((r) => r.isPending).length;
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-            children: [
-              _CountCaption(pending: pending, total: sorted.length),
-              ...sorted.map((r) => _RequestRow(request: r)),
-            ],
-          );
-        },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: VoidStatusSummaryCards(
+              pendingCount: pendingCount,
+              approvedCount: approvedCount,
+              rejectedCount: rejectedCount,
+              selected: selectedStatus,
+              onSelect: (status) => ref
+                  .read(voidRequestStatusFilterProvider.notifier)
+                  .state = status,
+            ),
+          ),
+          DateRangePicker(
+            startDate: range.start,
+            endDate: range.end,
+            selectedPreset: preset,
+            onPresetChanged: (p) {
+              if (p == DateRangePreset.custom) return;
+              ref.read(voidRequestDatePresetProvider.notifier).state = p;
+              ref.read(voidRequestDateRangeProvider.notifier).state =
+                  dateRangeForPreset(p, DateTime.now());
+            },
+            onCustomRangeSelected: (start, end) {
+              ref.read(voidRequestDatePresetProvider.notifier).state =
+                  DateRangePreset.custom;
+              ref.read(voidRequestDateRangeProvider.notifier).state =
+                  DateTimeRange(
+                      start: start,
+                      end: DateTime(
+                          end.year, end.month, end.day, 23, 59, 59, 999));
+            },
+          ),
+          Expanded(
+            child: paged.when(
+              loading: () => const ListSkeleton(),
+              error: (e, _) => ErrorStateView(
+                message: 'Error: $e',
+                onRetry: () => ref.invalidate(pagedVoidRequestsProvider),
+              ),
+              data: (page) {
+                if (page.items.isEmpty) {
+                  return const EmptyStateView(
+                    icon: LucideIcons.bell,
+                    title: 'No void requests',
+                    subtitle:
+                        'When a cashier requests a void, it appears here for your review.',
+                  );
+                }
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                  children: [
+                    ...page.items.map((r) => _RequestRow(request: r)),
+                    if (page.hasMore)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: OutlinedButton(
+                          onPressed: () => ref
+                              .read(pagedVoidRequestsProvider.notifier)
+                              .loadMore(),
+                          child: const Text('Load more'),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -87,42 +156,6 @@ class _MarkAllReadAction extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _CountCaption extends StatelessWidget {
-  const _CountCaption({required this.pending, required this.total});
-  final int pending;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final s = VoidStatusStyle.of(VoidRequestStatus.pending, dark: dark);
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 0, 2, 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-            decoration: BoxDecoration(
-              color: s.tint,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: Text(
-              '$pending pending',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: s.textColor),
-            ),
-          ),
-          const SizedBox(width: 7),
-          Text('· $total total', style: TextStyle(fontSize: 12, color: muted)),
-        ],
       ),
     );
   }

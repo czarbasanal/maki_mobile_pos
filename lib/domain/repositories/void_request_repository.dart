@@ -28,4 +28,28 @@ abstract class VoidRequestRepository {
 
   /// Marks all requests read.
   Future<void> markAllRead();
+
+  /// One page of requests with timestamps from `start` to `end`, inclusive
+  /// (>= `start`, <= `end`), newest first. [status] null = all statuses.
+  /// Callers must pass an end-of-day `end` (e.g. 23:59:59.999) to cover a full day.
+  /// Pass the last item's id as `startAfterId` for the next page; it must be an id
+  /// from a prior page of the SAME status/window query — a cursor from a different
+  /// filter silently shifts the page, and an id that no longer exists is treated as
+  /// no cursor.
+  Future<List<VoidRequestEntity>> getRequestsPage({
+    VoidRequestStatus? status,
+    required DateTime start,
+    required DateTime end,
+    int limit = 20,
+    String? startAfterId,
+  });
+
+  /// Count of requests with [status] with timestamps from `start` to `end`,
+  /// inclusive (>= `start`, <= `end`). Callers must pass an end-of-day `end`
+  /// (e.g. 23:59:59.999) to cover a full day. (Aggregate query.)
+  Future<int> countByStatus({
+    required VoidRequestStatus status,
+    required DateTime start,
+    required DateTime end,
+  });
 }

@@ -82,6 +82,7 @@ class _MotorcycleModelEditorScreenState
           leadingIcon: LucideIcons.bike,
           onEdit: () => _showModelDialog(context, existing: m),
           onToggleActive: canManage ? () => _toggleActive(m) : null,
+          onDelete: canManage ? () => _confirmDelete(m) : null,
         );
       },
     );
@@ -101,6 +102,27 @@ class _MotorcycleModelEditorScreenState
     } else {
       context.showErrorSnackBar('Operation failed');
     }
+  }
+
+  Future<void> _confirmDelete(MotorcycleModelEntity model) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete this entry?',
+      message: '"${model.name}" will be permanently deleted. '
+          'Past records that used it keep the name. '
+          'Use Deactivate instead to just hide it.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      icon: LucideIcons.trash2,
+    );
+    if (!confirmed || !mounted) return;
+    final ok = await ref
+        .read(motorcycleModelOperationsProvider.notifier)
+        .delete(model.id);
+    if (!mounted) return;
+    ok
+        ? context.showSuccessSnackBar('Deleted')
+        : context.showErrorSnackBar('Failed to delete');
   }
 
   Future<void> _showModelDialog(

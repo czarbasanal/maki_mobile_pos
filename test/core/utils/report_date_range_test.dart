@@ -5,16 +5,16 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_p
 void main() {
   final now = DateTime(2026, 7, 1, 14, 30); // fixed anchor
 
-  test('today = midnight..23:59:59 same day', () {
+  test('today = midnight..23:59:59.999 same day', () {
     final r = dateRangeForPreset(DateRangePreset.today, now);
     expect(r.start, DateTime(2026, 7, 1));
-    expect(r.end, DateTime(2026, 7, 1, 23, 59, 59));
+    expect(r.end, DateTime(2026, 7, 1, 23, 59, 59, 999));
   });
 
   test('yesterday = the prior day', () {
     final r = dateRangeForPreset(DateRangePreset.yesterday, now);
     expect(r.start, DateTime(2026, 6, 30));
-    expect(r.end, DateTime(2026, 6, 30, 23, 59, 59));
+    expect(r.end, DateTime(2026, 6, 30, 23, 59, 59, 999));
   });
 
   test('thisWeek starts on a Monday on/before now', () {
@@ -32,7 +32,7 @@ void main() {
   test('lastMonth spans the whole previous month', () {
     final r = dateRangeForPreset(DateRangePreset.lastMonth, now);
     expect(r.start, DateTime(2026, 6, 1));
-    expect(r.end, DateTime(2026, 6, 30, 23, 59, 59));
+    expect(r.end, DateTime(2026, 6, 30, 23, 59, 59, 999));
   });
 
   test('thisQuarter: July is Q3 -> starts July 1', () {

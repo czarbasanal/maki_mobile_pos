@@ -17,6 +17,7 @@ class SettingsCrudRow extends StatelessWidget {
     required this.isActive,
     required this.onEdit,
     this.onToggleActive,
+    this.onDelete,
     this.leadingIcon,
   });
 
@@ -27,6 +28,10 @@ class SettingsCrudRow extends StatelessWidget {
   /// Archive/reactivate action; null hides the toggle button entirely
   /// (users without full list-manage permission).
   final VoidCallback? onToggleActive;
+
+  /// Permanent-delete action; null hides the button (users without
+  /// full list-manage permission). Callers own the confirm dialog.
+  final VoidCallback? onDelete;
 
   /// When non-null, a neutral glyph tile is shown before the title (mechanics
   /// use `wrench`; category rows have none).
@@ -101,6 +106,13 @@ class SettingsCrudRow extends StatelessWidget {
                 color: isActive ? muted : reactivate,
                 tooltip: isActive ? 'Deactivate' : 'Reactivate',
                 onPressed: onToggleActive!,
+              ),
+            if (onDelete != null)
+              _RowIconButton(
+                icon: LucideIcons.trash2,
+                color: AppColors.error,
+                tooltip: 'Delete',
+                onPressed: onDelete!,
               ),
           ],
         ),

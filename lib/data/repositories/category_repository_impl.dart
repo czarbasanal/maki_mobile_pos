@@ -133,6 +133,19 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
+  Future<void> deleteCategory(String categoryId) async {
+    try {
+      await _ref.doc(categoryId).delete();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to delete: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<bool> nameExists({
     required String name,
     String? excludeCategoryId,

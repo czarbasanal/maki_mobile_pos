@@ -169,9 +169,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
         automaticallyImplyLeading: false,
         actions: [
           if (widget.user.hasPermission(Permission.voidSale))
-            VoidRequestsBell(
-              onPressed: () => context.push(RoutePaths.voidRequests),
-            ),
+            const VoidRequestsBell(),
           IconButton(
             icon: const Icon(LucideIcons.settings),
             onPressed: () => context.go(RoutePaths.settings),

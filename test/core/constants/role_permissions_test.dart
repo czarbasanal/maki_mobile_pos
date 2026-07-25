@@ -107,4 +107,34 @@ void main() {
       );
     });
   });
+
+  group('editProductCategories (2026-07-25: product categories staff+admin)', () {
+    test('cashier does NOT have editProductCategories', () {
+      expect(
+        RolePermissions.hasPermission(
+            UserRole.cashier, Permission.editProductCategories),
+        isFalse,
+      );
+    });
+
+    test('staff and admin have editProductCategories', () {
+      expect(
+        RolePermissions.hasPermission(
+            UserRole.staff, Permission.editProductCategories),
+        isTrue,
+      );
+      expect(
+        RolePermissions.hasPermission(
+            UserRole.admin, Permission.editProductCategories),
+        isTrue,
+      );
+    });
+
+    test('cashier keeps editLists (other lists unaffected)', () {
+      expect(
+        RolePermissions.hasPermission(UserRole.cashier, Permission.editLists),
+        isTrue,
+      );
+    });
+  });
 }
