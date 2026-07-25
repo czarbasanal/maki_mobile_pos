@@ -8,6 +8,13 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widget
 /// void-requests queue — mirrors the Inventory stock-filter summary cards
 /// (`inventory_screen.dart`'s `_buildSummaryCard`). Tapping a card toggles it
 /// as the active status filter; tapping the already-selected card clears it.
+///
+/// Counts are nullable: pass `null` for a card whose underlying query
+/// errored (e.g. FAILED_PRECONDITION from a missing composite index, or a
+/// permission error) so it renders a dash ('—') instead of a misleading
+/// '0' — a real zero and a broken query must never look the same. The
+/// caller (VoidRequestsScreen) is expected to pass `null` on `AsyncError`
+/// and `0` while loading.
 class VoidStatusSummaryCards extends StatelessWidget {
   const VoidStatusSummaryCards({
     super.key,
@@ -18,9 +25,9 @@ class VoidStatusSummaryCards extends StatelessWidget {
     required this.onSelect,
   });
 
-  final int pendingCount;
-  final int approvedCount;
-  final int rejectedCount;
+  final int? pendingCount;
+  final int? approvedCount;
+  final int? rejectedCount;
   final VoidRequestStatus? selected;
   final ValueChanged<VoidRequestStatus?> onSelect;
 
@@ -43,7 +50,7 @@ class VoidStatusSummaryCards extends StatelessWidget {
     );
   }
 
-  Widget _card(BuildContext context, VoidRequestStatus status, int count) {
+  Widget _card(BuildContext context, VoidRequestStatus status, int? count) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
@@ -59,7 +66,7 @@ class VoidStatusSummaryCards extends StatelessWidget {
           Icon(style.squareIcon, color: style.iconColor, size: 19),
           const SizedBox(height: 4),
           Text(
-            '$count',
+            count == null ? '—' : '$count',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,

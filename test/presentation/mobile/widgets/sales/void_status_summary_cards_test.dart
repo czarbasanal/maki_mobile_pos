@@ -5,9 +5,9 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_su
 
 void main() {
   Widget harness({
-    required int pending,
-    required int approved,
-    required int rejected,
+    required int? pending,
+    required int? approved,
+    required int? rejected,
     VoidRequestStatus? selected,
     required ValueChanged<VoidRequestStatus?> onSelect,
   }) =>
@@ -82,5 +82,20 @@ void main() {
 
     expect(called, isTrue);
     expect(fired, isNull);
+  });
+
+  testWidgets('a null count renders a dash instead of 0', (tester) async {
+    await tester.pumpWidget(harness(
+      pending: null,
+      approved: 5,
+      rejected: 1,
+      selected: null,
+      onSelect: (_) {},
+    ));
+
+    expect(find.text('—'), findsOneWidget);
+    expect(find.text('0'), findsNothing);
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
   });
 }

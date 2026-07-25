@@ -25,18 +25,22 @@ class VoidRequestsScreen extends ConsumerWidget {
     final selectedStatus = ref.watch(voidRequestStatusFilterProvider);
     final preset = ref.watch(voidRequestDatePresetProvider);
     final range = ref.watch(voidRequestDateRangeProvider);
-    final pendingCount = ref
-        .watch(voidRequestStatusCountProvider(VoidRequestStatus.pending))
-        .valueOrNull ??
-        0;
-    final approvedCount = ref
-        .watch(voidRequestStatusCountProvider(VoidRequestStatus.approved))
-        .valueOrNull ??
-        0;
-    final rejectedCount = ref
-        .watch(voidRequestStatusCountProvider(VoidRequestStatus.rejected))
-        .valueOrNull ??
-        0;
+    // AsyncError (e.g. FAILED_PRECONDITION from a missing composite index,
+    // or a permission error) is surfaced as `null` so the card renders a
+    // dash instead of a misleading '0' — see VoidStatusSummaryCards' doc
+    // comment. Loading still shows '0'.
+    final pendingAsync =
+        ref.watch(voidRequestStatusCountProvider(VoidRequestStatus.pending));
+    final approvedAsync =
+        ref.watch(voidRequestStatusCountProvider(VoidRequestStatus.approved));
+    final rejectedAsync =
+        ref.watch(voidRequestStatusCountProvider(VoidRequestStatus.rejected));
+    final pendingCount =
+        pendingAsync.hasError ? null : (pendingAsync.valueOrNull ?? 0);
+    final approvedCount =
+        approvedAsync.hasError ? null : (approvedAsync.valueOrNull ?? 0);
+    final rejectedCount =
+        rejectedAsync.hasError ? null : (rejectedAsync.valueOrNull ?? 0);
 
     return Scaffold(
       appBar: AppBar(

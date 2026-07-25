@@ -65,6 +65,22 @@ void main() {
         isTrue,
       );
     });
+
+    test(
+        'unknown kind segment falls back to the product-editor gate '
+        '(builder falls back to CategoryKind.product for unknown segments)',
+        () {
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/bogus', user(UserRole.cashier)),
+        isFalse,
+      );
+      expect(
+        RouteGuards.canAccess(
+            '${RoutePaths.categorySettings}/bogus', user(UserRole.staff)),
+        isTrue,
+      );
+    });
   });
 
   group('RouteGuards — shop fees editor open to every active role', () {

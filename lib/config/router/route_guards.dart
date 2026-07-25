@@ -203,10 +203,15 @@ abstract class RouteGuards {
     if (path.startsWith('${RoutePaths.categorySettings}/')) {
       final kindSegment =
           path.substring('${RoutePaths.categorySettings}/'.length);
-      if (kindSegment == CategoryKind.product.name) {
-        return user.hasPermission(Permission.editProductCategories);
-      }
-      return user.hasPermission(Permission.editLists);
+      // Unknown segments fall through to CategoryKind.product in the
+      // route builder's orElse (app_routes.dart), so treat any segment
+      // that isn't a *known* non-product kind as the product editor gate.
+      final isKnownNonProduct = CategoryKind.values.any(
+        (k) => k != CategoryKind.product && k.name == kindSegment,
+      );
+      return isKnownNonProduct
+          ? user.hasPermission(Permission.editLists)
+          : user.hasPermission(Permission.editProductCategories);
     }
 
     // Fail-safe: deny everything not explicitly allowlisted above. Any new
