@@ -865,7 +865,6 @@ describe("cross-cutting", () => {
 // ===================================================================
 describe("shared list collections (cashier add/edit, staff full)", () => {
   const LISTS = [
-    "product_categories",
     "expense_categories",
     "units",
     "void_reasons",
@@ -1001,6 +1000,31 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
       await assertFails(
         as("cashier").collection("motorcycle_models").doc("m1").delete()
       );
+    });
+  });
+
+  describe("product_categories (2026-07-25: staff/admin only, not shared-list)", () => {
+    it("cashier can no longer create a product category", async () => {
+      await assertFails(as("cashier").collection("product_categories").add(entry));
+    });
+
+    it("cashier can no longer rename a product category", async () => {
+      await seed("product_categories", "e1", entry);
+      await assertFails(
+        as("cashier").collection("product_categories").doc("e1").update({ name: "New Name" })
+      );
+    });
+
+    it("staff can still create and rename product categories", async () => {
+      await assertSucceeds(as("staff").collection("product_categories").add(entry));
+      await seed("product_categories", "e1", entry);
+      await assertSucceeds(
+        as("staff").collection("product_categories").doc("e1").update({ name: "New Name" })
+      );
+    });
+
+    it("cashier can still create an expense category (unchanged)", async () => {
+      await assertSucceeds(as("cashier").collection("expense_categories").add(entry));
     });
   });
 });
