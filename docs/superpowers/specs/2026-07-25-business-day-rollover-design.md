@@ -1,9 +1,9 @@
 # Business-day rollover + unsettled-drawer enforcement
 
-Date: 2026-07-25 (revised after user discussion — supersedes the earlier
-rollover-only draft)
-Surface: Flutter mobile only. No schema/rules changes (closings/sales
-queries only).
+Date: 2026-07-25 (v3 — user chose SERVER-HARD enforcement via a
+denormalized state doc; supersedes v2's client-only gate)
+Surface: Flutter mobile + firestore.rules (new `drawer_state` collection +
+a sales-create guard; deploy user-gated).
 
 ## Problem
 
@@ -74,12 +74,48 @@ null when clear):
   new sales." — with a "Close Day" button routing to EOD targeting that
   date. Shown on the POS screen (above the cart area) and the dashboard
   (below the header) whenever `unsettledBusinessDayProvider != null`.
-- Block: `canProceedToCheckout` gains `&& !hasUnsettledDay` (cart gate);
-  the JO bill-out button disables and `_billOut` early-returns with the
-  same warning when an unsettled day exists. `ProcessSaleUseCase` is NOT
-  changed (client-gate enforcement; the use case cannot query days —
-  document this boundary).
+- Block (client layer): `canProceedToCheckout` gains `&& !hasUnsettledDay`
+  (cart gate); the JO bill-out button disables and `_billOut`
+  early-returns with the same warning when an unsettled day exists.
 - Everything else (JO save/edit, receiving, expenses, reports) unaffected.
+
+### D2. Server-hard enforcement — `drawer_state` doc (user-chosen)
+
+Single doc `drawer_state/state` with integer business days (PH = UTC+8,
+no DST; `yyyymmdd` ints so rules compare without string padding):
+- `lastSaleDay: int` — business day of the most recent completed sale;
+  written INSIDE the sale-create transaction (`tx.set(merge)`), value
+  MUST equal the rules-computed current PH day.
+- `lastClosedDay: int` — business day of the most recent closing; written
+  in the close-day batch/transaction, value must be ≤ current PH day.
+
+Rules:
+- Helper `phDay()` = `request.time + duration.value(8, 'h')` →
+  `year*10000 + month*100 + day`.
+- `drawer_state` read: any active valid user. Create/update: any active
+  valid user, constrained per field — a write touching `lastSaleDay` must
+  set it to `phDay()`; a write touching `lastClosedDay` must set it ≤
+  `phDay()`. No delete.
+- `sales` create gains `&& drawerSettled()` where `drawerSettled()` =
+  state doc missing (fresh DB) OR `lastSaleDay == phDay()` (sales already
+  today — day is live) OR `lastClosedDay >= lastSaleDay` (latest sales-day
+  settled). This blocks a new sale whenever the most recent sales-day is a
+  PAST day without a closing — server-side, unbypassable.
+
+Boundaries (documented):
+- The rule enforces the LATEST-sales-day invariant; the client detector
+  (§C) remains the source of truth for the OLDEST unsettled day and the
+  banner. With oldest-first settling they agree.
+- Old APKs (≤ +15) neither update `drawer_state` nor gate client-side:
+  their sales pass the rule while the drawer is settled but don't advance
+  `lastSaleDay` (a detection gap, not a corruption) — retire old installs
+  promptly via App Distribution.
+- Missing doc ⇒ allow (lazy creation on the first post-update sale/close;
+  no backfill needed).
+- Rules deploy is a separate, user-confirmed step; deploy BEFORE/WITH the
+  APK that writes `drawer_state` (the rule tolerates the missing doc, so
+  ordering is safe either way — but the guard only bites once the doc
+  exists).
 
 ### E. EOD screen closes a TARGET day (not always today)
 
@@ -99,7 +135,10 @@ null when clear):
 ## Not changing
 
 Write-time business-date assignment, report presets, PO velocity windows,
-firestore rules (detection is query-based, client-side), web admin.
+web admin (web POS sale creation WILL hit the new rule once deployed —
+web's checkout must also write `drawer_state.lastSaleDay` in its create
+transaction, or web sales fail after the first mobile sale creates the
+doc: include the small web write in the plan).
 
 ## Testing (TDD; tests mirror lib/)
 
@@ -114,3 +153,7 @@ firestore rules (detection is query-based, client-side), web admin.
   EOD form; dashboard shows the banner.
 - Provider: flipping businessDay recomputes today-scoped providers (fake
   repo call counts).
+- Rules (emulator suite): drawer_state field constraints (lastSaleDay must
+  equal phDay; lastClosedDay ≤ phDay; no delete); sales create denied when
+  lastSaleDay is a past day > lastClosedDay; allowed when doc missing /
+  same-day / settled; spoofed lastSaleDay values rejected.
