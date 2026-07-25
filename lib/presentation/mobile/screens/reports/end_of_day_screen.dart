@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
@@ -13,13 +14,19 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/closing_expe
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
-/// End-of-day review + close flow for the current business day.
+/// End-of-day review + close flow for a single business day.
 ///
 /// Shows the sales + expenses figures, captures the opening float and counted
 /// cash, surfaces the variance, and persists the closing. If the day is
 /// already closed, renders the saved record read-only.
+///
+/// [targetDate] closes a specific past day (e.g. a rollover blocker routing
+/// to the oldest unsettled day). When omitted, the screen defaults to the
+/// oldest unsettled day if one is already known, otherwise today.
 class EndOfDayScreen extends ConsumerStatefulWidget {
-  const EndOfDayScreen({super.key});
+  const EndOfDayScreen({super.key, this.targetDate});
+
+  final DateTime? targetDate;
 
   @override
   ConsumerState<EndOfDayScreen> createState() => _EndOfDayScreenState();
@@ -41,9 +48,24 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   /// state only — persisted onto the closing when the day is closed.
   final Set<String> _excludedIds = {};
 
-  DateTime get _today {
-    final n = DateTime.now();
-    return DateTime(n.year, n.month, n.day);
+  /// The day this screen closes. Resolved ONCE in [initState] — widget
+  /// arg, else the already-loaded oldest-unsettled day, else today — and
+  /// never re-derived afterward, so a midnight flip or a detector change
+  /// can't retarget a form the user already has open.
+  late final DateTime _target;
+
+  /// Whether [_target] was "today" (the current business day) at the
+  /// moment this screen opened — drives the AppBar title. Captured
+  /// alongside [_target] so it, too, is immune to a later clock flip.
+  late final bool _targetIsToday;
+
+  @override
+  void initState() {
+    super.initState();
+    final today = ref.read(businessDayProvider);
+    final unsettled = ref.read(unsettledBusinessDayProvider).valueOrNull;
+    _target = widget.targetDate ?? unsettled ?? today;
+    _targetIsToday = _target == today;
   }
 
   List<double> _plateDpAmounts = const [];
@@ -68,7 +90,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final existingAsync = ref.watch(dailyClosingForDateProvider(_today));
+    final existingAsync = ref.watch(dailyClosingForDateProvider(_target));
 
     return Scaffold(
       appBar: AppBar(
@@ -76,7 +98,9 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.goBackOr(RoutePaths.reports),
         ),
-        title: const Text('End-of-Day Closing'),
+        title: Text(_targetIsToday
+            ? 'End-of-Day Closing'
+            : 'Closing ${DateFormat('MMM d').format(_target)}'),
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.history),
@@ -89,22 +113,22 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
         loading: () => const FormSkeleton(),
         error: (e, _) => ErrorStateView(
           message: 'Error: $e',
-          onRetry: () => ref.invalidate(dailyClosingForDateProvider(_today)),
+          onRetry: () => ref.invalidate(dailyClosingForDateProvider(_target)),
         ),
         data: (existing) => existing != null
-            ? _ClosedView(closing: existing, date: _today)
+            ? _ClosedView(closing: existing, date: _target)
             : _buildReview(),
       ),
     );
   }
 
   Widget _buildReview() {
-    final dataAsync = ref.watch(dailyClosingDataProvider(_today));
+    final dataAsync = ref.watch(dailyClosingDataProvider(_target));
     return dataAsync.when(
       loading: () => const FormSkeleton(),
       error: (e, _) => ErrorStateView(
         message: 'Error: $e',
-        onRetry: () => ref.invalidate(dailyClosingDataProvider(_today)),
+        onRetry: () => ref.invalidate(dailyClosingDataProvider(_target)),
       ),
       data: (data) {
         final draft = data.draftExcluding(_excludedIds);
@@ -452,7 +476,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     final notes = _notesController.text.trim();
     final saved =
         await ref.read(dailyClosingOperationsProvider.notifier).closeDay(
-              date: _today,
+              date: _target,
               openingFloat: _float,
               countedCash: _counted ?? 0,
               plateNoDpAmounts: List.of(_plateDpAmounts),

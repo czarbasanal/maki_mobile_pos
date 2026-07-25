@@ -14,6 +14,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/reports/end_of_day_s
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
@@ -121,6 +122,7 @@ void main() {
       dailyClosingDataProvider(today).overrideWith((ref) async => data),
       closeDayUseCaseProvider.overrideWithValue(useCase),
       businessDayProvider.overrideWith(() => _FixedBusinessDayNotifier(today)),
+      unsettledBusinessDayProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);
 
