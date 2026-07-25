@@ -179,6 +179,54 @@ void main() {
       expect(result.errorMessage, contains('empty'));
     });
 
+    test(
+        'a fee-only sale (no items, one or more fee lines) passes validation',
+        () async {
+      // grandTotal = feesTotal(50) only; tenders must reconcile.
+      final sale = createTestSale(items: [], amountReceived: 50).copyWith(
+        feeLines: const [
+          FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 50),
+        ],
+        tenders: const {PaymentMethod.cash: 50},
+      );
+
+      when(() => mockSaleRepo.generateSaleNumber(any()))
+          .thenAnswer((_) async => 'SALE-003');
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
+          .thenAnswer((inv) async =>
+              (inv.positionalArguments.first as SaleEntity)
+                  .copyWith(id: 'sale-300', saleNumber: 'SALE-003'));
+
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-fee');
+
+      expect(result.success, true, reason: result.errorMessage);
+      expect(result.sale!.feesTotal, 50);
+      expect(result.sale!.grandTotal, 50);
+      verifyNever(() => mockProductRepo.getProductById(any()));
+    });
+
+    // "truly-empty sale still throws" is already covered by 'should fail
+    // when cart is empty' above (items: [], feeLines: []).
+
+    test('a labor-only sale (no items, no fee lines, labor only) is still '
+        'rejected', () async {
+      final sale = createTestSale(items: [], amountReceived: 450).copyWith(
+        laborLines: const [
+          LaborLineEntity(id: 'lab-1', description: 'Engine tune-up', fee: 450),
+        ],
+        mechanicId: 'mech-1',
+        mechanicName: 'Juan Dela Cruz',
+        tenders: const {PaymentMethod.cash: 450},
+      );
+
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
+
+      expect(result.success, false);
+      expect(result.errorMessage, contains('empty'));
+    });
+
     test('should fail when the tender breakdown does not reconcile', () async {
       // Tenders sum to 100 but the grand total is 200.
       final sale = createTestSale()

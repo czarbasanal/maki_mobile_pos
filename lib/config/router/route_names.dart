@@ -171,6 +171,9 @@ abstract class RouteNames {
   /// Mechanics admin editor — `/settings/mechanics`.
   static const String mechanics = 'mechanics';
 
+  /// Shop fees admin editor — `/settings/shop-fees`.
+  static const String shopFees = 'shopFees';
+
   /// Motorcycle models admin editor — `/settings/motorcycle-models`.
   static const String motorcycleModels = 'motorcycleModels';
 
@@ -267,6 +270,7 @@ abstract class RoutePaths {
   static const String categorySettings = '/settings/categories';
   static const String categoryEditor = '/settings/categories/:kind';
   static const String mechanics = '/settings/mechanics';
+  static const String shopFees = '/settings/shop-fees';
   static const String motorcycleModels = '/settings/motorcycle-models';
   static const String about = '/settings/about';
 

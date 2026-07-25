@@ -44,6 +44,14 @@ class CartSummary extends StatelessWidget {
                   cart.laborSubtotal.toCurrency(),
             ),
           ],
+          if (cart.feeLines.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            SummaryRow(
+              label: 'Shop fees',
+              value:
+                  cart.feesTotal.toCurrency(),
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm + 1),
           const Divider(height: 1),
           const SizedBox(height: AppSpacing.sm + 1),

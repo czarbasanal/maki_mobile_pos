@@ -55,6 +55,10 @@ abstract class FirestoreCollections {
   /// Mechanics collection - admin-managed mechanic list for service drafts
   static const String mechanics = 'mechanics';
 
+  /// Shop fees collection - admin-managed shop-fee catalog (e.g. environmental
+  /// fee, disposal fee) attachable to a sale/draft
+  static const String shopFees = 'shop_fees';
+
   /// Motorcycle models collection - admin-managed + cashier-addable model list
   /// picked on Job Orders.
   static const String motorcycleModels = 'motorcycle_models';

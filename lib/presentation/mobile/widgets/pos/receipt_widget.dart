@@ -348,6 +348,45 @@ class ReceiptWidget extends ConsumerWidget {
             );
           }),
         ],
+        if (sale.feeLines.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'SHOP FEES',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              color: _ReceiptColors.label,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ...sale.feeLines.map((line) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      line.name,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.black),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      line.amount.toCurrency(),
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
       ],
     );
   }
@@ -363,6 +402,10 @@ class ReceiptWidget extends ConsumerWidget {
         if (sale.laborLines.isNotEmpty) ...[
           const SizedBox(height: 4),
           _buildTotalRow('Labor', sale.laborSubtotal),
+        ],
+        if (sale.feeLines.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          _buildTotalRow('Shop fees', sale.feesTotal),
         ],
         const SizedBox(height: AppSpacing.sm),
         _buildTotalRow('TOTAL', sale.grandTotal, isGrandTotal: true),

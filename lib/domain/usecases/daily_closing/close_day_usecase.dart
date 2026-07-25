@@ -108,6 +108,7 @@ class CloseDayUseCase {
         cashExpenses: draft.cashExpenses,
         salmonReceivable: draft.salmonReceivable,
         laborRevenue: draft.laborRevenue,
+        feesRevenue: draft.feesRevenue,
         plateNoDp: plateNoDp,
         plateNoDelivery: plateNoDelivery,
         plateNoDpAmounts: List.of(plateNoDpAmounts),

@@ -226,6 +226,52 @@ void main() {
       expect(updated.laborSubtotal, 150.0);
     });
 
+    test('addFeeLine adds a fee line and feeds feesTotal', () {
+      final updated = draft.addFeeLine(
+        const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+      );
+      expect(updated.feeLines.length, 1);
+      expect(updated.feesTotal, 20.0);
+      // Original is unchanged (immutability).
+      expect(draft.feeLines, isEmpty);
+    });
+
+    test('updateFeeLine replaces a matching line by id', () {
+      final updated = draft
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+          )
+          .updateFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 35.0),
+          );
+      expect(updated.feeLines.single.amount, 35.0);
+      expect(updated.feesTotal, 35.0);
+    });
+
+    test('updateFeeLine on a missing id is a no-op', () {
+      final updated = draft
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+          )
+          .updateFeeLine(
+            const FeeLineEntity(id: 'nope', name: 'X', amount: 999.0),
+          );
+      expect(updated.feeLines.single.amount, 20.0);
+    });
+
+    test('removeFeeLine drops the matching line', () {
+      final updated = draft
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+          )
+          .addFeeLine(
+            const FeeLineEntity(id: 'fee-2', name: 'Air', amount: 5.0),
+          )
+          .removeFeeLine('fee-1');
+      expect(updated.feeLines.single.id, 'fee-2');
+      expect(updated.feesTotal, 5.0);
+    });
+
     test('copyWith sets and clears mechanic fields', () {
       final assigned =
           draft.copyWith(mechanicId: 'mech-1', mechanicName: 'Juan Dela Cruz');
@@ -246,6 +292,59 @@ void main() {
         const LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
       );
       expect(withLabor == draft, false);
+    });
+
+    test('fee fields default to empty', () {
+      expect(draft.feeLines, isEmpty);
+      expect(draft.feesTotal, 0.0);
+    });
+
+    test('fees raise revenue/grandTotal but not parts/labor/discount/cost', () {
+      final withFees = draft.copyWith(
+        feeLines: const [
+          FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+          FeeLineEntity(id: 'fee-2', name: 'Air', amount: 5.0),
+        ],
+      );
+
+      // Parts-only figures are untouched by fees.
+      expect(withFees.partsSubtotal, 200.0);
+      expect(withFees.totalDiscount, 10.0);
+      expect(withFees.totalCost, 120.0);
+      expect(withFees.partsRevenue, 190.0);
+      expect(withFees.partsProfit, 70.0);
+      // Labor track is untouched too.
+      expect(withFees.laborSubtotal, 0.0);
+      expect(withFees.laborRevenue, 0.0);
+
+      // Fees track.
+      expect(withFees.feesTotal, 25.0);
+
+      // Combined.
+      expect(withFees.grandTotal, 215.0); // 190 + 25
+    });
+
+    test('labor and fees both add into grandTotal', () {
+      final combined = draft
+          .addLaborLine(
+            const LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),
+          )
+          .copyWith(
+            feeLines: const [
+              FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+            ],
+          );
+      // grandTotal = partsRevenue(190) + laborRevenue(300) + feesTotal(20)
+      expect(combined.grandTotal, 510.0);
+    });
+
+    test('props include feeLines', () {
+      final withFees = draft.copyWith(
+        feeLines: const [
+          FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20.0),
+        ],
+      );
+      expect(withFees == draft, false);
     });
   });
 

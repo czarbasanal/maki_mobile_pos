@@ -212,5 +212,90 @@ void main() {
       // Expected cash is labor-inclusive: 0 float + 1450 cash - 0 expenses.
       expect(draft.expectedCashFor(0), 1450);
     });
+
+    test(
+        'carries fees revenue as its own line; expectedCash unchanged by it',
+        () {
+      const summaryNoFees = SalesSummary(
+        totalSalesCount: 2,
+        voidedSalesCount: 0,
+        grossAmount: 1000, // parts gross (parts-only)
+        totalDiscounts: 0,
+        netAmount: 1000, // parts net (parts-only)
+        totalCost: 600,
+        totalProfit: 400,
+        byPaymentMethod: {PaymentMethod.cash: 1000}, // parts only
+      );
+      const summaryWithFees = SalesSummary(
+        totalSalesCount: 2,
+        voidedSalesCount: 0,
+        grossAmount: 1000, // parts gross (parts-only)
+        totalDiscounts: 0,
+        netAmount: 1000, // parts net (parts-only)
+        totalCost: 600,
+        totalProfit: 400,
+        byPaymentMethod: {PaymentMethod.cash: 1150}, // parts 1000 + fees 150
+        feesRevenue: 150,
+      );
+
+      final draftNoFees = DailyClosingDraft.fromData(
+        businessDate: DateTime(2026, 5, 28),
+        summary: summaryNoFees,
+        expenses: const [],
+      );
+      final draftWithFees = DailyClosingDraft.fromData(
+        businessDate: DateTime(2026, 5, 28),
+        summary: summaryWithFees,
+        expenses: const [],
+      );
+
+      // Parts-only top-line on the closing snapshot.
+      expect(draftWithFees.grossSales, 1000);
+      expect(draftWithFees.netSales, 1000);
+      // Fees surfaced as their own line.
+      expect(draftWithFees.feesRevenue, 150);
+      expect(draftNoFees.feesRevenue, 0);
+      // Fee cash is already inside cashSales (drawer physically holds it):
+      // expectedCash is fees-inclusive via cashSales, same as labor.
+      expect(draftWithFees.expectedCashFor(0), 1150);
+
+      // CRITICAL invariant: expectedCashFor's *formula* is unchanged by the
+      // feesRevenue field — two drafts with identical cashSales/cashExpenses
+      // but different feesRevenue produce the identical expectedCash.
+      final draftA = DailyClosingDraft(
+        businessDate: DateTime(2026, 5, 28),
+        grossSales: 0,
+        netSales: 0,
+        totalDiscounts: 0,
+        cashSales: 1000,
+        nonCashSales: 0,
+        gcashSales: 0,
+        mayaSales: 0,
+        totalExpenses: 0,
+        cashExpenses: 0,
+        salmonReceivable: 0,
+        feesRevenue: 0,
+        salesCount: 0,
+        voidedCount: 0,
+      );
+      final draftB = DailyClosingDraft(
+        businessDate: DateTime(2026, 5, 28),
+        grossSales: 0,
+        netSales: 0,
+        totalDiscounts: 0,
+        cashSales: 1000,
+        nonCashSales: 0,
+        gcashSales: 0,
+        mayaSales: 0,
+        totalExpenses: 0,
+        cashExpenses: 0,
+        salmonReceivable: 0,
+        feesRevenue: 999, // wildly different fees, same cash inputs
+        salesCount: 0,
+        voidedCount: 0,
+      );
+      expect(draftA.expectedCashFor(500), draftB.expectedCashFor(500));
+      expect(draftA.expectedCashFor(500), 1500);
+    });
   });
 }

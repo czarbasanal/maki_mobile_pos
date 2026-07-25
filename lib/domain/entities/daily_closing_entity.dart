@@ -61,6 +61,12 @@ class DailyClosingDraft extends Equatable {
   /// field is a reporting line, not a reconciliation input.
   final double laborRevenue;
 
+  /// Shop-fee revenue for the day. A separate track from merchandise, like
+  /// [laborRevenue]: [grossSales]/[netSales] stay PARTS-ONLY. Fee cash is
+  /// already folded into [cashSales]/[expectedCashFor] (the drawer physically
+  /// holds it), so this field is a reporting line, not a reconciliation input.
+  final double feesRevenue;
+
   final int salesCount;
   final int voidedCount;
 
@@ -77,6 +83,7 @@ class DailyClosingDraft extends Equatable {
     required this.cashExpenses,
     required this.salmonReceivable,
     this.laborRevenue = 0,
+    this.feesRevenue = 0,
     required this.salesCount,
     required this.voidedCount,
   });
@@ -124,6 +131,7 @@ class DailyClosingDraft extends Equatable {
       cashExpenses: cashExpenses,
       salmonReceivable: salmonReceivable,
       laborRevenue: summary.laborRevenue,
+      feesRevenue: summary.feesRevenue,
       salesCount: summary.totalSalesCount,
       voidedCount: summary.voidedSalesCount,
     );
@@ -159,6 +167,7 @@ class DailyClosingDraft extends Equatable {
         cashExpenses,
         salmonReceivable,
         laborRevenue,
+        feesRevenue,
         salesCount,
         voidedCount,
       ];
@@ -182,6 +191,10 @@ class DailyClosingEntity extends Equatable {
   final double cashExpenses;
   final double salmonReceivable;
   final double laborRevenue;
+
+  /// Shop-fee revenue persisted with this closing — see the doc on
+  /// [DailyClosingDraft.feesRevenue] (same reporting-only semantics).
+  final double feesRevenue;
   final double plateNoDp;
   final double plateNoDelivery;
 
@@ -222,6 +235,7 @@ class DailyClosingEntity extends Equatable {
     required this.cashExpenses,
     required this.salmonReceivable,
     this.laborRevenue = 0,
+    this.feesRevenue = 0,
     this.plateNoDp = 0,
     this.plateNoDelivery = 0,
     this.plateNoDpAmounts = const [],
@@ -263,6 +277,7 @@ class DailyClosingEntity extends Equatable {
         cashExpenses,
         salmonReceivable,
         laborRevenue,
+        feesRevenue,
         plateNoDp,
         plateNoDelivery,
         plateNoDpAmounts,

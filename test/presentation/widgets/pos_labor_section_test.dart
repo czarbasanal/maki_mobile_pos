@@ -70,6 +70,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(MechanicPicker), findsOneWidget);
     expect(find.text('Add labor line'), findsOneWidget);
+
+    // Shop Fees is mounted right beside Labor & Service.
+    expect(find.text('Shop Fees'), findsOneWidget);
   });
 
   testWidgets('shows the labor validation banner when a mechanic is missing',

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/data/models/fee_line_model.dart';
 import 'package:maki_mobile_pos/data/models/labor_line_model.dart';
 import 'package:maki_mobile_pos/data/models/sale_item_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -15,6 +16,7 @@ class DraftModel {
   final String name;
   final List<SaleItemModel> items;
   final List<LaborLineModel> laborLines;
+  final List<FeeLineModel> feeLines;
   final String? mechanicId;
   final String? mechanicName;
   final String? motorcycleModel;
@@ -34,6 +36,7 @@ class DraftModel {
     required this.name,
     required this.items,
     this.laborLines = const [],
+    this.feeLines = const [],
     this.mechanicId,
     this.mechanicName,
     this.motorcycleModel,
@@ -72,11 +75,21 @@ class DraftModel {
       laborList.add(LaborLineModel.fromMap(laborMap, laborId));
     }
 
+    // Parse fee lines array (inline, like labor). Legacy docs -> [].
+    final feeList = <FeeLineModel>[];
+    final feeData = map['feeLines'] as List<dynamic>? ?? [];
+    for (int i = 0; i < feeData.length; i++) {
+      final feeMap = feeData[i] as Map<String, dynamic>;
+      final feeId = feeMap['id'] as String? ?? 'fee-$i';
+      feeList.add(FeeLineModel.fromMap(feeMap, feeId));
+    }
+
     return DraftModel(
       id: documentId,
       name: map['name'] as String? ?? 'Unnamed Draft',
       items: itemsList,
       laborLines: laborList,
+      feeLines: feeList,
       mechanicId: map['mechanicId'] as String?,
       mechanicName: map['mechanicName'] as String?,
       motorcycleModel: map['motorcycleModel'] as String?,
@@ -108,6 +121,7 @@ class DraftModel {
       'items': items.map((item) => item.toMap(includeId: true)).toList(),
       'laborLines':
           laborLines.map((l) => l.toMap(includeId: true)).toList(),
+      'feeLines': feeLines.map((f) => f.toMap(includeId: true)).toList(),
       'mechanicId': mechanicId,
       'mechanicName': mechanicName,
       'motorcycleModel': motorcycleModel,
@@ -176,6 +190,7 @@ class DraftModel {
       name: name,
       items: items.map((item) => item.toEntity()).toList(),
       laborLines: laborLines.map((l) => l.toEntity()).toList(),
+      feeLines: feeLines.map((f) => f.toEntity()).toList(),
       mechanicId: mechanicId,
       mechanicName: mechanicName,
       motorcycleModel: motorcycleModel,
@@ -202,6 +217,8 @@ class DraftModel {
       laborLines: entity.laborLines
           .map((l) => LaborLineModel.fromEntity(l))
           .toList(),
+      feeLines:
+          entity.feeLines.map((f) => FeeLineModel.fromEntity(f)).toList(),
       mechanicId: entity.mechanicId,
       mechanicName: entity.mechanicName,
       motorcycleModel: entity.motorcycleModel,
@@ -237,6 +254,7 @@ class DraftModel {
     required String name,
     required List<SaleItemModel> items,
     List<LaborLineModel> laborLines = const [],
+    List<FeeLineModel> feeLines = const [],
     String? mechanicId,
     String? mechanicName,
     DiscountType discountType = DiscountType.amount,
@@ -249,6 +267,7 @@ class DraftModel {
       name: name,
       items: items,
       laborLines: laborLines,
+      feeLines: feeLines,
       mechanicId: mechanicId,
       mechanicName: mechanicName,
       discountType: discountType,
@@ -284,8 +303,12 @@ class DraftModel {
   /// Labor subtotal (sum of labor fees; never discounted)
   double get laborSubtotal => laborLines.fold(0.0, (s, l) => s + l.fee);
 
-  /// Grand total: net parts (after discount) + labor
-  double get grandTotal => (subtotal - totalDiscount) + laborSubtotal;
+  /// Fees total (sum of shop-fee amounts; never discounted)
+  double get feesTotal => feeLines.fold(0.0, (s, f) => s + f.amount);
+
+  /// Grand total: net parts (after discount) + labor + fees
+  double get grandTotal =>
+      (subtotal - totalDiscount) + laborSubtotal + feesTotal;
 
   /// Total item count
   int get totalItemCount => items.fold(0, (acc, item) => acc + item.quantity);
@@ -297,6 +320,7 @@ class DraftModel {
     String? name,
     List<SaleItemModel>? items,
     List<LaborLineModel>? laborLines,
+    List<FeeLineModel>? feeLines,
     String? mechanicId,
     String? mechanicName,
     String? motorcycleModel,
@@ -317,6 +341,7 @@ class DraftModel {
       name: name ?? this.name,
       items: items ?? this.items,
       laborLines: laborLines ?? this.laborLines,
+      feeLines: feeLines ?? this.feeLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName:
           clearMechanic ? null : (mechanicName ?? this.mechanicName),

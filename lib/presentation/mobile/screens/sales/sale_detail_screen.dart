@@ -274,6 +274,7 @@ class SaleDetailScreen extends ConsumerWidget {
             final index = entry.key;
             final item = entry.value;
             final isLast = index == sale.items.length - 1 &&
+                sale.feeLines.isEmpty &&
                 sale.laborLines.isEmpty;
             final netAmount = item.calculateNetAmount(
               isPercentage: sale.isPercentageDiscount,
@@ -360,6 +361,67 @@ class SaleDetailScreen extends ConsumerWidget {
                           ),
                         ),
                     ],
+                  ),
+                ],
+              ),
+            );
+          }),
+          ...sale.feeLines.asMap().entries.map((entry) {
+            final index = entry.key;
+            final line = entry.value;
+            final isLast = index == sale.feeLines.length - 1 &&
+                sale.laborLines.isEmpty;
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: isLast
+                    ? null
+                    : Border(bottom: BorderSide(color: hairline)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      LucideIcons.receipt,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          line.name,
+                          style: AppTextStyles.productName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Shop Fee',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    line.amount.toCurrency(),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),

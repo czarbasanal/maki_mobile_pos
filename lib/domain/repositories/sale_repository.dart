@@ -256,6 +256,10 @@ class SalesSummary {
   /// Total labor profit. Labor has zero cost, so this equals [laborRevenue].
   final double laborProfit;
 
+  /// Shop-fee revenue — management's, separate track like labor; NOT in
+  /// gross/net/profit.
+  final double feesRevenue;
+
   /// Breakdown by payment method
   final Map<PaymentMethod, double> byPaymentMethod;
 
@@ -281,6 +285,7 @@ class SalesSummary {
     required this.byPaymentMethod,
     this.laborRevenue = 0,
     this.laborProfit = 0,
+    this.feesRevenue = 0,
   });
 
   /// Creates an empty summary.
@@ -296,6 +301,7 @@ class SalesSummary {
       byPaymentMethod: {},
       laborRevenue: 0,
       laborProfit: 0,
+      feesRevenue: 0,
     );
   }
 }

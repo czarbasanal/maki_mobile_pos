@@ -150,6 +150,9 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                       ClosingKvRow(
                           label: 'Labor revenue (service)',
                           value: _peso(draft.laborRevenue)),
+                    if (draft.feesRevenue > 0)
+                      ClosingKvRow(
+                          label: 'Shop fees', value: _peso(draft.feesRevenue)),
                     ClosingKvRow(
                         label: 'Sales count', value: '${draft.salesCount}'),
                     if (draft.salmonReceivable > 0)
@@ -533,6 +536,9 @@ class _ClosedView extends ConsumerWidget {
                 ClosingKvRow(
                     label: 'Labor revenue (service)',
                     value: _peso(closing.laborRevenue)),
+              if (closing.feesRevenue > 0)
+                ClosingKvRow(
+                    label: 'Shop fees', value: _peso(closing.feesRevenue)),
               if (closing.salmonReceivable > 0)
                 ClosingKvRow(
                     label: 'Salmon receivable',

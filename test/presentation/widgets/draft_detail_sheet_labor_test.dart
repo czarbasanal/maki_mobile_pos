@@ -4,7 +4,11 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_detail_sheet.dart';
 
 void main() {
-  DraftEntity buildDraft({List<LaborLineEntity> labor = const [], String? mechanic}) =>
+  DraftEntity buildDraft({
+    List<LaborLineEntity> labor = const [],
+    List<FeeLineEntity> fees = const [],
+    String? mechanic,
+  }) =>
       DraftEntity(
         id: 'draft-1',
         name: 'Plate ABC-123',
@@ -20,6 +24,7 @@ void main() {
           ),
         ],
         laborLines: labor,
+        feeLines: fees,
         mechanicName: mechanic,
         mechanicId: mechanic == null ? null : 'mech-1',
         createdBy: 'cashier-1',

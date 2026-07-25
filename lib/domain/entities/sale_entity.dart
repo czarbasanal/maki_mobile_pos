@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/domain/entities/fee_line_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/labor_line_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/sale_item_entity.dart';
 
@@ -28,6 +29,11 @@ class SaleEntity extends Equatable {
   /// Free-form labor/service lines (full price, never discounted).
   /// Stored INLINE on the sale doc (not in the items subcollection).
   final List<LaborLineEntity> laborLines;
+
+  /// Shop-fee lines on this sale (outside-item charges: electric charge,
+  /// tire changer, air, ...). Belongs to the shop, never discounted, zero
+  /// cost. Stored INLINE on the sale doc (not in the items subcollection).
+  final List<FeeLineEntity> feeLines;
 
   /// Mechanic assigned to this job (one per ticket); null when none.
   final String? mechanicId;
@@ -95,6 +101,7 @@ class SaleEntity extends Equatable {
     required this.saleNumber,
     required this.items,
     this.laborLines = const [],
+    this.feeLines = const [],
     this.mechanicId,
     this.mechanicName,
     this.motorcycleModel,
@@ -156,8 +163,12 @@ class SaleEntity extends Equatable {
   /// Labor revenue (pure margin — zero cost).
   double get laborRevenue => laborSubtotal;
 
-  /// Grand total after discounts, including labor.
-  double get grandTotal => partsRevenue + laborRevenue;
+  /// Total of all shop-fee lines. Belongs to the shop; never discounted;
+  /// zero cost (pure margin, like labor).
+  double get feesTotal => feeLines.fold(0.0, (s, f) => s + f.amount);
+
+  /// Grand total after discounts, including labor and shop fees.
+  double get grandTotal => partsRevenue + laborRevenue + feesTotal;
 
   /// Tender breakdown, normalized: explicit [tenders] if present, otherwise
   /// the whole [grandTotal] attributed to [paymentMethod] (legacy sales).
@@ -225,6 +236,7 @@ class SaleEntity extends Equatable {
     String? saleNumber,
     List<SaleItemEntity>? items,
     List<LaborLineEntity>? laborLines,
+    List<FeeLineEntity>? feeLines,
     String? mechanicId,
     String? mechanicName,
     String? motorcycleModel,
@@ -255,6 +267,7 @@ class SaleEntity extends Equatable {
       saleNumber: saleNumber ?? this.saleNumber,
       items: items ?? this.items,
       laborLines: laborLines ?? this.laborLines,
+      feeLines: feeLines ?? this.feeLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
       motorcycleModel: motorcycleModel ?? this.motorcycleModel,
@@ -299,6 +312,7 @@ class SaleEntity extends Equatable {
         saleNumber,
         items,
         laborLines,
+        feeLines,
         mechanicId,
         mechanicName,
         motorcycleModel,

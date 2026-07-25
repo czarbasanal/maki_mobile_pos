@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/data/models/fee_line_model.dart';
 import 'package:maki_mobile_pos/data/models/labor_line_model.dart';
 import 'package:maki_mobile_pos/data/models/sale_item_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -16,6 +17,7 @@ class SaleModel {
   final String saleNumber;
   final List<SaleItemModel> items;
   final List<LaborLineModel> laborLines;
+  final List<FeeLineModel> feeLines;
   final String? mechanicId;
   final String? mechanicName;
   final String? motorcycleModel;
@@ -41,6 +43,7 @@ class SaleModel {
     required this.saleNumber,
     required this.items,
     this.laborLines = const [],
+    this.feeLines = const [],
     this.mechanicId,
     this.mechanicName,
     this.motorcycleModel,
@@ -81,11 +84,21 @@ class SaleModel {
       laborList.add(LaborLineModel.fromMap(laborMap, laborId));
     }
 
+    // Fee lines are stored INLINE too (see FeeLineModel doc). Legacy -> [].
+    final feeList = <FeeLineModel>[];
+    final feeData = map['feeLines'] as List<dynamic>? ?? [];
+    for (int i = 0; i < feeData.length; i++) {
+      final feeMap = feeData[i] as Map<String, dynamic>;
+      final feeId = feeMap['id'] as String? ?? 'fee-$i';
+      feeList.add(FeeLineModel.fromMap(feeMap, feeId));
+    }
+
     return SaleModel(
       id: documentId,
       saleNumber: map['saleNumber'] as String? ?? '',
       items: items ?? [],
       laborLines: laborList,
+      feeLines: feeList,
       mechanicId: map['mechanicId'] as String?,
       mechanicName: map['mechanicName'] as String?,
       motorcycleModel: map['motorcycleModel'] as String?,
@@ -126,6 +139,7 @@ class SaleModel {
       'saleNumber': saleNumber,
       'laborLines':
           laborLines.map((l) => l.toMap(includeId: true)).toList(),
+      'feeLines': feeLines.map((f) => f.toMap(includeId: true)).toList(),
       'mechanicId': mechanicId,
       'mechanicName': mechanicName,
       'motorcycleModel': motorcycleModel,
@@ -202,6 +216,7 @@ class SaleModel {
       saleNumber: saleNumber,
       items: items.map((item) => item.toEntity()).toList(),
       laborLines: laborLines.map((l) => l.toEntity()).toList(),
+      feeLines: feeLines.map((f) => f.toEntity()).toList(),
       mechanicId: mechanicId,
       mechanicName: mechanicName,
       motorcycleModel: motorcycleModel,
@@ -234,6 +249,8 @@ class SaleModel {
       laborLines: entity.laborLines
           .map((l) => LaborLineModel.fromEntity(l))
           .toList(),
+      feeLines:
+          entity.feeLines.map((f) => FeeLineModel.fromEntity(f)).toList(),
       mechanicId: entity.mechanicId,
       mechanicName: entity.mechanicName,
       motorcycleModel: entity.motorcycleModel,
@@ -278,6 +295,7 @@ class SaleModel {
     required String saleNumber,
     required List<SaleItemModel> items,
     List<LaborLineModel> laborLines = const [],
+    List<FeeLineModel> feeLines = const [],
     String? mechanicId,
     String? mechanicName,
     DiscountType discountType = DiscountType.amount,
@@ -295,6 +313,7 @@ class SaleModel {
       saleNumber: saleNumber,
       items: items,
       laborLines: laborLines,
+      feeLines: feeLines,
       mechanicId: mechanicId,
       mechanicName: mechanicName,
       discountType: discountType,
@@ -347,8 +366,12 @@ class SaleModel {
   /// Labor subtotal (sum of labor fees; never discounted)
   double get laborSubtotal => laborLines.fold(0.0, (s, l) => s + l.fee);
 
-  /// Grand total: net parts (after discount) + labor
-  double get grandTotal => (subtotal - totalDiscount) + laborSubtotal;
+  /// Fees total (sum of shop-fee amounts; never discounted)
+  double get feesTotal => feeLines.fold(0.0, (s, f) => s + f.amount);
+
+  /// Grand total: net parts (after discount) + labor + fees
+  double get grandTotal =>
+      (subtotal - totalDiscount) + laborSubtotal + feesTotal;
 
   // ==================== COPY WITH ====================
 
@@ -357,6 +380,7 @@ class SaleModel {
     String? saleNumber,
     List<SaleItemModel>? items,
     List<LaborLineModel>? laborLines,
+    List<FeeLineModel>? feeLines,
     String? mechanicId,
     String? mechanicName,
     String? motorcycleModel,
@@ -383,6 +407,7 @@ class SaleModel {
       saleNumber: saleNumber ?? this.saleNumber,
       items: items ?? this.items,
       laborLines: laborLines ?? this.laborLines,
+      feeLines: feeLines ?? this.feeLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
       mechanicName:
           clearMechanic ? null : (mechanicName ?? this.mechanicName),

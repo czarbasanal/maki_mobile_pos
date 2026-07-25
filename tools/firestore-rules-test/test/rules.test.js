@@ -863,6 +863,7 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
     "units",
     "void_reasons",
     "mechanics",
+    "shop_fees",
   ];
 
   const entry = { name: "Test Entry", isActive: true };

@@ -549,6 +549,78 @@ void main() {
       expect(sale.mechanicName, 'Maria');
       expect(sale.grandTotal, 300); // parts 100 + labor 200
     });
+
+    test('loadFromDraft copies feeLines into the cart', () {
+      final draft = DraftEntity(
+        id: 'draft-1',
+        name: 'Service job',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Test Product',
+            unitPrice: 100,
+            unitCost: 60,
+            quantity: 1,
+          ),
+        ],
+        feeLines: const [
+          FeeLineEntity(id: 'fee-1', name: 'Electric charge', amount: 20),
+        ],
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John',
+        createdAt: DateTime.now(),
+      );
+
+      cartNotifier.loadFromDraft(draft);
+
+      final state = container.read(cartProvider);
+      expect(state.feeLines.length, 1);
+      expect(state.feeLines.first.name, 'Electric charge');
+      expect(state.feeLines.first.amount, 20);
+    });
+
+    test('toDraft carries feeLines', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 20,
+      ));
+
+      final draft = cartNotifier.toDraft(
+        name: 'My Draft',
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+      );
+
+      expect(draft.feeLines.length, 1);
+      expect(draft.feeLines.first.name, 'Electric charge');
+      expect(draft.feeLines.first.amount, 20);
+      expect(draft.grandTotal, 120); // parts 100 + fees 20
+    });
+
+    test('toSale carries feeLines', () {
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 20,
+      ));
+      cartNotifier.setAmountReceived(120);
+
+      final sale = cartNotifier.toSale(
+        saleNumber: 'SALE-001',
+        cashierId: 'cashier-1',
+        cashierName: 'John Doe',
+      );
+
+      expect(sale.feeLines.length, 1);
+      expect(sale.feeLines.first.amount, 20);
+      expect(sale.grandTotal, 120); // parts 100 + fees 20
+    });
   });
 
   group('Derived Providers', () {
@@ -615,6 +687,101 @@ void main() {
     test('setMotorcycleModel updates state', () {
       cartNotifier.setMotorcycleModel('Aerox');
       expect(container.read(cartProvider).motorcycleModel, 'Aerox');
+    });
+
+    test('feesTotal and grandTotal include fee lines', () {
+      // items 100 (no discount) + labor 50 + fees 30 => grandTotal 180
+      cartNotifier.addProduct(createTestProduct(price: 100));
+      cartNotifier.addLaborLine(description: 'Quick check', fee: 50);
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 30,
+      ));
+
+      final state = container.read(cartProvider);
+      expect(state.feesTotal, 30);
+      expect(state.grandTotal, 180);
+    });
+
+    test('canCheckout: fee-only true, labor-only false, empty false', () {
+      // Fee-only: no items, no labor, one fee line -> can check out (once
+      // the (default cash) payment covers the fee total).
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Air',
+        amount: 10,
+      ));
+      cartNotifier.setAmountReceived(10);
+      var state = container.read(cartProvider);
+      expect(state.canCheckout, true);
+
+      // Labor-only: remove the fee, add a labor line with a mechanic
+      // assigned (so laborValid holds) -> still cannot check out.
+      cartNotifier.removeFeeLine('fee-1');
+      cartNotifier.addLaborLine(description: 'Tune-up', fee: 100);
+      cartNotifier.setMechanic('mech-1', 'Juan');
+      state = container.read(cartProvider);
+      expect(state.laborValid, true);
+      expect(state.canCheckout, false);
+
+      // Empty: clear everything -> cannot check out.
+      cartNotifier.reset();
+      state = container.read(cartProvider);
+      expect(state.canCheckout, false);
+    });
+
+    test('canSaveAsDraft: fee-only cart can save as JO', () {
+      // No items, no labor, one fee line -> billable content exists, so
+      // saving as a Job Order is allowed even though the cart has no items.
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Air',
+        amount: 10,
+      ));
+
+      final state = container.read(cartProvider);
+      expect(state.isNotEmpty, false); // no items
+      expect(state.hasBillableContent, true); // but has a fee
+      expect(state.canSaveAsDraft, true);
+    });
+
+    test('addFeeLine, updateFeeLine, removeFeeLine mutate feeLines', () {
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 50,
+      ));
+      var state = container.read(cartProvider);
+      expect(state.feeLines.length, 1);
+      expect(state.feeLines.first.name, 'Electric charge');
+      expect(state.feeLines.first.amount, 50);
+
+      cartNotifier.updateFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Electric charge',
+        amount: 75,
+      ));
+      state = container.read(cartProvider);
+      expect(state.feeLines.first.amount, 75);
+
+      cartNotifier.removeFeeLine('fee-1');
+      state = container.read(cartProvider);
+      expect(state.feeLines, isEmpty);
+    });
+
+    test('clearCart resets feeLines', () {
+      cartNotifier.addProduct(createTestProduct());
+      cartNotifier.addFeeLine(const FeeLineEntity(
+        id: 'fee-1',
+        name: 'Air',
+        amount: 10,
+      ));
+      expect(container.read(cartProvider).feeLines, isNotEmpty);
+
+      cartNotifier.reset();
+
+      expect(container.read(cartProvider).feeLines, isEmpty);
     });
 
     test('toSale carries motorcycleModel and draftId from a resumed ticket', () {

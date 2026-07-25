@@ -36,6 +36,9 @@ void main() {
     expect(find.text('Motorcycle Models'), findsOneWidget);
     expect(find.text('User Management'), findsNothing);
     expect(find.text('Cost Code Settings'), findsNothing);
+
+    await tester.scrollUntilVisible(find.text('Shop Fees'), 200);
+    expect(find.text('Shop Fees'), findsOneWidget);
   });
 
   testWidgets('admin keeps admin tiles and also sees the list tiles',
@@ -48,5 +51,8 @@ void main() {
     expect(find.text('Manage Lists'), findsOneWidget);
     expect(find.text('Mechanics'), findsOneWidget);
     expect(find.text('Motorcycle Models'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Shop Fees'), 200);
+    expect(find.text('Shop Fees'), findsOneWidget);
   });
 }

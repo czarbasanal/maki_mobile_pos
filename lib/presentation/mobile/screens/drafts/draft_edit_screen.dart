@@ -16,6 +16,9 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_inpu
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/draft_dialogs.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/add_products_sheet.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/fee_line_row.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/fee_section.dart'
+    show showAddFeeLineDialog;
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
@@ -100,6 +103,19 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
 
   Future<void> _removeLabor(DraftEntity draft, String lineId) async {
     await _persist(draft.removeLaborLine(lineId));
+  }
+
+  Future<void> _addFee(
+    DraftEntity draft,
+    List<ShopFeeEntity> activeFees,
+  ) async {
+    final result = await showAddFeeLineDialog(context, activeFees: activeFees);
+    if (result == null) return;
+    await _persist(draft.addFeeLine(result));
+  }
+
+  Future<void> _removeFee(DraftEntity draft, String lineId) async {
+    await _persist(draft.removeFeeLine(lineId));
   }
 
   Future<void> _removeItem(DraftEntity draft, String itemId) =>
@@ -328,6 +344,10 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                   // Labor & Service (mechanic + labor lines) — editable
                   // anytime.
                   _buildLaborSection(draft),
+
+                  // Shop Fees — editable anytime, same reuse route as Labor
+                  // (shared FeeLineRow + add-fee dialog from Task 5a).
+                  _buildFeeSection(draft),
                 ],
               ),
             ),
@@ -464,6 +484,76 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     );
   }
 
+  /// Shop Fees — mirrors [_buildLaborSection]'s shell (bordered container,
+  /// header row + Add action, bounded scrollable rows) but with the shared
+  /// [FeeLineRow] + [showAddFeeLineDialog] from Task 5a's POS section
+  /// instead of building its own picker.
+  Widget _buildFeeSection(DraftEntity draft) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    // Watched so the picker's data is warmed up before "Add Fee" is tapped,
+    // same reasoning as the POS FeeSection.
+    final activeFees =
+        ref.watch(activeShopFeesProvider).valueOrNull ?? const [];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: hairline)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(LucideIcons.receipt, size: 16, color: muted),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Shop Fees',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: muted,
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => _addFee(draft, activeFees),
+                icon: const Icon(LucideIcons.plus, size: 16),
+                label: const Text('Add Fee'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+          // Bounded + scrollable — same treatment as the labor section.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 260),
+            child: ListView(
+              shrinkWrap: true,
+              children: draft.feeLines
+                  .map(
+                    (line) => FeeLineRow(
+                      line: line,
+                      onAmountEdited: (amount) => _persist(
+                        draft.updateFeeLine(line.copyWith(amount: amount)),
+                      ),
+                      onRemove: () => _removeFee(draft, line.id),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummarySection(DraftEntity draft) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -496,6 +586,13 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                     ? 'Labor (1 service)'
                     : 'Labor (${draft.laborLines.length} services)',
                 value: draft.laborSubtotal.toCurrency(),
+              ),
+            ],
+            if (draft.feeLines.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              SummaryRow(
+                label: 'Shop Fees (${draft.feeLines.length})',
+                value: draft.feesTotal.toCurrency(),
               ),
             ],
             // Total row: "Total" 15/700 + "(n items)" 12.5/500 muted inline;
@@ -572,9 +669,11 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       return;
     }
 
-    // Guard: don't clobber an unfinished walk-in sale sitting in the register.
+    // Guard: don't clobber an unfinished walk-in sale sitting in the
+    // register. hasBillableContent (not isNotEmpty) so a fee-only register
+    // cart is not silently clobbered without warning.
     final cart = ref.read(cartProvider);
-    if (cart.isNotEmpty) {
+    if (cart.hasBillableContent) {
       final proceed = await showAppConfirmDialog(
         context,
         title: 'Register in use',

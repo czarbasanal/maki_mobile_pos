@@ -16,6 +16,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.d
 import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/save_job_order_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/job_order_badge_button.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/fee_section.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
@@ -65,7 +66,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               // Drafts button with badge
               JobOrderBadgeButton(onPressed: _navigateToDrafts),
               // Clear cart button
-              if (cart.isNotEmpty)
+              if (cart.hasBillableContent)
                 IconButton(
                   icon: const Icon(LucideIcons.trash2),
                   tooltip: 'Clear Cart',
@@ -233,7 +234,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       children: [
         // Scrollable area: cart items, summary, payment
         Expanded(
-          child: cart.isEmpty
+          child: !cart.hasBillableContent
               ? _buildEmptyCart()
               : SingleChildScrollView(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -268,6 +269,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                         ),
                         child: AppCard(child: _buildLaborSection(cart)),
                       ),
+                      const SizedBox(height: AppSpacing.sm),
+                      // Shop Fees — collapsible; empty for normal sales.
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: AppCard(child: FeeSection(cart: cart)),
+                      ),
                       const SizedBox(height: AppSpacing.sm + 2),
                       // Cart Summary — payment is now collected on the
                       // dedicated Checkout screen, not inline.
@@ -283,7 +292,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         ),
 
         // Fixed action buttons at bottom
-        if (cart.isNotEmpty) _buildActionButtons(cart),
+        if (cart.hasBillableContent) _buildActionButtons(cart),
       ],
     );
   }
@@ -446,16 +455,21 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   /// Action buttons side by side — Save Draft (secondary, left) and
   /// Checkout (primary, right) share the same 50px height and lg corner
-  /// radius. Both are gated on a non-empty, not-processing cart.
+  /// radius.
   Widget _buildActionButtons(CartState cart) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.lg),
     );
-    // canSaveAsDraft = has items, not processing — same gate we want for
-    // "proceed to checkout" since payment entry happens on the next screen.
-    final canProceed = cart.canSaveAsDraft;
+    // Save Job Order: fee-only carts can be saved as JOs and billed out —
+    // gate on billable content (items or fees); labor alone is still
+    // blocked (canSaveAsDraft).
+    final canSaveDraft = cart.canSaveAsDraft;
+    // Checkout: fee-only carts (no items, one or more fee lines) must be
+    // able to proceed too. canProceedToCheckout doesn't require
+    // isPaymentValid — payment amounts are entered on the next screen.
+    final canGoCheckout = cart.canProceedToCheckout;
     return Container(
       decoration: BoxDecoration(
         color: theme.appBarTheme.backgroundColor,
@@ -471,7 +485,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 child: SizedBox(
                   height: 50,
                   child: OutlinedButton.icon(
-                    onPressed: canProceed ? _showSaveDraftDialog : null,
+                    onPressed: canSaveDraft ? _showSaveDraftDialog : null,
                     icon: const Icon(LucideIcons.clipboardPlus, size: 18),
                     // Scale down instead of wrapping — the label was cutting
                     // off to two lines on narrow screens.
@@ -488,7 +502,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    boxShadow: canProceed
+                    boxShadow: canGoCheckout
                         ? (isDark
                             ? AppShadows.primaryButtonGold
                             : AppShadows.primaryButton)
@@ -497,7 +511,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                   child: SizedBox(
                     height: 50,
                     child: FilledButton.icon(
-                      onPressed: canProceed ? _proceedToCheckout : null,
+                      onPressed: canGoCheckout ? _proceedToCheckout : null,
                       icon: const Icon(LucideIcons.arrowRight, size: 18),
                       label: const Text('Checkout'),
                       style: FilledButton.styleFrom(shape: shape),

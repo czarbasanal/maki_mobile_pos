@@ -64,6 +64,8 @@ void main() {
       expect(model.plateNoDpAmounts, isEmpty);
       expect(model.plateNoDeliveryAmounts, isEmpty);
       expect(model.notes, isNull);
+      // Legacy docs saved before shop fees existed read back as 0.
+      expect(model.feesRevenue, 0);
     });
   });
 }

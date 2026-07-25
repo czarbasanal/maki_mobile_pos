@@ -259,6 +259,21 @@ class SalesSummaryCard extends ConsumerWidget {
                 ],
               ),
             ),
+            if (summary.feesRevenue > 0) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'Shop Fees',
+                      value: summary.feesRevenue.toCurrency(),
+                      icon: LucideIcons.receipt,
+                      subtitle: 'Management · no COGS',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ] else ...[
             // Cashier / staff: cost & profit gated.
             Padding(
