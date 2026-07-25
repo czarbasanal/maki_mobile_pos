@@ -5,10 +5,14 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
+import 'package:maki_mobile_pos/core/constants/role_permissions.dart';
+import 'package:maki_mobile_pos/core/enums/user_role.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
+import 'package:maki_mobile_pos/services/expense_receipt_storage_service.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/closing_expense_list.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
@@ -193,6 +197,10 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
         onRetry: () => ref.invalidate(dailyClosingDataProvider(target)),
       ),
       data: (data) {
+        final role = ref.watch(currentUserProvider).valueOrNull?.role ??
+            UserRole.cashier;
+        final canDelete =
+            RolePermissions.hasPermission(role, Permission.deleteExpense);
         final draft = data.draftExcluding(_excludedIds);
         final expected = draft.expectedCashFor(
           _float,
@@ -290,6 +298,10 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                               ? _excludedIds.remove(id)
                               : _excludedIds.add(id);
                         }),
+                        onDelete: canDelete
+                            ? (id) => _deleteExpense(
+                                data.expenses.firstWhere((e) => e.id == id))
+                            : null,
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -498,6 +510,44 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
     if (text.isEmpty) return;
     apply([...current, double.parse(text)]);
     controller.clear();
+  }
+
+  /// Permanently deletes [expense] (menu action on an expense row), mirroring
+  /// the Expenses screen flow: confirm → delete → best-effort receipt cleanup.
+  Future<void> _deleteExpense(ExpenseEntity expense) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete expense?',
+      message: '"${expense.description}" will be permanently deleted.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      icon: LucideIcons.trash2,
+    );
+    if (!confirmed || !mounted) return;
+
+    final ok = await ref
+        .read(expenseOperationsProvider.notifier)
+        .deleteExpense(expense.id);
+    if (!ok) {
+      if (mounted) {
+        final err = ref.read(expenseOperationsProvider).error;
+        context.showErrorSnackBar('Failed to delete: ${err ?? 'unknown'}');
+      }
+      return;
+    }
+    if (expense.receiptImageUrl != null) {
+      // Best-effort receipt cleanup — orphans are harmless.
+      try {
+        await ref
+            .read(expenseReceiptStorageServiceProvider)
+            .delete(expenseId: expense.id);
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    setState(() => _excludedIds.remove(expense.id));
+    ref.invalidate(expensesByDateRangeProvider);
+    ref.invalidate(dailyClosingDataProvider);
+    context.showSuccessSnackBar('Expense deleted');
   }
 
   Future<void> _submit() async {
