@@ -30,6 +30,7 @@ void main() {
         overrides: [
           draftByIdProvider('draft-1').overrideWith((ref) async => draft),
           activeMechanicsProvider.overrideWith((ref) => Stream.value(const [])),
+          unsettledBusinessDayProvider.overrideWith((ref) async => null),
         ],
         child: const MaterialApp(home: DraftEditScreen(draftId: 'draft-1')),
       );

@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/dashboard/dashboard_screen.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/quick_actions.dart';
 
@@ -48,6 +49,7 @@ void main() {
               .overrideWith((ref) => Stream.value(const <SaleEntity>[])),
           todaysSalesSummaryProvider.overrideWith((ref) async => emptySummary),
           monthToDateSummaryProvider.overrideWith((ref) async => emptySummary),
+          unsettledBusinessDayProvider.overrideWith((ref) async => null),
           ...extra,
         ],
         child: const MaterialApp(home: DashboardScreen()),

@@ -22,4 +22,5 @@ export 'rank_row.dart';
 export 'segmented_pill_filter.dart';
 export 'state_views.dart';
 export 'summary_row.dart';
+export 'unsettled_drawer_banner.dart';
 export 'user_avatar.dart';

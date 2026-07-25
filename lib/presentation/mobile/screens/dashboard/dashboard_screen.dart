@@ -185,9 +185,16 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
         ],
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _handleRefresh,
-          child: _buildScrollableSections(),
+        child: Column(
+          children: [
+            const UnsettledDrawerBanner(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _handleRefresh,
+                child: _buildScrollableSections(),
+              ),
+            ),
+          ],
         ),
       ),
     );

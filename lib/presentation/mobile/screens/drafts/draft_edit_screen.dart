@@ -648,8 +648,13 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed:
-                    draft.hasBillableContent ? () => _billOut(draft) : null,
+                onPressed: draft.hasBillableContent &&
+                        ref
+                                .watch(unsettledBusinessDayProvider)
+                                .valueOrNull ==
+                            null
+                    ? () => _billOut(draft)
+                    : null,
                 icon: const Icon(LucideIcons.shoppingCart),
                 label: const Text('Bill out'),
               ),
@@ -667,6 +672,13 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   Future<void> _billOut(DraftEntity draft) async {
     if (!jobOrderReadyToBillOut(draft)) {
       context.showWarningSnackBar('Set the motorcycle model to bill out');
+      return;
+    }
+
+    if (ref.read(unsettledBusinessDayProvider).valueOrNull != null) {
+      context.showWarningSnackBar(
+        'Close the previous day before billing out',
+      );
       return;
     }
 

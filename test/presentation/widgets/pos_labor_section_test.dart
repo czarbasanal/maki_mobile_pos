@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/cart_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/pos/pos_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
@@ -53,6 +54,7 @@ void main() {
       activeMechanicsProvider.overrideWith(
         (ref) => Stream.value(<MechanicEntity>[]),
       ),
+      unsettledBusinessDayProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);
     container.read(cartProvider.notifier).addProduct(_product());
@@ -93,6 +95,7 @@ void main() {
           ),
         ]),
       ),
+      unsettledBusinessDayProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);
     final cart = container.read(cartProvider.notifier);

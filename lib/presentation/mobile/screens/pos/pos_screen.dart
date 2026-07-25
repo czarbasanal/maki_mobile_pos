@@ -77,14 +77,23 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         ),
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Use side-by-side layout for wider screens
-            if (constraints.maxWidth >= 800) {
-              return _buildWideLayout(cart, theme);
-            }
-            return _buildNarrowLayout(cart, theme);
-          },
+        child: Column(
+          children: [
+            // Blocks new sales while an earlier business day sits open —
+            // above the cart area, same as every other action affordance.
+            const UnsettledDrawerBanner(),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Use side-by-side layout for wider screens
+                  if (constraints.maxWidth >= 800) {
+                    return _buildWideLayout(cart, theme);
+                  }
+                  return _buildNarrowLayout(cart, theme);
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -467,8 +476,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final canSaveDraft = cart.canSaveAsDraft;
     // Checkout: same billable-content gate must be able to proceed too.
     // canProceedToCheckout doesn't require isPaymentValid — payment amounts
-    // are entered on the next screen.
-    final canGoCheckout = cart.canProceedToCheckout;
+    // are entered on the next screen. Also blocked while an earlier
+    // business day is unsettled (CartState stays a pure value object, so
+    // this reads the provider here at the screen layer instead).
+    final unsettled = ref.watch(unsettledBusinessDayProvider).valueOrNull;
+    final canGoCheckout = cart.canProceedToCheckout && unsettled == null;
     return Container(
       decoration: BoxDecoration(
         color: theme.appBarTheme.backgroundColor,
