@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/void_request_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/void_requests_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/void_request_provider.dart';
 
@@ -228,5 +229,36 @@ void main() {
 
     expect(find.textContaining('SALE-'), findsOneWidget);
     expect(find.text('SALE-p1'), findsOneWidget);
+  });
+
+  testWidgets(
+      'custom date range handler normalizes end to end-of-day and sets preset',
+      (tester) async {
+    final now = DateTime.now();
+    final seed = [
+      _req('p1', createdAt: now.subtract(const Duration(minutes: 1))),
+    ];
+    await tester.pumpWidget(_harness(seed));
+    await tester.pumpAndSettle();
+
+    // Grab the DateRangePicker widget and invoke its callback.
+    final pickerWidget =
+        tester.widget<DateRangePicker>(find.byType(DateRangePicker));
+    pickerWidget.onCustomRangeSelected(
+        DateTime(2026, 7, 20), DateTime(2026, 7, 22));
+    await tester.pumpAndSettle();
+
+    // Access the provider container from the ProviderScope.
+    final container = ProviderScope.containerOf(
+        tester.element(find.byType(VoidRequestsScreen)));
+
+    // Assert the date range end is normalized to 23:59:59.999 and start is preserved.
+    final range = container.read(voidRequestDateRangeProvider);
+    expect(range.start, DateTime(2026, 7, 20));
+    expect(range.end, DateTime(2026, 7, 22, 23, 59, 59, 999));
+
+    // Assert the preset is set to custom.
+    final preset = container.read(voidRequestDatePresetProvider);
+    expect(preset, DateRangePreset.custom);
   });
 }
