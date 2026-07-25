@@ -125,8 +125,10 @@ final receivingCountsProvider =
 final monthToDateReceivingTotalProvider =
     Provider<AsyncValue<double>>((ref) {
   final all = ref.watch(recentReceivingsProvider);
+  // Window follows the business-day clock so the card rolls over at midnight.
+  final today = ref.watch(businessDayProvider);
   return all.whenData(
-    (list) => sumTotalCost(monthToDateCompleted(list, DateTime.now())),
+    (list) => sumTotalCost(monthToDateCompleted(list, today)),
   );
 });
 
@@ -137,8 +139,9 @@ final monthToDateReceivingTotalProvider =
 final currentWeekReceivingsProvider =
     Provider<AsyncValue<List<ReceivingEntity>>>((ref) {
   final all = ref.watch(recentReceivingsProvider);
+  final today = ref.watch(businessDayProvider);
   return all.whenData(
-    (list) => receivingsInCurrentWeek(list, DateTime.now()),
+    (list) => receivingsInCurrentWeek(list, today),
   );
 });
 

@@ -48,8 +48,10 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
     final dailyOnly =
         user != null && RolePermissions.isDailyReportsOnly(user.role);
     if (dailyOnly) {
-      // Non-admin roles can only see today; force it regardless of prior state.
-      final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+      // Non-admin roles can only see today; force it regardless of prior
+      // state — via the clock so it follows a midnight rollover.
+      final r =
+          dateRangeForPreset(DateRangePreset.today, ref.watch(businessDayProvider));
       _startDate = r.start;
       _endDate = r.end;
       _selectedPreset = DateRangePreset.today;
