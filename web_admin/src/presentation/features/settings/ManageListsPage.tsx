@@ -109,14 +109,21 @@ export function ManageListsPage() {
           <ul className="divide-y divide-light-hairline">
             {categories.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm">
-                <span
-                  className={cn(
-                    'text-bodySmall',
-                    c.isActive ? 'text-light-text' : 'text-light-text-hint line-through',
-                  )}
-                >
-                  {c.name}
-                  {c.isActive ? '' : ' (inactive)'}
+                <span className="flex items-center gap-tk-sm">
+                  <span
+                    className={cn(
+                      'text-bodySmall',
+                      c.isActive ? 'text-light-text' : 'text-light-text-hint line-through',
+                    )}
+                  >
+                    {c.name}
+                    {c.isActive ? '' : ' (inactive)'}
+                  </span>
+                  {c.code ? (
+                    <span className="rounded bg-light-subtle px-tk-xs py-[1px] font-mono text-labelSmall text-light-text-secondary">
+                      {c.code}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="flex items-center gap-tk-xs">
                   <button

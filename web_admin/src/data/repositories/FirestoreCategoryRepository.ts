@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   onSnapshot,
+  runTransaction,
   serverTimestamp,
   updateDoc,
   type Firestore,
@@ -15,9 +16,9 @@ import type {
 } from '@/domain/repositories/CategoryRepository';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
 import type { Category } from '@/domain/entities';
-import type { CategoryKind } from '@/domain/categories/categoryKind';
-import { collectionForKind } from '@/domain/categories/categoryKind';
+import { CategoryKind, collectionForKind } from '@/domain/categories/categoryKind';
 import { categoryConverter } from '@/data/converters/categoryConverter';
+import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 
 // Categories are small collections, so we read the whole list and filter/sort
 // client-side — no composite index required.
@@ -57,14 +58,47 @@ export class FirestoreCategoryRepository implements CategoryRepository {
   }
 
   async create(kind: CategoryKind, name: string, actorId: string): Promise<Category> {
-    const ref = await addDoc(collection(this.db, collectionForKind(kind)), {
+    const data = {
       name,
       isActive: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       createdBy: actorId,
       updatedBy: actorId,
+    };
+
+    if (kind !== CategoryKind.product) {
+      const ref = await addDoc(collection(this.db, collectionForKind(kind)), data);
+      const snap = await getDoc(ref.withConverter(categoryConverter));
+      const created = snap.data();
+      if (!created) throw new Error('Failed to load the created category');
+      return created;
+    }
+
+    // Product categories additionally claim the next sequential Code128
+    // category code, atomically with the category write. Mirrors
+    // CategoryRepositoryImpl.createCategory(assignCode: true) on mobile —
+    // doc shapes must stay byte-identical (shared registry/counter docs).
+    const ref = doc(collection(this.db, collectionForKind(kind))); // pre-allocate id
+    const counterRef = doc(this.db, FirestoreCollections.categoryCodes, '_counter');
+    let assignedCode = '';
+
+    await runTransaction(this.db, async (tx) => {
+      const counterSnap = await tx.get(counterRef);
+      const next = (counterSnap.data()?.next as number | undefined) ?? 1;
+      assignedCode = next.toString().padStart(4, '0');
+      const registryRef = doc(this.db, FirestoreCollections.categoryCodes, assignedCode);
+
+      tx.set(ref, { ...data, code: assignedCode });
+      tx.set(registryRef, {
+        categoryId: ref.id,
+        nameSnapshot: name,
+        assignedAt: serverTimestamp(),
+        nextSequence: 1,
+      });
+      tx.set(counterRef, { next: next + 1 });
     });
+
     const snap = await getDoc(ref.withConverter(categoryConverter));
     const created = snap.data();
     if (!created) throw new Error('Failed to load the created category');

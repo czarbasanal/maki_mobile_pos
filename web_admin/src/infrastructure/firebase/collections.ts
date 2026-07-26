@@ -22,6 +22,12 @@ export const FirestoreCollections = {
   productSkus: 'product_skus',
   // Barcode-uniqueness claim collection. Keyed by normalizeBarcode(code).
   productBarcodes: 'product_barcodes',
+  // Code128 category-code registry. Non-numeric doc `_counter` {next: int}
+  // plus one registry doc per assigned code
+  // {categoryId, nameSnapshot, assignedAt, nextSequence}. Assigned only for
+  // product categories. Mirrors
+  // lib/core/constants/firestore_collections.dart.
+  categoryCodes: 'category_codes',
   // Drawer-state collection. Single doc (id 'state') tracking the
   // business-day rollover: lastSaleDay/lastClosedDay (yyyymmdd ints, see
   // core/utils/businessDay.ts), merge-written by sale creation / day
