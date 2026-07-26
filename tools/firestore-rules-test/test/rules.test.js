@@ -1158,6 +1158,130 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
 });
 
 // ===================================================================
+// /category_codes
+// ===================================================================
+describe("/category_codes", () => {
+  const registryDoc = {
+    categoryId: "cat-1",
+    nameSnapshot: "Brake Pads",
+    assignedAt: new Date(),
+    nextSequence: 1,
+  };
+  const counterDoc = { next: 2 };
+
+  async function seed(id, data) {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("category_codes").doc(id).set(data)
+    );
+  }
+
+  it("staff can create a registry doc", async () => {
+    await assertSucceeds(
+      as("staff").collection("category_codes").doc("BRA").set(registryDoc)
+    );
+  });
+
+  it("staff can create the _counter doc", async () => {
+    await assertSucceeds(
+      as("staff").collection("category_codes").doc("_counter").set(counterDoc)
+    );
+  });
+
+  it("cashier cannot create a registry doc", async () => {
+    await assertFails(
+      as("cashier").collection("category_codes").doc("BRA").set(registryDoc)
+    );
+  });
+
+  it("cashier cannot create the _counter doc", async () => {
+    await assertFails(
+      as("cashier").collection("category_codes").doc("_counter").set(counterDoc)
+    );
+  });
+
+  it("staff can update ONLY nextSequence on a registry doc", async () => {
+    await seed("BRA", registryDoc);
+    await assertSucceeds(
+      as("staff")
+        .collection("category_codes")
+        .doc("BRA")
+        .update({ nextSequence: 2 })
+    );
+  });
+
+  it("staff cannot update nameSnapshot on a registry doc", async () => {
+    await seed("BRA", registryDoc);
+    await assertFails(
+      as("staff")
+        .collection("category_codes")
+        .doc("BRA")
+        .update({ nameSnapshot: "Renamed" })
+    );
+  });
+
+  it("staff cannot update nameSnapshot+nextSequence together on a registry doc", async () => {
+    await seed("BRA", registryDoc);
+    await assertFails(
+      as("staff")
+        .collection("category_codes")
+        .doc("BRA")
+        .update({ nameSnapshot: "Renamed", nextSequence: 2 })
+    );
+  });
+
+  it("staff can update next on the _counter doc", async () => {
+    await seed("_counter", counterDoc);
+    await assertSucceeds(
+      as("staff").collection("category_codes").doc("_counter").update({ next: 3 })
+    );
+  });
+
+  it("staff cannot update any other key on the _counter doc", async () => {
+    await seed("_counter", counterDoc);
+    await assertFails(
+      as("staff")
+        .collection("category_codes")
+        .doc("_counter")
+        .update({ extra: "nope" })
+    );
+  });
+
+  it("cashier cannot update nextSequence on a registry doc", async () => {
+    await seed("BRA", registryDoc);
+    await assertFails(
+      as("cashier")
+        .collection("category_codes")
+        .doc("BRA")
+        .update({ nextSequence: 2 })
+    );
+  });
+
+  it("any active user (cashier) can read a registry doc", async () => {
+    await seed("BRA", registryDoc);
+    await assertSucceeds(as("cashier").collection("category_codes").doc("BRA").get());
+  });
+
+  it("any active user (cashier) can read the _counter doc", async () => {
+    await seed("_counter", counterDoc);
+    await assertSucceeds(
+      as("cashier").collection("category_codes").doc("_counter").get()
+    );
+  });
+
+  it("delete fails even for admin", async () => {
+    await seed("BRA", registryDoc);
+    await assertFails(as("admin").collection("category_codes").doc("BRA").delete());
+  });
+
+  it("delete fails for the _counter doc even for admin", async () => {
+    await seed("_counter", counterDoc);
+    await assertFails(
+      as("admin").collection("category_codes").doc("_counter").delete()
+    );
+  });
+});
+
+// ===================================================================
 // /drawer_state
 // ===================================================================
 describe("/drawer_state", () => {
