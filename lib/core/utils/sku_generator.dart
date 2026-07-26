@@ -243,7 +243,10 @@ abstract class SkuGenerator {
   /// Checks whether a SKU matches the auto-generated pattern.
   ///
   /// Returns true if [sku] is exactly 8 digits and starts with [categoryCode].
+  /// Validates that [categoryCode] is exactly 4 digits; returns false if not.
   static bool matchesAutoPattern(String sku, String categoryCode) {
+    // Validate categoryCode is exactly 4 digits at runtime (assert strips in release).
+    if (!RegExp(r'^\d{4}$').hasMatch(categoryCode)) return false;
     if (sku.length != 8) return false;
     if (!RegExp(r'^\d{8}$').hasMatch(sku)) return false;
     return sku.startsWith(categoryCode);

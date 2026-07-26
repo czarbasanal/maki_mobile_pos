@@ -180,6 +180,17 @@ void main() {
       expect(SkuGenerator.matchesAutoPattern('MLK-A3B7', '0007'), isFalse);
     });
 
+    test('matchesAutoPattern validates categoryCode is exactly 4 digits', () {
+      expect(SkuGenerator.matchesAutoPattern('00070153', ''), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('00070153', '007'), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('00070153', '00071'), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('00070153', 'ABCD'), isFalse);
+    });
+
+    test('displaySku passthrough for non-8-digit', () {
+      expect(SkuGenerator.displaySku('00070153-1'), '00070153-1');
+    });
+
     test('sequenceOf extracts last 4 digits as int', () {
       expect(SkuGenerator.sequenceOf('00070153'), 153);
       expect(SkuGenerator.sequenceOf('00010001'), 1);
