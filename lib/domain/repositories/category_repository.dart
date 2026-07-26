@@ -50,4 +50,13 @@ abstract class CategoryRepository {
     required String name,
     String? excludeCategoryId,
   });
+
+  /// Plain (non-claiming) read of a Code128 category-code registry doc's
+  /// `nextSequence` — lets a form preview the next candidate SKU without
+  /// reserving it. The actual claim happens later, inside the product-create
+  /// transaction (see `ProductRepository.createProduct`'s `autoSkuCategoryCode`).
+  ///
+  /// Throws [DatabaseException] (code `unknown-category-code`) if no registry
+  /// doc exists for [categoryCode].
+  Future<int> peekNextSequence(String categoryCode);
 }

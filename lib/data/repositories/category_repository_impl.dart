@@ -206,6 +206,26 @@ class CategoryRepositoryImpl implements CategoryRepository {
     }
   }
 
+  @override
+  Future<int> peekNextSequence(String categoryCode) async {
+    try {
+      final doc = await _categoryCodesRef.doc(categoryCode).get();
+      if (!doc.exists) {
+        throw DatabaseException(
+          message: 'Unknown category code "$categoryCode"',
+          code: 'unknown-category-code',
+        );
+      }
+      return (doc.data()?['nextSequence'] as int?) ?? 1;
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to peek next sequence: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
   // Sort client-side A→Z (case-insensitive). Avoids needing a Firestore
   // index and the dataset is small.
   List<CategoryEntity> _snapshotToSorted(

@@ -27,6 +27,7 @@ class CreateProductUseCase {
   Future<UseCaseResult<ProductEntity>> execute({
     required UserEntity actor,
     required ProductEntity product,
+    String? autoSkuCategoryCode,
   }) async {
     try {
       assertPermission(actor, Permission.addProduct);
@@ -35,6 +36,7 @@ class CreateProductUseCase {
         product: product,
         createdBy: actor.id,
         createdByName: actor.displayName,
+        autoSkuCategoryCode: autoSkuCategoryCode,
       );
 
       await _logger.log(

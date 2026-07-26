@@ -64,6 +64,7 @@ void main() {
           product: any(named: 'product'),
           createdBy: any(named: 'createdBy'),
           createdByName: any(named: 'createdByName'),
+          autoSkuCategoryCode: any(named: 'autoSkuCategoryCode'),
         )).thenAnswer((inv) async =>
         (inv.namedArguments[#product] as ProductEntity).copyWith(id: 'p-1'));
     when(() => logRepo.logActivity(any()))

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/category_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -102,6 +103,50 @@ void main() {
       final counterSnapshot =
           await firestore.collection('category_codes').get();
       expect(counterSnapshot.docs, isEmpty);
+    });
+  });
+
+  group('peekNextSequence', () {
+    test('reads the registry doc nextSequence without claiming it', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repo = CategoryRepositoryImpl(
+        collectionName: 'product_categories',
+        firestore: firestore,
+      );
+      await firestore.collection('category_codes').doc('0007').set({
+        'categoryId': 'cat-1',
+        'nameSnapshot': 'Brakes',
+        'assignedAt': FieldValue.serverTimestamp(),
+        'nextSequence': 1,
+      });
+
+      final next = await repo.peekNextSequence('0007');
+
+      expect(next, 1);
+      // A peek is read-only: the registry doc is untouched.
+      final registry =
+          await firestore.collection('category_codes').doc('0007').get();
+      expect(registry.data()!['nextSequence'], 1);
+    });
+
+    test('throws DatabaseException(unknown-category-code) when absent',
+        () async {
+      final firestore = FakeFirebaseFirestore();
+      final repo = CategoryRepositoryImpl(
+        collectionName: 'product_categories',
+        firestore: firestore,
+      );
+
+      await expectLater(
+        repo.peekNextSequence('9999'),
+        throwsA(
+          isA<DatabaseException>().having(
+            (e) => e.code,
+            'code',
+            'unknown-category-code',
+          ),
+        ),
+      );
     });
   });
 }
