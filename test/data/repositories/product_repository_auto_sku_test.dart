@@ -153,5 +153,39 @@ void main() {
           await firestore.collection('category_codes').doc('0007').get();
       expect(registry.data()!['nextSequence'], 9999);
     });
+
+    test(
+        'category-full at the boundary: registry nextSequence already 10000 '
+        'throws before composing a candidate and writes nothing', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repo = ProductRepositoryImpl(firestore: firestore);
+      await _seedRegistry(firestore, '0007', 10000);
+
+      await expectLater(
+        repo.createProduct(
+          product: _product(sku: '00070001'),
+          createdBy: 'user-1',
+          autoSkuCategoryCode: '0007',
+        ),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.code,
+            'code',
+            'category-full',
+          ),
+        ),
+      );
+
+      final products = await firestore.collection('products').get();
+      expect(products.docs, isEmpty);
+
+      final skus = await firestore.collection('product_skus').get();
+      expect(skus.docs, isEmpty);
+
+      final registry =
+          await firestore.collection('category_codes').doc('0007').get();
+      expect(registry.data()!['nextSequence'], 10000,
+          reason: 'registry must be untouched');
+    });
   });
 }

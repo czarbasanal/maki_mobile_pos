@@ -39,8 +39,29 @@ const categories = snapshot.docs.map(doc => ({
 
 console.log(`found ${categories.length} categories`);
 
+console.log('\n--- scanning category_codes registry ---');
+
+// Registry state matters for the numbering floor: an in-app category
+// hard-delete removes the category doc (and its `code`) but leaves the
+// `category_codes/{code}` registry doc and `_counter` in place, so a re-run
+// must never reassign a code a registry doc still holds, and must never
+// regress the counter.
+const registrySnapshot = await db.collection('category_codes').get();
+const registryCodes = [];
+let counterNext = null;
+for (const doc of registrySnapshot.docs) {
+  if (doc.id === '_counter') {
+    counterNext = doc.data().next ?? null;
+  } else {
+    registryCodes.push(doc.id);
+  }
+}
+console.log(
+  `found ${registryCodes.length} registry entries, counter next = ${counterNext ?? '(none)'}`,
+);
+
 // Plan assignments
-const assignments = planAssignments(categories);
+const assignments = planAssignments(categories, { registryCodes, counterNext });
 
 console.log(`\n--- assignments ---`);
 
@@ -74,13 +95,20 @@ for (const assignment of assignments) {
   });
 }
 
-// Calculate counter value
+// Calculate counter value. existingMax folds in the registry codes too (not
+// just category `code`s), mirroring planAssignments' floor — a stale/lagging
+// counter must never let this write the counter lower than it already is.
 const existingCodes = categories
   .filter(cat => cat.code)
   .map(cat => parseInt(cat.code, 10))
   .filter(code => !isNaN(code));
-const maxExisting = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
-counterValue = counterAfter(assignments, maxExisting);
+const maxCategoryCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
+const registryCodeNums = registryCodes
+  .map(code => parseInt(code, 10))
+  .filter(code => !isNaN(code));
+const maxRegistryCode = registryCodeNums.length > 0 ? Math.max(...registryCodeNums) : 0;
+const existingMax = Math.max(maxCategoryCode, maxRegistryCode);
+counterValue = counterAfter(assignments, existingMax, counterNext);
 
 console.log(`\n--- summary ---`);
 console.log(`assignments: ${assignments.length}`);

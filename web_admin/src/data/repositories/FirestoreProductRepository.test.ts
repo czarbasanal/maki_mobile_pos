@@ -224,4 +224,17 @@ describe('FirestoreProductRepository.create — auto-SKU (peek + claim-in-transa
     expect(state.writes.filter((w) => w.path.startsWith('products/'))).toHaveLength(0);
     expect(state.writes.find((w) => w.path === 'category_codes/0007')).toBeUndefined();
   });
+
+  it('category-full at the boundary: registry nextSequence already 10000 throws before composing a candidate and writes nothing', async () => {
+    const repo = new FirestoreProductRepository({} as unknown as Firestore);
+    seedRegistry('0007', 10000);
+
+    await expect(
+      repo.create(productInput('00070001'), 'user-1', '0007'),
+    ).rejects.toThrow('Category is full — split it into two categories.');
+
+    expect(state.writes.filter((w) => w.path.startsWith('products/'))).toHaveLength(0);
+    expect(state.writes.find((w) => w.path.startsWith('product_skus/'))).toBeUndefined();
+    expect(state.writes.find((w) => w.path === 'category_codes/0007')).toBeUndefined();
+  });
 });

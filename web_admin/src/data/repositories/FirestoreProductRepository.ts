@@ -278,14 +278,17 @@ export class FirestoreProductRepository implements ProductRepository {
           if (attempts > FirestoreProductRepository.autoSkuScanCap) {
             throw new Error('sku-scan-exhausted');
           }
+          // Must run before composeAutoSku (which throws its own generic
+          // range error): an out-of-range candidate needs the specific
+          // category-full error, not composeAutoSku's message.
+          if (candidate > 9999) {
+            throw new Error('Category is full — split it into two categories.');
+          }
           finalSku = composeAutoSku(autoSkuCategoryCode!, candidate);
           finalClaimRef = doc(this.db, FirestoreCollections.productSkus, normalizeSku(finalSku));
           const candidateClaim = await tx.get(finalClaimRef);
           if (!candidateClaim.exists()) break;
           candidate += 1;
-          if (candidate > 9999) {
-            throw new Error('Category is full — split it into two categories.');
-          }
         }
 
         const barcodeClaims = await Promise.all(barcodeClaimRefs.map((r) => tx.get(r)));

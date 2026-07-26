@@ -6,12 +6,25 @@ import { REORDER_SALES_CAP, useReorderSuggestions } from '@/presentation/hooks/u
 import { CappedNotice } from '@/presentation/components/common/CappedNotice';
 import type { ReorderParams, ReorderSuggestion } from '@/domain/reorder/computeReorderSuggestions';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
+import { displaySku } from '@/domain/products/sku';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { RoutePaths } from '@/presentation/router/routePaths';
 
 const WINDOWS = [7, 14, 30, 90];
+
+/** One reorder-CSV row. Exported for a focused pinning test on the leading-zero-safe SKU display. */
+export function reorderCsvRow(s: ReorderSuggestion, qty: number): (string | number)[] {
+  return [
+    s.supplierName ?? 'No supplier',
+    displaySku(s.product.sku),
+    s.product.name,
+    s.product.quantity,
+    s.velocityPerDay.toFixed(2),
+    qty,
+  ];
+}
 
 export function ReorderSuggestionsPage() {
   // Day-stable clock: same timestamp all day, advances on the first render
@@ -49,14 +62,9 @@ export function ReorderSuggestionsPage() {
   }, [suggestions]);
 
   function exportCsv() {
-    const rows = suggestions.map((s) => [
-      s.supplierName ?? 'No supplier',
-      s.product.sku,
-      s.product.name,
-      s.product.quantity,
-      s.velocityPerDay.toFixed(2),
-      finalQty(s.product.id, s.suggestedQty),
-    ]);
+    const rows = suggestions.map((s) =>
+      reorderCsvRow(s, finalQty(s.product.id, s.suggestedQty)),
+    );
     const csv = toCsv(
       ['Supplier', 'SKU', 'Name', 'Current stock', 'Velocity/day', 'Order qty'],
       rows,

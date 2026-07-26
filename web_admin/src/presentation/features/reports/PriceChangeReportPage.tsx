@@ -4,15 +4,35 @@ import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
 import { usePriceChangeReport } from '@/presentation/hooks/usePriceChangeReport';
+import type { PriceChangeRow } from '@/domain/products/priceChangeReport';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { formatMoney } from '@/core/utils/money';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
+import { displaySku } from '@/domain/products/sku';
 import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 
 const csvSigned = (v: number) => (v >= 0 ? '+' : '') + v.toFixed(2);
 const stamp = (d: Date) => d.toISOString().slice(0, 10);
+
+/** One price-change-CSV row. Exported for a focused pinning test on the leading-zero-safe SKU display. */
+export function priceChangeCsvRow(
+  r: PriceChangeRow,
+  product: { name: string; sku: string } | undefined,
+): (string | number)[] {
+  return [
+    r.entry.changedAt.toISOString(),
+    product?.name ?? r.entry.productId,
+    displaySku(product?.sku ?? ''),
+    r.entry.price.toFixed(2),
+    r.hasPrior ? csvSigned(r.priceDelta) : '',
+    r.entry.cost.toFixed(2),
+    r.hasPrior ? csvSigned(r.costDelta) : '',
+    r.entry.reason ?? '',
+    r.entry.changedBy,
+  ];
+}
 
 export function PriceChangeReportPage() {
   const [range, setRange] = useState<DateRange>(() => resolvePreset('thisMonth'));
@@ -34,20 +54,7 @@ export function PriceChangeReportPage() {
       'Date', 'Product', 'SKU', 'New Price', 'Price Delta', 'New Cost',
       'Cost Delta', 'Reason', 'Changed By',
     ];
-    const body = rows.map((r) => {
-      const p = productById.get(r.entry.productId);
-      return [
-        r.entry.changedAt.toISOString(),
-        p?.name ?? r.entry.productId,
-        p?.sku ?? '',
-        r.entry.price.toFixed(2),
-        r.hasPrior ? csvSigned(r.priceDelta) : '',
-        r.entry.cost.toFixed(2),
-        r.hasPrior ? csvSigned(r.costDelta) : '',
-        r.entry.reason ?? '',
-        r.entry.changedBy,
-      ];
-    });
+    const body = rows.map((r) => priceChangeCsvRow(r, productById.get(r.entry.productId)));
     downloadCsv(
       `price-changes-${stamp(range.start)}-${stamp(range.end)}.csv`,
       toCsv(headers, body),

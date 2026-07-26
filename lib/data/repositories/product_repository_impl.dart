@@ -126,6 +126,17 @@ class ProductRepositoryImpl implements ProductRepository {
                 code: 'sku-scan-exhausted',
               );
             }
+            // Must run before composeAutoSku: its `sequence <= 9999` assert is
+            // stripped in release builds, so an out-of-range candidate would
+            // otherwise silently mint a malformed (>8-digit) SKU instead of
+            // failing loudly.
+            if (candidate > 9999) {
+              throw ValidationException(
+                code: 'category-full',
+                message:
+                    'Category is full — split it into two categories.',
+              );
+            }
             finalSku = SkuGenerator.composeAutoSku(
               autoSkuCategoryCode,
               candidate,
@@ -134,13 +145,6 @@ class ProductRepositoryImpl implements ProductRepository {
             final candidateClaim = await tx.get(claimRef);
             if (!candidateClaim.exists) break;
             candidate++;
-            if (candidate > 9999) {
-              throw ValidationException(
-                code: 'category-full',
-                message:
-                    'Category is full — split it into two categories.',
-              );
-            }
           }
 
           final barcodeClaims = [

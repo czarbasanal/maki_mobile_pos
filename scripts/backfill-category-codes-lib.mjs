@@ -1,11 +1,23 @@
 /**
  * Plans code assignments for categories that don't have one.
- * Assigns codes in 4-digit format (0001, 0002, etc.) starting from max existing code + 1.
+ * Assigns codes in 4-digit format (0001, 0002, etc.), starting from the
+ * highest known-used code + 1 — where "known-used" is the max of: existing
+ * category `code`s, existing `category_codes` registry doc ids, and
+ * (counterNext ?? 1) - 1. The registry state matters because an in-app
+ * category hard-delete removes the category doc (and its `code`) but NOT the
+ * `category_codes/{code}` registry doc or the `_counter`, which stays live so
+ * runtime category creation keeps working. Flooring on category codes alone
+ * would let a re-run reassign a deleted category's code, overwriting its
+ * still-live registry doc and regressing `_counter` — which then bricks
+ * runtime category creation (rules deny tx.set on an existing registry doc).
  *
  * @param {Array<{id, name, createdAt, code?}>} categories - All categories from product_categories
+ * @param {{registryCodes?: string[], counterNext?: number|null}} [opts]
+ *   - registryCodes: every `category_codes` doc id EXCLUDING `_counter`
+ *   - counterNext: the current `_counter.next` value (or null if no counter doc yet)
  * @returns {Array<{id, code, name}>} - Assignments for uncoded categories, sorted by createdAt then id
  */
-export function planAssignments(categories) {
+export function planAssignments(categories, { registryCodes = [], counterNext = null } = {}) {
   // Filter to categories without a code
   const uncoded = categories.filter(cat => !cat.code);
 
@@ -13,13 +25,21 @@ export function planAssignments(categories) {
     return [];
   }
 
-  // Find the max existing code
+  // Find the max existing code across every source of "already used".
   const existingCodes = categories
     .filter(cat => cat.code)
     .map(cat => parseInt(cat.code, 10))
     .filter(code => !isNaN(code));
+  const maxCategoryCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
 
-  const maxExisting = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
+  const registryCodeNums = registryCodes
+    .map(code => parseInt(code, 10))
+    .filter(code => !isNaN(code));
+  const maxRegistryCode = registryCodeNums.length > 0 ? Math.max(...registryCodeNums) : 0;
+
+  const counterFloor = counterNext != null ? counterNext - 1 : 0;
+
+  const floor = Math.max(maxCategoryCode, maxRegistryCode, counterFloor);
 
   // Sort by createdAt (ascending), then by id
   uncoded.sort((a, b) => {
@@ -31,16 +51,19 @@ export function planAssignments(categories) {
     return a.id.localeCompare(b.id);
   });
 
-  // Assign codes starting from maxExisting + 1
-  const assignments = uncoded.map((cat, index) => {
-    const codeNum = maxExisting + 1 + index;
-    const code = String(codeNum).padStart(4, '0');
-    return {
-      id: cat.id,
-      code,
-      name: cat.name,
-    };
-  });
+  // Assign codes starting from floor + 1, skipping any code a registry doc
+  // already claims (defensive: covers a stale/lagging counter too).
+  const registryCodeSet = new Set(registryCodes);
+  const assignments = [];
+  let next = floor + 1;
+  for (const cat of uncoded) {
+    while (registryCodeSet.has(String(next).padStart(4, '0'))) {
+      next += 1;
+    }
+    const code = String(next).padStart(4, '0');
+    assignments.push({ id: cat.id, code, name: cat.name });
+    next += 1;
+  }
 
   return assignments;
 }
@@ -50,17 +73,20 @@ export function planAssignments(categories) {
  *
  * @param {Array<{id, code, name}>} assignments - Assignments from planAssignments
  * @param {number} existingMax - The highest code number that already exists (0 if none)
- * @returns {number} - The next counter value to use
+ * @param {number|null} [counterNext] - The current `_counter.next` value (or null if no counter doc yet)
+ * @returns {number} - The next counter value to use — never lower than counterNext
  */
-export function counterAfter(assignments, existingMax) {
+export function counterAfter(assignments, existingMax, counterNext = null) {
+  const counterUsedFloor = counterNext != null ? counterNext - 1 : 0;
+  const floor = Math.max(existingMax, counterUsedFloor);
+
   if (assignments.length === 0) {
-    return existingMax + 1;
+    return floor + 1;
   }
 
   // Get the last assigned code (they're in order)
   const lastCode = assignments[assignments.length - 1].code;
   const lastCodeNum = parseInt(lastCode, 10);
 
-  // Counter should be the max of the last assigned code and existing max, plus 1
-  return Math.max(lastCodeNum, existingMax) + 1;
+  return Math.max(lastCodeNum, floor) + 1;
 }
