@@ -31,5 +31,79 @@ void main() {
       ));
       expect(find.byIcon(LucideIcons.trash2), findsNothing);
     });
+
+    testWidgets('badge renders with RobotoMono font when provided',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SettingsCrudRow(
+            name: 'Parts',
+            isActive: true,
+            onEdit: () {},
+            badge: '0007',
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Find text with RobotoMono fontFamily
+      final textFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.data == '0007' &&
+            (widget.style?.fontFamily ?? '').contains('RobotoMono'),
+      );
+      expect(textFinder, findsOneWidget);
+    });
+
+    testWidgets('no badge renders when badge is null', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SettingsCrudRow(
+            name: 'Parts',
+            isActive: true,
+            onEdit: () {},
+            badge: null,
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Ensure no '0007' text exists
+      expect(find.text('0007'), findsNothing);
+    });
+
+    testWidgets('badge strikethrough is preserved on inactive row',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SettingsCrudRow(
+            name: 'Parts',
+            isActive: false,
+            onEdit: () {},
+            badge: '0007',
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Verify badge still renders
+      final badgeFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.data == '0007' &&
+            (widget.style?.fontFamily ?? '').contains('RobotoMono'),
+      );
+      expect(badgeFinder, findsOneWidget);
+
+      // Verify name is struck through
+      final nameFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.data == 'Parts' &&
+            widget.style?.decoration == TextDecoration.lineThrough,
+      );
+      expect(nameFinder, findsOneWidget);
+    });
   });
 }
