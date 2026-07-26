@@ -72,6 +72,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   bool _autoGenerateSku = true;
   ProductEntity? _existingProduct;
 
+  // Cached snapshot of active product categories, refreshed every build from
+  // [activeCategoriesProvider]. The free-standing SKU helpers below (name
+  // blur, switch toggle, category onChanged) need to resolve the selected
+  // category NAME (held in [_categoryController]) to its coded entity, but
+  // aren't themselves build-time widgets, hence the cache.
+  List<CategoryEntity> _productCategories = const [];
+
+  // Monotonic token guarding the async peekNextSequence race: a stale
+  // response (superseded by a later category switch, an auto-generate
+  // toggle, or a manual edit) must not clobber the SKU field.
+  int _skuPeekToken = 0;
+
   // Image-upload state. Bytes are held in-memory so the user can cancel
   // the form without burning a Storage write; the actual upload happens
   // in _handleSubmit on save.
@@ -448,6 +460,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void _onNameFocusChange() {
     if (_nameFocusNode.hasFocus) return;
     if (!_autoGenerateSku) return;
+    // A coded category is driving the field via peekNextSequence — a name
+    // blur must not clobber it with the name-based format.
+    if (_categoryDrivesSku()) return;
     setState(() {
       _skuController.text =
           SkuGenerator.generateForName(_nameController.text);
@@ -455,12 +470,82 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   /// Re-rolls the SKU using the current product name. No-op when
-  /// [_autoGenerateSku] is off — manual mode is the user's text verbatim.
+  /// [_autoGenerateSku] is off — manual mode is the user's text verbatim —
+  /// or while a coded category is driving the field (see [_categoryDrivesSku]).
   void _regenerateSku() {
     if (!_autoGenerateSku) return;
+    if (_categoryDrivesSku()) return;
     setState(() {
       _skuController.text =
           SkuGenerator.generateForName(_nameController.text);
+    });
+  }
+
+  /// Looks up the active category entity matching [name] (case-sensitive,
+  /// mirrors the dropdown's exact-name matching). Returns null for an empty
+  /// name or one not present in the cached active list.
+  CategoryEntity? _categoryEntityForName(String name) {
+    if (name.isEmpty) return null;
+    for (final c in _productCategories) {
+      if (c.name == name) return c;
+    }
+    return null;
+  }
+
+  /// True when the currently selected category (by name, in the
+  /// Classification dropdown) carries a Code128 category `code` — meaning
+  /// its peeked sequence is what's driving the SKU field, not the
+  /// name-based generator.
+  bool _categoryDrivesSku() =>
+      _categoryEntityForName(_categoryController.text.trim())?.code != null;
+
+  /// Category code to hand `createProduct` for the atomic peek+claim, or
+  /// null for a plain (non-claiming) create. Only fires when auto-generate
+  /// is on AND the SKU text currently in the field still matches that
+  /// category's coded pattern — a manual edit after the last peek silently
+  /// falls back to null, same as an uncoded category.
+  String? _autoSkuCategoryCodeForSubmit() {
+    if (!_autoGenerateSku) return null;
+    final code = _categoryEntityForName(_categoryController.text.trim())?.code;
+    if (code == null) return null;
+    final sku = _skuController.text.trim();
+    return SkuGenerator.matchesAutoPattern(sku, code) ? code : null;
+  }
+
+  /// Re-derives the SKU for [category] when auto-generate is on and we're
+  /// creating (no-op on edit — auto-SKU is a create-time convenience only).
+  /// A category with a `code` asynchronously peeks the next sequence via
+  /// [CategoryRepository.peekNextSequence] and composes `code+sequence`; a
+  /// code-less (or cleared) category falls back to the existing name-based
+  /// generator. [_skuPeekToken] guards against a stale response clobbering
+  /// the field after a later switch/edit superseded it. Peek failures
+  /// (offline, unknown code) degrade silently to the name-based generator —
+  /// never block the form.
+  void _applyCategoryForSku(CategoryEntity? category) {
+    if (widget.isEditing || !_autoGenerateSku) return;
+    final token = ++_skuPeekToken;
+    final code = category?.code;
+    if (code == null) {
+      setState(() {
+        _skuController.text =
+            SkuGenerator.generateForName(_nameController.text);
+      });
+      return;
+    }
+    ref
+        .read(categoryRepositoryProvider(CategoryKind.product))
+        .peekNextSequence(code)
+        .then((sequence) {
+      if (!mounted || token != _skuPeekToken) return;
+      setState(() {
+        _skuController.text = SkuGenerator.composeAutoSku(code, sequence);
+      });
+    }).catchError((_) {
+      if (!mounted || token != _skuPeekToken) return;
+      setState(() {
+        _skuController.text =
+            SkuGenerator.generateForName(_nameController.text);
+      });
     });
   }
 
@@ -514,6 +599,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final currentUser = ref.watch(currentUserProvider).value;
     final userRole = currentUser?.role ?? UserRole.cashier;
     final inventoryState = ref.watch(inventoryStateProvider);
+    // Refresh the cache the free-standing SKU helpers read (see
+    // `_categoryEntityForName`). No setState needed — build already runs on
+    // every provider emission and this doesn't need to trigger a rebuild.
+    final productCategories =
+        ref.watch(activeCategoriesProvider(CategoryKind.product)).valueOrNull;
+    if (productCategories != null) _productCategories = productCategories;
 
     // Determine edit capabilities based on role
     final bool isCreating = !widget.isEditing;
@@ -636,15 +727,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 ),
                                 value: _autoGenerateSku,
                                 onChanged: (v) {
-                                  setState(() {
-                                    _autoGenerateSku = v;
-                                    if (v) {
-                                      _skuController.text =
-                                          SkuGenerator.generateForName(
-                                        _nameController.text,
-                                      );
-                                    }
-                                  });
+                                  setState(() => _autoGenerateSku = v);
+                                  if (v) {
+                                    _applyCategoryForSku(
+                                      _categoryEntityForName(
+                                        _categoryController.text.trim(),
+                                      ),
+                                    );
+                                  }
                                 },
                               ),
                             TextFormField(
@@ -757,6 +847,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   setState(() {
                                     _categoryController.text = value ?? '';
                                   });
+                                  _applyCategoryForSku(
+                                    _categoryEntityForName(value ?? ''),
+                                  );
                                 },
                               ),
                             ),
@@ -1248,7 +1341,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
         final productOps = ref.read(productOperationsProvider.notifier);
         final created = await context.runWithWaiting(
-          () => productOps.createProduct(actor: currentUser, product: product),
+          () => productOps.createProduct(
+            actor: currentUser,
+            product: product,
+            autoSkuCategoryCode: _autoSkuCategoryCodeForSubmit(),
+          ),
           message: 'Saving…',
         );
         if (created == null) throw Exception('Failed to create product');
@@ -1320,7 +1417,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
         final productOps = ref.read(productOperationsProvider.notifier);
         final created = await context.runWithWaiting(
-          () => productOps.createProduct(actor: currentUser, product: product),
+          () => productOps.createProduct(
+            actor: currentUser,
+            product: product,
+            autoSkuCategoryCode: _autoSkuCategoryCodeForSubmit(),
+          ),
           message: 'Saving…',
         );
         if (created == null) throw Exception('Failed to create product');
