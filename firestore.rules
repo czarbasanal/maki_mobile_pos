@@ -478,6 +478,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // R2: one pending void request per sale, by construction. One claim doc
+    // per sale with an outstanding request, keyed by saleId — its existence
+    // IS the lock; the client's create-then-tx.get transaction fails when the
+    // doc already exists. Additive only — the void_requests block above is
+    // unchanged so +17 clients (which write requests without a claim) keep
+    // working; no existsAfter cross-check yet (revisit with the NAME-TOCTOU
+    // epic). See docs/superpowers/specs/2026-07-26-race-riders-design.md (R2).
+    match /void_request_pending/{saleId} {
+      // Any active valid user can read (the tx.get needs it; no secrets here).
+      allow read: if isValidUser() && isActiveUser();
+
+      // Requester claims their own sale. A second create on the same saleId
+      // fails outright — Firestore create rules only ever apply to a doc
+      // that doesn't yet exist.
+      allow create: if isValidUser() && isActiveUser() &&
+        request.resource.data.requestedBy == request.auth.uid;
+
+      // Only admin frees a claim (resolve path).
+      allow delete: if isAdmin() && isActiveUser();
+
+      // Claims are create/delete only — a claim can't be repointed.
+      allow update: if false;
+    }
+
     // SKU-uniqueness guard: one claim doc per in-use SKU
     // (key = normalizeSku(sku) = sku.trim().toUpperCase()). Reserved atomically in a
     // transaction by the product create / SKU-rename paths (slices B/C). Slice A only

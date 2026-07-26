@@ -15,8 +15,13 @@ abstract class VoidRequestRepository {
   Future<bool> hasPendingForSale(String saleId);
 
   /// Resolves a request (approve/reject) — admin only at the rules layer.
+  /// [saleId] is the resolved request's sale — used to delete the matching
+  /// `void_request_pending/{saleId}` claim in the same operation as the
+  /// status update. Deleting a claim that doesn't exist (a legacy request
+  /// created before the claim collection existed) is a no-op.
   Future<void> resolve({
     required String requestId,
+    required String saleId,
     required VoidRequestStatus status,
     required String resolvedBy,
     required String resolvedByName,

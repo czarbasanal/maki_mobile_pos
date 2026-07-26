@@ -50,6 +50,7 @@ void main() {
         ApproveVoidRequestUseCase(repository: repo, voidSaleUseCase: voidSale);
     when(() => repo.resolve(
           requestId: any(named: 'requestId'),
+          saleId: any(named: 'saleId'),
           status: any(named: 'status'),
           resolvedBy: any(named: 'resolvedBy'),
           resolvedByName: any(named: 'resolvedByName'),
@@ -81,6 +82,7 @@ void main() {
         )).called(1);
     verify(() => repo.resolve(
           requestId: 'vr-1',
+          saleId: 's-1',
           status: VoidRequestStatus.approved,
           resolvedBy: 'u-admin',
           resolvedByName: 'admin user',
@@ -105,6 +107,7 @@ void main() {
     expect(result.success, isFalse);
     verifyNever(() => repo.resolve(
           requestId: any(named: 'requestId'),
+          saleId: any(named: 'saleId'),
           status: any(named: 'status'),
           resolvedBy: any(named: 'resolvedBy'),
           resolvedByName: any(named: 'resolvedByName'),

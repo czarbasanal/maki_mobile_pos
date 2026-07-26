@@ -14,12 +14,36 @@ class VoidRequestRepositoryImpl implements VoidRequestRepository {
   CollectionReference get _ref =>
       _firestore.collection(FirestoreCollections.voidRequests);
 
+  CollectionReference get _pendingRef =>
+      _firestore.collection(FirestoreCollections.voidRequestPending);
+
   @override
   Future<VoidRequestEntity> createRequest(VoidRequestEntity request) async {
+    // Pre-allocate the doc ref so its id can be written into the claim
+    // inside the same transaction (R2: one pending request per sale, by
+    // construction — the claim doc's existence IS the lock).
+    final requestDocRef = _ref.doc();
+    final claimRef = _pendingRef.doc(request.saleId);
+
     try {
-      final docRef = await _ref.add(VoidRequestModel.toCreateMap(request));
-      final doc = await docRef.get();
-      return VoidRequestModel.fromFirestore(doc);
+      await _firestore.runTransaction((transaction) async {
+        final claimSnap = await transaction.get(claimRef);
+        if (claimSnap.exists) {
+          throw const DatabaseException(
+            message: 'A void request for this sale is already pending',
+            code: 'void-already-pending',
+          );
+        }
+
+        transaction.set(claimRef, {
+          'requestId': requestDocRef.id,
+          'requestedBy': request.requestedBy,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        transaction.set(requestDocRef, VoidRequestModel.toCreateMap(request));
+      });
+    } on DatabaseException {
+      rethrow; // don't let the generic catch convert this to a different DatabaseException
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to create void request: ${e.message}',
@@ -27,6 +51,9 @@ class VoidRequestRepositoryImpl implements VoidRequestRepository {
         originalError: e,
       );
     }
+
+    final doc = await requestDocRef.get();
+    return VoidRequestModel.fromFirestore(doc);
   }
 
   @override
@@ -60,13 +87,15 @@ class VoidRequestRepositoryImpl implements VoidRequestRepository {
   @override
   Future<void> resolve({
     required String requestId,
+    required String saleId,
     required VoidRequestStatus status,
     required String resolvedBy,
     required String resolvedByName,
     String? rejectionReason,
   }) async {
     try {
-      await _ref.doc(requestId).update({
+      final batch = _firestore.batch();
+      batch.update(_ref.doc(requestId), {
         'status': status.value,
         'read': true,
         'resolvedBy': resolvedBy,
@@ -74,6 +103,10 @@ class VoidRequestRepositoryImpl implements VoidRequestRepository {
         'resolvedAt': FieldValue.serverTimestamp(),
         if (rejectionReason != null) 'rejectionReason': rejectionReason,
       });
+      // Idempotent: legacy requests created before the claim collection
+      // existed have no matching claim, and deleting a missing doc is a no-op.
+      batch.delete(_pendingRef.doc(saleId));
+      await batch.commit();
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to resolve void request: ${e.message}',

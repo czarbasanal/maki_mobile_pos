@@ -30,6 +30,7 @@ class RejectVoidRequestUseCase {
 
       await _repository.resolve(
         requestId: request.id,
+        saleId: request.saleId,
         status: VoidRequestStatus.rejected,
         resolvedBy: actor.id,
         resolvedByName: actor.displayName,
