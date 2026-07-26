@@ -218,4 +218,54 @@ abstract class SkuGenerator {
     }
     return sku;
   }
+
+  /// Composes an auto-generated SKU from a category code and sequence.
+  ///
+  /// Format: 4-digit category code + 4-digit zero-padded sequence.
+  /// Example: composeAutoSku('0007', 153) returns '00070153'
+  ///
+  /// Asserts:
+  /// - [categoryCode] is exactly 4 digits
+  /// - [sequence] is between 1 and 9999 inclusive
+  static String composeAutoSku(String categoryCode, int sequence) {
+    assert(
+      categoryCode.length == 4 && RegExp(r'^\d{4}$').hasMatch(categoryCode),
+      'categoryCode must be exactly 4 digits',
+    );
+    assert(
+      sequence >= 1 && sequence <= 9999,
+      'sequence must be between 1 and 9999',
+    );
+    final paddedSequence = sequence.toString().padLeft(4, '0');
+    return '$categoryCode$paddedSequence';
+  }
+
+  /// Checks whether a SKU matches the auto-generated pattern.
+  ///
+  /// Returns true if [sku] is exactly 8 digits and starts with [categoryCode].
+  static bool matchesAutoPattern(String sku, String categoryCode) {
+    if (sku.length != 8) return false;
+    if (!RegExp(r'^\d{8}$').hasMatch(sku)) return false;
+    return sku.startsWith(categoryCode);
+  }
+
+  /// Extracts the sequence number from an auto-generated SKU.
+  ///
+  /// Returns the last 4 digits of the SKU as an integer.
+  /// Assumes [sku] matches the auto-generated pattern (use [matchesAutoPattern]).
+  static int sequenceOf(String sku) {
+    return int.parse(sku.substring(4));
+  }
+
+  /// Formats a SKU for display.
+  ///
+  /// If the SKU is exactly 8 numeric digits, formats it as 'XXXX-XXXX'.
+  /// Otherwise, returns the SKU unchanged.
+  /// Example: displaySku('00070153') returns '0007-0153'
+  static String displaySku(String sku) {
+    if (sku.length == 8 && RegExp(r'^\d{8}$').hasMatch(sku)) {
+      return '${sku.substring(0, 4)}-${sku.substring(4)}';
+    }
+    return sku;
+  }
 }

@@ -15,6 +15,9 @@ class CategoryEntity extends Equatable {
   /// collection so historical product/expense records keep matching.
   final bool isActive;
 
+  /// Optional 4-digit category code for Code128 auto-SKU generation.
+  final String? code;
+
   final DateTime createdAt;
   final DateTime? updatedAt;
   final String? createdBy;
@@ -28,6 +31,7 @@ class CategoryEntity extends Equatable {
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
+    this.code,
   });
 
   CategoryEntity copyWith({
@@ -38,6 +42,7 @@ class CategoryEntity extends Equatable {
     DateTime? updatedAt,
     String? createdBy,
     String? updatedBy,
+    String? code,
   }) {
     return CategoryEntity(
       id: id ?? this.id,
@@ -47,6 +52,7 @@ class CategoryEntity extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
       updatedBy: updatedBy ?? this.updatedBy,
+      code: code ?? this.code,
     );
   }
 
@@ -64,6 +70,7 @@ class CategoryEntity extends Equatable {
         id,
         name,
         isActive,
+        code,
         createdAt,
         updatedAt,
         createdBy,
