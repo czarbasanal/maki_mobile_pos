@@ -38,6 +38,7 @@ void main() {
     useCase = RejectVoidRequestUseCase(repository: repo);
     when(() => repo.resolve(
           requestId: any(named: 'requestId'),
+          saleId: any(named: 'saleId'),
           status: any(named: 'status'),
           resolvedBy: any(named: 'resolvedBy'),
           resolvedByName: any(named: 'resolvedByName'),
@@ -53,6 +54,7 @@ void main() {
     expect(result.success, isTrue);
     verify(() => repo.resolve(
           requestId: 'vr-1',
+          saleId: 's-1',
           status: VoidRequestStatus.rejected,
           resolvedBy: 'u-admin',
           resolvedByName: 'admin user',

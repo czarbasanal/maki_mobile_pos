@@ -1,3 +1,4 @@
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/payment_method.dart';
@@ -345,5 +346,24 @@ void main() {
     expect(saved.expectedCash, 2600); // 2000 + 700 - 100 (500 NOT deducted)
     expect(saved.variance, 0);
     expect(saved.excludedExpenseIds, ['drop']);
+  });
+
+  test('permission-denied on save maps to already-closed (double-close race)',
+      () async {
+    when(() => closings.saveClosing(any())).thenThrow(const DatabaseException(
+      message: 'Failed to save closing: PERMISSION_DENIED',
+      code: 'permission-denied',
+    ));
+
+    final result = await useCase.execute(
+      actor: _user(UserRole.admin),
+      date: DateTime(2026, 7, 26),
+      openingFloat: 0,
+      countedCash: 100,
+    );
+
+    expect(result.success, isFalse);
+    expect(result.errorCode, 'already-closed');
+    expect(result.errorMessage, 'This day has already been closed.');
   });
 }

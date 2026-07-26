@@ -66,6 +66,12 @@ abstract class FirestoreCollections {
   /// Void requests collection - cashier/staff void requests awaiting admin approval
   static const String voidRequests = 'void_requests';
 
+  /// Void-request pending-claim collection. One doc per sale with an
+  /// outstanding void request, keyed by saleId; reserved atomically inside
+  /// the same transaction as the `void_requests` doc create, and deleted on
+  /// resolve. See docs/superpowers/specs/2026-07-26-race-riders-design.md (R2).
+  static const String voidRequestPending = 'void_request_pending';
+
   /// Product SKU-uniqueness claim collection. One doc per in-use SKU, keyed by
   /// SkuGenerator.normalizeSku(sku); reserved atomically on product create /
   /// SKU rename. See docs/superpowers/specs/2026-06-01-sku-guard-*.

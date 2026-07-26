@@ -812,6 +812,79 @@ describe("/void_requests", () => {
 });
 
 // ===================================================================
+// /void_request_pending (R2 — one pending void request per sale, by
+// construction; the claim doc's existence IS the lock)
+// ===================================================================
+describe("/void_request_pending", () => {
+  const claim = (uid) => ({
+    requestId: "vr-9", requestedBy: uid, createdAt: new Date(),
+  });
+
+  it("cashier/staff can create a claim with their own requestedBy", async () => {
+    await assertSucceeds(
+      as("cashier").collection("void_request_pending").doc("s-1").set(claim(USERS.cashier.uid)));
+    await assertSucceeds(
+      as("staff").collection("void_request_pending").doc("s-2").set(claim(USERS.staff.uid)));
+  });
+
+  it("cannot create a claim as someone else", async () => {
+    await assertFails(
+      as("cashier").collection("void_request_pending").doc("s-3").set(claim(USERS.staff.uid)));
+  });
+
+  it("inactive user cannot create", async () => {
+    await assertFails(
+      as("inactiveStaff").collection("void_request_pending").doc("s-4")
+        .set(claim(USERS.inactiveStaff.uid)));
+  });
+
+  it("a second create on an already-claimed saleId fails", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("void_request_pending").doc("s-5")
+        .set(claim(USERS.cashier.uid));
+    });
+
+    await assertFails(
+      as("staff").collection("void_request_pending").doc("s-5").set(claim(USERS.staff.uid)));
+  });
+
+  it("active valid users can read", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("void_request_pending").doc("s-6")
+        .set(claim(USERS.cashier.uid));
+    });
+    await assertSucceeds(as("cashier").collection("void_request_pending").doc("s-6").get());
+    await assertSucceeds(as("admin").collection("void_request_pending").doc("s-6").get());
+  });
+
+  it("cashier/staff cannot delete a claim", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("void_request_pending").doc("s-7")
+        .set(claim(USERS.cashier.uid));
+    });
+    await assertFails(as("cashier").collection("void_request_pending").doc("s-7").delete());
+    await assertFails(as("staff").collection("void_request_pending").doc("s-7").delete());
+  });
+
+  it("admin can delete a claim (resolve path)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("void_request_pending").doc("s-8")
+        .set(claim(USERS.cashier.uid));
+    });
+    await assertSucceeds(as("admin").collection("void_request_pending").doc("s-8").delete());
+  });
+
+  it("update always fails, even for admin", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("void_request_pending").doc("s-9")
+        .set(claim(USERS.cashier.uid));
+    });
+    await assertFails(
+      as("admin").collection("void_request_pending").doc("s-9").update({ requestId: "vr-99" }));
+  });
+});
+
+// ===================================================================
 // Cross-cutting: unauthenticated + inactive
 // ===================================================================
 describe("cross-cutting", () => {

@@ -71,6 +71,7 @@ class _FakeVoidRequestRepository implements VoidRequestRepository {
   @override
   Future<void> resolve({
     required String requestId,
+    required String saleId,
     required VoidRequestStatus status,
     required String resolvedBy,
     required String resolvedByName,

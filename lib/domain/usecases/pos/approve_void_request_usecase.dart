@@ -43,6 +43,7 @@ class ApproveVoidRequestUseCase {
 
       await _repository.resolve(
         requestId: request.id,
+        saleId: request.saleId,
         status: VoidRequestStatus.approved,
         resolvedBy: actor.id,
         resolvedByName: actor.displayName,
