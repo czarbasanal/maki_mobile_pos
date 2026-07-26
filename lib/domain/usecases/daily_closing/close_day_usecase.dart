@@ -126,7 +126,21 @@ class CloseDayUseCase {
         closedAt: DateTime.now(),
       );
 
-      final saved = await _closingRepository.saveClosing(entity);
+      final DailyClosingEntity saved;
+      try {
+        saved = await _closingRepository.saveClosing(entity);
+      } on DatabaseException catch (e) {
+        // Closings are create-only in rules, so permission-denied here means
+        // another device won the close race for this day between our
+        // getClosing precheck and the write.
+        if (e.code == 'permission-denied') {
+          return const UseCaseResult.failure(
+            message: 'This day has already been closed.',
+            code: 'already-closed',
+          );
+        }
+        rethrow;
+      }
 
       await _logger.log(
         type: ActivityType.dayClosed,
