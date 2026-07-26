@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,11 +9,11 @@ import { useCreateProduct, useUpdateProduct } from '@/presentation/hooks/useProd
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { useSuppliers } from '@/presentation/hooks/useSuppliers';
 import { useCostCode } from '@/presentation/hooks/useCostCode';
-import { useProductRepo } from '@/infrastructure/di/container';
+import { useProductRepo, useCategoryRepo } from '@/infrastructure/di/container';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
-import { generateSku } from '@/domain/products/sku';
-import { encodeCostCode } from '@/domain/entities';
+import { generateSku, composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
+import { encodeCostCode, type Category } from '@/domain/entities';
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -65,6 +65,7 @@ export function InventoryFormPage() {
   const isEditing = !!id;
   const navigate = useNavigate();
   const repo = useProductRepo();
+  const categoryRepo = useCategoryRepo();
 
   const { data: target, isLoading, error } = useProduct(id);
   const update = useUpdateProduct();
@@ -89,6 +90,10 @@ export function InventoryFormPage() {
   const [skuDialog, setSkuDialog] = useState<{ open: boolean; count: number; values: FormValues | null }>(
     { open: false, count: 0, values: null },
   );
+  // Monotonic token guarding the async peekNextSequence race: a stale
+  // response (superseded by a later category switch, an auto-generate
+  // toggle, or a manual edit) must not clobber the SKU field.
+  const skuPeekToken = useRef(0);
 
   const {
     register,
@@ -163,8 +168,70 @@ export function InventoryFormPage() {
   const mutationError = update.error?.message ?? create.error?.message ?? null;
   const skuLocked = !isEditing && autoSku;
 
-  const regenerateSku = () =>
+  /** Looks up the active product category matching `name` (case-sensitive,
+   *  mirrors the dropdown's exact-name matching). */
+  const categoryEntityForName = (name: string): Category | undefined =>
+    (productCats ?? []).find((c) => c.name === name);
+
+  /** True when the currently selected category carries a Code128 `code` —
+   *  meaning its peeked sequence is what's driving the SKU field, not the
+   *  name-based generator. */
+  const categoryDrivesSku = () =>
+    categoryEntityForName(getValues('category') ?? '')?.code !== undefined;
+
+  /** Re-rolls the SKU using the current product name. No-op while a coded
+   *  category is driving the field (see categoryDrivesSku) — regenerating
+   *  from the name would silently drop the category's claim pattern. */
+  const regenerateSku = () => {
+    if (categoryDrivesSku()) return;
     setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
+  };
+
+  /** Re-derives the SKU for `category` when auto-generate is on (`autoOn`
+   *  passed explicitly rather than read from state, since this can be
+   *  invoked in the same handler that just flipped the checkbox — React
+   *  state updates aren't synchronous). No-op when editing (auto-SKU is a
+   *  create-time convenience only). A coded category asynchronously peeks
+   *  the next sequence and composes `code+sequence`; a code-less (or
+   *  cleared) category falls back to the name-based generator.
+   *  `skuPeekToken` guards a stale response from clobbering the field after
+   *  a later switch/edit superseded it; the resolved category's code is also
+   *  re-checked against what's currently selected, in case the token was
+   *  bumped by something that didn't reset it (belt-and-suspenders with the
+   *  token check). Peek failures (offline, unknown code) degrade silently to
+   *  the name-based generator — never block the form. */
+  const applyCategoryForSku = (category: Category | undefined, autoOn: boolean) => {
+    if (isEditing || !autoOn) return;
+    const token = ++skuPeekToken.current;
+    const code = category?.code;
+    if (code === undefined) {
+      setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
+      return;
+    }
+    categoryRepo
+      .peekNextSequence(code)
+      .then((sequence) => {
+        if (token !== skuPeekToken.current) return;
+        if (categoryEntityForName(getValues('category') ?? '')?.code !== code) return;
+        setValue('sku', composeAutoSku(code, sequence), { shouldValidate: true });
+      })
+      .catch(() => {
+        if (token !== skuPeekToken.current) return;
+        setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
+      });
+  };
+
+  /** Category code to hand `useCreateProduct` for the atomic peek+claim, or
+   *  undefined for a plain (non-claiming) create. Only fires when
+   *  auto-generate is on AND the SKU currently in `values` still matches
+   *  that category's coded pattern — a manual edit after the last peek
+   *  silently falls back to undefined, same as an uncoded category. */
+  const autoSkuCategoryCodeForSubmit = (values: FormValues): string | undefined => {
+    if (!autoSku) return undefined;
+    const code = categoryEntityForName(values.category ?? '')?.code;
+    if (code === undefined) return undefined;
+    return matchesAutoPattern(values.sku.trim(), code) ? code : undefined;
+  };
 
   const commitBarcode = (raw: string) => {
     const code = raw.trim();
@@ -295,6 +362,7 @@ export function InventoryFormPage() {
         category: blank(values.category),
         notes: blank(values.notes),
         imageBlob,
+        autoSkuCategoryCode: autoSkuCategoryCodeForSubmit(values),
       });
       navigate(RoutePaths.inventory);
     } catch (e) {
@@ -357,7 +425,7 @@ export function InventoryFormPage() {
                 type="text"
                 className={inputCls(!!errors.name)}
                 {...register('name', {
-                  onBlur: () => { if (skuLocked) regenerateSku(); },
+                  onBlur: () => { if (skuLocked && !categoryDrivesSku()) regenerateSku(); },
                 })}
               />
             } />
@@ -370,7 +438,11 @@ export function InventoryFormPage() {
                 onChange={(e) => {
                   const on = e.target.checked;
                   setAutoSku(on);
-                  if (on) regenerateSku();
+                  // Cancel any in-flight peek when toggling.
+                  skuPeekToken.current++;
+                  if (on) {
+                    applyCategoryForSku(categoryEntityForName(getValues('category') ?? ''), true);
+                  }
                 }}
               />
               Auto-generate SKU from name
@@ -489,7 +561,11 @@ export function InventoryFormPage() {
               } />
             <Field label="Category" error={errors.category?.message}
               input={
-                <select className={cn(inputCls(false), 'pr-8')} {...register('category')}>
+                <select className={cn(inputCls(false), 'pr-8')}
+                  {...register('category', {
+                    onChange: (e) => applyCategoryForSku(categoryEntityForName(e.target.value), autoSku),
+                  })}
+                >
                   <option value="">(none)</option>
                   {categoryOptions.map((c) => (<option key={c} value={c}>{c}</option>))}
                 </select>

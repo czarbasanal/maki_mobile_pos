@@ -105,6 +105,14 @@ export class FirestoreCategoryRepository implements CategoryRepository {
     return created;
   }
 
+  async peekNextSequence(categoryCode: string): Promise<number> {
+    const snap = await getDoc(doc(this.db, FirestoreCollections.categoryCodes, categoryCode));
+    if (!snap.exists()) {
+      throw new Error(`Unknown category code "${categoryCode}"`);
+    }
+    return (snap.data()?.nextSequence as number | undefined) ?? 1;
+  }
+
   async update(
     kind: CategoryKind,
     id: string,

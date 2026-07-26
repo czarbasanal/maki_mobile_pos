@@ -5,6 +5,7 @@ import { useProducts } from '@/presentation/hooks/useProducts';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { getStockStatus, StockStatus } from '@/domain/entities';
 import { filterProducts, type ProductFilter } from '@/domain/products/filterProducts';
+import { displaySku } from '@/domain/products/sku';
 import { stockTotals } from '@/domain/products/stockTotals';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -179,7 +180,7 @@ export function InventoryListPage() {
                       {p.name}
                       {!p.isActive ? <span className="ml-tk-xs text-light-text-hint">(inactive)</span> : null}
                     </Td>
-                    <Td className="text-light-text-secondary">{p.sku}</Td>
+                    <Td className="font-mono text-light-text-secondary">{displaySku(p.sku)}</Td>
                     <Td className="text-light-text-secondary">{p.category ?? '—'}</Td>
                     <Td>
                       <span className={cn('inline-flex items-center rounded-full px-2 py-[2px] text-[11px] font-medium', STOCK_BADGE[s])}>

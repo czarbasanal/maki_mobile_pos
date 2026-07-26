@@ -16,4 +16,10 @@ export interface CategoryRepository {
   ): Unsubscribe;
   create(kind: CategoryKind, name: string, actorId: string): Promise<Category>;
   update(kind: CategoryKind, id: string, input: CategoryUpdateInput, actorId: string): Promise<void>;
+  /**
+   * Plain (non-claiming) read of `category_codes/{categoryCode}.nextSequence`
+   * — used by the product form to preview the SKU the create transaction
+   * would claim, without reserving it. Throws if the code is unknown.
+   */
+  peekNextSequence(categoryCode: string): Promise<number>;
 }

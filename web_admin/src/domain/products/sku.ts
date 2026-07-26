@@ -1,5 +1,10 @@
-// Port of lib/core/utils/sku_generator.dart `generateForName`. Ambiguous
-// characters (0/O, 1/I/L) are excluded so SKUs stay scanner-friendly.
+// Port of lib/core/utils/sku_generator.dart `generateForName`, plus the
+// Code128 auto-SKU helpers (composeAutoSku/matchesAutoPattern/sequenceOf/
+// displaySku — mirrors lib/core/utils/sku_generator.dart's statics of the
+// same name). Ambiguous characters (0/O, 1/I/L) are excluded so SKUs stay
+// scanner-friendly. Keep this file, the Dart SkuGenerator, and
+// scripts/backfill-*.mjs byte-identical for anything claim-key or
+// pattern related.
 const SKU_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const SKU_PREFIX = 'SKU';
 const SKU_RANDOM_LENGTH = 8;
@@ -69,4 +74,56 @@ export function isClaimableBarcode(key: string): boolean {
   if (key === '.' || key === '..') return false;
   if (key.includes('/')) return false;
   return !/^__.*__$/.test(key);
+}
+
+/**
+ * Composes an auto-generated SKU from a 4-digit category code and a
+ * 1..9999 sequence. Format: code + zero-padded 4-digit sequence.
+ * Example: composeAutoSku('0007', 153) => '00070153'.
+ * Throws on a non-4-digit code or a sequence outside 1..9999 (mirrors the
+ * Dart `SkuGenerator.composeAutoSku` asserts, which are non-strippable here).
+ */
+export function composeAutoSku(categoryCode: string, sequence: number): string {
+  if (!/^\d{4}$/.test(categoryCode)) {
+    throw new Error('categoryCode must be exactly 4 digits');
+  }
+  if (!Number.isInteger(sequence) || sequence < 1 || sequence > 9999) {
+    throw new Error('sequence must be between 1 and 9999');
+  }
+  const paddedSequence = String(sequence).padStart(4, '0');
+  return `${categoryCode}${paddedSequence}`;
+}
+
+/**
+ * Whether `sku` matches the auto-generated pattern for `categoryCode`: exactly
+ * 8 digits and starts with the (exactly-4-digit) category code. `categoryCode`
+ * is validated at runtime — a malformed code (not exactly 4 digits) returns
+ * false rather than throwing, since this is a guard callers use on arbitrary
+ * input, not an invariant they control.
+ */
+export function matchesAutoPattern(sku: string, categoryCode: string): boolean {
+  if (!/^\d{4}$/.test(categoryCode)) return false;
+  if (sku.length !== 8) return false;
+  if (!/^\d{8}$/.test(sku)) return false;
+  return sku.startsWith(categoryCode);
+}
+
+/**
+ * Extracts the sequence number (last 4 digits) from an auto-generated SKU.
+ * Assumes `sku` already matches the auto pattern (see matchesAutoPattern).
+ */
+export function sequenceOf(sku: string): number {
+  return Number.parseInt(sku.slice(4), 10);
+}
+
+/**
+ * Formats a SKU for display: an 8-digit auto-SKU becomes 'XXXX-XXXX';
+ * anything else (manual SKUs, variation suffixes) passes through unchanged.
+ * Example: displaySku('00070153') => '0007-0153'.
+ */
+export function displaySku(sku: string): string {
+  if (sku.length === 8 && /^\d{8}$/.test(sku)) {
+    return `${sku.slice(0, 4)}-${sku.slice(4)}`;
+  }
+  return sku;
 }

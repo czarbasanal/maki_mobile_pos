@@ -28,7 +28,14 @@ import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/
 import { productConverter } from '@/data/converters/productConverter';
 import { toDate } from '@/data/converters/timestamps';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
-import { normalizeSku, normalizeBarcode, isClaimableBarcode } from '@/domain/products/sku';
+import {
+  normalizeSku,
+  normalizeBarcode,
+  isClaimableBarcode,
+  matchesAutoPattern,
+  sequenceOf,
+  composeAutoSku,
+} from '@/domain/products/sku';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
 import { buildProductWrites, newProductId } from '@/data/products/productWrites';
 import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
@@ -217,7 +224,11 @@ export class FirestoreProductRepository implements ProductRepository {
   }
 
   // Write methods land in phase 7.
-  async create(input: ProductCreateInput, actorId: string): Promise<Product> {
+  async create(
+    input: ProductCreateInput,
+    actorId: string,
+    autoSkuCategoryCode?: string,
+  ): Promise<Product> {
     const productId = newProductId(this.db);
     const { productRef, productData, claimRef, claimData } = buildProductWrites(
       this.db,
@@ -237,26 +248,91 @@ export class FirestoreProductRepository implements ProductRepository {
       doc(this.db, FirestoreCollections.productBarcodes, k),
     );
 
+    // Auto-SKU only kicks in when a category code was supplied AND the
+    // caller's sku actually matches that code's auto pattern — anything else
+    // (no code, or a manual-override sku) is the plain manual path below,
+    // byte-identical to before this param existed.
+    const autoMode =
+      autoSkuCategoryCode !== undefined && matchesAutoPattern(input.sku, autoSkuCategoryCode);
+    const registryRef = autoMode
+      ? doc(this.db, FirestoreCollections.categoryCodes, autoSkuCategoryCode)
+      : null;
+
     await runTransaction(this.db, async (tx) => {
-      const claim = await tx.get(claimRef);
-      const barcodeClaims = await Promise.all(barcodeClaimRefs.map((r) => tx.get(r)));
-      if (claim.exists()) throw new DuplicateSkuError();
-      if (barcodeClaims.some((c) => c.exists())) throw new DuplicateBarcodeError();
-      tx.set(productRef, productData);
-      tx.set(claimRef, claimData);
-      barcodeClaimRefs.forEach((r, i) => {
-        tx.set(r, {
-          barcode: barcodeKeys[i],
+      if (autoMode) {
+        const registrySnap = await tx.get(registryRef!);
+        if (!registrySnap.exists()) {
+          throw new Error(`Unknown category code "${autoSkuCategoryCode}"`);
+        }
+        const registryNext = (registrySnap.data()?.nextSequence as number | undefined) ?? 1;
+        let candidate = Math.max(sequenceOf(input.sku), registryNext);
+
+        // Reads-before-writes: scan forward from the peeked candidate,
+        // re-reading the claim doc each time, until a free sequence is
+        // found (closes the peek-then-claim TOCTOU) or the scan cap trips.
+        let finalSku = input.sku;
+        let finalClaimRef = claimRef;
+        let attempts = 0;
+        while (true) {
+          attempts += 1;
+          if (attempts > FirestoreProductRepository.autoSkuScanCap) {
+            throw new Error('sku-scan-exhausted');
+          }
+          finalSku = composeAutoSku(autoSkuCategoryCode!, candidate);
+          finalClaimRef = doc(this.db, FirestoreCollections.productSkus, normalizeSku(finalSku));
+          const candidateClaim = await tx.get(finalClaimRef);
+          if (!candidateClaim.exists()) break;
+          candidate += 1;
+          if (candidate > 9999) {
+            throw new Error('Category is full — split it into two categories.');
+          }
+        }
+
+        const barcodeClaims = await Promise.all(barcodeClaimRefs.map((r) => tx.get(r)));
+        if (barcodeClaims.some((c) => c.exists())) throw new DuplicateBarcodeError();
+
+        tx.set(productRef, { ...productData, sku: finalSku });
+        tx.set(finalClaimRef, {
+          sku: finalSku,
           productId,
           claimedBy: actorId,
           claimedAt: serverTimestamp(),
         });
-      });
+        barcodeClaimRefs.forEach((r, i) => {
+          tx.set(r, {
+            barcode: barcodeKeys[i],
+            productId,
+            claimedBy: actorId,
+            claimedAt: serverTimestamp(),
+          });
+        });
+        // Targeted write of only nextSequence — leaves categoryId/
+        // nameSnapshot/assignedAt untouched (rules enforce hasOnly(['nextSequence'])).
+        tx.update(registryRef!, { nextSequence: candidate + 1 });
+      } else {
+        const claim = await tx.get(claimRef);
+        const barcodeClaims = await Promise.all(barcodeClaimRefs.map((r) => tx.get(r)));
+        if (claim.exists()) throw new DuplicateSkuError();
+        if (barcodeClaims.some((c) => c.exists())) throw new DuplicateBarcodeError();
+        tx.set(productRef, productData);
+        tx.set(claimRef, claimData);
+        barcodeClaimRefs.forEach((r, i) => {
+          tx.set(r, {
+            barcode: barcodeKeys[i],
+            productId,
+            claimedBy: actorId,
+            claimedAt: serverTimestamp(),
+          });
+        });
+      }
     });
     const created = await this.getById(productId);
     if (!created) throw new Error('Failed to load the created product');
     return created;
   }
+
+  /** Cap on claim-read scan attempts inside the auto-SKU candidate loop. */
+  private static readonly autoSkuScanCap = 25;
 
   async update(id: string, input: ProductUpdateInput, actorId: string): Promise<void> {
     await updateDoc(
