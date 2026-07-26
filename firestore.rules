@@ -335,6 +335,22 @@ service cloud.firestore {
       allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
+    // ==================== CATEGORY CODES REGISTRY ====================
+
+    match /category_codes/{code} {
+      allow read: if isValidUser() && isActiveUser();
+      // Created only alongside a product category (staff+admin, mirroring
+      // product_categories create) — includes the '_counter' doc.
+      allow create: if isStaffOrAdmin() && isActiveUser();
+      // Registry docs: only nextSequence may change (product-create bumps).
+      // '_counter': only next may change (category-create bumps).
+      allow update: if isStaffOrAdmin() && isActiveUser() &&
+        (code == '_counter'
+          ? request.resource.data.diff(resource.data).affectedKeys().hasOnly(['next'])
+          : request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nextSequence']));
+      allow delete: if false;
+    }
+
     // ==================== EXPENSE CATEGORIES COLLECTION ====================
 
     match /expense_categories/{categoryId} {

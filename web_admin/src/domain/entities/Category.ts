@@ -8,4 +8,6 @@ export interface Category {
   updatedAt: Date | null;
   createdBy: string | null;
   updatedBy: string | null;
+  /** Sequential 4-digit Code128 category code (product categories only). */
+  code?: string;
 }

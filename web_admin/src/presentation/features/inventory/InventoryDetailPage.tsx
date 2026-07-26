@@ -11,6 +11,7 @@ import {
 import { useProduct } from '@/presentation/hooks/useProduct';
 import { useDeactivateProduct, useReactivateProduct } from '@/presentation/hooks/useProductMutations';
 import { getStockStatus, StockStatus } from '@/domain/entities';
+import { displaySku } from '@/domain/products/sku';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
@@ -67,7 +68,7 @@ export function InventoryDetailPage() {
           ) : null}
           <div>
             <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">{product.name}</h1>
-            <p className="mt-tk-xs text-bodySmall text-light-text-hint">{product.sku}</p>
+            <p className="mt-tk-xs font-mono text-bodySmall text-light-text-hint">{displaySku(product.sku)}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-tk-sm">

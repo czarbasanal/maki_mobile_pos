@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/cost_code_pill.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
@@ -53,7 +54,7 @@ class ProductListTile extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    product.sku,
+                    SkuGenerator.displaySku(product.sku),
                     style: AppTextStyles.code.copyWith(color: muted),
                   ),
                   if (product.category != null) ...[

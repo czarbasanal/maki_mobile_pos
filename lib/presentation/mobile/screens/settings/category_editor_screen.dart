@@ -138,6 +138,7 @@ class _CategoryEditorScreenState extends ConsumerState<CategoryEditorScreen> {
           onEdit: () => _showCategoryDialog(context, existing: category),
           onToggleActive: canManage ? () => _toggleActive(category) : null,
           onDelete: canManage ? () => _confirmDelete(category) : null,
+          badge: _kind == CategoryKind.product ? category.code : null,
         );
       },
     );

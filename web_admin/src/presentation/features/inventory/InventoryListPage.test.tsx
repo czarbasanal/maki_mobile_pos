@@ -99,3 +99,19 @@ describe('InventoryListPage totals strip', () => {
     expect(screen.getByText(formatMoney(360))).toBeInTheDocument(); // profit: 690 - 330
   });
 });
+
+describe('InventoryListPage SKU cell', () => {
+  it('displays a coded 8-digit auto-SKU as XXXX-XXXX in a mono cell', () => {
+    signIn(UserRole.admin);
+    harness([widget({ sku: '00070153' })]);
+    const cell = screen.getByText('0007-0153');
+    expect(cell).toBeInTheDocument();
+    expect(cell).toHaveClass('font-mono');
+  });
+
+  it('passes a non-coded SKU through unchanged', () => {
+    signIn(UserRole.admin);
+    harness([widget()]);
+    expect(screen.getByText('A1')).toBeInTheDocument();
+  });
+});

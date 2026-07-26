@@ -33,7 +33,16 @@ export interface ProductRepository {
   search(query: string): Promise<Product[]>;
   listBySupplier(supplierId: string): Promise<Product[]>;
   listLowStock(): Promise<Product[]>;
-  create(input: ProductCreateInput, actorId: string): Promise<Product>;
+  /**
+   * `autoSkuCategoryCode`: when set AND `input.sku` matches that code's
+   * Code128 auto pattern (see domain/products/sku.ts `matchesAutoPattern`),
+   * the create transaction peeks/claims the next free sequence in that
+   * category's registry instead of trusting `input.sku` verbatim — mirrors
+   * `ProductRepositoryImpl.createProduct`'s `autoSkuCategoryCode` path on
+   * mobile. Omitted (or a non-matching sku) is the plain manual path,
+   * byte-identical to before this param existed.
+   */
+  create(input: ProductCreateInput, actorId: string, autoSkuCategoryCode?: string): Promise<Product>;
   update(id: string, input: ProductUpdateInput, actorId: string): Promise<void>;
   adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void>;
   setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;

@@ -121,6 +121,29 @@ void main() {
       expect(lines[2], startsWith('Low,'));
       expect(lines.last, startsWith('TOTAL,'));
     });
+
+    test('formats 8-digit SKU codes as XXXX-XXXX and passes others through', () {
+      final csv = buildProfitReportCsv(const [
+        ProductSalesData(
+            productId: 'p1',
+            sku: '00070153',
+            name: 'Auto SKU Product',
+            quantitySold: 1,
+            totalRevenue: 100,
+            totalCost: 90),
+        ProductSalesData(
+            productId: 'p2',
+            sku: 'MLK-A3B7',
+            name: 'Manual SKU Product',
+            quantitySold: 2,
+            totalRevenue: 300,
+            totalCost: 100),
+      ]);
+      final lines = csv.trim().split('\n');
+      // Sorted by profit desc: Manual (200 profit) first, Auto (10 profit) second
+      expect(lines[1], contains('MLK-A3B7')); // Manual SKU passed through
+      expect(lines[2], contains('0007-0153')); // 8-digit formatted
+    });
   });
 
   group('buildLaborReportCsv', () {
@@ -175,6 +198,31 @@ void main() {
       expect(lines.length, 3); // header + 2 changes
       expect(lines[1], contains('Widget (SKU-1)'));
       expect(lines[1], contains('+20.00')); // newest row's price delta
+    });
+
+    test('extracts and formats SKU from product label in CSV', () {
+      final rows = priceChangeRowsInRange([
+        PriceChangeEntry(
+            id: 'a',
+            productId: 'p1',
+            price: 120,
+            cost: 70,
+            changedAt: DateTime(2026, 6, 10, 9),
+            changedBy: 'u1'),
+        PriceChangeEntry(
+            id: 'b',
+            productId: 'p2',
+            price: 100,
+            cost: 60,
+            changedAt: DateTime(2026, 6, 1, 9),
+            changedBy: 'u1'),
+      ]);
+      final csv = buildPriceChangeReportCsv(rows,
+          {'p1': 'Brake Shoe (00070153)', 'p2': 'Coupling (MLK-A3B7)'});
+      final lines = csv.trim().split('\n');
+      // SKU column should contain formatted 8-digit codes and pass-through SKUs
+      expect(lines[1], contains('0007-0153')); // 8-digit formatted
+      expect(lines[2], contains('MLK-A3B7')); // Manual SKU passed through
     });
   });
 

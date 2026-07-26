@@ -27,6 +27,26 @@ void main() {
     createdByName: 'Admin',
   );
 
+  test('auto-SKU items display with the leading-zero-safe hyphen (Excel guard)',
+      () {
+    final autoPo = po.copyWith(
+      items: const [
+        PurchaseOrderItemEntity(
+          id: 'p2',
+          productId: 'p2',
+          sku: '00070153',
+          name: 'Oil Filter',
+          quantity: 2,
+          unit: 'pcs',
+          unitCost: 30,
+          costCode: 'NBF',
+        ),
+      ],
+    );
+    final lines = buildPurchaseOrderCsv(autoPo).trim().split('\n');
+    expect(lines[5], '0007-0153,Oil Filter,2,pcs');
+  });
+
   test('builds header block and item rows without costs', () {
     final lines = buildPurchaseOrderCsv(po).trim().split('\n');
     expect(lines[0], 'Purchase Order,PO-20260703-001');

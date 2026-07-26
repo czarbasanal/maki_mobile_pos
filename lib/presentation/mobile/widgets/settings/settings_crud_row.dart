@@ -19,6 +19,7 @@ class SettingsCrudRow extends StatelessWidget {
     this.onToggleActive,
     this.onDelete,
     this.leadingIcon,
+    this.badge,
   });
 
   final String name;
@@ -36,6 +37,10 @@ class SettingsCrudRow extends StatelessWidget {
   /// When non-null, a neutral glyph tile is shown before the title (mechanics
   /// use `wrench`; category rows have none).
   final IconData? leadingIcon;
+
+  /// When non-null, a small read-only rounded chip is rendered after the name
+  /// with RobotoMono text and neutral tint background.
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -71,18 +76,46 @@ class SettingsCrudRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isActive
-                          ? theme.colorScheme.onSurface
-                          : inactiveText,
-                      decoration:
-                          isActive ? null : TextDecoration.lineThrough,
-                      decorationColor: inactiveText,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: isActive
+                                ? theme.colorScheme.onSurface
+                                : inactiveText,
+                            decoration:
+                                isActive ? null : TextDecoration.lineThrough,
+                            decorationColor: inactiveText,
+                          ),
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: tileBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            badge!,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontFamily: AppTextStyles.monoFontFamily,
+                              color: muted,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   if (!isActive) ...[
                     const SizedBox(height: 1),

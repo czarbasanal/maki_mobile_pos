@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -7,16 +8,20 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/category_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/cost_code_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/product_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
+import 'package:maki_mobile_pos/domain/repositories/category_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/product_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_image_uploader.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cost_code_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dropdown.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/services/product_image_storage_service.dart';
 
@@ -24,6 +29,8 @@ class _MockProductRepository extends Mock implements ProductRepository {}
 
 class _MockActivityLogRepository extends Mock
     implements ActivityLogRepository {}
+
+class _MockCategoryRepository extends Mock implements CategoryRepository {}
 
 class _FakeProductEntity extends Fake implements ProductEntity {}
 
@@ -294,6 +301,37 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
+  // Same as pumpCreate, but with product categories (and their code repo)
+  // wired up, for the category-coded auto-SKU tests below.
+  Future<void> pumpCreateWithCategories(
+    WidgetTester tester,
+    UserRole role,
+    List<CategoryEntity> categories,
+    CategoryRepository categoryRepo,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWith((ref) => Stream.value(user(role))),
+          productRepositoryProvider.overrideWith((ref) => repo),
+          activityLogRepositoryProvider.overrideWith((ref) => logRepo),
+          productImageStorageServiceProvider.overrideWithValue(storage),
+          costCodeMappingProvider
+              .overrideWith((ref) => CostCodeEntity.defaultMapping()),
+          activeCategoriesProvider(CategoryKind.product)
+              .overrideWith((ref) => Stream.value(categories)),
+          categoryRepositoryProvider(CategoryKind.product)
+              .overrideWith((ref) => categoryRepo),
+        ],
+        child: const MaterialApp(home: ProductFormScreen()),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+  }
+
   group('ProductFormScreen — bundle 04 layout', () {
     testWidgets('groups fields under uppercase section headers',
         (tester) async {
@@ -334,6 +372,150 @@ void main() {
       expect(find.text('Audit info'), findsNothing);
       // Price-history link shows for any admin on edit (no cost-eye gate).
       expect(find.text('View price history'), findsOneWidget);
+    });
+  });
+
+  group('ProductFormScreen — category-coded auto-SKU (create)', () {
+    CategoryEntity cat(String name, {String? code}) => CategoryEntity(
+          id: 'cat-$name',
+          name: name,
+          isActive: true,
+          code: code,
+          createdAt: DateTime(2024, 1, 1),
+        );
+
+    late _MockCategoryRepository categoryRepo;
+
+    setUp(() {
+      categoryRepo = _MockCategoryRepository();
+      when(() => categoryRepo.peekNextSequence('0007'))
+          .thenAnswer((_) async => 1);
+      when(() => categoryRepo.peekNextSequence('0009'))
+          .thenAnswer((_) async => 5);
+    });
+
+    // Auto-generate SKU defaults ON for new products, so selecting a
+    // category is enough to trigger the peek — no switch toggle needed.
+    Future<void> selectCategory(WidgetTester tester, String name) async {
+      await tester
+          .tap(find.widgetWithText(AppDropdown<String>, 'Category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(name).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('selecting a coded category fills the peeked SKU',
+        (tester) async {
+      await pumpCreateWithCategories(
+        tester,
+        UserRole.admin,
+        [cat('Bolts', code: '0007'), cat('Filters', code: '0009')],
+        categoryRepo,
+      );
+
+      await selectCategory(tester, 'Bolts');
+
+      expect(skuField(tester).controller!.text, '00070001');
+    });
+
+    testWidgets('switching to a second coded category re-peeks',
+        (tester) async {
+      await pumpCreateWithCategories(
+        tester,
+        UserRole.admin,
+        [cat('Bolts', code: '0007'), cat('Filters', code: '0009')],
+        categoryRepo,
+      );
+
+      await selectCategory(tester, 'Bolts');
+      expect(skuField(tester).controller!.text, '00070001');
+
+      await selectCategory(tester, 'Filters');
+      expect(skuField(tester).controller!.text, '00090005');
+    });
+
+    testWidgets('selecting a code-less category falls back to name-based SKU',
+        (tester) async {
+      await pumpCreateWithCategories(
+        tester,
+        UserRole.admin,
+        [cat('Bolts', code: '0007'), cat('Misc')],
+        categoryRepo,
+      );
+
+      await selectCategory(tester, 'Misc');
+
+      expect(skuField(tester).controller!.text, contains('-'));
+    });
+
+    testWidgets(
+        'manual typing over the SKU field survives an unrelated rebuild',
+        (tester) async {
+      await pumpCreateWithCategories(
+        tester,
+        UserRole.admin,
+        [cat('Bolts', code: '0007')],
+        categoryRepo,
+      );
+
+      await selectCategory(tester, 'Bolts');
+      expect(skuField(tester).controller!.text, '00070001');
+
+      // Flip to manual mode (this is also what enables direct edits — the
+      // SKU field is disabled while auto-generate drives it) and type a
+      // value of the user's own choosing.
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+      await tester.enterText(find.byKey(_kSkuFieldKey), 'MANUAL-1');
+      await tester.pump();
+
+      // Unrelated rebuild: editing price triggers a setState via the
+      // _onPriceOrCostChanged listener, unrelated to category/SKU state.
+      await tester.enterText(
+          find.byKey(const Key('product-price-field')), '99');
+      await tester.pump();
+
+      expect(skuField(tester).controller!.text, 'MANUAL-1');
+    });
+
+    testWidgets(
+        'toggling auto-generate OFF cancels a stalled peekNextSequence',
+        (tester) async {
+      // Make peekNextSequence hang so we can toggle the switch while it's
+      // in flight.
+      final peekCompleter = Completer<int>();
+      when(() => categoryRepo.peekNextSequence('0007'))
+          .thenAnswer((_) => peekCompleter.future);
+
+      await pumpCreateWithCategories(
+        tester,
+        UserRole.admin,
+        [cat('Bolts', code: '0007')],
+        categoryRepo,
+      );
+
+      // Select the category — this starts a peek that will hang.
+      await selectCategory(tester, 'Bolts');
+      // The SKU field is disabled while auto-generate is ON, so it shouldn't
+      // show the peeked value yet (and can't be edited).
+      expect(skuField(tester).enabled, isFalse);
+
+      // Toggle auto-generate OFF (this is also what enables direct edits).
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+
+      // Now manually type a SKU while the peek is still in flight.
+      await tester.enterText(find.byKey(_kSkuFieldKey), 'MANUAL-1');
+      await tester.pump();
+      expect(skuField(tester).controller!.text, 'MANUAL-1');
+
+      // Complete the stalled peek — it should be ignored because
+      // auto-generate is now OFF.
+      peekCompleter.complete(1);
+      await tester.pump();
+
+      // The field should still read MANUAL-1, not the peeked SKU.
+      expect(skuField(tester).controller!.text, 'MANUAL-1');
     });
   });
 }

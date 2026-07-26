@@ -4,6 +4,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import type { Product } from '@/domain/entities';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
+import { matchesAutoPattern } from '@/domain/products/sku';
 import { uploadProductImage, deleteProductImage } from '@/infrastructure/firebase/productImageStorage';
 
 export interface UpdateProductInput {
@@ -145,6 +146,11 @@ export interface CreateProductInput {
   category: string | null;
   notes: string | null;
   imageBlob?: Blob | null;
+  /** Set when a coded category drove the SKU field; relied on by the create
+   *  transaction's peek-then-claim scan (see FirestoreProductRepository.create).
+   *  Ignored (falls back to the plain manual path) unless `sku` still matches
+   *  that code's auto pattern. */
+  autoSkuCategoryCode?: string;
 }
 
 export function useCreateProduct() {
@@ -154,7 +160,14 @@ export function useCreateProduct() {
   return useMutation<Product, Error, CreateProductInput>({
     mutationFn: async (input) => {
       if (!actor) throw new Error('Not signed in');
-      if (await repo.skuExists(input.sku)) {
+      const autoMode =
+        input.autoSkuCategoryCode !== undefined &&
+        matchesAutoPattern(input.sku, input.autoSkuCategoryCode);
+      // The auto path relies on the create transaction's own claim-read scan
+      // (it may advance past `input.sku`) — a pre-check here would just be a
+      // stale, redundant read. Manual SKUs still get the pre-check so the
+      // form can surface a duplicate-SKU error before attempting the write.
+      if (!autoMode && (await repo.skuExists(input.sku))) {
         throw new Error('A product with this SKU already exists');
       }
       for (const code of input.barcodes) {
@@ -163,7 +176,7 @@ export function useCreateProduct() {
         }
       }
       const actorName = actor.displayName.trim() || null;
-      const { imageBlob, ...fields } = input;
+      const { imageBlob, autoSkuCategoryCode, ...fields } = input;
       const created = await repo.create(
         {
           ...fields,
@@ -177,6 +190,7 @@ export function useCreateProduct() {
           imageUrl: null,
         } as ProductCreateInput,
         actor.id,
+        autoMode ? autoSkuCategoryCode : undefined,
       );
       if (imageBlob) {
         try {

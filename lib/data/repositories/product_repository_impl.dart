@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
@@ -21,6 +23,13 @@ class ProductRepositoryImpl implements ProductRepository {
 
   CollectionReference<Map<String, dynamic>> get _barcodesRef =>
       _firestore.collection(FirestoreCollections.productBarcodes);
+
+  CollectionReference<Map<String, dynamic>> get _categoryCodesRef =>
+      _firestore.collection(FirestoreCollections.categoryCodes);
+
+  /// Cap on claim-read scan attempts inside the auto-SKU candidate loop
+  /// (see [createProduct]'s `autoSkuCategoryCode` path).
+  static const int _autoSkuScanCap = 25;
 
   /// The set of claimable barcode keys for a product: trim → drop empty → dedupe.
   /// When [validate], rejects a non-empty code that can't form a claim doc-id.
@@ -47,6 +56,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required ProductEntity product,
     required String createdBy,
     String? createdByName,
+    String? autoSkuCategoryCode,
   }) async {
     try {
       // The SKU becomes a product_skus claim doc-id (key = normalizeSku(sku)).
@@ -63,46 +73,147 @@ class ProductRepositoryImpl implements ProductRepository {
         );
       }
 
+      // Auto-SKU only kicks in when a category code was supplied AND the
+      // caller's SKU actually matches that code's auto pattern — anything
+      // else (null code, or a manual override sku) is the manual path,
+      // byte-identical to a plain create.
+      final autoMode = autoSkuCategoryCode != null &&
+          SkuGenerator.matchesAutoPattern(product.sku, autoSkuCategoryCode);
+      final registryRef =
+          autoMode ? _categoryCodesRef.doc(autoSkuCategoryCode) : null;
+
       // Claimable barcode keys (optional, trimmed, deduped, validated).
       final barcodeKeys = _barcodeKeys(product.barcodes, validate: true);
 
-      final productModel = ProductModel.fromEntity(product);
       final docRef = _productsRef.doc(); // pre-allocate id for the transaction
-      final claimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
       final barcodeRefs = barcodeKeys.map(_barcodesRef.doc).toList();
+
+      // The final sku/claim ref are resolved inside the transaction (the
+      // auto path may scan past product.sku); captured here so the code after
+      // the transaction (return value, price history) can see the result.
+      var finalSku = product.sku;
 
       // Atomically reserve the SKU + barcode claims and write the product
       // together. Reads precede writes (Firestore transaction rule); the tx.get
       // gates + auto-retry close the TOCTOU the old exists()-then-write left open.
       await _firestore.runTransaction((tx) async {
-        final claim = await tx.get(claimRef);
-        final barcodeClaims = [for (final ref in barcodeRefs) await tx.get(ref)];
-        if (claim.exists) {
-          throw DuplicateSkuException(sku: product.sku);
-        }
-        for (var i = 0; i < barcodeClaims.length; i++) {
-          if (barcodeClaims[i].exists) {
-            throw DuplicateBarcodeException(barcode: barcodeRefs[i].id);
+        finalSku = product.sku;
+        var claimRef = _skusRef.doc(SkuGenerator.normalizeSku(product.sku));
+
+        if (autoMode) {
+          final registrySnap = await tx.get(registryRef!);
+          if (!registrySnap.exists) {
+            throw DatabaseException(
+              message: 'Unknown category code "$autoSkuCategoryCode"',
+              code: 'unknown-category-code',
+            );
           }
-        }
-        tx.set(
-          docRef,
-          productModel.toCreateMap(createdBy,
-              createdByDisplayName: createdByName),
-        );
-        tx.set(claimRef, {
-          'sku': product.sku,
-          'productId': docRef.id,
-          'claimedBy': createdBy,
-          'claimedAt': FieldValue.serverTimestamp(),
-        });
-        for (final ref in barcodeRefs) {
-          tx.set(ref, {
-            'barcode': ref.id,
+          final registryNext =
+              (registrySnap.data()?['nextSequence'] as int?) ?? 1;
+          var candidate = math.max(
+            SkuGenerator.sequenceOf(product.sku),
+            registryNext,
+          );
+
+          var attempts = 0;
+          while (true) {
+            attempts++;
+            if (attempts > _autoSkuScanCap) {
+              throw const DatabaseException(
+                message:
+                    'Could not find a free auto-SKU sequence after '
+                    '$_autoSkuScanCap attempts',
+                code: 'sku-scan-exhausted',
+              );
+            }
+            // Must run before composeAutoSku: its `sequence <= 9999` assert is
+            // stripped in release builds, so an out-of-range candidate would
+            // otherwise silently mint a malformed (>8-digit) SKU instead of
+            // failing loudly.
+            if (candidate > 9999) {
+              throw ValidationException(
+                code: 'category-full',
+                message:
+                    'Category is full — split it into two categories.',
+              );
+            }
+            finalSku = SkuGenerator.composeAutoSku(
+              autoSkuCategoryCode,
+              candidate,
+            );
+            claimRef = _skusRef.doc(SkuGenerator.normalizeSku(finalSku));
+            final candidateClaim = await tx.get(claimRef);
+            if (!candidateClaim.exists) break;
+            candidate++;
+          }
+
+          final barcodeClaims = [
+            for (final ref in barcodeRefs) await tx.get(ref)
+          ];
+          for (var i = 0; i < barcodeClaims.length; i++) {
+            if (barcodeClaims[i].exists) {
+              throw DuplicateBarcodeException(barcode: barcodeRefs[i].id);
+            }
+          }
+
+          final productModel =
+              ProductModel.fromEntity(product.copyWith(sku: finalSku));
+          tx.set(
+            docRef,
+            productModel.toCreateMap(createdBy,
+                createdByDisplayName: createdByName),
+          );
+          tx.set(claimRef, {
+            'sku': finalSku,
             'productId': docRef.id,
             'claimedBy': createdBy,
             'claimedAt': FieldValue.serverTimestamp(),
           });
+          for (final ref in barcodeRefs) {
+            tx.set(ref, {
+              'barcode': ref.id,
+              'productId': docRef.id,
+              'claimedBy': createdBy,
+              'claimedAt': FieldValue.serverTimestamp(),
+            });
+          }
+          // Targeted update of only nextSequence — leaves categoryId/
+          // nameSnapshot/assignedAt untouched.
+          tx.update(registryRef, {'nextSequence': candidate + 1});
+        } else {
+          final claim = await tx.get(claimRef);
+          final barcodeClaims = [
+            for (final ref in barcodeRefs) await tx.get(ref)
+          ];
+          if (claim.exists) {
+            throw DuplicateSkuException(sku: product.sku);
+          }
+          for (var i = 0; i < barcodeClaims.length; i++) {
+            if (barcodeClaims[i].exists) {
+              throw DuplicateBarcodeException(barcode: barcodeRefs[i].id);
+            }
+          }
+
+          final productModel = ProductModel.fromEntity(product);
+          tx.set(
+            docRef,
+            productModel.toCreateMap(createdBy,
+                createdByDisplayName: createdByName),
+          );
+          tx.set(claimRef, {
+            'sku': product.sku,
+            'productId': docRef.id,
+            'claimedBy': createdBy,
+            'claimedAt': FieldValue.serverTimestamp(),
+          });
+          for (final ref in barcodeRefs) {
+            tx.set(ref, {
+              'barcode': ref.id,
+              'productId': docRef.id,
+              'claimedBy': createdBy,
+              'claimedAt': FieldValue.serverTimestamp(),
+            });
+          }
         }
       });
 
@@ -120,7 +231,7 @@ class ProductRepositoryImpl implements ProductRepository {
         // Swallowed by design.
       }
 
-      return product.copyWith(id: docRef.id);
+      return product.copyWith(id: docRef.id, sku: finalSku);
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to create product: ${e.message}',

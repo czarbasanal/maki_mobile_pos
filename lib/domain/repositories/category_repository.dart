@@ -15,9 +15,16 @@ abstract class CategoryRepository {
   Future<CategoryEntity?> getCategoryById(String categoryId);
 
   /// Creates a category. Returns the persisted entity with its assigned ID.
+  ///
+  /// When [assignCode], the create runs inside a transaction that also
+  /// claims the next sequential 4-digit Code128 category code (see
+  /// `category_codes/_counter` + registry docs) and stamps it onto the
+  /// created category. Callers that don't need auto-SKU codes (e.g. expense
+  /// categories) leave this false, which keeps the original plain-add path.
   Future<CategoryEntity> createCategory({
     required CategoryEntity category,
     required String createdBy,
+    bool assignCode = false,
   });
 
   /// Updates an existing category.
@@ -43,4 +50,13 @@ abstract class CategoryRepository {
     required String name,
     String? excludeCategoryId,
   });
+
+  /// Plain (non-claiming) read of a Code128 category-code registry doc's
+  /// `nextSequence` — lets a form preview the next candidate SKU without
+  /// reserving it. The actual claim happens later, inside the product-create
+  /// transaction (see `ProductRepository.createProduct`'s `autoSkuCategoryCode`).
+  ///
+  /// Throws [DatabaseException] (code `unknown-category-code`) if no registry
+  /// doc exists for [categoryCode].
+  Future<int> peekNextSequence(String categoryCode);
 }

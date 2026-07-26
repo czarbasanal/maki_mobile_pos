@@ -6,6 +6,7 @@ class CategoryModel {
   final String id;
   final String name;
   final bool isActive;
+  final String? code;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final String? createdBy;
@@ -19,6 +20,7 @@ class CategoryModel {
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
+    this.code,
   });
 
   factory CategoryModel.fromFirestore(
@@ -33,6 +35,7 @@ class CategoryModel {
       id: documentId,
       name: map['name'] as String? ?? '',
       isActive: map['isActive'] as bool? ?? true,
+      code: map['code'] as String?,
       createdAt: _parseTimestamp(map['createdAt']) ?? DateTime.now(),
       updatedAt: _parseTimestamp(map['updatedAt']),
       createdBy: map['createdBy'] as String?,
@@ -48,6 +51,11 @@ class CategoryModel {
       'name': name,
       'isActive': isActive,
     };
+
+    // Include code only if non-null (but NOT for updates, since codes are immutable)
+    if (!forUpdate && code != null) {
+      map['code'] = code;
+    }
 
     if (forCreate) {
       map['createdAt'] = FieldValue.serverTimestamp();
@@ -82,6 +90,7 @@ class CategoryModel {
       id: id,
       name: name,
       isActive: isActive,
+      code: code,
       createdAt: createdAt,
       updatedAt: updatedAt,
       createdBy: createdBy,
@@ -94,6 +103,7 @@ class CategoryModel {
       id: entity.id,
       name: entity.name,
       isActive: entity.isActive,
+      code: entity.code,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       createdBy: entity.createdBy,
@@ -109,6 +119,7 @@ class CategoryModel {
     DateTime? updatedAt,
     String? createdBy,
     String? updatedBy,
+    String? code,
   }) {
     return CategoryModel(
       id: id ?? this.id,
@@ -118,6 +129,7 @@ class CategoryModel {
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
       updatedBy: updatedBy ?? this.updatedBy,
+      code: code ?? this.code,
     );
   }
 

@@ -13,13 +13,27 @@ abstract class ProductRepository {
   /// [createdBy] - The ID of the user creating the product
   /// [createdByName] - Display name of the creator (denormalized so non-admin
   /// viewers can read the audit info without `users/{uid}` access).
+  /// [autoSkuCategoryCode] - When non-null and `product.sku` matches the
+  /// auto-SKU pattern for this code (see `SkuGenerator.matchesAutoPattern`),
+  /// the transaction re-derives the final sequence from the live registry
+  /// (peek-then-claim: `max(sequenceOf(product.sku), registry.nextSequence)`,
+  /// scanning forward past any already-claimed candidates) instead of trusting
+  /// the caller's peeked SKU byte-for-byte — closing the TOCTOU window between
+  /// a form's peek and this write. Null, or a `product.sku` that doesn't match
+  /// the pattern, is the manual path: byte-identical to a plain create.
   ///
-  /// Returns the created product with populated ID.
-  /// Throws [DuplicateSkuException] if SKU already exists.
+  /// Returns the created product with populated ID (and, for the auto path,
+  /// the FINAL claimed SKU — which may differ from `product.sku`).
+  /// Throws [DuplicateSkuException] if SKU already exists (manual path only).
+  /// Throws [ValidationException] (code `category-full`) if the auto path
+  /// scans past sequence 9999.
+  /// Throws [DatabaseException] (code `sku-scan-exhausted`) if the auto path
+  /// can't find a free sequence within 25 read attempts.
   Future<ProductEntity> createProduct({
     required ProductEntity product,
     required String createdBy,
     String? createdByName,
+    String? autoSkuCategoryCode,
   });
 
   // ==================== READ ====================

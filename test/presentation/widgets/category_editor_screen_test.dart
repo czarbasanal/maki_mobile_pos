@@ -126,4 +126,79 @@ void main() {
 
     expect(find.byIcon(LucideIcons.moreVertical), findsOneWidget);
   });
+
+  testWidgets(
+      'product-kind category with code renders badge chip with RobotoMono',
+      (tester) async {
+    final override =
+        allCategoriesProvider(CategoryKind.product).overrideWith(
+      (ref) => Stream.value([
+        CategoryEntity(
+          id: '1',
+          name: 'Brakes',
+          isActive: true,
+          createdAt: DateTime(2026, 1, 1),
+          code: '0007',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        override,
+        currentUserProvider
+            .overrideWith((ref) => Stream.value(currentUser(UserRole.admin))),
+      ],
+      child: const MaterialApp(
+        home: CategoryEditorScreen(kind: CategoryKind.product),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // Verify badge text exists with RobotoMono font
+    final textFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is Text &&
+          widget.data == '0007' &&
+          (widget.style?.fontFamily ?? '').contains('RobotoMono'),
+    );
+    expect(textFinder, findsOneWidget);
+  });
+
+  testWidgets('product-kind category without code renders no badge',
+      (tester) async {
+    final override =
+        allCategoriesProvider(CategoryKind.product).overrideWith(
+      (ref) => Stream.value([
+        CategoryEntity(
+          id: '1',
+          name: 'Brakes',
+          isActive: true,
+          createdAt: DateTime(2026, 1, 1),
+          code: null,
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        override,
+        currentUserProvider
+            .overrideWith((ref) => Stream.value(currentUser(UserRole.admin))),
+      ],
+      child: const MaterialApp(
+        home: CategoryEditorScreen(kind: CategoryKind.product),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // Verify no badge text exists
+    final textFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is Text &&
+          (widget.data?.contains(RegExp(r'^\d{4}$')) ?? false) &&
+          (widget.style?.fontFamily ?? '').contains('RobotoMono'),
+    );
+    expect(textFinder, findsNothing);
+  });
 }

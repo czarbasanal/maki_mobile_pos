@@ -1,5 +1,6 @@
 import 'package:csv/csv.dart';
 import 'package:maki_mobile_pos/core/extensions/datetime_extensions.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/purchase_order_entity.dart';
 
 const _converter = ListToCsvConverter(eol: '\n');
@@ -13,7 +14,8 @@ String buildPurchaseOrderCsv(PurchaseOrderEntity po) {
     ['Date', po.createdAt.toIsoDate()],
     [],
     ['SKU', 'Name', 'Qty', 'Unit'],
-    for (final item in po.items) [item.sku, item.name, item.quantity, item.unit],
+    for (final item in po.items)
+      [SkuGenerator.displaySku(item.sku), item.name, item.quantity, item.unit],
   ];
   return '${_converter.convert(rows)}\n';
 }

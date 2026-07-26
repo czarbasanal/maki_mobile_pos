@@ -28,6 +28,7 @@ export const categoryConverter: FirestoreDataConverter<Category> = {
       updatedAt: toDate(d.updatedAt),
       createdBy: d.createdBy ?? null,
       updatedBy: d.updatedBy ?? null,
+      code: d.code ?? undefined,
     };
   },
 };

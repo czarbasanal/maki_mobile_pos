@@ -126,4 +126,88 @@ void main() {
       expect(SkuGenerator.isValidSku('ABC_123'), isFalse);
     });
   });
+
+  group('Code128 auto-SKU format', () {
+    test('composeAutoSku pads category code to 4 digits then appends sequence',
+        () {
+      expect(SkuGenerator.composeAutoSku('0007', 153), '00070153');
+      expect(SkuGenerator.composeAutoSku('0001', 1), '00010001');
+      expect(SkuGenerator.composeAutoSku('1234', 9999), '12349999');
+    });
+
+    test('composeAutoSku asserts code is exactly 4 digits', () {
+      expect(
+        () => SkuGenerator.composeAutoSku('007', 1),
+        throwsAssertionError,
+      );
+      expect(
+        () => SkuGenerator.composeAutoSku('00070', 1),
+        throwsAssertionError,
+      );
+      expect(
+        () => SkuGenerator.composeAutoSku('ABCD', 1),
+        throwsAssertionError,
+      );
+    });
+
+    test('composeAutoSku asserts sequence is 1..9999', () {
+      expect(
+        () => SkuGenerator.composeAutoSku('0007', 0),
+        throwsAssertionError,
+      );
+      expect(
+        () => SkuGenerator.composeAutoSku('0007', 10000),
+        throwsAssertionError,
+      );
+    });
+
+    test('matchesAutoPattern checks 8 digits and starts with code', () {
+      expect(SkuGenerator.matchesAutoPattern('00070153', '0007'), isTrue);
+      expect(SkuGenerator.matchesAutoPattern('00010001', '0001'), isTrue);
+    });
+
+    test('matchesAutoPattern rejects wrong length', () {
+      expect(SkuGenerator.matchesAutoPattern('0007015', '0007'), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('000701530', '0007'), isFalse);
+    });
+
+    test('matchesAutoPattern rejects wrong prefix', () {
+      expect(SkuGenerator.matchesAutoPattern('00080153', '0007'), isFalse);
+    });
+
+    test('matchesAutoPattern rejects non-numeric', () {
+      expect(SkuGenerator.matchesAutoPattern('0007ABCD', '0007'), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('MLK-A3B7', '0007'), isFalse);
+    });
+
+    test('matchesAutoPattern validates categoryCode is exactly 4 digits', () {
+      expect(SkuGenerator.matchesAutoPattern('00070153', ''), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('00070153', '007'), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('00070153', '00071'), isFalse);
+      expect(SkuGenerator.matchesAutoPattern('00070153', 'ABCD'), isFalse);
+    });
+
+    test('displaySku passthrough for non-8-digit', () {
+      expect(SkuGenerator.displaySku('00070153-1'), '00070153-1');
+    });
+
+    test('sequenceOf extracts last 4 digits as int', () {
+      expect(SkuGenerator.sequenceOf('00070153'), 153);
+      expect(SkuGenerator.sequenceOf('00010001'), 1);
+      expect(SkuGenerator.sequenceOf('12349999'), 9999);
+    });
+
+    test('displaySku formats 8-digit numeric as 0007-0153', () {
+      expect(SkuGenerator.displaySku('00070153'), '0007-0153');
+      expect(SkuGenerator.displaySku('00010001'), '0001-0001');
+      expect(SkuGenerator.displaySku('12349999'), '1234-9999');
+    });
+
+    test('displaySku leaves non-8-digit or non-numeric unchanged', () {
+      expect(SkuGenerator.displaySku('MLK-A3B7'), 'MLK-A3B7');
+      expect(SkuGenerator.displaySku('0007015'), '0007015');
+      expect(SkuGenerator.displaySku('000701530'), '000701530');
+      expect(SkuGenerator.displaySku('SKU-ABCD1234'), 'SKU-ABCD1234');
+    });
+  });
 }
