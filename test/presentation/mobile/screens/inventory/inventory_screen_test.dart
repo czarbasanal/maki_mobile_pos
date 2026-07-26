@@ -105,4 +105,47 @@ void main() {
     await _pump(tester);
     expect(find.byType(PopupMenuButton<String>), findsOneWidget);
   });
+
+  testWidgets('formats 8-digit numeric SKU as XXXX-XXXX in product row',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final products = [
+      ProductEntity(
+        id: 'auto-1',
+        sku: '00070153',
+        name: 'Auto Generated SKU',
+        costCode: 'NBF',
+        cost: 60.0,
+        price: 100.0,
+        quantity: 50,
+        reorderLevel: 10,
+        unit: 'pcs',
+        isActive: true,
+        createdAt: DateTime(2026, 1, 1),
+        category: 'Brakes',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          productsProvider.overrideWith((ref) => Stream.value(products)),
+          currentUserProvider.overrideWith((ref) => Stream.value(_admin)),
+          activeCategoriesProvider(CategoryKind.product)
+              .overrideWith((ref) => Stream.value(const [])),
+          costCodeMappingProvider
+              .overrideWith((ref) => CostCodeEntity.defaultMapping()),
+        ],
+        child: const MaterialApp(home: InventoryScreen()),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+
+    // Verify formatted SKU is displayed
+    expect(find.text('0007-0153'), findsOneWidget);
+    expect(find.text('00070153'), findsNothing); // raw SKU should not be shown
+  });
 }

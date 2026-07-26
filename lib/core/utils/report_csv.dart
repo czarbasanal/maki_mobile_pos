@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/utils/labor_report.dart';
 import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
 import 'package:maki_mobile_pos/core/utils/motorcycle_model_report.dart';
 import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 
@@ -78,7 +79,7 @@ String buildProfitReportCsv(List<ProductSalesData> products) {
     profit += p.totalProfit;
     rows.add([
       p.name,
-      p.sku,
+      SkuGenerator.displaySku(p.sku),
       p.quantitySold,
       p.totalRevenue.toStringAsFixed(2),
       p.totalCost.toStringAsFixed(2),
@@ -152,6 +153,13 @@ String buildMechanicPerformanceReportCsv(MechanicPerformanceReportData report) {
 
 String _signed(double v) => (v >= 0 ? '+' : '') + v.toStringAsFixed(2);
 
+/// Extracts the SKU from a product label in the format "Name (SKU)".
+/// Returns empty string if the label doesn't contain parentheses.
+String _extractSkuFromLabel(String label) {
+  final match = RegExp(r'\(([^)]+)\)$').firstMatch(label);
+  return match?.group(1) ?? '';
+}
+
 /// Change log: one row per price/cost change, newest-first (as [rows] arrive).
 /// [productLabelById] maps productId -> "Name (SKU)"; a missing product falls
 /// back to the id. No TOTAL row (a change log has no meaningful column totals).
@@ -168,10 +176,13 @@ String buildPriceChangeReportCsv(
   ];
   for (final r in rows) {
     final e = r.entry;
+    final label = productLabelById[e.productId] ?? e.productId;
+    final extractedSku = _extractSkuFromLabel(label);
+    final displayedSku = SkuGenerator.displaySku(extractedSku);
     out.add([
       fmt.format(e.changedAt),
-      productLabelById[e.productId] ?? e.productId,
-      '',
+      label,
+      displayedSku,
       e.price.toStringAsFixed(2),
       r.hasPrior ? _signed(r.priceDelta) : '',
       e.cost.toStringAsFixed(2),
