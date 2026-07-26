@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -474,6 +475,46 @@ void main() {
           find.byKey(const Key('product-price-field')), '99');
       await tester.pump();
 
+      expect(skuField(tester).controller!.text, 'MANUAL-1');
+    });
+
+    testWidgets(
+        'toggling auto-generate OFF cancels a stalled peekNextSequence',
+        (tester) async {
+      // Make peekNextSequence hang so we can toggle the switch while it's
+      // in flight.
+      final peekCompleter = Completer<int>();
+      when(() => categoryRepo.peekNextSequence('0007'))
+          .thenAnswer((_) => peekCompleter.future);
+
+      await pumpCreateWithCategories(
+        tester,
+        UserRole.admin,
+        [cat('Bolts', code: '0007')],
+        categoryRepo,
+      );
+
+      // Select the category — this starts a peek that will hang.
+      await selectCategory(tester, 'Bolts');
+      // The SKU field is disabled while auto-generate is ON, so it shouldn't
+      // show the peeked value yet (and can't be edited).
+      expect(skuField(tester).enabled, isFalse);
+
+      // Toggle auto-generate OFF (this is also what enables direct edits).
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+
+      // Now manually type a SKU while the peek is still in flight.
+      await tester.enterText(find.byKey(_kSkuFieldKey), 'MANUAL-1');
+      await tester.pump();
+      expect(skuField(tester).controller!.text, 'MANUAL-1');
+
+      // Complete the stalled peek — it should be ignored because
+      // auto-generate is now OFF.
+      peekCompleter.complete(1);
+      await tester.pump();
+
+      // The field should still read MANUAL-1, not the peeked SKU.
       expect(skuField(tester).controller!.text, 'MANUAL-1');
     });
   });

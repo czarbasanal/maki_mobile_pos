@@ -536,12 +536,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         .read(categoryRepositoryProvider(CategoryKind.product))
         .peekNextSequence(code)
         .then((sequence) {
-      if (!mounted || token != _skuPeekToken) return;
+      if (!mounted || token != _skuPeekToken || !_autoGenerateSku) return;
       setState(() {
         _skuController.text = SkuGenerator.composeAutoSku(code, sequence);
       });
     }).catchError((_) {
-      if (!mounted || token != _skuPeekToken) return;
+      if (!mounted || token != _skuPeekToken || !_autoGenerateSku) return;
       setState(() {
         _skuController.text =
             SkuGenerator.generateForName(_nameController.text);
@@ -728,6 +728,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 value: _autoGenerateSku,
                                 onChanged: (v) {
                                   setState(() => _autoGenerateSku = v);
+                                  // Cancel any in-flight peeks when toggling.
+                                  _skuPeekToken++;
                                   if (v) {
                                     _applyCategoryForSku(
                                       _categoryEntityForName(
