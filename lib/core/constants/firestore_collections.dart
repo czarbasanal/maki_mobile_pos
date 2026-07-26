@@ -82,6 +82,13 @@ abstract class FirestoreCollections {
   /// product create / barcode edit. See docs/superpowers/specs/2026-06-18-barcode-guard-*.
   static const String productBarcodes = 'product_barcodes';
 
+  /// Category-code registry collection for Code128 auto-SKU generation. Holds
+  /// a non-numeric `_counter` doc (`{next: int}`) plus one registry doc per
+  /// assigned code (`{categoryId, nameSnapshot, assignedAt, nextSequence}`),
+  /// keyed by the 4-digit code string. See docs/superpowers/sdd/ Code128
+  /// auto-SKU spec.
+  static const String categoryCodes = 'category_codes';
+
   /// Drawer-state collection. Single doc (id `'state'`) tracking the
   /// business-day rollover: `lastSaleDay`/`lastClosedDay` (yyyymmdd ints,
   /// see [businessDayInt]), merge-written by sale creation / day closing.

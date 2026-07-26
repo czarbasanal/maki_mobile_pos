@@ -121,6 +121,7 @@ class CategoryOperationsNotifier extends StateNotifier<AsyncValue<void>> {
       final created = await _repository.createCategory(
         category: category,
         createdBy: actorId,
+        assignCode: _kind == CategoryKind.product,
       );
       state = const AsyncValue.data(null);
       return created;

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -19,6 +20,9 @@ class CategoryRepositoryImpl implements CategoryRepository {
 
   CollectionReference<Map<String, dynamic>> get _ref =>
       _firestore.collection(_collectionName);
+
+  CollectionReference<Map<String, dynamic>> get _categoryCodesRef =>
+      _firestore.collection(FirestoreCollections.categoryCodes);
 
   @override
   Stream<List<CategoryEntity>> watchCategories() {
@@ -52,6 +56,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   Future<CategoryEntity> createCategory({
     required CategoryEntity category,
     required String createdBy,
+    bool assignCode = false,
   }) async {
     try {
       if (await nameExists(name: category.name)) {
@@ -63,8 +68,43 @@ class CategoryRepositoryImpl implements CategoryRepository {
       }
 
       final model = CategoryModel.fromEntity(category);
-      final docRef = await _ref.add(model.toCreateMap(createdBy));
-      return category.copyWith(id: docRef.id, createdBy: createdBy);
+
+      if (!assignCode) {
+        final docRef = await _ref.add(model.toCreateMap(createdBy));
+        return category.copyWith(id: docRef.id, createdBy: createdBy);
+      }
+
+      // Claim the next sequential Code128 category code and write the
+      // category atomically. Reads precede writes (Firestore transaction
+      // rule) — see ProductRepositoryImpl.createProduct for the same idiom.
+      final docRef = _ref.doc(); // pre-allocate id for the transaction
+      final counterRef = _categoryCodesRef.doc('_counter');
+      var assignedCode = '';
+
+      await _firestore.runTransaction((tx) async {
+        final counterSnap = await tx.get(counterRef);
+        final next = (counterSnap.data()?['next'] as int?) ?? 1;
+        assignedCode = next.toString().padLeft(4, '0');
+        final registryRef = _categoryCodesRef.doc(assignedCode);
+
+        tx.set(docRef, {
+          ...model.toCreateMap(createdBy),
+          'code': assignedCode,
+        });
+        tx.set(registryRef, {
+          'categoryId': docRef.id,
+          'nameSnapshot': category.name,
+          'assignedAt': FieldValue.serverTimestamp(),
+          'nextSequence': 1,
+        });
+        tx.set(counterRef, {'next': next + 1});
+      });
+
+      return category.copyWith(
+        id: docRef.id,
+        createdBy: createdBy,
+        code: assignedCode,
+      );
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to create category: ${e.message}',
