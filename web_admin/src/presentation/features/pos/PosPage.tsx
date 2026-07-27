@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { describedLaborLines } from '@/domain/sales/labor';
 import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
+import { useDrafts } from '@/presentation/hooks/useDrafts';
+import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
@@ -20,6 +22,7 @@ export function PosPage() {
   const draftName = useCartStore((s) => s.draftName);
   const clear = useCartStore((s) => s.clear);
   const saveDraft = useSaveDraft();
+  const drafts = useDrafts();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -27,9 +30,23 @@ export function PosPage() {
     (location.state as { completedSaleNumber?: string } | null)?.completedSaleNumber ?? null,
   );
   const [saveOpen, setSaveOpen] = useState(false);
-  const [draftNameInput, setDraftNameInput] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
   const hasTicket = lines.length > 0 || laborLines.length > 0;
+
+  // Updating an existing Job Order keeps its current name (no renumber).
+  // A brand-new one gets the next number for today, computed from the live
+  // drafts list — while that list is still loading, `jobOrderNumber` stays
+  // null so the dialog can't confirm against a stale/empty name set (which
+  // would otherwise risk minting a number that collides with one already on
+  // the server).
+  const jobOrderNumber = useMemo(() => {
+    if (draftId) return draftName ?? '';
+    if (drafts.isLoading || !drafts.data) return null;
+    return nextJobOrderNumber(
+      new Date(),
+      drafts.data.map((d) => d.name),
+    );
+  }, [draftId, draftName, drafts.isLoading, drafts.data]);
 
   useEffect(() => {
     document.title = 'POS';
@@ -57,11 +74,10 @@ export function PosPage() {
   }, [done]);
 
   const openSave = () => {
-    setDraftNameInput(draftName ?? '');
     setSaveOpen(true);
   };
   const onSaveDraft = async () => {
-    const name = draftNameInput.trim();
+    const name = jobOrderNumber;
     if (!name) return;
     try {
       await saveDraft.mutateAsync({
@@ -131,7 +147,7 @@ export function PosPage() {
             (lines.length === 0 || saveDraft.isPending) && 'cursor-not-allowed opacity-60',
           )}
         >
-          {saveDraft.isPending ? 'Saving…' : draftId ? 'Update draft' : 'Save as draft'}
+          {saveDraft.isPending ? 'Saving…' : draftId ? 'Update Job Order' : 'Save as Job Order'}
         </button>
       </div>
 
@@ -140,21 +156,16 @@ export function PosPage() {
         onClose={() => {
           if (!saveDraft.isPending) setSaveOpen(false);
         }}
-        title={draftId ? 'Update draft' : 'Save as draft'}
+        title={draftId ? 'Update Job Order' : 'Save as Job Order'}
         dismissable={!saveDraft.isPending}
       >
         <div className="space-y-tk-md">
-          <label className="block space-y-tk-xs">
-            <span className="text-bodySmall text-light-text-secondary">Draft name</span>
-            <input
-              type="text"
-              value={draftNameInput}
-              onChange={(e) => setDraftNameInput(e.target.value)}
-              autoFocus
-              placeholder="e.g. Mr Cruz — blue Mio"
-              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
-            />
-          </label>
+          <div className="space-y-tk-xs">
+            <span className="text-bodySmall text-light-text-secondary">Job Order #</span>
+            <div className="w-full rounded-md border border-light-border bg-light-subtle px-tk-md py-tk-sm font-mono text-bodySmall text-light-text">
+              {jobOrderNumber ?? 'Computing…'}
+            </div>
+          </div>
           <div className="flex justify-end gap-tk-sm">
             <button
               type="button"
@@ -167,7 +178,7 @@ export function PosPage() {
             <button
               type="button"
               onClick={onSaveDraft}
-              disabled={saveDraft.isPending || !draftNameInput.trim()}
+              disabled={saveDraft.isPending || !jobOrderNumber}
               className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
             >
               Save
