@@ -197,7 +197,7 @@ function UsersTable({ users, myId }: { users: User[]; myId: string }) {
 
   return (
     <>
-      <div className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
+      <div className="overflow-x-auto rounded-lg border border-light-hairline bg-light-card">
         <table className="w-full text-bodySmall">
           <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
             <tr>

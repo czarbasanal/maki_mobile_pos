@@ -100,3 +100,14 @@ describe('UsersListPage — delete action', () => {
     await waitFor(() => expect(del).toHaveBeenCalledWith('u3'));
   });
 });
+
+describe('UsersListPage — table wrapper', () => {
+  it('renders the table wrapper with overflow-x-auto class', () => {
+    harness({
+      users: [me, user({ id: 'u2', displayName: 'Test User' })],
+    });
+
+    const wrapper = screen.getByRole('table').closest('div');
+    expect(wrapper).toHaveClass('overflow-x-auto');
+  });
+});

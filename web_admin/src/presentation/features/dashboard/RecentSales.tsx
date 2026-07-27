@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import {
   saleGrandTotal,
   saleIsVoided,
@@ -24,7 +25,13 @@ export function RecentSales({ sales, limit = 8 }: { sales: Sale[]; limit?: numbe
   return (
     <ul className="divide-y divide-light-hairline">
       {sales.slice(0, limit).map((sale) => (
-        <RecentSaleRow key={sale.id} sale={sale} />
+        <Link
+          key={sale.id}
+          to={`/reports/sale/${sale.id}`}
+          className="block hover:bg-light-subtle transition-colors"
+        >
+          <RecentSaleRow sale={sale} />
+        </Link>
       ))}
     </ul>
   );

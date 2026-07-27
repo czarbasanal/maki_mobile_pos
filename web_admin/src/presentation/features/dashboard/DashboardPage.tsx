@@ -48,7 +48,7 @@ export function DashboardPage() {
           <LoadingView label="Loading today's sales…" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2 lg:grid-cols-5">
           <SummaryCard
             title="Sales today"
             value={String(count)}
@@ -60,7 +60,6 @@ export function DashboardPage() {
             value={formatMoney(summary.grossAmount)}
             icon={BanknotesIcon}
             tone="yellow"
-            emphasized
           />
           <SummaryCard
             title="Total COGS"
