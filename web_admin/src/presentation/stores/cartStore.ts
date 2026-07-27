@@ -16,6 +16,9 @@ interface CartState {
   mechanicName: string | null;
   draftId: string | null;
   draftName: string | null;
+  // Optional sale/JO notes — restored on draft resume, carried onto the sale
+  // at checkout (mobile parity). Null means "no notes", never ''.
+  notes: string | null;
   addLine: (product: Product) => void;
   setQty: (productId: string, quantity: number) => void;
   setLineDiscount: (productId: string, discountValue: number) => void;
@@ -25,6 +28,7 @@ interface CartState {
   setLaborLine: (id: string, patch: Partial<Pick<LaborLine, 'description' | 'fee'>>) => void;
   removeLaborLine: (id: string) => void;
   setMechanic: (id: string | null, name: string | null) => void;
+  setNotes: (notes: string | null) => void;
   loadDraft: (draft: Draft) => void;
   clear: () => void;
 }
@@ -39,6 +43,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     mechanicName: null,
     draftId: null,
     draftName: null,
+    notes: null,
     addLine: (product) =>
       set((s) => {
         if (s.lines.some((l) => l.productId === product.id)) {
@@ -96,6 +101,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     removeLaborLine: (id) =>
       set((s) => ({ laborLines: s.laborLines.filter((l) => l.id !== id) })),
     setMechanic: (id, name) => set({ mechanicId: id, mechanicName: name }),
+    setNotes: (notes) => set({ notes }),
     loadDraft: (draft) =>
       set({
         lines: draft.items,
@@ -106,6 +112,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         mechanicName: draft.mechanicName,
         draftId: draft.id,
         draftName: draft.name,
+        notes: draft.notes,
       }),
     clear: () =>
       set({
@@ -117,6 +124,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         mechanicName: null,
         draftId: null,
         draftName: null,
+        notes: null,
       }),
   }));
 }

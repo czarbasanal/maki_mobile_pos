@@ -20,6 +20,7 @@ export function PosPage() {
   const mechanicName = useCartStore((s) => s.mechanicName);
   const draftId = useCartStore((s) => s.draftId);
   const draftName = useCartStore((s) => s.draftName);
+  const notes = useCartStore((s) => s.notes);
   const clear = useCartStore((s) => s.clear);
   const saveDraft = useSaveDraft();
   const drafts = useDrafts();
@@ -89,6 +90,7 @@ export function PosPage() {
         feeLines,
         mechanicId,
         mechanicName,
+        notes,
       });
       setSaveOpen(false);
       clear();

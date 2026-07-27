@@ -25,6 +25,7 @@ export function JobOrderEditPage() {
   const feeLines = useDraftEditStore((s) => s.feeLines);
   const mechanicId = useDraftEditStore((s) => s.mechanicId);
   const mechanicName = useDraftEditStore((s) => s.mechanicName);
+  const notes = useDraftEditStore((s) => s.notes);
 
   const [name, setName] = useState('');
   const hydratedId = useRef<string | null>(null);
@@ -73,6 +74,7 @@ export function JobOrderEditPage() {
         feeLines,
         mechanicId,
         mechanicName,
+        notes: (notes ?? '').trim() || null,
       });
       navigate(RoutePaths.jobOrders);
     } catch {

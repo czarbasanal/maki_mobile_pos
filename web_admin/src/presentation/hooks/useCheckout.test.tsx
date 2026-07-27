@@ -36,6 +36,7 @@ const checkoutInput: CheckoutInput = {
   mechanicId: null,
   mechanicName: null,
   draftId: null,
+  notes: null,
 };
 
 function makeSale(overrides: Partial<Sale> = {}): Sale {

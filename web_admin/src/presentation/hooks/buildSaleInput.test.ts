@@ -36,10 +36,16 @@ const input = (over: Partial<CheckoutInput> = {}): CheckoutInput => ({
   mechanicId: null,
   mechanicName: null,
   draftId: null,
+  notes: null,
   ...over,
 });
 
 describe('buildSaleInput', () => {
+  it('carries cart notes onto the sale (JO-resumed carts bill out with their notes)', () => {
+    expect(buildSaleInput(input({ notes: 'rush job' }), actor()).notes).toBe('rush job');
+    expect(buildSaleInput(input(), actor()).notes).toBeNull();
+  });
+
   it('carries the payment method + tenders through verbatim', () => {
     const s = buildSaleInput(
       input({ paymentMethod: PaymentMethod.mixed, tenders: { cash: 300, gcash: 700 } }),

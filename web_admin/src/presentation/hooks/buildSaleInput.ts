@@ -21,6 +21,9 @@ export interface CheckoutInput {
   mechanicId: string | null;
   mechanicName: string | null;
   draftId: string | null;
+  // Cart notes (typed at JO save or restored on resume) ride onto the sale —
+  // mobile's toSale() does the same.
+  notes: string | null;
 }
 
 /** Compose the create-payload for a completed sale from cashier input + actor.
@@ -46,7 +49,7 @@ export function buildSaleInput(
     cashierId: actor.id,
     cashierName,
     draftId: input.draftId,
-    notes: null,
+    notes: input.notes,
     voidedAt: null,
     voidedBy: null,
     voidedByName: null,

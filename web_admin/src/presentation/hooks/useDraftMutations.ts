@@ -14,6 +14,7 @@ export interface SaveDraftInput {
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  notes: string | null;
 }
 
 /** Create a new draft or update the active one (resume → edit → save). */
@@ -35,6 +36,7 @@ export function useSaveDraft() {
             feeLines: input.feeLines,
             mechanicId: input.mechanicId,
             mechanicName: input.mechanicName,
+            notes: input.notes,
           },
           actor.id,
         );
@@ -61,7 +63,7 @@ export function useSaveDraft() {
         isConverted: false,
         convertedToSaleId: null,
         convertedAt: null,
-        notes: null,
+        notes: input.notes,
       });
       logActivity(activityLogRepo, () => ({
         type: ActivityType.other,

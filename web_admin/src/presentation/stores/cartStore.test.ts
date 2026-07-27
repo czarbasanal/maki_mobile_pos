@@ -99,11 +99,12 @@ describe('cartStore', () => {
       isConverted: false,
       convertedToSaleId: null,
       convertedAt: null,
-      notes: null,
+      notes: 'Check brakes',
     };
 
     store.loadDraft(draft);
     let s = useCartStore.getState();
+    expect(s.notes).toBe('Check brakes');
     expect(s.lines).toHaveLength(1);
     expect(s.discountType).toBe(DiscountType.percentage);
     expect(s.laborLines).toEqual(draft.laborLines);
@@ -121,6 +122,15 @@ describe('cartStore', () => {
     expect(s.draftName).toBeNull();
     expect(s.lines).toHaveLength(0);
     expect(s.feeLines).toHaveLength(0);
+    expect(s.notes).toBeNull();
+  });
+
+  it('setNotes sets and clears sale notes', () => {
+    const store = useCartStore.getState();
+    store.setNotes('Customer waiting');
+    expect(useCartStore.getState().notes).toBe('Customer waiting');
+    store.setNotes(null);
+    expect(useCartStore.getState().notes).toBeNull();
   });
 
   it('createCartStore() instances are independent', () => {
