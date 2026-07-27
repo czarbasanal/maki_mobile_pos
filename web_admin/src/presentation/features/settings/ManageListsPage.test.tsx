@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
+import { CategoryKind } from '@/domain/categories/categoryKind';
 import type { Category } from '@/domain/entities';
 import { ManageListsPage } from './ManageListsPage';
 
@@ -35,6 +37,7 @@ function harness(categories: Category[]) {
     list: vi.fn(async () => categories),
     create: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(async () => {}),
   } as unknown as Container['categoryRepo'];
   render(
     <DiProvider override={{ categoryRepo }}>
@@ -76,5 +79,34 @@ describe('ManageListsPage — product category codes', () => {
 
     expect(screen.getByText('Filters')).toBeInTheDocument();
     expect(screen.queryByText(/^\d{4}$/)).not.toBeInTheDocument();
+  });
+});
+
+describe('ManageListsPage — delete action', () => {
+  it('opens a destructive confirm dialog naming the entry, and Cancel does not delete', async () => {
+    const { categoryRepo } = harness([category({ id: 'c1', name: 'Filters' })]);
+
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Delete this entry?');
+    expect(dialog).toHaveTextContent(
+      '"Filters" will be permanently deleted. Past records that used it keep the name. Use Deactivate instead to just hide it.',
+    );
+
+    await userEvent.click(within(dialog).getByRole('button', { name: /cancel/i }));
+    expect(categoryRepo.delete).not.toHaveBeenCalled();
+  });
+
+  it('Confirm calls the repo delete with the kind and id', async () => {
+    const { categoryRepo } = harness([category({ id: 'c1', name: 'Filters' })]);
+
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: /^delete$/i }));
+
+    await waitFor(() =>
+      expect(categoryRepo.delete).toHaveBeenCalledWith(CategoryKind.product, 'c1'),
+    );
   });
 });

@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -126,5 +127,9 @@ export class FirestoreCategoryRepository implements CategoryRepository {
     if (input.name !== undefined) data.name = input.name;
     if (input.isActive !== undefined) data.isActive = input.isActive;
     await updateDoc(doc(this.db, collectionForKind(kind), id), data);
+  }
+
+  async delete(kind: CategoryKind, id: string): Promise<void> {
+    await deleteDoc(doc(this.db, collectionForKind(kind), id));
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
@@ -24,6 +24,7 @@ function harness(opts?: {
   employees?: Employee[];
   create?: ReturnType<typeof vi.fn>;
   update?: ReturnType<typeof vi.fn>;
+  del?: ReturnType<typeof vi.fn>;
 }) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const employeeRepo: Partial<Container['employeeRepo']> = {
@@ -43,9 +44,10 @@ function harness(opts?: {
         updatedAt: null,
       })),
     update: opts?.update ?? vi.fn(async () => {}),
+    delete: opts?.del ?? vi.fn(async () => {}),
   };
 
-  return render(
+  render(
     <DiProvider override={{ employeeRepo: employeeRepo as Container['employeeRepo'] }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter>
@@ -54,6 +56,7 @@ function harness(opts?: {
       </QueryClientProvider>
     </DiProvider>,
   );
+  return { employeeRepo };
 }
 
 describe('EmployeesPage', () => {
@@ -225,6 +228,48 @@ describe('EmployeesPage', () => {
 
     expect(screen.getByText(/could not load employees/i)).toBeInTheDocument();
     expect(screen.getByText('Missing or insufficient permissions.')).toBeInTheDocument();
+  });
+});
+
+describe('EmployeesPage — delete action (deactivate-first)', () => {
+  it('shows no Delete affordance on an active row, but shows it on an inactive row', () => {
+    harness({
+      employees: [
+        employee({ id: 'e1', name: 'Active Juan', isActive: true }),
+        employee({ id: 'e2', name: 'Retired Maria', isActive: false }),
+      ],
+    });
+
+    const activeRow = screen.getByText('Active Juan').closest('li') as HTMLElement;
+    expect(within(activeRow).queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument();
+
+    const inactiveRow = screen.getByText(/Retired Maria/).closest('li') as HTMLElement;
+    expect(within(inactiveRow).getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
+  });
+
+  it('confirming Delete on an inactive row calls the repo with its id', async () => {
+    const del = vi.fn(async () => {});
+    harness({ employees: [employee({ id: 'e2', name: 'Retired Maria', isActive: false })], del });
+
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Delete this entry?');
+    expect(dialog).toHaveTextContent('Retired Maria');
+
+    await userEvent.click(within(dialog).getByRole('button', { name: /^delete$/i }));
+
+    await waitFor(() => expect(del).toHaveBeenCalledWith('e2'));
+  });
+
+  it('Cancel does not delete', async () => {
+    const del = vi.fn(async () => {});
+    harness({ employees: [employee({ id: 'e2', name: 'Retired Maria', isActive: false })], del });
+
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: /cancel/i }));
+
+    expect(del).not.toHaveBeenCalled();
   });
 });
 

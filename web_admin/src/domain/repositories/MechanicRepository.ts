@@ -19,4 +19,6 @@ export interface MechanicRepository {
   watchAll(cb: (mechanics: Mechanic[]) => void, opts?: { includeInactive?: boolean }): Unsubscribe;
   create(input: MechanicCreateInput, actorId: string): Promise<Mechanic>;
   update(id: string, input: MechanicUpdateInput, actorId: string): Promise<void>;
+  /** Hard-deletes the mechanic doc. Past sales keep the name they recorded. */
+  delete(id: string): Promise<void>;
 }

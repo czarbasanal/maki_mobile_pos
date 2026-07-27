@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
-import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useMechanics } from '@/presentation/hooks/useMechanics';
-import { useCreateMechanic, useUpdateMechanic } from '@/presentation/hooks/useMechanicMutations';
+import {
+  useCreateMechanic,
+  useDeleteMechanic,
+  useUpdateMechanic,
+} from '@/presentation/hooks/useMechanicMutations';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
@@ -26,7 +30,10 @@ export function MechanicsPage() {
 
   const create = useCreateMechanic();
   const update = useUpdateMechanic();
-  const busy = create.isPending || update.isPending;
+  const del = useDeleteMechanic();
+  const busy = create.isPending || update.isPending || del.isPending;
+
+  const [deleting, setDeleting] = useState<Mechanic | null>(null);
 
   const openAdd = () => {
     setEditing(null);
@@ -68,6 +75,12 @@ export function MechanicsPage() {
 
   const toggleActive = async (m: Mechanic) => {
     await update.mutateAsync({ id: m.id, isActive: !m.isActive });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    await del.mutateAsync({ id: deleting.id });
+    setDeleting(null);
   };
 
   return (
@@ -131,6 +144,16 @@ export function MechanicsPage() {
                     {m.isActive ? <EyeSlashIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
                     {m.isActive ? 'Deactivate' : 'Reactivate'}
                   </button>
+                  {!m.isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(m)}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-error-dark hover:bg-error-light/40"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -203,6 +226,42 @@ export function MechanicsPage() {
               {busy ? <Spinner className="h-3.5 w-3.5" /> : null} Save
             </button>
           </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={deleting !== null}
+        onClose={() => {
+          if (!busy) setDeleting(null);
+        }}
+        title="Delete this entry?"
+        description={
+          deleting
+            ? `"${deleting.name}" will be permanently deleted. Past sales that used this mechanic keep the name.`
+            : undefined
+        }
+        dismissable={!busy}
+      >
+        {del.error ? (
+          <p className="mb-tk-md text-bodySmall text-error-dark">{del.error.message}</p>
+        ) : null}
+        <div className="flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setDeleting(null)}
+            disabled={busy}
+            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmDelete}
+            disabled={busy}
+            className="inline-flex items-center gap-tk-xs rounded-md bg-error px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:bg-error-dark disabled:opacity-60"
+          >
+            {del.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+          </button>
         </div>
       </Dialog>
     </div>

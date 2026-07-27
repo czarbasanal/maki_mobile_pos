@@ -25,3 +25,14 @@ export function useUpdateCategory(kind: CategoryKind) {
     },
   });
 }
+
+// Hard delete — direct, no deactivate-first gate (lists are admin-managed
+// dropdown values; the confirm dialog on ManageListsPage is the guard).
+export function useDeleteCategory(kind: CategoryKind) {
+  const repo = useCategoryRepo();
+  return useMutation<void, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      await repo.delete(kind, id);
+    },
+  });
+}

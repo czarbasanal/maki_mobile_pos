@@ -24,4 +24,6 @@ export interface EmployeeRepository {
   ): Unsubscribe;
   create(input: EmployeeCreateInput): Promise<Employee>;
   update(id: string, input: EmployeeUpdateInput): Promise<void>;
+  /** Hard-deletes the employee doc. Past payslips keep their own data. */
+  delete(id: string): Promise<void>;
 }

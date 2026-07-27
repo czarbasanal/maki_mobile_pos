@@ -38,3 +38,14 @@ export function useUpdateMechanic() {
     },
   });
 }
+
+// Deactivate-first: the mechanics page only offers Delete on an already
+// inactive row, so no actor/guard check is needed here beyond the repo call.
+export function useDeleteMechanic() {
+  const repo = useMechanicRepo();
+  return useMutation<void, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      await repo.delete(id);
+    },
+  });
+}

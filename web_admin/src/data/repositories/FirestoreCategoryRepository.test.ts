@@ -29,6 +29,7 @@ const state = vi.hoisted(() => ({
   counterExists: false,
   counterData: {} as Record<string, number>,
   addCalls: [] as { path: string; data: Record<string, unknown> }[],
+  deletes: [] as string[],
 }));
 
 function makeRef(path: string): FakeRef {
@@ -90,6 +91,9 @@ vi.mock('firebase/firestore', () => ({
   }),
   serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP'),
   updateDoc: vi.fn(),
+  deleteDoc: vi.fn(async (ref: FakeRef) => {
+    state.deletes.push(ref.path);
+  }),
 }));
 
 const { FirestoreCategoryRepository } = await import('./FirestoreCategoryRepository');
@@ -101,6 +105,7 @@ describe('FirestoreCategoryRepository.create', () => {
     state.autoIdSeq = 0;
     state.counterExists = false;
     state.counterData = {};
+    state.deletes = [];
   });
 
   it('assigns code 0001 to the first product category, with registry + counter writes', async () => {
@@ -151,5 +156,27 @@ describe('FirestoreCategoryRepository.create', () => {
     expect(created.code).toBeUndefined();
 
     expect(state.writes.find((w) => w.path.startsWith('category_codes/'))).toBeUndefined();
+  });
+});
+
+describe('FirestoreCategoryRepository.delete', () => {
+  beforeEach(() => {
+    state.deletes = [];
+  });
+
+  it('deletes the doc from the kind collection (non-product kind)', async () => {
+    const repo = new FirestoreCategoryRepository({} as unknown as Firestore);
+
+    await repo.delete(CategoryKind.unit, 'u1');
+
+    expect(state.deletes).toContain('units/u1');
+  });
+
+  it('deletes from product_categories for the product kind', async () => {
+    const repo = new FirestoreCategoryRepository({} as unknown as Firestore);
+
+    await repo.delete(CategoryKind.product, 'p1');
+
+    expect(state.deletes).toContain('product_categories/p1');
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useMutation } from '@tanstack/react-query';
 import { useEmployeeRepo } from '@/infrastructure/di/container';
 import { useFirestoreSubscription } from '@/presentation/hooks/useFirestoreSubscription';
@@ -62,7 +62,12 @@ export function EmployeesPage() {
   const update = useMutation<void, Error, { id: string } & EmployeeUpdateInput>({
     mutationFn: ({ id, ...patch }) => repo.update(id, patch),
   });
-  const busy = create.isPending || update.isPending;
+  const del = useMutation<void, Error, { id: string }>({
+    mutationFn: ({ id }) => repo.delete(id),
+  });
+  const busy = create.isPending || update.isPending || del.isPending;
+
+  const [deleting, setDeleting] = useState<Employee | null>(null);
 
   const parsedRate = parseDailyRate(dailyRate);
   const rateIsValid = Number.isFinite(parsedRate) && parsedRate > 0;
@@ -121,6 +126,16 @@ export function EmployeesPage() {
       await update.mutateAsync({ id: e.id, isActive: !e.isActive });
     } catch {
       // Surfaced via update.error below.
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    try {
+      await del.mutateAsync({ id: deleting.id });
+      setDeleting(null);
+    } catch {
+      // Surfaced via del.error below; confirm dialog stays open.
     }
   };
 
@@ -193,6 +208,16 @@ export function EmployeesPage() {
                     {e.isActive ? <EyeSlashIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
                     {e.isActive ? 'Deactivate' : 'Reactivate'}
                   </button>
+                  {!e.isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(e)}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-error-dark hover:bg-error-light/40"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -290,6 +315,42 @@ export function EmployeesPage() {
               {busy ? <Spinner className="h-3.5 w-3.5" /> : null} Save
             </button>
           </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={deleting !== null}
+        onClose={() => {
+          if (!busy) setDeleting(null);
+        }}
+        title="Delete this entry?"
+        description={
+          deleting
+            ? `"${deleting.name}" will be permanently deleted. Past payslips keep their own data.`
+            : undefined
+        }
+        dismissable={!busy}
+      >
+        {del.error ? (
+          <p className="mb-tk-md text-bodySmall text-error-dark">{del.error.message}</p>
+        ) : null}
+        <div className="flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setDeleting(null)}
+            disabled={busy}
+            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmDelete}
+            disabled={busy}
+            className="inline-flex items-center gap-tk-xs rounded-md bg-error px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:bg-error-dark disabled:opacity-60"
+          >
+            {del.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+          </button>
         </div>
       </Dialog>
     </div>
