@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/formatters.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'dart:typed_data';
@@ -745,6 +746,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               style: AppTextStyles.fieldInput.copyWith(
                                 fontFamily: AppTextStyles.monoFontFamily,
                               ),
+                              inputFormatters: [UpperCaseTextFormatter()],
                               decoration: InputDecoration(
                                 labelText: 'SKU *',
                                 prefixIcon: const Icon(LucideIcons.qrCode),
@@ -776,6 +778,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               controller: _nameController,
                               style: AppTextStyles.fieldInput,
                               focusNode: _nameFocusNode,
+                              inputFormatters: [UpperCaseTextFormatter()],
                               decoration: const InputDecoration(
                                 labelText: 'Product Name *',
                                 prefixIcon: Icon(LucideIcons.box),

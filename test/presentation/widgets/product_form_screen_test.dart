@@ -518,4 +518,24 @@ void main() {
       expect(skuField(tester).controller!.text, 'MANUAL-1');
     });
   });
+
+  testWidgets('name and SKU fields uppercase as you type', (tester) async {
+    await pumpForm(tester, UserRole.admin);
+
+    final nameField = find.widgetWithText(TextFormField, 'Product Name *');
+    await tester.enterText(nameField, 'brake pad');
+    expect(
+      (tester.widget<TextFormField>(nameField).controller)!.text,
+      'BRAKE PAD',
+    );
+
+    await tester.enterText(find.byKey(_kSkuFieldKey), 'abc123x');
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(_kSkuFieldKey))
+          .controller!
+          .text,
+      'ABC123X',
+    );
+  });
 }
