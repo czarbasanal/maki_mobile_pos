@@ -100,7 +100,7 @@ describe('saleConverter.toFirestore', () => {
       cashierName: 'Cashier',
       createdAt: new Date('2026-05-30T10:00:00Z'),
       updatedAt: null,
-      draftId: null,
+      jobOrderId: null,
       notes: null,
       voidedAt: null,
       voidedBy: null,

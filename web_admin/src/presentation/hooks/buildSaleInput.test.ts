@@ -35,7 +35,7 @@ const input = (over: Partial<CheckoutInput> = {}): CheckoutInput => ({
   feeLines: [],
   mechanicId: null,
   mechanicName: null,
-  draftId: null,
+  jobOrderId: null,
   notes: null,
   ...over,
 });
@@ -75,29 +75,29 @@ describe('buildSaleInput', () => {
     expect(s.mechanicId).toBe('m1');
     expect(s.mechanicName).toBe('Juan');
   });
-  it('carries draftId onto the sale (sale originated from a draft)', () => {
-    const s = buildSaleInput(input({ draftId: 'd1' }), actor());
-    expect(s.draftId).toBe('d1');
+  it('carries jobOrderId onto the sale (sale originated from a jobOrder)', () => {
+    const s = buildSaleInput(input({ jobOrderId: 'd1' }), actor());
+    expect(s.jobOrderId).toBe('d1');
   });
   it('carries fee lines through verbatim (mirrors labor)', () => {
     const fees: FeeLine[] = [{ id: 'f1', name: 'Convenience fee', amount: 50 }];
     const s = buildSaleInput(input({ feeLines: fees }), actor());
     expect(s.feeLines).toEqual(fees);
   });
-  it('defaults to no fees for a plain non-draft sale', () => {
+  it('defaults to no fees for a plain non-jobOrder sale', () => {
     const s = buildSaleInput(input(), actor());
     expect(s.feeLines).toEqual([]);
   });
-  it('a draft-with-fees survives bill-out: the built sale input carries the draft-sourced fee lines', () => {
-    // Simulates the resumed-draft → checkout path: CheckoutPage sources
-    // feeLines from the cart store (hydrated by loadDraft(draft)), not a
+  it('a jobOrder-with-fees survives bill-out: the built sale input carries the jobOrder-sourced fee lines', () => {
+    // Simulates the resumed-job order → checkout path: CheckoutPage sources
+    // feeLines from the cart store (hydrated by loadJobOrder(job order)), not a
     // hardcoded []. This is the carried money-correctness finding.
-    const draftFeeLines: FeeLine[] = [{ id: 'f1', name: 'Shop fee', amount: 75 }];
+    const jobOrderFeeLines: FeeLine[] = [{ id: 'f1', name: 'Shop fee', amount: 75 }];
     const s = buildSaleInput(
-      input({ draftId: 'd1', feeLines: draftFeeLines }),
+      input({ jobOrderId: 'd1', feeLines: jobOrderFeeLines }),
       actor(),
     );
-    expect(s.draftId).toBe('d1');
-    expect(s.feeLines).toEqual(draftFeeLines);
+    expect(s.jobOrderId).toBe('d1');
+    expect(s.feeLines).toEqual(jobOrderFeeLines);
   });
 });

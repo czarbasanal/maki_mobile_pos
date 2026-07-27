@@ -40,7 +40,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
     cashierName: 'Cashier',
     createdAt: new Date(),
     updatedAt: null,
-    draftId: null,
+    jobOrderId: null,
     notes: null,
     voidedAt: null,
     voidedBy: null,

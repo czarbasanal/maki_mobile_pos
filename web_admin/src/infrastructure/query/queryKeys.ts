@@ -24,9 +24,9 @@ export const queryKeys = {
     byId: (id: string) => ['sales', id] as const,
     recent: (limit: number) => ['sales', 'recent', limit] as const,
   },
-  drafts: {
-    all: ['drafts'] as const,
-    byId: (id: string) => ['drafts', id] as const,
+  jobOrders: {
+    all: ['job_orders'] as const,
+    byId: (id: string) => ['job_orders', id] as const,
   },
   expenses: {
     all: ['expenses'] as const,

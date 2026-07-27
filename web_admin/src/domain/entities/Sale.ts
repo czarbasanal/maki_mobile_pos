@@ -30,7 +30,7 @@ export interface Sale {
   cashierName: string;
   createdAt: Date;
   updatedAt: Date | null;
-  draftId: string | null;
+  jobOrderId: string | null;
   notes: string | null;
   voidedAt: Date | null;
   voidedBy: string | null;

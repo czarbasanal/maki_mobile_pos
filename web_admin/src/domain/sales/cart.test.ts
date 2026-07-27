@@ -34,7 +34,7 @@ describe('cartGrandTotal', () => {
       ),
     ).toBe(200 + 300);
   });
-  it('adds carried shop fees on top of parts + labor (money-correctness carry from a resumed draft)', () => {
+  it('adds carried shop fees on top of parts + labor (money-correctness carry from a resumed job order)', () => {
     expect(
       cartGrandTotal(
         [line({ quantity: 2 })],
@@ -44,7 +44,7 @@ describe('cartGrandTotal', () => {
       ),
     ).toBe(200 + 300 + 50);
   });
-  it('defaults to no fees when feeLines is omitted (a plain non-draft cart)', () => {
+  it('defaults to no fees when feeLines is omitted (a plain non-JO cart)', () => {
     expect(cartGrandTotal([line()], [], DiscountType.amount)).toBe(100);
   });
 });

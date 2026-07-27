@@ -1,5 +1,5 @@
 // FirestoreSaleRepository.create() writes several documents inside one
-// transaction (sale, items, counter, stock decrement, optional draft
+// transaction (sale, items, counter, stock decrement, optional job order
 // conversion). There's no Firestore emulator wired into the vitest suite
 // (unlike mobile's fake_cloud_firestore), so this test fakes the
 // 'firebase/firestore' SDK surface just enough to pin *what* the
@@ -29,7 +29,7 @@ const state = vi.hoisted(() => ({
   autoIdSeq: 0,
   counterExists: false,
   counterData: {} as Record<string, number>,
-  draftDoc: null as null | { exists: boolean; isConverted?: boolean },
+  jobOrderDoc: null as null | { exists: boolean; isConverted?: boolean },
 }));
 
 function makeRef(path: string): FakeRef {
@@ -71,7 +71,7 @@ vi.mock('firebase/firestore', () => ({
       cashierName: 'Cashier',
       createdAt: new Date(),
       updatedAt: null,
-      draftId: null,
+      jobOrderId: null,
       notes: null,
       voidedAt: null,
       voidedBy: null,
@@ -91,8 +91,8 @@ vi.mock('firebase/firestore', () => ({
         if (ref.path === 'settings/sale_counters') {
           return { exists: () => state.counterExists, data: () => state.counterData };
         }
-        if (state.draftDoc && ref.path.startsWith('drafts/')) {
-          const d = state.draftDoc;
+        if (state.jobOrderDoc && ref.path.startsWith('jobOrders/')) {
+          const d = state.jobOrderDoc;
           return {
             exists: () => d.exists,
             get: (key: string) => (key === 'isConverted' ? d.isConverted : undefined),
@@ -144,7 +144,7 @@ function baseInput(): Omit<Sale, 'id' | 'createdAt' | 'updatedAt'> {
     status: SaleStatus.completed,
     cashierId: 'c1',
     cashierName: 'Cashier',
-    draftId: null,
+    jobOrderId: null,
     notes: null,
     voidedAt: null,
     voidedBy: null,
@@ -159,7 +159,7 @@ describe('FirestoreSaleRepository.create — drawer_state stamping', () => {
     state.autoIdSeq = 0;
     state.counterExists = false;
     state.counterData = {};
-    state.draftDoc = null;
+    state.jobOrderDoc = null;
     vi.useRealTimers();
   });
 

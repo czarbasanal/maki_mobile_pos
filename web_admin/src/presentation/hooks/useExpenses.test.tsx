@@ -1,5 +1,5 @@
 // useExpenses/useExpenseTotals/mutations — fakes the ExpenseRepository via
-// DiProvider.override (same template as useDraft.test.tsx). The totals math
+// DiProvider.override (same template as useJobOrder.test.tsx). The totals math
 // test is the important one: it pins that {today, week, month} are three
 // independent range sums over Expense.amount, with week/month using
 // calendar (Monday-start week / 1st-of-month) boundaries, not rolling

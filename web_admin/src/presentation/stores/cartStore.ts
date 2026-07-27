@@ -1,5 +1,5 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import type { Draft, Product } from '@/domain/entities';
+import type { JobOrder, Product } from '@/domain/entities';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { FeeLine } from '@/domain/entities/FeeLine';
 import type { CartLine } from '@/domain/sales/cart';
@@ -9,14 +9,14 @@ interface CartState {
   lines: CartLine[];
   discountType: DiscountType;
   laborLines: LaborLine[];
-  // Shop fees carried from a resumed draft (no web POS entry UI yet — this
+  // Shop fees carried from a resumed job order (no web POS entry UI yet — this
   // exists so a fee-bearing mobile JO doesn't lose its fee money on bill-out).
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
-  draftId: string | null;
-  draftName: string | null;
-  // Optional sale/JO notes — restored on draft resume, carried onto the sale
+  jobOrderId: string | null;
+  jobOrderName: string | null;
+  // Optional sale/JO notes — restored on job order resume, carried onto the sale
   // at checkout (mobile parity). The JO-edit textarea buffers raw text here,
   // so '' can transiently appear; every PERSIST site normalizes ''/blank to
   // null before writing.
@@ -31,7 +31,7 @@ interface CartState {
   removeLaborLine: (id: string) => void;
   setMechanic: (id: string | null, name: string | null) => void;
   setNotes: (notes: string | null) => void;
-  loadDraft: (draft: Draft) => void;
+  loadJobOrder: (jobOrder: JobOrder) => void;
   clear: () => void;
 }
 
@@ -43,8 +43,8 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     feeLines: [],
     mechanicId: null,
     mechanicName: null,
-    draftId: null,
-    draftName: null,
+    jobOrderId: null,
+    jobOrderName: null,
     notes: null,
     addLine: (product) =>
       set((s) => {
@@ -104,17 +104,17 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
       set((s) => ({ laborLines: s.laborLines.filter((l) => l.id !== id) })),
     setMechanic: (id, name) => set({ mechanicId: id, mechanicName: name }),
     setNotes: (notes) => set({ notes }),
-    loadDraft: (draft) =>
+    loadJobOrder: (jobOrder) =>
       set({
-        lines: draft.items,
-        discountType: draft.discountType,
-        laborLines: draft.laborLines,
-        feeLines: draft.feeLines,
-        mechanicId: draft.mechanicId,
-        mechanicName: draft.mechanicName,
-        draftId: draft.id,
-        draftName: draft.name,
-        notes: draft.notes,
+        lines: jobOrder.items,
+        discountType: jobOrder.discountType,
+        laborLines: jobOrder.laborLines,
+        feeLines: jobOrder.feeLines,
+        mechanicId: jobOrder.mechanicId,
+        mechanicName: jobOrder.mechanicName,
+        jobOrderId: jobOrder.id,
+        jobOrderName: jobOrder.name,
+        notes: jobOrder.notes,
       }),
     clear: () =>
       set({
@@ -124,8 +124,8 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         feeLines: [],
         mechanicId: null,
         mechanicName: null,
-        draftId: null,
-        draftName: null,
+        jobOrderId: null,
+        jobOrderName: null,
         notes: null,
       }),
   }));

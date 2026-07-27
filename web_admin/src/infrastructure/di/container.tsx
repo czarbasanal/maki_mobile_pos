@@ -15,7 +15,7 @@ import { FirestoreSupplierRepository } from '@/data/repositories/FirestoreSuppli
 import { FirestoreReceivingRepository } from '@/data/repositories/FirestoreReceivingRepository';
 import { FirestoreCategoryRepository } from '@/data/repositories/FirestoreCategoryRepository';
 import { FirestoreMechanicRepository } from '@/data/repositories/FirestoreMechanicRepository';
-import { FirestoreDraftRepository } from '@/data/repositories/FirestoreDraftRepository';
+import { FirestoreJobOrderRepository } from '@/data/repositories/FirestoreJobOrderRepository';
 import { FirestoreEmployeeRepository } from '@/data/repositories/FirestoreEmployeeRepository';
 import { FirestorePayslipRepository } from '@/data/repositories/FirestorePayslipRepository';
 import { FirestoreHrSettingsRepository } from '@/data/repositories/FirestoreHrSettingsRepository';
@@ -30,7 +30,7 @@ import type { SupplierRepository } from '@/domain/repositories/SupplierRepositor
 import type { ReceivingRepository } from '@/domain/repositories/ReceivingRepository';
 import type { CategoryRepository } from '@/domain/repositories/CategoryRepository';
 import type { MechanicRepository } from '@/domain/repositories/MechanicRepository';
-import type { DraftRepository } from '@/domain/repositories/DraftRepository';
+import type { JobOrderRepository } from '@/domain/repositories/JobOrderRepository';
 import type { EmployeeRepository } from '@/domain/repositories/EmployeeRepository';
 import type { PayslipRepository } from '@/domain/repositories/PayslipRepository';
 import type { HrSettingsRepository } from '@/domain/repositories/HrSettingsRepository';
@@ -47,7 +47,7 @@ export interface Container {
   receivingRepo: ReceivingRepository;
   categoryRepo: CategoryRepository;
   mechanicRepo: MechanicRepository;
-  draftRepo: DraftRepository;
+  jobOrderRepo: JobOrderRepository;
   employeeRepo: EmployeeRepository;
   payslipRepo: PayslipRepository;
   hrSettingsRepo: HrSettingsRepository;
@@ -66,7 +66,7 @@ function buildDefaultContainer(): Container {
     receivingRepo: new FirestoreReceivingRepository(db, new FirestoreProductRepository(db)),
     categoryRepo: new FirestoreCategoryRepository(db),
     mechanicRepo: new FirestoreMechanicRepository(db),
-    draftRepo: new FirestoreDraftRepository(db),
+    jobOrderRepo: new FirestoreJobOrderRepository(db),
     employeeRepo: new FirestoreEmployeeRepository(db),
     payslipRepo: new FirestorePayslipRepository(db),
     hrSettingsRepo: new FirestoreHrSettingsRepository(db),
@@ -132,8 +132,8 @@ export function useMechanicRepo(): MechanicRepository {
   return useContainer().mechanicRepo;
 }
 
-export function useDraftRepo(): DraftRepository {
-  return useContainer().draftRepo;
+export function useJobOrderRepo(): JobOrderRepository {
+  return useContainer().jobOrderRepo;
 }
 
 export function useReceivingRepo(): ReceivingRepository {

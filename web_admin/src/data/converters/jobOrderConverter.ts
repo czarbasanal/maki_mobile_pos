@@ -3,14 +3,14 @@ import type {
   FirestoreDataConverter,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import type { Draft, SaleItem } from '@/domain/entities';
+import type { JobOrder, SaleItem } from '@/domain/entities';
 import { discountTypeFromString } from '@/domain/enums';
 import { requireDate, toDate } from './timestamps';
 import { parseLaborLines } from './laborLines';
 import { parseFeeLines } from './feeLines';
 
-/** Serialize cart/draft items to inline Firestore maps (id included). */
-export function draftItemsToMaps(items: SaleItem[]): object[] {
+/** Serialize cart/job order items to inline Firestore maps (id included). */
+export function jobOrderItemsToMaps(items: SaleItem[]): object[] {
   return items.map((it) => ({
     id: it.id,
     productId: it.productId,
@@ -25,7 +25,7 @@ export function draftItemsToMaps(items: SaleItem[]): object[] {
 }
 
 /** Parse an inline `items` array from Firestore into SaleItem[]. */
-export function parseDraftItems(value: unknown): SaleItem[] {
+export function parseJobOrderItems(value: unknown): SaleItem[] {
   if (!Array.isArray(value)) return [];
   return value.map((raw, i) => {
     const m = (raw ?? {}) as Record<string, unknown>;
@@ -47,16 +47,16 @@ export function parseDraftItems(value: unknown): SaleItem[] {
 // use serverTimestamp and serialize items/labor to maps). toFirestore is required
 // by the type but must never be used — fail loudly if someone wires up a
 // `.withConverter(...).set(...)` write path instead of the repository.
-export const draftConverter: FirestoreDataConverter<Draft> = {
+export const jobOrderConverter: FirestoreDataConverter<JobOrder> = {
   toFirestore() {
-    throw new Error('draftConverter is read-only — write drafts via FirestoreDraftRepository');
+    throw new Error('jobOrderConverter is read-only — write jobOrders via FirestoreJobOrderRepository');
   },
-  fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Draft {
+  fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): JobOrder {
     const d = snapshot.data();
     return {
       id: snapshot.id,
-      name: typeof d.name === 'string' && d.name ? d.name : 'Unnamed Draft',
-      items: parseDraftItems(d.items),
+      name: typeof d.name === 'string' && d.name ? d.name : 'Unnamed JobOrder',
+      items: parseJobOrderItems(d.items),
       laborLines: parseLaborLines(d.laborLines),
       feeLines: parseFeeLines(d.feeLines),
       mechanicId: d.mechanicId ?? null,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
-import { draftConverter } from './draftConverter';
+import { jobOrderConverter } from './jobOrderConverter';
 import { DiscountType } from '@/domain/enums/DiscountType';
 
 const snap = (id: string, data: Record<string, unknown>) =>
@@ -8,9 +8,9 @@ const snap = (id: string, data: Record<string, unknown>) =>
 
 const createdTs = Timestamp.fromDate(new Date('2026-02-01T00:00:00Z'));
 
-describe('draftConverter.fromFirestore', () => {
+describe('jobOrderConverter.fromFirestore', () => {
   it('parses items + labor + mechanic + discount + conversion fields', () => {
-    const d = draftConverter.fromFirestore(
+    const d = jobOrderConverter.fromFirestore(
       snap('d1', {
         name: 'Mr Cruz bike',
         items: [
@@ -43,18 +43,18 @@ describe('draftConverter.fromFirestore', () => {
   });
 
   it('defaults a missing name and missing labor', () => {
-    const d = draftConverter.fromFirestore(snap('d2', { createdAt: createdTs }));
-    expect(d.name).toBe('Unnamed Draft');
+    const d = jobOrderConverter.fromFirestore(snap('d2', { createdAt: createdTs }));
+    expect(d.name).toBe('Unnamed JobOrder');
     expect(d.laborLines).toEqual([]);
     expect(d.items).toEqual([]);
     expect(d.mechanicId).toBeNull();
     expect(d.isConverted).toBe(false);
   });
 
-  it('defaults feeLines to [] for a legacy draft written before shop fees existed', () => {
-    const d = draftConverter.fromFirestore(
+  it('defaults feeLines to [] for a legacy jobOrder written before shop fees existed', () => {
+    const d = jobOrderConverter.fromFirestore(
       snap('d3', {
-        name: 'Legacy draft',
+        name: 'Legacy jobOrder',
         laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
         createdAt: createdTs,
       }),

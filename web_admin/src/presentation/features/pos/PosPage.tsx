@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { describedLaborLines } from '@/domain/sales/labor';
-import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
-import { useDrafts } from '@/presentation/hooks/useDrafts';
+import { useSaveJobOrder } from '@/presentation/hooks/useJobOrderMutations';
+import { useJobOrders } from '@/presentation/hooks/useJobOrders';
 import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -18,12 +18,12 @@ export function PosPage() {
   const feeLines = useCartStore((s) => s.feeLines);
   const mechanicId = useCartStore((s) => s.mechanicId);
   const mechanicName = useCartStore((s) => s.mechanicName);
-  const draftId = useCartStore((s) => s.draftId);
-  const draftName = useCartStore((s) => s.draftName);
+  const jobOrderId = useCartStore((s) => s.jobOrderId);
+  const jobOrderName = useCartStore((s) => s.jobOrderName);
   const notes = useCartStore((s) => s.notes);
   const clear = useCartStore((s) => s.clear);
-  const saveDraft = useSaveDraft();
-  const drafts = useDrafts();
+  const saveJobOrder = useSaveJobOrder();
+  const jobOrders = useJobOrders();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -37,18 +37,18 @@ export function PosPage() {
 
   // Updating an existing Job Order keeps its current name (no renumber).
   // A brand-new one gets the next number for today, computed from the live
-  // drafts list — while that list is still loading, `jobOrderNumber` stays
+  // job orders list — while that list is still loading, `jobOrderNumber` stays
   // null so the dialog can't confirm against a stale/empty name set (which
   // would otherwise risk minting a number that collides with one already on
   // the server).
   const jobOrderNumber = useMemo(() => {
-    if (draftId) return draftName ?? '';
-    if (drafts.isLoading || !drafts.data) return null;
+    if (jobOrderId) return jobOrderName ?? '';
+    if (jobOrders.isLoading || !jobOrders.data) return null;
     return nextJobOrderNumber(
       new Date(),
-      drafts.data.map((d) => d.name),
+      jobOrders.data.map((d) => d.name),
     );
-  }, [draftId, draftName, drafts.isLoading, drafts.data]);
+  }, [jobOrderId, jobOrderName, jobOrders.isLoading, jobOrders.data]);
 
   useEffect(() => {
     document.title = 'POS';
@@ -82,13 +82,13 @@ export function PosPage() {
     setNoteDraft(notes ?? '');
     setSaveOpen(true);
   };
-  const onSaveDraft = async () => {
+  const onSaveJobOrder = async () => {
     const name = jobOrderNumber;
     if (!name) return;
     const trimmedNotes = noteDraft.trim() || null;
     try {
-      await saveDraft.mutateAsync({
-        draftId,
+      await saveJobOrder.mutateAsync({
+        jobOrderId,
         name,
         items: lines,
         discountType,
@@ -101,7 +101,7 @@ export function PosPage() {
       setSaveOpen(false);
       clear();
     } catch {
-      // surfaced via saveDraft.error
+      // surfaced via saveJobOrder.error
     }
   };
 
@@ -127,7 +127,7 @@ export function PosPage() {
           Sale <span className="font-mono">{done}</span> completed.
         </p>
       ) : null}
-      {saveDraft.isSuccess && lines.length === 0 ? (
+      {saveJobOrder.isSuccess && lines.length === 0 ? (
         <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
           Saved as Job Order.
         </p>
@@ -148,24 +148,24 @@ export function PosPage() {
         </Link>
         <button
           type="button"
-          disabled={lines.length === 0 || saveDraft.isPending}
+          disabled={lines.length === 0 || saveJobOrder.isPending}
           onClick={openSave}
           className={cn(
             'w-full rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-medium text-light-text hover:bg-light-subtle',
-            (lines.length === 0 || saveDraft.isPending) && 'cursor-not-allowed opacity-60',
+            (lines.length === 0 || saveJobOrder.isPending) && 'cursor-not-allowed opacity-60',
           )}
         >
-          {saveDraft.isPending ? 'Saving…' : draftId ? 'Update Job Order' : 'Save as Job Order'}
+          {saveJobOrder.isPending ? 'Saving…' : jobOrderId ? 'Update Job Order' : 'Save as Job Order'}
         </button>
       </div>
 
       <Dialog
         open={saveOpen}
         onClose={() => {
-          if (!saveDraft.isPending) setSaveOpen(false);
+          if (!saveJobOrder.isPending) setSaveOpen(false);
         }}
-        title={draftId ? 'Update Job Order' : 'Save as Job Order'}
-        dismissable={!saveDraft.isPending}
+        title={jobOrderId ? 'Update Job Order' : 'Save as Job Order'}
+        dismissable={!saveJobOrder.isPending}
       >
         <div className="space-y-tk-md">
           <div className="space-y-tk-xs">
@@ -181,7 +181,7 @@ export function PosPage() {
               value={noteDraft}
               onChange={(e) => setNoteDraft(e.target.value)}
               placeholder="Optional — e.g. customer requests"
-              disabled={saveDraft.isPending}
+              disabled={saveJobOrder.isPending}
               className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
             />
           </label>
@@ -189,15 +189,15 @@ export function PosPage() {
             <button
               type="button"
               onClick={() => setSaveOpen(false)}
-              disabled={saveDraft.isPending}
+              disabled={saveJobOrder.isPending}
               className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
             >
               Cancel
             </button>
             <button
               type="button"
-              onClick={onSaveDraft}
-              disabled={saveDraft.isPending || !jobOrderNumber}
+              onClick={onSaveJobOrder}
+              disabled={saveJobOrder.isPending || !jobOrderNumber}
               className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
             >
               Save

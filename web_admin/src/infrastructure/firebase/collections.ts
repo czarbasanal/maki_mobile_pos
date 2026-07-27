@@ -13,7 +13,7 @@ export const FirestoreCollections = {
   employees: 'employees',
   payslips: 'payslips',
   sales: 'sales',
-  drafts: 'drafts',
+  jobOrders: 'job_orders',
   receivings: 'receivings',
   expenses: 'expenses',
   userLogs: 'user_logs',

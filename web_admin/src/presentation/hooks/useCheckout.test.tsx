@@ -1,6 +1,6 @@
 // Activity-log wiring for sale checkout (task-10 representative case: sale
 // create -> type 'sale'). Also covers the JO bill-out path, which is the
-// same write (repo.create converts the draft internally when draftId is set).
+// same write (repo.create converts the job order internally when jobOrderId is set).
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -35,7 +35,7 @@ const checkoutInput: CheckoutInput = {
   feeLines: [],
   mechanicId: null,
   mechanicName: null,
-  draftId: null,
+  jobOrderId: null,
   notes: null,
 };
 
@@ -58,7 +58,7 @@ function makeSale(overrides: Partial<Sale> = {}): Sale {
     cashierName: 'Cashier',
     createdAt: new Date(),
     updatedAt: null,
-    draftId: null,
+    jobOrderId: null,
     notes: null,
     voidedAt: null,
     voidedBy: null,

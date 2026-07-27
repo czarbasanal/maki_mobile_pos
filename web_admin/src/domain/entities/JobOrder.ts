@@ -4,7 +4,7 @@ import type { SaleItem } from './SaleItem';
 import type { LaborLine } from './LaborLine';
 import type { FeeLine } from './FeeLine';
 
-export interface Draft {
+export interface JobOrder {
   id: string;
   name: string;
   items: SaleItem[];

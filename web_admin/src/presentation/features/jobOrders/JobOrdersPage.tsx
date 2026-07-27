@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { useDrafts } from '@/presentation/hooks/useDrafts';
-import { useDeleteDraft } from '@/presentation/hooks/useDraftMutations';
+import { useJobOrders } from '@/presentation/hooks/useJobOrders';
+import { useDeleteJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { cartGrandTotal } from '@/domain/sales/cart';
 import { formatMoney } from '@/core/utils/money';
@@ -13,7 +13,7 @@ import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { cn } from '@/core/utils/cn';
-import type { Draft } from '@/domain/entities';
+import type { JobOrder } from '@/domain/entities';
 
 const PAGE_SIZE = 25;
 const dateFmt = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric' });
@@ -30,10 +30,10 @@ export function JobOrdersPage() {
     document.title = 'Job Orders · MAKI POS Admin';
   }, []);
 
-  const { data: jobOrders, isLoading, error } = useDrafts();
+  const { data: jobOrders, isLoading, error } = useJobOrders();
   const lines = useCartStore((s) => s.lines);
-  const loadDraft = useCartStore((s) => s.loadDraft);
-  const deleteDraft = useDeleteDraft();
+  const loadJobOrder = useCartStore((s) => s.loadJobOrder);
+  const deleteJobOrder = useDeleteJobOrder();
   const navigate = useNavigate();
 
   const [page, setPage] = useState(1);
@@ -43,14 +43,14 @@ export function JobOrdersPage() {
     [jobOrders, page],
   );
 
-  const onResume = (jobOrder: Draft) => {
+  const onResume = (jobOrder: JobOrder) => {
     if (lines.length > 0 && !window.confirm('Replace the current cart with this Job Order?')) return;
-    loadDraft(jobOrder);
+    loadJobOrder(jobOrder);
     navigate(RoutePaths.pos);
   };
-  const onDelete = (jobOrder: Draft) => {
+  const onDelete = (jobOrder: JobOrder) => {
     if (!window.confirm(`Delete Job Order "${jobOrder.name}"?`)) return;
-    deleteDraft.mutate({ id: jobOrder.id, name: jobOrder.name });
+    deleteJobOrder.mutate({ id: jobOrder.id, name: jobOrder.name });
   };
 
   return (
@@ -62,9 +62,9 @@ export function JobOrdersPage() {
         </p>
       </header>
 
-      {deleteDraft.error ? (
+      {deleteJobOrder.error ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
-          Could not delete the Job Order: {deleteDraft.error.message}
+          Could not delete the Job Order: {deleteJobOrder.error.message}
         </p>
       ) : null}
 

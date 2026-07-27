@@ -8,9 +8,9 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 import { cartGrandTotal } from '@/domain/sales/cart';
 import { formatMoney } from '@/core/utils/money';
 import { DiscountType } from '@/domain/enums/DiscountType';
-import type { Draft } from '@/domain/entities';
+import type { JobOrder } from '@/domain/entities';
 
-const draft = (o: Partial<Draft> = {}): Draft => ({
+const jobOrder = (o: Partial<JobOrder> = {}): JobOrder => ({
   id: 'd1',
   name: 'JO-072326-001',
   items: [],
@@ -41,18 +41,18 @@ function SaleStub() {
   return <div>SALE DETAIL {id}</div>;
 }
 
-function harness(drafts: Draft[]) {
+function harness(jobOrders: JobOrder[]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  let emit: (next: Draft[]) => void = () => {};
-  const draftRepo: Partial<Container['draftRepo']> = {
-    watchAll: vi.fn((cb: (drafts: Draft[]) => void) => {
+  let emit: (next: JobOrder[]) => void = () => {};
+  const jobOrderRepo: Partial<Container['jobOrderRepo']> = {
+    watchAll: vi.fn((cb: (jobOrders: JobOrder[]) => void) => {
       emit = cb;
-      cb(drafts);
+      cb(jobOrders);
       return () => {};
     }),
   };
   const view = render(
-    <DiProvider override={{ draftRepo: draftRepo as Container['draftRepo'] }}>
+    <DiProvider override={{ jobOrderRepo: jobOrderRepo as Container['jobOrderRepo'] }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={[RoutePaths.jobOrders]}>
           <Routes>
@@ -64,12 +64,12 @@ function harness(drafts: Draft[]) {
       </QueryClientProvider>
     </DiProvider>,
   );
-  return { ...view, emit: (next: Draft[]) => emit(next) };
+  return { ...view, emit: (next: JobOrder[]) => emit(next) };
 }
 
 describe('JobOrdersPage', () => {
   it('renders the JO number in mono, mechanic, total, and date for an open job order', () => {
-    const open = draft({
+    const open = jobOrder({
       id: 'd1',
       name: 'JO-072326-001',
       mechanicName: 'Kuya Bert',
@@ -85,7 +85,7 @@ describe('JobOrdersPage', () => {
   });
 
   it('shows a Billed pill for converted job orders and keeps them in the list, visually muted', () => {
-    const billed = draft({ id: 'd2', name: 'JO-072326-002', isConverted: true });
+    const billed = jobOrder({ id: 'd2', name: 'JO-072326-002', isConverted: true });
     harness([billed]);
 
     expect(screen.getByText('JO-072326-002')).toBeInTheDocument();
@@ -95,8 +95,8 @@ describe('JobOrdersPage', () => {
   });
 
   it('keeps both open and converted rows in the same list', () => {
-    const open = draft({ id: 'd1', name: 'JO-072326-001', isConverted: false });
-    const billed = draft({ id: 'd2', name: 'JO-072326-002', isConverted: true });
+    const open = jobOrder({ id: 'd1', name: 'JO-072326-001', isConverted: false });
+    const billed = jobOrder({ id: 'd2', name: 'JO-072326-002', isConverted: true });
     harness([open, billed]);
 
     expect(screen.getByText('JO-072326-001')).toBeInTheDocument();
@@ -111,7 +111,7 @@ describe('JobOrdersPage', () => {
   });
 
   it('billed row View opens the converted sale, not the (refusing) edit screen', () => {
-    const billed = draft({
+    const billed = jobOrder({
       id: 'd2',
       name: 'JO-072326-002',
       isConverted: true,
@@ -124,7 +124,7 @@ describe('JobOrdersPage', () => {
   });
 
   it('billed row with no converted-sale link shows no action at all', () => {
-    const billed = draft({
+    const billed = jobOrder({
       id: 'd2',
       name: 'JO-072326-002',
       isConverted: true,
@@ -138,14 +138,14 @@ describe('JobOrdersPage', () => {
 
 describe('JobOrdersPage — pagination', () => {
   it('shows the pager once the job order list exceeds 25', () => {
-    const many = Array.from({ length: 26 }, (_, i) => draft({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }));
+    const many = Array.from({ length: 26 }, (_, i) => jobOrder({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }));
     harness(many);
 
     expect(screen.getByText('1–25 of 26')).toBeInTheDocument();
   });
 
   it('hides the pager at exactly 25 job orders', () => {
-    const exactly25 = Array.from({ length: 25 }, (_, i) => draft({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }));
+    const exactly25 = Array.from({ length: 25 }, (_, i) => jobOrder({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }));
     harness(exactly25);
 
     expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
@@ -153,7 +153,7 @@ describe('JobOrdersPage — pagination', () => {
 
   it('snaps back to the last page when the list shrinks under a parked page 2 (delete-in-place)', () => {
     const many = Array.from({ length: 26 }, (_, i) =>
-      draft({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }),
+      jobOrder({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }),
     );
     const { emit } = harness(many);
 

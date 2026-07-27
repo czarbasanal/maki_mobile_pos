@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/infrastructure/query/queryKeys';
-import { useActivityLogRepo, useDraftRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useJobOrderRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { logActivity } from '@/application/activityLogger';
-import { ActivityType, type Draft, type FeeLine, type LaborLine, type SaleItem } from '@/domain/entities';
+import { ActivityType, type JobOrder, type FeeLine, type LaborLine, type SaleItem } from '@/domain/entities';
 import type { DiscountType } from '@/domain/enums/DiscountType';
 
-export interface SaveDraftInput {
-  draftId: string | null;
+export interface SaveJobOrderInput {
+  jobOrderId: string | null;
   name: string;
   items: SaleItem[];
   discountType: DiscountType;
@@ -18,24 +18,24 @@ export interface SaveDraftInput {
   notes: string | null;
 }
 
-/** Create a new draft or update the active one (resume → edit → save). */
-export function useSaveDraft() {
-  const repo = useDraftRepo();
+/** Create a new job order or update the active one (resume → edit → save). */
+export function useSaveJobOrder() {
+  const repo = useJobOrderRepo();
   const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
-  return useMutation<Draft | void, Error, SaveDraftInput>({
+  return useMutation<JobOrder | void, Error, SaveJobOrderInput>({
     // Without this, staleTime (60s) lets JobOrderEditPage rehydrate from the
     // pre-save cache — the user sees their save reverted, and saving again
     // persists the stale copy over the new one.
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.drafts.all });
+      void qc.invalidateQueries({ queryKey: queryKeys.jobOrders.all });
     },
     mutationFn: async (input) => {
       if (!actor) throw new Error('Not signed in');
-      if (input.draftId) {
+      if (input.jobOrderId) {
         await repo.update(
-          input.draftId,
+          input.jobOrderId,
           {
             name: input.name,
             items: input.items,
@@ -51,8 +51,8 @@ export function useSaveDraft() {
         logActivity(activityLogRepo, () => ({
           type: ActivityType.other,
           action: `Saved job order ${input.name}`,
-          entityId: input.draftId as string,
-          entityType: 'draft',
+          entityId: input.jobOrderId as string,
+          entityType: 'job_order',
         }));
         return;
       }
@@ -77,29 +77,29 @@ export function useSaveDraft() {
         type: ActivityType.other,
         action: `Saved job order ${created.name}`,
         entityId: created.id,
-        entityType: 'draft',
+        entityType: 'job_order',
       }));
       return created;
     },
   });
 }
 
-export interface DeleteDraftInput {
+export interface DeleteJobOrderInput {
   id: string;
   name: string;
 }
 
-export function useDeleteDraft() {
-  const repo = useDraftRepo();
+export function useDeleteJobOrder() {
+  const repo = useJobOrderRepo();
   const activityLogRepo = useActivityLogRepo();
-  return useMutation<void, Error, DeleteDraftInput>({
+  return useMutation<void, Error, DeleteJobOrderInput>({
     mutationFn: async ({ id, name }) => {
       await repo.delete(id);
       logActivity(activityLogRepo, () => ({
         type: ActivityType.other,
         action: `Deleted job order ${name}`,
         entityId: id,
-        entityType: 'draft',
+        entityType: 'job_order',
       }));
     },
   });
