@@ -77,4 +77,14 @@ describe('RecentSales', () => {
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(3);
   });
+
+  it('nests each link inside a list item (valid ul > li > a, not ul > a)', () => {
+    const { container } = harness([
+      sale({ id: 's1', saleNumber: 'SN-1' }),
+      sale({ id: 's2', saleNumber: 'SN-2' }),
+    ]);
+
+    expect(container.querySelectorAll('ul > li > a')).toHaveLength(2);
+    expect(container.querySelectorAll('ul > a')).toHaveLength(0);
+  });
 });

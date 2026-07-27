@@ -23,6 +23,7 @@ import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 
 const PAGE_SIZE = 25;
 
@@ -36,6 +37,7 @@ export function DaySalesPage() {
   const [date, setDate] = useState(() => new Date());
   const { sales, isLoading, error } = useDaySales(date);
   const [page, setPage] = useState(1);
+  usePageClamp(page, setPage, sales.length, PAGE_SIZE);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {

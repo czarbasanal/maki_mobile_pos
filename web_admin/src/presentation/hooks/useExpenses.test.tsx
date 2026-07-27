@@ -166,6 +166,24 @@ describe('expense mutations', () => {
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
 
+  it('useUpdateExpense logs null metadata for a description-only patch (no undefined keys — addDoc rejects them)', async () => {
+    useAuthStore.setState({
+      user: { id: 'u2', displayName: 'Staff', email: 's@x.com' } as never,
+      status: 'signedIn',
+    });
+    const update = vi.fn().mockResolvedValue(undefined);
+    const log = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useUpdateExpense(), { wrapper: wrap({ update }, log) });
+
+    act(() => {
+      result.current.mutate({ id: 'e1', patch: { description: 'Renamed' } });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(log).toHaveBeenCalledWith(expect.objectContaining({ metadata: null }));
+    useAuthStore.setState({ user: null, status: 'signedOut' });
+  });
+
   it('useDeleteExpense calls repo.delete with the id', async () => {
     const del = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteExpense(), { wrapper: wrap({ delete: del }) });

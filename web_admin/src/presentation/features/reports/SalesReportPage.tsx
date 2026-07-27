@@ -13,6 +13,7 @@ import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { CappedNotice } from '@/presentation/components/common/CappedNotice';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 
 const PAGE_SIZE = 25;
 
@@ -25,6 +26,7 @@ export function SalesReportPage() {
   const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
   const { sales, summary, topProducts, capped, isLoading, error } = useReportData(range);
   const [page, setPage] = useState(1);
+  usePageClamp(page, setPage, sales.length, PAGE_SIZE);
 
   useEffect(() => {
     document.title = 'Sales report · MAKI POS Admin';

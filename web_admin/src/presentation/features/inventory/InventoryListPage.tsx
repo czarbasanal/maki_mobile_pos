@@ -11,6 +11,7 @@ import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -69,6 +70,7 @@ export function InventoryListPage() {
     () => filterProducts(active, { search, stock, category }),
     [active, search, stock, category],
   );
+  usePageClamp(page, setPage, filtered.length, PAGE_SIZE);
 
   // Filters changed — a page number from the previous result set may now
   // point past the end (or simply be stale), so snap back to page 1.

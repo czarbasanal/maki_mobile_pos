@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { logActivity } from './activityLogger';
+import { logActivity, logActivityAndWait } from './activityLogger';
 import type { ActivityLogRepository } from '@/domain/repositories/ActivityLogRepository';
 import type { User } from '@/domain/entities';
 
@@ -141,5 +141,50 @@ describe('logActivity', () => {
     expect(log).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'logout', userId: 'u9', userName: 'Cash Ier' }),
     );
+  });
+});
+
+describe('logActivityAndWait', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ user: null, status: 'signedOut' });
+  });
+
+  it('awaits the repo write, injecting the same actor fields as logActivity', async () => {
+    const log = vi.fn().mockResolvedValue(undefined);
+    const repo = fakeRepo(log);
+
+    await logActivityAndWait(
+      repo,
+      () => ({ type: 'logout', action: 'User logged out' }),
+      actor({ id: 'u7', displayName: 'Out Going' }),
+    );
+
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'logout',
+        action: 'User logged out',
+        userId: 'u7',
+        userName: 'Out Going',
+        deviceInfo: null,
+      }),
+    );
+  });
+
+  it('resolves (never rejects) when the repo write fails', async () => {
+    const log = vi.fn().mockRejectedValue(new Error('permission-denied'));
+    const repo = fakeRepo(log);
+
+    await expect(
+      logActivityAndWait(repo, () => ({ type: 'logout', action: 'User logged out' }), actor()),
+    ).resolves.toBeUndefined();
+  });
+
+  it('no-ops with no signed-in user and no override', async () => {
+    const log = vi.fn().mockResolvedValue(undefined);
+    const repo = fakeRepo(log);
+
+    await logActivityAndWait(repo, () => ({ type: 'logout', action: 'User logged out' }));
+
+    expect(log).not.toHaveBeenCalled();
   });
 });

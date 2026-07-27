@@ -11,6 +11,7 @@ import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { cn } from '@/core/utils/cn';
 import type { Draft } from '@/domain/entities';
 
@@ -36,6 +37,7 @@ export function JobOrdersPage() {
   const navigate = useNavigate();
 
   const [page, setPage] = useState(1);
+  usePageClamp(page, setPage, jobOrders?.length ?? 0, PAGE_SIZE);
   const paged = useMemo(
     () => (jobOrders ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [jobOrders, page],
@@ -56,7 +58,7 @@ export function JobOrdersPage() {
       <header>
         <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Job Orders</h1>
         <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Service tickets — resume an open one into the POS, or open a billed one to view it.
+          Service tickets — resume an open one into the POS, or open a billed one to view its sale.
         </p>
       </header>
 
@@ -127,13 +129,20 @@ export function JobOrdersPage() {
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-tk-sm">
                         {billed ? (
-                          <button
-                            type="button"
-                            onClick={() => navigate(`${RoutePaths.jobOrders}/${jo.id}`)}
-                            className="rounded-md border border-light-border px-tk-md py-[6px] text-[12px] font-medium text-light-text-secondary hover:bg-light-subtle"
-                          >
-                            View
-                          </button>
+                          // The edit route refuses converted JOs ("already
+                          // billed out"), so View goes to the converted sale
+                          // — the record that actually holds the data now.
+                          jo.convertedToSaleId ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(RoutePaths.saleDetail.replace(':id', jo.convertedToSaleId!))
+                              }
+                              className="rounded-md border border-light-border px-tk-md py-[6px] text-[12px] font-medium text-light-text-secondary hover:bg-light-subtle"
+                            >
+                              View sale
+                            </button>
+                          ) : null
                         ) : (
                           <>
                             <button

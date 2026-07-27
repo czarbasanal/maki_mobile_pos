@@ -15,6 +15,7 @@ import { LoadingView, Spinner } from '@/presentation/components/common/LoadingVi
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -52,6 +53,7 @@ export function ExpensesPage() {
     setPage(1);
   }, [range, category]);
 
+  usePageClamp(page, setPage, expenses.length, PAGE_SIZE);
   const paged = useMemo(
     () => expenses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [expenses, page],

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
@@ -36,26 +36,35 @@ function EditStub() {
   return <div>JOB ORDER EDIT {id}</div>;
 }
 
+function SaleStub() {
+  const { id } = useParams();
+  return <div>SALE DETAIL {id}</div>;
+}
+
 function harness(drafts: Draft[]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  let emit: (next: Draft[]) => void = () => {};
   const draftRepo: Partial<Container['draftRepo']> = {
     watchAll: vi.fn((cb: (drafts: Draft[]) => void) => {
+      emit = cb;
       cb(drafts);
       return () => {};
     }),
   };
-  return render(
+  const view = render(
     <DiProvider override={{ draftRepo: draftRepo as Container['draftRepo'] }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={[RoutePaths.jobOrders]}>
           <Routes>
             <Route path={RoutePaths.jobOrders} element={<JobOrdersPage />} />
             <Route path={RoutePaths.jobOrderEdit} element={<EditStub />} />
+            <Route path={RoutePaths.saleDetail} element={<SaleStub />} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
   );
+  return { ...view, emit: (next: Draft[]) => emit(next) };
 }
 
 describe('JobOrdersPage', () => {
@@ -100,6 +109,31 @@ describe('JobOrdersPage', () => {
     harness([]);
     expect(screen.getByText(/no job orders/i)).toBeInTheDocument();
   });
+
+  it('billed row View opens the converted sale, not the (refusing) edit screen', () => {
+    const billed = draft({
+      id: 'd2',
+      name: 'JO-072326-002',
+      isConverted: true,
+      convertedToSaleId: 's9',
+    });
+    harness([billed]);
+
+    fireEvent.click(screen.getByRole('button', { name: /view sale/i }));
+    expect(screen.getByText('SALE DETAIL s9')).toBeInTheDocument();
+  });
+
+  it('billed row with no converted-sale link shows no action at all', () => {
+    const billed = draft({
+      id: 'd2',
+      name: 'JO-072326-002',
+      isConverted: true,
+      convertedToSaleId: null,
+    });
+    harness([billed]);
+
+    expect(screen.queryByRole('button', { name: /view/i })).not.toBeInTheDocument();
+  });
 });
 
 describe('JobOrdersPage — pagination', () => {
@@ -114,6 +148,23 @@ describe('JobOrdersPage — pagination', () => {
     const exactly25 = Array.from({ length: 25 }, (_, i) => draft({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }));
     harness(exactly25);
 
+    expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
+  });
+
+  it('snaps back to the last page when the list shrinks under a parked page 2 (delete-in-place)', () => {
+    const many = Array.from({ length: 26 }, (_, i) =>
+      draft({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }),
+    );
+    const { emit } = harness(many);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('26–26 of 26')).toBeInTheDocument();
+
+    // Live snapshot shrinks to 25 (e.g. the parked-on row was deleted): the
+    // pager unmounts (total <= pageSize), so without a clamp the page stays 2
+    // and the table renders empty with no Prev button to escape.
+    act(() => emit(many.slice(0, 25)));
+    expect(screen.getByText('JO-072326-001')).toBeInTheDocument();
     expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
   });
 });

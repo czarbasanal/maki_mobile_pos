@@ -40,6 +40,7 @@ import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { toneBadgeClasses, type Tone } from '@/core/theme/tones';
 import { cn } from '@/core/utils/cn';
 
@@ -159,6 +160,7 @@ export function ActivityLogsPage() {
     type: type ?? undefined,
     limit: 200,
   });
+  usePageClamp(page, setPage, logs?.length ?? 0, PAGE_SIZE);
 
   useEffect(() => {
     document.title = 'Activity logs · MAKI POS Admin';

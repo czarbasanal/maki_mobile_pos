@@ -7,7 +7,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useActivityLogRepo, useAuthRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { logActivity } from '@/application/activityLogger';
+import { logActivityAndWait } from '@/application/activityLogger';
 import { ActivityType } from '@/domain/entities';
 
 export function useSignOut() {
@@ -15,18 +15,22 @@ export function useSignOut() {
   const activityLogRepo = useActivityLogRepo();
   return useMutation<void, Error, void>({
     mutationFn: async () => {
-      // Read the outgoing user BEFORE signing out — signOut() flips the auth
-      // store to signedOut (via the onAuthStateChanged bridge), and logActivity
-      // is a no-op once there's no signed-in user to attribute the entry to.
+      // The log write must complete BEFORE signOut(): once the token is gone
+      // the addDoc goes out unauthenticated, the `user_logs` rules deny it,
+      // and the swallow hides that forever — web logouts would never appear
+      // in the activity log. Awaited (not fire-and-forget) so the write
+      // flushes while still signed in; mobile's sign_out_usecase does the
+      // same. logActivityAndWait never rejects, so a denied/offline log
+      // still can't block the actual sign-out.
       const user = useAuthStore.getState().user;
-      await authRepo.signOut();
       if (user) {
-        logActivity(
+        await logActivityAndWait(
           activityLogRepo,
           () => ({ type: ActivityType.logout, action: 'User logged out' }),
           user,
         );
       }
+      await authRepo.signOut();
     },
   });
 }

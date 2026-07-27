@@ -25,13 +25,11 @@ export function RecentSales({ sales, limit = 8 }: { sales: Sale[]; limit?: numbe
   return (
     <ul className="divide-y divide-light-hairline">
       {sales.slice(0, limit).map((sale) => (
-        <Link
-          key={sale.id}
-          to={`/reports/sale/${sale.id}`}
-          className="block hover:bg-light-subtle transition-colors"
-        >
-          <RecentSaleRow sale={sale} />
-        </Link>
+        <li key={sale.id}>
+          <Link to={`/reports/sale/${sale.id}`} className="block hover:bg-light-subtle transition-colors">
+            <RecentSaleRow sale={sale} />
+          </Link>
+        </li>
       ))}
     </ul>
   );
@@ -46,7 +44,7 @@ function RecentSaleRow({ sale }: { sale: Sale }) {
   const dotColor = voided ? colors.pos.voided : paymentColor;
 
   return (
-    <li className="flex items-center gap-tk-md py-tk-sm">
+    <div className="flex items-center gap-tk-md py-tk-sm">
       <span
         className="h-2 w-2 shrink-0 rounded-full"
         style={{ backgroundColor: dotColor }}
@@ -83,6 +81,6 @@ function RecentSaleRow({ sale }: { sale: Sale }) {
       >
         {formatMoney(total)}
       </div>
-    </li>
+    </div>
   );
 }

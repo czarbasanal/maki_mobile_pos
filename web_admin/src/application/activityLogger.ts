@@ -39,6 +39,21 @@ export interface LogActivityInput {
  * cleared (by the same mutation's own signOut() call, via the
  * onAuthStateChanged bridge) before this can run.
  */
+function buildEntry(user: User, input: LogActivityInput): Omit<ActivityLog, 'id' | 'createdAt'> {
+  return {
+    type: input.type,
+    action: input.action,
+    details: input.details ?? null,
+    userId: user.id,
+    userName: user.displayName,
+    userRole: user.role,
+    entityId: input.entityId ?? null,
+    entityType: input.entityType ?? null,
+    metadata: input.metadata ?? null,
+    deviceInfo: null,
+  };
+}
+
 export function logActivity(
   repo: ActivityLogRepository,
   build: () => LogActivityInput,
@@ -48,25 +63,33 @@ export function logActivity(
     const user = actorOverride ?? useAuthStore.getState().user;
     if (!user) return;
 
-    const input = build();
-    const entry: Omit<ActivityLog, 'id' | 'createdAt'> = {
-      type: input.type,
-      action: input.action,
-      details: input.details ?? null,
-      userId: user.id,
-      userName: user.displayName,
-      userRole: user.role,
-      entityId: input.entityId ?? null,
-      entityType: input.entityType ?? null,
-      metadata: input.metadata ?? null,
-      deviceInfo: null,
-    };
-
-    void repo.log(entry).catch(() => {
+    void repo.log(buildEntry(user, build())).catch(() => {
       // Swallowed — a failed audit-log write must never surface to the caller.
     });
   } catch {
     // Defensive: a throwing `build()` or a synchronously-throwing fake/repo
     // must not propagate either — see the file-level note above.
+  }
+}
+
+/**
+ * Awaited variant, same swallow-everything contract. For the rare site that
+ * must confirm the write LANDED while the session is still valid — sign-out,
+ * where a fire-and-forget entry queued after signOut() goes out with no auth
+ * token, gets denied by the `user_logs` rules, and vanishes silently.
+ */
+export async function logActivityAndWait(
+  repo: ActivityLogRepository,
+  build: () => LogActivityInput,
+  actorOverride?: User,
+): Promise<void> {
+  try {
+    const user = actorOverride ?? useAuthStore.getState().user;
+    if (!user) return;
+
+    await repo.log(buildEntry(user, build()));
+  } catch {
+    // Same contract as logActivity: a failed audit-log write never
+    // propagates to (or slows down more than one awaited write) the caller.
   }
 }

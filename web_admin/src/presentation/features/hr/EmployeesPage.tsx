@@ -9,6 +9,7 @@ import { LoadingView, Spinner } from '@/presentation/components/common/LoadingVi
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
@@ -42,6 +43,7 @@ export function EmployeesPage() {
 
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 25;
+  usePageClamp(page, setPage, employees?.length ?? 0, PAGE_SIZE);
   const paged = useMemo(
     () => (employees ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [employees, page],

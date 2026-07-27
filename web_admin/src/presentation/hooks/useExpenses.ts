@@ -156,7 +156,15 @@ export function useUpdateExpense() {
             : null,
         entityId: id,
         entityType: 'expense',
-        metadata: { amount: patch.amount, category: patch.category },
+        // Only defined keys — addDoc rejects undefined values, and the
+        // rejection would be swallowed (entry silently dropped).
+        metadata:
+          patch.amount !== undefined || patch.category !== undefined
+            ? {
+                ...(patch.amount !== undefined ? { amount: patch.amount } : {}),
+                ...(patch.category !== undefined ? { category: patch.category } : {}),
+              }
+            : null,
       }));
     },
     onSuccess: () => invalidateExpenses(qc),

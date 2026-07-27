@@ -9,6 +9,7 @@ import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { PageHeader } from '@/presentation/features/settings/PageHeader';
@@ -47,6 +48,7 @@ export function PayslipsPage() {
 
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 25;
+  usePageClamp(page, setPage, payslips?.length ?? 0, PAGE_SIZE);
   const paged = useMemo(
     () => (payslips ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [payslips, page],
