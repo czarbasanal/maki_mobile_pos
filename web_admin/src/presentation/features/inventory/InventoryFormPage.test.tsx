@@ -180,3 +180,21 @@ describe('InventoryFormPage — edit-mode supplier mapping', () => {
     expect(option.selected).toBe(true);
   });
 });
+
+describe('InventoryFormPage — uppercase inputs', () => {
+  it('name and sku fields uppercase as you type', async () => {
+    signIn();
+    harness();
+    const user = userEvent.setup();
+    const name = screen.getByLabelText('Name') as HTMLInputElement;
+    await user.type(name, 'brake pad');
+    expect(name.value).toBe('BRAKE PAD');
+
+    const autoToggle = screen.getByRole('checkbox', { name: /auto-generate/i });
+    if ((autoToggle as HTMLInputElement).checked) await user.click(autoToggle);
+    const sku = screen.getByLabelText('SKU') as HTMLInputElement;
+    await user.clear(sku);
+    await user.type(sku, 'abc123x');
+    expect(sku.value).toBe('ABC123X');
+  });
+});

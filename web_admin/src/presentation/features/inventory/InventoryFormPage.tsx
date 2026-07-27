@@ -292,6 +292,26 @@ export function InventoryFormPage() {
   };
   const shownImage = imagePreview ?? (!imageRemoved ? target?.imageUrl ?? null : null);
 
+  /** Force-uppercase an input in place (cursor preserved) BEFORE RHF reads it —
+   * catalog convention is all-caps names/SKUs. */
+  const upperizeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const el = e.target;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    el.value = el.value.toUpperCase();
+    if (start !== null && end !== null) el.setSelectionRange(start, end);
+  };
+
+  const nameField = register('name', {
+    onBlur: () => { if (skuLocked && !categoryDrivesSku()) regenerateSku(); },
+  });
+  const skuField = register('sku', {
+    onChange: () => {
+      if (update.error) update.reset();
+      if (create.error) create.reset();
+    },
+  });
+
   const resolveSupplier = (supplierId: string) => {
     const idOut = supplierId || null;
     const found = (suppliers ?? []).find((s) => s.id === idOut);
@@ -437,9 +457,8 @@ export function InventoryFormPage() {
               <input
                 type="text"
                 className={inputCls(!!errors.name)}
-                {...register('name', {
-                  onBlur: () => { if (skuLocked && !categoryDrivesSku()) regenerateSku(); },
-                })}
+                {...nameField}
+                onChange={(e) => { upperizeInput(e); void nameField.onChange(e); }}
               />
             } />
 
@@ -469,12 +488,8 @@ export function InventoryFormPage() {
                   type="text"
                   readOnly={skuLocked}
                   className={cn(inputCls(!!errors.sku), skuLocked && 'bg-light-subtle text-light-text-secondary')}
-                  {...register('sku', {
-                    onChange: () => {
-                      if (update.error) update.reset();
-                      if (create.error) create.reset();
-                    },
-                  })}
+                  {...skuField}
+                  onChange={(e) => { upperizeInput(e); void skuField.onChange(e); }}
                 />
                 {skuLocked ? (
                   <button
