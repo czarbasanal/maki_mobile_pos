@@ -17,7 +17,9 @@ interface CartState {
   draftId: string | null;
   draftName: string | null;
   // Optional sale/JO notes — restored on draft resume, carried onto the sale
-  // at checkout (mobile parity). Null means "no notes", never ''.
+  // at checkout (mobile parity). The JO-edit textarea buffers raw text here,
+  // so '' can transiently appear; every PERSIST site normalizes ''/blank to
+  // null before writing.
   notes: string | null;
   addLine: (product: Product) => void;
   setQty: (productId: string, quantity: number) => void;

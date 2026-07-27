@@ -2,6 +2,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/data/repositories/draft_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -18,9 +21,11 @@ void main() {
         createdAt: DateTime(2026, 7, 1),
       );
 
-  DraftEntity buildDraft({String? notes}) => DraftEntity(
+  DraftEntity buildDraft({String? notes, String? motorcycleModel}) =>
+      DraftEntity(
         id: 'draft-1',
         name: 'JO-072526-001',
+        motorcycleModel: motorcycleModel,
         items: const [
           SaleItemEntity(
             id: 'item-1',
@@ -114,5 +119,93 @@ void main() {
 
     final saved = await repo.getDraftById(id);
     expect(saved!.notes, isNull);
+  });
+
+  // Buttons don't blur a focused TextField, so Bill out and the back exits
+  // must commit explicitly — these pin the two exits the blur commit misses.
+  Future<(ProviderContainer, DraftRepositoryImpl, String)> pumpWithRouter(
+    WidgetTester tester,
+    DraftEntity draft,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final repo = DraftRepositoryImpl(firestore: FakeFirebaseFirestore());
+    final created = await repo.createDraft(draft);
+
+    final container = ProviderContainer(overrides: [
+      draftByIdProvider(created.id).overrideWith((ref) async => created),
+      activeMechanicsProvider.overrideWith((ref) => Stream.value(const [])),
+      activeShopFeesProvider.overrideWith((ref) => Stream.value(const [])),
+      currentUserProvider.overrideWith((ref) => Stream.value(admin())),
+      draftRepositoryProvider.overrideWithValue(repo),
+      unsettledBusinessDayProvider.overrideWith((ref) async => null),
+    ]);
+    addTearDown(container.dispose);
+
+    final router = GoRouter(
+      initialLocation: '/edit',
+      routes: [
+        GoRoute(
+          path: '/edit',
+          builder: (_, __) => DraftEditScreen(draftId: created.id),
+        ),
+        GoRoute(
+          path: RoutePaths.checkout,
+          builder: (_, __) => const Scaffold(body: Text('CHECKOUT STUB')),
+        ),
+        GoRoute(
+          path: RoutePaths.drafts,
+          builder: (_, __) => const Scaffold(body: Text('LIST STUB')),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await container.read(currentUserProvider.future);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    return (container, repo, created.id);
+  }
+
+  testWidgets(
+      'Bill out with a still-focused notes edit carries the fresh notes',
+      (tester) async {
+    final (container, repo, id) = await pumpWithRouter(
+      tester,
+      buildDraft(notes: 'Old note', motorcycleModel: 'Nmax'),
+    );
+
+    // Type but do NOT unfocus — tapping Bill out doesn't blur the field.
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Old note'), 'Fresh plan');
+    await tester.tap(find.text('Bill out'));
+    await settle(tester);
+
+    expect(find.text('CHECKOUT STUB'), findsOneWidget);
+    expect(container.read(cartProvider).notes, 'Fresh plan');
+    final saved = await repo.getDraftById(id);
+    expect(saved!.notes, 'Fresh plan');
+  });
+
+  testWidgets('back exit commits a still-focused notes edit', (tester) async {
+    final (_, repo, id) = await pumpWithRouter(
+      tester,
+      buildDraft(notes: 'Old note'),
+    );
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Old note'), 'Remember the gasket');
+    await tester.tap(find.byIcon(LucideIcons.chevronLeft));
+    await settle(tester);
+
+    final saved = await repo.getDraftById(id);
+    expect(saved!.notes, 'Remember the gasket');
   });
 }

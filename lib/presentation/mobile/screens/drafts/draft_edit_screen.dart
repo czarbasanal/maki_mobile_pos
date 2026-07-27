@@ -227,177 +227,189 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          draft.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            fontFamily: AppTextStyles.monoFontFamily,
+    // System back (gesture / hardware button) bypasses the chevron handler
+    // AND the notes field's blur commit — catch it here.
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _commitNotes();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            draft.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              fontFamily: AppTextStyles.monoFontFamily,
+            ),
           ),
-        ),
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(RoutePaths.drafts);
-            }
-          },
-        ),
-        actions: [
-          // Delete button (red)
-          IconButton(
-            icon: const Icon(LucideIcons.trash2),
-            color: AppColors.costUp(theme.brightness == Brightness.dark),
-            onPressed: () => _confirmDelete(draft),
-            tooltip: 'Delete Job Order',
+          leading: IconButton(
+            icon: const Icon(LucideIcons.chevronLeft),
+            onPressed: () {
+              // This screen has no save button — leaving IS the save gesture
+              // for a still-focused notes edit, and pop-blur timing is not
+              // guaranteed to fire the Focus commit.
+              _commitNotes();
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(RoutePaths.drafts);
+              }
+            },
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // ONE scroll region — header, parts and labor scroll together
-          // (POS cart pattern); the summary + Bill out stay pinned below.
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Column(
-                children: [
-                  // Draft info header
-                  Builder(builder: (context) {
-                    final muted = theme.colorScheme.onSurfaceVariant;
-                    final isDark = theme.brightness == Brightness.dark;
-                    final hairline = isDark
-                        ? AppColors.darkHairline
-                        : AppColors.lightHairline;
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: hairline)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Motorcycle model — the bill-out gate, editable in
-                          // place (the serviced bike can change mid-job).
-                          MotorcycleModelPicker(
-                            selectedModel: draft.motorcycleModel,
-                            onChanged: _onModelChanged,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Row(
-                            children: [
-                              Icon(LucideIcons.clock, size: 14, color: muted),
-                              const SizedBox(width: AppSpacing.sm),
-                              Text(
-                                'Created ${dateFormat.format(draft.createdAt)}',
-                                style: theme.textTheme.bodySmall
-                                    ?.copyWith(color: muted),
-                              ),
-                            ],
-                          ),
-                          if (draft.updatedAt != null) ...[
-                            const SizedBox(height: 4),
+          actions: [
+            // Delete button (red)
+            IconButton(
+              icon: const Icon(LucideIcons.trash2),
+              color: AppColors.costUp(theme.brightness == Brightness.dark),
+              onPressed: () => _confirmDelete(draft),
+              tooltip: 'Delete Job Order',
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // ONE scroll region — header, parts and labor scroll together
+            // (POS cart pattern); the summary + Bill out stay pinned below.
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Column(
+                  children: [
+                    // Draft info header
+                    Builder(builder: (context) {
+                      final muted = theme.colorScheme.onSurfaceVariant;
+                      final isDark = theme.brightness == Brightness.dark;
+                      final hairline = isDark
+                          ? AppColors.darkHairline
+                          : AppColors.lightHairline;
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          border: Border(bottom: BorderSide(color: hairline)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Motorcycle model — the bill-out gate, editable in
+                            // place (the serviced bike can change mid-job).
+                            MotorcycleModelPicker(
+                              selectedModel: draft.motorcycleModel,
+                              onChanged: _onModelChanged,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
                             Row(
                               children: [
-                                Icon(LucideIcons.squarePen,
-                                    size: 14, color: muted),
+                                Icon(LucideIcons.clock, size: 14, color: muted),
                                 const SizedBox(width: AppSpacing.sm),
                                 Text(
-                                  'Updated ${dateFormat.format(draft.updatedAt!)}',
+                                  'Created ${dateFormat.format(draft.createdAt)}',
                                   style: theme.textTheme.bodySmall
                                       ?.copyWith(color: muted),
                                 ),
                               ],
                             ),
-                          ],
-                          const SizedBox(height: AppSpacing.sm),
-                          Focus(
-                            onFocusChange: (hasFocus) {
-                              if (!hasFocus) _commitNotes();
-                            },
-                            child: TextField(
-                              style: AppTextStyles.fieldInput,
-                              controller: _notesControllerFor(draft),
-                              minLines: 1,
-                              maxLines: 3,
-                              textCapitalization:
-                                  TextCapitalization.sentences,
-                              decoration: const InputDecoration(
-                                labelText: 'Notes',
-                                hintText: 'e.g. customer requests',
+                            if (draft.updatedAt != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.squarePen,
+                                      size: 14, color: muted),
+                                  const SizedBox(width: AppSpacing.sm),
+                                  Text(
+                                    'Updated ${dateFormat.format(draft.updatedAt!)}',
+                                    style: theme.textTheme.bodySmall
+                                        ?.copyWith(color: muted),
+                                  ),
+                                ],
                               ),
+                            ],
+                            const SizedBox(height: AppSpacing.sm),
+                            Focus(
+                              onFocusChange: (hasFocus) {
+                                if (!hasFocus) _commitNotes();
+                              },
+                              child: TextField(
+                                style: AppTextStyles.fieldInput,
+                                controller: _notesControllerFor(draft),
+                                minLines: 1,
+                                maxLines: 3,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                decoration: const InputDecoration(
+                                  labelText: 'Notes',
+                                  hintText: 'e.g. customer requests',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+
+                    // Parts header + Add action
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.package,
+                              size: 16,
+                              color: theme.colorScheme.onSurfaceVariant),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            'Parts',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: _onAddParts,
+                            icon: const Icon(LucideIcons.plus, size: 16),
+                            label: const Text('Add parts'),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
                             ),
                           ),
                         ],
                       ),
-                    );
-                  }),
-
-                  // Parts header + Add action
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md, AppSpacing.sm, AppSpacing.xs, 0),
-                    child: Row(
-                      children: [
-                        Icon(LucideIcons.package,
-                            size: 16,
-                            color: theme.colorScheme.onSurfaceVariant),
-                        const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          'Parts',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: _onAddParts,
-                          icon: const Icon(LucideIcons.plus, size: 16),
-                          label: const Text('Add parts'),
-                          style: TextButton.styleFrom(
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
 
-                  // Items list — inline, not separately scrollable.
-                  draft.items.isEmpty
-                      ? SizedBox(height: 220, child: _buildEmptyItems())
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: draft.items.length,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemBuilder: (context, index) {
-                            return _buildDraftItem(draft, draft.items[index]);
-                          },
-                        ),
+                    // Items list — inline, not separately scrollable.
+                    draft.items.isEmpty
+                        ? SizedBox(height: 220, child: _buildEmptyItems())
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: draft.items.length,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemBuilder: (context, index) {
+                              return _buildDraftItem(draft, draft.items[index]);
+                            },
+                          ),
 
-                  // Labor & Service (mechanic + labor lines) — editable
-                  // anytime.
-                  _buildLaborSection(draft),
+                    // Labor & Service (mechanic + labor lines) — editable
+                    // anytime.
+                    _buildLaborSection(draft),
 
-                  // Shop Fees — editable anytime, same reuse route as Labor
-                  // (shared FeeLineRow + add-fee dialog from Task 5a).
-                  _buildFeeSection(draft),
-                ],
+                    // Shop Fees — editable anytime, same reuse route as Labor
+                    // (shared FeeLineRow + add-fee dialog from Task 5a).
+                    _buildFeeSection(draft),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // Sticky footer: summary + Bill out.
-          _buildSummarySection(draft),
-        ],
+            // Sticky footer: summary + Bill out.
+            _buildSummarySection(draft),
+          ],
+        ),
       ),
     );
   }
@@ -691,9 +703,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: draft.hasBillableContent &&
-                        ref
-                                .watch(unsettledBusinessDayProvider)
-                                .valueOrNull ==
+                        ref.watch(unsettledBusinessDayProvider).valueOrNull ==
                             null
                     ? () => _billOut(draft)
                     : null,
@@ -712,7 +722,13 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   /// A successful sale marks the ticket converted (ProcessSaleUseCase
   /// `_reconcileDraft`); an abandoned checkout leaves the ticket intact.
   Future<void> _billOut(DraftEntity draft) async {
-    if (!jobOrderReadyToBillOut(draft)) {
+    // Tapping a button doesn't blur the notes field, so a focused edit would
+    // otherwise miss the blur commit and the sale would carry stale notes.
+    // _persist updates _working synchronously before its await, so the
+    // refreshed copy is ready right after this call.
+    _commitNotes();
+    final ticket = _working ?? draft;
+    if (!jobOrderReadyToBillOut(ticket)) {
       context.showWarningSnackBar('Set the motorcycle model to bill out');
       return;
     }
@@ -740,7 +756,7 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
       if (!proceed || !mounted) return;
     }
 
-    ref.read(cartProvider.notifier).loadFromDraft(draft);
+    ref.read(cartProvider.notifier).loadFromDraft(ticket);
     ref.read(selectedDraftProvider.notifier).state = null;
     if (mounted) context.go(RoutePaths.checkout);
   }
