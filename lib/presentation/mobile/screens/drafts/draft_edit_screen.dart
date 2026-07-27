@@ -43,12 +43,42 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
   /// writes only `items` and would drop labor).
   DraftEntity? _working;
 
+  /// Notes edit buffer — seeded from the loaded ticket once (per draft id),
+  /// committed on focus loss so we don't write Firestore per keystroke.
+  TextEditingController? _notesCtrl;
+  String? _notesSeededForId;
+
   DraftEntity _sync(DraftEntity fromProvider) {
     final current = _working;
     if (current == null || current.id != fromProvider.id) {
       _working = fromProvider;
     }
     return _working!;
+  }
+
+  TextEditingController _notesControllerFor(DraftEntity draft) {
+    if (_notesCtrl == null || _notesSeededForId != draft.id) {
+      _notesCtrl?.dispose();
+      _notesCtrl = TextEditingController(text: draft.notes ?? '');
+      _notesSeededForId = draft.id;
+    }
+    return _notesCtrl!;
+  }
+
+  void _commitNotes() {
+    final base = _working;
+    final typed = _notesCtrl?.text.trim();
+    if (base == null || typed == null || typed == (base.notes ?? '')) return;
+    final next = typed.isEmpty
+        ? base.copyWith(clearNotes: true, updatedAt: DateTime.now())
+        : base.copyWith(notes: typed, updatedAt: DateTime.now());
+    _persist(next);
+  }
+
+  @override
+  void dispose() {
+    _notesCtrl?.dispose();
+    super.dispose();
   }
 
   Future<void> _persist(DraftEntity next) async {
@@ -287,12 +317,24 @@ class _DraftEditScreenState extends ConsumerState<DraftEditScreen> {
                               ],
                             ),
                           ],
-                          if (draft.notes != null &&
-                              draft.notes!.isNotEmpty) ...[
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(draft.notes!,
-                                style: theme.textTheme.bodyMedium),
-                          ],
+                          const SizedBox(height: AppSpacing.sm),
+                          Focus(
+                            onFocusChange: (hasFocus) {
+                              if (!hasFocus) _commitNotes();
+                            },
+                            child: TextField(
+                              style: AppTextStyles.fieldInput,
+                              controller: _notesControllerFor(draft),
+                              minLines: 1,
+                              maxLines: 3,
+                              textCapitalization:
+                                  TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                labelText: 'Notes',
+                                hintText: 'e.g. customer requests',
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     );
