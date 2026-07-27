@@ -3,7 +3,7 @@
 // range (useExpenseTotals's three window queries + the main list query all
 // go through it) but DOES respect `category`, so the category-filter test can
 // pin real narrowing without a real Firestore range query.
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -14,6 +14,15 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { formatMoney } from '@/core/utils/money';
 import type { Category, Expense } from '@/domain/entities';
+
+vi.mock('@/data/expenseReceiptStorage', () => ({
+  deleteExpenseReceipt: vi.fn(),
+}));
+import { deleteExpenseReceipt } from '@/data/expenseReceiptStorage';
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 function signIn(role: UserRole) {
   useAuthStore.setState({
@@ -168,11 +177,14 @@ describe('ExpensesPage — category filter', () => {
 });
 
 describe('ExpensesPage — delete', () => {
-  it('hides the Delete action from a role without deleteExpense', async () => {
+  it('staff can now delete expenses (shop policy 2026-07-04)', async () => {
     signIn(UserRole.staff);
-    harness([makeExpense()]);
+    const del = vi.fn().mockResolvedValue(undefined);
+    harness([makeExpense({ id: 'e1', description: 'Fuel' })], { delete: del });
+
     expect(await screen.findByText('Fuel')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
+    const deleteBtn = screen.getByRole('button', { name: /Delete/ });
+    expect(deleteBtn).toBeInTheDocument();
   });
 
   it('admin can delete an expense via the confirm dialog', async () => {
@@ -189,5 +201,33 @@ describe('ExpensesPage — delete', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
     expect(del).toHaveBeenCalledWith('e1');
+  });
+
+  it('deletes receipt storage when expense has receiptImageUrl', async () => {
+    signIn(UserRole.admin);
+    const del = vi.fn().mockResolvedValue(undefined);
+    harness([makeExpense({ id: 'e1', description: 'Fuel', receiptImageUrl: 'https://x/receipt.jpg' })], { delete: del });
+
+    expect(await screen.findByText('Fuel')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Delete/ }));
+
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(deleteExpenseReceipt).toHaveBeenCalledWith('e1');
+  });
+
+  it('does not call deleteExpenseReceipt when expense has no receipt', async () => {
+    signIn(UserRole.admin);
+    const del = vi.fn().mockResolvedValue(undefined);
+    harness([makeExpense({ id: 'e1', description: 'Fuel', receiptImageUrl: null })], { delete: del });
+
+    expect(await screen.findByText('Fuel')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Delete/ }));
+
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(deleteExpenseReceipt).not.toHaveBeenCalled();
   });
 });

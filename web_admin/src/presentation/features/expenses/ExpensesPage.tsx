@@ -8,6 +8,7 @@ import { paymentMethodDisplayName } from '@/domain/enums';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { useAuthStore } from '@/presentation/stores/authStore';
+import { deleteExpenseReceipt } from '@/data/expenseReceiptStorage';
 import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
 import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
@@ -60,6 +61,13 @@ export function ExpensesPage() {
     if (!deleting) return;
     try {
       await del.mutateAsync(deleting.id);
+      if (deleting.receiptImageUrl) {
+        try {
+          await deleteExpenseReceipt(deleting.id);
+        } catch {
+          // best-effort — an orphaned Storage object is harmless.
+        }
+      }
       setDeleting(null);
     } catch {
       // Surfaced via del.error below; confirm dialog stays open.
