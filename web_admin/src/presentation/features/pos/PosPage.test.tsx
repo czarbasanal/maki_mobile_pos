@@ -179,6 +179,36 @@ describe('Save as Job Order dialog', () => {
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ name: expected }));
   });
 
+  it('passes typed notes (trimmed) on save', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
+    });
+    const { create } = harness(undefined, [], []);
+
+    await userEvent.click(screen.getByRole('button', { name: /save as job order/i }));
+    await userEvent.type(screen.getByLabelText(/notes/i), '  Check brakes  ');
+    await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ notes: 'Check brakes' }));
+    // Saving parks the ticket and clears the cart — notes included.
+    expect(useCartStore.getState().notes).toBeNull();
+  });
+
+  it('prefills the notes textarea from the cart (resumed JO keeps its notes)', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    useCartStore.getState().setNotes('Customer waiting');
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
+    });
+    harness(undefined, [], []);
+
+    await userEvent.click(screen.getByRole('button', { name: /save as job order/i }));
+    expect(screen.getByLabelText(/notes/i)).toHaveValue('Customer waiting');
+  });
+
   it('keeps the existing name when updating a draft (no renumber)', async () => {
     useCartStore.getState().clear();
     useCartStore.getState().loadDraft(draft({ id: 'd1', name: 'JO-010100-005' }));
