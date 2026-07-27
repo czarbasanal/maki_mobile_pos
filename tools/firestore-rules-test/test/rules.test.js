@@ -544,6 +544,62 @@ describe("/drafts", () => {
 });
 
 // ===================================================================
+// /job_orders (renamed home of the same tickets - same matrix as /drafts)
+// ===================================================================
+describe("/job_orders", () => {
+  it("user can create a job order owned by themselves", async () => {
+    await assertSucceeds(
+      as("cashier").collection("job_orders").doc(newDocId("d")).set({
+        createdBy: USERS.cashier.uid,
+        items: [],
+      })
+    );
+  });
+
+  it("user CANNOT create a job order owned by someone else", async () => {
+    await assertFails(
+      as("cashier").collection("job_orders").doc(newDocId("d")).set({
+        createdBy: USERS.staff.uid,
+        items: [],
+      })
+    );
+  });
+
+  it("user can update/delete their own job order", async () => {
+    const id = newDocId("d");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("job_orders").doc(id).set({
+        createdBy: USERS.cashier.uid, items: [],
+      });
+    });
+    await assertSucceeds(as("cashier").collection("job_orders").doc(id).update({ items: [{}] }));
+    await assertSucceeds(as("cashier").collection("job_orders").doc(id).delete());
+  });
+
+  it("user CANNOT update/delete another user's job order", async () => {
+    const id = newDocId("d");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("job_orders").doc(id).set({
+        createdBy: USERS.staff.uid, items: [],
+      });
+    });
+    await assertFails(as("cashier").collection("job_orders").doc(id).update({ items: [{}] }));
+    await assertFails(as("cashier").collection("job_orders").doc(id).delete());
+  });
+
+  it("admin CAN update/delete any job order", async () => {
+    const id = newDocId("d");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("job_orders").doc(id).set({
+        createdBy: USERS.cashier.uid, items: [],
+      });
+    });
+    await assertSucceeds(as("admin").collection("job_orders").doc(id).update({ items: [{}] }));
+    await assertSucceeds(as("admin").collection("job_orders").doc(id).delete());
+  });
+});
+
+// ===================================================================
 // /receivings
 // ===================================================================
 describe("/receivings", () => {
@@ -892,6 +948,7 @@ describe("cross-cutting", () => {
     await assertFails(unauth().collection("products").doc("p-1").get());
     await assertFails(unauth().collection("sales").doc("s-1").get());
     await assertFails(unauth().collection("drafts").doc("d-1").get());
+    await assertFails(unauth().collection("job_orders").doc("d-1").get());
     await assertFails(unauth().collection("expenses").doc("e-1").get());
     await assertFails(unauth().collection("settings").doc("s-1").get());
   });

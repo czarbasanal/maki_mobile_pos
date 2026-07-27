@@ -7,6 +7,7 @@
 const WIPE_COLLECTIONS = [
   'sales', // includes the `items` subcollection (recursiveDelete)
   'drafts',
+  'job_orders',
   'receivings',
   'expenses',
   'daily_closings',
