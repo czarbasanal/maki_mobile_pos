@@ -243,13 +243,13 @@ abstract class Validators {
     return null;
   }
 
-  // ==================== DRAFT ====================
+  // ==================== JOB ORDER ====================
 
-  /// Validates draft description.
-  static String? draftDescription(String? value) {
+  /// Validates job order description.
+  static String? jobOrderDescription(String? value) {
     final maxError = maxLength(
       value,
-      AppConstants.maxDraftDescriptionLength,
+      AppConstants.maxJobOrderDescriptionLength,
       'Description',
     );
     if (maxError != null) return maxError;

@@ -13,7 +13,7 @@ void main() {
     repo = PurchaseOrderRepositoryImpl(firestore: fake);
   });
 
-  PurchaseOrderEntity draftEntity({String ref = 'PO-20260703-001'}) =>
+  PurchaseOrderEntity jobOrderEntity({String ref = 'PO-20260703-001'}) =>
       PurchaseOrderEntity(
         id: '',
         referenceNumber: ref,
@@ -40,7 +40,7 @@ void main() {
       );
 
   Future<PurchaseOrderEntity> orderedPo() async {
-    final po = await repo.createPurchaseOrder(draftEntity());
+    final po = await repo.createPurchaseOrder(jobOrderEntity());
     await repo.markOrdered(po.id);
     return (await repo.getPurchaseOrderById(po.id))!;
   }
@@ -95,7 +95,7 @@ void main() {
   });
 
   test('rejects draft POs', () async {
-    final po = await repo.createPurchaseOrder(draftEntity(ref: 'PO-X'));
+    final po = await repo.createPurchaseOrder(jobOrderEntity(ref: 'PO-X'));
     expect(() => start(po.id), throwsA(isA<DatabaseException>()));
   });
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 
-/// A label/value row for totals panels (cart, checkout, drafts).
+/// A label/value row for totals panels (cart, checkout, job orders).
 ///
 /// Two variants:
 /// - normal: 13px muted label + 13px value (optionally [valueColor]-tinted).
@@ -40,8 +40,7 @@ class SummaryRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style:
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

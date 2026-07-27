@@ -5,7 +5,7 @@ import 'package:maki_mobile_pos/core/theme/app_spacing.dart';
 /// Standard empty-state view: icon + title + optional subtitle + optional CTA.
 ///
 /// Replaces the per-screen `_buildEmptyState()` helpers that drifted across
-/// drafts / inventory / expenses / suppliers / users with inconsistent icon
+/// job orders / inventory / expenses / suppliers / users with inconsistent icon
 /// sizes and padding.
 class EmptyStateView extends StatelessWidget {
   final IconData icon;

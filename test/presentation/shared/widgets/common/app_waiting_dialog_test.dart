@@ -94,14 +94,13 @@ void main() {
     await tester.tap(find.text('go'));
     await tester.pump();
     expect(find.text('Billing out…'), findsOneWidget);
-    expect(find.text('Loading this job order into the register.'),
-        findsOneWidget);
+    expect(
+        find.text('Loading this job order into the register.'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 450));
     await tester.pumpAndSettle();
   });
 
-  testWidgets('light theme: white card, no border, ink title',
-      (tester) async {
+  testWidgets('light theme: white card, no border, ink title', (tester) async {
     await pumpHost(tester, theme: AppTheme.lightTheme, onTap: (context) {
       return context.runWithWaiting(
         () => Future.delayed(const Duration(milliseconds: 400)),

@@ -11,8 +11,8 @@ import 'package:maki_mobile_pos/presentation/shared/screens/auth/forgot_password
 import 'package:maki_mobile_pos/presentation/mobile/screens/dashboard/dashboard_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/pos/pos_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/pos/checkout_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/drafts_list_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/drafts/draft_edit_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/job_orders/job_orders_list_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/job_orders/job_order_edit_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/inventory_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/product_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/price_history_screen.dart';
@@ -191,16 +191,16 @@ List<RouteBase> featureRoutes() => [
         ],
       ),
       GoRoute(
-        path: RoutePaths.drafts,
-        name: RouteNames.drafts,
-        builder: (context, state) => const DraftsListScreen(),
+        path: RoutePaths.jobOrders,
+        name: RouteNames.jobOrders,
+        builder: (context, state) => const JobOrdersListScreen(),
         routes: [
           GoRoute(
             path: ':id',
-            name: RouteNames.draftEdit,
+            name: RouteNames.jobOrderEdit,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
-              return DraftEditScreen(draftId: id);
+              return JobOrderEditScreen(jobOrderId: id);
             },
           ),
         ],
@@ -402,8 +402,7 @@ List<RouteBase> featureRoutes() => [
               GoRoute(
                 path: 'history',
                 name: RouteNames.endOfDayHistory,
-                builder: (context, state) =>
-                    const DailyClosingHistoryScreen(),
+                builder: (context, state) => const DailyClosingHistoryScreen(),
               ),
             ],
           ),

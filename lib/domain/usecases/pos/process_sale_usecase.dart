@@ -8,19 +8,19 @@ import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 /// 1. Validate cart and payment
 /// 2. Create the sale — the sale number, sale doc, items, and the per-item
 ///    stock decrement are one atomic transaction in the repository (createSale)
-/// 3. Mark the source draft converted (if applicable)
+/// 3. Mark the source job order converted (if applicable)
 class ProcessSaleUseCase {
   final SaleRepository _saleRepository;
   final ProductRepository _productRepository;
-  final DraftRepository _draftRepository;
+  final JobOrderRepository _jobOrderRepository;
 
   ProcessSaleUseCase({
     required SaleRepository saleRepository,
     required ProductRepository productRepository,
-    required DraftRepository draftRepository,
+    required JobOrderRepository jobOrderRepository,
   })  : _saleRepository = saleRepository,
         _productRepository = productRepository,
-        _draftRepository = draftRepository;
+        _jobOrderRepository = jobOrderRepository;
 
   /// Processes a sale transaction.
   ///
@@ -66,8 +66,8 @@ class ProcessSaleUseCase {
         return _handleAlreadyRecorded(sale, checkoutId);
       }
 
-      // 4. Mark the source draft converted (if any)
-      await _reconcileDraft(sale, createdSale.id, warnings);
+      // 4. Mark the source job order converted (if any)
+      await _reconcileJobOrder(sale, createdSale.id, warnings);
 
       return ProcessSaleResult(
         success: true,
@@ -98,7 +98,7 @@ class ProcessSaleUseCase {
 
   /// Handles a checkout whose sale was already recorded under [checkoutId]
   /// (the idempotency guard fired). Returns the existing sale and reconciles
-  /// the source draft — but never fabricates a success it cannot back with a
+  /// the source job order — but never fabricates a success it cannot back with a
   /// real, reloadable sale.
   Future<ProcessSaleResult> _handleAlreadyRecorded(
     SaleEntity sale,
@@ -123,27 +123,27 @@ class ProcessSaleUseCase {
     }
 
     final warnings = <String>['This sale was already recorded.'];
-    await _reconcileDraft(sale, existing.id, warnings);
+    await _reconcileJobOrder(sale, existing.id, warnings);
     return ProcessSaleResult(success: true, sale: existing, warnings: warnings);
   }
 
-  /// Marks the source draft (if any) converted. Best-effort and safe to repeat
-  /// on a replayed checkout — a draft-conversion failure is a warning, not a
+  /// Marks the source job order (if any) converted. Best-effort and safe to repeat
+  /// on a replayed checkout — a job order-conversion failure is a warning, not a
   /// sale failure.
-  Future<void> _reconcileDraft(
+  Future<void> _reconcileJobOrder(
     SaleEntity sale,
     String saleId,
     List<String> warnings,
   ) async {
-    if (sale.draftId != null && sale.draftId!.isNotEmpty) {
+    if (sale.jobOrderId != null && sale.jobOrderId!.isNotEmpty) {
       try {
-        await _draftRepository.markDraftAsConverted(
-          draftId: sale.draftId!,
+        await _jobOrderRepository.markJobOrderAsConverted(
+          jobOrderId: sale.jobOrderId!,
           saleId: saleId,
         );
       } catch (e) {
-        // Don't fail the sale if draft update fails
-        warnings.add('Draft conversion failed: $e');
+        // Don't fail the sale if job order update fails
+        warnings.add('Job Order conversion failed: $e');
       }
     }
   }
@@ -153,7 +153,9 @@ class ProcessSaleUseCase {
     // Items, labor, or shop fees — any one is enough to bill out. Only
     // reject when there is truly nothing to bill (mirrors
     // CartState.hasBillableContent).
-    if (sale.items.isEmpty && sale.laborLines.isEmpty && sale.feeLines.isEmpty) {
+    if (sale.items.isEmpty &&
+        sale.laborLines.isEmpty &&
+        sale.feeLines.isEmpty) {
       throw const EmptyCartException();
     }
 

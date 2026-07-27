@@ -21,7 +21,7 @@ String jobOrderPrefixFor(DateTime now) {
 }
 
 /// The next job-order number for [now]'s date, given the [existingNames]
-/// of drafts created today (converted ones included, so billed-out numbers
+/// of job orders created today (converted ones included, so billed-out numbers
 /// are never reissued). Zero-padded to 3 digits, growing naturally past 999.
 String nextJobOrderNumber(DateTime now, Iterable<String> existingNames) {
   final prefix = jobOrderPrefixFor(now);

@@ -41,7 +41,8 @@ void main() {
       );
 
   testWidgets('renders the model list (active + inactive)', (tester) async {
-    await tester.pumpWidget(host([m('1', 'Nmax'), m('2', 'Aerox', active: false)]));
+    await tester
+        .pumpWidget(host([m('1', 'Nmax'), m('2', 'Aerox', active: false)]));
     await tester.pumpAndSettle();
     expect(find.text('Motorcycle Models'), findsOneWidget); // AppBar title
     expect(find.text('Nmax'), findsOneWidget);

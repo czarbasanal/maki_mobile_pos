@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/app_colors.dart';
-import 'package:maki_mobile_pos/presentation/providers/draft_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/job_order_provider.dart';
 
 /// POS app-bar button for Job Orders: a clipboard glyph with a count pill
-/// showing the open job-order count (live, from the drafts stream).
+/// showing the open job-order count (live, from the job orders stream).
 ///
 /// The pill is red with a white count (user preference over the mock's
 /// primary tint), with a 2px ring in the app-bar surface color.
@@ -17,9 +17,8 @@ class JobOrderBadgeButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final count = ref.watch(activeDraftCountProvider).valueOrNull ?? 0;
-    final ring =
-        theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface;
+    final count = ref.watch(activeJobOrderCountProvider).valueOrNull ?? 0;
+    final ring = theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface;
 
     return IconButton(
       tooltip: 'Job Orders',
@@ -33,8 +32,7 @@ class JobOrderBadgeButton extends ConsumerWidget {
               top: -6,
               right: -8,
               child: Container(
-                constraints:
-                    const BoxConstraints(minWidth: 17, minHeight: 17),
+                constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(

@@ -122,7 +122,7 @@ void main() {
       find.descendant(of: laborList, matching: find.byType(Dismissible)),
       findsNothing,
     );
-    // Save-as-Draft is gated off while labor is invalid.
+    // Save-as-Job Order is gated off while labor is invalid.
     final saveButton = tester.widget<OutlinedButton>(
       find.widgetWithText(OutlinedButton, 'Save Job Order'),
     );

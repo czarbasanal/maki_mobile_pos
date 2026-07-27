@@ -22,7 +22,7 @@ abstract class RouteGuards {
     '/',
     '/pos',
     '/pos/checkout',
-    '/drafts',
+    '/job-orders',
   };
 
   /// Routes that require specific permissions
@@ -82,8 +82,8 @@ abstract class RouteGuards {
     // Check exact match
     if (commonRoutes.contains(path)) return true;
 
-    // Check if it's a draft edit route (e.g., /drafts/123)
-    if (path.startsWith('/drafts/')) return true;
+    // Check if it's a job order edit route (e.g., /job-orders/123)
+    if (path.startsWith('/job-orders/')) return true;
 
     return false;
   }
@@ -233,8 +233,8 @@ abstract class RouteGuards {
   /// Gets available menu items for a user role.
   ///
   /// Updated role permissions:
-  /// - Cashier: POS, Drafts, Inventory (view), Reports (daily), Expenses (add), Settings (profile)
-  /// - Staff: POS, Drafts, Inventory (edit no price), Receiving, Reports (daily), Expenses (add), Settings (profile)
+  /// - Cashier: POS, Job Orders, Inventory (view), Reports (daily), Expenses (add), Settings (profile)
+  /// - Staff: POS, Job Orders, Inventory (edit no price), Receiving, Reports (daily), Expenses (add), Settings (profile)
   /// - Admin: Everything
   static List<MenuItem> getMenuItems(UserRole role) {
     final items = <MenuItem>[];
@@ -250,7 +250,7 @@ abstract class RouteGuards {
     items.add(const MenuItem(
       title: 'Job Orders',
       icon: Icons.drafts,
-      path: '/drafts',
+      path: '/job-orders',
     ));
 
     // Inventory - all roles can view

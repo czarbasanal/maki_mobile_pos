@@ -134,7 +134,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                 ),
                 // Save as draft
                 TextButton.icon(
-                  onPressed: receivingState.isEmpty ? null : _saveDraft,
+                  onPressed: receivingState.isEmpty ? null : _saveJobOrder,
                   icon: const Icon(LucideIcons.save, size: 16),
                   label: const Text('Draft'),
                 ),
@@ -673,7 +673,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
     _searchController.clear();
   }
 
-  Future<void> _saveDraft() async {
+  Future<void> _saveJobOrder() async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
 

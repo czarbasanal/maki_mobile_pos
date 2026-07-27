@@ -19,16 +19,14 @@ void main() {
     expect(RoutePaths.jobOrderReports, '/reports/job-orders');
     expect(RouteNames.jobOrderReports, 'jobOrderReports');
     expect(
-        RouteGuards.canAccess(
-            RoutePaths.jobOrderReports, user(UserRole.admin)),
+        RouteGuards.canAccess(RoutePaths.jobOrderReports, user(UserRole.admin)),
         isTrue);
     expect(
         RouteGuards.canAccess(
             RoutePaths.jobOrderReports, user(UserRole.cashier)),
         isFalse);
     expect(
-        RouteGuards.canAccess(
-            RoutePaths.jobOrderReports, user(UserRole.staff)),
+        RouteGuards.canAccess(RoutePaths.jobOrderReports, user(UserRole.staff)),
         isFalse);
   });
 

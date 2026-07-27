@@ -57,7 +57,8 @@ void main() {
     testWidgets('renders the total value as a primary-colored hero',
         (tester) async {
       await tester.pumpWidget(
-        _host(const SummaryRow(label: 'Total', value: '₱650.00', isTotal: true)),
+        _host(
+            const SummaryRow(label: 'Total', value: '₱650.00', isTotal: true)),
       );
       final value = tester.widget<Text>(find.text('₱650.00'));
       expect(value.style?.fontSize, 26);

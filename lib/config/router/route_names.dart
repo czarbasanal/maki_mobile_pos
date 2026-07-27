@@ -28,11 +28,11 @@ abstract class RouteNames {
 
   // ==================== DRAFT ROUTES ====================
 
-  /// Drafts list route
-  static const String drafts = 'drafts';
+  /// Job Orders list route
+  static const String jobOrders = 'jobOrders';
 
-  /// Edit draft route
-  static const String draftEdit = 'draftEdit';
+  /// Edit job order route
+  static const String jobOrderEdit = 'jobOrderEdit';
 
   // ==================== INVENTORY ROUTES ====================
 
@@ -184,7 +184,6 @@ abstract class RouteNames {
 
   /// User logs route
   static const String userLogs = 'userLogs';
-
 }
 
 /// Route paths (URL paths).
@@ -206,8 +205,8 @@ abstract class RoutePaths {
 
   // ==================== DRAFT PATHS ====================
 
-  static const String drafts = '/drafts';
-  static const String draftEdit = '/drafts/:id';
+  static const String jobOrders = '/job-orders';
+  static const String jobOrderEdit = '/job-orders/:id';
 
   // ==================== INVENTORY PATHS ====================
 

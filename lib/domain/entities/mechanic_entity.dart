@@ -2,9 +2,9 @@ import 'package:equatable/equatable.dart';
 
 /// Domain entity representing an admin-managed mechanic.
 ///
-/// Mechanics are assigned to a service draft/sale. Inactive mechanics drop
+/// Mechanics are assigned to a service job order/sale. Inactive mechanics drop
 /// off the picker but stay valid on historical records via the snapshotted
-/// name on the draft/sale.
+/// name on the job order/sale.
 class MechanicEntity extends Equatable {
   /// Unique identifier.
   final String id;

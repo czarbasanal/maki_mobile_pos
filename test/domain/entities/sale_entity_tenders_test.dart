@@ -33,7 +33,8 @@ SaleEntity _sale({
 
 void main() {
   group('SaleEntity tenders', () {
-    test('effectiveTenders falls back to {paymentMethod: grandTotal} when empty',
+    test(
+        'effectiveTenders falls back to {paymentMethod: grandTotal} when empty',
         () {
       final sale = _sale(method: PaymentMethod.gcash, tenders: const {});
       expect(sale.effectiveTenders, {PaymentMethod.gcash: 1000});

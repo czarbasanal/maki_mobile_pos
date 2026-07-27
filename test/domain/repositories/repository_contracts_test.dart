@@ -12,8 +12,8 @@ void main() {
       expect(SaleRepository, isNotNull);
     });
 
-    test('DraftRepository contract is defined', () {
-      expect(DraftRepository, isNotNull);
+    test('JobOrderRepository contract is defined', () {
+      expect(JobOrderRepository, isNotNull);
     });
 
     test('SalesSummary can be instantiated', () {

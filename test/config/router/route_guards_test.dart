@@ -63,7 +63,7 @@ void main() {
   });
 
   // The matrix: row = role, columns = routes. Entries are the expected
-  // canAccess() outcome. Common routes (POS, drafts, dashboard) should be true
+  // canAccess() outcome. Common routes (POS, job orders, dashboard) should be true
   // for every role; admin-only routes should be true only for admin.
   group('RouteGuards.canAccess — role × route matrix', () {
     final cashier = _user(UserRole.cashier);
@@ -76,7 +76,7 @@ void main() {
       RoutePaths.pos: const _Expected(cashier: true, staff: true, admin: true),
       RoutePaths.checkout:
           const _Expected(cashier: true, staff: true, admin: true),
-      RoutePaths.drafts:
+      RoutePaths.jobOrders:
           const _Expected(cashier: true, staff: true, admin: true),
       RoutePaths.inventory:
           const _Expected(cashier: true, staff: true, admin: true),
@@ -113,10 +113,12 @@ void main() {
     };
 
     matrix.forEach((path, expected) {
-      test('$path  cashier=${expected.cashier}, staff=${expected.staff}, admin=${expected.admin}',
+      test(
+          '$path  cashier=${expected.cashier}, staff=${expected.staff}, admin=${expected.admin}',
           () {
         expect(RouteGuards.canAccess(path, cashier), expected.cashier,
-            reason: 'cashier should ${expected.cashier ? "" : "not "}access $path');
+            reason:
+                'cashier should ${expected.cashier ? "" : "not "}access $path');
         expect(RouteGuards.canAccess(path, staff), expected.staff,
             reason: 'staff should ${expected.staff ? "" : "not "}access $path');
         expect(RouteGuards.canAccess(path, admin), expected.admin,
@@ -150,23 +152,17 @@ void main() {
               '/expenses/edit/exp-1', _user(UserRole.cashier)),
           true);
       expect(
-          RouteGuards.canAccess(
-              '/expenses/edit/exp-1', _user(UserRole.staff)),
+          RouteGuards.canAccess('/expenses/edit/exp-1', _user(UserRole.staff)),
           true);
       expect(
-          RouteGuards.canAccess(
-              '/expenses/edit/exp-1', _user(UserRole.admin)),
+          RouteGuards.canAccess('/expenses/edit/exp-1', _user(UserRole.admin)),
           true);
     });
 
     test('user edit is admin-only', () {
-      expect(
-          RouteGuards.canAccess(
-              '/users/edit/u-1', _user(UserRole.cashier)),
+      expect(RouteGuards.canAccess('/users/edit/u-1', _user(UserRole.cashier)),
           false);
-      expect(
-          RouteGuards.canAccess(
-              '/users/edit/u-1', _user(UserRole.staff)),
+      expect(RouteGuards.canAccess('/users/edit/u-1', _user(UserRole.staff)),
           false);
       expect(RouteGuards.canAccess('/users/edit/u-1', _user(UserRole.admin)),
           true);
@@ -174,44 +170,40 @@ void main() {
 
     test('supplier edit is admin-only', () {
       expect(
-          RouteGuards.canAccess(
-              '/suppliers/edit/s-1', _user(UserRole.staff)),
+          RouteGuards.canAccess('/suppliers/edit/s-1', _user(UserRole.staff)),
           false);
       expect(
-          RouteGuards.canAccess(
-              '/suppliers/edit/s-1', _user(UserRole.admin)),
+          RouteGuards.canAccess('/suppliers/edit/s-1', _user(UserRole.admin)),
           true);
     });
 
     test('inventory detail (view) is allowed for any role with viewInventory',
         () {
+      expect(RouteGuards.canAccess('/inventory/p-1', _user(UserRole.cashier)),
+          true);
       expect(
-          RouteGuards.canAccess('/inventory/p-1', _user(UserRole.cashier)),
-          true);
-      expect(RouteGuards.canAccess('/inventory/p-1', _user(UserRole.staff)),
-          true);
-      expect(RouteGuards.canAccess('/inventory/p-1', _user(UserRole.admin)),
-          true);
+          RouteGuards.canAccess('/inventory/p-1', _user(UserRole.staff)), true);
+      expect(
+          RouteGuards.canAccess('/inventory/p-1', _user(UserRole.admin)), true);
     });
 
-    test('draft edit (e.g. /drafts/abc) is treated as common route', () {
-      expect(RouteGuards.canAccess('/drafts/abc', _user(UserRole.cashier)),
+    test('jobOrder edit (e.g. /jobOrders/abc) is treated as common route', () {
+      expect(RouteGuards.canAccess('/job-orders/abc', _user(UserRole.cashier)),
           true);
-      expect(RouteGuards.canAccess('/drafts/abc', _user(UserRole.staff)),
+      expect(RouteGuards.canAccess('/job-orders/abc', _user(UserRole.staff)),
           true);
-      expect(RouteGuards.canAccess('/drafts/abc', _user(UserRole.admin)),
+      expect(RouteGuards.canAccess('/job-orders/abc', _user(UserRole.admin)),
           true);
     });
   });
 
   group('RouteGuards.getMenuItems', () {
-    test('cashier sees POS, Drafts, Inventory, Expenses, Reports, Settings',
+    test('cashier sees POS, JobOrders, Inventory, Expenses, Reports, Settings',
         () {
-      final paths = RouteGuards.getMenuItems(UserRole.cashier)
-          .map((e) => e.path)
-          .toSet();
+      final paths =
+          RouteGuards.getMenuItems(UserRole.cashier).map((e) => e.path).toSet();
       expect(paths, contains(RoutePaths.pos));
-      expect(paths, contains(RoutePaths.drafts));
+      expect(paths, contains(RoutePaths.jobOrders));
       expect(paths, contains(RoutePaths.inventory));
       expect(paths, contains(RoutePaths.expenses));
       expect(paths, contains(RoutePaths.reports));
@@ -223,9 +215,8 @@ void main() {
     });
 
     test('staff additionally sees Receiving', () {
-      final paths = RouteGuards.getMenuItems(UserRole.staff)
-          .map((e) => e.path)
-          .toSet();
+      final paths =
+          RouteGuards.getMenuItems(UserRole.staff).map((e) => e.path).toSet();
       expect(paths, contains(RoutePaths.receiving));
       expect(paths, isNot(contains(RoutePaths.suppliers)));
       expect(paths, isNot(contains(RoutePaths.users)));
@@ -233,9 +224,8 @@ void main() {
     });
 
     test('admin sees the full menu including Suppliers, Users, Logs', () {
-      final paths = RouteGuards.getMenuItems(UserRole.admin)
-          .map((e) => e.path)
-          .toSet();
+      final paths =
+          RouteGuards.getMenuItems(UserRole.admin).map((e) => e.path).toSet();
       expect(paths, contains(RoutePaths.suppliers));
       expect(paths, contains(RoutePaths.users));
       expect(paths, contains(RoutePaths.userLogs));

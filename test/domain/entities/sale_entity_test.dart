@@ -116,11 +116,11 @@ void main() {
       expect(voidedSale.voidedAt, isNotNull);
     });
 
-    test('isFromDraft returns correctly', () {
-      expect(sale.isFromDraft, false);
+    test('isFromJobOrder returns correctly', () {
+      expect(sale.isFromJobOrder, false);
 
-      final fromDraft = sale.copyWith(draftId: 'draft-1');
-      expect(fromDraft.isFromDraft, true);
+      final fromJobOrder = sale.copyWith(jobOrderId: 'jobOrder-1');
+      expect(fromJobOrder.isFromJobOrder, true);
     });
 
     test('parts getters with no labor', () {
@@ -134,7 +134,8 @@ void main() {
       expect(sale.totalProfit, 125.0);
     });
 
-    test('labor raises revenue/profit/grandTotal but not parts/discount/cost', () {
+    test('labor raises revenue/profit/grandTotal but not parts/discount/cost',
+        () {
       final withLabor = sale.copyWith(
         laborLines: const [
           LaborLineEntity(id: 'lab-1', description: 'Tune-up', fee: 300.0),

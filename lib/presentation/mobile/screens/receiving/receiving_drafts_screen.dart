@@ -16,7 +16,7 @@ class ReceivingDraftsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final draftsAsync = ref.watch(draftReceivingsProvider);
+    final jobOrdersAsync = ref.watch(draftReceivingsProvider);
     final dateFormat = DateFormat('MMM d, y • h:mm a');
 
     return Scaffold(
@@ -27,7 +27,7 @@ class ReceivingDraftsScreen extends ConsumerWidget {
         ),
         title: const Text('Draft Receivings'),
       ),
-      body: draftsAsync.when(
+      body: jobOrdersAsync.when(
         data: (drafts) {
           if (drafts.isEmpty) {
             return const EmptyStateView(
@@ -42,7 +42,8 @@ class ReceivingDraftsScreen extends ConsumerWidget {
             itemCount: drafts.length,
             itemBuilder: (context, index) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _DraftItem(draft: drafts[index], dateFormat: dateFormat),
+              child:
+                  _JobOrderItem(draft: drafts[index], dateFormat: dateFormat),
             ),
           );
         },
@@ -56,11 +57,11 @@ class ReceivingDraftsScreen extends ConsumerWidget {
   }
 }
 
-class _DraftItem extends StatelessWidget {
+class _JobOrderItem extends StatelessWidget {
   final ReceivingEntity draft;
   final DateFormat dateFormat;
 
-  const _DraftItem({required this.draft, required this.dateFormat});
+  const _JobOrderItem({required this.draft, required this.dateFormat});
 
   @override
   Widget build(BuildContext context) {

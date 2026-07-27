@@ -14,7 +14,7 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_dropdown.
 /// for "— None —") via [onChanged]. "➕ Add mechanic…" creates a mechanic
 /// inline (reusing an existing one on a case-insensitive name match) and
 /// selects it. The PARENT owns where the selection goes (the cart in POS, a
-/// draft working-copy in the draft editor), so the same widget is reused
+/// job order working-copy in the job order editor), so the same widget is reused
 /// verbatim in both places.
 class MechanicPicker extends ConsumerStatefulWidget {
   const MechanicPicker({
@@ -98,8 +98,8 @@ class _MechanicPickerState extends ConsumerState<MechanicPicker> {
   Future<void> _onAddNew(List<MechanicEntity> mechanics) async {
     final picked = await showDialog<MechanicEntity>(
       context: context,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
+      barrierColor:
+          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
       builder: (ctx) => _AddMechanicDialog(activeMechanics: mechanics),
     );
     if (!mounted) return;
@@ -120,8 +120,7 @@ class _AddMechanicDialog extends ConsumerStatefulWidget {
   final List<MechanicEntity> activeMechanics;
 
   @override
-  ConsumerState<_AddMechanicDialog> createState() =>
-      _AddMechanicDialogState();
+  ConsumerState<_AddMechanicDialog> createState() => _AddMechanicDialogState();
 }
 
 class _AddMechanicDialogState extends ConsumerState<_AddMechanicDialog> {
@@ -189,15 +188,14 @@ class _AddMechanicDialogState extends ConsumerState<_AddMechanicDialog> {
       return;
     }
 
-    final created =
-        await ref.read(mechanicOperationsProvider.notifier).create(
-              mechanic: MechanicEntity(
-                id: '',
-                name: name,
-                isActive: true,
-                createdAt: DateTime.now(),
-              ),
-            );
+    final created = await ref.read(mechanicOperationsProvider.notifier).create(
+          mechanic: MechanicEntity(
+            id: '',
+            name: name,
+            isActive: true,
+            createdAt: DateTime.now(),
+          ),
+        );
     if (!mounted) return;
     if (created == null) {
       setState(() => _isSaving = false);

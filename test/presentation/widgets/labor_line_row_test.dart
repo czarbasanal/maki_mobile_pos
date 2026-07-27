@@ -31,7 +31,8 @@ void main() {
   }
 
   group('LaborLineRow', () {
-    testWidgets('renders description and fee; Job Order style (no swipe, no pencil)',
+    testWidgets(
+        'renders description and fee; Job Order style (no swipe, no pencil)',
         (tester) async {
       await tester.pumpWidget(host());
 

@@ -100,7 +100,7 @@ class SettingsScreen extends ConsumerWidget {
                 SettingsTile(
                   icon: LucideIcons.wrench,
                   title: 'Mechanics',
-                  subtitle: 'Assign a mechanic to a service draft',
+                  subtitle: 'Assign a mechanic to a service job order',
                   onTap: () => context.push(RoutePaths.mechanics),
                 ),
                 SettingsTile(
@@ -451,8 +451,7 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final hairline =
-        dark ? AppColors.darkHairline : const Color(0xFFF0F0F0);
+    final hairline = dark ? AppColors.darkHairline : const Color(0xFFF0F0F0);
 
     return AppCard(
       margin: const EdgeInsets.symmetric(horizontal: 16),

@@ -73,7 +73,8 @@ void main() {
       expect(m.amount, 30.0);
     });
 
-    test('round-trips entity -> model -> map(includeId) -> model -> entity', () {
+    test('round-trips entity -> model -> map(includeId) -> model -> entity',
+        () {
       const entity = FeeLineEntity(
         id: 'fee-3',
         name: 'Air',
@@ -99,8 +100,7 @@ void main() {
       expect(m.description, 'Battery replacement');
     });
 
-    test('fromMap defaults description to null when absent (legacy docs)',
-        () {
+    test('fromMap defaults description to null when absent (legacy docs)', () {
       final m = FeeLineModel.fromMap(
         {'name': 'Electric charge', 'amount': 50.0},
         'fee-legacy',

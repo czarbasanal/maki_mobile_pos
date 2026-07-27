@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// A single free-form labor/service charge on a draft, sale, or cart.
+/// A single free-form labor/service charge on a job order, sale, or cart.
 ///
 /// Labor is full price and is **never discounted** — it lives on a different
 /// code path from item discounts (see spec decision #4). There is no cost

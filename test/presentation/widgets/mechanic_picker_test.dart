@@ -6,8 +6,8 @@ import 'package:maki_mobile_pos/domain/repositories/mechanic_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 
-MechanicEntity _mech(String id, String name) =>
-    MechanicEntity(id: id, name: name, isActive: true, createdAt: DateTime(2026, 1, 1));
+MechanicEntity _mech(String id, String name) => MechanicEntity(
+    id: id, name: name, isActive: true, createdAt: DateTime(2026, 1, 1));
 
 class _FakeMechanicOps extends MechanicOperationsNotifier {
   _FakeMechanicOps(super.ref, {this.createDelay});
@@ -89,14 +89,16 @@ void main() {
       overrides: [
         activeMechanicsProvider.overrideWith(
           (ref) => Stream.value(
-            mechanics ?? [_mech('m1', 'Juan Dela Cruz'), _mech('m2', 'Pedro Santos')],
+            mechanics ??
+                [_mech('m1', 'Juan Dela Cruz'), _mech('m2', 'Pedro Santos')],
           ),
         ),
         ...extraOverrides,
       ],
       child: MaterialApp(
         home: Scaffold(
-          body: MechanicPicker(selectedMechanicId: selectedId, onChanged: onChanged),
+          body: MechanicPicker(
+              selectedMechanicId: selectedId, onChanged: onChanged),
         ),
       ),
     );
@@ -117,7 +119,8 @@ void main() {
       expect(find.text('— None —'), findsWidgets);
     });
 
-    testWidgets('selecting a mechanic reports it via onChanged', (tester) async {
+    testWidgets('selecting a mechanic reports it via onChanged',
+        (tester) async {
       MechanicEntity? picked;
       var called = false;
       await tester.pumpWidget(host(onChanged: (m) {
@@ -140,10 +143,12 @@ void main() {
     testWidgets('selecting "— None —" reports null', (tester) async {
       MechanicEntity? picked = _mech('x', 'x');
       var called = false;
-      await tester.pumpWidget(host(selectedId: 'm1', onChanged: (m) {
-        picked = m;
-        called = true;
-      }));
+      await tester.pumpWidget(host(
+          selectedId: 'm1',
+          onChanged: (m) {
+            picked = m;
+            called = true;
+          }));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byType(MechanicPicker));
@@ -316,7 +321,8 @@ void main() {
       expect(fake?.createCallCount, 1);
     });
 
-    testWidgets('cancelling the add dialog fires no onChanged and resets '
+    testWidgets(
+        'cancelling the add dialog fires no onChanged and resets '
         'the dropdown off the sentinel', (tester) async {
       var changedCalls = 0;
       await tester.pumpWidget(host(onChanged: (_) => changedCalls++));

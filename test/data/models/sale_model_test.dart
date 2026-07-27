@@ -194,8 +194,7 @@ void main() {
       expect(back.feeLines.single.amount, 20.0);
     });
 
-    test('feeLines description round-trips through toMap/fromMap/toEntity',
-        () {
+    test('feeLines description round-trips through toMap/fromMap/toEntity', () {
       const chargeItemFee = FeeLineModel(
         id: 'fee-2',
         name: 'Charge Item',
@@ -216,8 +215,8 @@ void main() {
       );
 
       final map = model.toMap();
-      final feeMap = (map['feeLines'] as List<dynamic>).first
-          as Map<String, dynamic>;
+      final feeMap =
+          (map['feeLines'] as List<dynamic>).first as Map<String, dynamic>;
       expect(feeMap['description'], 'Battery replacement');
 
       final restored = SaleModel.fromMap(map, 'sale-2', items: const [item]);

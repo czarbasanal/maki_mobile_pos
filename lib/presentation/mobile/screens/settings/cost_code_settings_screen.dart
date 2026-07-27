@@ -81,7 +81,8 @@ class _CostCodeSettingsScreenState
           _buildInfoCard(theme),
 
           _sectionHeading(theme, 'Digit to Letter Mapping'),
-          _sectionHelper(theme, 'Each digit (0–9) is encoded as a letter to hide costs.'),
+          _sectionHelper(
+              theme, 'Each digit (0–9) is encoded as a letter to hide costs.'),
           const SizedBox(height: 12),
 
           // Mapping editor/display
@@ -288,9 +289,11 @@ class _CostCodeSettingsScreenState
       padding: const EdgeInsets.all(14),
       child: Column(
         children: [
-          _buildSpecialCodeRow(theme, '00', mapping.doubleZeroCode, 'Double Zero'),
+          _buildSpecialCodeRow(
+              theme, '00', mapping.doubleZeroCode, 'Double Zero'),
           const SizedBox(height: 9),
-          _buildSpecialCodeRow(theme, '000', mapping.tripleZeroCode, 'Triple Zero'),
+          _buildSpecialCodeRow(
+              theme, '000', mapping.tripleZeroCode, 'Triple Zero'),
         ],
       ),
     );
@@ -342,7 +345,8 @@ class _CostCodeSettingsScreenState
     final dark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
     final encoded = mapping.encode(cost);
-    final chipBorder = dark ? AppColors.success.withValues(alpha: 0.5) : AppColors.success;
+    final chipBorder =
+        dark ? AppColors.success.withValues(alpha: 0.5) : AppColors.success;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -383,8 +387,7 @@ class _CostCodeSettingsScreenState
 
   Widget _buildBottomBar(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(

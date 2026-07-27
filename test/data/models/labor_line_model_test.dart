@@ -73,7 +73,8 @@ void main() {
       expect(m.fee, 150.0);
     });
 
-    test('round-trips entity -> model -> map(includeId) -> model -> entity', () {
+    test('round-trips entity -> model -> map(includeId) -> model -> entity',
+        () {
       const entity = LaborLineEntity(
         id: 'labor-3',
         description: 'Carb clean',

@@ -313,9 +313,8 @@ class SaleDetailScreen extends ConsumerWidget {
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                border: isLast
-                    ? null
-                    : Border(bottom: BorderSide(color: hairline)),
+                border:
+                    isLast ? null : Border(bottom: BorderSide(color: hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,15 +398,14 @@ class SaleDetailScreen extends ConsumerWidget {
           ...sale.feeLines.asMap().entries.map((entry) {
             final index = entry.key;
             final line = entry.value;
-            final isLast = index == sale.feeLines.length - 1 &&
-                sale.laborLines.isEmpty;
+            final isLast =
+                index == sale.feeLines.length - 1 && sale.laborLines.isEmpty;
 
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                border: isLast
-                    ? null
-                    : Border(bottom: BorderSide(color: hairline)),
+                border:
+                    isLast ? null : Border(bottom: BorderSide(color: hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,9 +463,8 @@ class SaleDetailScreen extends ConsumerWidget {
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                border: isLast
-                    ? null
-                    : Border(bottom: BorderSide(color: hairline)),
+                border:
+                    isLast ? null : Border(bottom: BorderSide(color: hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,7 +563,8 @@ class SaleDetailScreen extends ConsumerWidget {
           // Change: a tinted success block when there's change to return; a plain
           // row at zero (no empty green box).
           if (sale.changeGiven > 0)
-            _buildChangeBlock(theme, '$cur${sale.changeGiven.toStringAsFixed(2)}')
+            _buildChangeBlock(
+                theme, '$cur${sale.changeGiven.toStringAsFixed(2)}')
           else
             SummaryRow(
               label: 'Change',
@@ -643,8 +641,7 @@ class SaleDetailScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: SummaryRow(
                 label: label(e.key),
-                value:
-                    e.value.toCurrency(),
+                value: e.value.toCurrency(),
               ),
             ))
         .toList();
@@ -688,12 +685,12 @@ class SaleDetailScreen extends ConsumerWidget {
             'Items',
             '${sale.totalItemCount} (${sale.uniqueProductCount} products)',
           ),
-          if (sale.draftId != null) ...[
+          if (sale.jobOrderId != null) ...[
             const SizedBox(height: 12),
             _buildDetailRow(
               theme,
               LucideIcons.inbox,
-              'From Draft',
+              'From Job Order',
               'Yes',
             ),
           ],
@@ -821,7 +818,8 @@ class SaleDetailScreen extends ConsumerWidget {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 'Notes',
-                style: TextStyle(fontWeight: FontWeight.w600, color: labelColor),
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: labelColor),
               ),
             ],
           ),
@@ -833,7 +831,8 @@ class SaleDetailScreen extends ConsumerWidget {
   }
 
   /// Chooses the right void affordance for the current user and sale state.
-  Widget? _buildVoidAction(BuildContext context, WidgetRef ref, SaleEntity sale) {
+  Widget? _buildVoidAction(
+      BuildContext context, WidgetRef ref, SaleEntity sale) {
     final user = ref.watch(currentUserProvider).value;
     final pendingAsync = ref.watch(pendingVoidRequestForSaleProvider(sale.id));
     final hasPending =
@@ -846,9 +845,8 @@ class SaleDetailScreen extends ConsumerWidget {
       // Admins can act on the request — the banner taps through to the
       // void-requests queue. Requesters just see the status.
       return PendingVoidBanner(
-        onTap: canVoidDirect
-            ? () => context.push(RoutePaths.voidRequests)
-            : null,
+        onTap:
+            canVoidDirect ? () => context.push(RoutePaths.voidRequests) : null,
       );
     }
 
@@ -876,7 +874,8 @@ class SaleDetailScreen extends ConsumerWidget {
 
   /// Pinned bottom action bar holding the void affordance — null when there's
   /// nothing to show (voided sale or no permission), so no empty bar renders.
-  Widget? _buildVoidFooter(BuildContext context, WidgetRef ref, SaleEntity sale) {
+  Widget? _buildVoidFooter(
+      BuildContext context, WidgetRef ref, SaleEntity sale) {
     final action = _buildVoidAction(context, ref, sale);
     if (action == null) return null;
     final theme = Theme.of(context);
@@ -945,8 +944,8 @@ class SaleDetailScreen extends ConsumerWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
+      barrierColor:
+          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.9,
         minChildSize: 0.5,

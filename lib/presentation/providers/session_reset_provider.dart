@@ -3,7 +3,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/activity_log_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cart_provider.dart';
-import 'package:maki_mobile_pos/presentation/providers/draft_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/job_order_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/inventory_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/supplier_provider.dart';
@@ -22,7 +22,7 @@ final sessionResetProvider = Provider<void>((ref) {
       ref.invalidate(securityLogsProvider);
       ref.invalidate(userActivityLogsProvider);
       ref.invalidate(entityLogsProvider);
-      ref.read(selectedDraftProvider.notifier).state = null;
+      ref.read(selectedJobOrderProvider.notifier).state = null;
       // Search/category/sort/cost-visibility carry no data themselves but
       // must not leak from one operator's session into the next.
       ref.invalidate(inventoryStateProvider);

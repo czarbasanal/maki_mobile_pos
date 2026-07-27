@@ -31,16 +31,16 @@ class CartState extends Equatable {
   /// Optional notes for the sale
   final String? notes;
 
-  /// If editing an existing draft, its ID
-  final String? sourceDraftId;
+  /// If editing an existing job order, its ID
+  final String? sourceJobOrderId;
 
-  /// Name of the draft this cart was loaded from, if any.
+  /// Name of the job order this cart was loaded from, if any.
   ///
-  /// Retained even though [sourceDraftId] is intentionally not — see
-  /// [CartNotifier.loadFromDraft]. Carrying just the name lets the
-  /// follow-up "Save as Draft" reuse the original title without
-  /// re-prompting, while still creating a new draft entry.
-  final String? draftName;
+  /// Retained even though [sourceJobOrderId] is intentionally not — see
+  /// [CartNotifier.loadFromJobOrder]. Carrying just the name lets the
+  /// follow-up "Save as Job Order" reuse the original title without
+  /// re-prompting, while still creating a new job order entry.
+  final String? jobOrderName;
 
   /// Labor/service lines on this ticket. Full price, never discounted.
   final List<LaborLineEntity> laborLines;
@@ -76,8 +76,8 @@ class CartState extends Equatable {
     this.secondaryMethod,
     this.splitAmount = 0,
     this.notes,
-    this.sourceDraftId,
-    this.draftName,
+    this.sourceJobOrderId,
+    this.jobOrderName,
     this.laborLines = const [],
     this.feeLines = const [],
     this.mechanicId,
@@ -97,8 +97,8 @@ class CartState extends Equatable {
         secondaryMethod,
         splitAmount,
         notes,
-        sourceDraftId,
-        draftName,
+        sourceJobOrderId,
+        jobOrderName,
         laborLines,
         feeLines,
         mechanicId,
@@ -284,16 +284,18 @@ class CartState extends Equatable {
   bool get canProceedToCheckout =>
       hasBillableContent && laborValid && !isProcessing;
 
-  /// Whether cart can be saved as draft. Fee-only carts (no items, one or
+  /// Whether cart can be saved as job order. Fee-only carts (no items, one or
   /// more fee lines) CAN be saved as a Job Order — same content gate as
   /// [hasBillableContent], mirroring [canProceedToCheckout].
-  bool get canSaveAsDraft => hasBillableContent && laborValid && !isProcessing;
+  bool get canSaveAsJobOrder =>
+      hasBillableContent && laborValid && !isProcessing;
 
   /// Whether any item has a discount
   bool get hasDiscount => totalDiscount > 0;
 
-  /// Whether this cart is from a draft
-  bool get isFromDraft => sourceDraftId != null && sourceDraftId!.isNotEmpty;
+  /// Whether this cart is from a job order
+  bool get isFromJobOrder =>
+      sourceJobOrderId != null && sourceJobOrderId!.isNotEmpty;
 
   // ==================== COPY WITH ====================
 
@@ -306,8 +308,8 @@ class CartState extends Equatable {
     double? splitAmount,
     bool clearSecondaryMethod = false,
     String? notes,
-    String? sourceDraftId,
-    String? draftName,
+    String? sourceJobOrderId,
+    String? jobOrderName,
     List<LaborLineEntity>? laborLines,
     List<FeeLineEntity>? feeLines,
     String? mechanicId,
@@ -317,8 +319,8 @@ class CartState extends Equatable {
     String? errorMessage,
     String? checkoutId,
     bool clearNotes = false,
-    bool clearSourceDraftId = false,
-    bool clearDraftName = false,
+    bool clearSourceJobOrderId = false,
+    bool clearJobOrderName = false,
     bool clearMechanic = false,
     bool clearMotorcycleModel = false,
     bool clearErrorMessage = false,
@@ -333,9 +335,11 @@ class CartState extends Equatable {
           : (secondaryMethod ?? this.secondaryMethod),
       splitAmount: splitAmount ?? this.splitAmount,
       notes: clearNotes ? null : (notes ?? this.notes),
-      sourceDraftId:
-          clearSourceDraftId ? null : (sourceDraftId ?? this.sourceDraftId),
-      draftName: clearDraftName ? null : (draftName ?? this.draftName),
+      sourceJobOrderId: clearSourceJobOrderId
+          ? null
+          : (sourceJobOrderId ?? this.sourceJobOrderId),
+      jobOrderName:
+          clearJobOrderName ? null : (jobOrderName ?? this.jobOrderName),
       laborLines: laborLines ?? this.laborLines,
       feeLines: feeLines ?? this.feeLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
@@ -396,7 +400,7 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   /// Adds a SaleItemEntity directly to the cart.
-  /// Used when loading from a draft.
+  /// Used when loading from a job order.
   void addItem(SaleItemEntity item) {
     final existingIndex =
         state.items.indexWhere((i) => i.productId == item.productId);
@@ -661,38 +665,38 @@ class CartNotifier extends StateNotifier<CartState> {
 
   // ==================== DRAFT OPERATIONS ====================
 
-  /// Loads a Job Order (draft) into the cart for bill-out.
+  /// Loads a Job Order (job order) into the cart for bill-out.
   ///
-  /// Retains [sourceDraftId] so the resulting sale carries a `draftId` and the
+  /// Retains [sourceJobOrderId] so the resulting sale carries a `jobOrderId` and the
   /// source ticket is marked converted on a successful sale (see
-  /// ProcessSaleUseCase `_reconcileDraft`). Bill-out is non-destructive — the
-  /// ticket is NOT deleted on load. The draft *name* is also retained so a
+  /// ProcessSaleUseCase `_reconcileJobOrder`). Bill-out is non-destructive — the
+  /// ticket is NOT deleted on load. The job order *name* is also retained so a
   /// follow-up "Save as Job Order" reuses the original title.
-  void loadFromDraft(DraftEntity draft) {
+  void loadFromJobOrder(JobOrderEntity jobOrder) {
     state = CartState(
-      items: List<SaleItemEntity>.from(draft.items),
-      discountType: draft.discountType,
+      items: List<SaleItemEntity>.from(jobOrder.items),
+      discountType: jobOrder.discountType,
       paymentMethod: PaymentMethod.cash,
       amountReceived: 0,
-      notes: draft.notes,
-      sourceDraftId: draft.id,
-      draftName: draft.name,
-      laborLines: List<LaborLineEntity>.from(draft.laborLines),
-      feeLines: List<FeeLineEntity>.from(draft.feeLines),
-      mechanicId: draft.mechanicId,
-      mechanicName: draft.mechanicName,
-      motorcycleModel: draft.motorcycleModel,
+      notes: jobOrder.notes,
+      sourceJobOrderId: jobOrder.id,
+      jobOrderName: jobOrder.name,
+      laborLines: List<LaborLineEntity>.from(jobOrder.laborLines),
+      feeLines: List<FeeLineEntity>.from(jobOrder.feeLines),
+      mechanicId: jobOrder.mechanicId,
+      mechanicName: jobOrder.mechanicName,
+      motorcycleModel: jobOrder.motorcycleModel,
     );
   }
 
-  /// Creates a DraftEntity from current cart state.
-  DraftEntity toDraft({
+  /// Creates a JobOrderEntity from current cart state.
+  JobOrderEntity toJobOrder({
     required String name,
     required String createdBy,
     required String createdByName,
   }) {
-    return DraftEntity(
-      id: state.sourceDraftId ?? '',
+    return JobOrderEntity(
+      id: state.sourceJobOrderId ?? '',
       name: name,
       items: state.items,
       discountType: state.discountType,
@@ -726,7 +730,7 @@ class CartNotifier extends StateNotifier<CartState> {
       cashierId: cashierId,
       cashierName: cashierName,
       createdAt: DateTime.now(),
-      draftId: state.sourceDraftId,
+      jobOrderId: state.sourceJobOrderId,
       notes: state.notes,
       laborLines: state.laborLines,
       feeLines: state.feeLines,

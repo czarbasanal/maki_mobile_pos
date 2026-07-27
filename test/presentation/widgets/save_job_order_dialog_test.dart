@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/save_job_order_dialog.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/job_orders/save_job_order_dialog.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/motorcycle_model_provider.dart';
 
@@ -126,8 +126,7 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(
-        find.widgetWithText(TextField, 'Customer waiting'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Customer waiting'), findsOneWidget);
   });
 
   testWidgets('whitespace-only notes save as null', (tester) async {
