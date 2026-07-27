@@ -19,6 +19,7 @@ import { FirestoreDraftRepository } from '@/data/repositories/FirestoreDraftRepo
 import { FirestoreEmployeeRepository } from '@/data/repositories/FirestoreEmployeeRepository';
 import { FirestorePayslipRepository } from '@/data/repositories/FirestorePayslipRepository';
 import { FirestoreHrSettingsRepository } from '@/data/repositories/FirestoreHrSettingsRepository';
+import { FirestoreExpenseRepository } from '@/data/repositories/FirestoreExpenseRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -33,6 +34,7 @@ import type { DraftRepository } from '@/domain/repositories/DraftRepository';
 import type { EmployeeRepository } from '@/domain/repositories/EmployeeRepository';
 import type { PayslipRepository } from '@/domain/repositories/PayslipRepository';
 import type { HrSettingsRepository } from '@/domain/repositories/HrSettingsRepository';
+import type { ExpenseRepository } from '@/domain/repositories/ExpenseRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -49,8 +51,7 @@ export interface Container {
   employeeRepo: EmployeeRepository;
   payslipRepo: PayslipRepository;
   hrSettingsRepo: HrSettingsRepository;
-  // Other repositories slot in here as their phases land:
-  // expenseRepo, ...
+  expenseRepo: ExpenseRepository;
 }
 
 function buildDefaultContainer(): Container {
@@ -69,6 +70,7 @@ function buildDefaultContainer(): Container {
     employeeRepo: new FirestoreEmployeeRepository(db),
     payslipRepo: new FirestorePayslipRepository(db),
     hrSettingsRepo: new FirestoreHrSettingsRepository(db),
+    expenseRepo: new FirestoreExpenseRepository(db),
   };
 }
 
@@ -148,4 +150,8 @@ export function usePayslipRepo(): PayslipRepository {
 
 export function useHrSettingsRepo(): HrSettingsRepository {
   return useContainer().hrSettingsRepo;
+}
+
+export function useExpenseRepo(): ExpenseRepository {
+  return useContainer().expenseRepo;
 }
