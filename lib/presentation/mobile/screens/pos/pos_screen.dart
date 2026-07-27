@@ -654,6 +654,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       initialModel: cart.motorcycleModel,
       initialMechanicId: cart.mechanicId,
       initialMechanicName: cart.mechanicName,
+      initialNotes: cart.notes,
     );
     if (input == null || !mounted) return;
 
@@ -664,6 +665,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     } else {
       notifier.setMechanic(input.mechanicId!, input.mechanicName ?? '');
     }
+    // Synchronous state update — toDraft() inside _saveDraft reads it.
+    notifier.setNotes(input.notes);
     _saveDraft(input.label);
   }
 

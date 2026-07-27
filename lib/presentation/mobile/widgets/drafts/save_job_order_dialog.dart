@@ -13,11 +13,15 @@ class SaveJobOrderInput {
     this.model,
     this.mechanicId,
     this.mechanicName,
+    this.notes,
   });
   final String label;
   final String? model;
   final String? mechanicId;
   final String? mechanicName;
+
+  /// Trimmed; null when left blank (never empty string).
+  final String? notes;
 }
 
 /// Confirms saving the cart as a Job Order under the auto-generated
@@ -32,6 +36,7 @@ Future<SaveJobOrderInput?> showSaveJobOrderDialog(
   String? initialModel,
   String? initialMechanicId,
   String? initialMechanicName,
+  String? initialNotes,
 }) {
   return showDialog<SaveJobOrderInput>(
     context: context,
@@ -42,6 +47,7 @@ Future<SaveJobOrderInput?> showSaveJobOrderDialog(
       initialModel: initialModel,
       initialMechanicId: initialMechanicId,
       initialMechanicName: initialMechanicName,
+      initialNotes: initialNotes,
     ),
   );
 }
@@ -52,11 +58,13 @@ class _SaveJobOrderDialog extends ConsumerStatefulWidget {
     this.initialModel,
     this.initialMechanicId,
     this.initialMechanicName,
+    this.initialNotes,
   });
   final String jobOrderNo;
   final String? initialModel;
   final String? initialMechanicId;
   final String? initialMechanicName;
+  final String? initialNotes;
 
   @override
   ConsumerState<_SaveJobOrderDialog> createState() =>
@@ -67,6 +75,14 @@ class _SaveJobOrderDialogState extends ConsumerState<_SaveJobOrderDialog> {
   late String? _model = widget.initialModel;
   late String? _mechanicId = widget.initialMechanicId;
   late String? _mechanicName = widget.initialMechanicName;
+  late final TextEditingController _notesController =
+      TextEditingController(text: widget.initialNotes ?? '');
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,11 +139,24 @@ class _SaveJobOrderDialogState extends ConsumerState<_SaveJobOrderDialog> {
               _mechanicName = m?.name;
             }),
           ),
+          const SizedBox(height: 12),
+          TextField(
+            style: AppTextStyles.fieldInput,
+            controller: _notesController,
+            minLines: 2,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Notes',
+              hintText: 'e.g. customer requests',
+            ),
+          ),
         ],
       ),
       actions: [
         appDialogCancel(context, 'Cancel', onTap: () => Navigator.pop(context)),
         appDialogPrimary(context, 'Save', onTap: () {
+          final notes = _notesController.text.trim();
           Navigator.pop(
             context,
             SaveJobOrderInput(
@@ -135,6 +164,7 @@ class _SaveJobOrderDialogState extends ConsumerState<_SaveJobOrderDialog> {
               model: _model,
               mechanicId: _mechanicId,
               mechanicName: _mechanicName,
+              notes: notes.isEmpty ? null : notes,
             ),
           );
         }),
