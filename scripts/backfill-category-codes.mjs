@@ -6,7 +6,7 @@
 // Execute:  node backfill-category-codes.mjs --execute
 // Emulator: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node backfill-category-codes.mjs --execute
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import { getFirestore, serverTimestamp } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { planAssignments, counterAfter } from './backfill-category-codes-lib.mjs';
 
 const PROJECT_ID = 'maki-mobile-pos';
@@ -89,7 +89,7 @@ for (const assignment of assignments) {
     data: {
       categoryId,
       nameSnapshot: name,
-      assignedAt: serverTimestamp(),
+      assignedAt: FieldValue.serverTimestamp(),
       nextSequence: 1,
     },
   });
