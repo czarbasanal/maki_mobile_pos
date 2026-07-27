@@ -12,6 +12,7 @@ import { cn } from '@/core/utils/cn';
 import type { Employee } from '@/domain/hr/types';
 import type { EmployeeUpdateInput } from '@/domain/repositories/EmployeeRepository';
 import { WEEKDAYS, weekdayLabel } from '@/domain/hr/weekdays';
+import { PageHeader } from '@/presentation/features/settings/PageHeader';
 
 // Blank -> NaN so a cleared/never-filled field fails the > 0 check instead of
 // silently passing as 0 (Number('') === 0).
@@ -123,13 +124,8 @@ export function EmployeesPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Employees</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Employees registered for payroll.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-between gap-tk-md">
+        <PageHeader title="Employees" description="Employees registered for payroll." />
         <button
           type="button"
           onClick={openAdd}
@@ -137,7 +133,7 @@ export function EmployeesPage() {
         >
           <PlusIcon className="h-3.5 w-3.5" /> Add
         </button>
-      </header>
+      </div>
 
       {listError ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">

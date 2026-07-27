@@ -8,6 +8,7 @@ import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import type { Mechanic } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
+import { PageHeader } from './PageHeader';
 
 export function MechanicsPage() {
   useEffect(() => {
@@ -71,13 +72,11 @@ export function MechanicsPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Mechanics</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Mechanics available for the labor picker on service sales.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-between gap-tk-md">
+        <PageHeader
+          title="Mechanics"
+          description="Mechanics available for the labor picker on service sales."
+        />
         <button
           type="button"
           onClick={openAdd}
@@ -85,7 +84,7 @@ export function MechanicsPage() {
         >
           <PlusIcon className="h-3.5 w-3.5" /> Add
         </button>
-      </header>
+      </div>
 
       {error ? (
         <ErrorView title="Could not load mechanics" message={error.message} />

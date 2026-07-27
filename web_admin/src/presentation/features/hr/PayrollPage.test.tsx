@@ -5,6 +5,7 @@ import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PayrollPage } from './PayrollPage';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { formatMoney } from '@/core/utils/money';
 import { DEFAULT_HR_SETTINGS, type Employee, type HrSettings, type PayslipDefaults } from '@/domain/hr/types';
@@ -61,10 +62,10 @@ function harness(opts?: {
       }}
     >
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/hr/payroll']}>
+        <MemoryRouter initialEntries={[RoutePaths.hrPayroll]}>
           <Routes>
-            <Route path="/hr/payroll" element={<PayrollPage />} />
-            <Route path="/hr/payslips/:id" element={<PayslipStub />} />
+            <Route path={RoutePaths.hrPayroll} element={<PayrollPage />} />
+            <Route path={RoutePaths.hrPayslipDetail} element={<PayslipStub />} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>

@@ -5,6 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PayslipDetailPage } from './PayslipDetailPage';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Payslip } from '@/domain/hr/types';
 import { downloadElementAsJpg } from '@/core/utils/downloadJpg';
 
@@ -68,10 +69,10 @@ function harness(opts?: {
   return render(
     <DiProvider override={{ payslipRepo: payslipRepo as Container['payslipRepo'] }}>
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/hr/payslips/ps1']}>
+        <MemoryRouter initialEntries={[`${RoutePaths.hrPayslips}/ps1`]}>
           <Routes>
-            <Route path="/hr/payslips/:id" element={<PayslipDetailPage />} />
-            <Route path="/hr/payslips" element={<div>PAYSLIPS LIST</div>} />
+            <Route path={RoutePaths.hrPayslipDetail} element={<PayslipDetailPage />} />
+            <Route path={RoutePaths.hrPayslips} element={<div>PAYSLIPS LIST</div>} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>

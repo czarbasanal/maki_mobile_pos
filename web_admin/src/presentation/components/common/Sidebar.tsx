@@ -82,19 +82,20 @@ const sections: NavSection[] = [
     ],
   },
   {
-    label: 'HR',
-    items: [
-      { label: 'Employees', path: RoutePaths.hrEmployees, icon: IdentificationIcon },
-      { label: 'Payroll', path: RoutePaths.hrPayroll, icon: BanknotesIcon },
-      { label: 'Payslips', path: RoutePaths.hrPayslips, icon: DocumentTextIcon },
-    ],
-  },
-  {
     label: 'Admin',
     items: [
       { label: 'Users', path: RoutePaths.users, icon: UsersIcon },
       { label: 'Activity Logs', path: RoutePaths.userLogs, icon: ClockIcon },
-      { label: 'Settings', path: RoutePaths.settings, icon: Cog6ToothIcon },
+      {
+        label: 'Settings',
+        path: RoutePaths.settings,
+        icon: Cog6ToothIcon,
+        children: [
+          { label: 'Employees', path: RoutePaths.hrEmployees, icon: IdentificationIcon },
+          { label: 'Payroll', path: RoutePaths.hrPayroll, icon: BanknotesIcon },
+          { label: 'Payslips', path: RoutePaths.hrPayslips, icon: DocumentTextIcon },
+        ],
+      },
     ],
   },
 ];

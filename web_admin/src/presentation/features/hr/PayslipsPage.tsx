@@ -10,6 +10,7 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
+import { PageHeader } from '@/presentation/features/settings/PageHeader';
 import type { Payslip } from '@/domain/hr/types';
 
 function parseIsoLocal(iso: string): Date {
@@ -45,12 +46,10 @@ export function PayslipsPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Payslips</h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Generated payslips, most recent pay period first.
-        </p>
-      </header>
+      <PageHeader
+        title="Payslips"
+        description="Generated payslips, most recent pay period first."
+      />
 
       {error ? (
         <ErrorView title="Could not load payslips" message={error.message} />

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PayslipsPage } from './PayslipsPage';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { formatMoney } from '@/core/utils/money';
 import type { Payslip } from '@/domain/hr/types';
 
@@ -56,10 +57,10 @@ function harness(opts?: { payslips?: Payslip[] }) {
 
   return render(
     <DiProvider override={{ payslipRepo: payslipRepo as Container['payslipRepo'] }}>
-      <MemoryRouter initialEntries={['/hr/payslips']}>
+      <MemoryRouter initialEntries={[RoutePaths.hrPayslips]}>
         <Routes>
-          <Route path="/hr/payslips" element={<PayslipsPage />} />
-          <Route path="/hr/payslips/:id" element={<DetailStub />} />
+          <Route path={RoutePaths.hrPayslips} element={<PayslipsPage />} />
+          <Route path={RoutePaths.hrPayslipDetail} element={<DetailStub />} />
         </Routes>
       </MemoryRouter>
     </DiProvider>,

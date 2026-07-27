@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { EmployeesPage } from './EmployeesPage';
 import { formatMoney } from '@/core/utils/money';
@@ -47,7 +48,9 @@ function harness(opts?: {
   return render(
     <DiProvider override={{ employeeRepo: employeeRepo as Container['employeeRepo'] }}>
       <QueryClientProvider client={qc}>
-        <EmployeesPage />
+        <MemoryRouter>
+          <EmployeesPage />
+        </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
   );
@@ -213,7 +216,9 @@ describe('EmployeesPage', () => {
     render(
       <DiProvider override={{ employeeRepo: employeeRepo as Container['employeeRepo'] }}>
         <QueryClientProvider client={qc}>
-          <EmployeesPage />
+          <MemoryRouter>
+            <EmployeesPage />
+          </MemoryRouter>
         </QueryClientProvider>
       </DiProvider>,
     );

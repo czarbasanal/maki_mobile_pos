@@ -9,6 +9,7 @@ import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import type { Category } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
+import { PageHeader } from './PageHeader';
 
 const KINDS: CategoryKind[] = [
   CategoryKind.product,
@@ -64,13 +65,11 @@ export function ManageListsPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Manage Lists</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Admin-managed dropdown values used across the app.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-between gap-tk-md">
+        <PageHeader
+          title="Manage Lists"
+          description="Admin-managed dropdown values used across the app."
+        />
         <button
           type="button"
           onClick={openAdd}
@@ -78,7 +77,7 @@ export function ManageListsPage() {
         >
           <PlusIcon className="h-3.5 w-3.5" /> Add
         </button>
-      </header>
+      </div>
 
       <div className="inline-flex flex-wrap rounded-md border border-light-hairline p-[2px]">
         {KINDS.map((k) => (

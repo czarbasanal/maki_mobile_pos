@@ -1,7 +1,7 @@
 // Top-level route table. Until each feature lands, routes render
 // <PagePlaceholder> so the shell is fully navigable from day one.
 
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { AdminShell } from '@/presentation/layouts/AdminShell';
 import { AuthLayout } from '@/presentation/layouts/AuthLayout';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -50,6 +50,12 @@ import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholde
 const placeholder = (title: string, phase: string) => (
   <PagePlaceholder title={title} phase={phase} />
 );
+
+// HR moved under /settings/hr/* — these keep old bookmarks/links alive.
+function HrPayslipDetailRedirect() {
+  const { id = '' } = useParams();
+  return <Navigate to={`${RoutePaths.hrPayslips}/${id}`} replace />;
+}
 
 export const router = createBrowserRouter(
   [
@@ -113,6 +119,12 @@ export const router = createBrowserRouter(
         { path: RoutePaths.hrSettings, element: <HrSettingsPage /> },
       ],
     },
+    // Old /hr/* bookmarks — redirect to the new /settings/hr/* homes.
+    { path: '/hr/employees', element: <Navigate to={RoutePaths.hrEmployees} replace /> },
+    { path: '/hr/payroll', element: <Navigate to={RoutePaths.hrPayroll} replace /> },
+    { path: '/hr/payslips', element: <Navigate to={RoutePaths.hrPayslips} replace /> },
+    { path: '/hr/payslips/:id', element: <HrPayslipDetailRedirect /> },
+    { path: '/hr/settings', element: <Navigate to={RoutePaths.hrSettings} replace /> },
     { path: '*', element: <Navigate to={RoutePaths.dashboard} replace /> },
   ],
   { basename: '/' },

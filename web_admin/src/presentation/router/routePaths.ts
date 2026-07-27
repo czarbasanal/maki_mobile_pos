@@ -55,11 +55,11 @@ export const RoutePaths = {
 
   userLogs: '/logs',
 
-  hrEmployees: '/hr/employees',
-  hrPayroll: '/hr/payroll',
-  hrPayslips: '/hr/payslips',
-  hrPayslipDetail: '/hr/payslips/:id',
-  hrSettings: '/hr/settings',
+  hrEmployees: '/settings/hr/employees',
+  hrPayroll: '/settings/hr/payroll',
+  hrPayslips: '/settings/hr/payslips',
+  hrPayslipDetail: '/settings/hr/payslips/:id',
+  hrSettings: '/settings/hr/config',
 } as const;
 
 export type RoutePath = (typeof RoutePaths)[keyof typeof RoutePaths];
