@@ -20,6 +20,7 @@ export function PosPage() {
   const mechanicName = useCartStore((s) => s.mechanicName);
   const draftId = useCartStore((s) => s.draftId);
   const draftName = useCartStore((s) => s.draftName);
+  const notes = useCartStore((s) => s.notes);
   const clear = useCartStore((s) => s.clear);
   const saveDraft = useSaveDraft();
   const drafts = useDrafts();
@@ -30,6 +31,7 @@ export function PosPage() {
     (location.state as { completedSaleNumber?: string } | null)?.completedSaleNumber ?? null,
   );
   const [saveOpen, setSaveOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
   const hasTicket = lines.length > 0 || laborLines.length > 0;
 
@@ -74,11 +76,16 @@ export function PosPage() {
   }, [done]);
 
   const openSave = () => {
+    // Seed the dialog's notes buffer from the cart (a resumed JO carries its
+    // saved notes; a fresh cart starts blank). Edits only land on the cart —
+    // and the JO — on Save, so Cancel discards them.
+    setNoteDraft(notes ?? '');
     setSaveOpen(true);
   };
   const onSaveDraft = async () => {
     const name = jobOrderNumber;
     if (!name) return;
+    const trimmedNotes = noteDraft.trim() || null;
     try {
       await saveDraft.mutateAsync({
         draftId,
@@ -89,6 +96,7 @@ export function PosPage() {
         feeLines,
         mechanicId,
         mechanicName,
+        notes: trimmedNotes,
       });
       setSaveOpen(false);
       clear();
@@ -166,6 +174,17 @@ export function PosPage() {
               {jobOrderNumber ?? 'Computing…'}
             </div>
           </div>
+          <label className="block space-y-tk-xs">
+            <span className="text-bodySmall text-light-text-secondary">Notes</span>
+            <textarea
+              rows={3}
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              placeholder="Optional — e.g. customer requests"
+              disabled={saveDraft.isPending}
+              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+            />
+          </label>
           <div className="flex justify-end gap-tk-sm">
             <button
               type="button"

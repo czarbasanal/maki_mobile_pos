@@ -147,6 +147,49 @@ describe('JobOrderEditPage', () => {
     expect(useCartStore.getState().lines).toHaveLength(0);
   });
 
+  it('hydrates notes from the job order and saves the edited value', async () => {
+    useCartStore.getState().clear();
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
+    });
+    const update = vi.fn().mockResolvedValue(undefined);
+    harness({
+      getById: vi.fn().mockResolvedValue(draft({ id: 'd1', name: 'Draft One', notes: 'Original note' })),
+      update,
+    });
+
+    await screen.findByDisplayValue('Draft One');
+    expect(screen.getByLabelText(/notes/i)).toHaveValue('Original note');
+
+    await userEvent.clear(screen.getByLabelText(/notes/i));
+    await userEvent.type(screen.getByLabelText(/notes/i), 'Replace clutch cable');
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    const [, patch] = update.mock.calls[0] as [string, { notes: string | null }];
+    expect(patch.notes).toBe('Replace clutch cable');
+  });
+
+  it('clearing notes saves null, never an empty string', async () => {
+    useCartStore.getState().clear();
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
+    });
+    const update = vi.fn().mockResolvedValue(undefined);
+    harness({
+      getById: vi.fn().mockResolvedValue(draft({ id: 'd1', name: 'Draft One', notes: 'Old' })),
+      update,
+    });
+
+    await screen.findByDisplayValue('Draft One');
+    await userEvent.clear(screen.getByLabelText(/notes/i));
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    const [, patch] = update.mock.calls[0] as [string, { notes: string | null }];
+    expect(patch.notes).toBeNull();
+  });
+
   it('preserves a fee-bearing draft\'s shop fees when saved (money must not be dropped on edit)', async () => {
     useCartStore.getState().clear();
     useAuthStore.setState({

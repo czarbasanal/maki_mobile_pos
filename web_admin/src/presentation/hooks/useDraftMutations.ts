@@ -1,4 +1,5 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/infrastructure/query/queryKeys';
 import { useActivityLogRepo, useDraftRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { logActivity } from '@/application/activityLogger';
@@ -14,6 +15,7 @@ export interface SaveDraftInput {
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  notes: string | null;
 }
 
 /** Create a new draft or update the active one (resume → edit → save). */
@@ -21,7 +23,14 @@ export function useSaveDraft() {
   const repo = useDraftRepo();
   const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
   return useMutation<Draft | void, Error, SaveDraftInput>({
+    // Without this, staleTime (60s) lets JobOrderEditPage rehydrate from the
+    // pre-save cache — the user sees their save reverted, and saving again
+    // persists the stale copy over the new one.
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.drafts.all });
+    },
     mutationFn: async (input) => {
       if (!actor) throw new Error('Not signed in');
       if (input.draftId) {
@@ -35,6 +44,7 @@ export function useSaveDraft() {
             feeLines: input.feeLines,
             mechanicId: input.mechanicId,
             mechanicName: input.mechanicName,
+            notes: input.notes,
           },
           actor.id,
         );
@@ -61,7 +71,7 @@ export function useSaveDraft() {
         isConverted: false,
         convertedToSaleId: null,
         convertedAt: null,
-        notes: null,
+        notes: input.notes,
       });
       logActivity(activityLogRepo, () => ({
         type: ActivityType.other,

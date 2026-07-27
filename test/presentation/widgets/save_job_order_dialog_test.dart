@@ -24,6 +24,7 @@ void main() {
     WidgetTester tester, {
     String? initialModel,
     String? initialMechanicId,
+    String? initialNotes,
   }) async {
     SaveJobOrderInput? result;
     await tester.pumpWidget(
@@ -44,6 +45,7 @@ void main() {
                     jobOrderNo: 'JO-072326-004',
                     initialModel: initialModel,
                     initialMechanicId: initialMechanicId,
+                    initialNotes: initialNotes,
                   ),
                   child: const Text('open'),
                 ),
@@ -67,9 +69,9 @@ void main() {
     expect(find.text('Nmax'), findsOneWidget);
     expect(find.text('— Optional —'), findsOneWidget);
 
-    // The auto-generated number is displayed read-only — no text input.
+    // The auto-generated number is displayed read-only — never as an input.
     expect(find.text('JO-072326-004'), findsOneWidget);
-    expect(find.byType(TextField), findsNothing);
+    expect(find.widgetWithText(TextField, 'JO-072326-004'), findsNothing);
 
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -101,5 +103,43 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(getResult()!.label, 'JO-072326-004');
+  });
+
+  testWidgets('collects optional notes, trimmed on save', (tester) async {
+    final getResult = await harness(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.byType(TextField), '  Check brakes and clutch  ');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(getResult()!.notes, 'Check brakes and clutch');
+  });
+
+  testWidgets('prefills notes from the cart (resumed JO keeps its notes)',
+      (tester) async {
+    await harness(tester, initialNotes: 'Customer waiting');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.widgetWithText(TextField, 'Customer waiting'), findsOneWidget);
+  });
+
+  testWidgets('whitespace-only notes save as null', (tester) async {
+    final getResult = await harness(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '   ');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(getResult()!.notes, isNull);
   });
 }

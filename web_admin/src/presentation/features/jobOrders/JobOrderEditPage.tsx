@@ -25,6 +25,8 @@ export function JobOrderEditPage() {
   const feeLines = useDraftEditStore((s) => s.feeLines);
   const mechanicId = useDraftEditStore((s) => s.mechanicId);
   const mechanicName = useDraftEditStore((s) => s.mechanicName);
+  const notes = useDraftEditStore((s) => s.notes);
+  const setNotes = useDraftEditStore((s) => s.setNotes);
 
   const [name, setName] = useState('');
   const hydratedId = useRef<string | null>(null);
@@ -73,6 +75,7 @@ export function JobOrderEditPage() {
         feeLines,
         mechanicId,
         mechanicName,
+        notes: (notes ?? '').trim() || null,
       });
       navigate(RoutePaths.jobOrders);
     } catch {
@@ -95,6 +98,13 @@ export function JobOrderEditPage() {
         <span className="text-bodySmall text-light-text-secondary">Job Order #</span>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)}
           className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm font-mono text-bodySmall text-light-text outline-none focus:border-light-text" />
+      </label>
+
+      <label className="block max-w-sm space-y-tk-xs">
+        <span className="text-bodySmall text-light-text-secondary">Notes</span>
+        <textarea rows={3} value={notes ?? ''} onChange={(e) => setNotes(e.target.value)}
+          placeholder="Optional"
+          className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text" />
       </label>
 
       <CartBuilder store={useDraftEditStore} />
