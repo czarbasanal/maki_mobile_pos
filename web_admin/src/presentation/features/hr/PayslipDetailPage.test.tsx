@@ -152,4 +152,18 @@ describe('PayslipDetailPage', () => {
 
     expect(await screen.findByText(/not found/i)).toBeInTheDocument();
   });
+
+  it('renders PageHeader with back link to payslips and title in the same header', async () => {
+    harness();
+
+    await screen.findByText('NET PAY');
+
+    const backLink = screen.getByRole('link', { name: /back to payslips/i });
+    const header = backLink.closest('header');
+
+    expect(header).toBeInTheDocument();
+    const h1 = header?.querySelector('h1');
+    expect(h1).toHaveTextContent('Juan Dela Cruz');
+    expect(backLink).toHaveAttribute('href', RoutePaths.hrPayslips);
+  });
 });
