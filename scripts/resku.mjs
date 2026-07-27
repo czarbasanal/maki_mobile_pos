@@ -225,7 +225,8 @@ for (let i = 0; i < writes.length; i += BATCH_SIZE) {
 
 const appliedAt = new Date().toISOString();
 await mkdir(DATA_DIR, { recursive: true });
-const mapPath = new URL(`resku-map-${appliedAt}.json`, DATA_DIR);
+// Colon-free name: ':' in an ISO timestamp makes new URL() parse it as a scheme.
+  const mapPath = new URL(`resku-map-${appliedAt.replaceAll(':', '-')}.json`, DATA_DIR);
 await writeFile(mapPath, JSON.stringify({
   appliedAt,
   renames: plan.renames,
