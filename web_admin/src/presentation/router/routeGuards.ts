@@ -12,7 +12,7 @@ const commonRoutes: ReadonlySet<string> = new Set([
   RoutePaths.dashboard,
   RoutePaths.pos,
   RoutePaths.checkout,
-  RoutePaths.drafts,
+  RoutePaths.jobOrders,
 ]);
 
 const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permission>([
@@ -32,6 +32,7 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.expenseAdd, Permission.addExpense],
   [RoutePaths.reports, Permission.viewSalesReports],
   [RoutePaths.salesReport, Permission.viewSalesReports],
+  [RoutePaths.daySales, Permission.viewSalesReports],
   [RoutePaths.profitReport, Permission.viewProfitReports],
   [RoutePaths.laborReport, Permission.viewSalesReports],
   [RoutePaths.priceChangeReport, Permission.viewProductCost],
@@ -54,7 +55,7 @@ export function isPublicRoute(path: string): boolean {
 
 export function isCommonRoute(path: string): boolean {
   if (commonRoutes.has(path)) return true;
-  if (path.startsWith('/drafts/')) return true;
+  if (path.startsWith('/job-orders/')) return true;
   return false;
 }
 
@@ -104,9 +105,9 @@ function checkDynamicRoute(path: string, user: User): boolean {
   if (path === RoutePaths.about) {
     return hasPermission(user.role, Permission.viewSettings);
   }
-  // /hr/payslips/:id — the concrete payslip detail (the static /hr/payslips
-  // list is matched as an exact route first).
-  if (path.startsWith('/hr/payslips/')) {
+  // /settings/hr/payslips/:id — the concrete payslip detail (the static
+  // /settings/hr/payslips list is matched as an exact route first).
+  if (path.startsWith('/settings/hr/payslips/')) {
     return hasPermission(user.role, Permission.manageHr);
   }
   return false;

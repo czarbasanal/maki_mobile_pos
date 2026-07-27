@@ -19,6 +19,7 @@ import { formatMoney } from '@/core/utils/money';
 import { payPeriodFor, shiftPeriod, type PayPeriod } from '@/domain/hr/payPeriod';
 import { WEEKDAYS } from '@/domain/hr/weekdays';
 import type { Employee, HrSettings } from '@/domain/hr/types';
+import { PageHeader } from '@/presentation/features/settings/PageHeader';
 import { usePayslipDraft } from './usePayslipDraft';
 import { WeekGrid } from './WeekGrid';
 
@@ -174,12 +175,10 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Payroll</h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Generate a payslip for one employee&apos;s pay period.
-        </p>
-      </header>
+      <PageHeader
+        title="Payroll"
+        description="Generate a payslip for one employee's pay period."
+      />
 
       {generate.error ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">

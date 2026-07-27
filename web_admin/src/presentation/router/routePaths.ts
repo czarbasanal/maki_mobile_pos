@@ -11,8 +11,8 @@ export const RoutePaths = {
   pos: '/pos',
   checkout: '/pos/checkout',
 
-  drafts: '/drafts',
-  draftEdit: '/drafts/:id',
+  jobOrders: '/job-orders',
+  jobOrderEdit: '/job-orders/:id',
 
   inventory: '/inventory',
   productAdd: '/inventory/add',
@@ -38,6 +38,8 @@ export const RoutePaths = {
 
   reports: '/reports',
   salesReport: '/reports/sales',
+  // Web-only (no Flutter mirror) — the dashboard's "View all" destination.
+  daySales: '/sales/day',
   profitReport: '/reports/profit',
   laborReport: '/reports/labor',
   priceChangeReport: '/reports/price-changes',
@@ -55,11 +57,11 @@ export const RoutePaths = {
 
   userLogs: '/logs',
 
-  hrEmployees: '/hr/employees',
-  hrPayroll: '/hr/payroll',
-  hrPayslips: '/hr/payslips',
-  hrPayslipDetail: '/hr/payslips/:id',
-  hrSettings: '/hr/settings',
+  hrEmployees: '/settings/hr/employees',
+  hrPayroll: '/settings/hr/payroll',
+  hrPayslips: '/settings/hr/payslips',
+  hrPayslipDetail: '/settings/hr/payslips/:id',
+  hrSettings: '/settings/hr/config',
 } as const;
 
 export type RoutePath = (typeof RoutePaths)[keyof typeof RoutePaths];

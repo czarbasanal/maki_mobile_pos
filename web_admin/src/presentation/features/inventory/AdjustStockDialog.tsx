@@ -44,8 +44,23 @@ export function AdjustStockDialog({
   const apply = async () => {
     if (parsed === null || err) return;
     try {
-      if (mode === 'set') await setStock.mutateAsync({ id: product.id, quantity: parsed });
-      else await adjust.mutateAsync({ id: product.id, delta: mode === 'add' ? parsed : -parsed });
+      if (mode === 'set') {
+        await setStock.mutateAsync({
+          id: product.id,
+          quantity: parsed,
+          productName: product.name,
+          sku: product.sku,
+          oldQuantity: product.quantity,
+        });
+      } else {
+        await adjust.mutateAsync({
+          id: product.id,
+          delta: mode === 'add' ? parsed : -parsed,
+          productName: product.name,
+          sku: product.sku,
+          oldQuantity: product.quantity,
+        });
+      }
       setQtyText('');
       onClose();
     } catch {

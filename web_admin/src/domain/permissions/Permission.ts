@@ -74,6 +74,10 @@ const cashier: ReadonlySet<Permission> = new Set<Permission>([
   Permission.viewDailySalesOnly,
   Permission.viewExpenses,
   Permission.addExpense,
+  // Expenses (shop policy 2026-07-04: cashiers/staff record, fix, and remove
+  // their own entry mistakes; activity log keeps the trail)
+  Permission.editExpense,
+  Permission.deleteExpense,
   Permission.viewSettings,
   Permission.editOwnProfile,
 ]);
@@ -96,6 +100,10 @@ const staff: ReadonlySet<Permission> = new Set<Permission>([
   Permission.viewDailySalesOnly,
   Permission.viewExpenses,
   Permission.addExpense,
+  // Expenses (shop policy 2026-07-04: cashiers/staff record, fix, and remove
+  // their own entry mistakes; activity log keeps the trail)
+  Permission.editExpense,
+  Permission.deleteExpense,
   Permission.viewSettings,
   Permission.editOwnProfile,
 ]);

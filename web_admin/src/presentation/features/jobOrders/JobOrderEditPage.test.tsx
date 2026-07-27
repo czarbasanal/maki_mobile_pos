@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { DraftEditPage } from './DraftEditPage';
+import { JobOrderEditPage } from './JobOrderEditPage';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { useDraftEditStore } from '@/presentation/stores/draftEditStore';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -21,7 +21,7 @@ const draft = (o: Partial<Draft> = {}): Draft => ({
 const product = (o: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, ...o } as Product);
 
-function harness(draftRepo: Partial<Container['draftRepo']>, node: ReactNode = <DraftEditPage />) {
+function harness(draftRepo: Partial<Container['draftRepo']>, node: ReactNode = <JobOrderEditPage />) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const productRepo: Partial<Container['productRepo']> = {
     watchAll: (cb: (products: Product[]) => void) => {
@@ -35,40 +35,44 @@ function harness(draftRepo: Partial<Container['draftRepo']>, node: ReactNode = <
       return () => {};
     },
   };
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   return render(
     <DiProvider
       override={{
         draftRepo: draftRepo as Container['draftRepo'],
         productRepo: productRepo as Container['productRepo'],
         mechanicRepo: mechanicRepo as Container['mechanicRepo'],
+        activityLogRepo,
       }}
     >
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/drafts/d1']}>
-          <Routes><Route path="/drafts/:id" element={node} /></Routes>
+        <MemoryRouter initialEntries={['/job-orders/d1']}>
+          <Routes><Route path="/job-orders/:id" element={node} /></Routes>
         </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
   );
 }
 
-describe('DraftEditPage', () => {
-  it('shows the editor with the draft name once loaded', async () => {
+describe('JobOrderEditPage', () => {
+  it('shows the editor with the job order name once loaded', async () => {
     harness({ getById: vi.fn().mockResolvedValue(draft()) });
     await waitFor(() => expect(screen.getByDisplayValue('Mr Cruz — Mio')).toBeInTheDocument());
   });
 
-  it('blocks editing a converted draft', async () => {
+  it('blocks editing a converted (billed) job order', async () => {
     harness({ getById: vi.fn().mockResolvedValue(draft({ isConverted: true })) });
-    await waitFor(() => expect(screen.getByText(/already billed out/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/This Job Order is already billed out/i)).toBeInTheDocument());
   });
 
-  it('shows not-found when the draft is missing', async () => {
+  it('shows not-found when the job order is missing', async () => {
     harness({ getById: vi.fn().mockResolvedValue(null) });
-    await waitFor(() => expect(screen.getByText(/Draft not found/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Job Order not found/i)).toBeInTheDocument());
   });
 
-  it('re-hydrates the editor when navigating between drafts without unmounting', async () => {
+  it('re-hydrates the editor when navigating between job orders without unmounting', async () => {
     const draftsById: Record<string, Draft> = {
       d1: draft({ id: 'd1', name: 'Draft One' }),
       d2: draft({ id: 'd2', name: 'Draft Two' }),
@@ -97,11 +101,11 @@ describe('DraftEditPage', () => {
         }}
       >
         <QueryClientProvider client={qc}>
-          <MemoryRouter initialEntries={['/drafts/d1']}>
-            <Link to="/drafts/d2">Go to draft two</Link>
+          <MemoryRouter initialEntries={['/job-orders/d1']}>
+            <Link to="/job-orders/d2">Go to job order two</Link>
             {/* Same Route element instance is reused across param changes (no key) — this is what exposed the bug. */}
             <Routes>
-              <Route path="/drafts/:id" element={<DraftEditPage />} />
+              <Route path="/job-orders/:id" element={<JobOrderEditPage />} />
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
@@ -110,7 +114,7 @@ describe('DraftEditPage', () => {
 
     await screen.findByDisplayValue('Draft One');
 
-    await userEvent.click(screen.getByText('Go to draft two'));
+    await userEvent.click(screen.getByText('Go to job order two'));
 
     await screen.findByDisplayValue('Draft Two');
   });

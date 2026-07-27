@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { EmployeesPage } from './EmployeesPage';
 import { formatMoney } from '@/core/utils/money';
@@ -23,6 +24,7 @@ function harness(opts?: {
   employees?: Employee[];
   create?: ReturnType<typeof vi.fn>;
   update?: ReturnType<typeof vi.fn>;
+  del?: ReturnType<typeof vi.fn>;
 }) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const employeeRepo: Partial<Container['employeeRepo']> = {
@@ -42,15 +44,19 @@ function harness(opts?: {
         updatedAt: null,
       })),
     update: opts?.update ?? vi.fn(async () => {}),
+    delete: opts?.del ?? vi.fn(async () => {}),
   };
 
-  return render(
+  render(
     <DiProvider override={{ employeeRepo: employeeRepo as Container['employeeRepo'] }}>
       <QueryClientProvider client={qc}>
-        <EmployeesPage />
+        <MemoryRouter>
+          <EmployeesPage />
+        </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
   );
+  return { employeeRepo };
 }
 
 describe('EmployeesPage', () => {
@@ -213,12 +219,72 @@ describe('EmployeesPage', () => {
     render(
       <DiProvider override={{ employeeRepo: employeeRepo as Container['employeeRepo'] }}>
         <QueryClientProvider client={qc}>
-          <EmployeesPage />
+          <MemoryRouter>
+            <EmployeesPage />
+          </MemoryRouter>
         </QueryClientProvider>
       </DiProvider>,
     );
 
     expect(screen.getByText(/could not load employees/i)).toBeInTheDocument();
     expect(screen.getByText('Missing or insufficient permissions.')).toBeInTheDocument();
+  });
+});
+
+describe('EmployeesPage — delete action (deactivate-first)', () => {
+  it('shows no Delete affordance on an active row, but shows it on an inactive row', () => {
+    harness({
+      employees: [
+        employee({ id: 'e1', name: 'Active Juan', isActive: true }),
+        employee({ id: 'e2', name: 'Retired Maria', isActive: false }),
+      ],
+    });
+
+    const activeRow = screen.getByText('Active Juan').closest('li') as HTMLElement;
+    expect(within(activeRow).queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument();
+
+    const inactiveRow = screen.getByText(/Retired Maria/).closest('li') as HTMLElement;
+    expect(within(inactiveRow).getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
+  });
+
+  it('confirming Delete on an inactive row calls the repo with its id', async () => {
+    const del = vi.fn(async () => {});
+    harness({ employees: [employee({ id: 'e2', name: 'Retired Maria', isActive: false })], del });
+
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Delete this entry?');
+    expect(dialog).toHaveTextContent('Retired Maria');
+
+    await userEvent.click(within(dialog).getByRole('button', { name: /^delete$/i }));
+
+    await waitFor(() => expect(del).toHaveBeenCalledWith('e2'));
+  });
+
+  it('Cancel does not delete', async () => {
+    const del = vi.fn(async () => {});
+    harness({ employees: [employee({ id: 'e2', name: 'Retired Maria', isActive: false })], del });
+
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: /cancel/i }));
+
+    expect(del).not.toHaveBeenCalled();
+  });
+});
+
+describe('EmployeesPage — pagination', () => {
+  it('shows the pager once the employee list exceeds 25', () => {
+    const many = Array.from({ length: 26 }, (_, i) => employee({ id: `e${i + 1}`, name: `Employee ${i + 1}` }));
+    harness({ employees: many });
+
+    expect(screen.getByText('1–25 of 26')).toBeInTheDocument();
+  });
+
+  it('hides the pager at exactly 25 employees', () => {
+    const exactly25 = Array.from({ length: 25 }, (_, i) => employee({ id: `e${i + 1}`, name: `Employee ${i + 1}` }));
+    harness({ employees: exactly25 });
+
+    expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
   });
 });

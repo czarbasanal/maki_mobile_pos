@@ -30,7 +30,7 @@ import {
 import { canAccess } from '@/presentation/router/routeGuards';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { useAuthRepo } from '@/infrastructure/di/container';
+import { useSignOut } from '@/presentation/hooks/useSignOut';
 import { cn } from '@/core/utils/cn';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -53,7 +53,7 @@ const sections: NavSection[] = [
     label: 'Sell',
     items: [
       { label: 'POS', path: RoutePaths.pos, icon: ShoppingCartIcon },
-      { label: 'Drafts', path: RoutePaths.drafts, icon: PencilSquareIcon },
+      { label: 'Job Orders', path: RoutePaths.jobOrders, icon: PencilSquareIcon },
     ],
   },
   {
@@ -82,19 +82,20 @@ const sections: NavSection[] = [
     ],
   },
   {
-    label: 'HR',
-    items: [
-      { label: 'Employees', path: RoutePaths.hrEmployees, icon: IdentificationIcon },
-      { label: 'Payroll', path: RoutePaths.hrPayroll, icon: BanknotesIcon },
-      { label: 'Payslips', path: RoutePaths.hrPayslips, icon: DocumentTextIcon },
-    ],
-  },
-  {
     label: 'Admin',
     items: [
       { label: 'Users', path: RoutePaths.users, icon: UsersIcon },
       { label: 'Activity Logs', path: RoutePaths.userLogs, icon: ClockIcon },
-      { label: 'Settings', path: RoutePaths.settings, icon: Cog6ToothIcon },
+      {
+        label: 'Settings',
+        path: RoutePaths.settings,
+        icon: Cog6ToothIcon,
+        children: [
+          { label: 'Employees', path: RoutePaths.hrEmployees, icon: IdentificationIcon },
+          { label: 'Payroll', path: RoutePaths.hrPayroll, icon: BanknotesIcon },
+          { label: 'Payslips', path: RoutePaths.hrPayslips, icon: DocumentTextIcon },
+        ],
+      },
     ],
   },
 ];
@@ -254,7 +255,7 @@ function SidebarAccount({ email, role }: { email: string; role: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const authRepo = useAuthRepo();
+  const signOut = useSignOut();
 
   useEffect(() => {
     if (!open) return;
@@ -267,7 +268,7 @@ function SidebarAccount({ email, role }: { email: string; role: string }) {
 
   const onSignOut = async () => {
     setOpen(false);
-    await authRepo.signOut();
+    await signOut.mutateAsync();
     navigate(RoutePaths.login, { replace: true });
   };
 

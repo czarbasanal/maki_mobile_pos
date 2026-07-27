@@ -1,7 +1,7 @@
 // Top-level route table. Until each feature lands, routes render
 // <PagePlaceholder> so the shell is fully navigable from day one.
 
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { AdminShell } from '@/presentation/layouts/AdminShell';
 import { AuthLayout } from '@/presentation/layouts/AuthLayout';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -22,6 +22,7 @@ import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPa
 import { LaborReportPage } from '@/presentation/features/reports/LaborReportPage';
 import { PriceChangeReportPage } from '@/presentation/features/reports/PriceChangeReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
+import { DaySalesPage } from '@/presentation/features/sales/DaySalesPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
 import { ReceivingDashboardPage } from '@/presentation/features/receiving/ReceivingDashboardPage';
 import { ReceivingHistoryPage } from '@/presentation/features/receiving/ReceivingHistoryPage';
@@ -38,18 +39,27 @@ import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersLi
 import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
 import { PosPage } from '@/presentation/features/pos/PosPage';
 import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
-import { DraftsPage } from '@/presentation/features/drafts/DraftsPage';
-import { DraftEditPage } from '@/presentation/features/drafts/DraftEditPage';
+import { JobOrdersPage } from '@/presentation/features/jobOrders/JobOrdersPage';
+import { JobOrderEditPage } from '@/presentation/features/jobOrders/JobOrderEditPage';
 import { EmployeesPage } from '@/presentation/features/hr/EmployeesPage';
 import { PayrollPage } from '@/presentation/features/hr/PayrollPage';
 import { PayslipsPage } from '@/presentation/features/hr/PayslipsPage';
 import { PayslipDetailPage } from '@/presentation/features/hr/PayslipDetailPage';
 import { HrSettingsPage } from '@/presentation/features/hr/HrSettingsPage';
-import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
+import { ExpensesPage } from '@/presentation/features/expenses/ExpensesPage';
+import { ExpenseFormPage } from '@/presentation/features/expenses/ExpenseFormPage';
 
-const placeholder = (title: string, phase: string) => (
-  <PagePlaceholder title={title} phase={phase} />
-);
+// HR moved under /settings/hr/* — these keep old bookmarks/links alive.
+function HrPayslipDetailRedirect() {
+  const { id = '' } = useParams();
+  return <Navigate to={`${RoutePaths.hrPayslips}/${id}`} replace />;
+}
+
+// Drafts renamed to Job Orders — these keep old bookmarks/links alive.
+function JobOrderDetailRedirect() {
+  const { id = '' } = useParams();
+  return <Navigate to={`${RoutePaths.jobOrders}/${id}`} replace />;
+}
 
 export const router = createBrowserRouter(
   [
@@ -71,8 +81,8 @@ export const router = createBrowserRouter(
         { path: RoutePaths.dashboard, element: <DashboardPage /> },
         { path: RoutePaths.pos, element: <PosPage /> },
         { path: RoutePaths.checkout, element: <CheckoutPage /> },
-        { path: RoutePaths.drafts, element: <DraftsPage /> },
-        { path: RoutePaths.draftEdit, element: <DraftEditPage /> },
+        { path: RoutePaths.jobOrders, element: <JobOrdersPage /> },
+        { path: RoutePaths.jobOrderEdit, element: <JobOrderEditPage /> },
         { path: RoutePaths.inventory, element: <InventoryListPage /> },
         { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
         { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
@@ -88,11 +98,12 @@ export const router = createBrowserRouter(
         { path: RoutePaths.suppliers, element: <SuppliersListPage /> },
         { path: RoutePaths.supplierAdd, element: <SupplierFormPage /> },
         { path: RoutePaths.supplierEdit, element: <SupplierFormPage /> },
-        { path: RoutePaths.expenses, element: placeholder('Expenses', 'phase 9') },
-        { path: RoutePaths.expenseAdd, element: placeholder('New expense', 'phase 9') },
-        { path: RoutePaths.expenseEdit, element: placeholder('Edit expense', 'phase 9') },
+        { path: RoutePaths.expenses, element: <ExpensesPage /> },
+        { path: RoutePaths.expenseAdd, element: <ExpenseFormPage /> },
+        { path: RoutePaths.expenseEdit, element: <ExpenseFormPage /> },
         { path: RoutePaths.reports, element: <ReportsHubPage /> },
         { path: RoutePaths.salesReport, element: <SalesReportPage /> },
+        { path: RoutePaths.daySales, element: <DaySalesPage /> },
         { path: RoutePaths.profitReport, element: <ProfitReportPage /> },
         { path: RoutePaths.laborReport, element: <LaborReportPage /> },
         { path: RoutePaths.priceChangeReport, element: <PriceChangeReportPage /> },
@@ -113,6 +124,15 @@ export const router = createBrowserRouter(
         { path: RoutePaths.hrSettings, element: <HrSettingsPage /> },
       ],
     },
+    // Old /hr/* bookmarks — redirect to the new /settings/hr/* homes.
+    { path: '/hr/employees', element: <Navigate to={RoutePaths.hrEmployees} replace /> },
+    { path: '/hr/payroll', element: <Navigate to={RoutePaths.hrPayroll} replace /> },
+    { path: '/hr/payslips', element: <Navigate to={RoutePaths.hrPayslips} replace /> },
+    { path: '/hr/payslips/:id', element: <HrPayslipDetailRedirect /> },
+    { path: '/hr/settings', element: <Navigate to={RoutePaths.hrSettings} replace /> },
+    // Old /drafts bookmarks — Drafts renamed to Job Orders.
+    { path: '/drafts', element: <Navigate to={RoutePaths.jobOrders} replace /> },
+    { path: '/drafts/:id', element: <JobOrderDetailRedirect /> },
     { path: '*', element: <Navigate to={RoutePaths.dashboard} replace /> },
   ],
   { basename: '/' },

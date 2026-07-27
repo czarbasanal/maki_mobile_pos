@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
-import { useDraftRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useDraftRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import type { Draft, FeeLine, LaborLine, SaleItem } from '@/domain/entities';
+import { logActivity } from '@/application/activityLogger';
+import { ActivityType, type Draft, type FeeLine, type LaborLine, type SaleItem } from '@/domain/entities';
 import type { DiscountType } from '@/domain/enums/DiscountType';
 
 export interface SaveDraftInput {
@@ -18,6 +19,7 @@ export interface SaveDraftInput {
 /** Create a new draft or update the active one (resume → edit → save). */
 export function useSaveDraft() {
   const repo = useDraftRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   return useMutation<Draft | void, Error, SaveDraftInput>({
     mutationFn: async (input) => {
@@ -36,10 +38,16 @@ export function useSaveDraft() {
           },
           actor.id,
         );
+        logActivity(activityLogRepo, () => ({
+          type: ActivityType.other,
+          action: `Saved job order ${input.name}`,
+          entityId: input.draftId as string,
+          entityType: 'draft',
+        }));
         return;
       }
       const cashierName = actor.displayName.trim() || actor.email;
-      return repo.create({
+      const created = await repo.create({
         name: input.name,
         items: input.items,
         discountType: input.discountType,
@@ -55,11 +63,34 @@ export function useSaveDraft() {
         convertedAt: null,
         notes: null,
       });
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.other,
+        action: `Saved job order ${created.name}`,
+        entityId: created.id,
+        entityType: 'draft',
+      }));
+      return created;
     },
   });
 }
 
+export interface DeleteDraftInput {
+  id: string;
+  name: string;
+}
+
 export function useDeleteDraft() {
   const repo = useDraftRepo();
-  return useMutation<void, Error, string>({ mutationFn: (id) => repo.delete(id) });
+  const activityLogRepo = useActivityLogRepo();
+  return useMutation<void, Error, DeleteDraftInput>({
+    mutationFn: async ({ id, name }) => {
+      await repo.delete(id);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.other,
+        action: `Deleted job order ${name}`,
+        entityId: id,
+        entityType: 'draft',
+      }));
+    },
+  });
 }

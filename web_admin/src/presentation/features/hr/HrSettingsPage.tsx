@@ -13,6 +13,7 @@ import { LoadingView, Spinner } from '@/presentation/components/common/LoadingVi
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import type { HrSettings } from '@/domain/hr/types';
 import { WEEKDAYS } from '@/domain/hr/weekdays';
+import { PageHeader } from '@/presentation/features/settings/PageHeader';
 
 interface EditedSettings {
   weekStartDay: number;
@@ -97,15 +98,11 @@ export function HrSettingsPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            HR Settings
-          </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Week start day and holiday pay percentages used when computing payslips.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-between gap-tk-md">
+        <PageHeader
+          title="HR Settings"
+          description="Week start day and holiday pay percentages used when computing payslips."
+        />
         <button
           type="button"
           onClick={onSave}
@@ -115,7 +112,7 @@ export function HrSettingsPage() {
           {save.isPending ? <Spinner className="h-3.5 w-3.5" /> : null}
           Save changes
         </button>
-      </header>
+      </div>
 
       {saveSuccess ? (
         <div className="flex items-center gap-tk-sm rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">

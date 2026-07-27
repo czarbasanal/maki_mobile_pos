@@ -20,8 +20,11 @@ function PosStub() {
 
 function harness(saleRepo: Partial<Container['saleRepo']>) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   return render(
-    <DiProvider override={{ saleRepo: saleRepo as Container['saleRepo'] }}>
+    <DiProvider override={{ saleRepo: saleRepo as Container['saleRepo'], activityLogRepo }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/pos/checkout']}>
           <Routes>

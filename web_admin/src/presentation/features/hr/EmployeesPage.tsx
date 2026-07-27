@@ -1,17 +1,22 @@
-import { useEffect, useState } from 'react';
-import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { useEffect, useMemo, useState } from 'react';
+import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useMutation } from '@tanstack/react-query';
-import { useEmployeeRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useEmployeeRepo } from '@/infrastructure/di/container';
 import { useFirestoreSubscription } from '@/presentation/hooks/useFirestoreSubscription';
+import { logActivity } from '@/application/activityLogger';
+import { ActivityType } from '@/domain/entities';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import type { Employee } from '@/domain/hr/types';
 import type { EmployeeUpdateInput } from '@/domain/repositories/EmployeeRepository';
 import { WEEKDAYS, weekdayLabel } from '@/domain/hr/weekdays';
+import { PageHeader } from '@/presentation/features/settings/PageHeader';
 
 // Blank -> NaN so a cleared/never-filled field fails the > 0 check instead of
 // silently passing as 0 (Number('') === 0).
@@ -26,6 +31,7 @@ export function EmployeesPage() {
   }, []);
 
   const repo = useEmployeeRepo();
+  const activityLogRepo = useActivityLogRepo();
   const {
     data: employees,
     isLoading,
@@ -33,6 +39,14 @@ export function EmployeesPage() {
   } = useFirestoreSubscription<Employee[]>(
     (onData, onError) => repo.watchAll(onData, { includeInactive: true }, onError),
     [repo],
+  );
+
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
+  usePageClamp(page, setPage, employees?.length ?? 0, PAGE_SIZE);
+  const paged = useMemo(
+    () => (employees ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [employees, page],
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -48,12 +62,43 @@ export function EmployeesPage() {
     Error,
     { name: string; dailyRate: number; weekStartDay: number | null }
   >({
-    mutationFn: (input) => repo.create(input),
+    mutationFn: async (input) => {
+      const created = await repo.create(input);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Created employee: ${created.name}`,
+        entityId: created.id,
+        entityType: 'employee',
+      }));
+      return created;
+    },
   });
   const update = useMutation<void, Error, { id: string } & EmployeeUpdateInput>({
-    mutationFn: ({ id, ...patch }) => repo.update(id, patch),
+    mutationFn: async ({ id, ...patch }) => {
+      await repo.update(id, patch);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Updated employee${patch.name ? `: ${patch.name}` : ''}`,
+        details: patch.isActive !== undefined ? (patch.isActive ? 'Reactivated' : 'Deactivated') : null,
+        entityId: id,
+        entityType: 'employee',
+      }));
+    },
   });
-  const busy = create.isPending || update.isPending;
+  const del = useMutation<void, Error, { id: string; name?: string }>({
+    mutationFn: async ({ id, name }) => {
+      await repo.delete(id);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Deleted employee${name ? `: ${name}` : ` ${id}`}`,
+        entityId: id,
+        entityType: 'employee',
+      }));
+    },
+  });
+  const busy = create.isPending || update.isPending || del.isPending;
+
+  const [deleting, setDeleting] = useState<Employee | null>(null);
 
   const parsedRate = parseDailyRate(dailyRate);
   const rateIsValid = Number.isFinite(parsedRate) && parsedRate > 0;
@@ -115,6 +160,16 @@ export function EmployeesPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    try {
+      await del.mutateAsync({ id: deleting.id, name: deleting.name });
+      setDeleting(null);
+    } catch {
+      // Surfaced via del.error below; confirm dialog stays open.
+    }
+  };
+
   // While the dialog is open, an error came from Save (create or edit).
   // While it's closed, an update error can only be from the list's
   // toggle-active action.
@@ -123,13 +178,8 @@ export function EmployeesPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Employees</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Employees registered for payroll.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-between gap-tk-md">
+        <PageHeader title="Employees" description="Employees registered for payroll." />
         <button
           type="button"
           onClick={openAdd}
@@ -137,7 +187,7 @@ export function EmployeesPage() {
         >
           <PlusIcon className="h-3.5 w-3.5" /> Add
         </button>
-      </header>
+      </div>
 
       {listError ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
@@ -154,7 +204,7 @@ export function EmployeesPage() {
       ) : (
         <div className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
           <ul className="divide-y divide-light-hairline">
-            {employees.map((e) => (
+            {paged.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm">
                 <div className="min-w-0">
                   <span
@@ -189,10 +239,21 @@ export function EmployeesPage() {
                     {e.isActive ? <EyeSlashIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
                     {e.isActive ? 'Deactivate' : 'Reactivate'}
                   </button>
+                  {!e.isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(e)}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-error-dark hover:bg-error-light/40"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  ) : null}
                 </span>
               </li>
             ))}
           </ul>
+          <Pager total={employees.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
         </div>
       )}
 
@@ -285,6 +346,42 @@ export function EmployeesPage() {
               {busy ? <Spinner className="h-3.5 w-3.5" /> : null} Save
             </button>
           </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={deleting !== null}
+        onClose={() => {
+          if (!busy) setDeleting(null);
+        }}
+        title="Delete this entry?"
+        description={
+          deleting
+            ? `"${deleting.name}" will be permanently deleted. Past payslips keep their own data.`
+            : undefined
+        }
+        dismissable={!busy}
+      >
+        {del.error ? (
+          <p className="mb-tk-md text-bodySmall text-error-dark">{del.error.message}</p>
+        ) : null}
+        <div className="flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setDeleting(null)}
+            disabled={busy}
+            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmDelete}
+            disabled={busy}
+            className="inline-flex items-center gap-tk-xs rounded-md bg-error px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:bg-error-dark disabled:opacity-60"
+          >
+            {del.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+          </button>
         </div>
       </Dialog>
     </div>

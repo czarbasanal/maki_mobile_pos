@@ -42,8 +42,11 @@ function harness(opts?: { users?: User[]; del?: ReturnType<typeof vi.fn> }) {
     reactivate: vi.fn(async () => {}),
     listByRole: vi.fn(async () => []),
   } as unknown as Container['userRepo'];
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   render(
-    <DiProvider override={{ userRepo }}>
+    <DiProvider override={{ userRepo, activityLogRepo }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter>
           <UsersListPage />
@@ -98,5 +101,38 @@ describe('UsersListPage — delete action', () => {
     // Menu is closed now, so the only Delete button is the confirm action.
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     await waitFor(() => expect(del).toHaveBeenCalledWith('u3'));
+  });
+});
+
+describe('UsersListPage — pagination', () => {
+  it('shows the pager once the active user list exceeds 25', () => {
+    const many = [
+      me,
+      ...Array.from({ length: 25 }, (_, i) => user({ id: `u${i + 2}`, displayName: `User ${i + 2}` })),
+    ];
+    harness({ users: many });
+
+    expect(screen.getByText('1–25 of 26')).toBeInTheDocument();
+  });
+
+  it('hides the pager at exactly 25 users', () => {
+    const exactly25 = [
+      me,
+      ...Array.from({ length: 24 }, (_, i) => user({ id: `u${i + 2}`, displayName: `User ${i + 2}` })),
+    ];
+    harness({ users: exactly25 });
+
+    expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
+  });
+});
+
+describe('UsersListPage — table wrapper', () => {
+  it('renders the table wrapper with overflow-x-auto class', () => {
+    harness({
+      users: [me, user({ id: 'u2', displayName: 'Test User' })],
+    });
+
+    const wrapper = screen.getByRole('table').closest('div');
+    expect(wrapper).toHaveClass('overflow-x-auto');
   });
 });

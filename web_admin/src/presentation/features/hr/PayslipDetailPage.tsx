@@ -3,7 +3,7 @@
 // downloadElementAsJpg on the PayslipCard container).
 
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { usePayslipRepo } from '@/infrastructure/di/container';
@@ -11,6 +11,7 @@ import { LoadingView, Spinner } from '@/presentation/components/common/LoadingVi
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Dialog } from '@/presentation/components/common/Dialog';
+import { PageHeader } from '@/presentation/features/settings/PageHeader';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { downloadElementAsJpg } from '@/core/utils/downloadJpg';
 import { PayslipCard } from './PayslipCard';
@@ -55,7 +56,11 @@ export function PayslipDetailPage() {
   if (!payslip) {
     return (
       <div className="space-y-tk-lg px-tk-xl py-tk-lg">
-        <BackLink />
+        <PageHeader
+          title="Payslip"
+          backTo={RoutePaths.hrPayslips}
+          backLabel="Back to payslips"
+        />
         <EmptyState title="Payslip not found" description="It may have been deleted." />
       </div>
     );
@@ -63,17 +68,13 @@ export function PayslipDetailPage() {
 
   return (
     <div className="space-y-tk-lg px-tk-xl py-tk-lg">
-      <BackLink />
-
-      <header className="flex flex-wrap items-center justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            {payslip.employeeName}
-          </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            {payslip.periodStart} – {payslip.periodEnd}
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-between gap-tk-md">
+        <PageHeader
+          title={payslip.employeeName}
+          description={`${payslip.periodStart} – ${payslip.periodEnd}`}
+          backTo={RoutePaths.hrPayslips}
+          backLabel="Back to payslips"
+        />
         <div className="flex flex-wrap items-center gap-tk-sm">
           <button
             type="button"
@@ -96,7 +97,7 @@ export function PayslipDetailPage() {
             <TrashIcon className="h-4 w-4" /> Delete payslip
           </button>
         </div>
-      </header>
+      </div>
 
       {del.error ? <p className="text-bodySmall text-error-dark">{del.error.message}</p> : null}
 
@@ -138,16 +139,5 @@ export function PayslipDetailPage() {
         </div>
       </Dialog>
     </div>
-  );
-}
-
-function BackLink() {
-  return (
-    <Link
-      to={RoutePaths.hrPayslips}
-      className="text-bodySmall text-light-text-secondary hover:underline"
-    >
-      ← Back to payslips
-    </Link>
   );
 }

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { UserRole } from '@/domain/enums';
 import type { User } from '@/domain/entities/User';
@@ -26,11 +27,17 @@ const admin: User = {
 function harness(initialPath: string) {
   useAuthStore.setState({ user: admin });
   const authRepo = { signOut: vi.fn() } as unknown as Container['authRepo'];
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
+  const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return render(
-    <DiProvider override={{ authRepo }}>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <Sidebar />
-      </MemoryRouter>
+    <DiProvider override={{ authRepo, activityLogRepo }}>
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <Sidebar />
+        </MemoryRouter>
+      </QueryClientProvider>
     </DiProvider>,
   );
 }

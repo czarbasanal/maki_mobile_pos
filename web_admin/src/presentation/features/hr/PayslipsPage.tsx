@@ -1,15 +1,18 @@
 // /hr/payslips — history list. Row click opens the detail page, which
 // renders the PayslipCard and offers Delete + Download JPG.
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePayslipRepo } from '@/infrastructure/di/container';
 import { useFirestoreSubscription } from '@/presentation/hooks/useFirestoreSubscription';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
+import { PageHeader } from '@/presentation/features/settings/PageHeader';
 import type { Payslip } from '@/domain/hr/types';
 
 function parseIsoLocal(iso: string): Date {
@@ -43,14 +46,20 @@ export function PayslipsPage() {
     error,
   } = useFirestoreSubscription<Payslip[]>((onData, onError) => repo.watchAll(onData, onError), [repo]);
 
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
+  usePageClamp(page, setPage, payslips?.length ?? 0, PAGE_SIZE);
+  const paged = useMemo(
+    () => (payslips ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [payslips, page],
+  );
+
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Payslips</h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Generated payslips, most recent pay period first.
-        </p>
-      </header>
+      <PageHeader
+        title="Payslips"
+        description="Generated payslips, most recent pay period first."
+      />
 
       {error ? (
         <ErrorView title="Could not load payslips" message={error.message} />
@@ -73,7 +82,7 @@ export function PayslipsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-light-hairline">
-              {payslips.map((p) => (
+              {paged.map((p) => (
                 <tr
                   key={p.id}
                   onClick={() => navigate(`${RoutePaths.hrPayslips}/${p.id}`)}
@@ -93,6 +102,7 @@ export function PayslipsPage() {
               ))}
             </tbody>
           </table>
+          <Pager total={payslips.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
         </section>
       )}
     </div>

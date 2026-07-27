@@ -30,7 +30,7 @@ describe('canAccess — settings routes', () => {
   });
 });
 
-describe('canAccess — HR routes', () => {
+describe('canAccess — HR routes (now under /settings/hr/*)', () => {
   const hrPaths = [
     RoutePaths.hrEmployees,
     RoutePaths.hrPayroll,
@@ -38,25 +38,41 @@ describe('canAccess — HR routes', () => {
     RoutePaths.hrSettings,
   ];
 
+  it('paths are rooted at /settings/hr', () => {
+    expect(RoutePaths.hrEmployees).toBe('/settings/hr/employees');
+    expect(RoutePaths.hrPayroll).toBe('/settings/hr/payroll');
+    expect(RoutePaths.hrPayslips).toBe('/settings/hr/payslips');
+    expect(RoutePaths.hrPayslipDetail).toBe('/settings/hr/payslips/:id');
+    expect(RoutePaths.hrSettings).toBe('/settings/hr/config');
+  });
+
   it('admin can reach all HR pages, including a concrete payslip detail', () => {
     hrPaths.forEach((path) => {
       expect(canAccess(path, admin)).toBe(true);
     });
-    expect(canAccess('/hr/payslips/abc123', admin)).toBe(true);
+    expect(canAccess(`${RoutePaths.hrPayslips}/abc123`, admin)).toBe(true);
   });
 
   it('cashier is denied all HR pages, including a concrete payslip detail', () => {
     hrPaths.forEach((path) => {
       expect(canAccess(path, cashier)).toBe(false);
     });
-    expect(canAccess('/hr/payslips/abc123', cashier)).toBe(false);
+    expect(canAccess(`${RoutePaths.hrPayslips}/abc123`, cashier)).toBe(false);
   });
 
   it('staff is denied all HR pages, including a concrete payslip detail', () => {
     hrPaths.forEach((path) => {
       expect(canAccess(path, staff)).toBe(false);
     });
-    expect(canAccess('/hr/payslips/abc123', staff)).toBe(false);
+    expect(canAccess(`${RoutePaths.hrPayslips}/abc123`, staff)).toBe(false);
+  });
+
+  it('old /hr/* paths are no longer routed — they moved, they were not aliased', () => {
+    expect(canAccess('/hr/employees', admin)).toBe(false);
+    expect(canAccess('/hr/payroll', admin)).toBe(false);
+    expect(canAccess('/hr/payslips', admin)).toBe(false);
+    expect(canAccess('/hr/payslips/abc123', admin)).toBe(false);
+    expect(canAccess('/hr/settings', admin)).toBe(false);
   });
 });
 
@@ -65,5 +81,26 @@ describe('canAccess — forgot-password', () => {
     expect(canAccess(RoutePaths.forgotPassword, null)).toBe(true);
     expect(canAccess(RoutePaths.forgotPassword, admin)).toBe(true);
     expect(canAccess(RoutePaths.forgotPassword, cashier)).toBe(true);
+  });
+});
+
+describe('canAccess — Job Orders (renamed from Drafts)', () => {
+  it('paths are rooted at /job-orders', () => {
+    expect(RoutePaths.jobOrders).toBe('/job-orders');
+    expect(RoutePaths.jobOrderEdit).toBe('/job-orders/:id');
+  });
+
+  it('is a common route for every signed-in role, including a concrete job order', () => {
+    expect(canAccess(RoutePaths.jobOrders, admin)).toBe(true);
+    expect(canAccess(RoutePaths.jobOrders, cashier)).toBe(true);
+    expect(canAccess(RoutePaths.jobOrders, staff)).toBe(true);
+    expect(canAccess(`${RoutePaths.jobOrders}/abc123`, admin)).toBe(true);
+    expect(canAccess(`${RoutePaths.jobOrders}/abc123`, cashier)).toBe(true);
+    expect(canAccess(`${RoutePaths.jobOrders}/abc123`, staff)).toBe(true);
+  });
+
+  it('old /drafts paths are no longer routed — they moved, they were not aliased', () => {
+    expect(canAccess('/drafts', admin)).toBe(false);
+    expect(canAccess('/drafts/abc123', admin)).toBe(false);
   });
 });

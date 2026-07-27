@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChartBarIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -12,6 +12,10 @@ import { SalesTable } from './SalesTable';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { CappedNotice } from '@/presentation/components/common/CappedNotice';
+import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+
+const PAGE_SIZE = 25;
 
 const fileStamp = (d: Date) =>
   `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(
@@ -21,10 +25,23 @@ const fileStamp = (d: Date) =>
 export function SalesReportPage() {
   const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
   const { sales, summary, topProducts, capped, isLoading, error } = useReportData(range);
+  const [page, setPage] = useState(1);
+  usePageClamp(page, setPage, sales.length, PAGE_SIZE);
 
   useEffect(() => {
     document.title = 'Sales report · MAKI POS Admin';
   }, []);
+
+  // Date range changed — a page number from the previous range may now
+  // point past the end (or simply be stale), so snap back to page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [range]);
+
+  const pagedSales = useMemo(
+    () => sales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [sales, page],
+  );
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
@@ -110,7 +127,8 @@ export function SalesReportPage() {
                 Download CSV
               </button>
             </div>
-            <SalesTable sales={sales} />
+            <SalesTable sales={pagedSales} />
+            <Pager total={sales.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
           </section>
         </>
       )}

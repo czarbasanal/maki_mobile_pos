@@ -39,6 +39,8 @@ import { useActivityLogs } from '@/presentation/hooks/useActivityLogs';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { Pager } from '@/presentation/components/common/Pager';
+import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { toneBadgeClasses, type Tone } from '@/core/theme/tones';
 import { cn } from '@/core/utils/cn';
 
@@ -91,20 +93,28 @@ function toneFor(type: ActivityType): Tone {
   }
 }
 
-const COMMON_TYPES: ActivityType[] = [
+// Exported so tests can assert every web-emitted type is filterable here
+// (see ActivityLogsPage.test.tsx's "filter coverage" describe block).
+export const COMMON_TYPES: ActivityType[] = [
   ActivityType.login,
   ActivityType.logout,
   ActivityType.sale,
   ActivityType.voidSale,
+  ActivityType.inventory,
   ActivityType.stockAdjustment,
   ActivityType.receiving,
+  ActivityType.expense,
   ActivityType.userCreated,
   ActivityType.userUpdated,
+  ActivityType.userDeactivated,
   ActivityType.roleChanged,
+  ActivityType.userManagement,
+  ActivityType.settings,
+  ActivityType.costCodeChanged,
   ActivityType.passwordVerified,
   ActivityType.passwordFailed,
   ActivityType.costViewed,
-  ActivityType.costCodeChanged,
+  ActivityType.other,
 ];
 
 const dateGroupFmt = new Intl.DateTimeFormat('en-PH', {
@@ -141,21 +151,37 @@ function dateLabel(d: Date): string {
   return dateGroupFmt.format(d);
 }
 
+const PAGE_SIZE = 25;
+
 export function ActivityLogsPage() {
   const [type, setType] = useState<ActivityType | null>(null);
+  const [page, setPage] = useState(1);
   const { data: logs, isLoading, error } = useActivityLogs({
     type: type ?? undefined,
     limit: 200,
   });
+  usePageClamp(page, setPage, logs?.length ?? 0, PAGE_SIZE);
 
   useEffect(() => {
     document.title = 'Activity logs · MAKI POS Admin';
   }, []);
 
+  // Filter changed — a page number from the previous result set may now
+  // point past the end (or simply be stale), so snap back to page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [type]);
+
+  const pagedLogs = useMemo(
+    () => (logs ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [logs, page],
+  );
+
+  // Paginate the flat list BEFORE grouping by date, so each page's date
+  // groups are coherent (a group never spans across a page boundary).
   const grouped = useMemo(() => {
-    if (!logs) return [];
     const groups = new Map<string, { date: Date; logs: ActivityLog[] }>();
-    for (const log of logs) {
+    for (const log of pagedLogs) {
       const key = dayKey(log.createdAt);
       const existing = groups.get(key);
       if (existing) {
@@ -172,7 +198,7 @@ export function ActivityLogsPage() {
       }
     }
     return Array.from(groups.values());
-  }, [logs]);
+  }, [pagedLogs]);
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
@@ -215,6 +241,7 @@ export function ActivityLogsPage() {
               </ul>
             </section>
           ))}
+          <Pager total={logs.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
         </div>
       )}
     </div>

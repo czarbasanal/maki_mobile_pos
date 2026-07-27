@@ -63,6 +63,9 @@ function harness(opts: {
       opts.create ??
       vi.fn().mockResolvedValue({ id: 'new-product' } as Product),
   };
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   return render(
     <DiProvider
       override={{
@@ -70,6 +73,7 @@ function harness(opts: {
         supplierRepo: supplierRepo as Container['supplierRepo'],
         costCodeRepo: costCodeRepo as Container['costCodeRepo'],
         productRepo: productRepo as Container['productRepo'],
+        activityLogRepo,
       }}
     >
       <QueryClientProvider client={qc}>

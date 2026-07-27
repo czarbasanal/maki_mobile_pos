@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { HrSettingsPage } from './HrSettingsPage';
 import { DEFAULT_HR_SETTINGS, type HrSettings } from '@/domain/hr/types';
@@ -19,7 +20,9 @@ function harness(opts?: {
   return render(
     <DiProvider override={{ hrSettingsRepo: hrSettingsRepo as Container['hrSettingsRepo'] }}>
       <QueryClientProvider client={qc}>
-        <HrSettingsPage />
+        <MemoryRouter>
+          <HrSettingsPage />
+        </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
   );

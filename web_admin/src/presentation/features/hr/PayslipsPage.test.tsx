@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PayslipsPage } from './PayslipsPage';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { formatMoney } from '@/core/utils/money';
 import type { Payslip } from '@/domain/hr/types';
 
@@ -56,10 +57,10 @@ function harness(opts?: { payslips?: Payslip[] }) {
 
   return render(
     <DiProvider override={{ payslipRepo: payslipRepo as Container['payslipRepo'] }}>
-      <MemoryRouter initialEntries={['/hr/payslips']}>
+      <MemoryRouter initialEntries={[RoutePaths.hrPayslips]}>
         <Routes>
-          <Route path="/hr/payslips" element={<PayslipsPage />} />
-          <Route path="/hr/payslips/:id" element={<DetailStub />} />
+          <Route path={RoutePaths.hrPayslips} element={<PayslipsPage />} />
+          <Route path={RoutePaths.hrPayslipDetail} element={<DetailStub />} />
         </Routes>
       </MemoryRouter>
     </DiProvider>,
@@ -93,5 +94,21 @@ describe('PayslipsPage', () => {
     harness({ payslips: [] });
 
     expect(screen.getByText(/no payslips/i)).toBeInTheDocument();
+  });
+});
+
+describe('PayslipsPage — pagination', () => {
+  it('shows the pager once the payslip list exceeds 25', () => {
+    const many = Array.from({ length: 26 }, (_, i) => payslip({ id: `ps${i + 1}`, employeeName: `Employee ${i + 1}` }));
+    harness({ payslips: many });
+
+    expect(screen.getByText('1–25 of 26')).toBeInTheDocument();
+  });
+
+  it('hides the pager at exactly 25 payslips', () => {
+    const exactly25 = Array.from({ length: 25 }, (_, i) => payslip({ id: `ps${i + 1}`, employeeName: `Employee ${i + 1}` }));
+    harness({ payslips: exactly25 });
+
+    expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
   });
 });

@@ -235,7 +235,11 @@ export function SaleDetailPage() {
               disabled={!reason || voidSale.isPending}
               onClick={async () => {
                 try {
-                  await voidSale.mutateAsync({ reason });
+                  await voidSale.mutateAsync({
+                    reason,
+                    saleNumber: sale.saleNumber,
+                    amount: saleGrandTotal(sale),
+                  });
                   setVoidOpen(false);
                 } catch {
                   // surfaced via voidSale.error

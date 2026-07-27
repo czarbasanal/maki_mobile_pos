@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react';
-import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { CategoryKind, labelForKind } from '@/domain/categories/categoryKind';
 import { useCategories } from '@/presentation/hooks/useCategories';
-import { useCreateCategory, useUpdateCategory } from '@/presentation/hooks/useCategoryMutations';
+import {
+  useCreateCategory,
+  useDeleteCategory,
+  useUpdateCategory,
+} from '@/presentation/hooks/useCategoryMutations';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import type { Category } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
+import { PageHeader } from './PageHeader';
 
 const KINDS: CategoryKind[] = [
   CategoryKind.product,
@@ -32,7 +37,10 @@ export function ManageListsPage() {
 
   const create = useCreateCategory(kind);
   const update = useUpdateCategory(kind);
-  const busy = create.isPending || update.isPending;
+  const del = useDeleteCategory(kind);
+  const busy = create.isPending || update.isPending || del.isPending;
+
+  const [deleting, setDeleting] = useState<Category | null>(null);
 
   const openAdd = () => {
     setEditing(null);
@@ -62,15 +70,19 @@ export function ManageListsPage() {
     await update.mutateAsync({ id: c.id, isActive: !c.isActive });
   };
 
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    await del.mutateAsync({ id: deleting.id, name: deleting.name });
+    setDeleting(null);
+  };
+
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Manage Lists</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Admin-managed dropdown values used across the app.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-between gap-tk-md">
+        <PageHeader
+          title="Manage Lists"
+          description="Admin-managed dropdown values used across the app."
+        />
         <button
           type="button"
           onClick={openAdd}
@@ -78,7 +90,7 @@ export function ManageListsPage() {
         >
           <PlusIcon className="h-3.5 w-3.5" /> Add
         </button>
-      </header>
+      </div>
 
       <div className="inline-flex flex-wrap rounded-md border border-light-hairline p-[2px]">
         {KINDS.map((k) => (
@@ -147,6 +159,14 @@ export function ManageListsPage() {
                     )}
                     {c.isActive ? 'Deactivate' : 'Reactivate'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleting(c)}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-error-dark hover:bg-error-light/40"
+                  >
+                    <TrashIcon className="h-3.5 w-3.5" /> Delete
+                  </button>
                 </span>
               </li>
             ))}
@@ -197,6 +217,42 @@ export function ManageListsPage() {
               {busy ? <Spinner className="h-3.5 w-3.5" /> : null} Save
             </button>
           </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={deleting !== null}
+        onClose={() => {
+          if (!busy) setDeleting(null);
+        }}
+        title="Delete this entry?"
+        description={
+          deleting
+            ? `"${deleting.name}" will be permanently deleted. Past records that used it keep the name. Use Deactivate instead to just hide it.`
+            : undefined
+        }
+        dismissable={!busy}
+      >
+        {del.error ? (
+          <p className="mb-tk-md text-bodySmall text-error-dark">{del.error.message}</p>
+        ) : null}
+        <div className="flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setDeleting(null)}
+            disabled={busy}
+            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmDelete}
+            disabled={busy}
+            className="inline-flex items-center gap-tk-xs rounded-md bg-error px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:bg-error-dark disabled:opacity-60"
+          >
+            {del.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+          </button>
         </div>
       </Dialog>
     </div>

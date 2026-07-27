@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -71,5 +72,9 @@ export class FirestoreEmployeeRepository implements EmployeeRepository {
     if (input.weekStartDay !== undefined) data.weekStartDay = input.weekStartDay;
     if (input.payslipDefaults !== undefined) data.payslipDefaults = input.payslipDefaults;
     await updateDoc(doc(this.db, FirestoreCollections.employees, id), data);
+  }
+
+  async delete(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, FirestoreCollections.employees, id));
   }
 }

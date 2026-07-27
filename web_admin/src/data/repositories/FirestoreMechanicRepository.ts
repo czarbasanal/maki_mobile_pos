@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -65,5 +66,9 @@ export class FirestoreMechanicRepository implements MechanicRepository {
     if (input.address !== undefined) data.address = input.address;
     if (input.contactNumber !== undefined) data.contactNumber = input.contactNumber;
     await updateDoc(doc(this.db, FirestoreCollections.mechanics, id), data);
+  }
+
+  async delete(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, FirestoreCollections.mechanics, id));
   }
 }

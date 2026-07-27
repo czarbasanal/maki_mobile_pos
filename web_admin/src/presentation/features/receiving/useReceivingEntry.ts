@@ -183,7 +183,14 @@ export function useReceivingEntry() {
     }
     try {
       const targetId = await persistDraft();
-      await complete.mutateAsync(targetId);
+      const supplier = suppliers?.find((s) => s.id === supplierId) ?? null;
+      await complete.mutateAsync({
+        id: targetId,
+        referenceNumber: referenceNumber ?? '',
+        itemCount: lines.length,
+        totalCost: totals.cost,
+        supplierName: supplier?.name ?? null,
+      });
       navigate(`/receiving/${targetId}`);
     } catch (e) {
       setError((e as Error).message);

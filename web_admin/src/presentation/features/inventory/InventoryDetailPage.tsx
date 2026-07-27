@@ -102,7 +102,7 @@ export function InventoryDetailPage() {
             <button
               type="button"
               disabled={reactivate.isPending}
-              onClick={() => reactivate.mutate(product.id)}
+              onClick={() => reactivate.mutate({ id: product.id, name: product.name, sku: product.sku })}
               className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
             >
               <ArrowPathIcon className="h-4 w-4" /> Reactivate
@@ -182,7 +182,10 @@ export function InventoryDetailPage() {
             <button
               type="button"
               disabled={deactivate.isPending}
-              onClick={async () => { await deactivate.mutateAsync(product.id); setConfirmDelete(false); }}
+              onClick={async () => {
+                await deactivate.mutateAsync({ id: product.id, name: product.name, sku: product.sku });
+                setConfirmDelete(false);
+              }}
               className="inline-flex items-center gap-tk-xs rounded-md bg-error-dark px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:opacity-90 disabled:opacity-60"
             >
               {deactivate.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
