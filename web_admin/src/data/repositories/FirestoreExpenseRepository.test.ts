@@ -107,6 +107,7 @@ function baseData(overrides: Record<string, unknown> = {}) {
     amount: 500,
     category: 'Transportation',
     date: new Date('2026-07-10T00:00:00.000Z'),
+    paidVia: 'cash',
     notes: null,
     receiptNumber: null,
     receiptImageUrl: null,
@@ -150,8 +151,18 @@ describe('FirestoreExpenseRepository', () => {
       const write = state.writes.find((w) => w.kind === 'set' && w.path.startsWith('expenses/'));
       expect(write).toBeDefined();
       expect(write?.data.description).toBe('Fuel');
+      expect(write?.data.paidVia).toBe('cash');
       expect(write?.data.createdAt).toBe('SERVER_TIMESTAMP');
       expect(created.id).toBe(write?.path.split('/')[1]);
+    });
+
+    it('writes a non-cash paidVia as given', async () => {
+      const repo = new FirestoreExpenseRepository({} as unknown as Firestore);
+
+      await repo.create({ ...baseData({ paidVia: 'gcash' }) } as never, 'actor-1', 'Cashier');
+
+      const write = state.writes.find((w) => w.kind === 'set' && w.path.startsWith('expenses/'));
+      expect(write?.data.paidVia).toBe('gcash');
     });
 
     it('lands the doc on a preset id (upload-before-create pattern)', async () => {
@@ -181,6 +192,19 @@ describe('FirestoreExpenseRepository', () => {
       expect(write).toBeDefined();
       expect(write?.data).toEqual({
         amount: 750,
+        updatedBy: 'actor-2',
+        updatedAt: 'SERVER_TIMESTAMP',
+      });
+    });
+
+    it('updates paidVia when provided', async () => {
+      const repo = new FirestoreExpenseRepository({} as unknown as Firestore);
+
+      await repo.update('e1', { paidVia: 'maya' }, 'actor-2');
+
+      const write = state.writes.find((w) => w.kind === 'update' && w.path === 'expenses/e1');
+      expect(write?.data).toEqual({
+        paidVia: 'maya',
         updatedBy: 'actor-2',
         updatedAt: 'SERVER_TIMESTAMP',
       });

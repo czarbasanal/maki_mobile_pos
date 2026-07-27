@@ -46,11 +46,8 @@ import { PayrollPage } from '@/presentation/features/hr/PayrollPage';
 import { PayslipsPage } from '@/presentation/features/hr/PayslipsPage';
 import { PayslipDetailPage } from '@/presentation/features/hr/PayslipDetailPage';
 import { HrSettingsPage } from '@/presentation/features/hr/HrSettingsPage';
-import { PagePlaceholder } from '@/presentation/components/common/PagePlaceholder';
-
-const placeholder = (title: string, phase: string) => (
-  <PagePlaceholder title={title} phase={phase} />
-);
+import { ExpensesPage } from '@/presentation/features/expenses/ExpensesPage';
+import { ExpenseFormPage } from '@/presentation/features/expenses/ExpenseFormPage';
 
 // HR moved under /settings/hr/* — these keep old bookmarks/links alive.
 function HrPayslipDetailRedirect() {
@@ -95,9 +92,9 @@ export const router = createBrowserRouter(
         { path: RoutePaths.suppliers, element: <SuppliersListPage /> },
         { path: RoutePaths.supplierAdd, element: <SupplierFormPage /> },
         { path: RoutePaths.supplierEdit, element: <SupplierFormPage /> },
-        { path: RoutePaths.expenses, element: placeholder('Expenses', 'phase 9') },
-        { path: RoutePaths.expenseAdd, element: placeholder('New expense', 'phase 9') },
-        { path: RoutePaths.expenseEdit, element: placeholder('Edit expense', 'phase 9') },
+        { path: RoutePaths.expenses, element: <ExpensesPage /> },
+        { path: RoutePaths.expenseAdd, element: <ExpenseFormPage /> },
+        { path: RoutePaths.expenseEdit, element: <ExpenseFormPage /> },
         { path: RoutePaths.reports, element: <ReportsHubPage /> },
         { path: RoutePaths.salesReport, element: <SalesReportPage /> },
         { path: RoutePaths.daySales, element: <DaySalesPage /> },

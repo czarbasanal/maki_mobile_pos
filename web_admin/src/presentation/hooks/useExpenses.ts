@@ -15,6 +15,17 @@ export interface ExpensesResult {
   error: Error | null;
 }
 
+/** One-shot read of a single expense by id — disabled until an id is supplied
+ *  (mirrors useProduct). Backs the edit form's prefill. */
+export function useExpense(id: string | undefined) {
+  const repo = useExpenseRepo();
+  return useQuery<Expense | null>({
+    queryKey: ['expenses', 'byId', id],
+    queryFn: () => repo.getById(id as string),
+    enabled: !!id,
+  });
+}
+
 /** List query — range + optional category filter, per ExpenseRepository.list. */
 export function useExpenses(filters: ExpenseListFilters = {}): ExpensesResult {
   const repo = useExpenseRepo();

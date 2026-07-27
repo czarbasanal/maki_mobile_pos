@@ -73,6 +73,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       amount: fields.amount,
       category: fields.category,
       date: Timestamp.fromDate(fields.date),
+      paidVia: fields.paidVia,
       notes: fields.notes,
       receiptNumber: fields.receiptNumber,
       receiptImageUrl: fields.receiptImageUrl,
@@ -103,6 +104,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     if (input.amount !== undefined) data.amount = input.amount;
     if (input.category !== undefined) data.category = input.category;
     if (input.date !== undefined) data.date = Timestamp.fromDate(input.date);
+    if (input.paidVia !== undefined) data.paidVia = input.paidVia;
     if (input.notes !== undefined) data.notes = input.notes;
     if (input.receiptNumber !== undefined) data.receiptNumber = input.receiptNumber;
     if (input.receiptImageUrl !== undefined) data.receiptImageUrl = input.receiptImageUrl;
