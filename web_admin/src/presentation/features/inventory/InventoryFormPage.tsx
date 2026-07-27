@@ -13,7 +13,7 @@ import { useProductRepo, useCategoryRepo } from '@/infrastructure/di/container';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
 import { generateSku, composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
-import { encodeCostCode, type Category } from '@/domain/entities';
+import { encodeCostCode, type Category, type Supplier } from '@/domain/entities';
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -153,9 +153,22 @@ export function InventoryFormPage() {
     if (target?.supplierId && !active.some((s) => s.id === target.supplierId)) {
       const saved = (suppliers ?? []).find((s) => s.id === target.supplierId);
       if (saved) return [saved, ...active];
+      // Suppliers not loaded yet (or the supplier doc is gone): synthesize an
+      // option from the product's own snapshot so the saved selection always
+      // has an option to land on — the category/unit selects get this via
+      // withCurrent. Without it the native select coerces to '' and a save
+      // would silently wipe the product's supplier.
+      return [
+        {
+          id: target.supplierId,
+          name: target.supplierName ?? target.supplierId,
+          isActive: true,
+        } as Supplier,
+        ...active,
+      ];
     }
     return active;
-  }, [suppliers, target?.supplierId]);
+  }, [suppliers, target?.supplierId, target?.supplierName]);
 
   if (isEditing && error) {
     return <ErrorView title="Could not load product" message={error.message} />;

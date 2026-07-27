@@ -7,7 +7,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { InventoryFormPage } from './InventoryFormPage';
@@ -129,5 +129,54 @@ describe('InventoryFormPage — create-mode auto-SKU', () => {
     await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
 
     expect(screen.getByLabelText('SKU')).toHaveValue('MANUAL-1');
+  });
+});
+
+describe('InventoryFormPage — edit-mode supplier mapping', () => {
+  it('shows the saved supplier even while the suppliers list has not loaded', async () => {
+    signIn();
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const target = {
+      id: 'p1', sku: 'SPRNG18', name: 'CENTER SPRING', cost: 10, price: 20,
+      quantity: 5, reorderLevel: 1, unit: 'pcs', category: 'Brakes',
+      supplierId: 'sup-1', supplierName: 'FUGO', barcodes: [], notes: null,
+      costCode: 'AA', imageUrl: null, isActive: true,
+      createdAt: new Date(), updatedAt: null,
+    } as unknown as Product;
+    const categoryRepo: Partial<Container['categoryRepo']> = {
+      watchAll: (kind, cb) => { cb(kind === 'product' ? [codedCategory] : []); return () => {}; },
+      peekNextSequence: vi.fn().mockResolvedValue(5),
+    };
+    // Suppliers never load — the saved supplier must still be selectable.
+    const supplierRepo: Partial<Container['supplierRepo']> = {
+      watchAll: () => () => {},
+    };
+    const costCodeRepo: Partial<Container['costCodeRepo']> = {
+      watch: (cb) => { cb(defaultCostCode); return () => {}; },
+    };
+    const productRepo: Partial<Container['productRepo']> = {
+      getById: vi.fn().mockResolvedValue(target),
+    };
+    render(
+      <DiProvider
+        override={{
+          categoryRepo: categoryRepo as Container['categoryRepo'],
+          supplierRepo: supplierRepo as Container['supplierRepo'],
+          costCodeRepo: costCodeRepo as Container['costCodeRepo'],
+          productRepo: productRepo as Container['productRepo'],
+        }}
+      >
+        <QueryClientProvider client={qc}>
+          <MemoryRouter initialEntries={['/inventory/edit/p1']}>
+            <Routes>
+              <Route path="/inventory/edit/:id" element={<InventoryFormPage />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </DiProvider>,
+    );
+    const option = (await screen.findByRole('option', { name: 'FUGO' })) as HTMLOptionElement;
+    expect(option.value).toBe('sup-1');
+    expect(option.selected).toBe(true);
   });
 });
