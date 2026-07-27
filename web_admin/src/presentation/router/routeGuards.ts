@@ -12,7 +12,7 @@ const commonRoutes: ReadonlySet<string> = new Set([
   RoutePaths.dashboard,
   RoutePaths.pos,
   RoutePaths.checkout,
-  RoutePaths.drafts,
+  RoutePaths.jobOrders,
 ]);
 
 const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permission>([
@@ -55,7 +55,7 @@ export function isPublicRoute(path: string): boolean {
 
 export function isCommonRoute(path: string): boolean {
   if (commonRoutes.has(path)) return true;
-  if (path.startsWith('/drafts/')) return true;
+  if (path.startsWith('/job-orders/')) return true;
   return false;
 }
 

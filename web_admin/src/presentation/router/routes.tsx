@@ -39,8 +39,8 @@ import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersLi
 import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
 import { PosPage } from '@/presentation/features/pos/PosPage';
 import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
-import { DraftsPage } from '@/presentation/features/drafts/DraftsPage';
-import { DraftEditPage } from '@/presentation/features/drafts/DraftEditPage';
+import { JobOrdersPage } from '@/presentation/features/jobOrders/JobOrdersPage';
+import { JobOrderEditPage } from '@/presentation/features/jobOrders/JobOrderEditPage';
 import { EmployeesPage } from '@/presentation/features/hr/EmployeesPage';
 import { PayrollPage } from '@/presentation/features/hr/PayrollPage';
 import { PayslipsPage } from '@/presentation/features/hr/PayslipsPage';
@@ -53,6 +53,12 @@ import { ExpenseFormPage } from '@/presentation/features/expenses/ExpenseFormPag
 function HrPayslipDetailRedirect() {
   const { id = '' } = useParams();
   return <Navigate to={`${RoutePaths.hrPayslips}/${id}`} replace />;
+}
+
+// Drafts renamed to Job Orders — these keep old bookmarks/links alive.
+function JobOrderDetailRedirect() {
+  const { id = '' } = useParams();
+  return <Navigate to={`${RoutePaths.jobOrders}/${id}`} replace />;
 }
 
 export const router = createBrowserRouter(
@@ -75,8 +81,8 @@ export const router = createBrowserRouter(
         { path: RoutePaths.dashboard, element: <DashboardPage /> },
         { path: RoutePaths.pos, element: <PosPage /> },
         { path: RoutePaths.checkout, element: <CheckoutPage /> },
-        { path: RoutePaths.drafts, element: <DraftsPage /> },
-        { path: RoutePaths.draftEdit, element: <DraftEditPage /> },
+        { path: RoutePaths.jobOrders, element: <JobOrdersPage /> },
+        { path: RoutePaths.jobOrderEdit, element: <JobOrderEditPage /> },
         { path: RoutePaths.inventory, element: <InventoryListPage /> },
         { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
         { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
@@ -124,6 +130,9 @@ export const router = createBrowserRouter(
     { path: '/hr/payslips', element: <Navigate to={RoutePaths.hrPayslips} replace /> },
     { path: '/hr/payslips/:id', element: <HrPayslipDetailRedirect /> },
     { path: '/hr/settings', element: <Navigate to={RoutePaths.hrSettings} replace /> },
+    // Old /drafts bookmarks — Drafts renamed to Job Orders.
+    { path: '/drafts', element: <Navigate to={RoutePaths.jobOrders} replace /> },
+    { path: '/drafts/:id', element: <JobOrderDetailRedirect /> },
     { path: '*', element: <Navigate to={RoutePaths.dashboard} replace /> },
   ],
   { basename: '/' },

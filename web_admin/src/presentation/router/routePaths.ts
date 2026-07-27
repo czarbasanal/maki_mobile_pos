@@ -11,8 +11,8 @@ export const RoutePaths = {
   pos: '/pos',
   checkout: '/pos/checkout',
 
-  drafts: '/drafts',
-  draftEdit: '/drafts/:id',
+  jobOrders: '/job-orders',
+  jobOrderEdit: '/job-orders/:id',
 
   inventory: '/inventory',
   productAdd: '/inventory/add',

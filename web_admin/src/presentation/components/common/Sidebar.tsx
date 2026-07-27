@@ -53,7 +53,7 @@ const sections: NavSection[] = [
     label: 'Sell',
     items: [
       { label: 'POS', path: RoutePaths.pos, icon: ShoppingCartIcon },
-      { label: 'Drafts', path: RoutePaths.drafts, icon: PencilSquareIcon },
+      { label: 'Job Orders', path: RoutePaths.jobOrders, icon: PencilSquareIcon },
     ],
   },
   {

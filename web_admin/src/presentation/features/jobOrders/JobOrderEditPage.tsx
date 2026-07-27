@@ -11,7 +11,7 @@ import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 
-export function DraftEditPage() {
+export function JobOrderEditPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const { data: draft, isLoading, error } = useDraft(id);
@@ -30,7 +30,7 @@ export function DraftEditPage() {
   const hydratedId = useRef<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Edit draft';
+    document.title = 'Edit Job Order';
   }, []);
   useEffect(() => {
     if (draft && !draft.isConverted && hydratedId.current !== draft.id) {
@@ -41,21 +41,21 @@ export function DraftEditPage() {
   }, [draft, loadDraft]);
   useEffect(() => () => clear(), [clear]);
 
-  if (error) return <ErrorView title="Could not load draft" message={error.message} />;
-  if (isLoading) return <LoadingView label="Loading draft…" />;
+  if (error) return <ErrorView title="Could not load Job Order" message={error.message} />;
+  if (isLoading) return <LoadingView label="Loading Job Order…" />;
   if (!draft) {
     return (
       <div className="px-tk-xl py-tk-lg">
-        <EmptyState title="Draft not found" description="It may have been deleted or already billed out." />
-        <Link to={RoutePaths.drafts} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Drafts</Link>
+        <EmptyState title="Job Order not found" description="It may have been deleted or already billed out." />
+        <Link to={RoutePaths.jobOrders} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Job Orders</Link>
       </div>
     );
   }
   if (draft.isConverted) {
     return (
       <div className="px-tk-xl py-tk-lg">
-        <EmptyState title="Can't edit this draft" description="This draft was already billed out and can't be edited." />
-        <Link to={RoutePaths.drafts} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Drafts</Link>
+        <EmptyState title="Can't edit this Job Order" description="This Job Order is already billed out and can't be edited." />
+        <Link to={RoutePaths.jobOrders} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Job Orders</Link>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export function DraftEditPage() {
         mechanicId,
         mechanicName,
       });
-      navigate(RoutePaths.drafts);
+      navigate(RoutePaths.jobOrders);
     } catch {
       // surfaced via save.error
     }
@@ -82,8 +82,8 @@ export function DraftEditPage() {
 
   return (
     <div className="space-y-tk-md px-tk-xl py-tk-lg">
-      <Link to={RoutePaths.drafts} className="text-bodySmall text-light-text-secondary hover:text-light-text">← Drafts</Link>
-      <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Edit draft</h1>
+      <Link to={RoutePaths.jobOrders} className="text-bodySmall text-light-text-secondary hover:text-light-text">← Job Orders</Link>
+      <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Edit Job Order</h1>
 
       {save.error ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
@@ -92,15 +92,15 @@ export function DraftEditPage() {
       ) : null}
 
       <label className="block max-w-sm space-y-tk-xs">
-        <span className="text-bodySmall text-light-text-secondary">Draft name</span>
+        <span className="text-bodySmall text-light-text-secondary">Job Order #</span>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text" />
+          className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm font-mono text-bodySmall text-light-text outline-none focus:border-light-text" />
       </label>
 
       <CartBuilder store={useDraftEditStore} />
 
       <div className="flex justify-end gap-tk-sm">
-        <Link to={RoutePaths.drafts} className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">Cancel</Link>
+        <Link to={RoutePaths.jobOrders} className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">Cancel</Link>
         <button type="button" onClick={onSave} disabled={save.isPending || !name.trim()}
           className={cn('rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark',
             (save.isPending || !name.trim()) && 'cursor-not-allowed opacity-60')}>

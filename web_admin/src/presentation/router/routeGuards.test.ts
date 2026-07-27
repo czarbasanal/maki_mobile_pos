@@ -83,3 +83,24 @@ describe('canAccess — forgot-password', () => {
     expect(canAccess(RoutePaths.forgotPassword, cashier)).toBe(true);
   });
 });
+
+describe('canAccess — Job Orders (renamed from Drafts)', () => {
+  it('paths are rooted at /job-orders', () => {
+    expect(RoutePaths.jobOrders).toBe('/job-orders');
+    expect(RoutePaths.jobOrderEdit).toBe('/job-orders/:id');
+  });
+
+  it('is a common route for every signed-in role, including a concrete job order', () => {
+    expect(canAccess(RoutePaths.jobOrders, admin)).toBe(true);
+    expect(canAccess(RoutePaths.jobOrders, cashier)).toBe(true);
+    expect(canAccess(RoutePaths.jobOrders, staff)).toBe(true);
+    expect(canAccess(`${RoutePaths.jobOrders}/abc123`, admin)).toBe(true);
+    expect(canAccess(`${RoutePaths.jobOrders}/abc123`, cashier)).toBe(true);
+    expect(canAccess(`${RoutePaths.jobOrders}/abc123`, staff)).toBe(true);
+  });
+
+  it('old /drafts paths are no longer routed — they moved, they were not aliased', () => {
+    expect(canAccess('/drafts', admin)).toBe(false);
+    expect(canAccess('/drafts/abc123', admin)).toBe(false);
+  });
+});

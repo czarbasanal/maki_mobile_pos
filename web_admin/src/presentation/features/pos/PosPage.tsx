@@ -121,7 +121,7 @@ export function PosPage() {
       ) : null}
       {saveDraft.isSuccess && lines.length === 0 ? (
         <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
-          Saved to drafts.
+          Saved as Job Order.
         </p>
       ) : null}
 
