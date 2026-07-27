@@ -42,8 +42,11 @@ function harness(opts?: { users?: User[]; del?: ReturnType<typeof vi.fn> }) {
     reactivate: vi.fn(async () => {}),
     listByRole: vi.fn(async () => []),
   } as unknown as Container['userRepo'];
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   render(
-    <DiProvider override={{ userRepo }}>
+    <DiProvider override={{ userRepo, activityLogRepo }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter>
           <UsersListPage />

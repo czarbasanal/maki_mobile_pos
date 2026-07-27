@@ -39,8 +39,11 @@ function harness(categories: Category[]) {
     update: vi.fn(),
     delete: vi.fn(async () => {}),
   } as unknown as Container['categoryRepo'];
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   render(
-    <DiProvider override={{ categoryRepo }}>
+    <DiProvider override={{ categoryRepo, activityLogRepo }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter>
           <ManageListsPage />

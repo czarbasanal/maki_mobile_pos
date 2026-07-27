@@ -48,7 +48,7 @@ export function JobOrdersPage() {
   };
   const onDelete = (jobOrder: Draft) => {
     if (!window.confirm(`Delete Job Order "${jobOrder.name}"?`)) return;
-    deleteDraft.mutate(jobOrder.id);
+    deleteDraft.mutate({ id: jobOrder.id, name: jobOrder.name });
   };
 
   return (

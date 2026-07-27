@@ -35,12 +35,16 @@ function harness(draftRepo: Partial<Container['draftRepo']>, node: ReactNode = <
       return () => {};
     },
   };
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   return render(
     <DiProvider
       override={{
         draftRepo: draftRepo as Container['draftRepo'],
         productRepo: productRepo as Container['productRepo'],
         mechanicRepo: mechanicRepo as Container['mechanicRepo'],
+        activityLogRepo,
       }}
     >
       <QueryClientProvider client={qc}>

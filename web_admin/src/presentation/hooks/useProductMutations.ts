@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useProductRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useProductRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
+import { logActivity } from '@/application/activityLogger';
 import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
-import type { Product } from '@/domain/entities';
+import { ActivityType, type Product } from '@/domain/entities';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
 import { matchesAutoPattern } from '@/domain/products/sku';
 import { uploadProductImage, deleteProductImage } from '@/infrastructure/firebase/productImageStorage';
@@ -20,6 +21,7 @@ export interface UpdateProductInput {
 
 export function useUpdateProduct() {
   const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<void, Error, UpdateProductInput>({
@@ -73,6 +75,14 @@ export function useUpdateProduct() {
         }
       }
 
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.inventory,
+        action: `Updated product: ${fullPatch.name ?? id}`,
+        details: `SKU ${newSku}`,
+        entityId: id,
+        entityType: 'product',
+      }));
+
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -80,12 +90,22 @@ export function useUpdateProduct() {
 
 export function useAdjustStock() {
   const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
-  return useMutation<void, Error, { id: string; delta: number }>({
-    mutationFn: async ({ id, delta }) => {
+  return useMutation<void, Error, { id: string; delta: number; productName: string; sku: string; oldQuantity: number }>({
+    mutationFn: async ({ id, delta, productName, sku, oldQuantity }) => {
       if (!actor) throw new Error('Not signed in');
       await repo.adjustStock(id, delta, actor.id, (actor.displayName.trim() || null));
+      const newQuantity = oldQuantity + delta;
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.stockAdjustment,
+        action: `Adjusted stock for ${productName}`,
+        details: `${oldQuantity} → ${newQuantity} (${delta >= 0 ? '+' : ''}${delta})`,
+        entityId: id,
+        entityType: 'product',
+        metadata: { sku, oldQuantity, newQuantity, change: delta },
+      }));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -93,12 +113,21 @@ export function useAdjustStock() {
 
 export function useSetStock() {
   const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
-  return useMutation<void, Error, { id: string; quantity: number }>({
-    mutationFn: async ({ id, quantity }) => {
+  return useMutation<void, Error, { id: string; quantity: number; productName: string; sku: string; oldQuantity: number }>({
+    mutationFn: async ({ id, quantity, productName, sku, oldQuantity }) => {
       if (!actor) throw new Error('Not signed in');
       await repo.setStock(id, quantity, actor.id, (actor.displayName.trim() || null));
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.stockAdjustment,
+        action: `Adjusted stock for ${productName}`,
+        details: `${oldQuantity} → ${quantity} (${quantity - oldQuantity >= 0 ? '+' : ''}${quantity - oldQuantity})`,
+        entityId: id,
+        entityType: 'product',
+        metadata: { sku, oldQuantity, newQuantity: quantity, change: quantity - oldQuantity },
+      }));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -106,12 +135,20 @@ export function useSetStock() {
 
 export function useDeactivateProduct() {
   const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
-  return useMutation<void, Error, string>({
-    mutationFn: async (id) => {
+  return useMutation<void, Error, { id: string; name: string; sku: string }>({
+    mutationFn: async ({ id, name, sku }) => {
       if (!actor) throw new Error('Not signed in');
       await repo.deactivate(id, actor.id, (actor.displayName.trim() || null));
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.inventory,
+        action: `Deactivated product: ${name}`,
+        details: `SKU ${sku}`,
+        entityId: id,
+        entityType: 'product',
+      }));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -119,12 +156,20 @@ export function useDeactivateProduct() {
 
 export function useReactivateProduct() {
   const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
-  return useMutation<void, Error, string>({
-    mutationFn: async (id) => {
+  return useMutation<void, Error, { id: string; name: string; sku: string }>({
+    mutationFn: async ({ id, name, sku }) => {
       if (!actor) throw new Error('Not signed in');
       await repo.reactivate(id, actor.id, (actor.displayName.trim() || null));
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.inventory,
+        action: `Reactivated product: ${name}`,
+        details: `SKU ${sku}`,
+        entityId: id,
+        entityType: 'product',
+      }));
       qc.invalidateQueries({ queryKey: ['product', id] });
     },
   });
@@ -155,6 +200,7 @@ export interface CreateProductInput {
 
 export function useCreateProduct() {
   const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<Product, Error, CreateProductInput>({
@@ -212,6 +258,13 @@ export function useCreateProduct() {
       } catch {
         // best-effort; never fail the create on a history write
       }
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.inventory,
+        action: `Created product: ${created.name}`,
+        details: `SKU ${created.sku} • ₱${created.price.toFixed(2)}`,
+        entityId: created.id,
+        entityType: 'product',
+      }));
       qc.invalidateQueries({ queryKey: ['product', created.id] });
       return created;
     },

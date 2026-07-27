@@ -19,10 +19,14 @@ import {
 import type { Expense } from '@/domain/entities';
 import type { ReactNode } from 'react';
 
-function wrap(expenseRepo: Partial<Container['expenseRepo']>) {
+function wrap(
+  expenseRepo: Partial<Container['expenseRepo']>,
+  activityLog: ReturnType<typeof vi.fn> = vi.fn().mockResolvedValue(undefined),
+) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const activityLogRepo = { log: activityLog } as unknown as Container['activityLogRepo'];
   return ({ children }: { children: ReactNode }) => (
-    <DiProvider override={{ expenseRepo: expenseRepo as Container['expenseRepo'] }}>
+    <DiProvider override={{ expenseRepo: expenseRepo as Container['expenseRepo'], activityLogRepo }}>
       <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     </DiProvider>
   );
@@ -106,13 +110,14 @@ describe('useExpenseTotals', () => {
 });
 
 describe('expense mutations', () => {
-  it('useCreateExpense calls repo.create with the actor id + display name', async () => {
+  it('useCreateExpense calls repo.create with the actor id + display name, and logs an expense activity (task-10 representative case)', async () => {
     useAuthStore.setState({
-      user: { id: 'u1', displayName: 'Cashier One', email: 'c@x.com' } as never,
+      user: { id: 'u1', displayName: 'Cashier One', email: 'c@x.com', role: 'cashier' } as never,
       status: 'signedIn',
     });
     const create = vi.fn().mockResolvedValue(makeExpense());
-    const { result } = renderHook(() => useCreateExpense(), { wrapper: wrap({ create }) });
+    const log = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCreateExpense(), { wrapper: wrap({ create }, log) });
 
     act(() => {
       result.current.mutate({
@@ -132,6 +137,14 @@ describe('expense mutations', () => {
       expect.objectContaining({ description: 'Fuel' }),
       'u1',
       'Cashier One',
+    );
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'expense',
+        action: 'Created expense: Fuel',
+        entityType: 'expense',
+        userId: 'u1',
+      }),
     );
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
@@ -153,12 +166,12 @@ describe('expense mutations', () => {
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
 
-  it('useDeleteExpense calls repo.delete', async () => {
+  it('useDeleteExpense calls repo.delete with the id', async () => {
     const del = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteExpense(), { wrapper: wrap({ delete: del }) });
 
     act(() => {
-      result.current.mutate('e1');
+      result.current.mutate({ id: 'e1', description: 'Fuel', category: 'Transportation', amount: 100 });
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));

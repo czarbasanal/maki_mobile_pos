@@ -60,7 +60,12 @@ export function ExpensesPage() {
   const confirmDelete = async () => {
     if (!deleting) return;
     try {
-      await del.mutateAsync(deleting.id);
+      await del.mutateAsync({
+        id: deleting.id,
+        description: deleting.description,
+        category: deleting.category,
+        amount: deleting.amount,
+      });
       if (deleting.receiptImageUrl) {
         try {
           await deleteExpenseReceipt(deleting.id);

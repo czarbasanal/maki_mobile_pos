@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { endOfDay, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
-import { useExpenseRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useExpenseRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import type { Expense } from '@/domain/entities';
+import { logActivity } from '@/application/activityLogger';
+import { ActivityType, type Expense } from '@/domain/entities';
 import type { ExpenseCreateInput, ExpenseListFilters } from '@/domain/repositories/ExpenseRepository';
 
 function invalidateExpenses(qc: QueryClient) {
@@ -106,17 +107,27 @@ export type CreateExpenseInput = Omit<
 
 export function useCreateExpense() {
   const repo = useExpenseRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<Expense, Error, CreateExpenseInput>({
     mutationFn: async (input) => {
       if (!actor) throw new Error('Not signed in');
       const actorName = actor.displayName.trim() || actor.email;
-      return repo.create(
+      const created = await repo.create(
         { ...input, createdBy: actor.id, createdByName: actorName },
         actor.id,
         actorName,
       );
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.expense,
+        action: `Created expense: ${created.description}`,
+        details: `${created.category} • ₱${created.amount.toFixed(2)}`,
+        entityId: created.id,
+        entityType: 'expense',
+        metadata: { amount: created.amount, category: created.category },
+      }));
+      return created;
     },
     onSuccess: () => invalidateExpenses(qc),
   });
@@ -129,23 +140,54 @@ export interface UpdateExpenseInput {
 
 export function useUpdateExpense() {
   const repo = useExpenseRepo();
+  const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<void, Error, UpdateExpenseInput>({
     mutationFn: async ({ id, patch }) => {
       if (!actor) throw new Error('Not signed in');
       await repo.update(id, patch, actor.id);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.expense,
+        action: `Updated expense${patch.description ? `: ${patch.description}` : ` ${id}`}`,
+        details:
+          patch.category !== undefined || patch.amount !== undefined
+            ? `${patch.category ?? ''}${patch.amount !== undefined ? ` • ₱${patch.amount.toFixed(2)}` : ''}`.trim()
+            : null,
+        entityId: id,
+        entityType: 'expense',
+        metadata: { amount: patch.amount, category: patch.category },
+      }));
     },
     onSuccess: () => invalidateExpenses(qc),
   });
 }
 
+export interface DeleteExpenseInput {
+  id: string;
+  // Caller already has the full row loaded (list/detail view) — passed
+  // through rather than re-fetched, so the log can carry the same
+  // "Deleted expense: {description}" wording the mobile use case emits.
+  description: string;
+  category: string;
+  amount: number;
+}
+
 export function useDeleteExpense() {
   const repo = useExpenseRepo();
+  const activityLogRepo = useActivityLogRepo();
   const qc = useQueryClient();
-  return useMutation<void, Error, string>({
-    mutationFn: async (id) => {
+  return useMutation<void, Error, DeleteExpenseInput>({
+    mutationFn: async ({ id, description, category, amount }) => {
       await repo.delete(id);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.expense,
+        action: `Deleted expense: ${description}`,
+        details: `${category} • ₱${amount.toFixed(2)}`,
+        entityId: id,
+        entityType: 'expense',
+        metadata: { amount, category },
+      }));
     },
     onSuccess: () => invalidateExpenses(qc),
   });

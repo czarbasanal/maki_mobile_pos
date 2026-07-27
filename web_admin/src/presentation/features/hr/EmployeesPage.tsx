@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useMutation } from '@tanstack/react-query';
-import { useEmployeeRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useEmployeeRepo } from '@/infrastructure/di/container';
 import { useFirestoreSubscription } from '@/presentation/hooks/useFirestoreSubscription';
+import { logActivity } from '@/application/activityLogger';
+import { ActivityType } from '@/domain/entities';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
@@ -28,6 +30,7 @@ export function EmployeesPage() {
   }, []);
 
   const repo = useEmployeeRepo();
+  const activityLogRepo = useActivityLogRepo();
   const {
     data: employees,
     isLoading,
@@ -57,13 +60,39 @@ export function EmployeesPage() {
     Error,
     { name: string; dailyRate: number; weekStartDay: number | null }
   >({
-    mutationFn: (input) => repo.create(input),
+    mutationFn: async (input) => {
+      const created = await repo.create(input);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Created employee: ${created.name}`,
+        entityId: created.id,
+        entityType: 'employee',
+      }));
+      return created;
+    },
   });
   const update = useMutation<void, Error, { id: string } & EmployeeUpdateInput>({
-    mutationFn: ({ id, ...patch }) => repo.update(id, patch),
+    mutationFn: async ({ id, ...patch }) => {
+      await repo.update(id, patch);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Updated employee${patch.name ? `: ${patch.name}` : ''}`,
+        details: patch.isActive !== undefined ? (patch.isActive ? 'Reactivated' : 'Deactivated') : null,
+        entityId: id,
+        entityType: 'employee',
+      }));
+    },
   });
-  const del = useMutation<void, Error, { id: string }>({
-    mutationFn: ({ id }) => repo.delete(id),
+  const del = useMutation<void, Error, { id: string; name?: string }>({
+    mutationFn: async ({ id, name }) => {
+      await repo.delete(id);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Deleted employee${name ? `: ${name}` : ` ${id}`}`,
+        entityId: id,
+        entityType: 'employee',
+      }));
+    },
   });
   const busy = create.isPending || update.isPending || del.isPending;
 
@@ -132,7 +161,7 @@ export function EmployeesPage() {
   const confirmDelete = async () => {
     if (!deleting) return;
     try {
-      await del.mutateAsync({ id: deleting.id });
+      await del.mutateAsync({ id: deleting.id, name: deleting.name });
       setDeleting(null);
     } catch {
       // Surfaced via del.error below; confirm dialog stays open.

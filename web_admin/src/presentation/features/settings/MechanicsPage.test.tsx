@@ -34,8 +34,11 @@ function harness(mechanics: Mechanic[]) {
     update: vi.fn(),
     delete: vi.fn(async () => {}),
   } as unknown as Container['mechanicRepo'];
+  const activityLogRepo = {
+    log: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Container['activityLogRepo'];
   render(
-    <DiProvider override={{ mechanicRepo }}>
+    <DiProvider override={{ mechanicRepo, activityLogRepo }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter>
           <MechanicsPage />

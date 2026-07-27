@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { NoSymbolIcon } from '@heroicons/react/24/outline';
-import { useAuthRepo } from '@/infrastructure/di/container';
+import { useSignOut } from '@/presentation/hooks/useSignOut';
 import { RoutePaths } from '@/presentation/router/routePaths';
 
 export function AccessDeniedPage() {
-  const authRepo = useAuthRepo();
+  const signOut = useSignOut();
   const navigate = useNavigate();
 
   const onSignOut = async () => {
-    await authRepo.signOut();
+    await signOut.mutateAsync();
     navigate(RoutePaths.login, { replace: true });
   };
 

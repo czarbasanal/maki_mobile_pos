@@ -92,20 +92,28 @@ function toneFor(type: ActivityType): Tone {
   }
 }
 
-const COMMON_TYPES: ActivityType[] = [
+// Exported so tests can assert every web-emitted type is filterable here
+// (see ActivityLogsPage.test.tsx's "filter coverage" describe block).
+export const COMMON_TYPES: ActivityType[] = [
   ActivityType.login,
   ActivityType.logout,
   ActivityType.sale,
   ActivityType.voidSale,
+  ActivityType.inventory,
   ActivityType.stockAdjustment,
   ActivityType.receiving,
+  ActivityType.expense,
   ActivityType.userCreated,
   ActivityType.userUpdated,
+  ActivityType.userDeactivated,
   ActivityType.roleChanged,
+  ActivityType.userManagement,
+  ActivityType.settings,
+  ActivityType.costCodeChanged,
   ActivityType.passwordVerified,
   ActivityType.passwordFailed,
   ActivityType.costViewed,
-  ActivityType.costCodeChanged,
+  ActivityType.other,
 ];
 
 const dateGroupFmt = new Intl.DateTimeFormat('en-PH', {

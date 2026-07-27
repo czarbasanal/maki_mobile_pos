@@ -79,7 +79,7 @@ export function MechanicsPage() {
 
   const confirmDelete = async () => {
     if (!deleting) return;
-    await del.mutateAsync({ id: deleting.id });
+    await del.mutateAsync({ id: deleting.id, name: deleting.name });
     setDeleting(null);
   };
 

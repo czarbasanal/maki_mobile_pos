@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { useAuthRepo, useCostCodeRepo } from '@/infrastructure/di/container';
-import type { CostCode } from '@/domain/entities';
+import { useActivityLogRepo, useAuthRepo, useCostCodeRepo } from '@/infrastructure/di/container';
+import { logActivity } from '@/application/activityLogger';
+import { ActivityType, type CostCode } from '@/domain/entities';
 
 interface UpdateCostCodeInput {
   mapping: Omit<CostCode, 'updatedAt' | 'updatedBy'>;
@@ -13,6 +14,7 @@ interface UpdateCostCodeInput {
 export function useUpdateCostCode() {
   const authRepo = useAuthRepo();
   const costCodeRepo = useCostCodeRepo();
+  const activityLogRepo = useActivityLogRepo();
 
   return useMutation<void, Error, UpdateCostCodeInput>({
     mutationFn: async ({ mapping, password }) => {
@@ -21,6 +23,10 @@ export function useUpdateCostCode() {
       const actorId = authRepo.currentUserId;
       if (!actorId) throw new Error('Not signed in');
       await costCodeRepo.update(mapping, actorId);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.costCodeChanged,
+        action: 'Modified cost code mapping',
+      }));
     },
   });
 }

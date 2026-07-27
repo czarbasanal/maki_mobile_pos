@@ -210,9 +210,14 @@ export function ExpenseFormPage() {
   };
 
   const confirmDelete = async () => {
-    if (!id) return;
+    if (!id || !target) return;
     try {
-      await del.mutateAsync(id);
+      await del.mutateAsync({
+        id,
+        description: target.description,
+        category: target.category,
+        amount: target.amount,
+      });
       try {
         await deleteExpenseReceipt(id);
       } catch {

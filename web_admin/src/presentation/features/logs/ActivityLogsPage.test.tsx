@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { ActivityLogsPage } from './ActivityLogsPage';
+import { ActivityLogsPage, COMMON_TYPES } from './ActivityLogsPage';
 import { ActivityType, type ActivityLog } from '@/domain/entities';
 
 const log = (o: Partial<ActivityLog> = {}): ActivityLog => ({
@@ -72,5 +72,34 @@ describe('ActivityLogsPage pagination', () => {
   it('hides the pager when there are 25 or fewer logs', () => {
     harness(logs.slice(0, 25));
     expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+  });
+});
+
+describe('ActivityLogsPage — filter coverage (task-10)', () => {
+  // Every type a web mutation site now emits (task-10) must be filterable
+  // from the type dropdown — a type left out of COMMON_TYPES would still be
+  // written and shown in the plain "All activities" list, but an admin could
+  // never filter down to just that type.
+  const webEmittedTypes: ActivityType[] = [
+    ActivityType.login,
+    ActivityType.logout,
+    ActivityType.sale,
+    ActivityType.voidSale,
+    ActivityType.inventory,
+    ActivityType.stockAdjustment,
+    ActivityType.receiving,
+    ActivityType.expense,
+    ActivityType.userCreated,
+    ActivityType.userUpdated,
+    ActivityType.userDeactivated,
+    ActivityType.roleChanged,
+    ActivityType.userManagement,
+    ActivityType.settings,
+    ActivityType.costCodeChanged,
+    ActivityType.other,
+  ];
+
+  it.each(webEmittedTypes)('COMMON_TYPES includes %s', (type) => {
+    expect(COMMON_TYPES).toContain(type);
   });
 });

@@ -30,7 +30,7 @@ import {
 import { canAccess } from '@/presentation/router/routeGuards';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { useAuthRepo } from '@/infrastructure/di/container';
+import { useSignOut } from '@/presentation/hooks/useSignOut';
 import { cn } from '@/core/utils/cn';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -255,7 +255,7 @@ function SidebarAccount({ email, role }: { email: string; role: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const authRepo = useAuthRepo();
+  const signOut = useSignOut();
 
   useEffect(() => {
     if (!open) return;
@@ -268,7 +268,7 @@ function SidebarAccount({ email, role }: { email: string; role: string }) {
 
   const onSignOut = async () => {
     setOpen(false);
-    await authRepo.signOut();
+    await signOut.mutateAsync();
     navigate(RoutePaths.login, { replace: true });
   };
 
