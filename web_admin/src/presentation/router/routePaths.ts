@@ -38,6 +38,8 @@ export const RoutePaths = {
 
   reports: '/reports',
   salesReport: '/reports/sales',
+  // Web-only (no Flutter mirror) — the dashboard's "View all" destination.
+  daySales: '/sales/day',
   profitReport: '/reports/profit',
   laborReport: '/reports/labor',
   priceChangeReport: '/reports/price-changes',

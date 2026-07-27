@@ -76,6 +76,13 @@ function harness(sales: Sale[] = [fakeSale()]) {
 }
 
 describe('DashboardPage', () => {
+  it('links "View all" on the Recent sales panel to the day sales page', async () => {
+    harness();
+
+    const link = await screen.findByRole('link', { name: /view all/i });
+    expect(link).toHaveAttribute('href', '/sales/day');
+  });
+
   it('renders all 5 summary cards without emphasized style', async () => {
     harness();
 

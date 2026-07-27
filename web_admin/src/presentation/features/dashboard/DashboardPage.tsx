@@ -2,6 +2,7 @@
 // in a grid, recent sales + inventory side-by-side.
 
 import { useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ArrowTrendingUpIcon,
   BanknotesIcon,
@@ -9,6 +10,7 @@ import {
   CubeIcon,
   ReceiptPercentIcon,
 } from '@heroicons/react/24/outline';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { useTodaysSales } from '@/presentation/hooks/useTodaysSales';
 import { summarizeSales } from '@/domain/sales/summarizeSales';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
@@ -83,7 +85,18 @@ export function DashboardPage() {
       )}
 
       <div className="grid grid-cols-1 gap-tk-lg lg:grid-cols-3">
-        <Panel title="Recent sales" className="lg:col-span-2">
+        <Panel
+          title="Recent sales"
+          className="lg:col-span-2"
+          action={
+            <Link
+              to={RoutePaths.daySales}
+              className="text-bodySmall font-medium text-light-text-secondary hover:text-light-text hover:underline"
+            >
+              View all →
+            </Link>
+          }
+        >
           {error ? (
             <ErrorView message={error.message} />
           ) : isLoading || !sales ? (
@@ -103,17 +116,22 @@ export function DashboardPage() {
 function Panel({
   title,
   className,
+  action,
   children,
 }: {
   title: string;
   className?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section
       className={`rounded-lg border border-light-hairline bg-light-card p-tk-lg ${className ?? ''}`}
     >
-      <h2 className="mb-tk-md text-bodyMedium font-semibold text-light-text">{title}</h2>
+      <div className="mb-tk-md flex items-center justify-between">
+        <h2 className="text-bodyMedium font-semibold text-light-text">{title}</h2>
+        {action}
+      </div>
       {children}
     </section>
   );

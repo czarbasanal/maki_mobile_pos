@@ -22,6 +22,7 @@ import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPa
 import { LaborReportPage } from '@/presentation/features/reports/LaborReportPage';
 import { PriceChangeReportPage } from '@/presentation/features/reports/PriceChangeReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
+import { DaySalesPage } from '@/presentation/features/sales/DaySalesPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
 import { ReceivingDashboardPage } from '@/presentation/features/receiving/ReceivingDashboardPage';
 import { ReceivingHistoryPage } from '@/presentation/features/receiving/ReceivingHistoryPage';
@@ -99,6 +100,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.expenseEdit, element: placeholder('Edit expense', 'phase 9') },
         { path: RoutePaths.reports, element: <ReportsHubPage /> },
         { path: RoutePaths.salesReport, element: <SalesReportPage /> },
+        { path: RoutePaths.daySales, element: <DaySalesPage /> },
         { path: RoutePaths.profitReport, element: <ProfitReportPage /> },
         { path: RoutePaths.laborReport, element: <LaborReportPage /> },
         { path: RoutePaths.priceChangeReport, element: <PriceChangeReportPage /> },
