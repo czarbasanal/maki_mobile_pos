@@ -100,6 +100,34 @@ describe('InventoryListPage totals strip', () => {
   });
 });
 
+describe('InventoryListPage pagination', () => {
+  const many: Product[] = Array.from({ length: 30 }, (_, i) =>
+    widget({ id: `p${i + 1}`, sku: `SKU-${i + 1}`, name: `Product ${i + 1}` }),
+  );
+
+  it('shows only 25 rows and the pager for 30 products, revealing the rest on page 2', async () => {
+    signIn(UserRole.staff);
+    harness(many);
+
+    expect(screen.getByText('Product 1')).toBeInTheDocument();
+    expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
+    expect(screen.queryByText('Product 26')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(screen.getByText('Product 26')).toBeInTheDocument();
+    expect(screen.getByText('Product 30')).toBeInTheDocument();
+    expect(screen.queryByText('Product 1')).not.toBeInTheDocument();
+  });
+
+  it('hides the pager entirely when the filtered set is at or under 25', () => {
+    signIn(UserRole.staff);
+    harness(many.slice(0, 25));
+
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+  });
+});
+
 describe('InventoryListPage SKU cell', () => {
   it('displays a coded 8-digit auto-SKU as XXXX-XXXX in a mono cell', () => {
     signIn(UserRole.admin);

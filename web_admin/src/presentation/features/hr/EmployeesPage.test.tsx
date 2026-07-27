@@ -227,3 +227,19 @@ describe('EmployeesPage', () => {
     expect(screen.getByText('Missing or insufficient permissions.')).toBeInTheDocument();
   });
 });
+
+describe('EmployeesPage — pagination', () => {
+  it('shows the pager once the employee list exceeds 25', () => {
+    const many = Array.from({ length: 26 }, (_, i) => employee({ id: `e${i + 1}`, name: `Employee ${i + 1}` }));
+    harness({ employees: many });
+
+    expect(screen.getByText('1–25 of 26')).toBeInTheDocument();
+  });
+
+  it('hides the pager at exactly 25 employees', () => {
+    const exactly25 = Array.from({ length: 25 }, (_, i) => employee({ id: `e${i + 1}`, name: `Employee ${i + 1}` }));
+    harness({ employees: exactly25 });
+
+    expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
+  });
+});

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
@@ -82,5 +83,21 @@ describe('SalesReportPage', () => {
     await waitFor(() => expect(screen.getByText('Shop fees')).toBeInTheDocument());
     const row = screen.getByText('Shop fees').closest('div');
     expect(row?.textContent).toContain(formatMoney(0));
+  });
+
+  it('paginates the sales table at 25/page, revealing the rest on page 2', async () => {
+    const many = Array.from({ length: 30 }, (_, i) =>
+      sale({ id: `s${i + 1}`, saleNumber: `OR-${String(i + 1).padStart(4, '0')}` }),
+    );
+    harness(many);
+
+    await waitFor(() => expect(screen.getByText('1–25 of 30')).toBeInTheDocument());
+    expect(screen.getByText('OR-0001')).toBeInTheDocument();
+    expect(screen.queryByText('OR-0026')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(screen.getByText('OR-0026')).toBeInTheDocument();
+    expect(screen.queryByText('OR-0001')).not.toBeInTheDocument();
   });
 });

@@ -25,6 +25,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { Pager } from '@/presentation/components/common/Pager';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Spinner } from '@/presentation/components/common/LoadingView';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -38,6 +39,8 @@ export function UsersListPage() {
   const me = useAuthStore((s) => s.user);
   const [showInactive, setShowInactive] = useState(false);
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
 
   const { data: users, isLoading, error } = useUsers(showInactive);
 
@@ -55,6 +58,17 @@ export function UsersListPage() {
     });
     return out;
   }, [users, roleFilter]);
+
+  // Filters changed — a page number from the previous result set may now
+  // point past the end (or simply be stale), so snap back to page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter, showInactive]);
+
+  const paged = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  );
 
   const summary = useMemo(() => {
     if (!users) return { total: 0, admin: 0, staff: 0, cashier: 0 };
@@ -127,7 +141,10 @@ export function UsersListPage() {
       ) : filtered.length === 0 ? (
         <EmptyState title="No users found" description="Try clearing the filter or adding a new user." />
       ) : (
-        <UsersTable users={filtered} myId={me?.id ?? ''} />
+        <>
+          <UsersTable users={paged} myId={me?.id ?? ''} />
+          <Pager total={filtered.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+        </>
       )}
     </div>
   );

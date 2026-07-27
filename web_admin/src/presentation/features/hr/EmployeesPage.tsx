@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useMutation } from '@tanstack/react-query';
 import { useEmployeeRepo } from '@/infrastructure/di/container';
@@ -6,6 +6,7 @@ import { useFirestoreSubscription } from '@/presentation/hooks/useFirestoreSubsc
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { Pager } from '@/presentation/components/common/Pager';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
@@ -34,6 +35,13 @@ export function EmployeesPage() {
   } = useFirestoreSubscription<Employee[]>(
     (onData, onError) => repo.watchAll(onData, { includeInactive: true }, onError),
     [repo],
+  );
+
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
+  const paged = useMemo(
+    () => (employees ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [employees, page],
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -150,7 +158,7 @@ export function EmployeesPage() {
       ) : (
         <div className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
           <ul className="divide-y divide-light-hairline">
-            {employees.map((e) => (
+            {paged.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm">
                 <div className="min-w-0">
                   <span
@@ -189,6 +197,7 @@ export function EmployeesPage() {
               </li>
             ))}
           </ul>
+          <Pager total={employees.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
         </div>
       )}
 

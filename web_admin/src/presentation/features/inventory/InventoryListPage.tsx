@@ -10,6 +10,7 @@ import { stockTotals } from '@/domain/products/stockTotals';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { Pager } from '@/presentation/components/common/Pager';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -37,6 +38,8 @@ export function InventoryListPage() {
   const [stock, setStock] = useState<ProductFilter['stock']>('all');
   const [category, setCategory] = useState<ProductFilter['category']>('all');
   const [showInactive, setShowInactive] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
 
   const active = useMemo(
     () => (showInactive ? (products ?? []) : (products ?? []).filter((p) => p.isActive)),
@@ -65,6 +68,17 @@ export function InventoryListPage() {
   const filtered = useMemo(
     () => filterProducts(active, { search, stock, category }),
     [active, search, stock, category],
+  );
+
+  // Filters changed — a page number from the previous result set may now
+  // point past the end (or simply be stale), so snap back to page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [search, stock, category, showInactive]);
+
+  const paged = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
   );
 
   const user = useAuthStore((s) => s.user);
@@ -168,7 +182,7 @@ export function InventoryListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-light-hairline">
-              {filtered.map((p) => {
+              {paged.map((p) => {
                 const s = getStockStatus(p);
                 return (
                   <tr
@@ -194,6 +208,7 @@ export function InventoryListPage() {
               })}
             </tbody>
           </table>
+          <Pager total={filtered.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
         </div>
       )}
     </div>
