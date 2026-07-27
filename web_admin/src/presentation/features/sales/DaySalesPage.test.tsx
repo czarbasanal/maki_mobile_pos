@@ -1,6 +1,8 @@
-// DaySalesPage: a single day's sales as expandable tiles. Items load lazily
-// (first expand only — the fake repo's getById call count is the contract),
-// and prev/next day re-queries the [00:00, 23:59:59.999] range.
+// DaySalesPage: a single day's sales as expandable tiles. list() already
+// returns every sale with .items populated (matching the real
+// FirestoreSaleRepository contract), so expand is a purely local toggle —
+// getById must never be called from this page. Prev/next day re-queries the
+// [00:00, 23:59:59.999] range.
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -82,15 +84,11 @@ describe('DaySalesPage', () => {
     expect(await screen.findByText(/no sales/i)).toBeInTheDocument();
   });
 
-  it('fetches items lazily on first expand and reuses the cache on the second expand', async () => {
+  it('expands to show item lines already present on the sale, with no getById call', async () => {
     const sale = fakeSale({
       id: 's1',
       saleNumber: 'SN-0001',
       laborLines: [{ id: 'l1', description: 'Labor', fee: 50 }],
-    });
-    const list = vi.fn().mockResolvedValue([sale]);
-    const getById = vi.fn().mockResolvedValue({
-      ...sale,
       items: [
         {
           id: 'i1',
@@ -105,6 +103,8 @@ describe('DaySalesPage', () => {
         },
       ],
     });
+    const list = vi.fn().mockResolvedValue([sale]);
+    const getById = vi.fn().mockResolvedValue(null);
     harness({ list, getById });
 
     await screen.findByText('SN-0001');
@@ -113,13 +113,12 @@ describe('DaySalesPage', () => {
 
     await user.click(toggle);
     expect(await screen.findByText(/Brake Pad/)).toBeInTheDocument();
-    expect(getById).toHaveBeenCalledTimes(1);
 
     await user.click(toggle); // collapse
     await user.click(toggle); // expand again
 
     expect(await screen.findByText(/Brake Pad/)).toBeInTheDocument();
-    expect(getById).toHaveBeenCalledTimes(1);
+    expect(getById).not.toHaveBeenCalled();
   });
 
   it('prev/next day buttons change the queried range', async () => {

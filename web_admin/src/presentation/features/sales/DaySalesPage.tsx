@@ -1,12 +1,11 @@
 // A single day's sales as expandable tiles — the "View all" destination from
-// the dashboard's Recent sales panel. Collapsed tiles are cheap (sale
-// metadata only); a tile's line items load lazily on first expand and are
-// cached in local state so re-expanding never re-fetches.
+// the dashboard's Recent sales panel. useDaySales() (via SaleRepository.list)
+// already returns every sale with .items populated, so expand is a purely
+// local toggle — no per-tile fetch.
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { addDays, format, subDays } from 'date-fns';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { useSaleRepo } from '@/infrastructure/di/container';
 import { useDaySales } from '@/presentation/hooks/useDaySales';
 import {
   saleGrandTotal,
@@ -14,7 +13,6 @@ import {
   saleIsVoided,
   saleItemNet,
   type Sale,
-  type SaleItem,
 } from '@/domain/entities';
 import { PaymentMethod, paymentMethodDisplayName } from '@/domain/enums';
 import { formatMoney } from '@/core/utils/money';
@@ -39,9 +37,6 @@ export function DaySalesPage() {
   const { sales, isLoading, error } = useDaySales(date);
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
-  const [itemsBySaleId, setItemsBySaleId] = useState<Record<string, SaleItem[]>>({});
-  const [loadingIds, setLoadingIds] = useState<ReadonlySet<string>>(new Set());
-  const saleRepo = useSaleRepo();
 
   useEffect(() => {
     document.title = 'Day sales · MAKI POS Admin';
@@ -59,31 +54,13 @@ export function DaySalesPage() {
     [sales, page],
   );
 
-  async function loadItems(saleId: string) {
-    setLoadingIds((prev) => new Set(prev).add(saleId));
-    try {
-      const full = await saleRepo.getById(saleId);
-      setItemsBySaleId((prev) => ({ ...prev, [saleId]: full?.items ?? [] }));
-    } finally {
-      setLoadingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(saleId);
-        return next;
-      });
-    }
-  }
-
   function toggle(sale: Sale) {
-    const isOpening = !expanded.has(sale.id);
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(sale.id)) next.delete(sale.id);
       else next.add(sale.id);
       return next;
     });
-    if (isOpening && !itemsBySaleId[sale.id] && !loadingIds.has(sale.id)) {
-      void loadItems(sale.id);
-    }
   }
 
   return (
@@ -146,8 +123,6 @@ export function DaySalesPage() {
                 key={sale.id}
                 sale={sale}
                 expanded={expanded.has(sale.id)}
-                loading={loadingIds.has(sale.id)}
-                items={itemsBySaleId[sale.id]}
                 onToggle={() => toggle(sale)}
               />
             ))}
@@ -162,14 +137,10 @@ export function DaySalesPage() {
 function SaleTile({
   sale,
   expanded,
-  loading,
-  items,
   onToggle,
 }: {
   sale: Sale;
   expanded: boolean;
-  loading: boolean;
-  items: SaleItem[] | undefined;
   onToggle: () => void;
 }) {
   const voided = saleIsVoided(sale);
@@ -218,40 +189,36 @@ function SaleTile({
 
       {expanded ? (
         <div className="border-t border-light-hairline bg-light-subtle px-tk-md py-tk-md">
-          {loading ? (
-            <LoadingView label="Loading items…" />
-          ) : (
-            <div className="space-y-tk-xs text-bodySmall">
-              {(items ?? []).map((item) => (
-                <div key={item.id} className="flex justify-between text-light-text">
-                  <span>
-                    {item.quantity} × {item.name}
-                  </span>
-                  <span className="tabular-nums">{formatMoney(saleItemNet(item, isPct))}</span>
-                </div>
-              ))}
-              {sale.laborLines.map((l) => (
-                <div key={l.id} className="flex justify-between text-light-text">
-                  <span>🔧 {l.description || 'Service'}</span>
-                  <span className="tabular-nums">{formatMoney(l.fee)}</span>
-                </div>
-              ))}
-              {sale.feeLines.map((f) => (
-                <div key={f.id} className="flex justify-between text-light-text">
-                  <span>🔧 {f.name || 'Shop fee'}</span>
-                  <span className="tabular-nums">{formatMoney(f.amount)}</span>
-                </div>
-              ))}
-              <div className="pt-tk-xs">
-                <Link
-                  to={`${RoutePaths.saleDetail.replace(':id', sale.id)}`}
-                  className="text-bodySmall font-medium text-light-text underline"
-                >
-                  Full detail →
-                </Link>
+          <div className="space-y-tk-xs text-bodySmall">
+            {sale.items.map((item) => (
+              <div key={item.id} className="flex justify-between text-light-text">
+                <span>
+                  {item.quantity} × {item.name}
+                </span>
+                <span className="tabular-nums">{formatMoney(saleItemNet(item, isPct))}</span>
               </div>
+            ))}
+            {sale.laborLines.map((l) => (
+              <div key={l.id} className="flex justify-between text-light-text">
+                <span>🔧 {l.description || 'Service'}</span>
+                <span className="tabular-nums">{formatMoney(l.fee)}</span>
+              </div>
+            ))}
+            {sale.feeLines.map((f) => (
+              <div key={f.id} className="flex justify-between text-light-text">
+                <span>🔧 {f.name || 'Shop fee'}</span>
+                <span className="tabular-nums">{formatMoney(f.amount)}</span>
+              </div>
+            ))}
+            <div className="pt-tk-xs">
+              <Link
+                to={`${RoutePaths.saleDetail.replace(':id', sale.id)}`}
+                className="text-bodySmall font-medium text-light-text underline"
+              >
+                Full detail →
+              </Link>
             </div>
-          )}
+          </div>
         </div>
       ) : null}
     </div>
