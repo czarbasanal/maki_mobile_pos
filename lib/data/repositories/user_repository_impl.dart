@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
@@ -7,16 +8,47 @@ import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 
+/// Name of the throwaway FirebaseApp used only to mint new accounts. See
+/// [UserRepositoryImpl._defaultProvisioningAuth].
+const String _provisioningAppName = 'maki-admin-provisioning';
+
 /// Firestore implementation of [UserRepository].
 class UserRepositoryImpl implements UserRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
+
+  /// Deliberately the ONLY auth this repository can reach. It never holds the
+  /// primary [FirebaseAuth], so account creation cannot replace the signed-in
+  /// admin's session even by accident.
+  final Future<FirebaseAuth> Function() _provisioningAuth;
 
   UserRepositoryImpl({
     FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
+    Future<FirebaseAuth> Function()? provisioningAuth,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+        _provisioningAuth = provisioningAuth ?? _defaultProvisioningAuth;
+
+  /// Auth bound to a SECONDARY FirebaseApp, used solely to create accounts.
+  ///
+  /// `createUserWithEmailAndPassword` signs the new account in as a side
+  /// effect. On the primary app that replaces the admin's own session, so the
+  /// profile write that follows is evaluated as the brand-new user (who has
+  /// no profile doc yet, so the rules' `isAdmin()` is false) and gets denied —
+  /// leaving a login credential with no profile, and the admin logged out.
+  /// Doing it on a separate app keeps the admin's session untouched. Mirrors
+  /// the web admin (web_admin/src/data/repositories/FirestoreUserRepository.ts).
+  static Future<FirebaseAuth> _defaultProvisioningAuth() async {
+    FirebaseApp app;
+    try {
+      app = Firebase.app(_provisioningAppName);
+    } catch (_) {
+      // Reuse the primary app's options — same project, separate session.
+      app = await Firebase.initializeApp(
+        name: _provisioningAppName,
+        options: Firebase.app().options,
+      );
+    }
+    return FirebaseAuth.instanceFor(app: app);
+  }
 
   CollectionReference<Map<String, dynamic>> get _usersRef =>
       _firestore.collection(FirestoreCollections.users);
@@ -41,15 +73,27 @@ class UserRepositoryImpl implements UserRepository {
         );
       }
 
-      // Create Firebase Auth user
-      // Note: This creates the user under the admin's session
-      // In production, you might want to use Cloud Functions for this
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      final userId = userCredential.user!.uid;
+      // Mint the credential on the provisioning app, NOT on `_auth` — see
+      // [_defaultProvisioningAuth]. The new account is signed into that
+      // throwaway instance as a side effect; sign it back out so nothing is
+      // left holding a session, then write the profile below with the
+      // admin's own (untouched) session so the rules see an admin.
+      final provisioningAuth = await _provisioningAuth();
+      final String userId;
+      try {
+        final userCredential =
+            await provisioningAuth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        userId = userCredential.user!.uid;
+      } finally {
+        try {
+          await provisioningAuth.signOut();
+        } catch (_) {
+          // Never let cleanup mask the real outcome of the create.
+        }
+      }
 
       // Create Firestore document
       final user = UserEntity(
@@ -67,6 +111,20 @@ class UserRepositoryImpl implements UserRepository {
 
       return user;
     } on FirebaseAuthException catch (e) {
+      // We already know no profile doc exists (emailExists ran above), so
+      // Auth rejecting the email means a credential is orphaned — typically
+      // left behind by a create that failed after the account was minted.
+      // Reporting the raw "email already in use" sends admins hunting for a
+      // user that isn't in the list.
+      if (e.code == 'email-already-in-use') {
+        throw DuplicateEntryException(
+          field: 'email',
+          value: email,
+          message: 'This email has a leftover login from an earlier failed '
+              'setup, so the account can\'t be created. Ask your developer to '
+              'clear it, then try again.',
+        );
+      }
       throw AuthException(
         message: 'Failed to create user: ${e.message}',
         code: e.code,
