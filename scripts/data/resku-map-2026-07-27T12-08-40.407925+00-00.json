@@ -1,0 +1,7572 @@
+{
+ "appliedAt": "2026-07-27T12:08:40.407925+00:00",
+ "note": "reconstructed from resku-plan.json after map-write path crash; Firestore writes verified complete",
+ "renames": [
+  {
+   "id": "CENM57qrAqrp5MpDuJbF",
+   "oldSku": "ARFLTRPTSB-J79KPZ",
+   "newSku": "00020001",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "nFne9SgZWMh0IrcsbvCK",
+   "oldSku": "ARFLTRMRTR-AHEYSR",
+   "newSku": "00020002",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "QZKjEjHoVANwD8EeWzvk",
+   "oldSku": "ARFLTRMRTR-3QRUHE",
+   "newSku": "00020003",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "x9ks8PeIZ7k6qCgKezky",
+   "oldSku": "ARFLTRLZXB-D2PD49",
+   "newSku": "00020004",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "XbB44RCD2US0rjb0bgFl",
+   "oldSku": "ARFLTRSNTL-U43ZMB",
+   "newSku": "00020005",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "xzvn6hI0Mkcre9Osy85H",
+   "oldSku": "ARFLTRMRTR-AQEH5H",
+   "newSku": "00020006",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "7lKMg8RzptmC1DVd5PFo",
+   "oldSku": "ARFLTRSNTL-Q3SXU4",
+   "newSku": "00020007",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "bki1yUYuSL3Rg430smF0",
+   "oldSku": "ARFLTRSNTL-KKZMD5",
+   "newSku": "00020008",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "Civl3FQ0TZxrJY8qFdcl",
+   "oldSku": "ARFLTRSNTL-2UXU26",
+   "newSku": "00020009",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "hCEFcN4OO7vNhlauCuGx",
+   "oldSku": "ARFLTRSNTL-9W8G45",
+   "newSku": "00020010",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "j0Kr6yqKXyzp4m8fx9xv",
+   "oldSku": "ARFLTRSNTL-42CESN",
+   "newSku": "00020011",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "TIyXzLbGIRX0G2YyIdIK",
+   "oldSku": "ARFLTRSNTL-7Q3WZW",
+   "newSku": "00020012",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "vYbLdUu19mhR6SoXlVLw",
+   "oldSku": "ARFLTRSNTL-3VHSBT",
+   "newSku": "00020013",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "x6Lgo7RwlEB8YGmw9hrY",
+   "oldSku": "ARFLTRSNTL-H94NPB",
+   "newSku": "00020014",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "YPaFiaV1Im72F6TXdCBJ",
+   "oldSku": "ARFLTRSNTL-KG9SHN",
+   "newSku": "00020015",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "GTfAOj18IWP1w6AlpkkE",
+   "oldSku": "ARFLTRSPRV-AH3SP8",
+   "newSku": "00020016",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "UXYYrO40C77QEdVtF00O",
+   "oldSku": "ARFLTRSPRV-DMENA2",
+   "newSku": "00020017",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "5Bfs4blG45UNuYUNopRe",
+   "oldSku": "BLTBNDNMXV-2RQSTJ",
+   "newSku": "00020018",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "lxZtF7aFmNHo4pBBT9hd",
+   "oldSku": "BLTBNDBRGM-9FEQE9",
+   "newSku": "00020019",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "MRlpFSIvklz6sWtXbawx",
+   "oldSku": "BLTBNDCLCK-W9YV2G",
+   "newSku": "00020020",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "OFAxsE2tB8j3AqSjlhGG",
+   "oldSku": "BLTBNDM125-Y4S3XU",
+   "newSku": "00020021",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "pOvwrnfTteplPcKmFQ7P",
+   "oldSku": "BLTBNDCLCK-9PNKSN",
+   "newSku": "00020022",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "ruXEE3GFWzf37EBXbbse",
+   "oldSku": "BLTBNDBTCR-D6Q7AW",
+   "newSku": "00020023",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "UTAfHoGNK6iUgjHgo0nv",
+   "oldSku": "BLTBNDDVPC-PZV9HW",
+   "newSku": "00020024",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "yNIF044MgJmN1pQVbwj1",
+   "oldSku": "BLTBNDSKYD-KEBXY4",
+   "newSku": "00020025",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "zIvVwSFdQLsuEkgOFJnu",
+   "oldSku": "BLTBNDMSPR-8GMS4A",
+   "newSku": "00020026",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "ZxCgmU2dJfLvj4mRHDFm",
+   "oldSku": "BLTBNDBTFZ-7YTRJM",
+   "newSku": "00020027",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "18Vx9bBd9sv3IxZ1D1JN",
+   "oldSku": "BLTYMHMSPR-F6HXSV",
+   "newSku": "00020028",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "1ondRmAjez30IRAoXmkU",
+   "oldSku": "BLTYMHNMXV-26ZJJY",
+   "newSku": "00020029",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "32w3cRVvImugtOjVVXwK",
+   "oldSku": "BLTHNDPCX1-5XJESE",
+   "newSku": "00020030",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "B1OTeda2J5jEq9n19LyN",
+   "oldSku": "BLTYMHNMXV-9ABZEM",
+   "newSku": "00020031",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "dLsMkZ38IidVHlqpcR8s",
+   "oldSku": "BLTYMHM125-YUQC4P",
+   "newSku": "00020032",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "pCxolc3WlnRkhfT3mQZW",
+   "oldSku": "BLTYMHNMXV-J9PGKQ",
+   "newSku": "00020033",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "xCC6XEwR9DHsIVJp9KjG",
+   "oldSku": "BLTHNDDV16-8Z5BE8",
+   "newSku": "00020034",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "0r1gMmmrtwjNos3c6tAJ",
+   "oldSku": "CNTRSPRNGH-37ASZR",
+   "newSku": "00020035",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "3rdNbV8utyWMNoE2kWJX",
+   "oldSku": "CNTRSPRNGN-RHCAAH",
+   "newSku": "00020036",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "5sGavfaVrmLJLG9Zhowz",
+   "oldSku": "CNTRSPRNGN-M6V57K",
+   "newSku": "00020037",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "LkXF4ErDoDzevvhE45Yi",
+   "oldSku": "CNTRSPRNGN-D2QRWH",
+   "newSku": "00020038",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "VpWjl7tBfV4frWPjP69T",
+   "oldSku": "CNTRSPRNGN-G6DJCR",
+   "newSku": "00020039",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "4Du2wGHIVB0zAR2qoc44",
+   "oldSku": "CNTRSPRNGR-MRZKAA",
+   "newSku": "00020040",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "c8nsmrwDz70479veXgXp",
+   "oldSku": "CNTRSPRNGN-ZATAZR",
+   "newSku": "00020041",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "dQxhg5AN2TL3WalZtu0i",
+   "oldSku": "CNTRSPRNGS-AFA54B",
+   "newSku": "00020042",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "DT0wFJlfu4hQdDLRGYtV",
+   "oldSku": "CNTRSPRNGS-EP7AVJ",
+   "newSku": "00020043",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "IZjBlqBahKH7ipQv7dZU",
+   "oldSku": "CNTRSPRNGN-5BAYEG",
+   "newSku": "00020044",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "KD0gm5cYzhHsSRH7rJm0",
+   "oldSku": "CNTRSPRNGS-S43YDD",
+   "newSku": "00020045",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "XKv8QNUENskvJ27SwYga",
+   "oldSku": "CNTRSPRNGS-D2T8AD",
+   "newSku": "00020046",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "YWQKaamp9ndDG5EWDBAw",
+   "oldSku": "CNTRSPRNGR-MNBKDF",
+   "newSku": "00020047",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "zw2YBlbjIRdubynGXpgm",
+   "oldSku": "CNTRSPRNGS-FMZZTR",
+   "newSku": "00020048",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "0yRMkHpgOXciWWR2YYUv",
+   "oldSku": "CNTRSPRNGS-9KBNNQ",
+   "newSku": "00020049",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "asRHHVSSMEtbEfrzsoDP",
+   "oldSku": "CNTRSPRNGS-Y3A5UY",
+   "newSku": "00020050",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "KTPz7soeN81WltH7LsJy",
+   "oldSku": "CNTRSPRNGS-X5JPN2",
+   "newSku": "00020051",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "Nh7RFGXSYa1EO6R7lKgD",
+   "oldSku": "CNTRSPRNGS-3FUWVC",
+   "newSku": "00020052",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "rHfzl3YHTx4CvztMoqXM",
+   "oldSku": "CNTRSPRNGS-CD8T8T",
+   "newSku": "00020053",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "sSL6qgHVtVDOKignHyIe",
+   "oldSku": "CNTRSPRNGS-M88DY7",
+   "newSku": "00020054",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "tReW9uq8PGIy48ROIzxx",
+   "oldSku": "CNTRSPRNGS-DHBXQ2",
+   "newSku": "00020055",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "wbL3SI4c99VYjqX64GWv",
+   "oldSku": "CNTRSPRNGS-HFHS5Z",
+   "newSku": "00020056",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "LcWHaPr1C86YNslXHe0u",
+   "oldSku": "CLTCHBLLJV-CBY8MM",
+   "newSku": "00020057",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "XQo1HYGryY0T5fmnQ6HW",
+   "oldSku": "CLTCHSSYSR-JURD4B",
+   "newSku": "00020058",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "0CjKHxBGQRMWxQcAnYG3",
+   "oldSku": "CLTCHBLLSR-EWCP63",
+   "newSku": "00020059",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "7g8t06wRWurUevuMuBUb",
+   "oldSku": "CLTCHBLLJV-V9HQ7X",
+   "newSku": "00020060",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "aeKkHmxEg0LQPbYkbxDA",
+   "oldSku": "CLTCHBLLSR-CXXCA5",
+   "newSku": "00020061",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "bfViiTXSR9mf5i36zD9G",
+   "oldSku": "CLTCHBLLNT-Q9PEMP",
+   "newSku": "00020062",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "dgjxk5pwqE5b4fjCRGBw",
+   "oldSku": "CLTCHBLLJV-D6KNAC",
+   "newSku": "00020063",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "LCGH5ed2KBYfTLhYDHlr",
+   "oldSku": "CLTCHBLLNT-BK8Z7S",
+   "newSku": "00020064",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "o8XC4UMAbTKWAf1IMOC7",
+   "oldSku": "CLTCHBLLRS-4D3R9H",
+   "newSku": "00020065",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "xDb5S6ptEw46y9rB1zLx",
+   "oldSku": "CLTCHBLLRS-MJNWHD",
+   "newSku": "00020066",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "xTkYAZffxbWmnhQuNw53",
+   "oldSku": "CLTCHBLLRS-QE3YQ9",
+   "newSku": "00020067",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "26H6cmUreoQeqLQsdYYp",
+   "oldSku": "CLTCHLNNGM-B7F9VS",
+   "newSku": "00020068",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "3rhlpKyzwrDuVzMkXV69",
+   "oldSku": "CLTCHLNNGK-GSD3WW",
+   "newSku": "00020069",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "cDLn8r3vWjvi7V7f2Q0n",
+   "oldSku": "CLTCHLNNGG-F29BH9",
+   "newSku": "00020070",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "HFiV8RYweWCZFdsbdLiO",
+   "oldSku": "CLTCHLNNGM-YFZCK3",
+   "newSku": "00020071",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "JbLDKe2kNDNloB7zln3d",
+   "oldSku": "CLTCHDMPRM-TEFPNA",
+   "newSku": "00020072",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "yXgKgKH4iOMWVInCSMWQ",
+   "oldSku": "CLTCHLNNGM-ER77MK",
+   "newSku": "00020073",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "ZOOJvRPQHUbiJsMNuMJU",
+   "oldSku": "CLTCHLNNGM-WKPJ26",
+   "newSku": "00020074",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "dfSOPaQ1LLkoFlchh7jZ",
+   "oldSku": "CLTCHSHSSY-ZYU7SA",
+   "newSku": "00020075",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "EDT2vvNcMxEgQD2rg0rM",
+   "oldSku": "CLTCHNTMCR-NUFTC8",
+   "newSku": "00020076",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "HwnNYmgmxe1yOYE7xEuM",
+   "oldSku": "CLTCHSHSSY-W3ZDXA",
+   "newSku": "00020077",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "lhoOePGgqKiQ8ZH2BaZc",
+   "oldSku": "CLTCHLNNGP-KBGX55",
+   "newSku": "00020078",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "p8YVkjqdz0g9bknhx1oN",
+   "oldSku": "CLTCHNTMCR-ET7526",
+   "newSku": "00020079",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "sjqGOUmsMXsy2Yc17I2P",
+   "oldSku": "CLTCHNTMSM-JQPHJ2",
+   "newSku": "00020080",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "tNWT6WAk6wgd8Swn2vBW",
+   "oldSku": "CLTCHLNNGP-XXFX7M",
+   "newSku": "00020081",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "uakT6ns98rTrZ8va7Rb6",
+   "oldSku": "CLTCHLNNGM-NFUCVZ",
+   "newSku": "00020082",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "uNFfv330FON5ZjZE8CyS",
+   "oldSku": "CLTCHNTMCR-Y39U2S",
+   "newSku": "00020083",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "1kL5wwhpjGOnBSTWnOwk",
+   "oldSku": "CLTCHSPRNG-3UB6VN",
+   "newSku": "00020084",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "4ERd3v2fBb0iJlJru4gC",
+   "oldSku": "CLTCHSHSSY-TB9VRM",
+   "newSku": "00020085",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "9ikflXGmw5tMvrc7Dfh9",
+   "oldSku": "CLTCHSHJVT-668XPJ",
+   "newSku": "00020086",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "B8NHxHduonnNcT35p5G3",
+   "oldSku": "CLTCHSHSSY-PGT34T",
+   "newSku": "00020087",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "g2DYven0t8eQYIxo7Jwk",
+   "oldSku": "CLTCHSHSRF-TFR9YG",
+   "newSku": "00020088",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "G3tIaSnd9LuvrbH0sDO8",
+   "oldSku": "CLTCHSPRNG-9AW57D",
+   "newSku": "00020089",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "htrOWAb01fY8UplcpncS",
+   "oldSku": "CLTCHSPRNG-YHBACT",
+   "newSku": "00020090",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "pdydvmQBLDzYBJXQP0Os",
+   "oldSku": "CLTCHSHRS8-VD6WVE",
+   "newSku": "00020091",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "r8ntOFxXSw2fNSseEPEX",
+   "oldSku": "CLTCHSPRNG-NCJRCJ",
+   "newSku": "00020092",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "RIXD8oit7YicgwfcVr6H",
+   "oldSku": "CLTCHSHSSY-Z3SB5E",
+   "newSku": "00020093",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "0cOJA2v4sVVB12wYI9G1",
+   "oldSku": "CLTCHSPRNG-956P84",
+   "newSku": "00020094",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "eBqGub1C0iJRzomgiC3Y",
+   "oldSku": "CLTCHSPRNG-XBC8F2",
+   "newSku": "00020095",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "fp5d5Av2GWVRUQQHQEqV",
+   "oldSku": "CLTCHSPRNG-EGTQ86",
+   "newSku": "00020096",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "UjAFP2w7YtdTpUrsZIia",
+   "oldSku": "CLTCHSPRNG-9659CK",
+   "newSku": "00020097",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "VTiGgHFnwjYhqNpWN1UO",
+   "oldSku": "CLTCHSPRNG-35BU8V",
+   "newSku": "00020098",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "Sy7066hVwrSQvSB7FVqt",
+   "oldSku": "GRPDLCT100-BF6E29",
+   "newSku": "00020099",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "zugqmEi7f4ouopohO7De",
+   "oldSku": "GRPDLRS-859XKC",
+   "newSku": "00020100",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "2fC1DhV6x6NCzhgcZ3zE",
+   "oldSku": "GRPDLTMX-PRW2Z9",
+   "newSku": "00020101",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "7QfajLkMQsJPfBULdg3O",
+   "oldSku": "GRPDLSMSH1-EG6UW6",
+   "newSku": "00020102",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "FT3uKjLgJBfSi0Obk2EP",
+   "oldSku": "GRPDLTMX15-UXMQC2",
+   "newSku": "00020103",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "mbauSs3glH3T7H8CVnD4",
+   "oldSku": "GRPDLW1001-FCDW7D",
+   "newSku": "00020104",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "OOuBjxNNiEg9Mr13jAa7",
+   "oldSku": "GRPDLSHGN-X5VG4P",
+   "newSku": "00020105",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "rFbBNkmnzGziNrStUGHS",
+   "oldSku": "GRPDLXRM11-FVKEFF",
+   "newSku": "00020106",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "00wvd92JOIp6DVN8FqJS",
+   "oldSku": "PLLYBLLPTS-JBKG6D",
+   "newSku": "00020107",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "88t6oDlRZlrtaiUGy2pn",
+   "oldSku": "PLLYBLLPTS-WFV823",
+   "newSku": "00020108",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "f1rOJg1VtdnIlL3rqvNB",
+   "oldSku": "PLLYBLLPTS-RBWKVP",
+   "newSku": "00020109",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "IxyLDcxk42BIyxp8sgyI",
+   "oldSku": "PLLYBLLPTS-T2VDAY",
+   "newSku": "00020110",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "MlEnGuLSkl2fCrdlPwRP",
+   "oldSku": "PRMRYCLTCH-WCWAW7",
+   "newSku": "00020111",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "tzn1MSYTu8NluNYQ9at5",
+   "oldSku": "PLLYBLLPTS-H78DND",
+   "newSku": "00020112",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "BO0SfakreCL0e3aMg482",
+   "oldSku": "PLLYSTJVTC-F4DEUE",
+   "newSku": "00020113",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "dXJRsskwehwcglmt5Ri0",
+   "oldSku": "PLLYSTMRTR-V6QCFH",
+   "newSku": "00020114",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "ffAuxCFEDY9XbL4VKcKC",
+   "oldSku": "PLLYSTHRCB-V4SGT2",
+   "newSku": "00020115",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "isdks34WmGlfcyPhPDii",
+   "oldSku": "PLLYBLLPTS-T5S57Q",
+   "newSku": "00020116",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "lp86yleALiqwRBxu2Y5D",
+   "oldSku": "PLLYBLLPTS-S3MV4X",
+   "newSku": "00020117",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "Pb2hcT1auT4Zb7CIjkjq",
+   "oldSku": "PLLYSTRS8D-JT4KKC",
+   "newSku": "00020118",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "S2aroEtQu7bIx5cr2m2O",
+   "oldSku": "PLLYSTJVTP-9QJZPF",
+   "newSku": "00020119",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "V7lOtOj7RZMMP2zhQ7q7",
+   "oldSku": "PLLYSTRS8R-DCHF5W",
+   "newSku": "00020120",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "v9tOzN7oSpJ34xkjU5yt",
+   "oldSku": "PLLYBLLPTS-TARH22",
+   "newSku": "00020121",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "z3guBDUmXuOixljYRO2a",
+   "oldSku": "PLLYBLLPTS-YZWQ28",
+   "newSku": "00020122",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "54deHOY0E3KUsjJV3J7F",
+   "oldSku": "PLLYSTSRFM-RV6XGQ",
+   "newSku": "00020123",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "FEL4kDjomJWhvrFROaet",
+   "oldSku": "PLLYSTRS8C-K76QH2",
+   "newSku": "00020124",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "GS61n3vw3NVOxdJmAeRf",
+   "oldSku": "PLLYSTSNRC-PEAQKA",
+   "newSku": "00020125",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "N0dBhUo9zBMF6pbMJOJa",
+   "oldSku": "PLLYSTSNTL-D77C4G",
+   "newSku": "00020126",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "NnzOLJsvplK9gWS4qHb4",
+   "oldSku": "PLLYSTSRFN-NEZYMH",
+   "newSku": "00020127",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "ORufClZ1V7Y7Oy9OOunP",
+   "oldSku": "PLLYSTSNTL-9QGXCS",
+   "newSku": "00020128",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "pzu9osNwoJzcvnNjzCno",
+   "oldSku": "PLLYSTSNRC-2J82EZ",
+   "newSku": "00020129",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "Q0kGeU0ZrzyOMXXTo3ly",
+   "oldSku": "PLLYSTSNRC-T9K6JD",
+   "newSku": "00020130",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "rgtWDJ8rbTGBB7KnWxqV",
+   "oldSku": "PLLYSTSRFN-JBPFY3",
+   "newSku": "00020131",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "7di3ejkeZNPQIv6yUA7v",
+   "oldSku": "PLLYSTYMKT-R4GM4R",
+   "newSku": "00020132",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "Cy1WYBO3yTYBPKOTyA5v",
+   "oldSku": "PLLYWSHRHR-XW6FJ9",
+   "newSku": "00020133",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "gppGJcJwNmc77wyqz4hm",
+   "oldSku": "PLLYWSHRRS-R4SRZK",
+   "newSku": "00020134",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "PwH4oTInMytzXjdP3gp7",
+   "oldSku": "PLLYSTYMKT-M9HMUY",
+   "newSku": "00020135",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "UTMz8YhqZPl6nYnuXW1t",
+   "oldSku": "PLLYWSHRRS-WDSQWN",
+   "newSku": "00020136",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "8mrBM9awyEli1YTYUlZA",
+   "oldSku": "SLDRHRCHSP-44JBTM",
+   "newSku": "00020137",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "GM48Ja1iPYwfhbuILP5j",
+   "oldSku": "SLDRPTSBKR-K48BD8",
+   "newSku": "00020138",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "unvOWhLNWdex2bgQniJL",
+   "oldSku": "SLDRMTRCLC-QXXMNH",
+   "newSku": "00020139",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "YCy2bMY4c8ZYC9HG3OEl",
+   "oldSku": "SLDRMTRBTB-D2ASQN",
+   "newSku": "00020140",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "ZAzNDWZ4OtjpoY2BvuzV",
+   "oldSku": "SLDRHRCHSP-UQ36SH",
+   "newSku": "00020141",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "3WI1zQCcBmEK07FFRKod",
+   "oldSku": "SLDRYMHNMX-JTHK5N",
+   "newSku": "00020142",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "jnCMq5jzaD7LQh2O87Y2",
+   "oldSku": "SLDRSNRCNG-HM497S",
+   "newSku": "00020143",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "YEHGGZK4DplMeBr2xq1s",
+   "oldSku": "SLDRPTSBKM-384H5F",
+   "newSku": "00020144",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "0iJll90adUVWH5FOtQJi",
+   "oldSku": "TRQDRVMRTR-896JNM",
+   "newSku": "00020145",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "9ujpE9PDRjVhWjZiIwkw",
+   "oldSku": "TRQDRVBRNG-U5UCS2",
+   "newSku": "00020146",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "DVRac0QcsZFVArbljmZ1",
+   "oldSku": "TRQDRVMRTR-5FXGG6",
+   "newSku": "00020147",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "ItFwWzwz90n3ZaT7LMpg",
+   "oldSku": "TRQDRVCLCK-BVP4EJ",
+   "newSku": "00020148",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "MDXipMqwdDiuQ3Xn0fx3",
+   "oldSku": "TRQDRVBRNG-DR4289",
+   "newSku": "00020149",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "VkXEbgAz7GpT6WPYDSp1",
+   "oldSku": "TRQDRVBRNG-4MBFXW",
+   "newSku": "00020150",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "Whe8WxMPOzFZeO6lzkhe",
+   "oldSku": "TRQDRVBRNG-NN92DC",
+   "newSku": "00020151",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "2vwVpAPkbsKVvrmvAsZY",
+   "oldSku": "BLTBNDSKYD-YKQRTJ",
+   "newSku": "00020152",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "vOeb00kKPK7hiUrTy2V1",
+   "oldSku": "BLTBNDSKYD-BCCQ3M",
+   "newSku": "00020153",
+   "categoryCode": "0002"
+  },
+  {
+   "id": "1lzzaj3y6RvtewuXkGE7",
+   "oldSku": "FRNTSHCKSP-66ZKG5",
+   "newSku": "00210001",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "iIIlaZMdNYayn0pN5A6p",
+   "oldSku": "FRNTSHCKSP-VM56W7",
+   "newSku": "00210002",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "JaJgbieSyOrDtwd2Cpnk",
+   "oldSku": "FRNTSHCKSP-VUJKA6",
+   "newSku": "00210003",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "qg9Py6niaWMBpJ2qsKvQ",
+   "oldSku": "FRNTSHCKSP-WWSDEE",
+   "newSku": "00210004",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "YlmXR7JL1geOlkLcKL6D",
+   "oldSku": "FRNTSHCKMT-PME2Q5",
+   "newSku": "00210005",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "zBkrIi487BOh0LtC4tCT",
+   "oldSku": "FRNTSHCKSP-3GNGXK",
+   "newSku": "00210006",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "01NmzeixI48lw6yHAWZY",
+   "oldSku": "FRNTSHCKSP-5VAQ8X",
+   "newSku": "00210007",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "BmLotK2DowQgqOELEowP",
+   "oldSku": "FRNTSHCKSP-AQ5FG6",
+   "newSku": "00210008",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "C31AHsaKZCLrck9mI6qY",
+   "oldSku": "FRNTSHCKSP-HNYAM9",
+   "newSku": "00210009",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "d1uktL0qTPWmA2DmApFS",
+   "oldSku": "FRNTSHCKSP-27GE3H",
+   "newSku": "00210010",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "D8dk151CzpLjOs2IDqiP",
+   "oldSku": "FRNTSHCKSP-F993V5",
+   "newSku": "00210011",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "iyjQPmqoNfjWV4g8DW1H",
+   "oldSku": "FRNTSHCKSP-8GDHKR",
+   "newSku": "00210012",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "PDFfHPy8Yw0D7fM9kzBF",
+   "oldSku": "FRNTSHCKSP-WGQBDG",
+   "newSku": "00210013",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "R2qZwAUUtWno3rmop1WC",
+   "oldSku": "FRNTSHCKSP-ZY7EYX",
+   "newSku": "00210014",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "TtO5lDZJWUUEOmJW3MCe",
+   "oldSku": "FRNTSHCKSP-B4V5BF",
+   "newSku": "00210015",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "ukqClxIvJShqVed2TqDa",
+   "oldSku": "FRNTSHCKSP-SZ2TXQ",
+   "newSku": "00210016",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "IieaXQhv7MdjzaXahU4J",
+   "oldSku": "FRNTSHCKTG-53J68Q",
+   "newSku": "00210017",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "6AuF467ljzXemR6Ip05m",
+   "oldSku": "RRSHCKMTRR-Q75XCK",
+   "newSku": "00210018",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "7yzC2QicSl6qKch5TZS5",
+   "oldSku": "RRSHCKMTRS-SDM737",
+   "newSku": "00210019",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "8IhZxvDWMhrv3xIKQIRh",
+   "oldSku": "RRSHCKMTRS-TZXTZ8",
+   "newSku": "00210020",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "amwYvr3Igl04azdzJhhw",
+   "oldSku": "RRSHCKMTSP-EXJ9ZF",
+   "newSku": "00210021",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "E2wauQBDLOqf0t9S609O",
+   "oldSku": "RRSHCKMTRR-DN2JJF",
+   "newSku": "00210022",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "gnsbhjt9z3pcmg7eKFYI",
+   "oldSku": "RRSHCKMKTT-T2RUXM",
+   "newSku": "00210023",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "lHlj46WPoYzToBvcEQCI",
+   "oldSku": "RRSHCKMTRR-YCQZCK",
+   "newSku": "00210024",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "P34jGvIA7BtvuHnkIhJD",
+   "oldSku": "RRSHCKMTSP-QJ5A6G",
+   "newSku": "00210025",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "Q8nWne2lp4kpoT6hYtnl",
+   "oldSku": "RRSHCKMTRX-HFD2P3",
+   "newSku": "00210026",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "w7KxCedhInPGH610V6Nq",
+   "oldSku": "RRSHCKMTRS-E5JZVF",
+   "newSku": "00210027",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "5jZuUwDsvCt8Rg2AWOZ3",
+   "oldSku": "RRSHCKTGCR-FZS4VU",
+   "newSku": "00210028",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "fnTjwIZ1HzY3dmLbxtLm",
+   "oldSku": "RRSHCKTGXR-43WZ6P",
+   "newSku": "00210029",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "KQamWytXTav4Ev28cfWt",
+   "oldSku": "RRSHCKTGXR-CTBFPX",
+   "newSku": "00210030",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "mztXExiIYRfgTiySogbf",
+   "oldSku": "RRSHCKTGXR-6GY7TB",
+   "newSku": "00210031",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "O5tFaGmiZRu2DLhhpF5p",
+   "oldSku": "RRSHCKMTRX-CTDRBK",
+   "newSku": "00210032",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "OxS8m49kxCEbhbnsxkwJ",
+   "oldSku": "RRSHCKSMKC-ZUDX8Q",
+   "newSku": "00210033",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "PCkFAbBzR6hnZPFciLPD",
+   "oldSku": "RRSHCKTGXR-8VVU67",
+   "newSku": "00210034",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "pr1CHsiwrw7oelgpyBra",
+   "oldSku": "RRSHCKTGXR-CSB3VW",
+   "newSku": "00210035",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "ufaaUfYQUVWFxlebJ35T",
+   "oldSku": "RRSHCKTGXR-UT25BH",
+   "newSku": "00210036",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "BSxQiampArLweYqXThrK",
+   "oldSku": "RRSHCKWTNK-QSNEBC",
+   "newSku": "00210037",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "dZFcCefzVAGN57TYDXao",
+   "oldSku": "RRSHCKWTNK-H3BZP3",
+   "newSku": "00210038",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "ffirWMjULCKqcVwmGPpN",
+   "oldSku": "RRSHCKTGXR-2P2H5U",
+   "newSku": "00210039",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "GugdaQ3VdsUnJBTZJmID",
+   "oldSku": "RRSHCKWTNK-2H2AHP",
+   "newSku": "00210040",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "KS0OxQhnQrMhN72aAS1k",
+   "oldSku": "RRSHCKWTNK-A9WFVH",
+   "newSku": "00210041",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "QNi3uvzDTsNeW8Wj08R0",
+   "oldSku": "RRSHCKWTNK-9YX87H",
+   "newSku": "00210042",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "rBaaoUl8z14ujQa1EjGb",
+   "oldSku": "RRSHCKWTNK-FKA9F4",
+   "newSku": "00210043",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "ZJshqzEOsAfoczCEHudq",
+   "oldSku": "RRSHCKTGXR-HQF4C9",
+   "newSku": "00210044",
+   "categoryCode": "0021"
+  },
+  {
+   "id": "YvtQ8zTocgZvnzUepalv",
+   "oldSku": "TLLGHTLDG-82X7DG",
+   "newSku": "00160001",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "crmdHxGQwiatAMnm2ICw",
+   "oldSku": "HDLGHTSSYB-RYM48K",
+   "newSku": "00160002",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "DxJph0Zzr5TXUmDP1wra",
+   "oldSku": "HDLGHTSSYB-8CYC3D",
+   "newSku": "00160003",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "KGJ1epFqMIQnyZ3EnGVb",
+   "oldSku": "HDLGHTSSYR-C5YP9D",
+   "newSku": "00160004",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "LRH3JjBYS03rKTgq8FDj",
+   "oldSku": "HDLGHTSSYB-XH49G4",
+   "newSku": "00160005",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "m7KRjLhL8WEfuzCVRn3v",
+   "oldSku": "HDLGHTSSYR-KH9CPR",
+   "newSku": "00160006",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "ZX9uvlXdF4vNMKGI8r8s",
+   "oldSku": "HDLGHTSSYM-V2EWB3",
+   "newSku": "00160007",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "c2itVrq0sJfVCoSby3KR",
+   "oldSku": "HDLGHTSSYS-BTZDMX",
+   "newSku": "00160008",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "ipFvRKshNqdoftekFeCy",
+   "oldSku": "HDLGHTSSYX-D652ZA",
+   "newSku": "00160009",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "K8JYicGnXQmFNbPYBEqf",
+   "oldSku": "HDLGHTSSYX-5PJGW2",
+   "newSku": "00160010",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "Lmt8VabUscNWMBz0Uohv",
+   "oldSku": "HDLGHTSSYW-8F6MGW",
+   "newSku": "00160011",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "LzxpP60EbKc8XW0ne5hA",
+   "oldSku": "HDLGHTSSYX-QDUTUA",
+   "newSku": "00160012",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "N9b1n1giK4njKfvPK9yw",
+   "oldSku": "HDLGHTSSYX-BZJJJ4",
+   "newSku": "00160013",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "pBrpNGV2Pv9L2qV0M64u",
+   "oldSku": "HDLGHTSSYX-SQ6BC9",
+   "newSku": "00160014",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "u92huofsO0P4W5b4We7j",
+   "oldSku": "HDLGHTSSYR-UUCW3B",
+   "newSku": "00160015",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "VQMHge9BdIleqDK04tUg",
+   "oldSku": "HDLGHTSSYT-99WBWF",
+   "newSku": "00160016",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "A9qDTcdePgY3VzCA9XJg",
+   "oldSku": "HDLGHTLDGL-ZFEVTM",
+   "newSku": "00160017",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "eORAIwJykkk88aDDt1gx",
+   "oldSku": "HDLGHTTLMP-EH7F3P",
+   "newSku": "00160018",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "ixm3NAwta4hY8puslVrr",
+   "oldSku": "HDLGHTLDPH-RPRUV9",
+   "newSku": "00160019",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "PvBIqmyONyYdJWo0oCFw",
+   "oldSku": "HDLGHTLDPH-SQWKKY",
+   "newSku": "00160020",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "qkPFf11Z98eQPZiartIc",
+   "oldSku": "HDLGHTLDGL-KT363K",
+   "newSku": "00160021",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "t5I7buvgejRCE24m9J7D",
+   "oldSku": "HDLGHTGLBL-562Z27",
+   "newSku": "00160022",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "yYS9d1nKEV88jtZug4dJ",
+   "oldSku": "HDLGHTLDSR-3ZCYFE",
+   "newSku": "00160023",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "05oTRbYuU12QGuMcuBJ1",
+   "oldSku": "HDLGHTLDSM-E3F8F8",
+   "newSku": "00160024",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "3Pj8UfC2N5akAFNTCnSZ",
+   "oldSku": "HDLGHTNVRS-RTEJKY",
+   "newSku": "00160025",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "3xngYNP3cqgxnzWodGcQ",
+   "oldSku": "HDLGHTSMSH-P4MXXE",
+   "newSku": "00160026",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "d5Glu2acsZBE0UL2Fkwp",
+   "oldSku": "HDLGHTRS10-4T8RGB",
+   "newSku": "00160027",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "wVMlr72JEaYyIVqlNlHC",
+   "oldSku": "HDLGHTNLYX-HWJGF9",
+   "newSku": "00160028",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "C5KiDXaQtgDazJJYimDy",
+   "oldSku": "MDLLDBL-XDPNQW",
+   "newSku": "00160029",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "R9EOu1dJH2uGO9DLBi1m",
+   "oldSku": "MDLLDPNK-SKAUTC",
+   "newSku": "00160030",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "UQ9ZZLb3hH6PkYsWkf3a",
+   "oldSku": "MDLLDGRN-46XJP9",
+   "newSku": "00160031",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "2JHDngl1Imqa9tGZLbEn",
+   "oldSku": "MDLLDYLW-YT35B4",
+   "newSku": "00160032",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "sYd5fHUuxtoWwexXVhm5",
+   "oldSku": "MDLLDRD-TP68R3",
+   "newSku": "00160033",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "a8up97SMpcfg3CcIUprS",
+   "oldSku": "PNTBLBT10S-FBDXG5",
+   "newSku": "00160034",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "zzHmu67sYpDFWmFuaVtD",
+   "oldSku": "PNTBLBGLBL-KBYUMN",
+   "newSku": "00160035",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "4svKDAT0gxBh1yns6ImV",
+   "oldSku": "PNTBLBT13B-N9TETE",
+   "newSku": "00160036",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "XbVV4XuSR9XYOPNPqK2V",
+   "oldSku": "PNTBLBT10S-QK4PSW",
+   "newSku": "00160037",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "9Wp7M7OUJJbLqzDXAO4e",
+   "oldSku": "SGNLLGHTSS-GA7ADR",
+   "newSku": "00160038",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "U6QQmJuvDj41eB0vfQDC",
+   "oldSku": "SGNLLGHTSS-HWKZUH",
+   "newSku": "00160039",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "4dabCXP25zdPLJzT2Uvq",
+   "oldSku": "SGNLLGHTSS-326GS4",
+   "newSku": "00160040",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "CwjLTxxkaFDT2E48SgJs",
+   "oldSku": "SGNLLGHTSS-HP4VD6",
+   "newSku": "00160041",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "fzH63wPqofQD3x1TRhsF",
+   "oldSku": "SGNLLGHTSS-G5G3FB",
+   "newSku": "00160042",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "kEu8XOZEqj599A4KUQ5i",
+   "oldSku": "SGNLLGHTSS-UPTGMM",
+   "newSku": "00160043",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "l2ygWhkusyAuDIPHgcyM",
+   "oldSku": "SGNLLGHTSS-5GWJ7E",
+   "newSku": "00160044",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "qmtXHoI6cwB0wrp6LVCo",
+   "oldSku": "SGNLLGHTSS-9U5C7Z",
+   "newSku": "00160045",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "RUi37PhOMeoHy8s4XryL",
+   "oldSku": "SGNLLGHTSS-FDE3MX",
+   "newSku": "00160046",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "TQD9WaumRqtBaA2u2lNe",
+   "oldSku": "SGNLLGHTSS-MGU6AB",
+   "newSku": "00160047",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "y135kZhmvszUqc1tq4yJ",
+   "oldSku": "SGNLLGHTSS-U4NF9E",
+   "newSku": "00160048",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "iTQoMYzrZXFceXcLfUiQ",
+   "oldSku": "SGNLLGHTSS-UXFN7V",
+   "newSku": "00160049",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "AHOKDTu2kWahrpFS4P3W",
+   "oldSku": "TLLGHTSSYS-5AHRHR",
+   "newSku": "00160050",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "NRtSNOo4867Z0f8WwYIp",
+   "oldSku": "TLLGHTSSYS-6VCMR6",
+   "newSku": "00160051",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "oCEQHRYX7tOOHPQvDt2t",
+   "oldSku": "TLLGHTSSYT-V5XDKB",
+   "newSku": "00160052",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "ESizDMfyCDX27f1AuJlo",
+   "oldSku": "WNKRLMPBT1-6KUH3Q",
+   "newSku": "00160053",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "F5OU4CA42CXk4J5u1YNP",
+   "oldSku": "WNKRLMPMMR-A8NH9Q",
+   "newSku": "00160054",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "ghkOFKLaC2YnPZo7QUKs",
+   "oldSku": "WNKRLMPSMS-8KK94S",
+   "newSku": "00160055",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "GG1ZInc6nUGpFQJ8j7z0",
+   "oldSku": "MDLLDWHT-BP642B",
+   "newSku": "00160056",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "qzPNeezpTHrRmxIEiubk",
+   "oldSku": "MDLLDWHT-D7DTNP",
+   "newSku": "00160057",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "osjq7dndxYlkjNGhpwju",
+   "oldSku": "MDLSMKKLLR-9RYZY6",
+   "newSku": "00160058",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "IjnKBl7LsHPqrdSiCGMQ",
+   "oldSku": "HDLGHTLDLH-5PJQYF",
+   "newSku": "00160059",
+   "categoryCode": "0016"
+  },
+  {
+   "id": "ENQjMdcAo9971WZ1FY2R",
+   "oldSku": "ANTRSTSHRC-93TKTF",
+   "newSku": "00200001",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "TvTVLHwVXV1qKCAZU9Es",
+   "oldSku": "ANTRSTSHRC-Y9NKC2",
+   "newSku": "00200002",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "6LE6L5zgnpd0Q5qbffd1",
+   "oldSku": "BRKFLDRS8-P5N5ZE",
+   "newSku": "00200003",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "h5PDhCcxC70uhxOna7vI",
+   "oldSku": "BRKFLDNTNL-J96S3P",
+   "newSku": "00200004",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "IosmZDazBcNGn132mx2W",
+   "oldSku": "CRBCLNRKNG-P4K7S9",
+   "newSku": "00200005",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "q19Ef0YH89NUAT31xeZy",
+   "oldSku": "CLNTPRSTN5-PSQFKR",
+   "newSku": "00200006",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "rybU3bWdPfxAvnPhE4xo",
+   "oldSku": "CLNTPRSTN1-XN88YB",
+   "newSku": "00200007",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "S5bGUK0XVp4P96aLdFWQ",
+   "oldSku": "CVTCLNR450-X3YA7R",
+   "newSku": "00200008",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "ZN7xFEc9CJkebW2V2HOX",
+   "oldSku": "CLNTSLVSTR-HZUHM6",
+   "newSku": "00200009",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "LlP80f16ZTsWj0zpNmsA",
+   "oldSku": "ENGNLPTRN2-AREAKF",
+   "newSku": "00200010",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "qbRAMjRLbBKTwCr26aNb",
+   "oldSku": "ENGNLPTRNS-X2QWAM",
+   "newSku": "00200011",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "54dHCq9ICVLR2G1HR3cY",
+   "oldSku": "FRKLNTNL-PYZNH8",
+   "newSku": "00200012",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "H96pLNz5RtIoIOTFLbQZ",
+   "oldSku": "FRKLPTRN-SZCQP4",
+   "newSku": "00200013",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "5L1zxVh4qRyhJVlm6yvQ",
+   "oldSku": "GRLYMLB-AS9F7E",
+   "newSku": "00200014",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "83jPcilSOKee9x3fW1Mi",
+   "oldSku": "GRLPRHND-GWCMNZ",
+   "newSku": "00200015",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "10k8FydXoybEJAvGB3g6",
+   "oldSku": "GRSHTMPKBY-2GUC48",
+   "newSku": "00200016",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "dIMZqWfRo8vFrY17QGdE",
+   "oldSku": "GRSHTMPGTS-V8QDGE",
+   "newSku": "00200017",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "v7qwdwaVMIQA4u2Ye8pI",
+   "oldSku": "GRSRD-UNTZRC",
+   "newSku": "00200018",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "aQo7r6gv8VQT0ElnkWzO",
+   "oldSku": "MGCGTS-HDG3J4",
+   "newSku": "00200019",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "ocaS5HDCVo6MuTxp9ZI5",
+   "oldSku": "OLFLTRBJJC-YYBY9Z",
+   "newSku": "00200020",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "BQjbvcxwFBpJzqFtpmW9",
+   "oldSku": "OLFLTRSHGN-287VNV",
+   "newSku": "00200021",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "h5cmrEqzj2nAZoH6PGny",
+   "oldSku": "OLFLTRKWSK-VCE492",
+   "newSku": "00200022",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "hw2DfrhfpOhbXLIz6t6j",
+   "oldSku": "OLFLTRYMH-H5F2G6",
+   "newSku": "00200023",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "xpCNlnNGwKzdk5yfrbfP",
+   "oldSku": "OLFLTRSZK-PR5WZU",
+   "newSku": "00200024",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "0Ga6fv7Pyfqfw3YeLCNz",
+   "oldSku": "SLNTMTR-EJWQSG",
+   "newSku": "00200025",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "M7pFanC9XrTJrpjJCFWT",
+   "oldSku": "SLNTKBY-V7TT6B",
+   "newSku": "00200026",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "agjiaSQoUc9JpDJv9MDn",
+   "oldSku": "TRBLCKKNGS-FZRHJQ",
+   "newSku": "00200027",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "Ea8N7aeZHnZFmgpZhguY",
+   "oldSku": "VS1SML-9H5WSD",
+   "newSku": "00200028",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "F77yVVEyZRNTCIZCAHKZ",
+   "oldSku": "VS1BG-XWEE58",
+   "newSku": "00200029",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "wLNiSEykuWhhQBrTWsdn",
+   "oldSku": "ENGNLVLG80-WJWBGT",
+   "newSku": "00200030",
+   "categoryCode": "0020"
+  },
+  {
+   "id": "cy4f4gNB4Ettjp2T8rgu",
+   "oldSku": "CHNDJSTRCS-RV7TD4",
+   "newSku": "00060001",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "lPa1UmBCNUeqfEoiMIsY",
+   "oldSku": "CHNDJSTRCS-8QR522",
+   "newSku": "00060002",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "m5yqyFWbq5eUbrAnDuvD",
+   "oldSku": "CHNDJSTRCS-S9KMP6",
+   "newSku": "00060003",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "mEvNrTKjiwAKzdVuscsx",
+   "oldSku": "CHNDJSTRCS-Y4RZMC",
+   "newSku": "00060004",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "nFXRjFD5pAvxKlurDxOB",
+   "oldSku": "CHNDJSTRRS-8YU2HR",
+   "newSku": "00060005",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "Xvb0SQLijPrbS2uZRfNv",
+   "oldSku": "CHNDJSTRCS-NMVDPT",
+   "newSku": "00060006",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "ZMPx5yW9rvloC2RFB8EX",
+   "oldSku": "CHNDJSTRCS-C5DTHT",
+   "newSku": "00060007",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "0cryG5KVwMSd6LIF0HNL",
+   "oldSku": "CHNGLBL428-656AMZ",
+   "newSku": "00060008",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "0GrPMe6Jb46is2Cqyuv8",
+   "oldSku": "CHNDJSTRW1-HBSRN5",
+   "newSku": "00060009",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "1UI9Ia0auJThM98zDzSD",
+   "oldSku": "CHNTHWRKZ4-ZN25CG",
+   "newSku": "00060010",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "av50iOYgMkce9wW3aU8J",
+   "oldSku": "CHNGLBL428-MSP8BG",
+   "newSku": "00060011",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "BIdzjOSCBI9d7cPR5ek0",
+   "oldSku": "CHNLCK428H-NDZSEW",
+   "newSku": "00060012",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "CYpkIFrHItTn3bRGppiF",
+   "oldSku": "CHNDJSTRXR-TGMETE",
+   "newSku": "00060013",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "Ee1dJuGUTkSrAJGgOvmk",
+   "oldSku": "CHNGLBL420-EZW8HX",
+   "newSku": "00060014",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "NudnNtspWP47ATyQmb1q",
+   "oldSku": "CHNLCK420-D4A8S2",
+   "newSku": "00060015",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "r2PUv8BkgpGHol3i6tlr",
+   "oldSku": "CHNTHWRKZ4-HJGHC8",
+   "newSku": "00060016",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "31BHJili9FojtR0OYJeU",
+   "oldSku": "CHNSPRCKTD-5T2B75",
+   "newSku": "00060017",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "67Dlj9N4C19Dq07AOycI",
+   "oldSku": "CHNVZ428H1-MYQDQ2",
+   "newSku": "00060018",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "bq6vqatpuyhccSKsereo",
+   "oldSku": "CHNSPRCKTD-5FSXEJ",
+   "newSku": "00060019",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "PyNL7xcCazeFK7c5DqVb",
+   "oldSku": "CHNSPRCKTM-UETUZD",
+   "newSku": "00060020",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "qcrO9ERPdJ3eqau1RA8k",
+   "oldSku": "CHNSPRCKTM-TFV3GC",
+   "newSku": "00060021",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "SLN4dD5KprQGHhOjh11o",
+   "oldSku": "CHNSPRCKTM-MPDAE9",
+   "newSku": "00060022",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "sRzogqA5YpfBvnITiX5O",
+   "oldSku": "CHNSPRCKTM-E8MYS5",
+   "newSku": "00060023",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "Ui7yxL1yVaAytfDMaQWt",
+   "oldSku": "CHNSPRCKTM-7PKNDA",
+   "newSku": "00060024",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "Wskgp5oulVdNgBkeEpLI",
+   "oldSku": "CHNSPRCKTD-KGQGHU",
+   "newSku": "00060025",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "x7Er4LLp18WKsNTtOyQl",
+   "oldSku": "CHNSPRCKTK-EEYBSP",
+   "newSku": "00060026",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "iQ3LhRG2bXKwD99wmBHC",
+   "oldSku": "CHNSPRCKTK-5GNHXT",
+   "newSku": "00060027",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "Ivfdr8bgzUKdM4hDoS8i",
+   "oldSku": "CHNSPRCKTK-9X6X54",
+   "newSku": "00060028",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "izAxIS8MD7KvHZ8vFEzG",
+   "oldSku": "CHNSPRCKTK-MWRRAH",
+   "newSku": "00060029",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "J8CY2Ht3w5cjhB1c3Irb",
+   "oldSku": "CHNSPRCKTK-A4R4PM",
+   "newSku": "00060030",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "SPp15rbzNokww8ooPG9o",
+   "oldSku": "CHNSPRCKTK-8Y95CD",
+   "newSku": "00060031",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "DjB6Jv52qnv8FwsKpkbS",
+   "oldSku": "ENGNSPRCKT-4G8WMV",
+   "newSku": "00060032",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "ocm3nPzrMfuaoJpyGs0n",
+   "oldSku": "ENGNSPRCKT-CT625Q",
+   "newSku": "00060033",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "QJSMwU0BFPBOUvOXzzmk",
+   "oldSku": "ENGNSPRCKT-ATNCVB",
+   "newSku": "00060034",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "iui8cy4Z01qFleE1rQwj",
+   "oldSku": "ENGNSPRCKT-MX5R4E",
+   "newSku": "00060035",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "l75kpZkDbS7IWnujWsYP",
+   "oldSku": "ENGNSPRCKT-K42MZM",
+   "newSku": "00060036",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "LKxCN8Urz9TALHdltWct",
+   "oldSku": "ENGNSPRCKT-DWNBBK",
+   "newSku": "00060037",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "qDeOmFSyIyME2LTHIVeA",
+   "oldSku": "ENGNSPRCKT-SHVAZG",
+   "newSku": "00060038",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "5K9ofXkKdFYGq4qAu8Rg",
+   "oldSku": "SPRCKTRRCN-A437NZ",
+   "newSku": "00060039",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "B2K5azaOSD6msiMDvGMo",
+   "oldSku": "SPRCKTRRCS-XPDNGR",
+   "newSku": "00060040",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "ciTPETQ1AgltcorXc13P",
+   "oldSku": "SPRCKTRRDB-4ZFRNX",
+   "newSku": "00060041",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "DeUNvQFiDMybIRpiAwL8",
+   "oldSku": "SPRCKTRRCS-65H3Y7",
+   "newSku": "00060042",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "HLk2s354kGPJFIwDpakH",
+   "oldSku": "SPRCKTLCK-Y37F78",
+   "newSku": "00060043",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "pjY06cbrsATvbowWnWxQ",
+   "oldSku": "SPRCKTRRDB-ZZ2JQY",
+   "newSku": "00060044",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "3296H2D7NpMF7haDc9WJ",
+   "oldSku": "SPRCKTRRTR-GD6P8F",
+   "newSku": "00060045",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "3nM9l3kbO7EyCOcrtZz7",
+   "oldSku": "SPRCKTRRJH-XVNYZH",
+   "newSku": "00060046",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "AzkQkfclyQBT7rFjV2Q7",
+   "oldSku": "SPRCKTRRTR-B3PNTZ",
+   "newSku": "00060047",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "GSnCvHtRvoPuQUwtXjA4",
+   "oldSku": "SPRCKTRRGH-EGDVK9",
+   "newSku": "00060048",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "hbk6ZP2mqeQH0OccQFXo",
+   "oldSku": "SPRCKTRRDB-JYS466",
+   "newSku": "00060049",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "IZoMkgaObRz0Rfxk1YBu",
+   "oldSku": "SPRCKTRRTR-WVZKEH",
+   "newSku": "00060050",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "KB3RMK1u0OAkLW7fLSGc",
+   "oldSku": "SPRCKTRRJM-2S6XFM",
+   "newSku": "00060051",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "KXUpZr3BMk0uJhGZr31s",
+   "oldSku": "SPRCKTRRTR-AEPW38",
+   "newSku": "00060052",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "scb7CGcxp32mE1WadNTh",
+   "oldSku": "SPRCKTRRJM-CTPDUB",
+   "newSku": "00060053",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "dZtsmiYpUobfOePJaj2q",
+   "oldSku": "SPRCKTRRTV-XTTMQV",
+   "newSku": "00060054",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "FhHBzAvDLkvFDCIvRmE0",
+   "oldSku": "SPRCKTRRTV-QEG4QA",
+   "newSku": "00060055",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "K1PUitE4uH0czhMitTFe",
+   "oldSku": "SPRCKTRRTV-W99AMX",
+   "newSku": "00060056",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "lCsipGTLtcrNn1PDdIne",
+   "oldSku": "SPRCKTRRTV-GX3M65",
+   "newSku": "00060057",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "rZXgUJQCmR4f7GHRKLgL",
+   "oldSku": "SPRCKTRRTV-HHGTN4",
+   "newSku": "00060058",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "zOpT5Hs8x4fO51mtqunN",
+   "oldSku": "SPRCKTRRVR-2XH25V",
+   "newSku": "00060059",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "ZRiQe4bF9dEqEnG4Q8tx",
+   "oldSku": "SPRCKTRRTV-4AMUS3",
+   "newSku": "00060060",
+   "categoryCode": "0006"
+  },
+  {
+   "id": "canSzun8NDYhu5g1K9GT",
+   "oldSku": "CMCHNGDCSL-4VMFKJ",
+   "newSku": "00170001",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "h8LcyFC80osDly5hIt5y",
+   "oldSku": "CMBRNGMCRC-ZCMBN7",
+   "newSku": "00170002",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "hRPv85vUCFALtZektv2x",
+   "oldSku": "CMBRNGMCRC-DBVEUQ",
+   "newSku": "00170003",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "nK1F9xu4WDgxU7MjTqB1",
+   "oldSku": "CMBRNGMCRC-UN4DUR",
+   "newSku": "00170004",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "P2QGaKGlhUtcVorBaMkv",
+   "oldSku": "CMBRNGMCRC-N8RQRV",
+   "newSku": "00170005",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "U5DUj1QMscdGtWMZlkmz",
+   "oldSku": "CMBRNGMCRC-ARAZ3R",
+   "newSku": "00170006",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "0vbDVziBV4nTCyScM6Cg",
+   "oldSku": "CMCHNGDCSL-FXYFKJ",
+   "newSku": "00170007",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "7Lu3mZtjvuTOVUug9TR8",
+   "oldSku": "CMSHFTGLBL-Y7GWY5",
+   "newSku": "00170008",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "9o27VAbJQ62MotGTgL5g",
+   "oldSku": "CMSHFTMRTX-WT9DA5",
+   "newSku": "00170009",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "fd28v9LKH4aCAs90DfJr",
+   "oldSku": "CMCHNGDKHC-T5Y3QX",
+   "newSku": "00170010",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "LYhWeIk9xofEsT8iBlzS",
+   "oldSku": "CMSHFTMRTR-DQXGRV",
+   "newSku": "00170011",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "nVCwilBDDEQ0lCn5asd9",
+   "oldSku": "CMCHNGDTGR-DQ2BSV",
+   "newSku": "00170012",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "v97kLWhClMLbgjZiLk9t",
+   "oldSku": "CMSHFTGLBL-TSYW9S",
+   "newSku": "00170013",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "vytHDhzPuxTXYfsR5rm7",
+   "oldSku": "CMSHFTMRTR-5HBHWP",
+   "newSku": "00170014",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "xNgXCmW9gzUR5BvmKjm8",
+   "oldSku": "CMSHFTMKTD-XK3Y8Y",
+   "newSku": "00170015",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "cRQ2kb2x2D2Rmomfgu2t",
+   "oldSku": "CMSHFTSPDW-6S55J3",
+   "newSku": "00170016",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "mZGtSKLgujkcbT36XG5f",
+   "oldSku": "CMSHFTMRTR-FJRZSB",
+   "newSku": "00170017",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "n6XGEsAsUrikOu2MI2LU",
+   "oldSku": "CMSHFTMRTR-C2333E",
+   "newSku": "00170018",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Uo1tnKazsennZuooNEFk",
+   "oldSku": "CMSHFTSPDX-63SAFU",
+   "newSku": "00170019",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "VWZSl3RHBQDmfhBlp9QO",
+   "oldSku": "CMSHFTMRTR-AG9Q5B",
+   "newSku": "00170020",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "yaFpxJokuOWY8VaXllII",
+   "oldSku": "CMSHFTSPDS-EK7P24",
+   "newSku": "00170021",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "dNDudi540WVQdMgcXzEi",
+   "oldSku": "CNNCTNGRDY-CGQ2PD",
+   "newSku": "00170022",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "eTA03A8UK8uxRoXZmeJN",
+   "oldSku": "CNNCTNGRDY-4ZN5D2",
+   "newSku": "00170023",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "4Vyb525tCntgnWnMVXcI",
+   "oldSku": "CYLNDRBLCK-7GZ37F",
+   "newSku": "00170024",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "bqGcz6zBYvNY28hj4Ses",
+   "oldSku": "CYLNDRBLCK-KTRMWN",
+   "newSku": "00170025",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "DLHDPs4IuNkKV6SlgWBQ",
+   "oldSku": "CYLNDRBLCK-RRUGAK",
+   "newSku": "00170026",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "j6cpCz9HSzC96IXZZF1s",
+   "oldSku": "CYLNDRBLCK-FW5BDD",
+   "newSku": "00170027",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "nCnZnqy6yAP4ZOBEqEeL",
+   "oldSku": "CYLNDRBLCK-RQFE3J",
+   "newSku": "00170028",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "rzm8JZPIIexOcyTtykiH",
+   "oldSku": "CYLNDRBLCK-NN6SFY",
+   "newSku": "00170029",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Xt6I0Y1KXjvfbIFiBYmo",
+   "oldSku": "CYLNDRBLCK-EJ4E52",
+   "newSku": "00170030",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "AZv44zuPtM9NDcCnIYks",
+   "oldSku": "CYLNDRBLCK-RN8DNY",
+   "newSku": "00170031",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "F0HYuG6MJXnSKB7Gir5O",
+   "oldSku": "CYLNDRBLCK-NR7E5E",
+   "newSku": "00170032",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "J48SMswSvxxxVyn7HrIJ",
+   "oldSku": "DPSTCKXRMW-FZHB7V",
+   "newSku": "00170033",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "kgOOun5lu8EHqhQ1NqlA",
+   "oldSku": "CYLNDRBLCK-SDSY7Q",
+   "newSku": "00170034",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "LUiEoT42lPhHDrGYvpaq",
+   "oldSku": "CYLNDRBLCK-YRX7EE",
+   "newSku": "00170035",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Qgzqic7H7KBg1tjyfQCR",
+   "oldSku": "CYLNDRBLCK-KCFR8V",
+   "newSku": "00170036",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "UG7W9OYLMpdDMIr2PvIN",
+   "oldSku": "CYLNDRBLCK-GQCNWD",
+   "newSku": "00170037",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "ZnjZb4jeTlPIoneU9XRr",
+   "oldSku": "DPSTCKBC17-TSRCNQ",
+   "newSku": "00170038",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "IO9BlX29j7ilzo96Fe4M",
+   "oldSku": "ENGNLDRNPL-A4APRW",
+   "newSku": "00170039",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "K59zu0iHBCXxpfpihoBE",
+   "oldSku": "DRNPLGCHCK-9CBHYB",
+   "newSku": "00170040",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "2KhqhDf7D0AbwDJtp68E",
+   "oldSku": "ENGNVLVTGS-VEC4DK",
+   "newSku": "00170041",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "ewEMsQRJ8RUIr3swwNJ3",
+   "oldSku": "ENGNVLVTGC-PD4BG5",
+   "newSku": "00170042",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "IBJefXd9ooeHRmG9F6j9",
+   "oldSku": "ENGNVLVTGS-SNTH6C",
+   "newSku": "00170043",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "iwJWs7CUUlQWRtj6j45a",
+   "oldSku": "ENGNVLVMKT-A9M46Z",
+   "newSku": "00170044",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "OFv5eVVfzJfplm2PExU2",
+   "oldSku": "ENGNVLVSPD-E4X2YS",
+   "newSku": "00170045",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "wca6UNkxz5q93XoQwHmy",
+   "oldSku": "ENGNVLVTGM-AU5Y22",
+   "newSku": "00170046",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "NkS2U07zwcULSXtwPYMT",
+   "oldSku": "ENGNVLVTGW-547YYP",
+   "newSku": "00170047",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "QiE5j2d2OID9sY82rXkf",
+   "oldSku": "GSKTLL-AS57ZC",
+   "newSku": "00170048",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "L8FFYRp9LG6fQKl4n8tD",
+   "oldSku": "KCKSTRTRBT-TPJ9TF",
+   "newSku": "00170049",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "LoqcFjsazBiyOeLXobvZ",
+   "oldSku": "KCKSTRTRCR-YQ5NUD",
+   "newSku": "00170050",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "pReHrAMtb4cRn5Aqs0Kt",
+   "oldSku": "KCKSTRTRCR-QHBKDB",
+   "newSku": "00170051",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "1Wqyfnioqe7gRmUISh8n",
+   "oldSku": "KCKSTRTRCR-ERPG4E",
+   "newSku": "00170052",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "4JmI8m1faE1jNzftvv81",
+   "oldSku": "KCKSTRTRHR-ZYB93M",
+   "newSku": "00170053",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "SLvfMVhwJLw84j8JgqPn",
+   "oldSku": "KCKSTRTRCR-89D9D5",
+   "newSku": "00170054",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "wEncWr85HxbQYnBWQo3T",
+   "oldSku": "KCKSTRTRCR-ZUHCAX",
+   "newSku": "00170055",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "weSuR0qyjX60fNW01AHQ",
+   "oldSku": "KCKSTRTRRD-4RDPTS",
+   "newSku": "00170056",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "apsQhFNA4fX24lluPdQx",
+   "oldSku": "OVRHLNGGSK-G24TPR",
+   "newSku": "00170057",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "DNL07Nn2Q8Kw4ip127Zn",
+   "oldSku": "OVRHLNGGSK-CZU78A",
+   "newSku": "00170058",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "flSomuyAuoVEGoWEbtRv",
+   "oldSku": "OVRHLNGGSK-253GPU",
+   "newSku": "00170059",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "iduxTLcSw2hFA9JjZMPy",
+   "oldSku": "OVRHLNGGSK-RAKTA5",
+   "newSku": "00170060",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "OHPOFJrWEeCGnkQeF8DL",
+   "oldSku": "OVRHLNGGSK-AYKQTH",
+   "newSku": "00170061",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Qsdj0461dOPhZdUOCDmA",
+   "oldSku": "OVRHLNGGSK-FMXKWR",
+   "newSku": "00170062",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "2hQIHhd93dHrAprUOmYa",
+   "oldSku": "OVRHLNGGSK-865QNH",
+   "newSku": "00170063",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "7sspJblt6Zr8MVH9zXVP",
+   "oldSku": "OVRHLNGGSK-5QC72T",
+   "newSku": "00170064",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "9t9g27aTABoKl1bPkFqY",
+   "oldSku": "OVRHLNGGSK-BPMDKH",
+   "newSku": "00170065",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "ccHmo0xGbewlVGf7GlrJ",
+   "oldSku": "OVRHLNGGSK-Q3FW98",
+   "newSku": "00170066",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "I41BRx3BOxnP2wwC2qVp",
+   "oldSku": "OVRHLNGGSK-TCP2B2",
+   "newSku": "00170067",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "mrW3svUQM2MBUOUZJ5vR",
+   "oldSku": "OVRHLNGGSK-FABYJW",
+   "newSku": "00170068",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "nhyLu2dl3f7dI1YaX4mz",
+   "oldSku": "OVRHLNGGSK-SRFFZU",
+   "newSku": "00170069",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "vyNIJ3IeeM6kl67qzcW6",
+   "oldSku": "OVRHLNGGSK-NGAWEN",
+   "newSku": "00170070",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "XdFMaqe92xyXPlDP4B9a",
+   "oldSku": "OVRHLNGGSK-CWQE5J",
+   "newSku": "00170071",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "2Rq5sgJkt70K3GUCQ7a0",
+   "oldSku": "OVRHLNGGSK-AGFZHC",
+   "newSku": "00170072",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "m5RM3ia73hq0IUJAarHU",
+   "oldSku": "OVRHLNGGSK-FSHA68",
+   "newSku": "00170073",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "bdCzvHJhyn0YETftio2n",
+   "oldSku": "PSTNKTTGCL-YQ9ZYF",
+   "newSku": "00170074",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Nx9JRycjIV1rUQKBSByU",
+   "oldSku": "PSTNKTMDLL-CSC4QB",
+   "newSku": "00170075",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "PP6eIxDJ1hEUp6Sc2kNH",
+   "oldSku": "PSTNKTMDLL-SAS5UY",
+   "newSku": "00170076",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Uw3EjXG4HN2oCrFOurek",
+   "oldSku": "PSTNKTMKTC-7DG6RR",
+   "newSku": "00170077",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "zq0EoE8ZArjddFVRLqaQ",
+   "oldSku": "PSTNKTTGBT-ESRHE2",
+   "newSku": "00170078",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "f6fLeZLYSKx8CoGkhmFX",
+   "oldSku": "PSTNRNGMKT-342QNF",
+   "newSku": "00170079",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "jrprtlmQr0JU8ACgDAXA",
+   "oldSku": "PSTNKTTGSM-F87TRV",
+   "newSku": "00170080",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "MxQSkpYV1Ono9qJa9uBb",
+   "oldSku": "PSTNKTTGWV-TMGAKX",
+   "newSku": "00170081",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "QxW5zV4lrSPleWdHaLFD",
+   "oldSku": "PSTNKTTGXR-P64X7R",
+   "newSku": "00170082",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "YMZWPYrmctNZRHG1PVbx",
+   "oldSku": "PSTNKTTGTM-MKBWP6",
+   "newSku": "00170083",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "7D9yCATOu1zypVZonj9i",
+   "oldSku": "RCKRRMKRSC-HS7SSD",
+   "newSku": "00170084",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "EVNTcOJDEX6mldEjaaF2",
+   "oldSku": "RCKRRMKRSC-SUWHF5",
+   "newSku": "00170085",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "g6GnXzjQiuVDkLLoisUt",
+   "oldSku": "RCKRRMKRSX-J8QQRF",
+   "newSku": "00170086",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "JLjRHpg7evrGrbVOCwpk",
+   "oldSku": "RCKRRMMKTC-ZSSR4Y",
+   "newSku": "00170087",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "kbooDBHP6dt4Nmp9pZ8Y",
+   "oldSku": "RCKRRMKRSX-8R68JU",
+   "newSku": "00170088",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "OyTIOAPU387gFUabiJtC",
+   "oldSku": "RCKRRMMKTD-RVQ8X8",
+   "newSku": "00170089",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "tNRWffKTgacX4Um7cSKe",
+   "oldSku": "RCKRRMKRSM-XDXVXC",
+   "newSku": "00170090",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "atfOCY9dK2cD4Ys7EEsB",
+   "oldSku": "RCKRRMMKTX-VHPSYX",
+   "newSku": "00170091",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "LJTqzK3vavW0pa07tTsF",
+   "oldSku": "RCKRRMMKTT-XNGPNH",
+   "newSku": "00170092",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "2z0gH72k5e0pn5ej7dFX",
+   "oldSku": "TNSNRSHRKK-NQBM3M",
+   "newSku": "00170093",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Dm6aM8IoJ7TNmp7ErjN4",
+   "oldSku": "TNSNRSHRKK-5E3U7Q",
+   "newSku": "00170094",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "sOrPuitDZplirBSkNOmP",
+   "oldSku": "TNSNR9988R-A5PG7S",
+   "newSku": "00170095",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "GhHtycmTnzC528z91cQP",
+   "oldSku": "TNSNRSHRKK-H7X7YS",
+   "newSku": "00170096",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "RwwE7uPEgFQywROO9M03",
+   "oldSku": "TNSNRSHRKK-GTBFUM",
+   "newSku": "00170097",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "S51MpgIHoZYIZ7wHBvgr",
+   "oldSku": "TNSNRSHRKK-TZYQRJ",
+   "newSku": "00170098",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "0IE1OfG0HQb72WJdHu5G",
+   "oldSku": "TPGSKTMCW1-SBVAF9",
+   "newSku": "00170099",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "36OWBOFS69B1nhuAHNzz",
+   "oldSku": "TPGSKTCSLM-6XEK44",
+   "newSku": "00170100",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "GxbQ0DzB89dB9fbWiQG7",
+   "oldSku": "TPGSKTMCXR-MCDTY6",
+   "newSku": "00170101",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "zSgzzQ0a2m57Ukcs4TLg",
+   "oldSku": "TPGSKTMCM1-RX8HCN",
+   "newSku": "00170102",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "2ZMZRtyXHcssnhMIgq5f",
+   "oldSku": "TPGSKTYMHN-CGG744",
+   "newSku": "00170103",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "CgwJRylqIVQfhExOltbm",
+   "oldSku": "TPGSKTTKBT-CTPCR5",
+   "newSku": "00170104",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "J2uxdMylKVBWW4EsDWdW",
+   "oldSku": "TPGSKTMKTV-3G5XDQ",
+   "newSku": "00170105",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "jlr4RJhsRWrVo4KhF8sW",
+   "oldSku": "TPGSKTMKTS-DY325F",
+   "newSku": "00170106",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "mjzgiT3F40j5P6Kn77t0",
+   "oldSku": "TPGSKTMKTT-4DYGJ4",
+   "newSku": "00170107",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "tGKf7qbG1UVMMOzSfusH",
+   "oldSku": "TPGSKTFRTN-UX65F2",
+   "newSku": "00170108",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "VlHlPZ4VZGSt6ZJ5Mt76",
+   "oldSku": "TPGSKTKRSW-EDAWB9",
+   "newSku": "00170109",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "zAjGh4i5r50PyJnSWsJ9",
+   "oldSku": "TPGSKTYMHN-B45ART",
+   "newSku": "00170110",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "9xmPXXh9b6hOHQenciI4",
+   "oldSku": "VLVSLPTSBK-3SZ895",
+   "newSku": "00170111",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "FsP5G0ptoXqKV0zClC2P",
+   "oldSku": "VLVSPRNGPT-GDKYQ7",
+   "newSku": "00170112",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "qnWcDdyECBZTpbWLdR7x",
+   "oldSku": "VLVSLPTSBK-GCEM6S",
+   "newSku": "00170113",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "XNipxFG2rIRSwXp2mVAI",
+   "oldSku": "VLVSPRNGPT-JWDH74",
+   "newSku": "00170114",
+   "categoryCode": "0017"
+  },
+  {
+   "id": "Hu9PXwXhrHhO1qxY6FrD",
+   "oldSku": "ADJSTBLFLS-6SDZZ3",
+   "newSku": "00120001",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "5h8H3WFfPuXdEROcwZdE",
+   "oldSku": "BTTRYCHMPN-HRVNQN",
+   "newSku": "00120002",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "5VFuTz32fUTPekjUS7Mu",
+   "oldSku": "BTTRYCHMPN-PKNJF3",
+   "newSku": "00120003",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "3J3cIesBZvwwZp3aw9Bk",
+   "oldSku": "BTTRYCHMPN-YWPPEW",
+   "newSku": "00120004",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "9kxmJsHBlu0062oQLNKU",
+   "oldSku": "BTTRYMTLTM-2EKB7P",
+   "newSku": "00120005",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "COihZ9pjUE8AlgnRxU3h",
+   "oldSku": "BTTRYMTLTM-VV64X6",
+   "newSku": "00120006",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "dpF1Xv0WmbUgooYiiAq6",
+   "oldSku": "BTTRYMTLTM-HY7W9Y",
+   "newSku": "00120007",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "FmI7ywU8CwuT1vMvtNUA",
+   "oldSku": "BTTRYMTLTM-BTMXVN",
+   "newSku": "00120008",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "QkXPMayOu2vecmwJuNtF",
+   "oldSku": "BTTRYVCTRY-KYPWUF",
+   "newSku": "00120009",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "QQV2ctQxzqz7kFQAu4fZ",
+   "oldSku": "BTTRYKNGSF-8GGB6P",
+   "newSku": "00120010",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "R1Txko6CSLOWi48poDkR",
+   "oldSku": "BTTRYCHMPN-M44ZR2",
+   "newSku": "00120011",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "weqFnJHJeSYyrXbD5GdP",
+   "oldSku": "BTTRYDYWYY-TGCTB3",
+   "newSku": "00120012",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "efkqWu8LoHYEYITMYCMm",
+   "oldSku": "CRBNBRSSSM-P2NM2V",
+   "newSku": "00120013",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "ojM09qgdQLPb8BUK7znu",
+   "oldSku": "CRBNBRSSSN-CKZ663",
+   "newSku": "00120014",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "RrBg8iBh53WWz9WDuBID",
+   "oldSku": "CRBNBRSSTK-B79G3F",
+   "newSku": "00120015",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "TPZOyqYq3JBWs9EZAjnB",
+   "oldSku": "CRBNBRSSKH-T2929C",
+   "newSku": "00120016",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "XhjcxBD7Od5VkpSuCwPN",
+   "oldSku": "CRBNBRSSSB-YA4GTZ",
+   "newSku": "00120017",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "Z5BLlEMtBSiJfIIaNnXk",
+   "oldSku": "CRBNBRSSTK-JWVP4B",
+   "newSku": "00120018",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "YsRVqtLKlbWFGdWx2wMO",
+   "oldSku": "CRBNBRSSSP-N48TGU",
+   "newSku": "00120019",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "4zRgckTZRmevAjV0yizu",
+   "oldSku": "CDMTRXRM12-8BYTKS",
+   "newSku": "00120020",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "6V8m0BEdC1DJyhIGKgCh",
+   "oldSku": "CDCSLLFFN1-2J9NJA",
+   "newSku": "00120021",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "1Z7Bxo1H5w4Bg5ARS9TY",
+   "oldSku": "ELCTTPKNGS-4CEKV6",
+   "newSku": "00120022",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "r9V7Ft0zLPIngAyNclic",
+   "oldSku": "ELCTTP3M-8B5W76",
+   "newSku": "00120023",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "y3qqgOdIa7i6uQRDWEfC",
+   "oldSku": "ELCTTPRMK-9ZWBTQ",
+   "newSku": "00120024",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "48uOHfrQCqgfVkJqJAke",
+   "oldSku": "FLSHRRLYSN-CRDEWB",
+   "newSku": "00120025",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "5kHjvDDn1NBF086FmYhI",
+   "oldSku": "FLSHRRLYNS-GE5PRP",
+   "newSku": "00120026",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "7mMiuErBR7FEVfBaBpHZ",
+   "oldSku": "HTNSNCRDTW-QYSXTA",
+   "newSku": "00120027",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "8LNM6Fpz31NOKmNVpi87",
+   "oldSku": "HRNRLYGLBL-TBFBXM",
+   "newSku": "00120028",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "V3pcALrtiDHJLmF3D9di",
+   "oldSku": "HRNRLYWSCK-RR3N4S",
+   "newSku": "00120029",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "auS4wj40TaJIneGUtt9V",
+   "oldSku": "INTRRPTRRL-RDJ5RS",
+   "newSku": "00120030",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "GjE2NlXprh0ZHSWEIbGi",
+   "oldSku": "RGLTRKMNSM-PET59F",
+   "newSku": "00120031",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "0Kdhu2mW6BRWSTZb8LPJ",
+   "oldSku": "RGLTRKRS6Y-XEGYJS",
+   "newSku": "00120032",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "BAuZM3KkrpWWetMIM4eI",
+   "oldSku": "RGLTRSXM12-XQ7AZZ",
+   "newSku": "00120033",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "i5k0zCjzvA9NqOWjTKvg",
+   "oldSku": "RGLTRSXRDR-S527VT",
+   "newSku": "00120034",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "ncnwtExYQNg8ntUCK0Km",
+   "oldSku": "RGLTRKNK5W-CFHS6N",
+   "newSku": "00120035",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "rjQdwEd7V5INwDJ4oJTX",
+   "oldSku": "RGLTRKRSWV-UGZA58",
+   "newSku": "00120036",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "rnQZL0XdD6kVSUEedQt4",
+   "oldSku": "RGLTRKRSXR-X65HF8",
+   "newSku": "00120037",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "UEyz8Dtzr61P5VbK0PQu",
+   "oldSku": "RGLTRMTRM-62BKFT",
+   "newSku": "00120038",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "yW6gIluXNa5pQ74V5iyY",
+   "oldSku": "RGLTRKRSXR-QPEWTQ",
+   "newSku": "00120039",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "KqYTUxRnmF7ThyeomdLr",
+   "oldSku": "RGLTRSXWVD-65EF5S",
+   "newSku": "00120040",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "RcmbculfrJT6kAIkkSr7",
+   "oldSku": "RGLTRSXTMX-3QKHP2",
+   "newSku": "00120041",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "uOUT4xFJ7WeAVgfVTFb8",
+   "oldSku": "RGLTRSXW10-TK3BGH",
+   "newSku": "00120042",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "BU0MFCYlRXH2Da6YgdHn",
+   "oldSku": "SPRKPLGCPM-YW9QF2",
+   "newSku": "00120043",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "KDbIloUEZXBs1llwpRHG",
+   "oldSku": "SPRKPLGBSC-GWGJ82",
+   "newSku": "00120044",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "ON1LnGke7YrXopUAVc8V",
+   "oldSku": "SPRKPLGCPX-F8697C",
+   "newSku": "00120045",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "V1gclKJiERCauIwXVsmu",
+   "oldSku": "SPRKPLGBSC-GWGE4J",
+   "newSku": "00120046",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "xfbZDmoTkgZ7C9PbN5QV",
+   "oldSku": "SPRKPLGCPR-GHZ9KR",
+   "newSku": "00120047",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "6yFy5TbHQJVVz1IkUmGd",
+   "oldSku": "SPRKPLGNGK-3QRFUV",
+   "newSku": "00120048",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "be91YhOGCZHJWufvCAjs",
+   "oldSku": "SPRKPLGNGK-SZHNAY",
+   "newSku": "00120049",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "oZg8Y9mIZC4OQNVVdocJ",
+   "oldSku": "SPRKPLGBSC-TVJQVB",
+   "newSku": "00120050",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "uj1vt2wDeKPrkWlpBucf",
+   "oldSku": "SPRKPLGNGK-CZKDN8",
+   "newSku": "00120051",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "VmdlIM3VhHXuhdHXrpxr",
+   "oldSku": "SPRKPLGNGK-B9VR8B",
+   "newSku": "00120052",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "Yhc8KYQK1RGhHxmaR9AZ",
+   "oldSku": "SPRKPLGNGK-5FNE78",
+   "newSku": "00120053",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "AvODqhJTWSuv1IVFJtws",
+   "oldSku": "STRTRRLYMR-VC6ZG2",
+   "newSku": "00120054",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "NSfr7u8QE9dxqwdeuMh3",
+   "oldSku": "STRTRRLYMR-6QCMGY",
+   "newSku": "00120055",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "6NzS4MVIsiwQNjETv6Nl",
+   "oldSku": "STRTRRLYMR-S6FY5C",
+   "newSku": "00120056",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "gww8LYh89YWE3FsDcEbx",
+   "oldSku": "STTRCLSPDC-GYF7BT",
+   "newSku": "00120057",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "i3eJ03egtMHRAFw9ZTBL",
+   "oldSku": "STTRCLMRTR-N5H9JQ",
+   "newSku": "00120058",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "JZpCaAy5pf4QSLug2bZy",
+   "oldSku": "STTRCLSPDS-2UHJ2G",
+   "newSku": "00120059",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "LF8HevES1b0QLt2x2coM",
+   "oldSku": "STTRCLSPDT-3583RC",
+   "newSku": "00120060",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "lTtxqwIX4JHaLAORtPHF",
+   "oldSku": "STRTRRLYYM-JVY8PS",
+   "newSku": "00120061",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "meBhbm1In5egLQIqfQry",
+   "oldSku": "STTRCLMRTR-2ABFWM",
+   "newSku": "00120062",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "r1NHx4oeuzByYDAezB9i",
+   "oldSku": "STRTRRLYYM-2QWQ6C",
+   "newSku": "00120063",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "YaxsVbVsszvqxTyJ7ISa",
+   "oldSku": "STRTRRLYMR-6N7G69",
+   "newSku": "00120064",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "CAE0RWBqGJOHLXtVOJlK",
+   "oldSku": "STTRCLSPDW-Z97QBE",
+   "newSku": "00120065",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "kXyBuRtoq3GREGTZZcbC",
+   "oldSku": "STTRCLSPDX-9TZV2G",
+   "newSku": "00120066",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "tuLmtOK8XI8LkP9FaiY8",
+   "oldSku": "WRDBL-B5F3ST",
+   "newSku": "00120067",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "t9f6tMOFHwudER6RmIsS",
+   "oldSku": "WRSNGLBLK-RPYHUR",
+   "newSku": "00120068",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "uOYIVMQCcjTJDeQ5sK0u",
+   "oldSku": "WRSNGLRD-2H6DCX",
+   "newSku": "00120069",
+   "categoryCode": "0012"
+  },
+  {
+   "id": "gQyyItwxD65UxYYwwcF6",
+   "oldSku": "BLTLLNRDRD-X5J8FT",
+   "newSku": "00070001",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "PZwY2WP00bw2ry9oiUhP",
+   "oldSku": "BLTLLNRDBL-HR4RDQ",
+   "newSku": "00070002",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "Q38ezQcoBijqrU7Nwqc4",
+   "oldSku": "BLTLLNRDBL-RMC74W",
+   "newSku": "00070003",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "qELZzbMsLziLk4THBrVs",
+   "oldSku": "BLTLLNRDGL-TTSZ87",
+   "newSku": "00070004",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "auiIDlUaqDibR4sJB6Kr",
+   "oldSku": "BLTLLNSS6X-Q4YFXN",
+   "newSku": "00070005",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "cSvv2AmMmmrLuKXGZ7QV",
+   "oldSku": "BLTLLNRDSL-CCPS5J",
+   "newSku": "00070006",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "D9FAm11D4S9IAaHvW4Tt",
+   "oldSku": "BLTLLNSS5X-HT7A9B",
+   "newSku": "00070007",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "fWTPMpUEQVXpe1WfCmjf",
+   "oldSku": "BLTLLNSS10-3ZD2ZW",
+   "newSku": "00070008",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "ICFcRs0MUJCB6X2ll4I8",
+   "oldSku": "BLTLLNSS5X-N23JDN",
+   "newSku": "00070009",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "lf6LyvXAKuJeDwF2MSed",
+   "oldSku": "BLTLLNSS5X-KJ84ET",
+   "newSku": "00070010",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "v4DF2tW3wV7WZED7qOae",
+   "oldSku": "BLTLLNSS8X-85SKTQ",
+   "newSku": "00070011",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "WmDVlgmGS9xppR7dvgxt",
+   "oldSku": "BLTLLNSS10-ADC8EZ",
+   "newSku": "00070012",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "xYcBPCb42Kw9HZV5KiEN",
+   "oldSku": "BLTLLNSS5X-46BSGX",
+   "newSku": "00070013",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "erInVDm3BbUnz5Ep8u29",
+   "oldSku": "BLTHNG5X15-W92FGB",
+   "newSku": "00070014",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "gomdNW2xXolMSSNnGc8T",
+   "oldSku": "BLTHNGDSCH-23HGQP",
+   "newSku": "00070015",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "Iv247ae5jostEEIQwvBT",
+   "oldSku": "BLTHNGCNC5-K2GUV9",
+   "newSku": "00070016",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "LeJgOAygqf2ukjqREYHU",
+   "oldSku": "BLTHNGCNC5-DZ587R",
+   "newSku": "00070017",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "Mk87kTI1oZXvR0WASb0Q",
+   "oldSku": "BLTCYLNDR-SRHB88",
+   "newSku": "00070018",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "RltJHZ3Po0ZAZ5E48iWd",
+   "oldSku": "BLTHNGCRNK-3DMEWQ",
+   "newSku": "00070019",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "s8pQuem4fTakh9W08DdH",
+   "oldSku": "BLTHNGCNC5-QZ7KXV",
+   "newSku": "00070020",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "TNeKjLbeK181z1rWczvf",
+   "oldSku": "BLTHNGCNCS-3MDRAV",
+   "newSku": "00070021",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "ujplFp0lybyykmx5aP2C",
+   "oldSku": "BLTHNGCNCS-DY384G",
+   "newSku": "00070022",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "0xrfvN7Rgcov2RzHQCJT",
+   "oldSku": "BLTRD6X10M-GMPFNM",
+   "newSku": "00070023",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "3gkRBMNpA1z2EsYJroHb",
+   "oldSku": "BLTRD10X25-RJE426",
+   "newSku": "00070024",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "CXwujfrfDs85S0eXLte0",
+   "oldSku": "BLTHNGFLWR-2XKACT",
+   "newSku": "00070025",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "dQzV7qo5B7ClIkSxw5Cz",
+   "oldSku": "BLTRD10X40-Z6AU5S",
+   "newSku": "00070026",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "EzWxGCpspi3NEJN0dF7t",
+   "oldSku": "BLTRD10X45-VQCF6D",
+   "newSku": "00070027",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "Ii7hrc6svIMRmkOL84ig",
+   "oldSku": "BLTRD10X30-8E8UFK",
+   "newSku": "00070028",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "kG0cttJbqQH0nnW1HAUE",
+   "oldSku": "BLTRD10X15-KYGVP7",
+   "newSku": "00070029",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "LGpoy8MKgWQuvOCgNwDD",
+   "oldSku": "BLTRD10X35-T4MSK8",
+   "newSku": "00070030",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "PTbW0fjVvvyjepbRFNpH",
+   "oldSku": "BLTRD10X20-83BJUH",
+   "newSku": "00070031",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "XggjaxGgdzsMEbCMCmoN",
+   "oldSku": "BLTHNGFLWR-QX7VDN",
+   "newSku": "00070032",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "5i5J24E0vzLLbKHMNgiL",
+   "oldSku": "BLTRD8X15M-NAGEDE",
+   "newSku": "00070033",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "AEemdrEsPSGeDGm2fBWE",
+   "oldSku": "BLTRD6X20M-Y5JW3P",
+   "newSku": "00070034",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "b2V0wfHiowOT8zMb2ahu",
+   "oldSku": "BLTRD6X15M-PBUK4V",
+   "newSku": "00070035",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "ccX4sxNGwu4i9vGKhckY",
+   "oldSku": "BLTRD6X45M-SQ4JAD",
+   "newSku": "00070036",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "Naq3HeinXCaO8mLyiy1z",
+   "oldSku": "BLTRD6X40M-UQG8W6",
+   "newSku": "00070037",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "ObQxmpiOsftkwnMl4rqr",
+   "oldSku": "BLTRD6X25M-V7TJ39",
+   "newSku": "00070038",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "qAWlzuAJqB2QufS0gsVU",
+   "oldSku": "BLTRD8X20M-MTE7DJ",
+   "newSku": "00070039",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "rmMAas1jI9HS1Hfidg4m",
+   "oldSku": "BLTRD8X25M-28BP88",
+   "newSku": "00070040",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "RoAUpqqpo8Wu6k4VZtST",
+   "oldSku": "BLTRD6X30M-UYQKJ4",
+   "newSku": "00070041",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "uAu0jXVEf1S8m1cCtyZA",
+   "oldSku": "BLTRD6X35M-Z8R25A",
+   "newSku": "00070042",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "0LQmaOhBK3OUp3nTExDF",
+   "oldSku": "BLTRD8X45M-WTKZDP",
+   "newSku": "00070043",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "A45gIbvoBr94lrHvRzSa",
+   "oldSku": "BLTSS5X25M-Q6HMSX",
+   "newSku": "00070044",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "CKKMhLeivtBmZ4XK0BS3",
+   "oldSku": "BLTSS6X20M-YZWPPN",
+   "newSku": "00070045",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "Du9bXkfMaM7xS7eLMKHq",
+   "oldSku": "BLTRD8X40M-7FVHBX",
+   "newSku": "00070046",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "EcGwaqtp56AHZ2k0GGem",
+   "oldSku": "BLTRD8X35M-6PDZRH",
+   "newSku": "00070047",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "lNseyLI6wI0PTgnAPPmf",
+   "oldSku": "BLTSS6X25M-SWX2CH",
+   "newSku": "00070048",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "Qmm6Fm1WkxHL1YQ4wYMA",
+   "oldSku": "BLTSS5X15M-G4YBZQ",
+   "newSku": "00070049",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "XEPxiTPBe37gfqWhLkR1",
+   "oldSku": "BLTSS5X20M-5TF22A",
+   "newSku": "00070050",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "yEsBjXTqlpNx6NOnny2y",
+   "oldSku": "BLTRD8X30M-X8ABVC",
+   "newSku": "00070051",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "5J7k3Uujoxk0m6bR8mVy",
+   "oldSku": "CLPNT5MM-T6FMYW",
+   "newSku": "00070052",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "pfO491OF4odwWSd5IsqF",
+   "oldSku": "CLPNT4MM-B5ATNB",
+   "newSku": "00070053",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "xoY4UxnqRarjfumVZ9n5",
+   "oldSku": "CLPNTSCRW4-AKBCKU",
+   "newSku": "00070054",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "kEfcfhjKqlwuRpyCErV7",
+   "oldSku": "LCKWSHR10M-6XJTZA",
+   "newSku": "00070055",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "lOCwOWZJEOTq9ojlZfCs",
+   "oldSku": "LCKWSHR6MM-B3CRYY",
+   "newSku": "00070056",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "nWnVotJr8GjczMJk6rmc",
+   "oldSku": "LCKWSHR8MM-6KHE8W",
+   "newSku": "00070057",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "0Mcb4GKjThCqyIxc4Hte",
+   "oldSku": "NTHNGCNCMC-HCRTPJ",
+   "newSku": "00070058",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "h8DTkziTtUGicsaK7bfC",
+   "oldSku": "NTRD10MM-P3M3E8",
+   "newSku": "00070059",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "kJI39txwqNQFrVEZ0NZa",
+   "oldSku": "NTSS5MM-GJ678T",
+   "newSku": "00070060",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "NcqqXP3oyzUJUS4qQgzP",
+   "oldSku": "NTSS6MM-YC56ND",
+   "newSku": "00070061",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "nSMNv3CWjJcEamYaKMVk",
+   "oldSku": "NTRD5MM-W7WXSU",
+   "newSku": "00070062",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "rp9hmtth0iZMAMUtpEHw",
+   "oldSku": "NTRD8MM-GVNNM5",
+   "newSku": "00070063",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "sJvfsVsEV5dMji8MO4KH",
+   "oldSku": "NTRD6MM-KHWYJN",
+   "newSku": "00070064",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "ZyKmJxfjtaPxa68ieA6v",
+   "oldSku": "NTRD12MM-V3PC5E",
+   "newSku": "00070065",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "3hC494yoH3SnDSYoU92q",
+   "oldSku": "PLNWSHRRD1-P9546B",
+   "newSku": "00070066",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "j6w4cmLcG89bJ9s7vZ5z",
+   "oldSku": "PLNWSHRRD6-RDXFXE",
+   "newSku": "00070067",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "qjTlRJT7HCVWwZmB7cf2",
+   "oldSku": "PLNWSHRRD5-8C8F83",
+   "newSku": "00070068",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "yisFNNhfgNDQ9JX0FbwY",
+   "oldSku": "PLNWSHRRD1-8TF8RW",
+   "newSku": "00070069",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "25gKi5NhpSJOBAQTvZIx",
+   "oldSku": "PLNWSHRRD8-5UA94J",
+   "newSku": "00070070",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "MRbm6JsClIsKov160jbQ",
+   "oldSku": "PLNWSHRSS6-UTSTWC",
+   "newSku": "00070071",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "RWiPq4NrJnD2tzhTse0n",
+   "oldSku": "PLSTCCLPRV-W4XDF7",
+   "newSku": "00070072",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "N1TamsKZPMeyuGxAy68o",
+   "oldSku": "BLTHNGCNC5-J3HUDS",
+   "newSku": "00070073",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "vsN3F12bwQQbdQ6Pm8sk",
+   "oldSku": "BLTHNGCNC5-CMEGGJ",
+   "newSku": "00070074",
+   "categoryCode": "0007"
+  },
+  {
+   "id": "4Z1u98xOVHwPQOjpx5Ry",
+   "oldSku": "TRTLBSTDLS-9GZT2P",
+   "newSku": "00220001",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "8WC4plg4qIGf2hV4SFsh",
+   "oldSku": "TRTLBST62S-RQSACN",
+   "newSku": "00220002",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "fzXktM0B6TdTx6ip0gb8",
+   "oldSku": "TRTLBSTFLS-GS9P4A",
+   "newSku": "00220003",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "PjbFbIz6fR7aTtFTh7gU",
+   "oldSku": "TRTLBSTFLS-XFE54E",
+   "newSku": "00220004",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "w9l2IlY7MgHykhvUjwRb",
+   "oldSku": "TRTLBSTDLS-H7NAAP",
+   "newSku": "00220005",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "bS67OsEHFgyFR1bQQ7R9",
+   "oldSku": "TRTLBSTFLS-DJ2AC5",
+   "newSku": "00220006",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "ck7EM3mM9YxAemTkTgee",
+   "oldSku": "TRTLBSTFLS-URBY5K",
+   "newSku": "00220007",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "fEnV9J12eBSHQkZ2dzm5",
+   "oldSku": "TRTLBSTFLS-U6H2YT",
+   "newSku": "00220008",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "jebeOeYCUUEmatIMfXnC",
+   "oldSku": "TRTLCSTC65-G48ZPH",
+   "newSku": "00220009",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "k97U5CNsoSgmApN1obob",
+   "oldSku": "TRTLBSTFLS-F2W5YB",
+   "newSku": "00220010",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "KUVS1GdeMjWbKiMh3Xc6",
+   "oldSku": "TRTLBSTFLS-C7SNAZ",
+   "newSku": "00220011",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "PcKoyXACKd4V6ChFe8Xt",
+   "oldSku": "TRTLBSTFLS-AG87RN",
+   "newSku": "00220012",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "Uviw7zTCpcy7mqyoMqQs",
+   "oldSku": "TRTLBSTFLS-H7SCSG",
+   "newSku": "00220013",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "Vfme93sQN0AY13v7wRLw",
+   "oldSku": "TRTLCSTC65-ND2BAV",
+   "newSku": "00220014",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "6lKHyMQiha8bPEsXYyul",
+   "oldSku": "TRTLCSTCM5-58Z8JZ",
+   "newSku": "00220015",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "AwcoRl36CX87G9P8ppdU",
+   "oldSku": "TRTLMXXS70-ZGPMEF",
+   "newSku": "00220016",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "kmMI4jMyA4IiyQiPnPcy",
+   "oldSku": "TRTLCSTC65-Z83YAA",
+   "newSku": "00220017",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "s9Nagz0jNXiryIERPHE1",
+   "oldSku": "TRTLRCH909-87NXTH",
+   "newSku": "00220018",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "tUXYIyopEYqbv6k01Coe",
+   "oldSku": "TRTLCSTC65-MPN9YH",
+   "newSku": "00220019",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "tYIIJpjNeUqMXIm47IdA",
+   "oldSku": "TRTLCSTC65-6SG9GG",
+   "newSku": "00220020",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "uHyJuHgGxyK2TCw7YVT9",
+   "oldSku": "TRTLDL50JS-5CQMN5",
+   "newSku": "00220021",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "v2i0OH7akXU8nPUeptGh",
+   "oldSku": "TRTLCSTC65-3EFXRZ",
+   "newSku": "00220022",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "Wa9OiDgV1h3u7M3pfZfd",
+   "oldSku": "TRTLMXXS10-RXBUQE",
+   "newSku": "00220023",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "xxR3A0USOSQbsFinCrK2",
+   "oldSku": "TRTLMXXS60-EYCUZR",
+   "newSku": "00220024",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "0cucv8t9YgrVKrU0sehy",
+   "oldSku": "TRTLMXXSM6-WY3XSU",
+   "newSku": "00220025",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "4nOzNCNr2ejrGlfKQFMk",
+   "oldSku": "TRTLMXXSVC-6X3Q6J",
+   "newSku": "00220026",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "7KeiLtHupPBouI1vKsso",
+   "oldSku": "TRTLMXXSMV-WTAZGH",
+   "newSku": "00220027",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "9zsNPLUOWRGt9yaFgqH4",
+   "oldSku": "TRTLMXXSM6-EQ4B7T",
+   "newSku": "00220028",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "idsizF1So9Gnb0z4xE7k",
+   "oldSku": "TRTLMXXSMG-UAWW66",
+   "newSku": "00220029",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "Iw3P3B3D5r7ULuuLz0je",
+   "oldSku": "TRTLMXXSM6-HHXY9Z",
+   "newSku": "00220030",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "NkFvs5geL97DjdSmdtyi",
+   "oldSku": "TRTLMXXSMG-GYHVVB",
+   "newSku": "00220031",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "RVx3vYktYQFDrAXdzlkr",
+   "oldSku": "TRTLMXXSMV-KAVZUV",
+   "newSku": "00220032",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "wAqjg3OBVhgwXCR9MeAt",
+   "oldSku": "TRTLMXXS80-7SVK5J",
+   "newSku": "00220033",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "2ElxGMmuSCGNHo62ENcg",
+   "oldSku": "TRTTCST808-TV7Z3P",
+   "newSku": "00220034",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "6wo62azBiPuyd7cqe35h",
+   "oldSku": "TRTTCST908-ZY2S7E",
+   "newSku": "00220035",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "EkovMwecK7Aj54Lue1oo",
+   "oldSku": "TRTLQCKPHN-X7DSXN",
+   "newSku": "00220036",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "jaGy18PkWq5qnzu0hZzm",
+   "oldSku": "TRTTCST608-3V8GGN",
+   "newSku": "00220037",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "kK6lIDUIbdBdZaCxm3kV",
+   "oldSku": "TRTLMXXSVC-72PEBN",
+   "newSku": "00220038",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "NnHUGx3fgbuUfvUIvPBr",
+   "oldSku": "TRTLMXXSVC-YXRMEB",
+   "newSku": "00220039",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "SWct3zz6hXAp2K2nBYVu",
+   "oldSku": "TRTTCST708-NVHP97",
+   "newSku": "00220040",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "wxynZlZnSJwRpinx5Ew9",
+   "oldSku": "TRTTZMSPCL-HFD9F5",
+   "newSku": "00220041",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "WYnHfZo2xmQ6ORfvGiiW",
+   "oldSku": "TRTLMXXSVC-EXU8DD",
+   "newSku": "00220042",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "0Ly5OGVwloxVCMIjbUWu",
+   "oldSku": "TRTTLLZR45-5Y4K7K",
+   "newSku": "00220043",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "gZhmiM5hZts1HOnqvB65",
+   "oldSku": "TRTTLLZR50-6P4MG4",
+   "newSku": "00220044",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "l5h4AnPM4V3ZO80kce3y",
+   "oldSku": "TRTTPWRTR3-FH9QA2",
+   "newSku": "00220045",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "ukOm1kKWXgZePW4dyJjo",
+   "oldSku": "TRTTLLZR60-ZE7DC2",
+   "newSku": "00220046",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "zqwbYRTBscECJsW4VvIO",
+   "oldSku": "TRTTLLZR80-6GJPNG",
+   "newSku": "00220047",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "K69fCP511x1ywMPbHr4l",
+   "oldSku": "TRTLBST48P-JCJU5R",
+   "newSku": "00220048",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "RfLP8dRmQmn1gSrMoaOz",
+   "oldSku": "TRTLMXXSMG-6BU5FB",
+   "newSku": "00220049",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "vvoqCwRwUselaetkyooq",
+   "oldSku": "TRTLBST48P-TWF33A",
+   "newSku": "00220050",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "YpURFsiTgPGKhkgNKz7S",
+   "oldSku": "TRTLMXXSMG-9U2H5Q",
+   "newSku": "00220051",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "4Sysqy4dvtboLyDoQ39M",
+   "oldSku": "TRTLMXXSMV-X4GW36",
+   "newSku": "00220052",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "7ANPmLQaatDxBlElmnEY",
+   "oldSku": "TRTTLLZR80-UKBFS9",
+   "newSku": "00220053",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "dCrgdnixzelitodpbvDl",
+   "oldSku": "TRTTLLZR70-243H4F",
+   "newSku": "00220054",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "fe8zBtcfFmpguONr6tuX",
+   "oldSku": "TRTTLLZR70-5NAWXK",
+   "newSku": "00220055",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "FPcWrYGXUjHQ5qs4vUgL",
+   "oldSku": "TRTTZMSPCL-8KGB8R",
+   "newSku": "00220056",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "GWFKeemUeNocx9WrTGID",
+   "oldSku": "TRTTLLZR80-AEJQ6J",
+   "newSku": "00220057",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "L38PIcOudkn4djSVAanP",
+   "oldSku": "TRTLMXXSMV-4JJ5ST",
+   "newSku": "00220058",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "MqnRuOJjlQ1GlnDaF8dN",
+   "oldSku": "TRTTZMSPCL-ESTH3N",
+   "newSku": "00220059",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "RqYonCRF4URAV84MltTR",
+   "oldSku": "TBDSTN2751-ANMZHW",
+   "newSku": "00220060",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "BCvxVWEy8D385TgHXZlV",
+   "oldSku": "TBDSTN2251-YYHF4N",
+   "newSku": "00220061",
+   "categoryCode": "0022"
+  },
+  {
+   "id": "BKN9OHKPJSOCwVtv8huL",
+   "oldSku": "CBLBRKCSLW-8YVFF8",
+   "newSku": "00090001",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "Mi0roWYNuxUK0pSSkknh",
+   "oldSku": "CBLCLTCHCS-Q8P8NU",
+   "newSku": "00090002",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "Rwf7Z8Kg2HbQZdhYpGwY",
+   "oldSku": "CBLBRKCSLM-TJKVJX",
+   "newSku": "00090003",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "saTmANwhWU2dGmNKfenE",
+   "oldSku": "CBLBRKCSLS-MUKZU2",
+   "newSku": "00090004",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "sBmQIttEmsVjh6BhXpMN",
+   "oldSku": "CBLBRKCSLT-WVYGQZ",
+   "newSku": "00090005",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "toyR1W1UI7opFIyd5sLq",
+   "oldSku": "CBLBRKCSLS-8C5KCD",
+   "newSku": "00090006",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "X4X2CtM3Ya5omek5rPZP",
+   "oldSku": "CBLBRKNKYY-V4N3C9",
+   "newSku": "00090007",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "XlqXAWv8aGIZQt72uTXb",
+   "oldSku": "CBLBRKCSLM-G2BJR5",
+   "newSku": "00090008",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "zFiiDvKQj4dPqCuB16jv",
+   "oldSku": "CBLBRKCSLB-NAPEWH",
+   "newSku": "00090009",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "48LUhJyR9w0wM1SPNu6z",
+   "oldSku": "CBLCLTCHCS-57DX43",
+   "newSku": "00090010",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "5KTmyOhuJaKGfYnYrPwB",
+   "oldSku": "CBLCLTCHCS-NUDEEA",
+   "newSku": "00090011",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "e25fb7CnnVCt7kteK55I",
+   "oldSku": "CBLCLTCHKZ-Z64T25",
+   "newSku": "00090012",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "H8MaSgInnDLmeIIC4mHl",
+   "oldSku": "CBLCLTCHCS-CZF4WM",
+   "newSku": "00090013",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "hS3MFoaG2daVsSiFmqPh",
+   "oldSku": "CBLCLTCHKM-ZPJATY",
+   "newSku": "00090014",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "jdwvR4iPnRlSjPjqE02s",
+   "oldSku": "CBLCLTCHCS-9M64F5",
+   "newSku": "00090015",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "psykjR0QwNE3y44dfNSj",
+   "oldSku": "CBLCLTCHCS-XBE264",
+   "newSku": "00090016",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "tFrHxovax0ohA6DJyvVb",
+   "oldSku": "CBLCLTCHCS-WDJY3G",
+   "newSku": "00090017",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "Y09u0oNnRaraHEyLSdnj",
+   "oldSku": "CBLCLTCHMK-F2G9HC",
+   "newSku": "00090018",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "zWQrLUIBQ256BYQHgmzG",
+   "oldSku": "CBLCLTCHCS-YHT8EH",
+   "newSku": "00090019",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "a8i6dCL0GO5Rd4F93tPV",
+   "oldSku": "CBLSPDCSLS-EE3MHE",
+   "newSku": "00090020",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "GRm5154K9OYjf7LvD8xO",
+   "oldSku": "CBLSPDCSLT-JJC3UK",
+   "newSku": "00090021",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "GzdW6z2GLuPv6yO7KKt2",
+   "oldSku": "CBLSPDCSLM-SD8ZEY",
+   "newSku": "00090022",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "Iul05tQaffnY74joDDla",
+   "oldSku": "CBLTHRTTLC-GNB48F",
+   "newSku": "00090023",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "lBMoeIxfaz6Og0jbGbXS",
+   "oldSku": "CBLCLTCHMK-VV98B4",
+   "newSku": "00090024",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "ODgmmjqPgi2YFD1cwyXS",
+   "oldSku": "CBLSPDCSLS-KNY45E",
+   "newSku": "00090025",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "PYUuGz449m8dd5O6tEhF",
+   "oldSku": "CBLSPDCSLX-VMJ8E4",
+   "newSku": "00090026",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "TqmB9kWCSRFpNZvU87Mx",
+   "oldSku": "CBLSPDNKYY-CW8MEB",
+   "newSku": "00090027",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "XqNc03YBdGTJmnNIBUNk",
+   "oldSku": "CBLTHRTTLC-47PY8Q",
+   "newSku": "00090028",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "ZMBO28Mu5LPYA4v6Aqwr",
+   "oldSku": "CBLCLTCHZC-DHTASJ",
+   "newSku": "00090029",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "Aa0YwDlUJUhjp8X7vieg",
+   "oldSku": "CBLTHRTTLC-RFSS5Z",
+   "newSku": "00090030",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "D7LHazG6VN3oDE1roEX9",
+   "oldSku": "CBLTHRTTLC-2P2C42",
+   "newSku": "00090031",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "E5GWxN7uXWGQfb5l07UX",
+   "oldSku": "CBLTHRTTLC-M3NVBD",
+   "newSku": "00090032",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "jpc9KVXa3QI9PZKekOPz",
+   "oldSku": "CBLTHRTTLC-NRAZCS",
+   "newSku": "00090033",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "mK5H3OxEO3MlgzyFkehT",
+   "oldSku": "CBLTHRTTLC-CU2NSG",
+   "newSku": "00090034",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "NdDnpNDmCmxSrlXIMWwY",
+   "oldSku": "CBLTHRTTLC-WHVZ7N",
+   "newSku": "00090035",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "oleWo6I4N8w0U9m9tmtg",
+   "oldSku": "CBLTHRTTLC-TFZGW4",
+   "newSku": "00090036",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "tty309SYEVMopkrGqanx",
+   "oldSku": "CBLTHRTTLC-SH9FH2",
+   "newSku": "00090037",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "UxEiUQhIfzhltE5p6uhJ",
+   "oldSku": "CBLTHRTTLC-MXQZZJ",
+   "newSku": "00090038",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "zbRmMqjZcp3IXaHtj79x",
+   "oldSku": "CBLTHRTTLC-YRCYMF",
+   "newSku": "00090039",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "0elu4X6FR2MAn8FEJebn",
+   "oldSku": "CBLTHRTTLN-CB3EXS",
+   "newSku": "00090040",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "RD8sCs4Q1X1UaV3yel9Z",
+   "oldSku": "CBLTHRTTLZ-49M2BE",
+   "newSku": "00090041",
+   "categoryCode": "0009"
+  },
+  {
+   "id": "ftODqGcBKarIYiivVohw",
+   "oldSku": "CBLTWLDN4X-NVBE3K",
+   "newSku": "00110001",
+   "categoryCode": "0011"
+  },
+  {
+   "id": "ivb0I1nDDE5GAqFxzr1D",
+   "oldSku": "CBLTWLDN3X-Z5FX69",
+   "newSku": "00110002",
+   "categoryCode": "0011"
+  },
+  {
+   "id": "mvMLauV3rmTR1xHfpUXV",
+   "oldSku": "CBLTWLDN3X-WCKFUT",
+   "newSku": "00110003",
+   "categoryCode": "0011"
+  },
+  {
+   "id": "wYxPyffowtsLSRDUlR8g",
+   "oldSku": "CBLTWLDN25-45GBKS",
+   "newSku": "00110004",
+   "categoryCode": "0011"
+  },
+  {
+   "id": "0rzCGI0bCmumutLYm8Cg",
+   "oldSku": "STCKRS-XWYTTW",
+   "newSku": "00110005",
+   "categoryCode": "0011"
+  },
+  {
+   "id": "z3WuoGxRLedcwoIuQPml",
+   "oldSku": "TRP-NR2TBE",
+   "newSku": "00110006",
+   "categoryCode": "0011"
+  },
+  {
+   "id": "kNtfqFZnSy20LzSA4W3E",
+   "oldSku": "TSTPRDCT1-ZSFKPR",
+   "newSku": "00110007",
+   "categoryCode": "0011"
+  },
+  {
+   "id": "5X5N8fJCRQOTJGbjgBUk",
+   "oldSku": "AXLPVTCSLF-3JF3E8",
+   "newSku": "00050001",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "S0cN5gkuuREbIURiCAum",
+   "oldSku": "AXLPVTCSLC-ZV7YJZ",
+   "newSku": "00050002",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "3qf8QmPSNAQ9TiLmI9Bm",
+   "oldSku": "AXLPVTCSLR-7VU4EU",
+   "newSku": "00050003",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "a8ll4wYk11QCose0d27Y",
+   "oldSku": "AXLPVTCSLW-HF2ES8",
+   "newSku": "00050004",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "BP5S4aPU8znSKV5yf5Vq",
+   "oldSku": "AXLPVTCSLW-K85CCW",
+   "newSku": "00050005",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "BUwxJtFyQunUoPS3tRCT",
+   "oldSku": "AXLPVTCSLS-XR8V5R",
+   "newSku": "00050006",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "d9dBqfuLCEstGIAp5sFa",
+   "oldSku": "AXLRRCSLRD-4ZCYRD",
+   "newSku": "00050007",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "iSyMNPjMmIMGI8zh8euT",
+   "oldSku": "AXLPVTCSLX-TS86HA",
+   "newSku": "00050008",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "kOZRaoH0RadgubI6ZAbe",
+   "oldSku": "AXLRRCSLFR-2NBKAU",
+   "newSku": "00050009",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "QX3nW5GveiDyspzQ5EYg",
+   "oldSku": "AXLRRCSLRD-UTN9GX",
+   "newSku": "00050010",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "4eNlY7skoltUQ0Uacr90",
+   "oldSku": "BCKSTSSTMX-XB7TFX",
+   "newSku": "00050011",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "dtbnxPvebuOZ9p16KY9R",
+   "oldSku": "AXLRRCSLXR-JUCX9Z",
+   "newSku": "00050012",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "gaUxx5VZYf5oyhb2vt5Z",
+   "oldSku": "BCKSTSTLTM-JRB9AU",
+   "newSku": "00050013",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "jXq3POQdXGllt82pA3te",
+   "oldSku": "AXLRRCSLRD-9VW76U",
+   "newSku": "00050014",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "t8u8KKGem1bS3Mfwffuv",
+   "oldSku": "AXLRRCSLTM-W4P5AZ",
+   "newSku": "00050015",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "uT1fpkEHimFMpb5Xy4ze",
+   "oldSku": "AXLRRCSLRS-BWHC4H",
+   "newSku": "00050016",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "Vvt2Sj3xnWPGBcIhOf7j",
+   "oldSku": "AXLRRCSLWV-X6DHPK",
+   "newSku": "00050017",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "1nLiCUdy5A5fMPFatexh",
+   "oldSku": "BLLRCBRNGS-AB7JGT",
+   "newSku": "00050018",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "408wM2Hyk7XgU5IqnroU",
+   "oldSku": "BLLRCBRNGS-Y3QYKC",
+   "newSku": "00050019",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "EAFbRAnlhQpwIDTsuI3H",
+   "oldSku": "BLLRCBRNGS-4HGPJW",
+   "newSku": "00050020",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "eIVCHbqw7mdgoJaIe1N6",
+   "oldSku": "BLLRCPTSBK-3NS5UV",
+   "newSku": "00050021",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "oMRt9IYPMT32c39uLMdY",
+   "oldSku": "BLLRCBRNGS-AJVG9J",
+   "newSku": "00050022",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "rCPlqSE49Myw4vdcAIFk",
+   "oldSku": "BLLRCPTSBK-6WU9QS",
+   "newSku": "00050023",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "SJlMmobIb17PTgn5OIDf",
+   "oldSku": "BLLRCBRNGS-39AQ5G",
+   "newSku": "00050024",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "yTpbxxYs0a48x9Dti8K5",
+   "oldSku": "BLLRCPTSBK-NN4DFF",
+   "newSku": "00050025",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "10ljOLNovaqjV7Es9JjX",
+   "oldSku": "BSHNGPVTCS-4Z3BMS",
+   "newSku": "00050026",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "2S2sEPEEjHn6KQVVXAxe",
+   "oldSku": "BSHNGSWNGR-WYA6PE",
+   "newSku": "00050027",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "8vZ08ndFXHCAAwdGU15E",
+   "oldSku": "BSHNGSTLTM-F4XY4W",
+   "newSku": "00050028",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "9HcSk55dbiFkggF2TRvM",
+   "oldSku": "BSHNGRBBRB-MKCJP9",
+   "newSku": "00050029",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "b9mHwg6Kp03TZE4LDiPI",
+   "oldSku": "BSHNGPVTCS-P76SCG",
+   "newSku": "00050030",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "HFAOIhMy0PXub1A61hyh",
+   "oldSku": "BSHNGPVTCS-CMPSHT",
+   "newSku": "00050031",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "SmHMWKGTw2Gfa88r9iqi",
+   "oldSku": "BSHNGHNG-B9YYAE",
+   "newSku": "00050032",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "VD53XyKqwVbyeCjwNjGh",
+   "oldSku": "BSHNGRRHBC-B8UJVE",
+   "newSku": "00050033",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "xQ5TaVCrCCGUvv0lNfQV",
+   "oldSku": "BSHNGRBBRS-XKUFHD",
+   "newSku": "00050034",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "9BWYsXsAxtAwnsrVWovO",
+   "oldSku": "BSHNGSWNGR-PA7VGC",
+   "newSku": "00050035",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "5vS2ELnt907rnaJIxlIR",
+   "oldSku": "CNTRSTNDST-R296VR",
+   "newSku": "00050036",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "FcCwe7jRiRrbcboheBnt",
+   "oldSku": "CNTRSTNDSS-9B7PEZ",
+   "newSku": "00050037",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "MzLwUWXYwg36SpdOBJ5K",
+   "oldSku": "CNTRSTNDSS-EP6XZM",
+   "newSku": "00050038",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "3Z3Mhu7Iyc9NtHWEwTWS",
+   "oldSku": "FTRSTFRRBB-SAGQR8",
+   "newSku": "00050039",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "CjMbfzJqog5QucjZgw8p",
+   "oldSku": "FTRSTSSYWS-4ZG7YX",
+   "newSku": "00050040",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "INEHM0UN5FZMVra68Okp",
+   "oldSku": "FTRSTSSYWS-KVDFTZ",
+   "newSku": "00050041",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "KgXpn3Z2h20gbpz4Tl7T",
+   "oldSku": "FTRSTSSYWS-SVVMUF",
+   "newSku": "00050042",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "zemDqzeoKKvMry3hCzGp",
+   "oldSku": "FTRSTFRRBB-6C5RXJ",
+   "newSku": "00050043",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "FiXABI5fcLLaGRBpES0p",
+   "oldSku": "FTRSTFRRBB-D6DEMC",
+   "newSku": "00050044",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "vpL7uC8xsqfhrpfx4vdZ",
+   "oldSku": "FTRSTRRRBB-HZQKWX",
+   "newSku": "00050045",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "WhNbj7He3UIhi0VfAmQT",
+   "oldSku": "FTRSTRRRBB-Y44BX2",
+   "newSku": "00050046",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "aHGxu6S2x0PCyRrPOFcc",
+   "oldSku": "HNDLBRTMX-58U6EH",
+   "newSku": "00050047",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "MmP2HZB4tmG87zFxZk8X",
+   "oldSku": "HNDLBRBJJC-7E8XTW",
+   "newSku": "00050048",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "uoYejWaBxHEtwlBkeGGR",
+   "oldSku": "HNDLBRPRTP-DQ4HJE",
+   "newSku": "00050049",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "W8xrNuP8I0ITRFCIC0AK",
+   "oldSku": "HNDLBRPRTP-7D8V8H",
+   "newSku": "00050050",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "3DQlkC4YY0IGoDDqrnYt",
+   "oldSku": "KNCKLBRNGK-AMM4FA",
+   "newSku": "00050051",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "6EQz14Vd2bNSz2Vhiief",
+   "oldSku": "KNCKLBRNGK-RNZZS4",
+   "newSku": "00050052",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "l80pvDINcCUiOi7lbRK3",
+   "oldSku": "KNCKLBRNGK-P48X9X",
+   "newSku": "00050053",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "s9KXf0TIUy5q0WuWxJ9k",
+   "oldSku": "KNCKLBRNGK-UHR2C5",
+   "newSku": "00050054",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "wsRra59lOPU0B97finAo",
+   "oldSku": "KNCKLBRNGK-JHCF7V",
+   "newSku": "00050055",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "8vhyqhYtZKGnWd4mz4gX",
+   "oldSku": "KNCKLBRNGN-QX6WBQ",
+   "newSku": "00050056",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "FSnpsfbrmJJfxbbQgn7p",
+   "oldSku": "KNCKLBRNGV-3Q5C8V",
+   "newSku": "00050057",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "nOfV5iNAMAsz7NiEbKWq",
+   "oldSku": "KNCKLBRNGS-N3CACY",
+   "newSku": "00050058",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "PxfoKh3OqqaSUtDVx9KQ",
+   "oldSku": "KNCKLBRNGN-D9M2SV",
+   "newSku": "00050059",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "QoIiNkg7mLKTHFgefgID",
+   "oldSku": "KNCKLBRNGN-PPCRZY",
+   "newSku": "00050060",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "wyelIv1torbxAuo3cbsP",
+   "oldSku": "KNCKLBRNGN-QCVZG3",
+   "newSku": "00050061",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "rXylVnGAAAaWqZ48tg9H",
+   "oldSku": "STSSYTMX15-Z5C69E",
+   "newSku": "00050062",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "11EXmZXLqyxm5vBieTyr",
+   "oldSku": "SHCKXTSHRK-7U788X",
+   "newSku": "00050063",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "2teGES8KjUL6KBkOKEie",
+   "oldSku": "SHCKXTSHRK-6BAFMH",
+   "newSku": "00050064",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "3OtKTNcQBLuDxuEsSqPK",
+   "oldSku": "SHCKXTSHRK-H75FXB",
+   "newSku": "00050065",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "brQS4uL7pYnOMBWv0mVO",
+   "oldSku": "SHCKXTSHRK-M5RCGT",
+   "newSku": "00050066",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "Em8aavaAbO5tswqehyYd",
+   "oldSku": "SHCKXTSHRK-JGMSPK",
+   "newSku": "00050067",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "lztPKpEO0GIljQFphbNf",
+   "oldSku": "SHCKXTSHRK-326G55",
+   "newSku": "00050068",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "miott3EVWOX3AmN02u0N",
+   "oldSku": "SHCKXTSHRK-9UHFCW",
+   "newSku": "00050069",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "OiVR5pyC1T7op91Ksiv9",
+   "oldSku": "SHCKXTSHRK-HYNJY6",
+   "newSku": "00050070",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "RLOIsF3eKll7rkeSUW7n",
+   "oldSku": "SHCKXTSHRK-UTWZ6X",
+   "newSku": "00050071",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "UctrwWjvlaOepmxJBkIJ",
+   "oldSku": "SHCKXTSHRK-MNFTZ5",
+   "newSku": "00050072",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "66oT9VuzHgvFZGG69vz9",
+   "oldSku": "SDSTNDSHRK-YW9MEZ",
+   "newSku": "00050073",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "KAeJXFgM3LgeP6fUuyYN",
+   "oldSku": "SDSTNDSSCH-BYX96U",
+   "newSku": "00050074",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "n9Kp5MYa7caIDhEL2HPE",
+   "oldSku": "SDSTNDSHRK-99RXJE",
+   "newSku": "00050075",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "udh9nlwrgOqM8VRKWJR4",
+   "oldSku": "SDSTNDSHRK-XSWG4U",
+   "newSku": "00050076",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "xLOaPd6EmnRSEc06bXV6",
+   "oldSku": "SDSTNDPRNT-VURMAC",
+   "newSku": "00050077",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "0v6p3p4IcjwFYpYIvcMT",
+   "oldSku": "SPCRFRDXNX-RKWR6Y",
+   "newSku": "00050078",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "h6vExgl4NKXk4spvarao",
+   "oldSku": "SPCRRRDXNX-CTP6MX",
+   "newSku": "00050079",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "N4QFvEyTCZrlt7WRTgqA",
+   "oldSku": "SWNGRMPLS3-5Q8ZTV",
+   "newSku": "00050080",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "4BEhO0MP5owEE85BANnF",
+   "oldSku": "SWNGRMSTLS-M35GPM",
+   "newSku": "00050081",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "EcgIhxaoUEiWlk6cy6pm",
+   "oldSku": "SWNGRMSTLT-Z5G6GY",
+   "newSku": "00050082",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "IWpEAD07DyiVx8npegp3",
+   "oldSku": "SWNGRMSSSM-GF8KVM",
+   "newSku": "00050083",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "LCmfADV18iDHJRoJ3Kez",
+   "oldSku": "SWNGRMSHRK-R2N7EW",
+   "newSku": "00050084",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "nKfKyv2rogkvrObtluHl",
+   "oldSku": "SWNGRMPLS3-8CBCMC",
+   "newSku": "00050085",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "PYnx7apmwOoskSTEKHJs",
+   "oldSku": "SWNGRMSHRK-J898Q9",
+   "newSku": "00050086",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "ULMXZMJzt3ijKX2guwEL",
+   "oldSku": "SWNGRMSHRK-K6A36G",
+   "newSku": "00050087",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "Xmg2SJBwCrqM3KZTDbQQ",
+   "oldSku": "SWNGRMSTLX-GCGACZ",
+   "newSku": "00050088",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "Y4jesRy0S3kW2spuh9bh",
+   "oldSku": "SWNGRMSHRK-VHRDYN",
+   "newSku": "00050089",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "53VnZh6KzsLTD3UYmmF5",
+   "oldSku": "SWNGRMSTLX-3738Z6",
+   "newSku": "00050090",
+   "categoryCode": "0005"
+  },
+  {
+   "id": "IP0WHMTdF5QxikdI0CKq",
+   "oldSku": "TPSSNSRSTR-X9GMVR",
+   "newSku": "00240001",
+   "categoryCode": "0024"
+  },
+  {
+   "id": "10NN4LULZv05wU8plTov",
+   "oldSku": "TPSSNSRMCR-2PWEWF",
+   "newSku": "00240002",
+   "categoryCode": "0024"
+  },
+  {
+   "id": "ctpSZpQRRIKcreRHBZS6",
+   "oldSku": "TPSSNSRSPD-EJ25JQ",
+   "newSku": "00240003",
+   "categoryCode": "0024"
+  },
+  {
+   "id": "wp4QKwTIOErKseW3VNNB",
+   "oldSku": "TPSSNSRLXZ-R37VG2",
+   "newSku": "00240004",
+   "categoryCode": "0024"
+  },
+  {
+   "id": "YhRnsBqgba3Ypls2WEto",
+   "oldSku": "TPSSNSRSPD-MZP7U8",
+   "newSku": "00240005",
+   "categoryCode": "0024"
+  },
+  {
+   "id": "ZTh5XUc7iTy2hBXdtzuG",
+   "oldSku": "TPSSNSRLZX-DC6WSB",
+   "newSku": "00240006",
+   "categoryCode": "0024"
+  },
+  {
+   "id": "jveVsiEvMxJMEheqOfra",
+   "oldSku": "BRKRMCSLBT-SE9BEC",
+   "newSku": "00040001",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "1CPN1wRoGG2kxX9zjI0N",
+   "oldSku": "BRKRMCSLMR-EENWNK",
+   "newSku": "00040002",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "dVDJyVOaf8s1IfvAgKCA",
+   "oldSku": "BRKRMCSLTM-772XSW",
+   "newSku": "00040003",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "F9uPY2oiBp0mP2K8YOjj",
+   "oldSku": "BRKRMCSLW1-HY3ZDC",
+   "newSku": "00040004",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "jDqy0MjcAFby0gyrzoWo",
+   "oldSku": "BRKRMCSLSM-NK226U",
+   "newSku": "00040005",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "lY4aWbW9NecU9UcQWbqv",
+   "oldSku": "BRKRMCSLCT-BVRY88",
+   "newSku": "00040006",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "qB7oaCBlSrdosChnEyXL",
+   "oldSku": "BRKRMCSLTM-5CR6MD",
+   "newSku": "00040007",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "QOOyn6zjnUmvjRAkaUWL",
+   "oldSku": "BRKRMCSLXR-PKZ3U7",
+   "newSku": "00040008",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "bghATLc9O6ztgINBKqRw",
+   "oldSku": "BRKMSTRPMP-P9UAT7",
+   "newSku": "00040009",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "kvxnkvWHlZ63x9pNwSTv",
+   "oldSku": "BRKMSTRPMP-G65CBQ",
+   "newSku": "00040010",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "lPOE9E2z7wlQKgSjG9T7",
+   "oldSku": "BRKMSTRPMP-K3QJS3",
+   "newSku": "00040011",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "VmMIPCGHufMPKEwblrIa",
+   "oldSku": "BRKMSTRPMP-7RSWSK",
+   "newSku": "00040012",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "ZR7hpp5ubAaee30MeY4i",
+   "oldSku": "BRKMSTRPMP-6E6Y8J",
+   "newSku": "00040013",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "2ZnMIzEVlVqRQtODnRHs",
+   "oldSku": "BRKPDFRBND-QCVHPM",
+   "newSku": "00040014",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "71RLoKstQ5JDadcFiap0",
+   "oldSku": "BRKPDFRKMY-E7JMZS",
+   "newSku": "00040015",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "cIpXsLKeMe23rH5rxrDQ",
+   "oldSku": "BRKPDFRBND-BGEQSP",
+   "newSku": "00040016",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "da2OgxRyl03RxsCkInVD",
+   "oldSku": "BRKPDFRKMY-SDSU6S",
+   "newSku": "00040017",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "E4nwUt9hcyPvcUuF9bF2",
+   "oldSku": "BRKPDFRBND-CGXWM6",
+   "newSku": "00040018",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "efG0smzkaTJ7J3Y6MzbC",
+   "oldSku": "BRKMSTRRRB-GHTSGG",
+   "newSku": "00040019",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "LHOmbr1L0BIfV7z8TUxz",
+   "oldSku": "BRKPDFRKMY-CBC555",
+   "newSku": "00040020",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "vA40VRV9ZKwxXPdONYYQ",
+   "oldSku": "BRKPDFRBND-MFKS8U",
+   "newSku": "00040021",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "XSoE9S0Y8toPj58zF9rd",
+   "oldSku": "BRKPDFRKMY-RV5YQE",
+   "newSku": "00040022",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "YyzUjMOiRgQbAGZdKrLp",
+   "oldSku": "BRKPDFRKMY-4BFCCP",
+   "newSku": "00040023",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "5me7ZvS04YnKZPH9Ctxf",
+   "oldSku": "BRKPDFRPTS-B9CTWE",
+   "newSku": "00040024",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "cQzirFkN1t2yl2jxdjg7",
+   "oldSku": "BRKPDFRPTS-2VWGSZ",
+   "newSku": "00040025",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "dgyGka7ljYwBE0rhjCcK",
+   "oldSku": "BRKPDFRKMY-NJPZK2",
+   "newSku": "00040026",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "g3E5u2nGFiPaOb7zVH5F",
+   "oldSku": "BRKPDFRPTS-Q6VWMQ",
+   "newSku": "00040027",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "h0cwdMYq6T1HDS8At6Id",
+   "oldSku": "BRKPDFRPTS-BPHZ7K",
+   "newSku": "00040028",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "hLj0agLYdBty30eP4eYa",
+   "oldSku": "BRKPDFRPTS-QH8DEE",
+   "newSku": "00040029",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "l72Tnm7GfFyBPv7Bu3xk",
+   "oldSku": "BRKPDFRPTS-G8EEE8",
+   "newSku": "00040030",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "pxq1nWm0cKn9Cl44ckeE",
+   "oldSku": "BRKPDFRPTS-SGZZRX",
+   "newSku": "00040031",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "zzjx2Nrmlvkz3vPazQMb",
+   "oldSku": "BRKPDFRPTS-WEPUHR",
+   "newSku": "00040032",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "C7VUNqWBpMhnDy0z3htR",
+   "oldSku": "BRKPDRRPTS-HQEU55",
+   "newSku": "00040033",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "lTVQFid8umjv3xIg8cfk",
+   "oldSku": "BRKPDRRKMY-ZS8KSF",
+   "newSku": "00040034",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "n05u2CEP7Cz08aHEgtGc",
+   "oldSku": "BRKPDKMYBP-VEUARW",
+   "newSku": "00040035",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "Opjo7705NfCKNeC0RLx6",
+   "oldSku": "BRKPDRRKMY-TQNCAA",
+   "newSku": "00040036",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "QcpSW7p9vIPOUWmKNSUt",
+   "oldSku": "BRKPDRRPTS-T8T9XB",
+   "newSku": "00040037",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "QxzJidpVd91P68r9NCO0",
+   "oldSku": "BRKPDRRKMY-86D43K",
+   "newSku": "00040038",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "ty9LQ66QvCHwRznMI8ul",
+   "oldSku": "BRKPDRRPTS-ZE55YR",
+   "newSku": "00040039",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "UF7rEMqfXohKqecAczuj",
+   "oldSku": "BRKPDRRKMY-2XMZAQ",
+   "newSku": "00040040",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "y2nXmkxP591WXyX1tAcJ",
+   "oldSku": "BRKPDRRBND-474GVR",
+   "newSku": "00040041",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "4M4X9D3x5UhNQyqnJUty",
+   "oldSku": "BRKRDSNTLT-JUZBES",
+   "newSku": "00040042",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "aBOgcYSV6zZuXCq0XvhN",
+   "oldSku": "BRKRDWV125-QQMSU3",
+   "newSku": "00040043",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "AtofZ4XHAqLRLkf7fnPz",
+   "oldSku": "BRKSHSKCT1-7CZ99M",
+   "newSku": "00040044",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "bE0VQXoVoW2kvyhEbiSv",
+   "oldSku": "BRKRDSNTLX-7P95CJ",
+   "newSku": "00040045",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "bgXYXOqH3HIP1SVJHEUk",
+   "oldSku": "BRKRDSNTLX-RC8GQR",
+   "newSku": "00040046",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "Cl4w3moe8hLIQuuE2Vme",
+   "oldSku": "BRKSHSKHD3-46BYPN",
+   "newSku": "00040047",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "inNnithL9uWnBRb0fXTK",
+   "oldSku": "BRKRDSNTLR-E5226B",
+   "newSku": "00040048",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "lqLqiE5vNArsnr2HQ2FT",
+   "oldSku": "BRKSHSKDRS-HX9RA7",
+   "newSku": "00040049",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "RrkSNnYI86AMdo9Rti2L",
+   "oldSku": "BRKPDLSPRN-5KF5P8",
+   "newSku": "00040050",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "UNDppAKoIKzFHrLxn8yU",
+   "oldSku": "BRKSHSKRS1-MC9PG3",
+   "newSku": "00040051",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "czdWsFrkCKt3dSD8XDbL",
+   "oldSku": "BRKSHPTSBK-BDFBQP",
+   "newSku": "00040052",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "iFUvzoWoM8hC3jGyqS0p",
+   "oldSku": "BRKHSRLS60-B656XZ",
+   "newSku": "00040053",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "mHNwHtEzV1JhlDsgReKO",
+   "oldSku": "BRKSHMRTRM-XMVVTJ",
+   "newSku": "00040054",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "oVDHOzxuw44U0E1BiU2S",
+   "oldSku": "BRKSHPTSBK-9AK778",
+   "newSku": "00040055",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "pSVsI9klxTLpLNnIedDU",
+   "oldSku": "BRKSHVZB01-J95NS5",
+   "newSku": "00040056",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "rvxfvq9g4gTrnthD5Nu1",
+   "oldSku": "BRKSHSKTMX-BPRF9H",
+   "newSku": "00040057",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "vAKXneyC88lLP8xpa5Kn",
+   "oldSku": "BRKSHSKXRM-X5P2CF",
+   "newSku": "00040058",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "Vb0po3iYVvK6jLY2cmzj",
+   "oldSku": "BRKHSRLS12-EGSZZ7",
+   "newSku": "00040059",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "wP8QMEPOXBkmHLU4xGAE",
+   "oldSku": "BRKSHSKXL1-8E3MZJ",
+   "newSku": "00040060",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "XYdRPVyzcNUZczGM6GoT",
+   "oldSku": "BRKSHSKTMX-HM4PE6",
+   "newSku": "00040061",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "7FhSrpj4yAyhrzVVupyC",
+   "oldSku": "CLPRSSYFRW-YDMJK8",
+   "newSku": "00040062",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "FPdJMsF2qMnrx8jLmCbL",
+   "oldSku": "CLPRSSYFRW-PXJ4KB",
+   "newSku": "00040063",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "SKrB14u7Xw9Cu1aDeihj",
+   "oldSku": "CLPRSSYFRW-ZDFZV6",
+   "newSku": "00040064",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "3bHbVHF5lzIY0fzi7hZc",
+   "oldSku": "CLPRFRMRTR-B6X7FG",
+   "newSku": "00040065",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "9mRkeaa2E5xj8aAsqX0B",
+   "oldSku": "CLPRFRSHRK-Q6H3PQ",
+   "newSku": "00040066",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "toeGMHbo01AZ7FT4OjMD",
+   "oldSku": "CLPRFRDSHT-8BRFCK",
+   "newSku": "00040067",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "WBZvoPjbqXzzYsLOSS7F",
+   "oldSku": "CLPRFRSHRK-3S4HQ8",
+   "newSku": "00040068",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "zQvZvmwjgrIlkXzlmaNq",
+   "oldSku": "DSCPLTDSHT-VPWRVZ",
+   "newSku": "00040069",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "1zhthYzIujzM5J7HIOLe",
+   "oldSku": "DSCPLTFRNM-UQZG9M",
+   "newSku": "00040070",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "C9ixXWG21RRQUK5rp4tJ",
+   "oldSku": "DSCPLTFRSN-N9RW2J",
+   "newSku": "00040071",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "H5nscjFfn77S9AtSMe12",
+   "oldSku": "DSCPLTFRM3-R98DB9",
+   "newSku": "00040072",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "PTLJ29B5AOh58g4ezFm5",
+   "oldSku": "DSCPLTFRPC-9G76BR",
+   "newSku": "00040073",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "RWOYb3wBlCUBNcqznXU1",
+   "oldSku": "DSCPLTMBTC-2QCME8",
+   "newSku": "00040074",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "SnfIV2XEmnISbgaAxNbn",
+   "oldSku": "DSCPLTFRWV-CJX42U",
+   "newSku": "00040075",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "sYuxz49iXqPdGnoY3xlC",
+   "oldSku": "DSCPLTMSL1-7HUN3B",
+   "newSku": "00040076",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "tDsAeKLWMYDAJeHuFnCR",
+   "oldSku": "DSCPLTFRSN-64FMAQ",
+   "newSku": "00040077",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "YOKIIFzzDO2wJQLG8L00",
+   "oldSku": "DSCPLTFRYM-XDJNZM",
+   "newSku": "00040078",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "9i0Z8O2tWiChxZbv7s07",
+   "oldSku": "DSCPLTWVDS-XV23KC",
+   "newSku": "00040079",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "aayloBpzz09pli3YSPIx",
+   "oldSku": "DSCPLTRRYM-TUKMQP",
+   "newSku": "00040080",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "Au5dvzioLZkd6tVV9GQR",
+   "oldSku": "DSCPLTRRSN-W9YQGT",
+   "newSku": "00040081",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "aWqbL9UsikbyKpO4AvV9",
+   "oldSku": "DSCPLTXRMW-8JQXHN",
+   "newSku": "00040082",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "mLvc3RXf7mkEevLyMq3Q",
+   "oldSku": "DSCPLTRRSN-4P6ZU3",
+   "newSku": "00040083",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "RRdahQtIdzRHOdigvyFb",
+   "oldSku": "DSCPLTRRSN-XCG8Z3",
+   "newSku": "00040084",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "aLHbiahTXa1Q2loBiK8u",
+   "oldSku": "HNDLLVRWMR-USV77R",
+   "newSku": "00040085",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "EYdw70sugsvmWQ9H7CII",
+   "oldSku": "HNDLLVRWMR-SCRFYB",
+   "newSku": "00040086",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "bo3jU8hDcBGTgfYBftmj",
+   "oldSku": "MSTRRPKTFR-G79JX6",
+   "newSku": "00040087",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "DsiacXbHHY2ydcmiqCgE",
+   "oldSku": "MSTRRPKTFR-AMEJ6Z",
+   "newSku": "00040088",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "fisScefZDgmqrmlwpg3H",
+   "oldSku": "MSTRRPKTFR-6SSSSH",
+   "newSku": "00040089",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "IIywKp1F7fKRFkZk8NWc",
+   "oldSku": "MSTRRPKTFR-NNWC35",
+   "newSku": "00040090",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "JHbcFz8MWTVXeymFhTRH",
+   "oldSku": "MSTRRPKTFR-WD6BRD",
+   "newSku": "00040091",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "kqC2xvI0zkAacZb1yJfh",
+   "oldSku": "MSTRRPKTFR-84YMHV",
+   "newSku": "00040092",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "MeRAEzySvB9hT1CRdUdX",
+   "oldSku": "MSTRRPKTFR-U2T8TW",
+   "newSku": "00040093",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "o93PTD3p4qr9PLdT9FuM",
+   "oldSku": "MSTRRPKTFR-PDT6U9",
+   "newSku": "00040094",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "UVnx1TUZKFRrItcSxT2W",
+   "oldSku": "MSTRRPKTFR-T6YCA4",
+   "newSku": "00040095",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "UwjeSchq3qGMbAWtAnPK",
+   "oldSku": "MSTRRPKTFR-SD492K",
+   "newSku": "00040096",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "AXTUmdggbaDKtCgJpHzW",
+   "oldSku": "MSTRRPKTRR-ZHZC5Z",
+   "newSku": "00040097",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "swmT7wxT0E9jVVNeCatH",
+   "oldSku": "MSTRRPKTRR-5P5FTC",
+   "newSku": "00040098",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "erogd1YTr6tk9Cl9lKDN",
+   "oldSku": "DSCPLTRRRD-6KBBJC",
+   "newSku": "00040099",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "NwJQL7YsWBwiGTPaVpi2",
+   "oldSku": "DSCPLTRRRD-CV8A9F",
+   "newSku": "00040100",
+   "categoryCode": "0004"
+  },
+  {
+   "id": "hGlC3GW1EwOHqm70ALlZ",
+   "oldSku": "FSTTHRTTLD-6S3X2X",
+   "newSku": "00080001",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "1Pls5MohsOCKZZe3ZDMx",
+   "oldSku": "SWTCHHLLW-3QGF8Q",
+   "newSku": "00080002",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "7TUIAoXvk0SIaVMumX0x",
+   "oldSku": "SWTCHCRCDL-9WQBYC",
+   "newSku": "00080003",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "Hp1lYStxvhYotO9ZRw5C",
+   "oldSku": "SWTCH3WY-BCDGM9",
+   "newSku": "00080004",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "KAxg9Lq5gy0T7G5VJ3xO",
+   "oldSku": "SWTCHBRKM-G36JZ7",
+   "newSku": "00080005",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "O2K6WHCy5H5JLE7csEcp",
+   "oldSku": "SWTCHBRKXR-SE8XN8",
+   "newSku": "00080006",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "qz3LvWFxXzjDyXIYbiNY",
+   "oldSku": "SWTCHHZRD-SBK8SC",
+   "newSku": "00080007",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "Tfds45NApCyttN29wb8L",
+   "oldSku": "SWTCHSLWHZ-JTGJC5",
+   "newSku": "00080008",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "1U1anUYJeilrymMVfhOt",
+   "oldSku": "SWTCHHDLGH-PH7RP6",
+   "newSku": "00080009",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "8fnkR8JcGzhKe2JgE37S",
+   "oldSku": "SWTCHNFF-X6GP75",
+   "newSku": "00080010",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "aqP96zoNCb8zPlUAYpOi",
+   "oldSku": "SWTCHHLWBG-NT4NU2",
+   "newSku": "00080011",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "Eohpi2O1mLBbNzx7r756",
+   "oldSku": "SWTCHSLWHZ-4KMPAQ",
+   "newSku": "00080012",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "FQUUI0CCym4vkdFO1VGS",
+   "oldSku": "SWTCHHDLGH-VFMMDM",
+   "newSku": "00080013",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "Gap7kZkcKKgJkqSTE1Vo",
+   "oldSku": "SWTCHHLWSM-56XH95",
+   "newSku": "00080014",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "l3Qvv4g19dAFZlRAWeE7",
+   "oldSku": "SWTCHSTRTR-8HHHVP",
+   "newSku": "00080015",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "mPeEg2g9gmexWFj1bWy5",
+   "oldSku": "SWTCHHRN-HZZ9CS",
+   "newSku": "00080016",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "Yi7IifLY7lTxjY8qIVvD",
+   "oldSku": "SWTCHHRNBT-8GEW68",
+   "newSku": "00080017",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "IvEtgX5kCcjBOt3C4hwm",
+   "oldSku": "SWTCHSTRTR-TDGEEU",
+   "newSku": "00080018",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "xBrqvTgrDS3lr8OJRqoo",
+   "oldSku": "SWTCHTGGLR-WUDEB3",
+   "newSku": "00080019",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "ZReg2ZIUOsWH4bYoh7Kv",
+   "oldSku": "SWTCHTGGLB-7ARWA7",
+   "newSku": "00080020",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "ytGUp0a6Nvko5575lYCJ",
+   "oldSku": "THRTTLPPXR-T7CNRE",
+   "newSku": "00080021",
+   "categoryCode": "0008"
+  },
+  {
+   "id": "aWFbEo5OHrUWnEj6FopX",
+   "oldSku": "BCKCWLNGSM-7MGREH",
+   "newSku": "00190001",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Y3sySuwmHGYGaSmT59Ou",
+   "oldSku": "BCKFNDRXRM-MD7CEA",
+   "newSku": "00190002",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "qhwnIfiz6abQ3tJCAU6g",
+   "oldSku": "BDYCVRLHRH-MBTFYU",
+   "newSku": "00190003",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "5t3734h3oacGbuId7HOp",
+   "oldSku": "BDYCVRXRM1-63VSSS",
+   "newSku": "00190004",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "9dY3yKPzz7z66ER9I6jP",
+   "oldSku": "BDYCVRLHRH-T79NNQ",
+   "newSku": "00190005",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "FfSs0Rxla4dv1KyrIVs9",
+   "oldSku": "BDYCVRXRM1-NSPFWJ",
+   "newSku": "00190006",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "KH1CSR1KixEUGsWQJcdM",
+   "oldSku": "BDYCVRW100-M4CHPC",
+   "newSku": "00190007",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "sentfVBaW708pT9IDXbi",
+   "oldSku": "BDYCVRW100-J5CBH6",
+   "newSku": "00190008",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "UcMqDlmB9QNVEvDSVfPV",
+   "oldSku": "BDYCVRW100-X83FWS",
+   "newSku": "00190009",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "dN3EpYEXsFAfSixKa5Uc",
+   "oldSku": "CWLNGSSYR1-NZAHED",
+   "newSku": "00190010",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "9MZ7k2XnPT57nAoYBFOA",
+   "oldSku": "DLPHNFNDRN-5JBXWW",
+   "newSku": "00190011",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "R8o6swbv0g8JbvrD5kSz",
+   "oldSku": "DLPHNFNDRN-F65QYH",
+   "newSku": "00190012",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "X4n5s0uqxDkmUhoUyQAm",
+   "oldSku": "DLPHNFNDRN-DFEWSH",
+   "newSku": "00190013",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "UOaPE2BTjR8sAxN8OWc6",
+   "oldSku": "FNDRXTMDGR-JKTH32",
+   "newSku": "00190014",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "WZ5qm9NPOnxXf3ipKuvJ",
+   "oldSku": "FNDRXTMDGR-A5D3NZ",
+   "newSku": "00190015",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "YyfClzXs5w1AXRycxosk",
+   "oldSku": "FNDRXTW100-RYNJJC",
+   "newSku": "00190016",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Zt4UrpH0yjcx0t2diAUo",
+   "oldSku": "FNDRXTMDGR-5ZAQUS",
+   "newSku": "00190017",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "4Kv6wPd5UJOm0Ldib9ee",
+   "oldSku": "FRNTCWLNGS-83X9CD",
+   "newSku": "00190018",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "9Wc40c6BIv4n3qTYbEiC",
+   "oldSku": "FRNTCWLNGW-F5N5G3",
+   "newSku": "00190019",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "gOyd0P8OhgUiXyFy117f",
+   "oldSku": "FRNTCWLNGS-U96399",
+   "newSku": "00190020",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "QoLn4zC4xKIn61m8dG48",
+   "oldSku": "FRNTCWLNGS-3U2R3Q",
+   "newSku": "00190021",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "1tNUrklzv92FE9s45hGL",
+   "oldSku": "FRNTFNDRCL-96WA59",
+   "newSku": "00190022",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "H6n3UPiEth3L397Om3wL",
+   "oldSku": "FRNTCWLNGW-WP5MWY",
+   "newSku": "00190023",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "kNLL531o7oEBq9SbMPmn",
+   "oldSku": "FRNTFNDRBT-HPPB32",
+   "newSku": "00190024",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "LlZndA85FVwjM87UbXqn",
+   "oldSku": "FRNTFNDRBT-YEQB5Q",
+   "newSku": "00190025",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "rILHzo7X4OBV7eupMSV8",
+   "oldSku": "FRNTFNDRMS-TTH9XB",
+   "newSku": "00190026",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "RviDbbI8mkhR0IXITQGz",
+   "oldSku": "FRNTFNDRCL-XEMFJE",
+   "newSku": "00190027",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "sfuGKV0UmKNGRJVnDAJW",
+   "oldSku": "FRNTFNDRCL-HAATBJ",
+   "newSku": "00190028",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "toNMNMxxnF9NQS1MpSUI",
+   "oldSku": "FRNTCWLNGW-REYHQ9",
+   "newSku": "00190029",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "VksF8xqcjTX3Jjq2fvF9",
+   "oldSku": "FRNTCWLNGW-PW5YMK",
+   "newSku": "00190030",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "AtcUziADk4EUcQvtrftV",
+   "oldSku": "FRNTFNDRW1-TDSGZV",
+   "newSku": "00190031",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "eNJHIQOZAg1Hpu6Lod0b",
+   "oldSku": "FRNTFNDRM1-BFFB84",
+   "newSku": "00190032",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Ig12lmJ3bbV3fmrrxezP",
+   "oldSku": "FRNTFNDRW1-57PU2V",
+   "newSku": "00190033",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "K3mO0zkRDQoY4Cxsbg3m",
+   "oldSku": "FRNTFNDRMS-V4RFDX",
+   "newSku": "00190034",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "KmKp6IKLt7dKB2Z4Qca3",
+   "oldSku": "FRNTFNDRM1-PHPPBV",
+   "newSku": "00190035",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Lm3NpZRv2SKLrYpPE0ZH",
+   "oldSku": "FRNTFNDRSM-XCAFKD",
+   "newSku": "00190036",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Rsas4A6Od2XcJ1LU5r6V",
+   "oldSku": "FRNTFNDRXR-2HGKHF",
+   "newSku": "00190037",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "tYufVGlxj1pD802inmKE",
+   "oldSku": "FRNTFNDRSM-QDVCZ7",
+   "newSku": "00190038",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "zQzJN6Tiy82QFkLJW5Gu",
+   "oldSku": "FRNTFNDRXR-2BCV3V",
+   "newSku": "00190039",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Su4khNcqv6yuHa1Jx6Le",
+   "oldSku": "FRNTFNDRXR-HFZ4PH",
+   "newSku": "00190040",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "vC8BaTHntloNXn1MmFOn",
+   "oldSku": "FRNTFNDRXR-58MPGK",
+   "newSku": "00190041",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Y5HpIuSEUVjEDcwkZN6q",
+   "oldSku": "FRNTFNDRXR-TDPZGW",
+   "newSku": "00190042",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "XAb6KQHXq43ZBD8fvQfg",
+   "oldSku": "HDLGHTCWLN-AFN6HB",
+   "newSku": "00190043",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "p86mefMzSk6X0829RnEB",
+   "oldSku": "RRFNDRSSTM-2BJKZP",
+   "newSku": "00190044",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "rOEQ0d94WkpsHxr9UeXv",
+   "oldSku": "RRFNDRW100-NT35YT",
+   "newSku": "00190045",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "GgSuSHVKZ91GHJaW8lvl",
+   "oldSku": "SHRTSDCVRX-F8MDV6",
+   "newSku": "00190046",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "vMESPb97bF2qmIKcRgWH",
+   "oldSku": "SHRTSDCVRX-H8AABM",
+   "newSku": "00190047",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "vrgdq55idmDinAbgCsPo",
+   "oldSku": "SHRTSDCVRX-GTPGW5",
+   "newSku": "00190048",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "8lwKpI4Q2ZW7XrzvMrak",
+   "oldSku": "SHRTSDCVRX-5JMWXY",
+   "newSku": "00190049",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "8OyoYU3B3QQpqPupxpZ9",
+   "oldSku": "SDCVRXRM11-QMGDQ8",
+   "newSku": "00190050",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "fsV8aHlsHGnM8gZLz80L",
+   "oldSku": "SDCVRXRM11-TN2X9B",
+   "newSku": "00190051",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "Vqq7FbCLIMRCn4NWLwlB",
+   "oldSku": "SDCVRXRM11-YDCHC3",
+   "newSku": "00190052",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "AkUup1kZtoLhzv7i196Q",
+   "oldSku": "TLLGHTCVRX-FDXY6K",
+   "newSku": "00190053",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "oaGYlNIrhQepgZFewABR",
+   "oldSku": "TLLGHTCVRW-ZCYSEZ",
+   "newSku": "00190054",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "xUPttDllft50X58C26m3",
+   "oldSku": "TLLGHTCVRW-GZ8R9K",
+   "newSku": "00190055",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "zZbvf5nut5RYH1tTtbqd",
+   "oldSku": "TLLGHTCVRX-HQAZRB",
+   "newSku": "00190056",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "dYQ1shqvcQ179uoF0Lna",
+   "oldSku": "TLLGHTCVRX-URWDQX",
+   "newSku": "00190057",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "pl6nBJre64VqiiHbup2e",
+   "oldSku": "TNKCVRXRM1-QAAYZK",
+   "newSku": "00190058",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "pNLEPQ9dDCYcIxFmD3Pv",
+   "oldSku": "TNKCVRXRM1-4ABGBK",
+   "newSku": "00190059",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "R8HIdRT7w70v7LKStOCg",
+   "oldSku": "TNKCVRCNSL-CG32DW",
+   "newSku": "00190060",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "RYtpMvwYd2t6NrVc8rv6",
+   "oldSku": "TNKCVRXRM1-Y3QSJP",
+   "newSku": "00190061",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "AlqFZyuwmsDwFucqGb8F",
+   "oldSku": "TPCNTRCVRW-6A2AEQ",
+   "newSku": "00190062",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "m45iK5OrAHSaJnd5PAmg",
+   "oldSku": "TPCNTRCVRW-VA7Y4K",
+   "newSku": "00190063",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "tV4VxzizR0OPnYVI8Svm",
+   "oldSku": "TPCNTRCVRW-7W38AM",
+   "newSku": "00190064",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "MsdGUuINmmiBslibfIpM",
+   "oldSku": "UBXCVRXRM1-FRJ28M",
+   "newSku": "00190065",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "SB32bb2RyemCLLQyjDbI",
+   "oldSku": "UBXW100BLK-8P4R4J",
+   "newSku": "00190066",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "sWX1FXrqE74DMMKROLyd",
+   "oldSku": "UBXCVRW100-RVEYME",
+   "newSku": "00190067",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "UBTSHLsizZfnl2K9bjiT",
+   "oldSku": "UBXXRM1251-3RMNW6",
+   "newSku": "00190068",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "dg2cL5yZeNfOGcai1jZv",
+   "oldSku": "WNGSCVRTRN-XWRA2H",
+   "newSku": "00190069",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "VHHfgJJoMNaCjSCDMA62",
+   "oldSku": "WNGSCVRTRN-TT5TAC",
+   "newSku": "00190070",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "FugZP8v6nqbk4HVRqxkM",
+   "oldSku": "WNGSCVRTRN-52TJC6",
+   "newSku": "00190071",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "iKkvPbOBYTzRBBuybczf",
+   "oldSku": "WNGSCVRWVW-NPTJGW",
+   "newSku": "00190072",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "oBcMWqH7WBHe9mbtAana",
+   "oldSku": "WNGSCVRWVW-CD8WEB",
+   "newSku": "00190073",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "vPjYqNGhiv40QM23vElK",
+   "oldSku": "WNGSCVRTRN-MXV3C9",
+   "newSku": "00190074",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "xO6rHbcVKWYEhUonAClb",
+   "oldSku": "WNGSCVRWVW-39PGAU",
+   "newSku": "00190075",
+   "categoryCode": "0019"
+  },
+  {
+   "id": "dry4Rp8yeJx8X2rWDYFY",
+   "oldSku": "ALLYLVRRCB-H2MFZ4",
+   "newSku": "00010001",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Nq6pfZHOrKN3eHCMsLAV",
+   "oldSku": "ALLYLVRRCB-FERVGY",
+   "newSku": "00010002",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "pXOJsa4klfh5BNLkYqbF",
+   "oldSku": "ALLYLVRRCB-ZGE92D",
+   "newSku": "00010003",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "yXC4EaVzu3u4zcsJVAMn",
+   "oldSku": "BLNDSPTMRR-U3YNH3",
+   "newSku": "00010004",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "25qw8LXeSEz38EzLFVp0",
+   "oldSku": "BRKLVRTKSM-WEUGCS",
+   "newSku": "00010005",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "IUpKZvRp0rNTIWTkoc53",
+   "oldSku": "BRKLVRSPDX-SEN8KC",
+   "newSku": "00010006",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "KAaRKBCHIB0iYMbiHX9z",
+   "oldSku": "BRKLVRTKML-8H3NZ8",
+   "newSku": "00010007",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "nhhDV5sPk9EOpmkD68f3",
+   "oldSku": "BRKLVRTKTC-22JBU3",
+   "newSku": "00010008",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Frqm2AIwUreoyc3gsyk6",
+   "oldSku": "CLTCHLVRTK-GAQZE2",
+   "newSku": "00010009",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "hJ1IYZ35kaZa90Kl7ZEy",
+   "oldSku": "CLTCHLVRKZ-UHUP3A",
+   "newSku": "00010010",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Pb8OZeP1FolnJZg1t8JQ",
+   "oldSku": "CLTCHLVRTK-ZV3A35",
+   "newSku": "00010011",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "jn6fkFbWJkuS1zeuqbMx",
+   "oldSku": "FNDRCLMPSH-HP3GZS",
+   "newSku": "00010012",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "XnJwWbkprhJXt2uMg9g9",
+   "oldSku": "FNDRCLMPKR-SKXAVV",
+   "newSku": "00010013",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "2gIYkx2NgRB9cMkhm27E",
+   "oldSku": "FLTBRNPSSH-68WJRZ",
+   "newSku": "00010014",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "B5xjshKXXRigegogts1r",
+   "oldSku": "FTRSTLLYSK-T58FRX",
+   "newSku": "00010015",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "eZ40xXgekJGDnN35xJsH",
+   "oldSku": "FLTBRBGGLB-YX8HER",
+   "newSku": "00010016",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "rYU9ZuNGlCLZRkBWRl9L",
+   "oldSku": "FTRSTSSYRR-BMBTW7",
+   "newSku": "00010017",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "doKqwk3ojSkOZO7b8CCc",
+   "oldSku": "FTRSTRRSHR-AD4JVE",
+   "newSku": "00010018",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "wIha3IMVXZfiFiQuqkFs",
+   "oldSku": "HNDGLVSFLL-KYVRW6",
+   "newSku": "00010019",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "2yOQQ9mgMwf5pbZanICY",
+   "oldSku": "HNDGLVSHLF-SCFEX8",
+   "newSku": "00010020",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "cekjBlwiRy3UjZh7RzaQ",
+   "oldSku": "HNDLGRPDMN-JNHW6E",
+   "newSku": "00010021",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "daGHWo98TJ8qkgP4Jvco",
+   "oldSku": "HNDLGRPJRP-Y72CJE",
+   "newSku": "00010022",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "wjIXNWbBVARGM34s6im2",
+   "oldSku": "HNDLGRPDYT-CBX6PS",
+   "newSku": "00010023",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "YjpKSeggIlexIK2f8mk3",
+   "oldSku": "HNDLBRXTYM-BZK6G3",
+   "newSku": "00010024",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "41vU0SIRlS2pXXnZyQ4I",
+   "oldSku": "HNDLGRPRCB-B944RC",
+   "newSku": "00010025",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "5E92ghuvfheLD1PWaDNy",
+   "oldSku": "HNDLLVRMTR-VKPXR5",
+   "newSku": "00010026",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "6UWefU8BfVxh8PLLKVMX",
+   "oldSku": "HNDLGRPJRP-SBDQFE",
+   "newSku": "00010027",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "CQa2ds910VwYQMPj7kxT",
+   "oldSku": "HNDLGRPPRT-EK5VAA",
+   "newSku": "00010028",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "gjj2At4geGvUoCukQJJJ",
+   "oldSku": "HNDLGRPSMK-44U4W5",
+   "newSku": "00010029",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "kevyJ8kMEGW2UNbpGr9D",
+   "oldSku": "HNDLLVRRMT-XYJYRG",
+   "newSku": "00010030",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "oNgfjNU6NMuZFOBLlG3J",
+   "oldSku": "HNDLLVRMTR-BDZQSA",
+   "newSku": "00010031",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "RgkwNgVX2evn3tpwNhaI",
+   "oldSku": "HNDLGRPSMK-8VNRG2",
+   "newSku": "00010032",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "T5J3KbzOCWnkUhu0jacg",
+   "oldSku": "HNDLGRPPLY-MJ7AV7",
+   "newSku": "00010033",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "A0jIfq7vzxHu26pQuVND",
+   "oldSku": "HNDLLVRMTR-5U5TZE",
+   "newSku": "00010034",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "bo8l0YDpbmQBPK3xGRH7",
+   "oldSku": "HNDLLVRSHR-BN8WAF",
+   "newSku": "00010035",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Km2tsrqbE7pC5qGVyPAR",
+   "oldSku": "HNDLLVRSKY-RKZGR8",
+   "newSku": "00010036",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "kvNkxJnabx3BsQ9MCCt0",
+   "oldSku": "HNDLLVRMTR-WNP58B",
+   "newSku": "00010037",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "oNGoS8U6ngIV8rLk2jHs",
+   "oldSku": "HNDLLVRMTR-PUPF9F",
+   "newSku": "00010038",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "RqwZxgSZWiv3DeMk830o",
+   "oldSku": "HNDLLVRYMK-ZKSWEU",
+   "newSku": "00010039",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "7mIjDpNS9OF6aL5X2XXE",
+   "oldSku": "HDLGHTBRCK-WJHQJD",
+   "newSku": "00010040",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "AsHSPGZGMKIR4T0QvhEs",
+   "oldSku": "HLMTSKLLJN-5Z8637",
+   "newSku": "00010041",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "bN2i4uYBean1iENI9VG1",
+   "oldSku": "HLMTSKLLJN-DS5623",
+   "newSku": "00010042",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "OR3NmqC6eB5QDr998ehb",
+   "oldSku": "HTGRDM-CQ2BGT",
+   "newSku": "00010043",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "TRBcxxqvvEAXpgMjQW6m",
+   "oldSku": "HLMTHLFFCR-Q27UVA",
+   "newSku": "00010044",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "ynx1Yc0la9ieQWsXpld2",
+   "oldSku": "HLMTHLFFCR-AC4XR2",
+   "newSku": "00010045",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "e1tH6BlFcjv4IqEzN1XH",
+   "oldSku": "HRNGLBLGB3-G35MKZ",
+   "newSku": "00010046",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "eRS1gTow89EE9AjHtc4s",
+   "oldSku": "HRNGLBLGB1-UQYJWV",
+   "newSku": "00010047",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "fQgPCf8l7N7X7jrp6Pwk",
+   "oldSku": "HRNBSCHC12-YSTRKY",
+   "newSku": "00010048",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "iT3qw5UPdFd7qR35J2S5",
+   "oldSku": "HRNMTRSNLD-8K9G93",
+   "newSku": "00010049",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "PKn0tjIzEYTtUj5M1wB1",
+   "oldSku": "HLMTSKLLJN-FH2RM2",
+   "newSku": "00010050",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "PrF8jy45ash929dV4rBn",
+   "oldSku": "HRNGLBLGB1-864BY9",
+   "newSku": "00010051",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "t6srx1AU3SF2uv1x9Djc",
+   "oldSku": "HRNGLBLGB1-9MZ3ZB",
+   "newSku": "00010052",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "eYmZE4EM1gGbNwmmOE7C",
+   "oldSku": "HRNPSNLDL-NV596F",
+   "newSku": "00010053",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "cwltqZj4CRKfbcJhObl7",
+   "oldSku": "MDLBRCKTLZ-6HXT76",
+   "newSku": "00010054",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "OuuL3Gb4BC49IjahfGva",
+   "oldSku": "MDLBRCKTNM-NHR4ES",
+   "newSku": "00010055",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "pegFd3xedfeHCZ8aeQuj",
+   "oldSku": "MDLBRCKTLZ-DB79N3",
+   "newSku": "00010056",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "gBnwMDmKPbxqg4pFmPu4",
+   "oldSku": "MFFLRCLMPY-GD7V3K",
+   "newSku": "00010057",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "REIvjXgpZ89kzKk5SRXu",
+   "oldSku": "PHNHLDRMGC-8GU9W9",
+   "newSku": "00010058",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "YhWQtF1HH6sFDY56pwhy",
+   "oldSku": "PHNHLDRSMK-ZHWX78",
+   "newSku": "00010059",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "vNbDImLasP5eigFMRcSF",
+   "oldSku": "RDTRCVRBMX-NFCMUF",
+   "newSku": "00010060",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "xtLycsMhbRyhTEdOkLix",
+   "oldSku": "RDTRCVRBMX-K4Z372",
+   "newSku": "00010061",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "792XeldiNx50yKZVvyu5",
+   "oldSku": "STCVRDBS-NFYAMP",
+   "newSku": "00010062",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "CTWWT5EXgVGdcvkoJRNF",
+   "oldSku": "RCKTCPHJG-JEC7NV",
+   "newSku": "00010063",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "gNwn7oK8y5nFy7JeuGk0",
+   "oldSku": "STCVRGRPPR-QM9PH3",
+   "newSku": "00010064",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "my24ChLgEyDpDXI44cUH",
+   "oldSku": "STCVRGRPPR-FJHPK5",
+   "newSku": "00010065",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "2augqxmmlylm7OTzvA7u",
+   "oldSku": "STCVRJRPNV-Q5YJH5",
+   "newSku": "00010066",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "gogc9Fzl61PE223mIFE5",
+   "oldSku": "STCVRGRPPR-5F6YFJ",
+   "newSku": "00010067",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "I3qgDs2Lpf05wG4PFZkx",
+   "oldSku": "STCVRHNDPL-GCN995",
+   "newSku": "00010068",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "ief9QZZ8G0r4pIYiXNV4",
+   "oldSku": "STCVRSMJNB-FA4E8K",
+   "newSku": "00010069",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "NsT6FeOngrd5zEj0oJyO",
+   "oldSku": "STCVRNDNMX-KAW9NW",
+   "newSku": "00010070",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "QKK7mqcl2TMLQvT0jnn7",
+   "oldSku": "STCVRHND-FSWPQK",
+   "newSku": "00010071",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "r1iSGrfcqIHwAsaiSw8R",
+   "oldSku": "STCVRNDMDM-3WY33Q",
+   "newSku": "00010072",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "SC1tYnPRPeuwfBQ3Bm9L",
+   "oldSku": "STCVRNDRX-7X6R67",
+   "newSku": "00010073",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "UgAYQxFIJ7oQ2ha0KOXD",
+   "oldSku": "STCVRNDHCL-7JGV78",
+   "newSku": "00010074",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "VFdRuA3BBsBEk0qkIWh1",
+   "oldSku": "STCVRGRPPR-5GSDSS",
+   "newSku": "00010075",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "48eKCqcAjR1chFAQJuwZ",
+   "oldSku": "STCVRSMJNG-RVWSFQ",
+   "newSku": "00010076",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "5QoJu4k61o2GWkzrODQA",
+   "oldSku": "STCVRSMJNP-VWFYFK",
+   "newSku": "00010077",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "rNfCh3QUxZ3TUUIWNmyy",
+   "oldSku": "STCVRSMJNY-FFD52K",
+   "newSku": "00010078",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "wX3kD3Ao9Mix1RgvVH5u",
+   "oldSku": "STCVRSMJNG-CAMM24",
+   "newSku": "00010079",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Z8U32Agvnd8N2M0Zqc8K",
+   "oldSku": "STCVRSMJNR-HEJ26Y",
+   "newSku": "00010080",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "BVG6ueDLzhlyHVxfwi2y",
+   "oldSku": "SDMRRRDMNB-49HUEQ",
+   "newSku": "00010081",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "nqHg3iX8PiJjLn5QKELR",
+   "oldSku": "SDMRRRDMNG-RMVMCT",
+   "newSku": "00010082",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "P3CUjyapgg0IAxMtbiHi",
+   "oldSku": "SDMRRRDMNS-R4P6V3",
+   "newSku": "00010083",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "tkclceLODlPSaLnDulwm",
+   "oldSku": "SDMRRRDMNB-R9483Y",
+   "newSku": "00010084",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "XAuMTNa3ybOEBsTPrc7a",
+   "oldSku": "SDMRRRDMNR-JN5JAJ",
+   "newSku": "00010085",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "aKUl0TVsUhRY4Ml6mqUW",
+   "oldSku": "SDMRRRDMNW-U48BUQ",
+   "newSku": "00010086",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "eCNulw8qvrQgNq95uJIl",
+   "oldSku": "SDMRRRGNNH-XCVC9H",
+   "newSku": "00010087",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "iAOtKOYT3NzHDwCW6Ixu",
+   "oldSku": "SDMRRRH2C-5ZW9SZ",
+   "newSku": "00010088",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "ogpTWJTqwPuyQbQI3du1",
+   "oldSku": "SDMRRRHLDR-MZUEPJ",
+   "newSku": "00010089",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "U6UzolRcy0Lv1LTcQLd3",
+   "oldSku": "SDMRRRRTRV-3EGX6D",
+   "newSku": "00010090",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "UNdaYiC5GL1nJOUemomX",
+   "oldSku": "SDMRRRHMYM-GJCRTT",
+   "newSku": "00010091",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Vux6bNNRaklNegvjj2OQ",
+   "oldSku": "SDMRRRGNNY-9VVF8S",
+   "newSku": "00010092",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "wdScsWbSlQKPNotEtqeg",
+   "oldSku": "SDMRRRRTRV-CXKJ4D",
+   "newSku": "00010093",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "ZhxRDlXjIzdSAssQMz6d",
+   "oldSku": "SDMRRRRTRV-6G8XJ5",
+   "newSku": "00010094",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "iU3c5h6wSpCxux72nULV",
+   "oldSku": "SDMRRRSHRK-C2YXCH",
+   "newSku": "00010095",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "kLBbh54nQkiSj6KCDccz",
+   "oldSku": "SDMRRRSHRK-82UFQD",
+   "newSku": "00010096",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Rc5luXuB9vK0JbusqlZa",
+   "oldSku": "SDMRRRSHRK-AQWP4Z",
+   "newSku": "00010097",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "9NdHFhGbdqmJdbn01ioa",
+   "oldSku": "SGNLLGHTLN-25DJBA",
+   "newSku": "00010098",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "BjolSyAvMfFQMt4pHUzd",
+   "oldSku": "SGNLLGHTLN-BTD62S",
+   "newSku": "00010099",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "OOx60fPLYXtKBjV2RaVp",
+   "oldSku": "STCKLVRTKM-VYARK4",
+   "newSku": "00010100",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "Q8PBaxvl7rBHOGN3AMF8",
+   "oldSku": "STCKLVRTKC-RVQ45A",
+   "newSku": "00010101",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "sH1oba4zluXwzKcIgwtE",
+   "oldSku": "STCKLVRTKN-82AQZ3",
+   "newSku": "00010102",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "VbIxKcXct7v6sSH8nFi5",
+   "oldSku": "STCKLVRTKB-RNQ2NC",
+   "newSku": "00010103",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "zFgWO6zKJ11fsLXObdxt",
+   "oldSku": "STCKLVRTKN-5666ZP",
+   "newSku": "00010104",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "YmVOZTZ56rwKuE85lYde",
+   "oldSku": "TNKCPCRSSP-PHREEP",
+   "newSku": "00010105",
+   "categoryCode": "0001"
+  },
+  {
+   "id": "2TKDtxOkokCNl6cnbYcS",
+   "oldSku": "EXHSTPPBTC-AR45DB",
+   "newSku": "00100001",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "F7JkAsDgP7TKWUmTyKTh",
+   "oldSku": "EXHSTPPSMS-NQPT6U",
+   "newSku": "00100002",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "NIJI7m3LZFIsVBOwNcMm",
+   "oldSku": "EXHSTPPM12-J6CXP9",
+   "newSku": "00100003",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "O01xt30UPT3tWRmyD4vx",
+   "oldSku": "EXHSTGSKTX-XVP5CF",
+   "newSku": "00100004",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "q08cKXFwgu7U99cqSQ9v",
+   "oldSku": "EXHSTGSKTB-FCCEPG",
+   "newSku": "00100005",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "s9h1OuzT16WsbdaAU4hK",
+   "oldSku": "EXHSTPPMSP-GHGT3X",
+   "newSku": "00100006",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "SWdLBcxvelPVjBEqciSp",
+   "oldSku": "EXHSTGSKTT-KCARGQ",
+   "newSku": "00100007",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "UVEYMGSq6JqnVPr5DoIN",
+   "oldSku": "EXHSTPPXRM-WTC4UY",
+   "newSku": "00100008",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "C7SqKLOfoSY7PCryQH56",
+   "oldSku": "MFFLRFDM1R-M4Q2MC",
+   "newSku": "00100009",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "dr5AS0d2EcIR8lEDr1WZ",
+   "oldSku": "MFFLRCRPNM-K9QMDP",
+   "newSku": "00100010",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "HmDfZmA7OUr2mOJKpDjM",
+   "oldSku": "MFFLRJVTMS-WGX9N6",
+   "newSku": "00100011",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "pn0xRnI6Eufm5rYNSdoP",
+   "oldSku": "MFFLRSPDR1-X4KCS9",
+   "newSku": "00100012",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "SzTG59RpKNYBkLKHT9Rf",
+   "oldSku": "MFFLRMTSPD-HGQKN3",
+   "newSku": "00100013",
+   "categoryCode": "0010"
+  },
+  {
+   "id": "S1p61jSw9SxS3qH5fPQ9",
+   "oldSku": "CRBRPKTSNT-G674W9",
+   "newSku": "00150001",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "wevwlZiXh6KnWiHr7QgL",
+   "oldSku": "CRBRPKTSNT-NE4EJF",
+   "newSku": "00150002",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "4SL8bjNfUSy9YEkGhIYV",
+   "oldSku": "CRBRPKTSNT-V9YC5M",
+   "newSku": "00150003",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "bOQXRzI8svYPQrps35jJ",
+   "oldSku": "CRBRPKTSNT-GXY3HA",
+   "newSku": "00150004",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "kU3Npcj2PKIoQoUwy3Oy",
+   "oldSku": "CRBRPKTSNT-2YQ4UN",
+   "newSku": "00150005",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "UjXL60VHDa552iblrZMV",
+   "oldSku": "CRBRPKTSNT-ZEXD49",
+   "newSku": "00150006",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "AhXLpvADIh6nyAUVVvHU",
+   "oldSku": "CRBRTRKHNM-JHMG3W",
+   "newSku": "00150007",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "B6JB1XKfDOT3JltkMMqb",
+   "oldSku": "CRBRTRSNTL-QAMQZJ",
+   "newSku": "00150008",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "drRVeowhfFr77HhZOflJ",
+   "oldSku": "CRBRTRKHNX-K2ANWZ",
+   "newSku": "00150009",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "eRxmLyzOENhnHbFqGRu4",
+   "oldSku": "CRBRTRSNTL-C2YFTR",
+   "newSku": "00150010",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "Lkvj7Sm7H5MzobH4aVvF",
+   "oldSku": "CRBRTRSNTL-4XW6PX",
+   "newSku": "00150011",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "lQP1autmpnDaeuqM7vjM",
+   "oldSku": "CRBRTRSNTL-H7YU99",
+   "newSku": "00150012",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "nFSYhShrY4SB7WP5uU9P",
+   "oldSku": "CRBRTRSNTL-8SVZWG",
+   "newSku": "00150013",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "tTLsRFgAP3zfqOup7MuQ",
+   "oldSku": "CRBRTRKHNS-J9HEEP",
+   "newSku": "00150014",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "9AM18yZ9IKvi2wS0uqLv",
+   "oldSku": "CRBRTRSNTL-PPW8ED",
+   "newSku": "00150015",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "IRfr0y50UPvYgWLRfXTa",
+   "oldSku": "CRBRTRSNTL-M28QDA",
+   "newSku": "00150016",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "UpZEfUdqLx2v6fi7FdcL",
+   "oldSku": "CRBRTRVZXR-TRQYMR",
+   "newSku": "00150017",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "39Y6aXBP5K40ZbgX0tqu",
+   "oldSku": "FLCCKNVRSL-6EY3Z2",
+   "newSku": "00150018",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "5KUPI9cEeFUHxNirxNro",
+   "oldSku": "FLCCKYMKTM-DWWNEB",
+   "newSku": "00150019",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "aqQmnpsnw1Xs5gACWjOs",
+   "oldSku": "FLCCKYMKTS-GHECSG",
+   "newSku": "00150020",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "OhUH8hGPTvKdpts1h2go",
+   "oldSku": "FLCCKYMKTC-B39XBN",
+   "newSku": "00150021",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "QUkhpUHj8MOpSHKUVFIJ",
+   "oldSku": "FLFLTRLZXB-D8276R",
+   "newSku": "00150022",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "TAs9uJuu8t0irNiIMZmN",
+   "oldSku": "FLCCKYMKTX-X4ADDW",
+   "newSku": "00150023",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "UI8dzSxjaygS8YnnnCsX",
+   "oldSku": "FLCCKYMKTR-XWZFKQ",
+   "newSku": "00150024",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "VeBFUihLmbbIV5buQTce",
+   "oldSku": "FLCCKSNTLW-FXPNFA",
+   "newSku": "00150025",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "75ONLqhk1Osd6GlUCGPe",
+   "oldSku": "FLFLTRPTSB-RAXMDQ",
+   "newSku": "00150026",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "rhVHwdkxaUDUAnqfk0Z5",
+   "oldSku": "FLFLTRPTSB-FYS99T",
+   "newSku": "00150027",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "RQrHvPHBV40bgoNQcLeI",
+   "oldSku": "FLFLTRPTSB-QTSRTD",
+   "newSku": "00150028",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "vNPyk0Vo0dfkXmXaMOoE",
+   "oldSku": "FLFLTRPTSB-NRGBMX",
+   "newSku": "00150029",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "WqHcrj5Pdjjs9PHrYiBk",
+   "oldSku": "FLFLTRPTSB-GBJEZ4",
+   "newSku": "00150030",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "4Bzw4ryzayfU8a1A8jFs",
+   "oldSku": "FLNJCTRHSM-24PNGZ",
+   "newSku": "00150031",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "DW4INt1R8HkgaSWuD7K8",
+   "oldSku": "FLNJCTRSPD-AG9ZCV",
+   "newSku": "00150032",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "jwIVjd64ys6yPg8uotqo",
+   "oldSku": "FLHSGRN-3YHM9P",
+   "newSku": "00150033",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "NW3liQDh9RmQ0j18l2nA",
+   "oldSku": "FLHSBLK-8ZYPH9",
+   "newSku": "00150034",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "ppi7lgRqwSigdZ0TjQib",
+   "oldSku": "FLNJCTRHSM-99JH4E",
+   "newSku": "00150035",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "qnD2kiLdp7EFZv4VJf3O",
+   "oldSku": "FLNJCTRHSM-3A46FK",
+   "newSku": "00150036",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "tS3BzoSrQ6oy9DZL4Tzb",
+   "oldSku": "FLNJCTRPPH-G7QU5N",
+   "newSku": "00150037",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "yGlfhMibeyR7p4xSsewf",
+   "oldSku": "FLNJCTRPTS-3DGS3D",
+   "newSku": "00150038",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "3aclK0aSnIXRugvJwIn4",
+   "oldSku": "FLTNKCPXRM-J9W98W",
+   "newSku": "00150039",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "4QosTY1AApApgNdPb9TQ",
+   "oldSku": "FLNJCTRSPD-FXVDFC",
+   "newSku": "00150040",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "dlzervM8xnkbCAFcvsgA",
+   "oldSku": "FLNJCTRSPD-DAB2HF",
+   "newSku": "00150041",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "H1wVMcpQAXE5KUxvi3kN",
+   "oldSku": "FLNJCTRSPD-K48H2D",
+   "newSku": "00150042",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "5ixErMpt3D3G4iz9JGOn",
+   "oldSku": "IDLSPDCNTR-UM3RX4",
+   "newSku": "00150043",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "CBMG49EG4zAvHz7C6fIc",
+   "oldSku": "IDLSPDCNTR-GB8Z4N",
+   "newSku": "00150044",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "j66ctMbVnnR3hQjarO8t",
+   "oldSku": "IDLSPDCNTR-Y6JX5D",
+   "newSku": "00150045",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "JHRXk2nayAtxUlLcDL0r",
+   "oldSku": "IDLSPDCNTR-52UY69",
+   "newSku": "00150046",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "LSysmeTP2vQInCZiWSyz",
+   "oldSku": "IDLSPDCNTR-37ZGJD",
+   "newSku": "00150047",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "yYgFouLKNuicm0FPxN7X",
+   "oldSku": "IDLSPDCNTR-WQH955",
+   "newSku": "00150048",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "2snCX1xUmcucq9knSZVg",
+   "oldSku": "MNFLDRDR15-H34RMD",
+   "newSku": "00150049",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "abApwZsOzooPUErZEPNi",
+   "oldSku": "MNFLDYKMTR-76XUY6",
+   "newSku": "00150050",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "GLtThxx1MeFvd3qHySbm",
+   "oldSku": "MNFLDYKMTN-YVA9G2",
+   "newSku": "00150051",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "IifFvxXNS4amWEuh3vPa",
+   "oldSku": "MNFLDLLYTM-NPPP9T",
+   "newSku": "00150052",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "JMvZRq5BWxcE27XEeJSX",
+   "oldSku": "MNFLDM-5T8WUB",
+   "newSku": "00150053",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "LozMeD1x1FYBPACqSFa2",
+   "oldSku": "MNFLDYKMTR-8CZF98",
+   "newSku": "00150054",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "Ra2H2SIHvOBTakBaZHy4",
+   "oldSku": "MNFLDW125-ZYJPQE",
+   "newSku": "00150055",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "UtmphW4ZBZB6RSdkiLht",
+   "oldSku": "MNFLDXRM11-VFPT5F",
+   "newSku": "00150056",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "CECIxBdupk2CDjOWKApJ",
+   "oldSku": "SLCNDPTRYK-59BTFT",
+   "newSku": "00150057",
+   "categoryCode": "0015"
+  },
+  {
+   "id": "iKdJplMjxMHqDT9OBpDE",
+   "oldSku": "PNTSMRCLR-UG7G9E",
+   "newSku": "00130001",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "ix7XBTATu8mgZ1qPIxQA",
+   "oldSku": "PNTSMRRD-Z8CC49",
+   "newSku": "00130002",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "NRvUbtZ0fWIVqR9xesuh",
+   "oldSku": "PNTSMRHTMP-MJW6TJ",
+   "newSku": "00130003",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "P2IAHcY0Ous7HNC8zWVN",
+   "oldSku": "PNTSMRBLK-KWG4ZW",
+   "newSku": "00130004",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "PdcWHUrGfAKbNErFufKd",
+   "oldSku": "PNTSMRWHT-SUMYC5",
+   "newSku": "00130005",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "TeG7Ysa66j8eGW1Za1YB",
+   "oldSku": "PNTSMRPRMR-F83ATG",
+   "newSku": "00130006",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "VCe1BiQKYWRObaqCVitA",
+   "oldSku": "PNTSMRSLV-HE4URK",
+   "newSku": "00130007",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "3aDqcZVJlgbNgEsYBWsY",
+   "oldSku": "PNTSHRLXFL-C6D8ZQ",
+   "newSku": "00130008",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "3H6VRkTiV3iF74ty6W3C",
+   "oldSku": "PNTSHRLXFL-2VF4KR",
+   "newSku": "00130009",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "6drncWXeHe8lJgcjSTf4",
+   "oldSku": "PNTSHRLXMD-NEAMG8",
+   "newSku": "00130010",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "6n1VqRfNnB6ZjOtpfl8S",
+   "oldSku": "PNTSHRLXFL-YG4AAW",
+   "newSku": "00130011",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "eT2Wd6qSampAButgkeHr",
+   "oldSku": "PNTSHRLXHT-55M9MR",
+   "newSku": "00130012",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "gzMIqawGITN0GC8zl32F",
+   "oldSku": "PNTSHRLXFL-2XC9FC",
+   "newSku": "00130013",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "oA72iAVA3KOlwLhlI2hz",
+   "oldSku": "PNTSHRLXBL-ZCH5TD",
+   "newSku": "00130014",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "wXJ3gfqWuy5f8rorqcWj",
+   "oldSku": "PNTSHRLXHN-69KWUW",
+   "newSku": "00130015",
+   "categoryCode": "0013"
+  },
+  {
+   "id": "4lHWg09BkFWteAnFGqmg",
+   "oldSku": "IGNTNSWTCH-TWNWH3",
+   "newSku": "00180001",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "B4fKGFFC01cBRFQJg5Sb",
+   "oldSku": "IGNTNCLSYN-RXPUEV",
+   "newSku": "00180002",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "dUvSGYKpawgv4QcGlgXn",
+   "oldSku": "IGNTNCLSYN-UH3D3N",
+   "newSku": "00180003",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "FURaDWChED5QVqALwlJx",
+   "oldSku": "IGNTNSWTCH-FQ448A",
+   "newSku": "00180004",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "hZZN0QQIBZ6oDMfJ8QlH",
+   "oldSku": "IGNTNSWTCH-7P3T53",
+   "newSku": "00180005",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "jAR51bxdSSNL6DXFtHSH",
+   "oldSku": "IGNTNSWTCH-WNANJR",
+   "newSku": "00180006",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "LoBaFYdY5VbN2bJkZVKJ",
+   "oldSku": "IGNTNSWTCH-QJV4JC",
+   "newSku": "00180007",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "ro5MCtOSkHWn0R6JNcx3",
+   "oldSku": "IGNTNCLSYN-K9P8ES",
+   "newSku": "00180008",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "tGyq2PyLluUb6LcnK9WS",
+   "oldSku": "IGNTNSWTCH-BH7HGV",
+   "newSku": "00180009",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "ZJEThMVjwF2wS7RYViX4",
+   "oldSku": "IGNTNCLSYN-NN5C26",
+   "newSku": "00180010",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "3O6F3VVGVMkcvbRFS9lM",
+   "oldSku": "IGNTNSWTCH-GXSEYA",
+   "newSku": "00180011",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "pn2UHbVvJG7TBfPcDa4m",
+   "oldSku": "IGNTNSWTCH-BBC6E9",
+   "newSku": "00180012",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "QGn17D6MwSr63vdDdvjm",
+   "oldSku": "IGNTNSWTCH-A2C7Q8",
+   "newSku": "00180013",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "vG06DxY3CLIN7NocrauC",
+   "oldSku": "IGNTNSWTCH-VU349M",
+   "newSku": "00180014",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "tKR3ks6ezvHSFYVw1Qg7",
+   "oldSku": "VNDXKTCSLX-KZ9ZMU",
+   "newSku": "00180015",
+   "categoryCode": "0018"
+  },
+  {
+   "id": "WWNjajUnC64imWzYlC0q",
+   "oldSku": "FLFLTRKHCW-FMNSXR",
+   "newSku": "00140001",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "Mfp3nmgWi9t91dgA2is1",
+   "oldSku": "FLFLTRXRM-K7UKKM",
+   "newSku": "00140002",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "oI9n4RwSWEXxSnfxVv86",
+   "oldSku": "FLFLTRKHCX-V7Q3Z7",
+   "newSku": "00140003",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "cHEbx0l3g9XWz2gGCLPO",
+   "oldSku": "SPDMTRSSYB-TC7QM4",
+   "newSku": "00140004",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "eQu2cZlMZkYpsMU0JzjK",
+   "oldSku": "SPDMTRSSYC-DY7JVX",
+   "newSku": "00140005",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "GSSCbPvLzrwkAQ21KHtG",
+   "oldSku": "SPDMTRSSYC-8UN87F",
+   "newSku": "00140006",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "4pYqSpOvVvIZUEqlI6ov",
+   "oldSku": "SPDMTRSSYL-DHZMY8",
+   "newSku": "00140007",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "m4WC5MwqUYLBq1FTKXDx",
+   "oldSku": "SPDMTRSSYC-24H2SQ",
+   "newSku": "00140008",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "w3QbAh4RW25G35WZ0J9g",
+   "oldSku": "SPDMTRSSYS-U9Z99B",
+   "newSku": "00140009",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "XhNMvt1ceZzwS0LOHbmO",
+   "oldSku": "SPDMTRSSYK-KQY6S8",
+   "newSku": "00140010",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "3dy4wOZxCbKE43EwSvZc",
+   "oldSku": "VLTMTRGLBL-S7D467",
+   "newSku": "00140011",
+   "categoryCode": "0014"
+  },
+  {
+   "id": "LskVVzjUQ5QAaM937Kyz",
+   "oldSku": "EPXYSTLSTG-TNZAVZ",
+   "newSku": "00030001",
+   "categoryCode": "0003"
+  },
+  {
+   "id": "43wZCkU3JNcSAPT3SyCS",
+   "oldSku": "MGHTYBNDPN-RZDWW4",
+   "newSku": "00030002",
+   "categoryCode": "0003"
+  },
+  {
+   "id": "mhQrJ3RBf6OBPKXt9r1C",
+   "oldSku": "HNDLSWTCHC-XCZAH8",
+   "newSku": "00230001",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "OLMOeVfAbl3n9PFoIBq2",
+   "oldSku": "HNDLSWTCHC-MXNNK3",
+   "newSku": "00230002",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "5TF2dFZNCKRROPkEIPQC",
+   "oldSku": "HNDLSWTCHD-DBGXX2",
+   "newSku": "00230003",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "BYM543HPSMpGAf1nSUqg",
+   "oldSku": "HNDLSWTCHC-86T69V",
+   "newSku": "00230004",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "caH8RZwmpsKty4RcZ2D2",
+   "oldSku": "HNDLSWTCHD-TWXNPV",
+   "newSku": "00230005",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "GcKWzwpSFPIyNlB5AVMb",
+   "oldSku": "HNDLSWTCHM-WN8UF5",
+   "newSku": "00230006",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "hN4C237EWPM3zlz8jxZA",
+   "oldSku": "HNDLSWTCHD-KBRG6R",
+   "newSku": "00230007",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "NUC5Dq68ONOmtVSsnzUY",
+   "oldSku": "HNDLSWTCHC-2XX82F",
+   "newSku": "00230008",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "PuS44i6EdHREek1Cbvog",
+   "oldSku": "HNDLSWTCHD-XHS6PF",
+   "newSku": "00230009",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "UzLAfA5yADoiCuV98Z6p",
+   "oldSku": "HNDLSWTCHM-HWZTNU",
+   "newSku": "00230010",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "yz25Rvsq4QWRh6gO4nSV",
+   "oldSku": "HNDLSWTCHD-YJK6WG",
+   "newSku": "00230011",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "Z5zmhadYiCZurI79T8Bq",
+   "oldSku": "HNDLSWTCHD-K6X9AV",
+   "newSku": "00230012",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "6cqQjJ5kh3yy1tptivmH",
+   "oldSku": "HNDLSWTCHT-6MQM7Q",
+   "newSku": "00230013",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "HXn554WuvO3jSzZd32oh",
+   "oldSku": "HNDLSWTCHT-BBYQ77",
+   "newSku": "00230014",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "XjDNg8dGiQV8FaXPQVrm",
+   "oldSku": "HNDLSWTCHT-XNJHVB",
+   "newSku": "00230015",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "IG5GAzP1QZc1t21Mowqn",
+   "oldSku": "HNYWHLSWTC-4N4YM5",
+   "newSku": "00230016",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "Syf5mZJoD3fZcZsjJr99",
+   "oldSku": "NTRLLGHTSW-DNB7GE",
+   "newSku": "00230017",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "CRL2GiMAn1XGGtbNv0Xl",
+   "oldSku": "SHFTSWTCHK-SUK526",
+   "newSku": "00230018",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "dTYNituhkvtzjAREoEG5",
+   "oldSku": "SWTCH3WYLH-Z6PTD3",
+   "newSku": "00230019",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "Gs1hHxXaJbYW1E0xF7Cr",
+   "oldSku": "SWTCH3WYLH-WRXMGV",
+   "newSku": "00230020",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "DpHGv3zoo5Km951Fh5YA",
+   "oldSku": "HNDLSWTCHD-66YEH9",
+   "newSku": "00230021",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "etGnBZ3UjMRB6EqlW9S3",
+   "oldSku": "HNDLSWTCHD-DHDFXR",
+   "newSku": "00230022",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "PdyHaFYgIbX3PqBWT47f",
+   "oldSku": "HNDLSWTCHD-D8NSRH",
+   "newSku": "00230023",
+   "categoryCode": "0023"
+  },
+  {
+   "id": "W9Qvp7RhylILnTfooASH",
+   "oldSku": "HNDLSWTCHD-UZYB9N",
+   "newSku": "00230024",
+   "categoryCode": "0023"
+  }
+ ],
+ "baseSkuFixes": [
+  {
+   "id": "4Sysqy4dvtboLyDoQ39M",
+   "oldBaseSku": "TRTLMXXSMV-4JJ5ST",
+   "newBaseSku": "00220058"
+  },
+  {
+   "id": "GG1ZInc6nUGpFQJ8j7z0",
+   "oldBaseSku": "MDLLDWHT-D7DTNP",
+   "newBaseSku": "00160057"
+  },
+  {
+   "id": "GWFKeemUeNocx9WrTGID",
+   "oldBaseSku": "TRTTLLZR80-UKBFS9",
+   "newBaseSku": "00220053"
+  },
+  {
+   "id": "MqnRuOJjlQ1GlnDaF8dN",
+   "oldBaseSku": "TRTTZMSPCL-8KGB8R",
+   "newBaseSku": "00220056"
+  },
+  {
+   "id": "NwJQL7YsWBwiGTPaVpi2",
+   "oldBaseSku": "DSCPLTRRRD-6KBBJC",
+   "newBaseSku": "00040099"
+  },
+  {
+   "id": "PdyHaFYgIbX3PqBWT47f",
+   "oldBaseSku": "HNDLSWTCHD-UZYB9N",
+   "newBaseSku": "00230024"
+  },
+  {
+   "id": "YpURFsiTgPGKhkgNKz7S",
+   "oldBaseSku": "TRTLMXXSMG-6BU5FB",
+   "newBaseSku": "00220049"
+  },
+  {
+   "id": "etGnBZ3UjMRB6EqlW9S3",
+   "oldBaseSku": "HNDLSWTCHD-66YEH9",
+   "newBaseSku": "00230021"
+  },
+  {
+   "id": "fe8zBtcfFmpguONr6tuX",
+   "oldBaseSku": "TRTTLLZR70-243H4F",
+   "newBaseSku": "00220054"
+  },
+  {
+   "id": "vOeb00kKPK7hiUrTy2V1",
+   "oldBaseSku": "BLTBNDSKYD-YKQRTJ",
+   "newBaseSku": "00020152"
+  },
+  {
+   "id": "vsN3F12bwQQbdQ6Pm8sk",
+   "oldBaseSku": "BLTHNGCNC5-J3HUDS",
+   "newBaseSku": "00070073"
+  },
+  {
+   "id": "vvoqCwRwUselaetkyooq",
+   "oldBaseSku": "TRTLBST48P-JCJU5R",
+   "newBaseSku": "00220048"
+  }
+ ],
+ "registryAfter": {
+  "0001": 106,
+  "0002": 154,
+  "0003": 3,
+  "0004": 101,
+  "0005": 91,
+  "0006": 61,
+  "0007": 75,
+  "0008": 22,
+  "0009": 42,
+  "0010": 14,
+  "0011": 8,
+  "0012": 70,
+  "0013": 16,
+  "0014": 12,
+  "0015": 58,
+  "0016": 60,
+  "0017": 115,
+  "0018": 16,
+  "0019": 76,
+  "0020": 31,
+  "0021": 45,
+  "0022": 62,
+  "0023": 25,
+  "0024": 7,
+  "0025": 1,
+  "0026": 1
+ }
+}

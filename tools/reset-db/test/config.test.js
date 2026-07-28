@@ -9,7 +9,6 @@ describe('reset-db config', () => {
   it('WIPE_COLLECTIONS is exactly the expected set (incl. catalog)', () => {
     assert.deepStrictEqual(WIPE_COLLECTIONS, [
       'sales',
-      'drafts',
       'job_orders',
       'receivings',
       'expenses',

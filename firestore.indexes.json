@@ -29,52 +29,6 @@
       ]
     },
     {
-      "collectionGroup": "drafts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isConverted",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "drafts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isConverted",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdBy",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "drafts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isConverted",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "convertedAt",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "products",
       "queryScope": "COLLECTION",
       "fields": [

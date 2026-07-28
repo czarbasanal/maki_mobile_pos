@@ -10,7 +10,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 const PROJECT_ID = 'maki-mobile-pos';
 const DELETE = [
   'products', 'product_skus', 'product_barcodes', 'product_categories', 'suppliers',
-  'sales', 'receivings', 'drafts', 'job_orders', 'purchase_orders',
+  'sales', 'receivings', 'job_orders', 'purchase_orders',
   'expenses', 'daily_closings', 'user_logs', 'void_requests',
 ];
 const KEEP = [

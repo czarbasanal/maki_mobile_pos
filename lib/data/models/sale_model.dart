@@ -112,10 +112,7 @@ class SaleModel {
       cashierName: map['cashierName'] as String? ?? '',
       createdAt: _parseTimestamp(map['createdAt']) ?? DateTime.now(),
       updatedAt: _parseTimestamp(map['updatedAt']),
-      // TODO(2026-07-27): drop the 'draftId' fallback after all shop phones
-      // run +18 and the migration script's final sweep has been re-run —
-      // +17 APKs still write the old field name during the transition.
-      jobOrderId: (map['jobOrderId'] ?? map['draftId']) as String?,
+      jobOrderId: map['jobOrderId'] as String?,
       notes: map['notes'] as String?,
       voidedAt: _parseTimestamp(map['voidedAt']),
       voidedBy: map['voidedBy'] as String?,

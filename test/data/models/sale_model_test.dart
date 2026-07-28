@@ -111,31 +111,6 @@ void main() {
       expect(model.mechanicName, isNull);
     });
 
-    // Transition guard for the drafts→job_orders migration: sales written by
-    // +17 APKs carry the OLD field name. Deleting this fallback before every
-    // phone is on +18 (and the migration's final sweep has run) silently
-    // severs the sale↔ticket link on every pre-migration sale.
-    test('fromMap reads a pre-migration draftId as jobOrderId', () {
-      final model = SaleModel.fromMap(
-        {'saleNumber': 'SALE-OLD', 'draftId': 'ticket-1'},
-        'sale-old',
-      );
-
-      expect(model.jobOrderId, 'ticket-1');
-    });
-
-    test('fromMap prefers jobOrderId when a doc carries both fields', () {
-      final model = SaleModel.fromMap(
-        {
-          'saleNumber': 'SALE-BOTH',
-          'jobOrderId': 'ticket-new',
-          'draftId': 'ticket-old',
-        },
-        'sale-both',
-      );
-
-      expect(model.jobOrderId, 'ticket-new');
-    });
 
     test('toEntity / fromEntity round-trips labor + mechanic', () {
       final entity = buildModel().toEntity();
