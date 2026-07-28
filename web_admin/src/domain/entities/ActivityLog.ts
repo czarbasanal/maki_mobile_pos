@@ -7,7 +7,7 @@
 //   / stock_adjustment / receiving / user_management / user_created /
 //   user_updated / user_deactivated / role_changed / security /
 //   password_verified / password_failed / cost_viewed / settings /
-//   cost_code_changed / expense / supplier / other
+//   cost_code_changed / expense / supplier / day_closed / other
 
 export const ActivityType = {
   authentication: 'authentication',

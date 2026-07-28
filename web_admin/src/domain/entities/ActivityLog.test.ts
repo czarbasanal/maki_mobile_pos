@@ -19,6 +19,12 @@ describe('ActivityType', () => {
   });
 
   it('lists every enum value in ALL_ACTIVITY_TYPES', () => {
-    expect(new Set(ALL_ACTIVITY_TYPES)).toEqual(new Set(Object.values(ActivityType)));
+    // Hardcoded count (not derived from ActivityType) so deletions trip this assertion.
+    // Current canonical members: authentication, login, logout, sale, voidSale, refund,
+    // inventory, stockAdjustment, receiving, userManagement, userCreated, userUpdated,
+    // userDeactivated, roleChanged, security, passwordVerified, passwordFailed, costViewed,
+    // settings, costCodeChanged, expense, supplier, dayClosed, other = 24 total.
+    expect(ALL_ACTIVITY_TYPES).toHaveLength(24);
+    expect(ALL_ACTIVITY_TYPES).toContain(ActivityType.dayClosed);
   });
 });
