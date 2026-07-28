@@ -32,22 +32,19 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
 
   @override
   Future<List<ActivityLogEntity>> getActivityLogs({
-    ActivityType? type,
-    String? userId,
+    List<ActivityType> types = const [],
     DateTime? startDate,
     DateTime? endDate,
     int limit = 50,
   }) async {
     try {
-      Query<Map<String, dynamic>> query =
-          _logsRef.orderBy('createdAt', descending: true);
+      Query<Map<String, dynamic>> query = _logsRef;
 
-      if (type != null) {
-        query = query.where('type', isEqualTo: type.value);
-      }
-
-      if (userId != null) {
-        query = query.where('userId', isEqualTo: userId);
+      // Selecting every type is the same as selecting none, and skipping the
+      // constraint keeps the query off the composite index.
+      if (types.isNotEmpty && types.length < ActivityType.values.length) {
+        query = query.where('type',
+            whereIn: types.map((t) => t.value).toList(growable: false));
       }
 
       if (startDate != null) {
@@ -60,7 +57,7 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
             isLessThanOrEqualTo: Timestamp.fromDate(endDate));
       }
 
-      query = query.limit(limit);
+      query = query.orderBy('createdAt', descending: true).limit(limit);
 
       final snapshot = await query.get();
       return snapshot.docs
@@ -73,29 +70,5 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
         originalError: e,
       );
     }
-  }
-
-  @override
-  Stream<List<ActivityLogEntity>> watchActivityLogs({
-    ActivityType? type,
-    String? userId,
-    int limit = 50,
-  }) {
-    Query<Map<String, dynamic>> query =
-        _logsRef.orderBy('createdAt', descending: true);
-
-    if (type != null) {
-      query = query.where('type', isEqualTo: type.value);
-    }
-
-    if (userId != null) {
-      query = query.where('userId', isEqualTo: userId);
-    }
-
-    query = query.limit(limit);
-
-    return query.snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => ActivityLogModel.fromFirestore(doc).toEntity())
-        .toList());
   }
 }

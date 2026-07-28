@@ -5,19 +5,11 @@ abstract class ActivityLogRepository {
   /// Logs an activity.
   Future<ActivityLogEntity> logActivity(ActivityLogEntity log);
 
-  /// Gets activity logs with optional filters.
+  /// Gets activity logs. An empty [types] means "every operation".
   Future<List<ActivityLogEntity>> getActivityLogs({
-    ActivityType? type,
-    String? userId,
+    List<ActivityType> types = const [],
     DateTime? startDate,
     DateTime? endDate,
-    int limit = 50,
-  });
-
-  /// Streams activity logs for real-time updates.
-  Stream<List<ActivityLogEntity>> watchActivityLogs({
-    ActivityType? type,
-    String? userId,
     int limit = 50,
   });
 }
