@@ -29,12 +29,14 @@ describe('ActivityLogFilterBar', () => {
   });
 
   it('reports a ticked operation in canonical enum order', async () => {
-    const props = harness({ types: [ActivityType.login] });
+    const props = harness({ types: [ActivityType.sale] });
     await userEvent.click(screen.getByRole('button', { name: /1 operation/ }));
-    await userEvent.click(screen.getByLabelText('Sale'));
+    await userEvent.click(screen.getByLabelText('Login'));
 
-    // 'login' is declared before 'sale' in the enum, so order is preserved
-    // regardless of click order.
+    // 'login' is declared BEFORE 'sale' in the enum, but 'sale' was already
+    // selected and 'login' is clicked second — so a click-order-append
+    // implementation would produce [sale, login]. Only a canonical-order
+    // (filter over ALL_ACTIVITY_TYPES) implementation produces this order.
     expect(props.onTypes).toHaveBeenCalledWith([ActivityType.login, ActivityType.sale]);
   });
 
