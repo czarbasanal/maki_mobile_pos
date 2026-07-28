@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/data/repositories/user_repository_impl.dart';
+import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
@@ -48,15 +49,14 @@ void main() {
     );
   });
 
-  Future<UserEntityResult> create() async {
-    final user = await repository.createUser(
-      email: 'new@shop.test',
+  Future<UserEntity> create({String email = 'new@shop.test'}) {
+    return repository.createUser(
+      email: email,
       password: 'hunter2000',
       displayName: 'New Cashier',
       role: UserRole.cashier,
       createdBy: 'admin-1',
     );
-    return UserEntityResult(user.id);
   }
 
   // The admin's own session can no longer be touched by construction: the
@@ -95,6 +95,7 @@ void main() {
     final result = await create();
 
     expect(result.id, 'new-uid');
+    expect(result.email, 'new@shop.test');
     final doc = await fakeFirestore.collection('users').doc('new-uid').get();
     expect(doc.exists, isTrue);
     expect(doc.data()!['email'], 'new@shop.test');
@@ -114,12 +115,29 @@ void main() {
     verify(() => provisioningAuth.signOut()).called(1);
   });
 
+  test('a create still succeeds when signing the throwaway session out fails',
+      () async {
+    when(() => provisioningAuth.createUserWithEmailAndPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        )).thenAnswer((_) async => credentialFor('new-uid'));
+    when(() => provisioningAuth.signOut())
+        .thenThrow(FirebaseAuthException(code: 'network-request-failed'));
+
+    // Cleanup must never mask the real outcome — the account was made.
+    final result = await create();
+
+    expect(result.id, 'new-uid');
+    final doc = await fakeFirestore.collection('users').doc('new-uid').get();
+    expect(doc.exists, isTrue);
+  });
+
   test(
-      'a leftover credential with no profile reports the real problem, not '
-      '"email already in use"', () async {
-    // Orphan state from a previous failed create: Firebase Auth has the
-    // credential, the users collection does not — so the Firestore-only
-    // duplicate check passes and Auth rejects the mint.
+      'a credential with no profile is reported as a login clash, not a '
+      'missing user', () async {
+    // Auth has the credential but the users collection doesn't — e.g. the
+    // person was deleted (delete removes the profile, not the credential) or
+    // an earlier create failed midway.
     when(() => provisioningAuth.createUserWithEmailAndPassword(
           email: any(named: 'email'),
           password: any(named: 'password'),
@@ -127,19 +145,28 @@ void main() {
 
     await expectLater(
       create(),
-      throwsA(
-        isA<DuplicateEntryException>().having(
-          (e) => e.message,
-          'message',
-          allOf(contains('leftover'), contains('email')),
-        ),
-      ),
+      throwsA(isA<DuplicateEntryException>()
+          .having((e) => e.field, 'field', 'email')
+          .having((e) => e.value, 'value', 'new@shop.test')),
     );
   });
-}
 
-/// Tiny holder so the helper can return just what the tests assert on.
-class UserEntityResult {
-  UserEntityResult(this.id);
-  final String id;
+  test('an email already in the user list short-circuits before Auth is hit',
+      () async {
+    await fakeFirestore.collection('users').doc('existing').set({
+      'email': 'taken@shop.test',
+      'displayName': 'Taken',
+      'role': 'cashier',
+      'isActive': true,
+    });
+
+    await expectLater(
+      create(email: 'taken@shop.test'),
+      throwsA(isA<DuplicateEntryException>()),
+    );
+    verifyNever(() => provisioningAuth.createUserWithEmailAndPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ));
+  });
 }

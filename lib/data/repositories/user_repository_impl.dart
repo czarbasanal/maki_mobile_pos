@@ -36,6 +36,9 @@ class UserRepositoryImpl implements UserRepository {
   /// leaving a login credential with no profile, and the admin logged out.
   /// Doing it on a separate app keeps the admin's session untouched. Mirrors
   /// the web admin (web_admin/src/data/repositories/FirestoreUserRepository.ts).
+  /// Note: this app is NOT pointed at the Auth emulator by FirebaseService,
+  /// so if emulator use is ever switched on, wire it here too — otherwise
+  /// creates would mint real accounts while the rest of the app is local.
   static Future<FirebaseAuth> _defaultProvisioningAuth() async {
     FirebaseApp app;
     try {
@@ -78,6 +81,12 @@ class UserRepositoryImpl implements UserRepository {
       // throwaway instance as a side effect; sign it back out so nothing is
       // left holding a session, then write the profile below with the
       // admin's own (untouched) session so the rules see an admin.
+      // Residual (accepted, matches the web admin): between minting the
+      // credential and writing the profile below there is a window where the
+      // credential exists with no profile. If that write fails, recovery
+      // needs a service account (scripts/delete-auth-user.mjs). Closing it
+      // would mean deleting the just-minted account on failure instead of
+      // signing out here.
       final provisioningAuth = await _provisioningAuth();
       final String userId;
       try {
@@ -111,18 +120,23 @@ class UserRepositoryImpl implements UserRepository {
 
       return user;
     } on FirebaseAuthException catch (e) {
-      // We already know no profile doc exists (emailExists ran above), so
-      // Auth rejecting the email means a credential is orphaned — typically
-      // left behind by a create that failed after the account was minted.
+      // No profile doc exists (emailExists ran above), yet Auth already has
+      // the credential. Deliberately does NOT guess which cause it is —
+      // deleting a user removes users/{uid} but leaves the Auth credential
+      // behind on purpose (see firestore.rules), so re-adding someone who
+      // was deleted is the most common trigger, not a failed setup. A
+      // capitalisation difference lands here too, since this check is an
+      // exact-match Firestore query while Auth is case-insensitive.
       // Reporting the raw "email already in use" sends admins hunting for a
       // user that isn't in the list.
       if (e.code == 'email-already-in-use') {
         throw DuplicateEntryException(
           field: 'email',
           value: email,
-          message: 'This email has a leftover login from an earlier failed '
-              'setup, so the account can\'t be created. Ask your developer to '
-              'clear it, then try again.',
+          message: 'This email already has a login — it may be from a deleted '
+              'user, an earlier failed setup, or the same address typed with '
+              'different capitalisation. Ask your developer to check it, then '
+              'try again.',
         );
       }
       throw AuthException(
