@@ -41,9 +41,11 @@ import {
   useActivityLogSearch,
 } from '@/presentation/hooks/useActivityLogSearch';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
+import type { ActivityLogQuery } from '@/domain/repositories/ActivityLogRepository';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { CappedNotice } from '@/presentation/components/common/CappedNotice';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
@@ -142,7 +144,11 @@ export function ActivityLogsPage() {
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
   const [dirty, setDirty] = useState(false);
-  const [searched, setSearched] = useState(false);
+  // The query the admin actually submitted. Held so Refresh replays THAT
+  // window rather than whatever the filter controls happen to read right now
+  // — mirrors the mobile screen's `_submitted`.
+  const [submitted, setSubmitted] = useState<ActivityLogQuery | null>(null);
+  const searched = submitted !== null;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('activityLogs');
   const { data: logs, isLoading, error, run } = useActivityLogSearch();
@@ -161,15 +167,25 @@ export function ActivityLogsPage() {
   }
 
   function onSearch() {
-    setSearched(true);
-    setDirty(false);
-    setPage(1);
-    void run({
+    const query: ActivityLogQuery = {
       types,
       start: startAt,
       end: endAt,
       limit: ACTIVITY_LOG_SEARCH_LIMIT,
-    });
+    };
+    setSubmitted(query);
+    setDirty(false);
+    setPage(1);
+    void run(query);
+  }
+
+  // Same search, fresh rows. Deliberately leaves `dirty` alone: any filter
+  // edit the admin has made is still unsubmitted, so the "tap Search" prompt
+  // must survive a Refresh.
+  function onRefresh() {
+    if (!submitted) return;
+    setPage(1);
+    void run(submitted);
   }
 
   const pagedLogs = useMemo(
@@ -215,7 +231,7 @@ export function ActivityLogsPage() {
           {searched && logs ? (
             <button
               type="button"
-              onClick={onSearch}
+              onClick={onRefresh}
               className="rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
             >
               Refresh
@@ -264,11 +280,9 @@ export function ActivityLogsPage() {
         />
       ) : (
         <div className="space-y-tk-lg">
-          {logs.length >= ACTIVITY_LOG_SEARCH_LIMIT ? (
-            <p className="text-bodySmall text-light-text-secondary">
-              Showing the newest {ACTIVITY_LOG_SEARCH_LIMIT} — narrow your range.
-            </p>
-          ) : null}
+          <CappedNotice capped={logs.length >= ACTIVITY_LOG_SEARCH_LIMIT}>
+            Showing the newest {ACTIVITY_LOG_SEARCH_LIMIT} — narrow your range.
+          </CappedNotice>
           {grouped.map((group) => (
             <section key={dayKey(group.date)} className="space-y-tk-sm">
               <h2 className="sticky top-0 z-[1] -mx-tk-xl border-b border-light-hairline bg-light-background/80 px-tk-xl py-tk-xs text-[11px] font-semibold uppercase tracking-wider text-light-text-secondary backdrop-blur">

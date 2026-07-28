@@ -104,6 +104,46 @@ describe('ActivityLogsPage search gating', () => {
     expect(screen.getByText('Filters changed — tap Search.')).toBeInTheDocument();
   });
 
+  it('re-runs the SUBMITTED query when Refresh is clicked, not the edited filters', async () => {
+    const { listFn } = harness();
+    await search();
+
+    // Edit a filter after searching. Refresh means "same search, fresh rows",
+    // so it must replay the 23:59 window that was actually submitted — not
+    // silently adopt the 17:00 the admin is still typing.
+    await userEvent.clear(screen.getByLabelText('End time'));
+    await userEvent.type(screen.getByLabelText('End time'), '17:00');
+    // Pins the precondition: without a real edit landing, comparing the two
+    // calls would be vacuous.
+    expect(screen.getByLabelText('End time')).toHaveValue('17:00');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    expect(listFn).toHaveBeenCalledTimes(2);
+    expect(listFn.mock.calls[1][0]).toEqual(listFn.mock.calls[0][0]);
+    expect(listFn.mock.calls[1][0].end!.getHours()).toBe(23);
+    // The pending edit is still pending — Refresh is not a second Search, so
+    // it must not clear the "tap Search" prompt.
+    expect(screen.getByText('Filters changed — tap Search.')).toBeInTheDocument();
+  });
+
+  it('disables Search when the end time precedes the start time', async () => {
+    const { listFn } = harness();
+    await userEvent.clear(screen.getByLabelText('Start time'));
+    await userEvent.type(screen.getByLabelText('Start time'), '18:00');
+    await userEvent.clear(screen.getByLabelText('End time'));
+    await userEvent.type(screen.getByLabelText('End time'), '09:00');
+    expect(screen.getByLabelText('Start time')).toHaveValue('18:00');
+    expect(screen.getByLabelText('End time')).toHaveValue('09:00');
+
+    const button = screen.getByRole('button', { name: 'Search' });
+    // The real `disabled` attribute, not just disabled-looking styling.
+    expect(button).toBeDisabled();
+
+    await userEvent.click(button);
+    expect(listFn).not.toHaveBeenCalled();
+  });
+
   it('shows the no-match message for an empty result', async () => {
     harness([]);
     await search();
@@ -116,6 +156,16 @@ describe('ActivityLogsPage search gating', () => {
     expect(
       screen.getByText('Showing the newest 500 — narrow your range.'),
     ).toBeInTheDocument();
+  });
+
+  // The negative case: CappedNotice renders nothing when `capped` is false,
+  // so without this an always-on `capped` would sail through.
+  it('shows no cap warning for a result under the cap', async () => {
+    harness(); // 30 rows
+    await search();
+    expect(
+      screen.queryByText('Showing the newest 500 — narrow your range.'),
+    ).not.toBeInTheDocument();
   });
 });
 
