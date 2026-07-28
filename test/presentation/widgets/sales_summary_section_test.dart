@@ -14,6 +14,9 @@ SalesSummary _summary({
   double cost = 2000,
   double profit = 2500,
   int salesCount = 10,
+  double laborRevenue = 0,
+  double laborProfit = 0,
+  double feesRevenue = 0,
 }) {
   return SalesSummary(
     totalSalesCount: salesCount,
@@ -24,6 +27,9 @@ SalesSummary _summary({
     totalCost: cost,
     totalProfit: profit,
     byPaymentMethod: const {},
+    laborRevenue: laborRevenue,
+    laborProfit: laborProfit,
+    feesRevenue: feesRevenue,
   );
 }
 
@@ -127,6 +133,56 @@ void main() {
 
       // Supporting stat cards use the compact ₱K/M format.
       expect(find.text('₱7.1K'), findsOneWidget);
+    });
+
+    testWidgets('labor and shop fees share one row when both are present',
+        (tester) async {
+      await _pump(
+        tester,
+        isAdmin: true,
+        summary: _summary(
+          laborRevenue: 800,
+          laborProfit: 800,
+          feesRevenue: 150,
+        ),
+        avgDaily: const AsyncValue.data(0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Service / Labor'), findsOneWidget);
+      expect(find.text('Shop Fees'), findsOneWidget);
+
+      // Same row = same vertical centre, side by side.
+      final labor = tester.getRect(find.text('Service / Labor'));
+      final fees = tester.getRect(find.text('Shop Fees'));
+      expect(labor.center.dy, moreOrLessEquals(fees.center.dy, epsilon: 1));
+      expect(labor.center.dx, lessThan(fees.center.dx));
+    });
+
+    testWidgets('labor alone still spans the full width', (tester) async {
+      await _pump(
+        tester,
+        isAdmin: true,
+        summary: _summary(laborRevenue: 800, laborProfit: 800),
+        avgDaily: const AsyncValue.data(0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Service / Labor'), findsOneWidget);
+      expect(find.text('Shop Fees'), findsNothing);
+    });
+
+    testWidgets('shop fees alone still renders', (tester) async {
+      await _pump(
+        tester,
+        isAdmin: true,
+        summary: _summary(feesRevenue: 150),
+        avgDaily: const AsyncValue.data(0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Shop Fees'), findsOneWidget);
+      expect(find.text('Service / Labor'), findsNothing);
     });
 
     testWidgets('shows a spinner while today summary loads', (tester) async {

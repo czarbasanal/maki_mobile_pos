@@ -66,24 +66,42 @@ class SalesSummarySection extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (summary.laborRevenue > 0) ...[
-                const SizedBox(height: 12),
-                _StatCard(
-                  icon: LucideIcons.wrench,
-                  label: 'Service / Labor',
-                  value: _money(summary.laborRevenue),
-                  subtitle: '${_money(summary.laborProfit)} profit',
-                ),
-              ],
+              // Labor and shop fees pair up on one row when both are earning
+              // today; whichever appears alone keeps the full width.
               // Shop fees have zero cost (like labor), so revenue == profit.
-              if (summary.feesRevenue > 0) ...[
+              if (summary.laborRevenue > 0 || summary.feesRevenue > 0) ...[
                 const SizedBox(height: 12),
-                _StatCard(
-                  icon: LucideIcons.receipt,
-                  label: 'Shop Fees',
-                  value: _money(summary.feesRevenue),
-                  subtitle: '${_money(summary.feesRevenue)} profit',
-                ),
+                Builder(builder: (context) {
+                  final labor = summary.laborRevenue > 0
+                      ? _StatCard(
+                          icon: LucideIcons.wrench,
+                          label: 'Service / Labor',
+                          value: _money(summary.laborRevenue),
+                          subtitle: '${_money(summary.laborProfit)} profit',
+                        )
+                      : null;
+                  final fees = summary.feesRevenue > 0
+                      ? _StatCard(
+                          icon: LucideIcons.receipt,
+                          label: 'Shop Fees',
+                          value: _money(summary.feesRevenue),
+                          subtitle: '${_money(summary.feesRevenue)} profit',
+                        )
+                      : null;
+                  if (labor != null && fees != null) {
+                    return IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: labor),
+                          const SizedBox(width: 10),
+                          Expanded(child: fees),
+                        ],
+                      ),
+                    );
+                  }
+                  return labor ?? fees!;
+                }),
               ],
             ],
           ],
