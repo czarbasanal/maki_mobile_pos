@@ -56,6 +56,10 @@ void main() {
       bool dirty = false,
       VoidCallback? onSearch,
       VoidCallback? onToggleExpanded,
+      DateTime? startDate,
+      DateTime? endDate,
+      TimeOfDay? startTime,
+      TimeOfDay? endTime,
     }) {
       return MaterialApp(
         home: Scaffold(
@@ -63,10 +67,10 @@ void main() {
             expanded: expanded,
             selectedTypes: selected,
             preset: DateRangePreset.today,
-            startDate: DateTime(2026, 7, 28),
-            endDate: DateTime(2026, 7, 28),
-            startTime: const TimeOfDay(hour: 0, minute: 0),
-            endTime: const TimeOfDay(hour: 23, minute: 59),
+            startDate: startDate ?? DateTime(2026, 7, 28),
+            endDate: endDate ?? DateTime(2026, 7, 28),
+            startTime: startTime ?? const TimeOfDay(hour: 0, minute: 0),
+            endTime: endTime ?? const TimeOfDay(hour: 23, minute: 59),
             dirty: dirty,
             onToggleExpanded: onToggleExpanded ?? () {},
             onTypesChanged: (_) {},
@@ -113,6 +117,71 @@ void main() {
       await tester.tap(find.byType(InkWell).first);
       await tester.pump();
       expect(toggles, 1);
+    });
+
+    testWidgets('Search is disabled when the range is invalid',
+        (tester) async {
+      await tester.pumpWidget(host(
+        expanded: true,
+        startDate: DateTime(2026, 7, 29),
+        endDate: DateTime(2026, 7, 28),
+      ));
+      expect(find.text('Start must be before end.'), findsOneWidget);
+      final button = tester.widget<FilledButton>(find.byType(FilledButton));
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets(
+        'toggling chips out of order still emits canonical enum order',
+        (tester) async {
+      List<ActivityType> emitted = const [];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                return ActivityLogFilterCard(
+                  expanded: true,
+                  selectedTypes: emitted,
+                  preset: DateRangePreset.today,
+                  startDate: DateTime(2026, 7, 28),
+                  endDate: DateTime(2026, 7, 28),
+                  startTime: const TimeOfDay(hour: 0, minute: 0),
+                  endTime: const TimeOfDay(hour: 23, minute: 59),
+                  dirty: false,
+                  onToggleExpanded: () {},
+                  onTypesChanged: (v) => setState(() => emitted = v),
+                  onPresetChanged: (_) {},
+                  onCustomRangeSelected: (_, __) {},
+                  onStartTimeChanged: (_) {},
+                  onEndTimeChanged: (_) {},
+                  onSearch: () {},
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      // dayClosed is declared near the end of ActivityType.values;
+      // authentication is declared first. Tap the later-declared type
+      // first, then the earlier-declared one, and confirm the emitted
+      // list still comes back in canonical enum order rather than
+      // click order.
+      final lateChip = find.widgetWithText(
+          FilterChip, ActivityType.dayClosed.displayName);
+      final earlyChip = find.widgetWithText(
+          FilterChip, ActivityType.authentication.displayName);
+
+      await tester.ensureVisible(lateChip);
+      await tester.tap(lateChip);
+      await tester.pump();
+
+      await tester.ensureVisible(earlyChip);
+      await tester.tap(earlyChip);
+      await tester.pump();
+
+      expect(emitted, [ActivityType.authentication, ActivityType.dayClosed]);
     });
   });
 }
