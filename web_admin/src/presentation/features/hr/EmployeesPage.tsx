@@ -10,6 +10,7 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
@@ -42,11 +43,11 @@ export function EmployeesPage() {
   );
 
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 25;
-  usePageClamp(page, setPage, employees?.length ?? 0, PAGE_SIZE);
+  const [pageSize, setPageSize] = usePageSize('employees');
+  usePageClamp(page, setPage, employees?.length ?? 0, pageSize);
   const paged = useMemo(
-    () => (employees ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [employees, page],
+    () => (employees ?? []).slice((page - 1) * pageSize, page * pageSize),
+    [employees, page, pageSize],
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -253,7 +254,8 @@ export function EmployeesPage() {
               </li>
             ))}
           </ul>
-          <Pager total={employees.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+          <Pager total={employees.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </div>
       )}
 

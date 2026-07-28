@@ -14,8 +14,8 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { CappedNotice } from '@/presentation/components/common/CappedNotice';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 
-const PAGE_SIZE = 25;
 
 const fileStamp = (d: Date) =>
   `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(
@@ -26,7 +26,8 @@ export function SalesReportPage() {
   const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
   const { sales, summary, topProducts, capped, isLoading, error } = useReportData(range);
   const [page, setPage] = useState(1);
-  usePageClamp(page, setPage, sales.length, PAGE_SIZE);
+  const [pageSize, setPageSize] = usePageSize('salesReport');
+  usePageClamp(page, setPage, sales.length, pageSize);
 
   useEffect(() => {
     document.title = 'Sales report · MAKI POS Admin';
@@ -39,8 +40,8 @@ export function SalesReportPage() {
   }, [range]);
 
   const pagedSales = useMemo(
-    () => sales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [sales, page],
+    () => sales.slice((page - 1) * pageSize, page * pageSize),
+    [sales, page, pageSize],
   );
 
   return (
@@ -128,7 +129,8 @@ export function SalesReportPage() {
               </button>
             </div>
             <SalesTable sales={pagedSales} />
-            <Pager total={sales.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+            <Pager total={sales.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
           </section>
         </>
       )}

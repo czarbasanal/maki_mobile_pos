@@ -66,3 +66,42 @@ describe('Pager', () => {
     expect(screen.getByText('item-30')).toBeInTheDocument();
   });
 });
+
+describe('Pager — rows per page', () => {
+  it('offers 25/50/100/500/1000 when onPageSize is supplied', () => {
+    render(<Pager total={300} page={1} onPage={vi.fn()} pageSize={25} onPageSize={vi.fn()} />);
+    const select = screen.getByLabelText(/rows per page/i);
+    expect([...select.querySelectorAll('option')].map((o) => o.textContent)).toEqual([
+      '25', '50', '100', '500', '1000',
+    ]);
+  });
+
+  it('reports the newly chosen size', async () => {
+    const onPageSize = vi.fn();
+    render(<Pager total={300} page={1} onPage={vi.fn()} pageSize={25} onPageSize={onPageSize} />);
+    await userEvent.selectOptions(screen.getByLabelText(/rows per page/i), '100');
+    expect(onPageSize).toHaveBeenCalledWith(100);
+  });
+
+  it('stays visible once every row fits, so the size can be changed back', () => {
+    // The trap: pick 500 on a 300-row table and everything fits. If the pager
+    // hid itself here the selector would vanish and 25 would be unreachable.
+    render(<Pager total={300} page={1} onPage={vi.fn()} pageSize={500} onPageSize={vi.fn()} />);
+    expect(screen.getByLabelText(/rows per page/i)).toBeInTheDocument();
+    expect(screen.getByText('1–300 of 300')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Prev' })).toBeDisabled();
+  });
+
+  it('still renders nothing when even the smallest size would not paginate', () => {
+    const { container } = render(
+      <Pager total={20} page={1} onPage={vi.fn()} pageSize={500} onPageSize={vi.fn()} />,
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('omits the selector entirely when the parent does not support resizing', () => {
+    render(<Pager total={300} page={1} onPage={vi.fn()} pageSize={25} />);
+    expect(screen.queryByLabelText(/rows per page/i)).not.toBeInTheDocument();
+  });
+});

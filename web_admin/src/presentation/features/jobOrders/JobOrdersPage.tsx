@@ -12,10 +12,10 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { cn } from '@/core/utils/cn';
 import type { JobOrder } from '@/domain/entities';
 
-const PAGE_SIZE = 25;
 const dateFmt = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric' });
 
 function Th({ children, className }: { children: ReactNode; className?: string }) {
@@ -37,10 +37,11 @@ export function JobOrdersPage() {
   const navigate = useNavigate();
 
   const [page, setPage] = useState(1);
-  usePageClamp(page, setPage, jobOrders?.length ?? 0, PAGE_SIZE);
+  const [pageSize, setPageSize] = usePageSize('jobOrders');
+  usePageClamp(page, setPage, jobOrders?.length ?? 0, pageSize);
   const paged = useMemo(
-    () => (jobOrders ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [jobOrders, page],
+    () => (jobOrders ?? []).slice((page - 1) * pageSize, page * pageSize),
+    [jobOrders, page, pageSize],
   );
 
   const onResume = (jobOrder: JobOrder) => {
@@ -176,7 +177,8 @@ export function JobOrdersPage() {
               })}
             </tbody>
           </table>
-          <Pager total={jobOrders.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+          <Pager total={jobOrders.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </div>
       )}
     </div>
