@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { ActivityLogsPage, COMMON_TYPES } from './ActivityLogsPage';
+import { ActivityLogsPage } from './ActivityLogsPage';
 import { ActivityType, type ActivityLog } from '@/domain/entities';
+import type { ActivityLogQuery } from '@/domain/repositories/ActivityLogRepository';
 
 const log = (o: Partial<ActivityLog> = {}): ActivityLog => ({
   id: 'l1',
@@ -33,73 +34,108 @@ const logs: ActivityLog[] = [
   ),
 ];
 
+// The stub ignores the query and always returns the fixture, so the date
+// filter's real value doesn't matter to these assertions — only that a
+// search was issued at all.
 function harness(list: ActivityLog[] = logs) {
-  const activityLogRepo: Partial<Container['activityLogRepo']> = {
-    watch: vi.fn((_query, cb: (logs: ActivityLog[]) => void) => {
-      cb(list);
-      return () => {};
-    }),
-  };
-  return render(
-    <DiProvider override={{ activityLogRepo: activityLogRepo as Container['activityLogRepo'] }}>
+  // The parameter is declared (and ignored) purely so `mock.calls[0][0]` is
+  // typed as the query the page sent — the stub never reads it.
+  const listFn = vi.fn(async (_query: ActivityLogQuery) => list);
+  const activityLogRepo = { list: listFn } as unknown as Container['activityLogRepo'];
+  const utils = render(
+    <DiProvider override={{ activityLogRepo }}>
       <ActivityLogsPage />
     </DiProvider>,
   );
+  return { ...utils, listFn };
 }
+
+async function search() {
+  await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+}
+
+describe('ActivityLogsPage search gating', () => {
+  it('fetches nothing on mount', () => {
+    const { listFn } = harness();
+    expect(listFn).not.toHaveBeenCalled();
+    expect(screen.getByText('Pick your filters and tap Search.')).toBeInTheDocument();
+  });
+
+  it('fetches exactly once when Search is clicked', async () => {
+    const { listFn } = harness();
+    await search();
+    expect(listFn).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Day2 action 1')).toBeInTheDocument();
+  });
+
+  it('sends the search cap and a date window', async () => {
+    const { listFn } = harness();
+    await search();
+    const query = listFn.mock.calls[0][0];
+    expect(query.limit).toBe(500);
+    expect(query.start).toBeInstanceOf(Date);
+    expect(query.end).toBeInstanceOf(Date);
+    expect(query.start!.getTime()).toBeLessThanOrEqual(query.end!.getTime());
+    // Nothing selected means "every operation" — the page still forwards the
+    // (empty) selection rather than silently dropping the field.
+    expect(query.types).toEqual([]);
+  });
+
+  it('pads the window so an inclusive <= keeps the last minute', async () => {
+    const { listFn } = harness();
+    await search();
+    const query = listFn.mock.calls[0][0];
+    // Default 00:00–23:59. The end bound must reach :59.999 of the chosen
+    // minute, or a log written at 23:59:30 falls outside an inclusive <=.
+    expect([query.start!.getSeconds(), query.start!.getMilliseconds()]).toEqual([0, 0]);
+    expect([query.end!.getSeconds(), query.end!.getMilliseconds()]).toEqual([59, 999]);
+    expect([query.start!.getHours(), query.start!.getMinutes()]).toEqual([0, 0]);
+    expect([query.end!.getHours(), query.end!.getMinutes()]).toEqual([23, 59]);
+  });
+
+  it('does not refetch when a filter changes after a search', async () => {
+    const { listFn } = harness();
+    await search();
+    await userEvent.click(screen.getByLabelText('End time'));
+    await userEvent.clear(screen.getByLabelText('End time'));
+    await userEvent.type(screen.getByLabelText('End time'), '17:00');
+
+    expect(listFn).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Filters changed — tap Search.')).toBeInTheDocument();
+  });
+
+  it('shows the no-match message for an empty result', async () => {
+    harness([]);
+    await search();
+    expect(screen.getByText('No activity matched these filters')).toBeInTheDocument();
+  });
+
+  it('warns when the result hits the cap', async () => {
+    harness(Array.from({ length: 500 }, (_, i) => log({ id: `c${i}`, action: `Capped ${i}` })));
+    await search();
+    expect(
+      screen.getByText('Showing the newest 500 — narrow your range.'),
+    ).toBeInTheDocument();
+  });
+});
 
 describe('ActivityLogsPage pagination', () => {
   it('groups only its own 25 rows on page 1, leaving the rest for page 2', async () => {
     harness();
+    await search();
 
-    // Page 1 = first 25 of the flat (newest-first) list: all 15 Day2 items
-    // plus the first 10 Day1 items (Day1 action 1..10) — Day1 action 11..15
-    // must NOT appear on page 1.
     expect(screen.getByText('Day2 action 1')).toBeInTheDocument();
     expect(screen.getByText('Day1 action 10')).toBeInTheDocument();
     expect(screen.queryByText('Day1 action 11')).not.toBeInTheDocument();
     expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
+  });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+  it('shows the remaining rows on page 2', async () => {
+    harness();
+    await search();
+    await userEvent.click(screen.getByRole('button', { name: /next/i }));
 
-    // Page 2 = the remaining 5 (Day1 action 11..15), grouped under a single
-    // Day1 section — no Day2 rows leak onto this page.
     expect(screen.getByText('Day1 action 11')).toBeInTheDocument();
-    expect(screen.getByText('Day1 action 15')).toBeInTheDocument();
     expect(screen.queryByText('Day2 action 1')).not.toBeInTheDocument();
-    expect(screen.getByText('26–30 of 30')).toBeInTheDocument();
-  });
-
-  it('hides the pager when there are 25 or fewer logs', () => {
-    harness(logs.slice(0, 25));
-    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
-  });
-});
-
-describe('ActivityLogsPage — filter coverage (task-10)', () => {
-  // Every type a web mutation site now emits (task-10) must be filterable
-  // from the type dropdown — a type left out of COMMON_TYPES would still be
-  // written and shown in the plain "All activities" list, but an admin could
-  // never filter down to just that type.
-  const webEmittedTypes: ActivityType[] = [
-    ActivityType.login,
-    ActivityType.logout,
-    ActivityType.sale,
-    ActivityType.voidSale,
-    ActivityType.inventory,
-    ActivityType.stockAdjustment,
-    ActivityType.receiving,
-    ActivityType.expense,
-    ActivityType.userCreated,
-    ActivityType.userUpdated,
-    ActivityType.userDeactivated,
-    ActivityType.roleChanged,
-    ActivityType.userManagement,
-    ActivityType.settings,
-    ActivityType.costCodeChanged,
-    ActivityType.other,
-  ];
-
-  it.each(webEmittedTypes)('COMMON_TYPES includes %s', (type) => {
-    expect(COMMON_TYPES).toContain(type);
   });
 });

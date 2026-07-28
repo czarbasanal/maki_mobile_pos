@@ -25,7 +25,6 @@ function actor(overrides: Partial<User> = {}): User {
 function fakeRepo(log: ActivityLogRepository['log']): ActivityLogRepository {
   return {
     list: vi.fn(),
-    watch: vi.fn(),
     log,
   };
 }
