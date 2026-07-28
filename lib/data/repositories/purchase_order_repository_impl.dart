@@ -74,7 +74,7 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
       }
       if (current.status != PurchaseOrderStatus.draft) {
         throw const DatabaseException(
-            message: 'Only job order purchase orders can be edited');
+            message: 'Only draft purchase orders can be edited');
       }
       final model = PurchaseOrderModel.fromEntity(po);
       await _ordersRef.doc(po.id).update(model.toMap());

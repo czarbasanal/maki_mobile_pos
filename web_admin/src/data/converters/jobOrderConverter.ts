@@ -55,7 +55,7 @@ export const jobOrderConverter: FirestoreDataConverter<JobOrder> = {
     const d = snapshot.data();
     return {
       id: snapshot.id,
-      name: typeof d.name === 'string' && d.name ? d.name : 'Unnamed JobOrder',
+      name: typeof d.name === 'string' && d.name ? d.name : 'Unnamed Job Order',
       items: parseJobOrderItems(d.items),
       laborLines: parseLaborLines(d.laborLines),
       feeLines: parseFeeLines(d.feeLines),

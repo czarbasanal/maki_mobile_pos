@@ -253,7 +253,7 @@ export function ReceivingEntryPage() {
           <span className="tabular-nums font-semibold text-light-text">{formatMoney(entry.totals.cost)}</span>
         </div>
         <div className="flex gap-tk-sm">
-          <button type="button" disabled={entry.isBusy} onClick={entry.saveJobOrder}
+          <button type="button" disabled={entry.isBusy} onClick={entry.saveDraft}
             className="rounded-md border border-light-border px-tk-lg py-[8px] text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-50">
             Save draft
           </button>

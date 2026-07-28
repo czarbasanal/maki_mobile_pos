@@ -19,7 +19,7 @@ export interface ReceivingItem {
   isNewVariation: boolean;
   newProductId: string | null;
   notes: string | null;
-  /** JobOrder-only: a not-yet-created product's spec, created at complete time.
+  /** Draft-only: a not-yet-created product's spec, created at complete time.
    *  Absent/null on completed-doc items. */
   pendingNewProduct?: {
     category: string | null;

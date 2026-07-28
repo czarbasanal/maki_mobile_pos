@@ -165,7 +165,7 @@ export function useReceivingEntry() {
     return created.id;
   }
 
-  async function saveJobOrder() {
+  async function saveDraft() {
     setError(null);
     try {
       await persistDraft();
@@ -214,7 +214,7 @@ export function useReceivingEntry() {
     totals,
     error,
     isBusy: create.isPending || update.isPending || complete.isPending,
-    saveJobOrder,
+    saveDraft,
     receive,
   };
 }

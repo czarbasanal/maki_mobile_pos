@@ -78,6 +78,37 @@ describe('saleConverter.fromFirestore', () => {
     expect(sale.mechanicName).toBeNull();
     expect(sale.tenders).toEqual({});
   });
+
+  // Transition guard for the drafts→job_orders migration: sales written
+  // before the cutover (and by +17 APKs during it) carry the OLD field name.
+  // Dropping this fallback too early silently severs the sale↔ticket link on
+  // every pre-migration sale.
+  it('reads a pre-migration draftId as jobOrderId', () => {
+    const sale = saleConverter.fromFirestore(
+      snap('s4', {
+        paymentMethod: 'cash',
+        status: 'completed',
+        createdAt: new Date('2026-05-30T10:00:00Z'),
+        draftId: 'ticket-1',
+      }),
+      opts,
+    );
+    expect(sale.jobOrderId).toBe('ticket-1');
+  });
+
+  it('prefers jobOrderId when a doc carries both fields', () => {
+    const sale = saleConverter.fromFirestore(
+      snap('s5', {
+        paymentMethod: 'cash',
+        status: 'completed',
+        createdAt: new Date('2026-05-30T10:00:00Z'),
+        jobOrderId: 'ticket-new',
+        draftId: 'ticket-old',
+      }),
+      opts,
+    );
+    expect(sale.jobOrderId).toBe('ticket-new');
+  });
 });
 
 describe('saleConverter.toFirestore', () => {

@@ -59,7 +59,7 @@ export class FirestoreJobOrderRepository implements JobOrderRepository {
       updatedAt: serverTimestamp(),
     });
     const created = await this.getById(ref.id);
-    if (!created) throw new Error('Failed to load the created jobOrder');
+    if (!created) throw new Error('Failed to load the created Job Order');
     return created;
   }
 

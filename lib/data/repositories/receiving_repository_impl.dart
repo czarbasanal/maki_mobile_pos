@@ -165,7 +165,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
 
       if (receiving.status != ReceivingStatus.draft) {
         throw const DatabaseException(
-            message: 'Only job order receivings can be completed');
+            message: 'Only draft receivings can be completed');
       }
 
       // Process each item
@@ -402,7 +402,7 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
 
       if (receiving.status != ReceivingStatus.draft) {
         throw const DatabaseException(
-            message: 'Only job order receivings can be deleted');
+            message: 'Only draft receivings can be deleted');
       }
 
       if (receiving.purchaseOrderId != null) {

@@ -5,7 +5,8 @@
 // Phase 2: sales field move draftId → jobOrderId (old field deleted).
 //
 // Dry run:  node migrate-drafts-to-job-orders.mjs            (writes nothing)
-// Execute:  node migrate-drafts-to-job-orders.mjs --execute
+// Execute:  node migrate-drafts-to-job-orders.mjs --execute        (prompts for the project id)
+// Unattended: add --yes to skip the confirm prompt
 // Emulator: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node migrate-drafts-to-job-orders.mjs --execute
 //
 // Old drafts docs are LEFT IN PLACE as backup — deleting them is a separate
@@ -18,6 +19,7 @@ const PROJECT_ID = 'maki-mobile-pos';
 const BATCH_SIZE = 400;
 
 const execute = process.argv.includes('--execute');
+const skipPrompt = process.argv.includes('--yes');
 initializeApp({ credential: applicationDefault(), projectId: PROJECT_ID });
 const db = getFirestore();
 
@@ -82,6 +84,33 @@ if (!execute) {
 if (copies.length === 0 && salePatches.length === 0) {
   console.log('Nothing to do. Exiting.');
   process.exit(0);
+}
+
+// Production confirm gate (same shape as the sibling backfill scripts): a
+// stray --execute would copy every ticket and rewrite every sale doc.
+if (!EMULATOR && !skipPrompt) {
+  process.stdout.write(`\nIrreversible write to PRODUCTION. Type the project id (${PROJECT_ID}) to confirm: `);
+  const line = await new Promise((resolve, reject) => {
+    let buf = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (chunk) => {
+      buf += chunk;
+      const nl = buf.indexOf('\n');
+      if (nl !== -1) { process.stdin.pause(); resolve(buf.slice(0, nl).trim()); }
+    });
+    process.stdin.on('end', () => {
+      process.stdin.pause();
+      reject(new Error('stdin closed — use --yes for non-interactive runs'));
+    });
+    process.stdin.resume();
+  }).catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+  if (line !== PROJECT_ID) {
+    console.error('Confirmation mismatch — aborting. Nothing written.');
+    process.exit(1);
+  }
 }
 
 await commitInBatches(copies);

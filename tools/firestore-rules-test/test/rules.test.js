@@ -597,6 +597,65 @@ describe("/job_orders", () => {
     await assertSucceeds(as("admin").collection("job_orders").doc(id).update({ items: [{}] }));
     await assertSucceeds(as("admin").collection("job_orders").doc(id).delete());
   });
+
+  // Bill-out: whoever rings up a ticket marks it converted, even when someone
+  // else created it. This exception broke bill-out in production once before
+  // (2026-07-02) — pin it on the new collection.
+  it("non-owner CAN mark another user's job order converted (bill-out)", async () => {
+    const id = newDocId("d");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("job_orders").doc(id).set({
+        createdBy: USERS.staff.uid, items: [], isConverted: false,
+      });
+    });
+    await assertSucceeds(as("cashier").collection("job_orders").doc(id).update({
+      isConverted: true,
+      convertedToSaleId: "sale-1",
+      convertedAt: new Date(),
+      updatedAt: new Date(),
+    }));
+  });
+
+  it("non-owner CANNOT smuggle other fields through the conversion exception", async () => {
+    const id = newDocId("d");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("job_orders").doc(id).set({
+        createdBy: USERS.staff.uid, items: [], isConverted: false,
+      });
+    });
+    await assertFails(as("cashier").collection("job_orders").doc(id).update({
+      isConverted: true,
+      convertedToSaleId: "sale-1",
+      convertedAt: new Date(),
+      updatedAt: new Date(),
+      items: [{ price: 1 }],
+    }));
+  });
+
+  it("a converted job order is frozen — it cannot be billed out twice", async () => {
+    const id = newDocId("d");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("job_orders").doc(id).set({
+        createdBy: USERS.cashier.uid, items: [], isConverted: true,
+      });
+    });
+    await assertFails(as("cashier").collection("job_orders").doc(id).update({
+      isConverted: true, convertedToSaleId: "sale-2", convertedAt: new Date(), updatedAt: new Date(),
+    }));
+    await assertFails(as("cashier").collection("job_orders").doc(id).update({ isConverted: false }));
+  });
+
+  it("createdBy is immutable — the owner check cannot be laundered", async () => {
+    const id = newDocId("d");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection("job_orders").doc(id).set({
+        createdBy: USERS.staff.uid, items: [], isConverted: false,
+      });
+    });
+    await assertFails(as("cashier").collection("job_orders").doc(id).update({
+      createdBy: USERS.cashier.uid,
+    }));
+  });
 });
 
 // ===================================================================

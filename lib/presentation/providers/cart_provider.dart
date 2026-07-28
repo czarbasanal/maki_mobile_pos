@@ -663,9 +663,9 @@ class CartNotifier extends StateNotifier<CartState> {
     );
   }
 
-  // ==================== DRAFT OPERATIONS ====================
+  // ==================== JOB ORDER OPERATIONS ====================
 
-  /// Loads a Job Order (job order) into the cart for bill-out.
+  /// Loads a Job Order into the cart for bill-out.
   ///
   /// Retains [sourceJobOrderId] so the resulting sale carries a `jobOrderId` and the
   /// source ticket is marked converted on a successful sale (see

@@ -44,7 +44,7 @@ describe('jobOrderConverter.fromFirestore', () => {
 
   it('defaults a missing name and missing labor', () => {
     const d = jobOrderConverter.fromFirestore(snap('d2', { createdAt: createdTs }));
-    expect(d.name).toBe('Unnamed JobOrder');
+    expect(d.name).toBe('Unnamed Job Order');
     expect(d.laborLines).toEqual([]);
     expect(d.items).toEqual([]);
     expect(d.mechanicId).toBeNull();

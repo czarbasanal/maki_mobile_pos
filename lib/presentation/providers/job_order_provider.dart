@@ -15,7 +15,7 @@ final jobOrderRepositoryProvider = Provider<JobOrderRepository>((ref) {
   return JobOrderRepositoryImpl(firestore: ref.watch(firestoreProvider));
 });
 
-// ==================== DRAFT QUERIES ====================
+// ==================== JOB ORDER QUERIES ====================
 
 /// Provides active (non-converted) job orders as a real-time stream.
 final activeJobOrdersProvider = StreamProvider<List<JobOrderEntity>>((ref) {
@@ -86,7 +86,7 @@ final deleteJobOrderUseCaseProvider = Provider<DeleteJobOrderUseCase>((ref) {
       repository: ref.watch(jobOrderRepositoryProvider));
 });
 
-// ==================== DRAFT OPERATIONS ====================
+// ==================== JOB ORDER OPERATIONS ====================
 
 /// Notifier for job order operations.
 ///

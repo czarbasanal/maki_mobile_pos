@@ -1,4 +1,4 @@
-// Mirror of lib/domain/entities/draft_entity.dart.
+// Mirror of lib/domain/entities/job_order_entity.dart.
 import type { DiscountType } from '../enums';
 import type { SaleItem } from './SaleItem';
 import type { LaborLine } from './LaborLine';

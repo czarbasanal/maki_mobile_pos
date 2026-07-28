@@ -238,31 +238,31 @@ void main() {
         feesRevenue: 150,
       );
 
-      final jobOrderNoFees = DailyClosingDraft.fromData(
+      final draftNoFees = DailyClosingDraft.fromData(
         businessDate: DateTime(2026, 5, 28),
         summary: summaryNoFees,
         expenses: const [],
       );
-      final jobOrderWithFees = DailyClosingDraft.fromData(
+      final draftWithFees = DailyClosingDraft.fromData(
         businessDate: DateTime(2026, 5, 28),
         summary: summaryWithFees,
         expenses: const [],
       );
 
       // Parts-only top-line on the closing snapshot.
-      expect(jobOrderWithFees.grossSales, 1000);
-      expect(jobOrderWithFees.netSales, 1000);
+      expect(draftWithFees.grossSales, 1000);
+      expect(draftWithFees.netSales, 1000);
       // Fees surfaced as their own line.
-      expect(jobOrderWithFees.feesRevenue, 150);
-      expect(jobOrderNoFees.feesRevenue, 0);
+      expect(draftWithFees.feesRevenue, 150);
+      expect(draftNoFees.feesRevenue, 0);
       // Fee cash is already inside cashSales (drawer physically holds it):
       // expectedCash is fees-inclusive via cashSales, same as labor.
-      expect(jobOrderWithFees.expectedCashFor(0), 1150);
+      expect(draftWithFees.expectedCashFor(0), 1150);
 
       // CRITICAL invariant: expectedCashFor's *formula* is unchanged by the
       // feesRevenue field — two drafts with identical cashSales/cashExpenses
       // but different feesRevenue produce the identical expectedCash.
-      final jobOrderA = DailyClosingDraft(
+      final draftA = DailyClosingDraft(
         businessDate: DateTime(2026, 5, 28),
         grossSales: 0,
         netSales: 0,
@@ -278,7 +278,7 @@ void main() {
         salesCount: 0,
         voidedCount: 0,
       );
-      final jobOrderB = DailyClosingDraft(
+      final draftB = DailyClosingDraft(
         businessDate: DateTime(2026, 5, 28),
         grossSales: 0,
         netSales: 0,
@@ -294,8 +294,8 @@ void main() {
         salesCount: 0,
         voidedCount: 0,
       );
-      expect(jobOrderA.expectedCashFor(500), jobOrderB.expectedCashFor(500));
-      expect(jobOrderA.expectedCashFor(500), 1500);
+      expect(draftA.expectedCashFor(500), draftB.expectedCashFor(500));
+      expect(draftA.expectedCashFor(500), 1500);
     });
   });
 }
