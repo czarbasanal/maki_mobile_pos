@@ -22,14 +22,17 @@ const PRESETS: RangePreset[] = [
 /**
  * Preset dropdown + (for 'custom') two native date inputs. Calls `onChange`
  * with a concrete {start,end} whenever the effective range changes. The parent
- * owns the range; default preset is 'last7' and must match the parent's initial.
+ * owns the range; default preset is 'last7' unless overridden with defaultPreset,
+ * and must match the parent's initial.
  */
 export function DateRangePicker({
   onChange,
+  defaultPreset = 'last7',
 }: {
   onChange: (range: DateRange) => void;
+  defaultPreset?: Exclude<RangePreset, 'custom'>;
 }) {
-  const [preset, setPreset] = useState<RangePreset>('last7');
+  const [preset, setPreset] = useState<RangePreset>(defaultPreset);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
 
