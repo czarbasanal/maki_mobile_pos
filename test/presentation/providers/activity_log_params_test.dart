@@ -4,13 +4,27 @@ import 'package:maki_mobile_pos/presentation/providers/activity_log_provider.dar
 
 void main() {
   test('two identical selections compare equal and hash alike', () {
+    // Production never hands us a canonicalized const list: the operations
+    // picker rebuilds a fresh one on every chip tap via
+    // `ActivityType.values.where(...).toList(growable: false)`. Build one
+    // side that way and leave the other a const literal, so the two lists
+    // are equal in content but NOT the same instance — the only shape that
+    // actually exercises the element-wise comparison.
+    final picked = ActivityType.values
+        .where({ActivityType.sale, ActivityType.login}.contains)
+        .toList(growable: false);
+    const literal = [ActivityType.login, ActivityType.sale];
+    expect(identical(picked, literal), isFalse,
+        reason: 'the two lists must be distinct instances or this test '
+            'proves nothing about list-aware equality');
+
     final a = ActivityLogParams(
-      types: const [ActivityType.sale, ActivityType.login],
+      types: picked,
       startDate: DateTime(2026, 7, 28),
       endDate: DateTime(2026, 7, 28, 23, 59, 59, 999),
     );
     final b = ActivityLogParams(
-      types: const [ActivityType.sale, ActivityType.login],
+      types: literal,
       startDate: DateTime(2026, 7, 28),
       endDate: DateTime(2026, 7, 28, 23, 59, 59, 999),
     );
