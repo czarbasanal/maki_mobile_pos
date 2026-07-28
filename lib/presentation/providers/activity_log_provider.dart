@@ -69,31 +69,3 @@ final activityLogsStreamProvider =
     });
   },
 );
-
-/// Provides recent security logs.
-final securityLogsProvider =
-    FutureProvider<List<ActivityLogEntity>>((ref) async {
-  final repository = ref.watch(activityLogRepositoryProvider);
-  return repository.getSecurityLogs(limit: 100);
-});
-
-/// Provides logs for a specific user.
-final userActivityLogsProvider =
-    FutureProvider.family<List<ActivityLogEntity>, String>(
-  (ref, userId) async {
-    final repository = ref.watch(activityLogRepositoryProvider);
-    return repository.getUserLogs(userId: userId, limit: 50);
-  },
-);
-
-/// Provides logs for a specific entity.
-final entityLogsProvider = FutureProvider.family<List<ActivityLogEntity>,
-    ({String entityId, String entityType})>(
-  (ref, params) async {
-    final repository = ref.watch(activityLogRepositoryProvider);
-    return repository.getEntityLogs(
-      entityId: params.entityId,
-      entityType: params.entityType,
-    );
-  },
-);
