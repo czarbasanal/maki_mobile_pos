@@ -46,9 +46,15 @@ describe('ActivityLogFilterBar', () => {
     expect(props.onSearch).toHaveBeenCalledTimes(1);
   });
 
-  it('disables Search when the range is invalid', () => {
+  it('disables Search when the range is invalid and explains why', () => {
     harness({ disabled: true });
     expect(screen.getByRole('button', { name: 'Search' })).toBeDisabled();
+    expect(screen.getByText('Start must be before end.')).toBeInTheDocument();
+  });
+
+  it('shows no invalid-range note when the range is valid', () => {
+    harness({ disabled: false });
+    expect(screen.queryByText('Start must be before end.')).not.toBeInTheDocument();
   });
 
   it('shows the stale hint when dirty', () => {

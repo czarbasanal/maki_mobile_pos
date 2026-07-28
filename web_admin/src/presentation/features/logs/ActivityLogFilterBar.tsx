@@ -130,6 +130,10 @@ export function ActivityLogFilterBar({
         Search
       </button>
 
+      {disabled ? (
+        <span className="text-bodySmall text-error">Start must be before end.</span>
+      ) : null}
+
       {dirty ? (
         <span className="text-bodySmall text-light-text-secondary">
           Filters changed — tap Search.

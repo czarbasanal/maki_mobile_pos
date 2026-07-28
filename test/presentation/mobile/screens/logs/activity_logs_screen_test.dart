@@ -123,4 +123,77 @@ void main() {
 
     expect(find.text('No activity matched these filters'), findsOneWidget);
   });
+
+  testWidgets('Refresh refetches, replaying the SUBMITTED params rather '
+      'than filters edited afterwards', (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+
+    // Reopen the (now-collapsed) card and tick a filter. This edit must not
+    // leak into what Refresh replays — mirrors the web bug this test is
+    // named for, where Refresh rebuilt the query from the live filter
+    // controls instead of the submitted snapshot.
+    await tester.tap(find.textContaining('All operations'));
+    await tester.pumpAndSettle();
+    final saleChip = find.widgetWithText(FilterChip, 'Sale');
+    await tester.ensureVisible(saleChip);
+    await tester.pumpAndSettle();
+    await tester.tap(saleChip);
+    await tester.pumpAndSettle();
+    expect(find.text('Filters changed — tap Search.'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pumpAndSettle();
+
+    final captured = verify(() => repo.getActivityLogs(
+          types: captureAny(named: 'types'),
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          limit: any(named: 'limit'),
+        )).captured;
+
+    // Search, then Refresh — exactly two calls total.
+    expect(captured, hasLength(2));
+    // Both calls carry the types SUBMITTED by Search (empty = All), not the
+    // "Sale" filter ticked afterwards but never submitted.
+    expect(captured[0], isEmpty);
+    expect(captured[1], isEmpty);
+    // The pending edit is still pending — Refresh is not a second Search.
+    expect(find.text('Filters changed — tap Search.'), findsOneWidget);
+  });
+
+  testWidgets('shows the cap notice when the result hits the search limit',
+      (tester) async {
+    when(() => repo.getActivityLogs(
+          types: any(named: 'types'),
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          limit: any(named: 'limit'),
+        )).thenAnswer((_) async =>
+            List.generate(kActivityLogSearchLimit, (i) => _log('log $i')));
+
+    await pumpScreen(tester);
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+          'Showing the newest $kActivityLogSearchLimit — narrow your range.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows no cap notice for a result under the search limit',
+      (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+          'Showing the newest $kActivityLogSearchLimit — narrow your range.'),
+      findsNothing,
+    );
+  });
 }

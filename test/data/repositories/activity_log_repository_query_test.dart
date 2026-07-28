@@ -24,6 +24,22 @@ void main() {
     return db;
   }
 
+  /// Seeds a doc with a raw `type` string outside the enum — a real legacy
+  /// value the header of `ActivityLog.ts` documents as once having been
+  /// written. `ActivityType.fromString` maps it to `.other` on read.
+  Future<FakeFirebaseFirestore> seededWithLegacyType() async {
+    final db = await seeded();
+    await db.collection('user_logs').doc('legacy-sale-created').set({
+      'type': 'sale_created',
+      'action': 'legacy-sale-created',
+      'userId': 'u1',
+      'userName': 'Tester',
+      'userRole': 'admin',
+      'createdAt': Timestamp.fromDate(DateTime(2026, 7, 28, 14, 0)),
+    });
+    return db;
+  }
+
   test('no types selected returns everything in the window', () async {
     final repo = ActivityLogRepositoryImpl(firestore: await seeded());
 
@@ -70,6 +86,39 @@ void main() {
     );
 
     expect(logs.length, 3);
+  });
+
+  test('selecting every type emits no whereIn constraint, unlike a partial '
+      'selection', () async {
+    // A doc whose raw `type` is a legacy string outside the enum only comes
+    // back when the query has NO `type` constraint at all. A `whereIn`
+    // built from `ActivityType.values` (24 canonical values) can never match
+    // it, because 'sale_created' isn't one of those 24 strings. If the "all
+    // types" guard were loosened to e.g. `types.isNotEmpty` (still passing
+    // the "same 3 rows" assertion above, since fake_cloud_firestore matches
+    // either way for docs that DO carry a canonical type), this doc would
+    // silently vanish from the "all operations" search in production.
+    final repo = ActivityLogRepositoryImpl(
+      firestore: await seededWithLegacyType(),
+    );
+
+    final allTypes = await repo.getActivityLogs(
+      types: ActivityType.values,
+      startDate: DateTime(2026, 7, 28),
+      endDate: DateTime(2026, 7, 28, 23, 59, 59, 999),
+    );
+    expect(allTypes.map((l) => l.action),
+        contains('legacy-sale-created'));
+
+    // Sanity check on the other side: a genuine partial selection DOES
+    // exclude it, so this isn't a test that would pass no matter what.
+    final partial = await repo.getActivityLogs(
+      types: const [ActivityType.sale, ActivityType.voidSale],
+      startDate: DateTime(2026, 7, 28),
+      endDate: DateTime(2026, 7, 28, 23, 59, 59, 999),
+    );
+    expect(partial.map((l) => l.action),
+        isNot(contains('legacy-sale-created')));
   });
 
   test('results come back newest first', () async {

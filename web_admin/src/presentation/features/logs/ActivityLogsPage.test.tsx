@@ -144,6 +144,22 @@ describe('ActivityLogsPage search gating', () => {
     expect(listFn).not.toHaveBeenCalled();
   });
 
+  it('disables Search and issues no read when End time is cleared', async () => {
+    const { listFn } = harness();
+    await userEvent.clear(screen.getByLabelText('End time'));
+    expect(screen.getByLabelText('End time')).toHaveValue('');
+
+    const button = screen.getByRole('button', { name: 'Search' });
+    expect(button).toBeDisabled();
+    expect(screen.getByText('Start must be before end.')).toBeInTheDocument();
+
+    // A disabled button already blocks the click in real DOM, but exercise
+    // the handler directly too — the fix adds a guard inside onSearch itself
+    // so the invariant doesn't depend solely on the child's `disabled` wiring.
+    await userEvent.click(button);
+    expect(listFn).not.toHaveBeenCalled();
+  });
+
   it('shows the no-match message for an empty result', async () => {
     harness([]);
     await search();

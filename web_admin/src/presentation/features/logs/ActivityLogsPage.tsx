@@ -160,13 +160,18 @@ export function ActivityLogsPage() {
 
   const startAt = applyTime(range.start, startTime, false);
   const endAt = applyTime(range.end, endTime, true);
-  const rangeInvalid = startAt.getTime() > endAt.getTime();
+  // Either bound failing to parse (e.g. a cleared time input) is just as
+  // invalid as start-after-end — neither is a safe query to run.
+  const rangeInvalid = startAt === null || endAt === null || startAt.getTime() > endAt.getTime();
 
   function markDirty() {
     if (searched) setDirty(true);
   }
 
   function onSearch() {
+    // Local guard so this invariant doesn't depend on the child button's
+    // `disabled` prop being wired correctly.
+    if (rangeInvalid || startAt === null || endAt === null) return;
     const query: ActivityLogQuery = {
       types,
       start: startAt,
@@ -304,14 +309,27 @@ export function ActivityLogsPage() {
 }
 
 /**
+ * Parses a strict 24-hour `HH:MM` string, the shape a native
+ * `<input type="time">` reports. Returns `null` for anything that isn't a
+ * well-formed time — including the empty string a cleared input produces —
+ * so callers can't mistake "nothing entered" for midnight.
+ */
+function parseTime(hhmm: string): { h: number; m: number } | null {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hhmm);
+  if (!match) return null;
+  return { h: Number(match[1]), m: Number(match[2]) };
+}
+
+/**
  * Stamps a wall-clock time onto a day. The end bound is pushed to the last
  * millisecond of the chosen minute so an inclusive `<=` never drops a record
- * logged within it.
+ * logged within it. Returns `null` when `hhmm` doesn't parse.
  */
-function applyTime(day: Date, hhmm: string, endInclusive: boolean): Date {
-  const [h, m] = hhmm.split(':').map(Number);
+function applyTime(day: Date, hhmm: string, endInclusive: boolean): Date | null {
+  const parsed = parseTime(hhmm);
+  if (!parsed) return null;
   const d = new Date(day);
-  d.setHours(h || 0, m || 0, endInclusive ? 59 : 0, endInclusive ? 999 : 0);
+  d.setHours(parsed.h, parsed.m, endInclusive ? 59 : 0, endInclusive ? 999 : 0);
   return d;
 }
 
