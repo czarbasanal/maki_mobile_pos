@@ -25,7 +25,7 @@ export function Pager({
   // against the SMALLEST option rather than the current one keeps the
   // selector reachable after picking a size big enough to fit everything —
   // otherwise it would vanish and there'd be no way back down to 25.
-  const threshold = onPageSize ? PAGE_SIZE_OPTIONS[0] : pageSize;
+  const threshold = onPageSize ? Math.min(...PAGE_SIZE_OPTIONS) : pageSize;
   if (total <= threshold) return null;
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));

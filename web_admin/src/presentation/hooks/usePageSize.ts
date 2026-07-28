@@ -27,6 +27,9 @@ function read(table: string): PageSize {
 /**
  * Rows-per-page for one table, remembered per browser and kept independent
  * per `table` key so a big Inventory page doesn't also enlarge Sales.
+ *
+ * `table` must be a constant for the life of the component — the stored
+ * value is read once on mount.
  */
 export function usePageSize(table: string): [PageSize, (next: PageSize) => void] {
   const [size, setSize] = useState<PageSize>(() => read(table));

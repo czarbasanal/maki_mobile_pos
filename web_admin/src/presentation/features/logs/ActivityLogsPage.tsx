@@ -152,7 +152,6 @@ function dateLabel(d: Date): string {
   return dateGroupFmt.format(d);
 }
 
-
 export function ActivityLogsPage() {
   const [type, setType] = useState<ActivityType | null>(null);
   const [page, setPage] = useState(1);

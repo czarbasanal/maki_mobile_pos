@@ -26,7 +26,6 @@ import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
 
-
 const timeFmt = new Intl.DateTimeFormat('en-PH', {
   hour: 'numeric',
   minute: '2-digit',
