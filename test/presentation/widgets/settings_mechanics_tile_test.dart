@@ -38,7 +38,7 @@ void main() {
 
     expect(find.text('Mechanics'), findsOneWidget);
     expect(
-      find.text('Assign a mechanic to a service draft'),
+      find.text('Assign a mechanic to a service job order'),
       findsOneWidget,
     );
   });

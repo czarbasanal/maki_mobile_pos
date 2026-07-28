@@ -25,7 +25,7 @@ export function jobOrderPrefixFor(now: Date): string {
 
 /**
  * The next job-order number for `now`'s date, given the `existingNames` of
- * drafts created today (converted ones included, so billed-out numbers are
+ * job orders created today (converted ones included, so billed-out numbers are
  * never reissued). Zero-padded to 3 digits, growing naturally past 999.
  */
 export function nextJobOrderNumber(now: Date, existingNames: Iterable<string>): string {

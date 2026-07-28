@@ -9,11 +9,11 @@ enum Permission {
   voidSale,
   requestVoidSale, // cashier/staff request a void; admin approves
 
-  // Draft Permissions
-  saveDraft,
-  viewDrafts,
-  editDraft,
-  deleteDraft,
+  // Job Order Permissions
+  saveJobOrder,
+  viewJobOrders,
+  editJobOrder,
+  deleteJobOrder,
 
   // Inventory Permissions
   viewInventory,
@@ -86,11 +86,11 @@ abstract class RolePermissions {
     Permission.applyDiscount,
     Permission.requestVoidSale,
     // Note: voidSale is NOT included (admin only)
-    // Drafts
-    Permission.saveDraft,
-    Permission.viewDrafts,
-    Permission.editDraft,
-    Permission.deleteDraft,
+    // Job Orders
+    Permission.saveJobOrder,
+    Permission.viewJobOrders,
+    Permission.editJobOrder,
+    Permission.deleteJobOrder,
     // Inventory (view only, no cost, name edit only)
     Permission.viewInventory,
     Permission.editProductNameOnly,
@@ -124,11 +124,11 @@ abstract class RolePermissions {
     Permission.applyDiscount,
     Permission.requestVoidSale,
     // Note: voidSale is NOT included (admin only)
-    // Drafts
-    Permission.saveDraft,
-    Permission.viewDrafts,
-    Permission.editDraft,
-    Permission.deleteDraft,
+    // Job Orders
+    Permission.saveJobOrder,
+    Permission.viewJobOrders,
+    Permission.editJobOrder,
+    Permission.deleteJobOrder,
     // Inventory (edit without price, no cost visibility)
     Permission.viewInventory,
     Permission.editProductLimited,
@@ -171,11 +171,11 @@ abstract class RolePermissions {
     Permission.processSale,
     Permission.applyDiscount,
     Permission.voidSale,
-    // Drafts
-    Permission.saveDraft,
-    Permission.viewDrafts,
-    Permission.editDraft,
-    Permission.deleteDraft,
+    // Job Orders
+    Permission.saveJobOrder,
+    Permission.viewJobOrders,
+    Permission.editJobOrder,
+    Permission.deleteJobOrder,
     // Inventory
     Permission.viewInventory,
     Permission.viewProductCost,

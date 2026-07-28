@@ -205,10 +205,10 @@ void main() {
       expect(state.canCheckout, false);
     });
 
-    test('loadFromDraft should load draft state', () {
-      final draft = DraftEntity(
-        id: 'draft-1',
-        name: 'Test Draft',
+    test('loadFromJobOrder should load jobOrder state', () {
+      final jobOrder = JobOrderEntity(
+        id: 'jobOrder-1',
+        name: 'Test JobOrder',
         items: const [
           SaleItemEntity(
             id: 'item-1',
@@ -225,27 +225,27 @@ void main() {
         createdBy: 'user-1',
         createdByName: 'John',
         createdAt: DateTime.now(),
-        notes: 'Draft notes',
+        notes: 'JobOrder notes',
       );
 
-      cartNotifier.loadFromDraft(draft);
+      cartNotifier.loadFromJobOrder(jobOrder);
 
       final state = container.read(cartProvider);
       expect(state.items.length, 1);
-      expect(state.notes, 'Draft notes');
-      // Bill-out is non-destructive: the cart retains sourceDraftId so the
-      // resulting sale carries a draftId and the source ticket is marked
+      expect(state.notes, 'JobOrder notes');
+      // Bill-out is non-destructive: the cart retains sourceJobOrderId so the
+      // resulting sale carries a jobOrderId and the source ticket is marked
       // converted on success (it is NOT deleted on load).
-      expect(state.sourceDraftId, 'draft-1');
-      expect(state.isFromDraft, true);
+      expect(state.sourceJobOrderId, 'jobOrder-1');
+      expect(state.isFromJobOrder, true);
       // The name is retained so a follow-up "Save as Job Order" reuses the title.
-      expect(state.draftName, 'Test Draft');
+      expect(state.jobOrderName, 'Test JobOrder');
     });
 
-    test('reset should clear retained draft name', () {
-      final draft = DraftEntity(
-        id: 'draft-1',
-        name: 'Test Draft',
+    test('reset should clear retained jobOrder name', () {
+      final jobOrder = JobOrderEntity(
+        id: 'jobOrder-1',
+        name: 'Test JobOrder',
         items: const [
           SaleItemEntity(
             id: 'item-1',
@@ -262,23 +262,23 @@ void main() {
         createdByName: 'John',
         createdAt: DateTime.now(),
       );
-      cartNotifier.loadFromDraft(draft);
-      expect(container.read(cartProvider).draftName, 'Test Draft');
+      cartNotifier.loadFromJobOrder(jobOrder);
+      expect(container.read(cartProvider).jobOrderName, 'Test JobOrder');
 
       cartNotifier.reset();
 
-      expect(container.read(cartProvider).draftName, isNull);
+      expect(container.read(cartProvider).jobOrderName, isNull);
     });
 
     test(
         'reset should clear all state '
-        '(items, labor, mechanic, payment, notes, draft link, checkout id)',
+        '(items, labor, mechanic, payment, notes, jobOrder link, checkout id)',
         () {
-      // Seed via loadFromDraft so items/laborLines/mechanic/sourceDraftId are
+      // Seed via loadFromJobOrder so items/laborLines/mechanic/sourceJobOrderId are
       // all populated at once, then layer on the remaining cart-only fields.
-      final draft = DraftEntity(
-        id: 'draft-reset-1',
-        name: 'Reset Test Draft',
+      final jobOrder = JobOrderEntity(
+        id: 'jobOrder-reset-1',
+        name: 'Reset Test JobOrder',
         items: const [
           SaleItemEntity(
             id: 'item-1',
@@ -300,7 +300,7 @@ void main() {
         createdByName: 'John',
         createdAt: DateTime.now(),
       );
-      cartNotifier.loadFromDraft(draft);
+      cartNotifier.loadFromJobOrder(jobOrder);
       cartNotifier.setAmountReceived(500);
       cartNotifier.setSplitAmount(200);
       cartNotifier.setNotes('Test notes');
@@ -315,7 +315,7 @@ void main() {
       expect(seeded.amountReceived, 500);
       expect(seeded.splitAmount, 200);
       expect(seeded.notes, 'Test notes');
-      expect(seeded.sourceDraftId, isNotNull);
+      expect(seeded.sourceJobOrderId, isNotNull);
       expect(seeded.checkoutId, isNotEmpty);
 
       cartNotifier.reset();
@@ -328,7 +328,7 @@ void main() {
       expect(state.amountReceived, 0);
       expect(state.splitAmount, 0);
       expect(state.notes, isNull);
-      expect(state.sourceDraftId, isNull);
+      expect(state.sourceJobOrderId, isNull);
       expect(state.checkoutId, isEmpty);
     });
 
@@ -351,20 +351,20 @@ void main() {
       expect(sale.notes, 'Test sale');
     });
 
-    test('toDraft should create valid DraftEntity', () {
+    test('toJobOrder should create valid JobOrderEntity', () {
       final product = createTestProduct();
       cartNotifier.addProduct(product);
-      cartNotifier.setNotes('Test draft');
+      cartNotifier.setNotes('Test jobOrder');
 
-      final draft = cartNotifier.toDraft(
-        name: 'My Draft',
+      final jobOrder = cartNotifier.toJobOrder(
+        name: 'My JobOrder',
         createdBy: 'user-1',
         createdByName: 'John Doe',
       );
 
-      expect(draft.name, 'My Draft');
-      expect(draft.items.length, 1);
-      expect(draft.notes, 'Test draft');
+      expect(jobOrder.name, 'My JobOrder');
+      expect(jobOrder.items.length, 1);
+      expect(jobOrder.notes, 'Test jobOrder');
     });
 
     test('CartState defaults: empty laborLines, null mechanic', () {
@@ -476,9 +476,9 @@ void main() {
       expect(state.mechanicName, isNull);
     });
 
-    test('loadFromDraft copies laborLines and mechanic into the cart', () {
-      final draft = DraftEntity(
-        id: 'draft-1',
+    test('loadFromJobOrder copies laborLines and mechanic into the cart', () {
+      final jobOrder = JobOrderEntity(
+        id: 'jobOrder-1',
         name: 'Service job',
         items: const [
           SaleItemEntity(
@@ -502,7 +502,7 @@ void main() {
         createdAt: DateTime.now(),
       );
 
-      cartNotifier.loadFromDraft(draft);
+      cartNotifier.loadFromJobOrder(jobOrder);
 
       final state = container.read(cartProvider);
       expect(state.laborLines.length, 1);
@@ -512,23 +512,23 @@ void main() {
       expect(state.mechanicName, 'Juan');
     });
 
-    test('toDraft carries laborLines and mechanic', () {
+    test('toJobOrder carries laborLines and mechanic', () {
       cartNotifier.addProduct(createTestProduct(price: 100));
       cartNotifier.addLaborLine(description: 'Brake bleed', fee: 150);
       cartNotifier.setMechanic('mech-2', 'Pedro');
 
-      final draft = cartNotifier.toDraft(
-        name: 'My Draft',
+      final jobOrder = cartNotifier.toJobOrder(
+        name: 'My JobOrder',
         createdBy: 'user-1',
         createdByName: 'John Doe',
       );
 
-      expect(draft.laborLines.length, 1);
-      expect(draft.laborLines.first.description, 'Brake bleed');
-      expect(draft.laborLines.first.fee, 150);
-      expect(draft.mechanicId, 'mech-2');
-      expect(draft.mechanicName, 'Pedro');
-      expect(draft.grandTotal, 250); // parts 100 + labor 150
+      expect(jobOrder.laborLines.length, 1);
+      expect(jobOrder.laborLines.first.description, 'Brake bleed');
+      expect(jobOrder.laborLines.first.fee, 150);
+      expect(jobOrder.mechanicId, 'mech-2');
+      expect(jobOrder.mechanicName, 'Pedro');
+      expect(jobOrder.grandTotal, 250); // parts 100 + labor 150
     });
 
     test('toSale carries laborLines and mechanic', () {
@@ -550,9 +550,9 @@ void main() {
       expect(sale.grandTotal, 300); // parts 100 + labor 200
     });
 
-    test('loadFromDraft copies feeLines into the cart', () {
-      final draft = DraftEntity(
-        id: 'draft-1',
+    test('loadFromJobOrder copies feeLines into the cart', () {
+      final jobOrder = JobOrderEntity(
+        id: 'jobOrder-1',
         name: 'Service job',
         items: const [
           SaleItemEntity(
@@ -574,7 +574,7 @@ void main() {
         createdAt: DateTime.now(),
       );
 
-      cartNotifier.loadFromDraft(draft);
+      cartNotifier.loadFromJobOrder(jobOrder);
 
       final state = container.read(cartProvider);
       expect(state.feeLines.length, 1);
@@ -582,7 +582,7 @@ void main() {
       expect(state.feeLines.first.amount, 20);
     });
 
-    test('toDraft carries feeLines', () {
+    test('toJobOrder carries feeLines', () {
       cartNotifier.addProduct(createTestProduct(price: 100));
       cartNotifier.addFeeLine(const FeeLineEntity(
         id: 'fee-1',
@@ -590,16 +590,16 @@ void main() {
         amount: 20,
       ));
 
-      final draft = cartNotifier.toDraft(
-        name: 'My Draft',
+      final jobOrder = cartNotifier.toJobOrder(
+        name: 'My JobOrder',
         createdBy: 'user-1',
         createdByName: 'John Doe',
       );
 
-      expect(draft.feeLines.length, 1);
-      expect(draft.feeLines.first.name, 'Electric charge');
-      expect(draft.feeLines.first.amount, 20);
-      expect(draft.grandTotal, 120); // parts 100 + fees 20
+      expect(jobOrder.feeLines.length, 1);
+      expect(jobOrder.feeLines.first.name, 'Electric charge');
+      expect(jobOrder.feeLines.first.amount, 20);
+      expect(jobOrder.grandTotal, 120); // parts 100 + fees 20
     });
 
     test('toSale carries feeLines', () {
@@ -665,10 +665,10 @@ void main() {
     });
   });
 
-  group('motorcycleModel + sourceDraftId threading', () {
-    test('loadFromDraft carries model and sets sourceDraftId', () {
-      cartNotifier.loadFromDraft(DraftEntity(
-        id: 'draft-9',
+  group('motorcycleModel + sourceJobOrderId threading', () {
+    test('loadFromJobOrder carries model and sets sourceJobOrderId', () {
+      cartNotifier.loadFromJobOrder(JobOrderEntity(
+        id: 'jobOrder-9',
         name: 'ABC-123',
         items: const [],
         motorcycleModel: 'Nmax',
@@ -680,8 +680,8 @@ void main() {
       ));
       final s = container.read(cartProvider);
       expect(s.motorcycleModel, 'Nmax');
-      expect(s.sourceDraftId, 'draft-9');
-      expect(s.draftName, 'ABC-123');
+      expect(s.sourceJobOrderId, 'jobOrder-9');
+      expect(s.jobOrderName, 'ABC-123');
     });
 
     test('setMotorcycleModel updates state', () {
@@ -733,7 +733,7 @@ void main() {
       expect(state.canCheckout, false);
     });
 
-    test('canSaveAsDraft: fee-only cart can save as JO', () {
+    test('canSaveAsJobOrder: fee-only cart can save as JO', () {
       // No items, no labor, one fee line -> billable content exists, so
       // saving as a Job Order is allowed even though the cart has no items.
       cartNotifier.addFeeLine(const FeeLineEntity(
@@ -745,10 +745,10 @@ void main() {
       final state = container.read(cartProvider);
       expect(state.isNotEmpty, false); // no items
       expect(state.hasBillableContent, true); // but has a fee
-      expect(state.canSaveAsDraft, true);
+      expect(state.canSaveAsJobOrder, true);
     });
 
-    test('hasBillableContent / canSaveAsDraft: labor-only cart is billable',
+    test('hasBillableContent / canSaveAsJobOrder: labor-only cart is billable',
         () {
       // No items, no fees, one labor line with a mechanic assigned -> labor
       // alone now counts as billable content (policy change).
@@ -758,7 +758,7 @@ void main() {
       final state = container.read(cartProvider);
       expect(state.isNotEmpty, false); // no items
       expect(state.hasBillableContent, true); // but has labor
-      expect(state.canSaveAsDraft, true);
+      expect(state.canSaveAsJobOrder, true);
       expect(state.canProceedToCheckout, true);
     });
 
@@ -800,9 +800,10 @@ void main() {
       expect(container.read(cartProvider).feeLines, isEmpty);
     });
 
-    test('toSale carries motorcycleModel and draftId from a resumed ticket', () {
-      cartNotifier.loadFromDraft(DraftEntity(
-        id: 'draft-9',
+    test('toSale carries motorcycleModel and jobOrderId from a resumed ticket',
+        () {
+      cartNotifier.loadFromJobOrder(JobOrderEntity(
+        id: 'jobOrder-9',
         name: 'ABC-123',
         items: const [
           SaleItemEntity(
@@ -820,10 +821,10 @@ void main() {
         createdByName: 'C',
         createdAt: DateTime(2026, 7, 1),
       ));
-      final sale = cartNotifier.toSale(
-          saleNumber: '', cashierId: 'u', cashierName: 'C');
+      final sale =
+          cartNotifier.toSale(saleNumber: '', cashierId: 'u', cashierName: 'C');
       expect(sale.motorcycleModel, 'Nmax');
-      expect(sale.draftId, 'draft-9');
+      expect(sale.jobOrderId, 'jobOrder-9');
     });
   });
 

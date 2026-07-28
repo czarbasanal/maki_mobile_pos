@@ -30,7 +30,7 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       status: sale.status,
       cashierId: sale.cashierId,
       cashierName: sale.cashierName,
-      draftId: sale.draftId,
+      jobOrderId: sale.jobOrderId,
       notes: sale.notes,
       voidedBy: sale.voidedBy,
       voidedByName: sale.voidedByName,
@@ -62,7 +62,9 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       cashierName: d.cashierName ?? '',
       createdAt: requireDate(d.createdAt, 'createdAt'),
       updatedAt: toDate(d.updatedAt),
-      draftId: d.draftId ?? null,
+      // TODO(2026-07-27): drop the 'draftId' fallback after all shop phones run
+      // +18 and the migration script's final sweep has been re-run.
+      jobOrderId: (d.jobOrderId ?? d.draftId) ?? null,
       notes: d.notes ?? null,
       voidedAt: toDate(d.voidedAt),
       voidedBy: d.voidedBy ?? null,

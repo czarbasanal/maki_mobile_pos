@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createCartStore, useCartStore } from './cartStore';
 import { DiscountType } from '@/domain/enums/DiscountType';
-import type { Draft, Product } from '@/domain/entities';
+import type { JobOrder, Product } from '@/domain/entities';
 
 const product = (over: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'A', price: 100, cost: 60, unit: 'pcs', quantity: 10, ...over } as Product);
@@ -78,9 +78,9 @@ describe('cartStore', () => {
     expect(useCartStore.getState().mechanicName).toBeNull();
   });
 
-  it('loadDraft hydrates the cart and marks the draft active; clear resets it', () => {
+  it('loadJobOrder hydrates the cart and marks the jobOrder active; clear resets it', () => {
     const store = useCartStore.getState();
-    const draft: Draft = {
+    const jobOrder: JobOrder = {
       id: 'd1',
       name: 'Mr Cruz bike',
       items: [
@@ -102,24 +102,24 @@ describe('cartStore', () => {
       notes: 'Check brakes',
     };
 
-    store.loadDraft(draft);
+    store.loadJobOrder(jobOrder);
     let s = useCartStore.getState();
     expect(s.notes).toBe('Check brakes');
     expect(s.lines).toHaveLength(1);
     expect(s.discountType).toBe(DiscountType.percentage);
-    expect(s.laborLines).toEqual(draft.laborLines);
-    // Money-correctness carry: a fee-bearing draft's feeLines must survive
-    // resume, or the shop-fee money is lost when the draft is billed out.
-    expect(s.feeLines).toEqual(draft.feeLines);
+    expect(s.laborLines).toEqual(jobOrder.laborLines);
+    // Money-correctness carry: a fee-bearing job order's feeLines must survive
+    // resume, or the shop-fee money is lost when the job order is billed out.
+    expect(s.feeLines).toEqual(jobOrder.feeLines);
     expect(s.mechanicId).toBe('m1');
     expect(s.mechanicName).toBe('Juan');
-    expect(s.draftId).toBe('d1');
-    expect(s.draftName).toBe('Mr Cruz bike');
+    expect(s.jobOrderId).toBe('d1');
+    expect(s.jobOrderName).toBe('Mr Cruz bike');
 
     store.clear();
     s = useCartStore.getState();
-    expect(s.draftId).toBeNull();
-    expect(s.draftName).toBeNull();
+    expect(s.jobOrderId).toBeNull();
+    expect(s.jobOrderName).toBeNull();
     expect(s.lines).toHaveLength(0);
     expect(s.feeLines).toHaveLength(0);
     expect(s.notes).toBeNull();

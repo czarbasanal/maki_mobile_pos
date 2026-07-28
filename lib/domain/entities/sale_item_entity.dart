@@ -1,14 +1,14 @@
 import 'package:equatable/equatable.dart';
 
-/// Represents a single line item in a sale or draft.
+/// Represents a single line item in a sale or job order.
 ///
 /// Each item tracks:
 /// - Product reference and snapshot data (for historical accuracy)
 /// - Quantity and pricing
-/// - Item-level discount (value only; type inherited from parent Sale/Draft)
+/// - Item-level discount (value only; type inherited from parent Sale/Job Order)
 ///
 /// Note: The discount TYPE (amount vs percentage) is determined at the
-/// Sale/Draft level to ensure consistency across all items.
+/// Sale/Job Order level to ensure consistency across all items.
 class SaleItemEntity extends Equatable {
   /// Unique identifier for this line item
   final String id;
@@ -62,7 +62,7 @@ class SaleItemEntity extends Equatable {
 
   /// Calculates the discount amount based on discount type.
   ///
-  /// [isPercentage] - true if parent Sale/Draft uses percentage discount
+  /// [isPercentage] - true if parent Sale/Job Order uses percentage discount
   double calculateDiscountAmount({required bool isPercentage}) {
     if (discountValue <= 0) return 0;
 
@@ -78,21 +78,21 @@ class SaleItemEntity extends Equatable {
 
   /// Net amount after discount.
   ///
-  /// [isPercentage] - true if parent Sale/Draft uses percentage discount
+  /// [isPercentage] - true if parent Sale/Job Order uses percentage discount
   double calculateNetAmount({required bool isPercentage}) {
     return grossAmount - calculateDiscountAmount(isPercentage: isPercentage);
   }
 
   /// Profit for this line item.
   ///
-  /// [isPercentage] - true if parent Sale/Draft uses percentage discount
+  /// [isPercentage] - true if parent Sale/Job Order uses percentage discount
   double calculateProfit({required bool isPercentage}) {
     return calculateNetAmount(isPercentage: isPercentage) - totalCost;
   }
 
   /// Profit margin percentage for this item.
   ///
-  /// [isPercentage] - true if parent Sale/Draft uses percentage discount
+  /// [isPercentage] - true if parent Sale/Job Order uses percentage discount
   double calculateProfitMargin({required bool isPercentage}) {
     final netAmount = calculateNetAmount(isPercentage: isPercentage);
     if (netAmount <= 0) return 0;

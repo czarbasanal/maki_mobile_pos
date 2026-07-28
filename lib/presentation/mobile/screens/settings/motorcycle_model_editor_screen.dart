@@ -20,7 +20,7 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.d
 /// Lists active + inactive models; add / edit / deactivate / reactivate with a
 /// case-insensitive duplicate guard. Inactive entries stay (greyed) so admin
 /// can reactivate; deactivating never breaks history (the model is snapshotted
-/// by name on the draft/sale).
+/// by name on the job order/sale).
 class MotorcycleModelEditorScreen extends ConsumerStatefulWidget {
   const MotorcycleModelEditorScreen({super.key});
 
@@ -66,7 +66,9 @@ class _MotorcycleModelEditorScreenState
       );
     }
 
-    final canManage = ref.watch(currentUserProvider).valueOrNull
+    final canManage = ref
+            .watch(currentUserProvider)
+            .valueOrNull
             ?.hasPermission(Permission.manageCategories) ??
         false;
 
@@ -131,8 +133,8 @@ class _MotorcycleModelEditorScreenState
   }) async {
     final saved = await showDialog<bool>(
       context: context,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
+      barrierColor:
+          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
       builder: (_) => _ModelFormDialog(existing: existing),
     );
     if (!context.mounted || saved != true) return;
@@ -190,7 +192,9 @@ class _ModelFormDialogState extends ConsumerState<_ModelFormDialog> {
           validator: (value) {
             final trimmed = value?.trim() ?? '';
             if (trimmed.isEmpty) return 'Model is required';
-            if (trimmed.length < 2) return 'Model must be at least 2 characters';
+            if (trimmed.length < 2) {
+              return 'Model must be at least 2 characters';
+            }
             return null;
           },
         ),

@@ -34,7 +34,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
     cashierName: 'Cashier, A.', // comma -> must be quoted
     createdAt: new Date('2026-05-13T10:00:00Z'),
     updatedAt: null,
-    draftId: null,
+    jobOrderId: null,
     notes: null,
     voidedAt: null,
     voidedBy: null,

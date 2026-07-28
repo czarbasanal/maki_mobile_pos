@@ -76,8 +76,8 @@ class SaleEntity extends Equatable {
   /// When the sale was last updated (e.g., voided)
   final DateTime? updatedAt;
 
-  /// Reference to draft if this sale was converted from a draft
-  final String? draftId;
+  /// Reference to job order if this sale was converted from a job order
+  final String? jobOrderId;
 
   /// Notes/remarks for this sale
   final String? notes;
@@ -115,7 +115,7 @@ class SaleEntity extends Equatable {
     required this.cashierName,
     required this.createdAt,
     this.updatedAt,
-    this.draftId,
+    this.jobOrderId,
     this.notes,
     this.voidedAt,
     this.voidedBy,
@@ -216,8 +216,8 @@ class SaleEntity extends Equatable {
   /// Whether this sale is completed (not voided)
   bool get isCompleted => status == SaleStatus.completed;
 
-  /// Whether this sale was converted from a draft
-  bool get isFromDraft => draftId != null && draftId!.isNotEmpty;
+  /// Whether this sale was converted from a job order
+  bool get isFromJobOrder => jobOrderId != null && jobOrderId!.isNotEmpty;
 
   // ==================== VALIDATION ====================
 
@@ -251,14 +251,14 @@ class SaleEntity extends Equatable {
     String? cashierName,
     DateTime? createdAt,
     DateTime? updatedAt,
-    String? draftId,
+    String? jobOrderId,
     String? notes,
     DateTime? voidedAt,
     String? voidedBy,
     String? voidedByName,
     String? voidReason,
     // Clear flags for nullable fields
-    bool clearDraftId = false,
+    bool clearJobOrderId = false,
     bool clearNotes = false,
     bool clearVoidInfo = false,
     bool clearMechanic = false,
@@ -282,7 +282,7 @@ class SaleEntity extends Equatable {
       cashierName: cashierName ?? this.cashierName,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      draftId: clearDraftId ? null : (draftId ?? this.draftId),
+      jobOrderId: clearJobOrderId ? null : (jobOrderId ?? this.jobOrderId),
       notes: clearNotes ? null : (notes ?? this.notes),
       voidedAt: clearVoidInfo ? null : (voidedAt ?? this.voidedAt),
       voidedBy: clearVoidInfo ? null : (voidedBy ?? this.voidedBy),
@@ -327,7 +327,7 @@ class SaleEntity extends Equatable {
         cashierName,
         createdAt,
         updatedAt,
-        draftId,
+        jobOrderId,
         notes,
         voidedAt,
         voidedBy,

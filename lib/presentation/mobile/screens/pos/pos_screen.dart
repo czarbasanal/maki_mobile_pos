@@ -13,7 +13,7 @@ import 'package:maki_mobile_pos/core/utils/job_order_number.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/save_job_order_dialog.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/job_orders/save_job_order_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/job_order_badge_button.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_summary.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/fee_section.dart';
@@ -63,8 +63,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             ),
             title: const Text('Point of Sale'),
             actions: [
-              // Drafts button with badge
-              JobOrderBadgeButton(onPressed: _navigateToDrafts),
+              // Job Orders button with badge
+              JobOrderBadgeButton(onPressed: _navigateToJobOrders),
               // Clear cart button
               if (cart.hasBillableContent)
                 IconButton(
@@ -332,7 +332,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   /// Collapsible "Labor & Service" block: mechanic picker + editable
   /// labor lines + an inline validity banner. Starts expanded when labor
-  /// already exists so the cashier sees it on a reloaded service draft.
+  /// already exists so the cashier sees it on a reloaded service job order.
   Widget _buildLaborSection(CartState cart) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
@@ -462,7 +462,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         );
   }
 
-  /// Action buttons side by side — Save Draft (secondary, left) and
+  /// Action buttons side by side — Save Job Order (secondary, left) and
   /// Checkout (primary, right) share the same 50px height and lg corner
   /// radius.
   Widget _buildActionButtons(CartState cart) {
@@ -472,8 +472,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       borderRadius: BorderRadius.circular(AppRadius.lg),
     );
     // Save Job Order: any billable content (items, labor, or fees) can be
-    // saved as a JO and billed out — gate on canSaveAsDraft.
-    final canSaveDraft = cart.canSaveAsDraft;
+    // saved as a JO and billed out — gate on canSaveAsJobOrder.
+    final canSaveJobOrder = cart.canSaveAsJobOrder;
     // Checkout: same billable-content gate must be able to proceed too.
     // canProceedToCheckout doesn't require isPaymentValid — payment amounts
     // are entered on the next screen. Also blocked while an earlier
@@ -500,7 +500,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 child: SizedBox(
                   height: 50,
                   child: OutlinedButton.icon(
-                    onPressed: canSaveDraft ? _showSaveDraftDialog : null,
+                    onPressed: canSaveJobOrder ? _showSaveJobOrderDialog : null,
                     icon: const Icon(LucideIcons.clipboardPlus, size: 18),
                     // Scale down instead of wrapping — the label was cutting
                     // off to two lines on narrow screens.
@@ -613,14 +613,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     if (ok) ref.read(cartProvider.notifier).reset();
   }
 
-  Future<void> _showSaveDraftDialog() async {
+  Future<void> _showSaveJobOrderDialog() async {
     final cart = ref.read(cartProvider);
 
-    // Cart was loaded from a draft — reuse the original title and skip
+    // Cart was loaded from a job order — reuse the original title and skip
     // the prompt, since the user already named it the first time.
-    final retainedName = cart.draftName?.trim() ?? '';
+    final retainedName = cart.jobOrderName?.trim() ?? '';
     if (retainedName.isNotEmpty) {
-      _saveDraft(retainedName);
+      _saveJobOrder(retainedName);
       return;
     }
 
@@ -629,16 +629,15 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final now = DateTime.now();
     final String jobOrderNo;
     try {
-      final todaysDrafts = await context.runWithWaiting(
-        () => ref.read(draftRepositoryProvider).getDraftsByDateRange(
+      final todaysJobOrders = await context.runWithWaiting(
+        () => ref.read(jobOrderRepositoryProvider).getJobOrdersByDateRange(
               startDate: now,
               endDate: now,
               includeConverted: true,
             ),
         message: 'Preparing…',
       );
-      jobOrderNo =
-          nextJobOrderNumber(now, todaysDrafts.map((d) => d.name));
+      jobOrderNo = nextJobOrderNumber(now, todaysJobOrders.map((d) => d.name));
     } catch (_) {
       if (mounted) {
         context.showErrorSnackBar('Could not prepare a job order number');
@@ -665,31 +664,31 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     } else {
       notifier.setMechanic(input.mechanicId!, input.mechanicName ?? '');
     }
-    // Synchronous state update — toDraft() inside _saveDraft reads it.
+    // Synchronous state update — toJobOrder() inside _saveJobOrder reads it.
     notifier.setNotes(input.notes);
-    _saveDraft(input.label);
+    _saveJobOrder(input.label);
   }
 
-  Future<void> _saveDraft(String name) async {
+  Future<void> _saveJobOrder(String name) async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
 
     final cartNotifier = ref.read(cartProvider.notifier);
-    final draftOps = ref.read(draftOperationsProvider.notifier);
-    final isUpdate = ref.read(cartProvider).isFromDraft;
+    final jobOrderOps = ref.read(jobOrderOperationsProvider.notifier);
+    final isUpdate = ref.read(cartProvider).isFromJobOrder;
 
-    final draft = cartNotifier.toDraft(
+    final jobOrder = cartNotifier.toJobOrder(
       name: name,
       createdBy: currentUser.id,
       createdByName: currentUser.displayName,
     );
 
     // Block the UI while the write runs so a second tap can't fire a
-    // duplicate save — createDraft writes a new auto-id doc on every call.
+    // duplicate save — createJobOrder writes a new auto-id doc on every call.
     final result = await context.runWithWaiting(
       () => isUpdate
-          ? draftOps.updateDraft(actor: currentUser, draft: draft)
-          : draftOps.createDraft(actor: currentUser, draft: draft),
+          ? jobOrderOps.updateJobOrder(actor: currentUser, jobOrder: jobOrder)
+          : jobOrderOps.createJobOrder(actor: currentUser, jobOrder: jobOrder),
       message: isUpdate ? 'Updating…' : 'Saving…',
     );
 
@@ -708,7 +707,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     context.push(RoutePaths.checkout);
   }
 
-  void _navigateToDrafts() {
-    context.push(RoutePaths.drafts);
+  void _navigateToJobOrders() {
+    context.push(RoutePaths.jobOrders);
   }
 }

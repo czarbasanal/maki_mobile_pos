@@ -31,7 +31,7 @@ class SaleModel {
   final String cashierName;
   final DateTime createdAt;
   final DateTime? updatedAt;
-  final String? draftId;
+  final String? jobOrderId;
   final String? notes;
   final DateTime? voidedAt;
   final String? voidedBy;
@@ -57,7 +57,7 @@ class SaleModel {
     required this.cashierName,
     required this.createdAt,
     this.updatedAt,
-    this.draftId,
+    this.jobOrderId,
     this.notes,
     this.voidedAt,
     this.voidedBy,
@@ -112,7 +112,10 @@ class SaleModel {
       cashierName: map['cashierName'] as String? ?? '',
       createdAt: _parseTimestamp(map['createdAt']) ?? DateTime.now(),
       updatedAt: _parseTimestamp(map['updatedAt']),
-      draftId: map['draftId'] as String?,
+      // TODO(2026-07-27): drop the 'draftId' fallback after all shop phones
+      // run +18 and the migration script's final sweep has been re-run —
+      // +17 APKs still write the old field name during the transition.
+      jobOrderId: (map['jobOrderId'] ?? map['draftId']) as String?,
       notes: map['notes'] as String?,
       voidedAt: _parseTimestamp(map['voidedAt']),
       voidedBy: map['voidedBy'] as String?,
@@ -137,8 +140,7 @@ class SaleModel {
   }) {
     final map = <String, dynamic>{
       'saleNumber': saleNumber,
-      'laborLines':
-          laborLines.map((l) => l.toMap(includeId: true)).toList(),
+      'laborLines': laborLines.map((l) => l.toMap(includeId: true)).toList(),
       'feeLines': feeLines.map((f) => f.toMap(includeId: true)).toList(),
       'mechanicId': mechanicId,
       'mechanicName': mechanicName,
@@ -150,7 +152,7 @@ class SaleModel {
       'status': status.value,
       'cashierId': cashierId,
       'cashierName': cashierName,
-      'draftId': draftId,
+      'jobOrderId': jobOrderId,
       'notes': notes,
       'voidedBy': voidedBy,
       'voidedByName': voidedByName,
@@ -230,7 +232,7 @@ class SaleModel {
       cashierName: cashierName,
       createdAt: createdAt,
       updatedAt: updatedAt,
-      draftId: draftId,
+      jobOrderId: jobOrderId,
       notes: notes,
       voidedAt: voidedAt,
       voidedBy: voidedBy,
@@ -246,11 +248,9 @@ class SaleModel {
       saleNumber: entity.saleNumber,
       items:
           entity.items.map((item) => SaleItemModel.fromEntity(item)).toList(),
-      laborLines: entity.laborLines
-          .map((l) => LaborLineModel.fromEntity(l))
-          .toList(),
-      feeLines:
-          entity.feeLines.map((f) => FeeLineModel.fromEntity(f)).toList(),
+      laborLines:
+          entity.laborLines.map((l) => LaborLineModel.fromEntity(l)).toList(),
+      feeLines: entity.feeLines.map((f) => FeeLineModel.fromEntity(f)).toList(),
       mechanicId: entity.mechanicId,
       mechanicName: entity.mechanicName,
       motorcycleModel: entity.motorcycleModel,
@@ -264,7 +264,7 @@ class SaleModel {
       cashierName: entity.cashierName,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
-      draftId: entity.draftId,
+      jobOrderId: entity.jobOrderId,
       notes: entity.notes,
       voidedAt: entity.voidedAt,
       voidedBy: entity.voidedBy,
@@ -305,7 +305,7 @@ class SaleModel {
     required double changeGiven,
     required String cashierId,
     required String cashierName,
-    String? draftId,
+    String? jobOrderId,
     String? notes,
   }) {
     return SaleModel(
@@ -325,7 +325,7 @@ class SaleModel {
       cashierId: cashierId,
       cashierName: cashierName,
       createdAt: DateTime.now(),
-      draftId: draftId,
+      jobOrderId: jobOrderId,
       notes: notes,
     );
   }
@@ -395,7 +395,7 @@ class SaleModel {
     String? cashierName,
     DateTime? createdAt,
     DateTime? updatedAt,
-    String? draftId,
+    String? jobOrderId,
     String? notes,
     DateTime? voidedAt,
     String? voidedBy,
@@ -409,8 +409,7 @@ class SaleModel {
       laborLines: laborLines ?? this.laborLines,
       feeLines: feeLines ?? this.feeLines,
       mechanicId: clearMechanic ? null : (mechanicId ?? this.mechanicId),
-      mechanicName:
-          clearMechanic ? null : (mechanicName ?? this.mechanicName),
+      mechanicName: clearMechanic ? null : (mechanicName ?? this.mechanicName),
       motorcycleModel: motorcycleModel ?? this.motorcycleModel,
       discountType: discountType ?? this.discountType,
       paymentMethod: paymentMethod ?? this.paymentMethod,
@@ -422,7 +421,7 @@ class SaleModel {
       cashierName: cashierName ?? this.cashierName,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      draftId: draftId ?? this.draftId,
+      jobOrderId: jobOrderId ?? this.jobOrderId,
       notes: notes ?? this.notes,
       voidedAt: voidedAt ?? this.voidedAt,
       voidedBy: voidedBy ?? this.voidedBy,

@@ -111,6 +111,32 @@ void main() {
       expect(model.mechanicName, isNull);
     });
 
+    // Transition guard for the drafts→job_orders migration: sales written by
+    // +17 APKs carry the OLD field name. Deleting this fallback before every
+    // phone is on +18 (and the migration's final sweep has run) silently
+    // severs the sale↔ticket link on every pre-migration sale.
+    test('fromMap reads a pre-migration draftId as jobOrderId', () {
+      final model = SaleModel.fromMap(
+        {'saleNumber': 'SALE-OLD', 'draftId': 'ticket-1'},
+        'sale-old',
+      );
+
+      expect(model.jobOrderId, 'ticket-1');
+    });
+
+    test('fromMap prefers jobOrderId when a doc carries both fields', () {
+      final model = SaleModel.fromMap(
+        {
+          'saleNumber': 'SALE-BOTH',
+          'jobOrderId': 'ticket-new',
+          'draftId': 'ticket-old',
+        },
+        'sale-both',
+      );
+
+      expect(model.jobOrderId, 'ticket-new');
+    });
+
     test('toEntity / fromEntity round-trips labor + mechanic', () {
       final entity = buildModel().toEntity();
       expect(entity.laborLines.single.fee, 450.0);
@@ -194,8 +220,7 @@ void main() {
       expect(back.feeLines.single.amount, 20.0);
     });
 
-    test('feeLines description round-trips through toMap/fromMap/toEntity',
-        () {
+    test('feeLines description round-trips through toMap/fromMap/toEntity', () {
       const chargeItemFee = FeeLineModel(
         id: 'fee-2',
         name: 'Charge Item',
@@ -216,8 +241,8 @@ void main() {
       );
 
       final map = model.toMap();
-      final feeMap = (map['feeLines'] as List<dynamic>).first
-          as Map<String, dynamic>;
+      final feeMap =
+          (map['feeLines'] as List<dynamic>).first as Map<String, dynamic>;
       expect(feeMap['description'], 'Battery replacement');
 
       final restored = SaleModel.fromMap(map, 'sale-2', items: const [item]);

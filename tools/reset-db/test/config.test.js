@@ -10,6 +10,7 @@ describe('reset-db config', () => {
     assert.deepStrictEqual(WIPE_COLLECTIONS, [
       'sales',
       'drafts',
+      'job_orders',
       'receivings',
       'expenses',
       'daily_closings',

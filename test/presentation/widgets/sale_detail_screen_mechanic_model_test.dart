@@ -89,8 +89,7 @@ void main() {
     expect(find.textContaining('· Rusi'), findsNothing);
   });
 
-  testWidgets(
-      'sale header shows no mechanic/model row when both are absent',
+  testWidgets('sale header shows no mechanic/model row when both are absent',
       (tester) async {
     await pump(
       tester,

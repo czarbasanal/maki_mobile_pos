@@ -19,8 +19,8 @@ abstract class FirestoreCollections {
   /// Sales collection - completed transactions
   static const String sales = 'sales';
 
-  /// Drafts collection - saved incomplete sales
-  static const String drafts = 'drafts';
+  /// Job orders collection (service tickets; formerly 'drafts')
+  static const String jobOrders = 'job_orders';
 
   /// Receivings collection - stock receiving records
   static const String receivings = 'receivings';
@@ -52,7 +52,7 @@ abstract class FirestoreCollections {
   /// Void reasons collection - admin-managed reasons shown in the void-sale dialog
   static const String voidReasons = 'void_reasons';
 
-  /// Mechanics collection - admin-managed mechanic list for service drafts
+  /// Mechanics collection - admin-managed mechanic list for job orders
   static const String mechanics = 'mechanics';
 
   /// Shop fees collection - admin-managed shop-fee catalog (e.g. environmental

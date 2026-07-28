@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/utils/job_order_bill_out.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
-DraftEntity _draft({String? model}) => DraftEntity(
+JobOrderEntity _draft({String? model}) => JobOrderEntity(
       id: 'd',
       name: 'X',
       items: const [],

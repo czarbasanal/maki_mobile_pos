@@ -13,7 +13,7 @@ export 'sale_entity.dart';
 export 'sale_item_entity.dart';
 export 'labor_line_entity.dart';
 export 'fee_line_entity.dart';
-export 'draft_entity.dart';
+export 'job_order_entity.dart';
 export 'expense_entity.dart';
 export 'daily_closing_entity.dart';
 export 'cost_code_entity.dart';

@@ -239,6 +239,52 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "job_orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isConverted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "job_orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isConverted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdBy",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "job_orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isConverted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "convertedAt",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -246,10 +292,22 @@
       "collectionGroup": "price_history",
       "fieldPath": "changedAt",
       "indexes": [
-        { "queryScope": "COLLECTION", "order": "ASCENDING" },
-        { "queryScope": "COLLECTION", "order": "DESCENDING" },
-        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" },
-        { "queryScope": "COLLECTION_GROUP", "order": "DESCENDING" }
+        {
+          "queryScope": "COLLECTION",
+          "order": "ASCENDING"
+        },
+        {
+          "queryScope": "COLLECTION",
+          "order": "DESCENDING"
+        },
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "ASCENDING"
+        },
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "DESCENDING"
+        }
       ]
     }
   ]

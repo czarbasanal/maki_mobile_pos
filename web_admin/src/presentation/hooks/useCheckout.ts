@@ -8,7 +8,7 @@ import { buildSaleInput, type CheckoutInput } from './buildSaleInput';
 export type { CheckoutInput };
 
 // Covers both a plain new sale AND a Job-Order bill-out (the create()
-// transaction converts the draft internally when input.draftId is set) — one
+// transaction converts the job order internally when input.jobOrderId is set) — one
 // log site for both, since from here it's the same write.
 export function useCheckout() {
   const repo = useSaleRepo();

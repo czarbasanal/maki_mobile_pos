@@ -37,7 +37,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
       <section>
         {/* The results panel overlays the content below (absolute, anchored
             to the input) — an in-flow panel here grows the column and shoves
-            the Checkout/Save-draft card down the page. */}
+            the Checkout/Save-as-Job-Order card down the page. */}
         <div className="relative">
           <input
             type="text"

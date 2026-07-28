@@ -9,7 +9,7 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widget
 
 /// Result of the shared add/edit labor dialog — plain values so each call
 /// site reconciles into its own mutation shape (CartNotifier id-based
-/// updates vs DraftEntity whole-line updates).
+/// updates vs JobOrderEntity whole-line updates).
 class LaborLineInput {
   const LaborLineInput({required this.description, required this.fee});
   final String description;
@@ -122,8 +122,7 @@ class _LaborLineDialogState extends State<_LaborLineDialog> {
         ),
       ),
       actions: [
-        appDialogCancel(context, 'Cancel',
-            onTap: () => Navigator.pop(context)),
+        appDialogCancel(context, 'Cancel', onTap: () => Navigator.pop(context)),
         appDialogPrimary(context, widget.line == null ? 'Add' : 'Save',
             onTap: _submit),
       ],

@@ -3,7 +3,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 /// Data model for a shop-fee line with Firestore serialization.
 ///
-/// Fee lines are stored **inline** inside the parent draft/sale document's
+/// Fee lines are stored **inline** inside the parent job order/sale document's
 /// `feeLines` array (see spec), so [toMap] is called with `includeId: true`
 /// to keep the line's id inside the array element. Mirrors [LaborLineModel]
 /// for serialization shape.

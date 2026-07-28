@@ -15,12 +15,12 @@ export interface CheckoutInput {
   amountReceived: number;
   changeGiven: number;
   laborLines: LaborLine[];
-  // Carried from a resumed draft (a plain non-draft web sale passes []) — see
+  // Carried from a resumed job order (a plain non-job order web sale passes []) — see
   // web_admin/src/presentation/stores/cartStore.ts `feeLines`.
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
-  draftId: string | null;
+  jobOrderId: string | null;
   // Cart notes (typed at JO save or restored on resume) ride onto the sale —
   // mobile's toSale() does the same.
   notes: string | null;
@@ -48,7 +48,7 @@ export function buildSaleInput(
     status: SaleStatus.completed,
     cashierId: actor.id,
     cashierName,
-    draftId: input.draftId,
+    jobOrderId: input.jobOrderId,
     notes: input.notes,
     voidedAt: null,
     voidedBy: null,

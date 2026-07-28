@@ -15,6 +15,7 @@ const DELETE = [
   'void_requests',
   'daily_closings',
   'drafts',
+  'job_orders',
   'expenses',
   'receivings',
   'purchase_orders',

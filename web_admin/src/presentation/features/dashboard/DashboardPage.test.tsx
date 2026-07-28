@@ -36,7 +36,7 @@ const fakeSale = (o: Partial<Sale> = {}): Sale => ({
   amountReceived: 100,
   changeGiven: 0,
   status: SaleStatus.completed,
-  draftId: null,
+  jobOrderId: null,
   notes: null,
   mechanicId: null,
   mechanicName: null,

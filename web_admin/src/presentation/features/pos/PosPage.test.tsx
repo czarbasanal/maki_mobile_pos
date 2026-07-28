@@ -9,12 +9,12 @@ import { useCartStore } from '@/presentation/stores/cartStore';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { DiscountType } from '@/domain/enums/DiscountType';
-import type { Product, Mechanic, Draft } from '@/domain/entities';
+import type { Product, Mechanic, JobOrder } from '@/domain/entities';
 
 const product = (o: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, ...o } as Product);
 
-const draft = (o: Partial<Draft> = {}): Draft =>
+const jobOrder = (o: Partial<JobOrder> = {}): JobOrder =>
   ({
     id: 'd1',
     name: 'JO-010100-005',
@@ -34,18 +34,18 @@ const draft = (o: Partial<Draft> = {}): Draft =>
     convertedAt: null,
     notes: null,
     ...o,
-  } as Draft);
+  } as JobOrder);
 
 /**
- * `draftNames` controls the fake draftRepo.watchAll:
+ * `jobOrderNames` controls the fake jobOrderRepo.watchAll:
  * - `undefined` (default): never calls back — mirrors the still-loading state
- *   the original harness used before PosPage read drafts at all.
- * - an array: resolves immediately with drafts carrying those names.
+ *   the original harness used before PosPage read job orders at all.
+ * - an array: resolves immediately with job orders carrying those names.
  */
 function harness(
   state?: { completedSaleNumber?: string },
   products: Product[] = [],
-  draftNames?: string[],
+  jobOrderNames?: string[],
 ) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const productRepo: Partial<Container['productRepo']> = {
@@ -62,10 +62,10 @@ function harness(
   };
   const create = vi.fn();
   const update = vi.fn();
-  const draftRepo: Partial<Container['draftRepo']> = {
-    watchAll: vi.fn((cb: (drafts: Draft[]) => void) => {
-      if (draftNames === undefined) return () => {};
-      cb(draftNames.map((name, i) => draft({ id: `existing-${i}`, name })));
+  const jobOrderRepo: Partial<Container['jobOrderRepo']> = {
+    watchAll: vi.fn((cb: (jobOrders: JobOrder[]) => void) => {
+      if (jobOrderNames === undefined) return () => {};
+      cb(jobOrderNames.map((name, i) => jobOrder({ id: `existing-${i}`, name })));
       return () => {};
     }),
     create,
@@ -80,7 +80,7 @@ function harness(
       override={{
         productRepo: productRepo as Container['productRepo'],
         mechanicRepo: mechanicRepo as Container['mechanicRepo'],
-        draftRepo: draftRepo as Container['draftRepo'],
+        jobOrderRepo: jobOrderRepo as Container['jobOrderRepo'],
         activityLogRepo,
       }}
     >
@@ -147,7 +147,7 @@ describe('PosPage', () => {
     harness(undefined, [product()]);
 
     // Idle: no results panel in the layout at all (the old always-present
-    // in-flow panel pushed the Checkout/Save-draft card down).
+    // in-flow panel pushed the Checkout/Save-job order card down).
     expect(screen.queryByText(/type to search/i)).not.toBeInTheDocument();
 
     const input = screen.getByPlaceholderText(/search products/i);
@@ -162,7 +162,7 @@ describe('PosPage', () => {
 });
 
 describe('Save as Job Order dialog', () => {
-  it('computes a JO number for a new job order and saves it as the draft name', async () => {
+  it('computes a JO number for a new job order and saves it as the jobOrder name', async () => {
     useCartStore.getState().clear();
     useCartStore.getState().addLine(product());
     useAuthStore.setState({
@@ -209,9 +209,9 @@ describe('Save as Job Order dialog', () => {
     expect(screen.getByLabelText(/notes/i)).toHaveValue('Customer waiting');
   });
 
-  it('keeps the existing name when updating a draft (no renumber)', async () => {
+  it('keeps the existing name when updating a jobOrder (no renumber)', async () => {
     useCartStore.getState().clear();
-    useCartStore.getState().loadDraft(draft({ id: 'd1', name: 'JO-010100-005' }));
+    useCartStore.getState().loadJobOrder(jobOrder({ id: 'd1', name: 'JO-010100-005' }));
     useCartStore.getState().addLine(product());
     useAuthStore.setState({
       user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
@@ -229,7 +229,7 @@ describe('Save as Job Order dialog', () => {
     );
   });
 
-  it('disables confirm while drafts are still loading, to avoid a stale-empty-list collision', async () => {
+  it('disables confirm while jobOrders are still loading, to avoid a stale-empty-list collision', async () => {
     useCartStore.getState().clear();
     useCartStore.getState().addLine(product());
     harness(undefined, [], undefined);

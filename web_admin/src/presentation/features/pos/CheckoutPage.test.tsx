@@ -7,7 +7,7 @@ import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { CheckoutPage } from './CheckoutPage';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import type { Draft, Product } from '@/domain/entities';
+import type { JobOrder, Product } from '@/domain/entities';
 import { DiscountType } from '@/domain/enums/DiscountType';
 
 const product = (o: Partial<Product> = {}): Product =>
@@ -61,11 +61,11 @@ describe('CheckoutPage', () => {
     expect(useCartStore.getState().lines).toHaveLength(0);
   });
 
-  it('carries a resumed draft\'s shop fees through to the created sale (money must not be lost on bill-out)', async () => {
+  it('carries a resumed jobOrder\'s shop fees through to the created sale (money must not be lost on bill-out)', async () => {
     useCartStore.getState().clear();
     useAuthStore.setState({ user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never });
 
-    const draft: Draft = {
+    const jobOrder: JobOrder = {
       id: 'd1',
       name: 'Mr Cruz bike',
       items: [
@@ -86,7 +86,7 @@ describe('CheckoutPage', () => {
       convertedAt: null,
       notes: null,
     };
-    useCartStore.getState().loadDraft(draft);
+    useCartStore.getState().loadJobOrder(jobOrder);
 
     const create = vi.fn().mockResolvedValue({ id: 's1', saleNumber: 'S-00101' });
     harness({ create });
@@ -95,8 +95,8 @@ describe('CheckoutPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /complete sale/i }));
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
 
-    const [saleInput] = create.mock.calls[0] as [{ feeLines: unknown; draftId: string | null }];
-    expect(saleInput.draftId).toBe('d1');
-    expect(saleInput.feeLines).toEqual(draft.feeLines);
+    const [saleInput] = create.mock.calls[0] as [{ feeLines: unknown; jobOrderId: string | null }];
+    expect(saleInput.jobOrderId).toBe('d1');
+    expect(saleInput.feeLines).toEqual(jobOrder.feeLines);
   });
 });

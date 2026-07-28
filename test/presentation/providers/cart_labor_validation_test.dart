@@ -43,7 +43,7 @@ void main() {
       final state = container.read(cartProvider);
       expect(state.laborValid, isFalse);
       expect(state.laborValidationError, isNotNull);
-      expect(state.canSaveAsDraft, isFalse);
+      expect(state.canSaveAsJobOrder, isFalse);
       expect(state.canCheckout, isFalse);
     });
 
@@ -55,7 +55,7 @@ void main() {
 
       final state = container.read(cartProvider);
       expect(state.laborValid, isTrue);
-      expect(state.canSaveAsDraft, isTrue);
+      expect(state.canSaveAsJobOrder, isTrue);
       expect(state.canCheckout, isTrue);
     });
 
@@ -66,7 +66,7 @@ void main() {
 
       final state = container.read(cartProvider);
       expect(state.laborValid, isFalse);
-      expect(state.canSaveAsDraft, isFalse);
+      expect(state.canSaveAsJobOrder, isFalse);
     });
   });
 }

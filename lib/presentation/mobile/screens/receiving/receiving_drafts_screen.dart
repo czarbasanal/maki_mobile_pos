@@ -42,7 +42,8 @@ class ReceivingDraftsScreen extends ConsumerWidget {
             itemCount: drafts.length,
             itemBuilder: (context, index) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _DraftItem(draft: drafts[index], dateFormat: dateFormat),
+              child:
+                  _DraftItem(draft: drafts[index], dateFormat: dateFormat),
             ),
           );
         },

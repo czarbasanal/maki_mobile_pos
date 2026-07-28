@@ -2,11 +2,11 @@ import 'package:equatable/equatable.dart';
 
 /// Domain entity representing an admin-managed shop fee.
 ///
-/// Shop fees are attachable to a sale/draft (e.g. environmental fee,
+/// Shop fees are attachable to a sale/job order (e.g. environmental fee,
 /// disposal fee). [defaultAmount] is the amount pre-filled when the fee is
 /// picked; when null, the cashier enters the amount at the register.
 /// Inactive shop fees drop off the picker but stay valid on historical
-/// records via the snapshotted name/amount on the draft/sale.
+/// records via the snapshotted name/amount on the job order/sale.
 class ShopFeeEntity extends Equatable {
   /// Unique identifier.
   final String id;

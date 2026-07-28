@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useDraft } from '@/presentation/hooks/useDraft';
-import { useDraftEditStore } from '@/presentation/stores/draftEditStore';
-import { useSaveDraft } from '@/presentation/hooks/useDraftMutations';
+import { useJobOrder } from '@/presentation/hooks/useJobOrder';
+import { useJobOrderEditStore } from '@/presentation/stores/jobOrderEditStore';
+import { useSaveJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { describedLaborLines } from '@/domain/sales/labor';
 import { CartBuilder } from '@/presentation/features/pos/CartBuilder';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
@@ -14,19 +14,19 @@ import { cn } from '@/core/utils/cn';
 export function JobOrderEditPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const { data: draft, isLoading, error } = useDraft(id);
-  const save = useSaveDraft();
+  const { data: jobOrder, isLoading, error } = useJobOrder(id);
+  const save = useSaveJobOrder();
 
-  const loadDraft = useDraftEditStore((s) => s.loadDraft);
-  const clear = useDraftEditStore((s) => s.clear);
-  const lines = useDraftEditStore((s) => s.lines);
-  const discountType = useDraftEditStore((s) => s.discountType);
-  const laborLines = useDraftEditStore((s) => s.laborLines);
-  const feeLines = useDraftEditStore((s) => s.feeLines);
-  const mechanicId = useDraftEditStore((s) => s.mechanicId);
-  const mechanicName = useDraftEditStore((s) => s.mechanicName);
-  const notes = useDraftEditStore((s) => s.notes);
-  const setNotes = useDraftEditStore((s) => s.setNotes);
+  const loadJobOrder = useJobOrderEditStore((s) => s.loadJobOrder);
+  const clear = useJobOrderEditStore((s) => s.clear);
+  const lines = useJobOrderEditStore((s) => s.lines);
+  const discountType = useJobOrderEditStore((s) => s.discountType);
+  const laborLines = useJobOrderEditStore((s) => s.laborLines);
+  const feeLines = useJobOrderEditStore((s) => s.feeLines);
+  const mechanicId = useJobOrderEditStore((s) => s.mechanicId);
+  const mechanicName = useJobOrderEditStore((s) => s.mechanicName);
+  const notes = useJobOrderEditStore((s) => s.notes);
+  const setNotes = useJobOrderEditStore((s) => s.setNotes);
 
   const [name, setName] = useState('');
   const hydratedId = useRef<string | null>(null);
@@ -35,17 +35,17 @@ export function JobOrderEditPage() {
     document.title = 'Edit Job Order';
   }, []);
   useEffect(() => {
-    if (draft && !draft.isConverted && hydratedId.current !== draft.id) {
-      loadDraft(draft);
-      setName(draft.name);
-      hydratedId.current = draft.id;
+    if (jobOrder && !jobOrder.isConverted && hydratedId.current !== jobOrder.id) {
+      loadJobOrder(jobOrder);
+      setName(jobOrder.name);
+      hydratedId.current = jobOrder.id;
     }
-  }, [draft, loadDraft]);
+  }, [jobOrder, loadJobOrder]);
   useEffect(() => () => clear(), [clear]);
 
   if (error) return <ErrorView title="Could not load Job Order" message={error.message} />;
   if (isLoading) return <LoadingView label="Loading Job Order…" />;
-  if (!draft) {
+  if (!jobOrder) {
     return (
       <div className="px-tk-xl py-tk-lg">
         <EmptyState title="Job Order not found" description="It may have been deleted or already billed out." />
@@ -53,7 +53,7 @@ export function JobOrderEditPage() {
       </div>
     );
   }
-  if (draft.isConverted) {
+  if (jobOrder.isConverted) {
     return (
       <div className="px-tk-xl py-tk-lg">
         <EmptyState title="Can't edit this Job Order" description="This Job Order is already billed out and can't be edited." />
@@ -67,7 +67,7 @@ export function JobOrderEditPage() {
     if (!trimmed) return;
     try {
       await save.mutateAsync({
-        draftId: id,
+        jobOrderId: id,
         name: trimmed,
         items: lines,
         discountType,
@@ -107,7 +107,7 @@ export function JobOrderEditPage() {
           className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text" />
       </label>
 
-      <CartBuilder store={useDraftEditStore} />
+      <CartBuilder store={useJobOrderEditStore} />
 
       <div className="flex justify-end gap-tk-sm">
         <Link to={RoutePaths.jobOrders} className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">Cancel</Link>

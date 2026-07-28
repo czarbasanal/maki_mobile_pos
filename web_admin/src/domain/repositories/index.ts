@@ -2,7 +2,7 @@ export * from './AuthRepository';
 export * from './UserRepository';
 export * from './ProductRepository';
 export * from './SaleRepository';
-export * from './DraftRepository';
+export * from './JobOrderRepository';
 export * from './SupplierRepository';
 export * from './ExpenseRepository';
 export * from './ReceivingRepository';

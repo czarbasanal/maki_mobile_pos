@@ -10,7 +10,7 @@ export type SaleStatus = (typeof SaleStatus)[keyof typeof SaleStatus];
 export const saleStatusDisplayName: Record<SaleStatus, string> = {
   completed: 'Completed',
   voided: 'Voided',
-  draft: 'Draft',
+  draft: 'JobOrder',
 };
 
 export function saleStatusFromString(value: string | null | undefined): SaleStatus {

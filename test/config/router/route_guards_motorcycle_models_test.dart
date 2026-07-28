@@ -22,7 +22,8 @@ void main() {
 
     test('admin can access the editor', () {
       expect(
-        RouteGuards.canAccess(RoutePaths.motorcycleModels, user(UserRole.admin)),
+        RouteGuards.canAccess(
+            RoutePaths.motorcycleModels, user(UserRole.admin)),
         true,
       );
     });

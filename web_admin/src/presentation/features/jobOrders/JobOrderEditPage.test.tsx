@@ -6,13 +6,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { JobOrderEditPage } from './JobOrderEditPage';
 import { useCartStore } from '@/presentation/stores/cartStore';
-import { useDraftEditStore } from '@/presentation/stores/draftEditStore';
+import { useJobOrderEditStore } from '@/presentation/stores/jobOrderEditStore';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { DiscountType } from '@/domain/enums/DiscountType';
-import type { Draft, Product, Mechanic } from '@/domain/entities';
+import type { JobOrder, Product, Mechanic } from '@/domain/entities';
 import type { ReactNode } from 'react';
 
-const draft = (o: Partial<Draft> = {}): Draft => ({
+const jobOrder = (o: Partial<JobOrder> = {}): JobOrder => ({
   id: 'd1', name: 'Mr Cruz — Mio', items: [], laborLines: [], feeLines: [], mechanicId: null, mechanicName: null,
   discountType: DiscountType.amount, createdBy: 'u1', createdByName: 'C', createdAt: new Date(),
   updatedAt: null, updatedBy: null, isConverted: false, convertedToSaleId: null, convertedAt: null, notes: null, ...o,
@@ -21,7 +21,7 @@ const draft = (o: Partial<Draft> = {}): Draft => ({
 const product = (o: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, ...o } as Product);
 
-function harness(draftRepo: Partial<Container['draftRepo']>, node: ReactNode = <JobOrderEditPage />) {
+function harness(jobOrderRepo: Partial<Container['jobOrderRepo']>, node: ReactNode = <JobOrderEditPage />) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const productRepo: Partial<Container['productRepo']> = {
     watchAll: (cb: (products: Product[]) => void) => {
@@ -41,7 +41,7 @@ function harness(draftRepo: Partial<Container['draftRepo']>, node: ReactNode = <
   return render(
     <DiProvider
       override={{
-        draftRepo: draftRepo as Container['draftRepo'],
+        jobOrderRepo: jobOrderRepo as Container['jobOrderRepo'],
         productRepo: productRepo as Container['productRepo'],
         mechanicRepo: mechanicRepo as Container['mechanicRepo'],
         activityLogRepo,
@@ -58,12 +58,12 @@ function harness(draftRepo: Partial<Container['draftRepo']>, node: ReactNode = <
 
 describe('JobOrderEditPage', () => {
   it('shows the editor with the job order name once loaded', async () => {
-    harness({ getById: vi.fn().mockResolvedValue(draft()) });
+    harness({ getById: vi.fn().mockResolvedValue(jobOrder()) });
     await waitFor(() => expect(screen.getByDisplayValue('Mr Cruz — Mio')).toBeInTheDocument());
   });
 
   it('blocks editing a converted (billed) job order', async () => {
-    harness({ getById: vi.fn().mockResolvedValue(draft({ isConverted: true })) });
+    harness({ getById: vi.fn().mockResolvedValue(jobOrder({ isConverted: true })) });
     await waitFor(() => expect(screen.getByText(/This Job Order is already billed out/i)).toBeInTheDocument());
   });
 
@@ -73,11 +73,11 @@ describe('JobOrderEditPage', () => {
   });
 
   it('re-hydrates the editor when navigating between job orders without unmounting', async () => {
-    const draftsById: Record<string, Draft> = {
-      d1: draft({ id: 'd1', name: 'Draft One' }),
-      d2: draft({ id: 'd2', name: 'Draft Two' }),
+    const jobOrdersById: Record<string, JobOrder> = {
+      d1: jobOrder({ id: 'd1', name: 'JobOrder One' }),
+      d2: jobOrder({ id: 'd2', name: 'JobOrder Two' }),
     };
-    const getById = vi.fn((id: string) => Promise.resolve(draftsById[id] ?? null));
+    const getById = vi.fn((id: string) => Promise.resolve(jobOrdersById[id] ?? null));
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const productRepo: Partial<Container['productRepo']> = {
       watchAll: (cb: (products: Product[]) => void) => {
@@ -95,7 +95,7 @@ describe('JobOrderEditPage', () => {
     render(
       <DiProvider
         override={{
-          draftRepo: { getById } as unknown as Container['draftRepo'],
+          jobOrderRepo: { getById } as unknown as Container['jobOrderRepo'],
           productRepo: productRepo as Container['productRepo'],
           mechanicRepo: mechanicRepo as Container['mechanicRepo'],
         }}
@@ -112,27 +112,27 @@ describe('JobOrderEditPage', () => {
       </DiProvider>,
     );
 
-    await screen.findByDisplayValue('Draft One');
+    await screen.findByDisplayValue('JobOrder One');
 
     await userEvent.click(screen.getByText('Go to job order two'));
 
-    await screen.findByDisplayValue('Draft Two');
+    await screen.findByDisplayValue('JobOrder Two');
   });
 
-  it('saves the draft-edit store contents (not the live POS cart) and leaves the live cart untouched', async () => {
+  it('saves the jobOrder-edit store contents (not the live POS cart) and leaves the live cart untouched', async () => {
     useCartStore.getState().clear();
     useAuthStore.setState({
       user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
     });
     const update = vi.fn().mockResolvedValue(undefined);
 
-    harness({ getById: vi.fn().mockResolvedValue(draft({ id: 'd1', name: 'Draft One', items: [] })), update });
+    harness({ getById: vi.fn().mockResolvedValue(jobOrder({ id: 'd1', name: 'JobOrder One', items: [] })), update });
 
-    await screen.findByDisplayValue('Draft One');
+    await screen.findByDisplayValue('JobOrder One');
 
-    // Mutate the draft-edit store (not the live cart) — this is the wiring under test.
+    // Mutate the job order-edit store (not the live cart) — this is the wiring under test.
     act(() => {
-      useDraftEditStore.getState().addLine(product());
+      useJobOrderEditStore.getState().addLine(product());
     });
 
     await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
@@ -143,7 +143,7 @@ describe('JobOrderEditPage', () => {
     expect(patch.items).toHaveLength(1);
     expect(patch.items[0]).toMatchObject({ productId: 'p1' });
 
-    // The live POS cart must remain untouched by editing/saving a draft.
+    // The live POS cart must remain untouched by editing/saving a job order.
     expect(useCartStore.getState().lines).toHaveLength(0);
   });
 
@@ -154,11 +154,11 @@ describe('JobOrderEditPage', () => {
     });
     const update = vi.fn().mockResolvedValue(undefined);
     harness({
-      getById: vi.fn().mockResolvedValue(draft({ id: 'd1', name: 'Draft One', notes: 'Original note' })),
+      getById: vi.fn().mockResolvedValue(jobOrder({ id: 'd1', name: 'JobOrder One', notes: 'Original note' })),
       update,
     });
 
-    await screen.findByDisplayValue('Draft One');
+    await screen.findByDisplayValue('JobOrder One');
     expect(screen.getByLabelText(/notes/i)).toHaveValue('Original note');
 
     await userEvent.clear(screen.getByLabelText(/notes/i));
@@ -177,11 +177,11 @@ describe('JobOrderEditPage', () => {
     });
     const update = vi.fn().mockResolvedValue(undefined);
     harness({
-      getById: vi.fn().mockResolvedValue(draft({ id: 'd1', name: 'Draft One', notes: 'Old' })),
+      getById: vi.fn().mockResolvedValue(jobOrder({ id: 'd1', name: 'JobOrder One', notes: 'Old' })),
       update,
     });
 
-    await screen.findByDisplayValue('Draft One');
+    await screen.findByDisplayValue('JobOrder One');
     await userEvent.clear(screen.getByLabelText(/notes/i));
     await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
@@ -190,7 +190,7 @@ describe('JobOrderEditPage', () => {
     expect(patch.notes).toBeNull();
   });
 
-  it('preserves a fee-bearing draft\'s shop fees when saved (money must not be dropped on edit)', async () => {
+  it('preserves a fee-bearing jobOrder\'s shop fees when saved (money must not be dropped on edit)', async () => {
     useCartStore.getState().clear();
     useAuthStore.setState({
       user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
@@ -199,11 +199,11 @@ describe('JobOrderEditPage', () => {
     const feeLines = [{ id: 'f1', name: 'Convenience fee', amount: 50 }];
 
     harness({
-      getById: vi.fn().mockResolvedValue(draft({ id: 'd1', name: 'Draft One', feeLines })),
+      getById: vi.fn().mockResolvedValue(jobOrder({ id: 'd1', name: 'JobOrder One', feeLines })),
       update,
     });
 
-    await screen.findByDisplayValue('Draft One');
+    await screen.findByDisplayValue('JobOrder One');
     await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
     await waitFor(() => expect(update).toHaveBeenCalled());

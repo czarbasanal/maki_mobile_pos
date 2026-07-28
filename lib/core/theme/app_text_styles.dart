@@ -183,7 +183,7 @@ abstract class AppTextStyles {
   // ==================== PRODUCT-SPECIFIC STYLES ====================
 
   /// Shared style for product names rendered in tile/list/grid surfaces
-  /// (inventory, receiving, drafts, top-selling, POS picker, search
+  /// (inventory, receiving, job orders, top-selling, POS picker, search
   /// results). Sized smaller than a section heading so long names take up
   /// less vertical real estate, and intended to be paired with
   /// `maxLines: 2, overflow: TextOverflow.ellipsis` at every call site.

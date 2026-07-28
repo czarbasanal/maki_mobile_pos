@@ -28,7 +28,7 @@ import { saleConverter } from '@/data/converters/saleConverter';
 import { saleItemConverter } from '@/data/converters/saleItemConverter';
 import { counterKey, formatSaleNumber } from '@/domain/sales/saleNumber';
 import { SaleStatus } from '@/domain/enums/SaleStatus';
-import { draftConversionOutcome } from '@/domain/sales/draftConversion';
+import { jobOrderConversionOutcome } from '@/domain/sales/jobOrderConversion';
 import { phDayInt } from '@/core/utils/businessDay';
 
 function startOfDay(d: Date): Date {
@@ -131,24 +131,24 @@ export class FirestoreSaleRepository implements SaleRepository {
     const itemRefs = input.items.map(() =>
       doc(collection(this.db, FirestoreCollections.sales, saleRef.id, Subcollections.saleItems)),
     );
-    const draftRef = input.draftId
-      ? doc(this.db, FirestoreCollections.drafts, input.draftId)
+    const jobOrderRef = input.jobOrderId
+      ? doc(this.db, FirestoreCollections.jobOrders, input.jobOrderId)
       : null;
     const drawerStateRef = doc(this.db, FirestoreCollections.drawerState, 'state');
 
     await runTransaction(this.db, async (tx) => {
       // Reads first — must precede every write.
       const counterSnap = await tx.get(counterRef);
-      const draftSnap = draftRef ? await tx.get(draftRef) : null;
+      const jobOrderSnap = jobOrderRef ? await tx.get(jobOrderRef) : null;
 
-      // A resumed draft converts atomically with the sale; an already-converted
-      // draft aborts the whole sale (prevents a duplicate); a deleted draft is
+      // A resumed job order converts atomically with the sale; an already-converted
+      // job order aborts the whole sale (prevents a duplicate); a deleted job order is
       // skipped so the sale still commits.
-      const outcome = draftSnap
-        ? draftConversionOutcome(draftSnap.exists(), draftSnap.get('isConverted') === true)
+      const outcome = jobOrderSnap
+        ? jobOrderConversionOutcome(jobOrderSnap.exists(), jobOrderSnap.get('isConverted') === true)
         : 'skip';
       if (outcome === 'abort') {
-        throw new Error('This draft was already converted to a sale');
+        throw new Error('This Job Order was already billed out');
       }
 
       const seq =
@@ -169,7 +169,7 @@ export class FirestoreSaleRepository implements SaleRepository {
         feeLines: input.feeLines,
         mechanicId: input.mechanicId,
         mechanicName: input.mechanicName,
-        draftId: input.draftId,
+        jobOrderId: input.jobOrderId,
         notes: input.notes,
         voidedBy: null,
         voidedByName: null,
@@ -207,9 +207,9 @@ export class FirestoreSaleRepository implements SaleRepository {
           updatedByName: input.cashierName,
         });
       }
-      // Mark the source draft converted, atomically with the sale.
-      if (draftRef && outcome === 'convert') {
-        tx.update(draftRef, {
+      // Mark the source job order converted, atomically with the sale.
+      if (jobOrderRef && outcome === 'convert') {
+        tx.update(jobOrderRef, {
           isConverted: true,
           convertedToSaleId: saleRef.id,
           convertedAt: serverTimestamp(),

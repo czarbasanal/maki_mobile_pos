@@ -55,8 +55,8 @@ abstract class AppConstants {
   /// Maximum product name length
   static const int maxProductNameLength = 100;
 
-  /// Maximum description length for drafts
-  static const int maxDraftDescriptionLength = 200;
+  /// Maximum description length for job orders
+  static const int maxJobOrderDescriptionLength = 200;
 
   // ==================== PAGINATION ====================
 

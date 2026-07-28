@@ -35,7 +35,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void initState() {
     super.initState();
     // Pre-fill from CartState in case the user backed out and returned,
-    // or arrived from drafts with a previously stored amount.
+    // or arrived from job orders with a previously stored amount.
     final initialAmount = ref.read(cartProvider).amountReceived;
     _amountReceivedController = TextEditingController(
       text: initialAmount > 0 ? initialAmount.toStringAsFixed(2) : '',
@@ -118,8 +118,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         splitController: _splitController,
                         onAmountChanged: _handleAmountChanged,
                         onPaymentMethodChanged: _handlePaymentMethodChanged,
-                        onSecondaryMethodChanged:
-                            _handleSecondaryMethodChanged,
+                        onSecondaryMethodChanged: _handleSecondaryMethodChanged,
                         onSplitAmountChanged: _handleSplitAmountChanged,
                       ),
                     ),
@@ -141,8 +140,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget _buildItemsList(ThemeData theme, CartState cart) {
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
     return AppCard(
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -159,9 +157,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             return Container(
               padding: const EdgeInsets.all(AppSpacing.sm + 4),
               decoration: BoxDecoration(
-                border: isLast
-                    ? null
-                    : Border(bottom: BorderSide(color: hairline)),
+                border:
+                    isLast ? null : Border(bottom: BorderSide(color: hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,9 +227,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             return Container(
               padding: const EdgeInsets.all(AppSpacing.sm + 4),
               decoration: BoxDecoration(
-                border: isLast
-                    ? null
-                    : Border(bottom: BorderSide(color: hairline)),
+                border:
+                    isLast ? null : Border(bottom: BorderSide(color: hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,15 +286,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           children: [
             SummaryRow(
               label: cart.laborLines.isEmpty ? 'Subtotal' : 'Parts subtotal',
-              value:
-                  cart.partsSubtotal.toCurrency(),
+              value: cart.partsSubtotal.toCurrency(),
             ),
             if (cart.hasDiscount) ...[
               const SizedBox(height: 6),
               SummaryRow(
                 label: 'Discount',
-                value:
-                    '-${cart.totalDiscount.toCurrency()}',
+                value: '-${cart.totalDiscount.toCurrency()}',
                 valueColor: AppColors.successText(isDark),
               ),
             ],
@@ -306,16 +300,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const SizedBox(height: 6),
               SummaryRow(
                 label: laborLabel,
-                value:
-                    cart.laborSubtotal.toCurrency(),
+                value: cart.laborSubtotal.toCurrency(),
               ),
             ],
             if (cart.feeLines.isNotEmpty) ...[
               const SizedBox(height: 6),
               SummaryRow(
                 label: 'Shop fees',
-                value:
-                    cart.feesTotal.toCurrency(),
+                value: cart.feesTotal.toCurrency(),
               ),
             ],
             const Padding(
@@ -324,8 +316,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             SummaryRow(
               label: 'Total',
-              value:
-                  cart.grandTotal.toCurrency(),
+              value: cart.grandTotal.toCurrency(),
               isTotal: true,
             ),
           ],
@@ -375,7 +366,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              boxShadow: enabled ? AppShadows.confirmButton(dark: isDark) : null,
+              boxShadow:
+                  enabled ? AppShadows.confirmButton(dark: isDark) : null,
             ),
             child: SizedBox(
               width: double.infinity,
@@ -443,7 +435,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final useCase = ProcessSaleUseCase(
         saleRepository: ref.read(saleRepositoryProvider),
         productRepository: ref.read(productRepositoryProvider),
-        draftRepository: ref.read(draftRepositoryProvider),
+        jobOrderRepository: ref.read(jobOrderRepositoryProvider),
       );
 
       final cartNotifier = ref.read(cartProvider.notifier);
@@ -458,11 +450,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       if (result.success && result.sale != null) {
         cartNotifier.resetAfterCheckout();
-        ref.read(selectedDraftProvider.notifier).state = null;
+        ref.read(selectedJobOrderProvider.notifier).state = null;
 
         ref.invalidate(todaysSalesProvider);
         ref.invalidate(todaysSalesSummaryProvider);
-        ref.invalidate(activeDraftsProvider);
+        ref.invalidate(activeJobOrdersProvider);
         ref.invalidate(productsProvider);
         ref.invalidate(lowStockProductsProvider);
 
@@ -505,8 +497,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      barrierColor: AppDialog.scrimColor(
-          Theme.of(context).brightness == Brightness.dark),
+      barrierColor:
+          AppDialog.scrimColor(Theme.of(context).brightness == Brightness.dark),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.9,
         minChildSize: 0.5,

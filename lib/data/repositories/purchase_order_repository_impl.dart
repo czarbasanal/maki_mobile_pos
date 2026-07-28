@@ -17,7 +17,8 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
       _firestore.collection(FirestoreCollections.purchaseOrders);
 
   @override
-  Future<PurchaseOrderEntity> createPurchaseOrder(PurchaseOrderEntity po) async {
+  Future<PurchaseOrderEntity> createPurchaseOrder(
+      PurchaseOrderEntity po) async {
     try {
       final model = PurchaseOrderModel.fromEntity(po);
       final docRef = await _ordersRef.add(model.toMap(forCreate: true));
@@ -64,7 +65,8 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
   }
 
   @override
-  Future<PurchaseOrderEntity> updatePurchaseOrder(PurchaseOrderEntity po) async {
+  Future<PurchaseOrderEntity> updatePurchaseOrder(
+      PurchaseOrderEntity po) async {
     try {
       final current = await getPurchaseOrderById(po.id);
       if (current == null) {
@@ -161,8 +163,7 @@ class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
           .collection(FirestoreCollections.receivings)
           .doc(po.receivingId!);
       final snap = await receivingRef.get();
-      if (snap.exists &&
-          snap.data()?['status'] == ReceivingStatus.draft.name) {
+      if (snap.exists && snap.data()?['status'] == ReceivingStatus.draft.name) {
         batch.update(receivingRef, {
           'status': ReceivingStatus.cancelled.name,
           'purchaseOrderId': null,

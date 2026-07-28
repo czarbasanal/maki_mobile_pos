@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/drafts/new_job_order_dialog.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/job_orders/new_job_order_dialog.dart';
 import 'package:maki_mobile_pos/presentation/providers/mechanic_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/motorcycle_model_provider.dart';
 

@@ -10,11 +10,11 @@ class MockSaleRepository extends Mock implements SaleRepository {}
 
 class MockProductRepository extends Mock implements ProductRepository {}
 
-class MockDraftRepository extends Mock implements DraftRepository {}
+class MockJobOrderRepository extends Mock implements JobOrderRepository {}
 
 class _FakeSaleEntity extends Fake implements SaleEntity {}
 
-class _FakeDraftEntity extends Fake implements DraftEntity {}
+class _FakeJobOrderEntity extends Fake implements JobOrderEntity {}
 
 void main() {
   setUpAll(() {
@@ -24,17 +24,17 @@ void main() {
   late ProcessSaleUseCase useCase;
   late MockSaleRepository mockSaleRepo;
   late MockProductRepository mockProductRepo;
-  late MockDraftRepository mockDraftRepo;
+  late MockJobOrderRepository mockJobOrderRepo;
 
   setUp(() {
     mockSaleRepo = MockSaleRepository();
     mockProductRepo = MockProductRepository();
-    mockDraftRepo = MockDraftRepository();
+    mockJobOrderRepo = MockJobOrderRepository();
 
     useCase = ProcessSaleUseCase(
       saleRepository: mockSaleRepo,
       productRepository: mockProductRepo,
-      draftRepository: mockDraftRepo,
+      jobOrderRepository: mockJobOrderRepo,
     );
     // Idempotency pre-check defaults to "no existing sale" unless a test
     // overrides it for a specific checkout id.
@@ -73,11 +73,14 @@ void main() {
   }
 
   group('ProcessSaleUseCase', () {
-    test('a duplicate checkout returns the existing sale without re-subtracting '
+    test(
+        'a duplicate checkout returns the existing sale without re-subtracting '
         'stock', () async {
       final sale = createTestSale();
       final existing = sale.copyWith(id: 'chk-1', saleNumber: 'SALE-001');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
           .thenThrow(const DuplicateSaleException());
       when(() => mockSaleRepo.getSaleById('chk-1'))
           .thenAnswer((_) async => existing);
@@ -96,10 +99,13 @@ void main() {
           ));
     });
 
-    test('a duplicate whose sale cannot be reloaded fails safely (no phantom '
+    test(
+        'a duplicate whose sale cannot be reloaded fails safely (no phantom '
         'success)', () async {
       final sale = createTestSale();
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
           .thenThrow(const DuplicateSaleException());
       when(() => mockSaleRepo.getSaleById(any()))
           .thenThrow(Exception('read failed'));
@@ -112,26 +118,29 @@ void main() {
       expect(result.sale, isNull);
     });
 
-    test('a duplicate draft-sourced checkout still marks the draft converted',
+    test(
+        'a duplicate jobOrder-sourced checkout still marks the jobOrder converted',
         () async {
-      final sale = createTestSale().copyWith(draftId: 'draft-9');
+      final sale = createTestSale().copyWith(jobOrderId: 'jobOrder-9');
       final existing = sale.copyWith(id: 'chk-3', saleNumber: 'SALE-003');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
           .thenThrow(const DuplicateSaleException());
       when(() => mockSaleRepo.getSaleById('chk-3'))
           .thenAnswer((_) async => existing);
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => null);
-      when(() => mockDraftRepo.markDraftAsConverted(
-            draftId: any(named: 'draftId'),
+      when(() => mockJobOrderRepo.markJobOrderAsConverted(
+            jobOrderId: any(named: 'jobOrderId'),
             saleId: any(named: 'saleId'),
           )).thenThrow(Exception('ignored')); // caught; we verify the attempt
 
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-3');
 
       expect(result.success, isTrue);
-      verify(() => mockDraftRepo.markDraftAsConverted(
-            draftId: 'draft-9',
+      verify(() => mockJobOrderRepo.markJobOrderAsConverted(
+            jobOrderId: 'jobOrder-9',
             saleId: 'chk-3',
           )).called(1);
     });
@@ -142,7 +151,9 @@ void main() {
 
       when(() => mockSaleRepo.generateSaleNumber(any()))
           .thenAnswer((_) async => 'SALE-001');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
           .thenAnswer((_) async => createdSale);
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => ProductEntity(
@@ -179,8 +190,7 @@ void main() {
       expect(result.errorMessage, contains('empty'));
     });
 
-    test(
-        'a fee-only sale (no items, one or more fee lines) passes validation',
+    test('a fee-only sale (no items, one or more fee lines) passes validation',
         () async {
       // grandTotal = feesTotal(50) only; tenders must reconcile.
       final sale = createTestSale(items: [], amountReceived: 50).copyWith(
@@ -243,8 +253,8 @@ void main() {
 
     test('should fail when the tender breakdown does not reconcile', () async {
       // Tenders sum to 100 but the grand total is 200.
-      final sale = createTestSale()
-          .copyWith(tenders: const {PaymentMethod.cash: 100});
+      final sale =
+          createTestSale().copyWith(tenders: const {PaymentMethod.cash: 100});
 
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
 
@@ -266,7 +276,9 @@ void main() {
 
       when(() => mockSaleRepo.generateSaleNumber(any()))
           .thenAnswer((_) async => 'SALE-002');
-      when(() => mockSaleRepo.createSale(any(), id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
           .thenAnswer((inv) async =>
               (inv.positionalArguments.first as SaleEntity)
                   .copyWith(id: 'sale-200', saleNumber: 'SALE-002'));
@@ -295,25 +307,25 @@ void main() {
       // succeeds with labor priced in.
     });
 
-    test('a fresh draft-sourced sale marks the ticket converted on success',
+    test('a fresh jobOrder-sourced sale marks the ticket converted on success',
         () async {
-      final sale = createTestSale().copyWith(draftId: 'draft-9');
+      final sale = createTestSale().copyWith(jobOrderId: 'jobOrder-9');
       when(() => mockSaleRepo.createSale(any(),
               id: any(named: 'id'),
               decrementStock: any(named: 'decrementStock')))
           .thenAnswer((_) async => sale.copyWith(id: 'sale-1'));
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => null);
-      when(() => mockDraftRepo.markDraftAsConverted(
-            draftId: any(named: 'draftId'),
+      when(() => mockJobOrderRepo.markJobOrderAsConverted(
+            jobOrderId: any(named: 'jobOrderId'),
             saleId: any(named: 'saleId'),
-          )).thenAnswer((_) async => _FakeDraftEntity());
+          )).thenAnswer((_) async => _FakeJobOrderEntity());
 
       final result = await useCase.execute(sale: sale, checkoutId: 'chk-conv');
 
       expect(result.success, isTrue);
-      verify(() => mockDraftRepo.markDraftAsConverted(
-            draftId: 'draft-9',
+      verify(() => mockJobOrderRepo.markJobOrderAsConverted(
+            jobOrderId: 'jobOrder-9',
             saleId: 'sale-1',
           )).called(1);
     });
@@ -357,14 +369,13 @@ void main() {
         code: 'unavailable',
       ));
 
-      final result =
-          await useCase.execute(sale: sale, checkoutId: 'chk-other');
+      final result = await useCase.execute(sale: sale, checkoutId: 'chk-other');
 
       expect(result.success, isFalse);
       expect(result.errorMessage, 'Failed to create sale: network blip');
     });
 
-    test('a walk-in sale (no draftId) converts nothing', () async {
+    test('a walk-in sale (no jobOrderId) converts nothing', () async {
       final sale = createTestSale();
       when(() => mockSaleRepo.createSale(any(),
               id: any(named: 'id'),
@@ -373,11 +384,12 @@ void main() {
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => null);
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-walkin');
+      final result =
+          await useCase.execute(sale: sale, checkoutId: 'chk-walkin');
 
       expect(result.success, isTrue);
-      verifyNever(() => mockDraftRepo.markDraftAsConverted(
-            draftId: any(named: 'draftId'),
+      verifyNever(() => mockJobOrderRepo.markJobOrderAsConverted(
+            jobOrderId: any(named: 'jobOrderId'),
             saleId: any(named: 'saleId'),
           ));
     });

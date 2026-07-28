@@ -8,7 +8,7 @@ import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/receiving_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cart_provider.dart';
-import 'package:maki_mobile_pos/presentation/providers/draft_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/job_order_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/inventory_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
@@ -38,7 +38,7 @@ const _item = SaleItemEntity(
   quantity: 1,
 );
 
-DraftEntity _draft() => DraftEntity(
+JobOrderEntity _draft() => JobOrderEntity(
       id: 'd-1',
       name: 'Table 9',
       items: const [_item],
@@ -49,7 +49,7 @@ DraftEntity _draft() => DraftEntity(
     );
 
 void main() {
-  test('clears cart + selected draft when the user signs out', () async {
+  test('clears cart + selected jobOrder when the user signs out', () async {
     final auth = StreamController<UserEntity?>();
     final container = ProviderContainer(
       overrides: [
@@ -70,7 +70,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     container.read(cartProvider.notifier).addItem(_item);
-    container.read(selectedDraftProvider.notifier).state = _draft();
+    container.read(selectedJobOrderProvider.notifier).state = _draft();
     container.read(inventoryStateProvider.notifier)
       ..setSearchQuery('brake')
       ..setCategoryFilter('Brakes')
@@ -88,7 +88,7 @@ void main() {
           ),
         );
     expect(container.read(cartProvider).isNotEmpty, isTrue);
-    expect(container.read(selectedDraftProvider), isNotNull);
+    expect(container.read(selectedJobOrderProvider), isNotNull);
     expect(container.read(inventoryStateProvider).searchQuery, 'brake');
     expect(container.read(currentReceivingProvider).items, isNotEmpty);
 
@@ -96,7 +96,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(container.read(cartProvider).isEmpty, isTrue);
-    expect(container.read(selectedDraftProvider), isNull);
+    expect(container.read(selectedJobOrderProvider), isNull);
     final inv = container.read(inventoryStateProvider);
     expect(inv.searchQuery, isEmpty);
     expect(inv.categoryFilter, isNull);

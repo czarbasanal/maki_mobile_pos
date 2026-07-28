@@ -9,7 +9,7 @@ function sale(over: Partial<Sale> = {}): Sale {
     discountType: DiscountType.amount, paymentMethod: PaymentMethod.cash, tenders: {},
     amountReceived: 0, changeGiven: 0, status: SaleStatus.completed, cashierId: 'c1',
     cashierName: 'Cashier', createdAt: new Date('2026-06-01T10:00:00Z'), updatedAt: null,
-    draftId: null, notes: null, voidedAt: null, voidedBy: null, voidedByName: null,
+    jobOrderId: null, notes: null, voidedAt: null, voidedBy: null, voidedByName: null,
     voidReason: null, ...over,
   };
 }

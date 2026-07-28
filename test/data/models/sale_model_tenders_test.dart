@@ -41,7 +41,8 @@ void main() {
         'saleNumber': 'SALE-3',
         'paymentMethod': 'salmon',
         'tenders': {'cash': 400, 'salmon': 600},
-      }, 'doc-3').toEntity();
+      }, 'doc-3')
+          .toEntity();
 
       final back = SaleModel.fromEntity(entity);
       expect(back.tenders,

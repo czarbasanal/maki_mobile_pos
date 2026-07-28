@@ -13,7 +13,7 @@ export type CartLine = SaleItem;
 // Reuse the Sale money helpers by shaping a minimal Sale — they read only
 // items/laborLines/feeLines/discountType — so cart and sale math stay
 // single-sourced. feeLines defaults to [] — the web POS has no fee-entry UI
-// yet, so only a resumed draft's carried fees populate it.
+// yet, so only a resumed job order's carried fees populate it.
 function asSale(lines: CartLine[], discountType: DiscountType, feeLines: FeeLine[] = []): Sale {
   return { items: lines, laborLines: [], feeLines, discountType } as unknown as Sale;
 }
@@ -31,7 +31,7 @@ export function cartGrandTotal(
   feeLines: FeeLine[] = [],
 ): number {
   // Parts revenue (labor-0 path) + labor subtotal (described lines only) +
-  // carried shop fees (from a resumed draft — full price, no discount).
+  // carried shop fees (from a resumed job order — full price, no discount).
   return saleGrandTotal(asSale(lines, discountType, feeLines)) + cartLaborSubtotal(laborLines);
 }
 export function cartFeesTotal(feeLines: FeeLine[]): number {

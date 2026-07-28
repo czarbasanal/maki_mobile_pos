@@ -6,11 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/app_colors.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/presentation/providers/draft_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/job_order_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/job_order_badge_button.dart';
 
 void main() {
-  DraftEntity draft(String id) => DraftEntity(
+  JobOrderEntity jobOrder(String id) => JobOrderEntity(
         id: id,
         name: 'Plate $id',
         items: const [],
@@ -21,12 +21,12 @@ void main() {
 
   Future<void> pump(
     WidgetTester tester, {
-    required Stream<List<DraftEntity>> drafts,
+    required Stream<List<JobOrderEntity>> jobOrders,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          activeDraftsProvider.overrideWith((ref) => drafts),
+          activeJobOrdersProvider.overrideWith((ref) => jobOrders),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -42,14 +42,14 @@ void main() {
 
   testWidgets('shows clipboard icon with the open job-order count',
       (tester) async {
-    await pump(tester, drafts: Stream.value([draft('a'), draft('b')]));
+    await pump(tester, jobOrders: Stream.value([jobOrder('a'), jobOrder('b')]));
     await tester.pump();
     expect(find.byIcon(LucideIcons.clipboardList), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
   });
 
   testWidgets('count pill is red with a white number', (tester) async {
-    await pump(tester, drafts: Stream.value([draft('a')]));
+    await pump(tester, jobOrders: Stream.value([jobOrder('a')]));
     await tester.pump();
 
     final pill = tester.widget<Container>(
@@ -61,7 +61,7 @@ void main() {
 
   testWidgets('shows no count pill when there are no open job orders',
       (tester) async {
-    await pump(tester, drafts: Stream.value(const []));
+    await pump(tester, jobOrders: Stream.value(const []));
     await tester.pump();
     expect(find.byIcon(LucideIcons.clipboardList), findsOneWidget);
     expect(find.text('0'), findsNothing);
@@ -69,9 +69,9 @@ void main() {
 
   testWidgets('keeps the clipboard icon while the stream is still loading',
       (tester) async {
-    final controller = StreamController<List<DraftEntity>>();
+    final controller = StreamController<List<JobOrderEntity>>();
     addTearDown(controller.close);
-    await pump(tester, drafts: controller.stream);
+    await pump(tester, jobOrders: controller.stream);
     expect(find.byIcon(LucideIcons.clipboardList), findsOneWidget);
   });
 }
