@@ -7,6 +7,7 @@ import {
   ArrowPathIcon,
   ArrowRightOnRectangleIcon,
   ArrowUturnLeftIcon,
+  BookOpenIcon,
   BuildingStorefrontIcon,
   ChevronDownIcon,
   ClipboardDocumentListIcon,
@@ -68,6 +69,7 @@ const ICONS: Record<ActivityType, ComponentType<SVGProps<SVGSVGElement>>> = {
   cost_code_changed: CodeBracketSquareIcon,
   expense: ReceiptPercentIcon,
   supplier: BuildingStorefrontIcon,
+  day_closed: BookOpenIcon,
   other: ClipboardDocumentListIcon,
 };
 
@@ -89,6 +91,8 @@ function toneFor(type: ActivityType): Tone {
       return 'orange';
     case ActivityType.expense:
       return 'yellow';
+    case ActivityType.dayClosed:
+      return 'orange';
     default:
       return 'blue';
   }
