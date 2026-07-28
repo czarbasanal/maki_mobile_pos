@@ -24,8 +24,7 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
-
-const PAGE_SIZE = 25;
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 
 const timeFmt = new Intl.DateTimeFormat('en-PH', {
   hour: 'numeric',
@@ -37,7 +36,8 @@ export function DaySalesPage() {
   const [date, setDate] = useState(() => new Date());
   const { sales, isLoading, error } = useDaySales(date);
   const [page, setPage] = useState(1);
-  usePageClamp(page, setPage, sales.length, PAGE_SIZE);
+  const [pageSize, setPageSize] = usePageSize('daySales');
+  usePageClamp(page, setPage, sales.length, pageSize);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
@@ -52,8 +52,8 @@ export function DaySalesPage() {
   }, [date]);
 
   const pagedSales = useMemo(
-    () => sales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [sales, page],
+    () => sales.slice((page - 1) * pageSize, page * pageSize),
+    [sales, page, pageSize],
   );
 
   function toggle(sale: Sale) {
@@ -129,7 +129,8 @@ export function DaySalesPage() {
               />
             ))}
           </div>
-          <Pager total={sales.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+          <Pager total={sales.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </section>
       )}
     </div>

@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
@@ -137,11 +138,38 @@ describe('JobOrdersPage', () => {
 });
 
 describe('JobOrdersPage — pagination', () => {
+  // Isolated here rather than at the end of the resize test: a mid-test
+  // failure there would leak the stored size and break the NEXT test with an
+  // error pointing nowhere near the cause.
+  beforeEach(() => localStorage.clear());
+
   it('shows the pager once the job order list exceeds 25', () => {
     const many = Array.from({ length: 26 }, (_, i) => jobOrder({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }));
     harness(many);
 
     expect(screen.getByText('1–25 of 26')).toBeInTheDocument();
+  });
+
+  it('choosing more rows per page shows them, and the choice sticks per table', async () => {
+    const many = Array.from({ length: 30 }, (_, i) =>
+      jobOrder({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }),
+    );
+    const view = harness(many);
+    expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
+    expect(screen.queryByText('JO-072326-030')).not.toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByLabelText(/rows per page/i), '50');
+
+    expect(screen.getByText('1–30 of 30')).toBeInTheDocument();
+    expect(screen.getByText('JO-072326-030')).toBeInTheDocument();
+    // Still reachable so the size can be changed back.
+    expect(screen.getByLabelText(/rows per page/i)).toHaveValue('50');
+
+    // Remembered on the next visit, and scoped to this table only.
+    view.unmount();
+    harness(many);
+    expect(screen.getByLabelText(/rows per page/i)).toHaveValue('50');
+    expect(localStorage.getItem('maki.pageSize.inventory')).toBeNull();
   });
 
   it('hides the pager at exactly 25 job orders', () => {

@@ -12,6 +12,7 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -40,7 +41,7 @@ export function InventoryListPage() {
   const [category, setCategory] = useState<ProductFilter['category']>('all');
   const [showInactive, setShowInactive] = useState(false);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 25;
+  const [pageSize, setPageSize] = usePageSize('inventory');
 
   const active = useMemo(
     () => (showInactive ? (products ?? []) : (products ?? []).filter((p) => p.isActive)),
@@ -70,7 +71,7 @@ export function InventoryListPage() {
     () => filterProducts(active, { search, stock, category }),
     [active, search, stock, category],
   );
-  usePageClamp(page, setPage, filtered.length, PAGE_SIZE);
+  usePageClamp(page, setPage, filtered.length, pageSize);
 
   // Filters changed — a page number from the previous result set may now
   // point past the end (or simply be stale), so snap back to page 1.
@@ -79,8 +80,8 @@ export function InventoryListPage() {
   }, [search, stock, category, showInactive]);
 
   const paged = useMemo(
-    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filtered, page],
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page, pageSize],
   );
 
   const user = useAuthStore((s) => s.user);
@@ -210,7 +211,8 @@ export function InventoryListPage() {
               })}
             </tbody>
           </table>
-          <Pager total={filtered.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+          <Pager total={filtered.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </div>
       )}
     </div>

@@ -27,6 +27,7 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Spinner } from '@/presentation/components/common/LoadingView';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -41,7 +42,7 @@ export function UsersListPage() {
   const [showInactive, setShowInactive] = useState(false);
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 25;
+  const [pageSize, setPageSize] = usePageSize('users');
 
   const { data: users, isLoading, error } = useUsers(showInactive);
 
@@ -66,10 +67,10 @@ export function UsersListPage() {
     setPage(1);
   }, [roleFilter, showInactive]);
 
-  usePageClamp(page, setPage, filtered.length, PAGE_SIZE);
+  usePageClamp(page, setPage, filtered.length, pageSize);
   const paged = useMemo(
-    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filtered, page],
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page, pageSize],
   );
 
   const summary = useMemo(() => {
@@ -145,7 +146,8 @@ export function UsersListPage() {
       ) : (
         <>
           <UsersTable users={paged} myId={me?.id ?? ''} />
-          <Pager total={filtered.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+          <Pager total={filtered.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </>
       )}
     </div>

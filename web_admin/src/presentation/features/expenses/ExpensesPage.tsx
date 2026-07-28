@@ -16,13 +16,13 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 import type { Expense } from '@/domain/entities';
 
-const PAGE_SIZE = 25;
 const dateFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' });
 
 export function ExpensesPage() {
@@ -36,6 +36,7 @@ export function ExpensesPage() {
   const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
   const [category, setCategory] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize('expenses');
 
   const { totals } = useExpenseTotals();
   const { data: categories } = useActiveCategories(CategoryKind.expense);
@@ -53,10 +54,10 @@ export function ExpensesPage() {
     setPage(1);
   }, [range, category]);
 
-  usePageClamp(page, setPage, expenses.length, PAGE_SIZE);
+  usePageClamp(page, setPage, expenses.length, pageSize);
   const paged = useMemo(
-    () => expenses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [expenses, page],
+    () => expenses.slice((page - 1) * pageSize, page * pageSize),
+    [expenses, page, pageSize],
   );
 
   const confirmDelete = async () => {
@@ -184,7 +185,8 @@ export function ExpensesPage() {
               ))}
             </tbody>
           </table>
-          <Pager total={expenses.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+          <Pager total={expenses.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </div>
       )}
 

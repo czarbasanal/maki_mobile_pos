@@ -41,6 +41,7 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { toneBadgeClasses, type Tone } from '@/core/theme/tones';
 import { cn } from '@/core/utils/cn';
 
@@ -151,16 +152,15 @@ function dateLabel(d: Date): string {
   return dateGroupFmt.format(d);
 }
 
-const PAGE_SIZE = 25;
-
 export function ActivityLogsPage() {
   const [type, setType] = useState<ActivityType | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize('activityLogs');
   const { data: logs, isLoading, error } = useActivityLogs({
     type: type ?? undefined,
     limit: 200,
   });
-  usePageClamp(page, setPage, logs?.length ?? 0, PAGE_SIZE);
+  usePageClamp(page, setPage, logs?.length ?? 0, pageSize);
 
   useEffect(() => {
     document.title = 'Activity logs · MAKI POS Admin';
@@ -173,8 +173,8 @@ export function ActivityLogsPage() {
   }, [type]);
 
   const pagedLogs = useMemo(
-    () => (logs ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [logs, page],
+    () => (logs ?? []).slice((page - 1) * pageSize, page * pageSize),
+    [logs, page, pageSize],
   );
 
   // Paginate the flat list BEFORE grouping by date, so each page's date
@@ -241,7 +241,8 @@ export function ActivityLogsPage() {
               </ul>
             </section>
           ))}
-          <Pager total={logs.length} page={page} onPage={setPage} pageSize={PAGE_SIZE} />
+          <Pager total={logs.length} page={page} onPage={setPage} pageSize={pageSize}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </div>
       )}
     </div>
