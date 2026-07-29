@@ -609,11 +609,17 @@ export function parseSellingOptions(raw: unknown): SellingOption[] {
     const id = typeof rec.id === 'string' ? rec.id : '';
     const label = typeof rec.label === 'string' ? rec.label : '';
     if (id === '' || label === '') continue;
+    // Type-GUARD, don't coerce. `Number("abc")` is NaN and `Number(true)` is 1,
+    // where Dart falls back to the literal default for any non-numeric value.
+    // Math.trunc mirrors Dart's `.toInt()` on a fractional piece count.
     result.push({
       id,
       label,
-      pieces: Number(rec.pieces ?? 1),
-      price: Number(rec.price ?? 0),
+      pieces:
+        typeof rec.pieces === 'number' && Number.isFinite(rec.pieces)
+          ? Math.trunc(rec.pieces)
+          : 1,
+      price: typeof rec.price === 'number' && Number.isFinite(rec.price) ? rec.price : 0,
     });
   }
   return result;
