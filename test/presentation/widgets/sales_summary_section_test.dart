@@ -243,13 +243,43 @@ void main() {
         (tester) async {
       await pump(tester, avgDaily: 1234);
       expect(find.byIcon(LucideIcons.info), findsOneWidget);
+
+      // Scope to the card subtree that actually contains the "Avg Daily"
+      // label — each stat card is wrapped in its own `Expanded` inside the
+      // stat row, so this isolates just that one card (not COGS, not
+      // Profit, not the whole row). A findsOneWidget on the icon alone
+      // would still pass if the ⓘ were wired onto a different card; this
+      // pins it to the right one.
+      final avgDailyCard = find.ancestor(
+        of: find.text('Avg Daily'),
+        matching: find.byType(Expanded),
+      );
+      expect(avgDailyCard, findsOneWidget);
+      expect(
+        find.descendant(
+          of: avgDailyCard,
+          matching: find.byIcon(LucideIcons.info),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('tapping the info button explains the completed-days rule',
         (tester) async {
       await pump(tester, avgDaily: 1234);
 
-      await tester.tap(find.byIcon(LucideIcons.info));
+      // Tap the ⓘ scoped to the Avg Daily card's subtree specifically —
+      // if the info button were wired onto COGS or Profit instead, this
+      // finder comes up empty and the tap fails, rather than silently
+      // hitting whichever single ⓘ happens to exist anywhere in the tree.
+      final avgDailyCard = find.ancestor(
+        of: find.text('Avg Daily'),
+        matching: find.byType(Expanded),
+      );
+      await tester.tap(find.descendant(
+        of: avgDailyCard,
+        matching: find.byIcon(LucideIcons.info),
+      ));
       await tester.pumpAndSettle();
 
       expect(
