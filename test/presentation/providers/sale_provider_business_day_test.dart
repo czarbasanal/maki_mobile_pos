@@ -104,8 +104,8 @@ void main() {
     });
   });
 
-  group('monthToDateSummaryProvider', () {
-    test('start stays the 1st of the month; end follows the flipped day',
+  group('monthCompletedDaysSummaryProvider', () {
+    test('queries the 1st through end of YESTERDAY, and follows the flip',
         () async {
       final repo = _MockSaleRepository();
       when(() => repo.getSalesSummary(
@@ -120,35 +120,110 @@ void main() {
         businessDayProvider.overrideWith(() => dayNotifier),
       ]);
       addTearDown(container.dispose);
-      final sub = container.listen(monthToDateSummaryProvider, (_, __) {});
+      final sub =
+          container.listen(monthCompletedDaysSummaryProvider, (_, __) {});
       addTearDown(sub.close);
 
-      await container.read(monthToDateSummaryProvider.future);
+      await container.read(monthCompletedDaysSummaryProvider.future);
       var captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
       expect(captured[0], DateTime(2026, 7, 1));
-      expect(captured[1], DateTime(2026, 7, 24, 23, 59, 59, 999));
+      // End of the 23rd — today (the 24th) is NOT included.
+      expect(captured[1], DateTime(2026, 7, 23, 23, 59, 59, 999));
 
       dayNotifier.set(DateTime(2026, 7, 25));
       await Future<void>.delayed(Duration.zero);
-      await container.read(monthToDateSummaryProvider.future);
+      await container.read(monthCompletedDaysSummaryProvider.future);
       captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime(2026, 7, 1)); // same month, unchanged
-      expect(captured[1], DateTime(2026, 7, 25, 23, 59, 59, 999));
+      expect(captured[0], DateTime(2026, 7, 1));
+      expect(captured[1], DateTime(2026, 7, 24, 23, 59, 59, 999));
+    });
+
+    test('issues NO query on the 1st — there are no completed days', () async {
+      final repo = _MockSaleRepository();
+      when(() => repo.getSalesSummary(
+            startDate: any(named: 'startDate'),
+            endDate: any(named: 'endDate'),
+          )).thenAnswer((_) async => SalesSummary.empty());
+
+      final container = ProviderContainer(overrides: [
+        currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
+        saleRepositoryProvider.overrideWithValue(repo),
+        businessDayProvider
+            .overrideWith(() => _FixedBusinessDayNotifier(DateTime(2026, 7, 1))),
+      ]);
+      addTearDown(container.dispose);
+      final sub =
+          container.listen(monthCompletedDaysSummaryProvider, (_, __) {});
+      addTearDown(sub.close);
+
+      final summary =
+          await container.read(monthCompletedDaysSummaryProvider.future);
+
+      expect(summary.grossAmount, 0);
+      verifyNever(() => repo.getSalesSummary(
+            startDate: any(named: 'startDate'),
+            endDate: any(named: 'endDate'),
+          ));
     });
   });
 
-  group('avgDailySalesProvider', () {
+  group('avgDailySalesProvider — completed-days average', () {
+    Future<AsyncValue<double?>> readAvg(DateTime day, double gross) async {
+      final repo = _MockSaleRepository();
+      when(() => repo.getSalesSummary(
+            startDate: any(named: 'startDate'),
+            endDate: any(named: 'endDate'),
+          )).thenAnswer((_) async => SalesSummary(
+                totalSalesCount: 0,
+                voidedSalesCount: 0,
+                grossAmount: gross,
+                totalDiscounts: 0,
+                netAmount: 0,
+                totalCost: 0,
+                totalProfit: 0,
+                byPaymentMethod: const {},
+              ));
+
+      final container = ProviderContainer(overrides: [
+        currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
+        saleRepositoryProvider.overrideWithValue(repo),
+        businessDayProvider
+            .overrideWith(() => _FixedBusinessDayNotifier(day)),
+      ]);
+      addTearDown(container.dispose);
+      final sub =
+          container.listen(monthCompletedDaysSummaryProvider, (_, __) {});
+      addTearDown(sub.close);
+      await container.read(monthCompletedDaysSummaryProvider.future);
+      return container.read(avgDailySalesProvider);
+    }
+
+    test('divides by completed days only', () async {
+      // The 25th → 24 completed days. 2400 / 24 = 100.
+      final avg = await readAvg(DateTime(2026, 7, 25), 2400);
+      expect(avg.valueOrNull, 100);
+    });
+
+    test('returns null on the 1st rather than a misleading zero', () async {
+      final avg = await readAvg(DateTime(2026, 7, 1), 0);
+      expect(avg.valueOrNull, isNull);
+    });
+
+    // Retained from the pre-existing `avgDailySalesProvider` group (not
+    // superseded by the two tests above): proves the provider watches
+    // businessDayProvider directly and recomputes on a clock flip, even
+    // when the upstream summary provider is held fixed.
     test('daysElapsed follows businessDayProvider and recomputes on flip',
         () async {
       final dayNotifier = _FixedBusinessDayNotifier(DateTime(2026, 7, 15));
       final container = ProviderContainer(overrides: [
-        monthToDateSummaryProvider.overrideWith(
+        monthCompletedDaysSummaryProvider.overrideWith(
           (ref) async => const SalesSummary(
             totalSalesCount: 1,
             voidedSalesCount: 0,
@@ -164,15 +239,15 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      // Day 15 → 14 elapsed past days → 1400 / 14 = 100.
+      // Day 15 → 14 completed days → 1400 / 14 = 100.
       final sub = container.listen(avgDailySalesProvider, (_, __) {});
       addTearDown(sub.close);
-      await container.read(monthToDateSummaryProvider.future);
-      expect(container.read(avgDailySalesProvider).value, 100);
+      await container.read(monthCompletedDaysSummaryProvider.future);
+      expect(container.read(avgDailySalesProvider).valueOrNull, 100);
 
-      // Flip to day 8 (still July) → 7 elapsed days → 1400 / 7 = 200.
+      // Flip to day 8 (still July) → 7 completed days → 1400 / 7 = 200.
       dayNotifier.set(DateTime(2026, 7, 8));
-      expect(container.read(avgDailySalesProvider).value, 200);
+      expect(container.read(avgDailySalesProvider).valueOrNull, 200);
     });
   });
 

@@ -162,22 +162,28 @@ final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   return result.data!;
 });
 
-/// Sales summary for the current month-to-date (1st → now). Drives the
-/// dashboard's Avg Daily Sales card; the SalesSummary itself is reused for
-/// any other month-scoped totals.
-final monthToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
+/// Sales summary over the *completed* days of the current month
+/// (1st 00:00 → end of yesterday). Today is deliberately excluded: it is
+/// still in progress, and dividing a partial day's takings by a whole-day
+/// count inflates the Avg Daily figure.
+final monthCompletedDaysSummaryProvider =
+    FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
   // Watch the clock (not a raw DateTime.now() snapshot) so a midnight
-  // rollover re-runs this query with tomorrow's wider end-of-day bound.
+  // rollover re-runs this query with one more completed day.
   final today = ref.watch(businessDayProvider);
   final m = monthToDate(today);
-  final dayEnd =
-      DateTime(today.year, today.month, today.day, 23, 59, 59, 999);
+
+  // On the 1st nothing has completed yet — skip the round-trip entirely.
+  if (m.daysElapsed <= 0) return SalesSummary.empty();
+
+  final yesterdayEnd = DateTime(today.year, today.month, today.day)
+      .subtract(const Duration(milliseconds: 1));
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
         startDate: m.start,
-        endDate: dayEnd,
+        endDate: yesterdayEnd,
       );
   if (!result.success) {
     throw AppExceptionWrapper(
@@ -187,17 +193,18 @@ final monthToDateSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   return result.data!;
 });
 
-/// Average daily gross sales for the current month so far.
+/// Average daily gross sales across the *completed* days of this month.
 ///
-/// Derived from [monthToDateSummaryProvider] — month-to-date gross amount
-/// divided by the count of *completed* past days in the current month
-/// (today is excluded since it's still in progress). Returns 0 on the
-/// 1st of the month. Recomputes daily as the day count advances.
-final avgDailySalesProvider = Provider<AsyncValue<double>>((ref) {
-  final summaryAsync = ref.watch(monthToDateSummaryProvider);
+/// Total from [monthCompletedDaysSummaryProvider] (1st → end of yesterday)
+/// divided by the number of completed days, so numerator and denominator
+/// cover the same span. Returns null on the 1st — there is no completed day
+/// to average, and the card renders `—` rather than a misleading ₱0.
+final avgDailySalesProvider = Provider<AsyncValue<double?>>((ref) {
+  final summaryAsync = ref.watch(monthCompletedDaysSummaryProvider);
   final today = ref.watch(businessDayProvider);
   final daysElapsed = monthToDate(today).daysElapsed;
-  return summaryAsync.whenData(
+  if (daysElapsed <= 0) return const AsyncValue.data(null);
+  return summaryAsync.whenData<double?>(
     (summary) => avgDailyFromGross(summary.grossAmount, daysElapsed),
   );
 });
