@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/sales_summary_section.dart';
@@ -210,6 +211,61 @@ void main() {
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+  });
+
+  group('Avg Daily info button', () {
+    Future<void> pump(WidgetTester tester, {required double? avgDaily}) async {
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          todaysSalesSummaryProvider
+              .overrideWith((ref) async => SalesSummary.empty()),
+          avgDailySalesProvider.overrideWithValue(AsyncValue.data(avgDaily)),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SalesSummarySection(isAdmin: true),
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows a dash when there is no completed day yet',
+        (tester) async {
+      await pump(tester, avgDaily: null);
+      expect(find.text('—'), findsOneWidget);
+    });
+
+    testWidgets('exactly one info button — on the Avg Daily card',
+        (tester) async {
+      await pump(tester, avgDaily: 1234);
+      expect(find.byIcon(LucideIcons.info), findsOneWidget);
+    });
+
+    testWidgets('tapping the info button explains the completed-days rule',
+        (tester) async {
+      await pump(tester, avgDaily: 1234);
+
+      await tester.tap(find.byIcon(LucideIcons.info));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Your average sales per day this month, counting only days that '
+          'have finished.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          "It adds up sales from the 1st up to yesterday, then divides by that "
+          "many days. Today isn't counted yet because it's still going.",
+        ),
+        findsOneWidget,
+      );
     });
   });
 }
