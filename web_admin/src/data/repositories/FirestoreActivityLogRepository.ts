@@ -1,13 +1,13 @@
-// Read-side implementation of ActivityLogRepository. The log() write is
-// stub-thrown until a later phase needs to emit logs from React (currently
-// only the Flutter app writes to user_logs).
+// Read-side implementation of ActivityLogRepository. Reads are one-shot:
+// /admin/logs issues a single getDocs when the admin submits filters, so
+// there is no snapshot listener here. log() is the write side, used by every
+// web mutation hook through application/activityLogger.
 
 import {
   addDoc,
   collection,
   getDocs,
   limit as fsLimit,
-  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -20,8 +20,7 @@ import type {
   ActivityLogQuery,
   ActivityLogRepository,
 } from '@/domain/repositories/ActivityLogRepository';
-import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
-import type { ActivityLog } from '@/domain/entities';
+import { ALL_ACTIVITY_TYPES, type ActivityLog } from '@/domain/entities';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { activityLogConverter } from '@/data/converters/activityLogConverter';
 
@@ -36,8 +35,12 @@ export class FirestoreActivityLogRepository implements ActivityLogRepository {
 
   private constraints(q: ActivityLogQuery): QueryConstraint[] {
     const out: QueryConstraint[] = [];
-    if (q.type) out.push(where('type', '==', q.type));
-    if (q.userId) out.push(where('userId', '==', q.userId));
+    const types = q.types ?? [];
+    // Every type selected is the same as none, and skipping the constraint
+    // keeps the query off the type+createdAt composite index.
+    if (types.length > 0 && types.length < ALL_ACTIVITY_TYPES.length) {
+      out.push(where('type', 'in', types));
+    }
     if (q.start) out.push(where('createdAt', '>=', Timestamp.fromDate(q.start)));
     if (q.end) out.push(where('createdAt', '<=', Timestamp.fromDate(q.end)));
     out.push(orderBy('createdAt', 'desc'));
@@ -48,12 +51,6 @@ export class FirestoreActivityLogRepository implements ActivityLogRepository {
   async list(q: ActivityLogQuery = {}): Promise<ActivityLog[]> {
     const snap = await getDocs(query(this.col(), ...this.constraints(q)));
     return snap.docs.map((d) => d.data());
-  }
-
-  watch(q: ActivityLogQuery, callback: (logs: ActivityLog[]) => void): Unsubscribe {
-    return onSnapshot(query(this.col(), ...this.constraints(q)), (snap) => {
-      callback(snap.docs.map((d) => d.data()));
-    });
   }
 
   async log(input: Omit<ActivityLog, 'id' | 'createdAt'>): Promise<void> {

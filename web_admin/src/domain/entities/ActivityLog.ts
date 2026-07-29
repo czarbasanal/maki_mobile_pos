@@ -7,7 +7,7 @@
 //   / stock_adjustment / receiving / user_management / user_created /
 //   user_updated / user_deactivated / role_changed / security /
 //   password_verified / password_failed / cost_viewed / settings /
-//   cost_code_changed / expense / supplier / other
+//   cost_code_changed / expense / supplier / day_closed / other
 
 export const ActivityType = {
   authentication: 'authentication',
@@ -32,6 +32,7 @@ export const ActivityType = {
   costCodeChanged: 'cost_code_changed',
   expense: 'expense',
   supplier: 'supplier',
+  dayClosed: 'day_closed',
   other: 'other',
 } as const;
 
@@ -60,8 +61,12 @@ export const activityTypeDisplayName: Record<ActivityType, string> = {
   cost_code_changed: 'Cost Code Changed',
   expense: 'Expense',
   supplier: 'Supplier',
+  day_closed: 'Day Closed',
   other: 'Other',
 };
+
+/** Canonical order for filter lists — mirrors the Dart enum's declaration order. */
+export const ALL_ACTIVITY_TYPES: ActivityType[] = Object.values(ActivityType);
 
 export function activityTypeFromString(value: string | null | undefined): ActivityType {
   if (!value) return ActivityType.other;

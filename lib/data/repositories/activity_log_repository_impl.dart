@@ -32,32 +32,19 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
 
   @override
   Future<List<ActivityLogEntity>> getActivityLogs({
-    ActivityType? type,
-    String? userId,
-    String? entityId,
-    String? entityType,
+    List<ActivityType> types = const [],
     DateTime? startDate,
     DateTime? endDate,
     int limit = 50,
   }) async {
     try {
-      Query<Map<String, dynamic>> query =
-          _logsRef.orderBy('createdAt', descending: true);
+      Query<Map<String, dynamic>> query = _logsRef;
 
-      if (type != null) {
-        query = query.where('type', isEqualTo: type.value);
-      }
-
-      if (userId != null) {
-        query = query.where('userId', isEqualTo: userId);
-      }
-
-      if (entityId != null) {
-        query = query.where('entityId', isEqualTo: entityId);
-      }
-
-      if (entityType != null) {
-        query = query.where('entityType', isEqualTo: entityType);
+      // Selecting every type is the same as selecting none, and skipping the
+      // constraint keeps the query off the composite index.
+      if (types.isNotEmpty && types.length < ActivityType.values.length) {
+        query = query.where('type',
+            whereIn: types.map((t) => t.value).toList(growable: false));
       }
 
       if (startDate != null) {
@@ -70,7 +57,7 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
             isLessThanOrEqualTo: Timestamp.fromDate(endDate));
       }
 
-      query = query.limit(limit);
+      query = query.orderBy('createdAt', descending: true).limit(limit);
 
       final snapshot = await query.get();
       return snapshot.docs
@@ -79,127 +66,6 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to get activity logs: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
-
-  @override
-  Stream<List<ActivityLogEntity>> watchActivityLogs({
-    ActivityType? type,
-    String? userId,
-    int limit = 50,
-  }) {
-    Query<Map<String, dynamic>> query =
-        _logsRef.orderBy('createdAt', descending: true);
-
-    if (type != null) {
-      query = query.where('type', isEqualTo: type.value);
-    }
-
-    if (userId != null) {
-      query = query.where('userId', isEqualTo: userId);
-    }
-
-    query = query.limit(limit);
-
-    return query.snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => ActivityLogModel.fromFirestore(doc).toEntity())
-        .toList());
-  }
-
-  @override
-  Future<List<ActivityLogEntity>> getEntityLogs({
-    required String entityId,
-    required String entityType,
-    int limit = 20,
-  }) async {
-    return getActivityLogs(
-      entityId: entityId,
-      entityType: entityType,
-      limit: limit,
-    );
-  }
-
-  @override
-  Future<List<ActivityLogEntity>> getSecurityLogs({
-    int limit = 50,
-  }) async {
-    try {
-      final securityTypes = [
-        ActivityType.security.value,
-        ActivityType.authentication.value,
-        ActivityType.passwordVerified.value,
-        ActivityType.passwordFailed.value,
-        ActivityType.costViewed.value,
-        ActivityType.userManagement.value,
-        ActivityType.roleChanged.value,
-      ];
-
-      final snapshot = await _logsRef
-          .where('type', whereIn: securityTypes)
-          .orderBy('createdAt', descending: true)
-          .limit(limit)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => ActivityLogModel.fromFirestore(doc).toEntity())
-          .toList();
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to get security logs: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
-
-  @override
-  Future<List<ActivityLogEntity>> getUserLogs({
-    required String userId,
-    DateTime? startDate,
-    DateTime? endDate,
-    int limit = 50,
-  }) async {
-    return getActivityLogs(
-      userId: userId,
-      startDate: startDate,
-      endDate: endDate,
-      limit: limit,
-    );
-  }
-
-  @override
-  Future<int> deleteOldLogs({
-    required DateTime olderThan,
-    int batchSize = 100,
-  }) async {
-    try {
-      int deletedCount = 0;
-
-      while (true) {
-        final snapshot = await _logsRef
-            .where('createdAt', isLessThan: Timestamp.fromDate(olderThan))
-            .limit(batchSize)
-            .get();
-
-        if (snapshot.docs.isEmpty) break;
-
-        final batch = _firestore.batch();
-        for (final doc in snapshot.docs) {
-          batch.delete(doc.reference);
-        }
-        await batch.commit();
-        deletedCount += snapshot.docs.length;
-
-        if (snapshot.docs.length < batchSize) break;
-      }
-
-      return deletedCount;
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to delete old logs: ${e.message}',
         code: e.code,
         originalError: e,
       );
