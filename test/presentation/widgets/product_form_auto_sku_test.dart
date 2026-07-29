@@ -200,8 +200,13 @@ void main() {
       // old name-based generator (a non-trivial slug, not blank/symbols-only).
       await tester.enterText(find.byKey(_kNameFieldKey), 'MILK CHOCOLATE');
       await tester.pumpAndSettle();
-      // Move focus away to fire the blur handler.
-      await tester.tap(find.byKey(_kSkuFieldKey));
+      // Move focus away to fire any blur handler. NOT tester.tap on the SKU
+      // field: it's disabled while auto-generate is on (skuFieldEnabled is
+      // false in create+auto mode), and Flutter wraps a disabled TextField in
+      // IgnorePointer with canRequestFocus false — a tap there cannot move
+      // focus, and tap-outside doesn't auto-unfocus for touch pointers (the
+      // flutter_test default). Unfocus explicitly instead.
+      FocusManager.instance.primaryFocus?.unfocus();
       await tester.pumpAndSettle();
 
       expect(skuField(tester).controller!.text, isEmpty);

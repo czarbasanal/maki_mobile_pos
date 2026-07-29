@@ -434,16 +434,8 @@ void main() {
       expect(skuField(tester).controller!.text, '00090005');
     });
 
-    // DEVIATION (task-3, mobile auto-SKU): this test used to pin the
-    // name-based fallback for a code-less category ("...falls back to
-    // name-based SKU", asserting `contains('-')`). Task 3's whole point is
-    // removing that fallback — auto-generate is now category-driven or
-    // empty, never the old SKU-XXXXXXXX / NAME-XXXXXX format — so the old
-    // assertion is not "stale copy", it pins forbidden behavior. Updated to
-    // match the new contract (also covered by the dedicated
-    // product_form_auto_sku_test.dart); left in place rather than deleted
-    // since it still exercises this file's own pumpCreateWithCategories
-    // harness with a *second*, code-less category alongside a coded one.
+    // Updated for task-3: a code-less category used to fall back to a
+    // name-based SKU; it now leaves the field empty (ratified deviation).
     testWidgets('selecting a code-less category leaves the SKU empty',
         (tester) async {
       await pumpCreateWithCategories(

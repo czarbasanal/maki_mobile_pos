@@ -72,10 +72,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   ProductEntity? _existingProduct;
 
   // Cached snapshot of active product categories, refreshed every build from
-  // [activeCategoriesProvider]. The free-standing SKU helpers below (name
-  // blur, switch toggle, category onChanged) need to resolve the selected
-  // category NAME (held in [_categoryController]) to its coded entity, but
-  // aren't themselves build-time widgets, hence the cache.
+  // [activeCategoriesProvider]. The free-standing SKU helpers below (switch
+  // toggle, category onChanged) need to resolve the selected category NAME
+  // (held in [_categoryController]) to its coded entity, but aren't
+  // themselves build-time widgets, hence the cache.
   List<CategoryEntity> _productCategories = const [];
 
   // Monotonic token guarding the async peekNextSequence race: a stale
