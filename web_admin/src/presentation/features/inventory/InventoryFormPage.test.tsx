@@ -208,6 +208,9 @@ describe('InventoryFormPage — create-mode auto-SKU', () => {
   it('no regenerate button while auto-generate is on', () => {
     harness();
     expect(screen.queryByRole('button', { name: /regenerate/i })).toBeNull();
+    // Positive control: prove the form actually rendered, so the absence
+    // above means "no button", not "nothing rendered at all".
+    expect(screen.getByLabelText('SKU')).toBeInTheDocument();
   });
 
   it('submitting with an empty SKU raises the required error, not a generated one', async () => {

@@ -83,6 +83,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // toggle, or a manual edit) must not clobber the SKU field.
   int _skuPeekToken = 0;
 
+  // Lets _applyCategoryForSku's success branch re-validate just the SKU
+  // field once it auto-fills, clearing a stale "SKU is required" error
+  // from an earlier blank Save attempt. Deliberately field-scoped (not
+  // _formKey.currentState!.validate()) so fields the admin hasn't reached
+  // yet — Name, Price, Quantity — aren't flagged red as a side effect.
+  final GlobalKey<FormFieldState<String>> _skuFieldKey =
+      GlobalKey<FormFieldState<String>>();
+
   // Image-upload state. Bytes are held in-memory so the user can cancel
   // the form without burning a Storage write; the actual upload happens
   // in _handleSubmit on save.
@@ -505,6 +513,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _skuController.text = SkuGenerator.composeAutoSku(code, sequence);
         _skuHint = null;
       });
+      // A blank Save attempt may have left "SKU is required" showing under
+      // this field. Re-validate just it (see _skuFieldKey) so that stale
+      // error clears now that the field is filled — no second Save needed.
+      _skuFieldKey.currentState?.validate();
     }).catchError((_) {
       if (!mounted || token != _skuPeekToken || !_autoGenerateSku) return;
       setState(() {
@@ -715,7 +727,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 },
                               ),
                             TextFormField(
-                              key: const Key('product-sku-field'),
+                              key: _skuFieldKey,
                               controller: _skuController,
                               style: AppTextStyles.fieldInput.copyWith(
                                 fontFamily: AppTextStyles.monoFontFamily,
@@ -731,7 +743,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                         ? 'Changing the SKU keeps past sales & '
                                             'receiving history intact.'
                                         : null,
-                                helperMaxLines: 2,
                               ),
                               enabled: skuFieldEnabled,
                               validator: (value) {

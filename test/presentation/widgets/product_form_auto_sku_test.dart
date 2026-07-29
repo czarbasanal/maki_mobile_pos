@@ -57,7 +57,13 @@ class _FakeImageStorage extends Fake implements ProductImageStorageService {
   Future<void> delete({required String productId}) async {}
 }
 
-const _kSkuFieldKey = Key('product-sku-field');
+// The SKU field's widget key is now a GlobalKey<FormFieldState<String>>
+// (product_form_screen.dart, so _applyCategoryForSku can scope-revalidate
+// just this field — see the stale-error test below) and GlobalKeys can't be
+// reconstructed from outside the State that owns them. Find the field by its
+// label instead, same pattern already used for Name in
+// product_form_screen_test.dart.
+final _skuFieldFinder = find.widgetWithText(TextFormField, 'SKU *');
 const _kNameFieldKey = Key('product-name-field');
 
 final _codedCategory = CategoryEntity(
@@ -181,7 +187,7 @@ void main() {
   }
 
   TextFormField skuField(WidgetTester tester) =>
-      tester.widget<TextFormField>(find.byKey(_kSkuFieldKey));
+      tester.widget<TextFormField>(_skuFieldFinder);
 
   group('ProductFormScreen — auto-SKU (create mode)', () {
     testWidgets('opens with an empty SKU and the pick-a-category hint',
@@ -276,6 +282,36 @@ void main() {
       await pumpCreateScreen(tester, categories: [_codedCategory]);
 
       expect(find.byIcon(LucideIcons.refreshCw), findsNothing);
+      // Positive control: prove the form (and the SKU field specifically)
+      // actually rendered, so the absence above means "no button", not
+      // "nothing rendered at all".
+      expect(_skuFieldFinder, findsOneWidget);
+    });
+
+    testWidgets(
+        'a stale "SKU is required" error clears once a coded category '
+        'fills the SKU — no second Save needed',
+        (tester) async {
+      when(() => categoryRepo.peekNextSequence('0007'))
+          .thenAnswer((_) async => 5);
+      await pumpCreateScreen(tester, categories: [_codedCategory]);
+
+      // Submit blank. The whole form is empty so several validators fire;
+      // this test only cares about the SKU one.
+      await tester.ensureVisible(
+          find.byKey(const Key('product-form-submit')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('product-form-submit')));
+      await tester.pump();
+
+      expect(find.text('SKU is required'), findsOneWidget);
+
+      // Pick the coded category — the SKU auto-fills with 00070005.
+      await selectCategory(tester, _codedCategory.name);
+
+      expect(skuField(tester).controller!.text, '00070005');
+      // Cleared without a second Save.
+      expect(find.text('SKU is required'), findsNothing);
     });
   });
 }
