@@ -260,12 +260,29 @@ class _StatCard extends StatelessWidget {
               Icon(icon, size: 18, color: iconColor ?? muted),
               if (onInfo != null) ...[
                 const Spacer(),
-                InkWell(
-                  onTap: onInfo,
-                  customBorder: const CircleBorder(),
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: Icon(LucideIcons.info, size: 14, color: muted),
+                // The glyph stays a quiet 14px — this card is a third of
+                // the screen and the design language is deliberately airy
+                // — but Material's minimum touch target is 48x48, so the
+                // OverflowBox expands the *hit area* (and splash) to 48px
+                // while reporting the original ~18px footprint upward.
+                // That keeps the Row's height (and the card's, inside the
+                // IntrinsicHeight comparison row) exactly as before.
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: OverflowBox(
+                    minWidth: 48,
+                    minHeight: 48,
+                    maxWidth: 48,
+                    maxHeight: 48,
+                    child: InkWell(
+                      onTap: onInfo,
+                      customBorder: const CircleBorder(),
+                      child: Center(
+                        child:
+                            Icon(LucideIcons.info, size: 14, color: muted),
+                      ),
+                    ),
                   ),
                 ),
               ],

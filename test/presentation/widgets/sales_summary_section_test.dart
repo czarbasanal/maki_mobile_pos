@@ -250,6 +250,13 @@ void main() {
       // Profit, not the whole row). A findsOneWidget on the icon alone
       // would still pass if the ⓘ were wired onto a different card; this
       // pins it to the right one.
+      //
+      // We scope on `Expanded` (rather than the card widget itself)
+      // because `_StatCard` is private to sales_summary_section.dart and
+      // can't be named from this test file. If a future refactor swaps
+      // the per-card wrapper to e.g. `Flexible`, this finder will start
+      // failing empty rather than silently passing vacuous again — update
+      // the matched type here to match.
       final avgDailyCard = find.ancestor(
         of: find.text('Avg Daily'),
         matching: find.byType(Expanded),
