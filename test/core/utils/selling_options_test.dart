@@ -81,5 +81,44 @@ void main() {
       final options = [opt('a', 'By 6', 6, 600), opt('b', 'By 3', 3, 330)];
       expect(sellingOptionsFromList(sellingOptionsToList(options)), options);
     });
+
+    test('skips entry with non-String id', () {
+      final parsed = sellingOptionsFromList([
+        {'id': 5, 'label': 'By 6', 'pieces': 6, 'price': 600},
+        {'id': 'b', 'label': 'By 3', 'pieces': 3, 'price': 330},
+      ]);
+      expect(parsed, [opt('b', 'By 3', 3, 330)]);
+    });
+
+    test('skips entry with non-String label', () {
+      final parsed = sellingOptionsFromList([
+        {'id': 'a', 'label': 6, 'pieces': 6, 'price': 600},
+        {'id': 'b', 'label': 'By 3', 'pieces': 3, 'price': 330},
+      ]);
+      expect(parsed, [opt('b', 'By 3', 3, 330)]);
+    });
+
+    test('defaults pieces to 1 when non-numeric', () {
+      final parsed = sellingOptionsFromList([
+        {'id': 'a', 'label': 'By 6', 'pieces': '6', 'price': 600},
+      ]);
+      expect(parsed, [opt('a', 'By 6', 1, 600)]);
+    });
+
+    test('defaults price to 0.0 when non-numeric', () {
+      final parsed = sellingOptionsFromList([
+        {'id': 'a', 'label': 'By 6', 'pieces': 6, 'price': '600'},
+      ]);
+      expect(parsed, [opt('a', 'By 6', 6, 0.0)]);
+    });
+
+    test('skips non-Map elements in the list', () {
+      final parsed = sellingOptionsFromList([
+        42,
+        {'id': 'a', 'label': 'By 6', 'pieces': 6, 'price': 600},
+        'invalid',
+      ]);
+      expect(parsed, [opt('a', 'By 6', 6, 600)]);
+    });
   });
 }

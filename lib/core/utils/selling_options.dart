@@ -46,14 +46,14 @@ List<SellingOptionEntity> sellingOptionsFromList(dynamic raw) {
   final result = <SellingOptionEntity>[];
   for (final item in raw) {
     if (item is! Map) continue;
-    final id = item['id'] as String? ?? '';
-    final label = item['label'] as String? ?? '';
+    final id = item['id'] is String ? item['id'] as String : '';
+    final label = item['label'] is String ? item['label'] as String : '';
     if (id.isEmpty || label.isEmpty) continue;
     result.add(SellingOptionEntity(
       id: id,
       label: label,
-      pieces: (item['pieces'] as num?)?.toInt() ?? 1,
-      price: (item['price'] as num?)?.toDouble() ?? 0.0,
+      pieces: item['pieces'] is num ? (item['pieces'] as num).toInt() : 1,
+      price: item['price'] is num ? (item['price'] as num).toDouble() : 0.0,
     ));
   }
   return result;
