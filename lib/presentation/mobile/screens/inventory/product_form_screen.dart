@@ -54,11 +54,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _categoryController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Focus node on the product name field — when auto-SKU is on, the SKU
-  // re-rolls each time this loses focus so the prefix tracks the typed name
-  // without flickering on every keystroke.
-  final _nameFocusNode = FocusNode();
-
   String? _selectedSupplierId;
   // Mapped scan codes for this product. Edited via the chip input below;
   // a fresh string typed into [_barcodeInputController] is committed via
@@ -71,6 +66,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // SKU auto-generation: default ON for new products. Hidden / inert on edit
   // since the existing SKU is locked once a product has sale/receiving refs.
   bool _autoGenerateSku = true;
+  // Helper text under the SKU field while creating with auto-generate on.
+  // Null once a coded category has filled the field.
+  String? _skuHint = 'Pick a category to generate the SKU.';
   ProductEntity? _existingProduct;
 
   // Cached snapshot of active product categories, refreshed every build from
@@ -138,11 +136,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     if (widget.productId != null) {
       _loadProduct();
-    } else {
-      // Seed an initial auto-generated SKU so the field isn't blank on first
-      // paint. Re-rolls when the name field blurs and on the explicit refresh.
-      _skuController.text = SkuGenerator.generateForName(null);
-      _nameFocusNode.addListener(_onNameFocusChange);
     }
   }
 
@@ -458,30 +451,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
-  void _onNameFocusChange() {
-    if (_nameFocusNode.hasFocus) return;
-    if (!_autoGenerateSku) return;
-    // A coded category is driving the field via peekNextSequence — a name
-    // blur must not clobber it with the name-based format.
-    if (_categoryDrivesSku()) return;
-    setState(() {
-      _skuController.text =
-          SkuGenerator.generateForName(_nameController.text);
-    });
-  }
-
-  /// Re-rolls the SKU using the current product name. No-op when
-  /// [_autoGenerateSku] is off — manual mode is the user's text verbatim —
-  /// or while a coded category is driving the field (see [_categoryDrivesSku]).
-  void _regenerateSku() {
-    if (!_autoGenerateSku) return;
-    if (_categoryDrivesSku()) return;
-    setState(() {
-      _skuController.text =
-          SkuGenerator.generateForName(_nameController.text);
-    });
-  }
-
   /// Looks up the active category entity matching [name] (case-sensitive,
   /// mirrors the dropdown's exact-name matching). Returns null for an empty
   /// name or one not present in the cached active list.
@@ -492,13 +461,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
     return null;
   }
-
-  /// True when the currently selected category (by name, in the
-  /// Classification dropdown) carries a Code128 category `code` — meaning
-  /// its peeked sequence is what's driving the SKU field, not the
-  /// name-based generator.
-  bool _categoryDrivesSku() =>
-      _categoryEntityForName(_categoryController.text.trim())?.code != null;
 
   /// Category code to hand `createProduct` for the atomic peek+claim, or
   /// null for a plain (non-claiming) create. Only fires when auto-generate
@@ -515,21 +477,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   /// Re-derives the SKU for [category] when auto-generate is on and we're
   /// creating (no-op on edit — auto-SKU is a create-time convenience only).
-  /// A category with a `code` asynchronously peeks the next sequence via
-  /// [CategoryRepository.peekNextSequence] and composes `code+sequence`; a
-  /// code-less (or cleared) category falls back to the existing name-based
-  /// generator. [_skuPeekToken] guards against a stale response clobbering
-  /// the field after a later switch/edit superseded it. Peek failures
-  /// (offline, unknown code) degrade silently to the name-based generator —
-  /// never block the form.
+  /// A category with a `code` peeks the next sequence and composes
+  /// `code+sequence`. Anything else — no category, no code, or a failed peek
+  /// — leaves the field EMPTY with an explanatory hint. It must never fall
+  /// back to the old name-based format. [_skuPeekToken] guards a stale
+  /// response from clobbering the field after a later switch superseded it.
   void _applyCategoryForSku(CategoryEntity? category) {
     if (widget.isEditing || !_autoGenerateSku) return;
     final token = ++_skuPeekToken;
     final code = category?.code;
     if (code == null) {
       setState(() {
-        _skuController.text =
-            SkuGenerator.generateForName(_nameController.text);
+        _skuController.text = '';
+        _skuHint = category == null
+            ? 'Pick a category to generate the SKU.'
+            : 'This category has no code — pick another, or turn off '
+                'auto-generate and type a SKU.';
       });
       return;
     }
@@ -540,12 +503,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (!mounted || token != _skuPeekToken || !_autoGenerateSku) return;
       setState(() {
         _skuController.text = SkuGenerator.composeAutoSku(code, sequence);
+        _skuHint = null;
       });
     }).catchError((_) {
       if (!mounted || token != _skuPeekToken || !_autoGenerateSku) return;
       setState(() {
-        _skuController.text =
-            SkuGenerator.generateForName(_nameController.text);
+        _skuController.text = '';
+        _skuHint = 'This category has no code — pick another, or turn off '
+            'auto-generate and type a SKU.';
       });
     });
   }
@@ -590,7 +555,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _barcodeInputController.dispose();
     _categoryController.dispose();
     _notesController.dispose();
-    _nameFocusNode.dispose();
     super.dispose();
   }
 
@@ -722,13 +686,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 title: const Text('Auto-generate SKU'),
                                 subtitle: Text(
                                   _autoGenerateSku
-                                      ? 'Built from category + random suffix'
+                                      ? 'Built from the category code'
                                       : 'Type the SKU manually',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                                 value: _autoGenerateSku,
                                 onChanged: (v) {
-                                  setState(() => _autoGenerateSku = v);
+                                  setState(() {
+                                    _autoGenerateSku = v;
+                                    // Manual mode has no hint to show; auto
+                                    // mode below re-derives it immediately.
+                                    _skuHint = null;
+                                  });
                                   // Cancel any in-flight peeks when toggling.
                                   _skuPeekToken++;
                                   if (v) {
@@ -750,18 +719,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               decoration: InputDecoration(
                                 labelText: 'SKU *',
                                 prefixIcon: const Icon(LucideIcons.qrCode),
-                                helperText:
-                                    (!isCreating && userRole == UserRole.admin)
+                                helperText: (isCreating && _autoGenerateSku)
+                                    ? _skuHint
+                                    : (!isCreating &&
+                                            userRole == UserRole.admin)
                                         ? 'Changing the SKU keeps past sales & '
                                             'receiving history intact.'
                                         : null,
-                                suffixIcon: (isCreating && _autoGenerateSku)
-                                    ? IconButton(
-                                        tooltip: 'Regenerate',
-                                        icon: const Icon(LucideIcons.refreshCw),
-                                        onPressed: _regenerateSku,
-                                      )
-                                    : null,
+                                helperMaxLines: 2,
                               ),
                               enabled: skuFieldEnabled,
                               validator: (value) {
@@ -775,9 +740,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             ),
                             const SizedBox(height: 14),
                             TextFormField(
+                              key: const Key('product-name-field'),
                               controller: _nameController,
                               style: AppTextStyles.fieldInput,
-                              focusNode: _nameFocusNode,
                               inputFormatters: [UpperCaseTextFormatter()],
                               decoration: const InputDecoration(
                                 labelText: 'Product Name *',
