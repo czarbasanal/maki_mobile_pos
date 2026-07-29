@@ -26,6 +26,10 @@
     - `It adds up sales from the 1st up to yesterday, then divides by that many days. Today isn't counted yet because it's still going.`
   - SKU hint, no category chosen: `Pick a category to generate the SKU.`
   - SKU hint, category has no code: `This category has no code — pick another, or turn off auto-generate and type a SKU.`
+  - SKU hint, sequence lookup failed: `Couldn't reach the server — try again, or turn off auto-generate and type a SKU.`
+    A failed peek is a transient network condition on a category that *does* have a code —
+    reusing the no-code wording would send the admin hunting for a settings problem that
+    does not exist. All three strings are shared byte-for-byte across both surfaces.
 - Mobile gates: `flutter analyze` clean, `flutter test` passing. Web gates from `web_admin/`: `npm run typecheck`, `npm run test`, `npm run build`.
 - No Firestore rules, index, or schema change. Deploy nothing.
 - End every commit message with this trailer on its own line after a blank line:
@@ -663,7 +667,10 @@ Replace `_applyCategoryForSku` (lines 525-551):
       if (!mounted || token != _skuPeekToken || !_autoGenerateSku) return;
       setState(() {
         _skuController.text = '';
-        _skuHint = 'This category has no code — pick another, or turn off '
+        // The category DOES have a code — the lookup failed. Saying "no code"
+        // here would send the admin hunting for a settings problem that
+        // doesn't exist.
+        _skuHint = "Couldn't reach the server — try again, or turn off "
             'auto-generate and type a SKU.';
       });
     });
@@ -853,8 +860,11 @@ Replace `applyCategoryForSku` (lines 216-235):
       .catch(() => {
         if (token !== skuPeekToken.current) return;
         setValue('sku', '', { shouldValidate: false });
+        // The category DOES have a code — the lookup failed. Saying "no code"
+        // here would send the admin hunting for a settings problem that
+        // doesn't exist.
         setSkuHint(
-          'This category has no code — pick another, or turn off auto-generate and type a SKU.',
+          "Couldn't reach the server — try again, or turn off auto-generate and type a SKU.",
         );
       });
   };
@@ -948,9 +958,10 @@ Run:
 ```bash
 grep -rn "Pick a category to generate the SKU." --include="*.dart" --include="*.tsx" lib web_admin/src
 grep -rn "This category has no code" --include="*.dart" --include="*.tsx" lib web_admin/src
+grep -rn "reach the server" --include="*.dart" --include="*.tsx" lib web_admin/src
 ```
 
-Expected: each string appears on both surfaces. Compare the two no-code strings character by character — mobile's is built from adjacent string literals across a line break, which is where a doubled or missing space creeps in.
+Expected: all three strings appear on both surfaces. Compare the multi-word ones character by character — mobile's are built from adjacent string literals across a line break, which is where a doubled or missing space creeps in — and confirm every dash is an em dash (U+2014), not a hyphen or en dash.
 
 - [ ] **Step 2: Confirm Receiving is untouched**
 

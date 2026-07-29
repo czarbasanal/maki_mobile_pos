@@ -115,7 +115,14 @@ shows a generated value in the old format.
 | Product name typed / blurred | Nothing generated. Name no longer drives the SKU at all. |
 | Category **with** a 4-digit code chosen | Field fills with `composeAutoSku(code, sequence)` — unchanged from today. |
 | Category **without** a code chosen | Field stays empty. Helper: *"This category has no code — pick another, or turn off auto-generate and type a SKU."* |
-| Category peek fails (network/error) | Field stays empty, same helper as the no-code case. |
+| Category peek fails (network/error) | Field stays empty. Helper: *"Couldn't reach the server — try again, or turn off auto-generate and type a SKU."* |
+
+**Why the failure case gets its own message** (decided 2026-07-29, after review): an
+earlier draft of this spec reused the no-code helper for a failed peek. That tells the
+admin their category is misconfigured when the category is fine and the network merely
+blipped — sending them to hunt for a settings problem that does not exist. A coded
+category whose sequence lookup failed is a transient condition, and the copy has to say
+so. Three strings total, all shared byte-for-byte across both surfaces.
 | Auto-generate toggled **off** | Manual entry, verbatim. Unchanged. |
 | Editing an existing product | Unchanged — auto-SKU has always been create-only. |
 
