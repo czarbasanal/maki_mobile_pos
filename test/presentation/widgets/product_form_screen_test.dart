@@ -54,7 +54,12 @@ class _FakeImageStorage extends Fake implements ProductImageStorageService {
   Future<void> delete({required String productId}) async {}
 }
 
-const _kSkuFieldKey = Key('product-sku-field');
+// The SKU field's widget key is now a GlobalKey<FormFieldState<String>>
+// (product_form_screen.dart, so _applyCategoryForSku can scope-revalidate
+// just this field), and GlobalKeys can't be reconstructed from outside the
+// State that owns them. Find the field by its label instead, same pattern
+// already used for Name below.
+final _skuFieldFinder = find.widgetWithText(TextFormField, 'SKU *');
 
 void main() {
   setUpAll(() {
@@ -156,7 +161,7 @@ void main() {
   }
 
   TextFormField skuField(WidgetTester tester) =>
-      tester.widget<TextFormField>(find.byKey(_kSkuFieldKey));
+      tester.widget<TextFormField>(_skuFieldFinder);
 
   group('ProductFormScreen — SKU field gating', () {
     testWidgets('admin CAN edit the SKU', (tester) async {
@@ -231,7 +236,7 @@ void main() {
         (tester) async {
       await pumpForm(tester, UserRole.admin);
 
-      await tester.enterText(find.byKey(_kSkuFieldKey), 'SKU-NEW');
+      await tester.enterText(_skuFieldFinder, 'SKU-NEW');
       await tester.pump();
       // The submit button sits below the fold in the test viewport — scroll
       // it into view before tapping (settle is safe: not saving yet).
@@ -255,7 +260,7 @@ void main() {
     testWidgets('cancelling the dialog aborts the save', (tester) async {
       await pumpForm(tester, UserRole.admin);
 
-      await tester.enterText(find.byKey(_kSkuFieldKey), 'SKU-NEW');
+      await tester.enterText(_skuFieldFinder, 'SKU-NEW');
       await tester.pump();
       // The submit button sits below the fold in the test viewport — scroll
       // it into view before tapping (settle is safe: not saving yet).
@@ -434,7 +439,9 @@ void main() {
       expect(skuField(tester).controller!.text, '00090005');
     });
 
-    testWidgets('selecting a code-less category falls back to name-based SKU',
+    // Updated for task-3: a code-less category used to fall back to a
+    // name-based SKU; it now leaves the field empty (ratified deviation).
+    testWidgets('selecting a code-less category leaves the SKU empty',
         (tester) async {
       await pumpCreateWithCategories(
         tester,
@@ -445,7 +452,7 @@ void main() {
 
       await selectCategory(tester, 'Misc');
 
-      expect(skuField(tester).controller!.text, contains('-'));
+      expect(skuField(tester).controller!.text, isEmpty);
     });
 
     testWidgets(
@@ -466,7 +473,7 @@ void main() {
       // value of the user's own choosing.
       await tester.tap(find.byType(SwitchListTile));
       await tester.pump();
-      await tester.enterText(find.byKey(_kSkuFieldKey), 'MANUAL-1');
+      await tester.enterText(_skuFieldFinder, 'MANUAL-1');
       await tester.pump();
 
       // Unrelated rebuild: editing price triggers a setState via the
@@ -505,7 +512,7 @@ void main() {
       await tester.pump();
 
       // Now manually type a SKU while the peek is still in flight.
-      await tester.enterText(find.byKey(_kSkuFieldKey), 'MANUAL-1');
+      await tester.enterText(_skuFieldFinder, 'MANUAL-1');
       await tester.pump();
       expect(skuField(tester).controller!.text, 'MANUAL-1');
 
@@ -529,10 +536,10 @@ void main() {
       'BRAKE PAD',
     );
 
-    await tester.enterText(find.byKey(_kSkuFieldKey), 'abc123x');
+    await tester.enterText(_skuFieldFinder, 'abc123x');
     expect(
       tester
-          .widget<TextFormField>(find.byKey(_kSkuFieldKey))
+          .widget<TextFormField>(_skuFieldFinder)
           .controller!
           .text,
       'ABC123X',

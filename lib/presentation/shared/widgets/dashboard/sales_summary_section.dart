@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Today's Sales section for the dashboard.
 ///
@@ -44,6 +45,7 @@ class SalesSummarySection extends ConsumerWidget {
                         value: avgDaily != null
                             ? _money(avgDaily, compact: true)
                             : '—',
+                        onInfo: () => _showAvgDailyInfo(context),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -223,12 +225,18 @@ class _StatCard extends StatelessWidget {
   final Color? iconColor;
   final String? subtitle;
 
+  /// When supplied, a small ⓘ sits opposite the leading icon; tapping it is
+  /// how the metric explains itself. Only cards whose meaning isn't obvious
+  /// from the label pass this.
+  final VoidCallback? onInfo;
+
   const _StatCard({
     required this.icon,
     required this.label,
     required this.value,
     this.iconColor,
     this.subtitle,
+    this.onInfo,
   });
 
   @override
@@ -244,37 +252,73 @@ class _StatCard extends StatelessWidget {
         boxShadow: AppShadows.card(dark: isDark),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      // A Stack, not a bare Column: the info hit region below is a
+      // `Positioned` child, and Positioned children are excluded from a
+      // Stack's own size computation — so it can genuinely report a
+      // larger tappable box (unlike the previous OverflowBox attempt,
+      // whose own `hitTest` was still gated on its small parent size)
+      // without the card growing even a pixel. Only the Column below
+      // determines this Stack's — and therefore the card's — height.
+      child: Stack(
         children: [
-          Icon(icon, size: 18, color: iconColor ?? muted),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: muted,
-              fontSize: 11,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 18, color: iconColor ?? muted),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: muted,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 2),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+          if (onInfo != null)
+            // Real 48x48 tap target (Material's minimum) anchored on the
+            // same top-right corner the old 18x18 box occupied. None of
+            // the card's content is interactive, so the region overlapping
+            // the label below steals no other tap. The glyph itself stays
+            // pinned to the top-right (matching where it used to sit,
+            // level with the leading icon) rather than centred in the
+            // full 48px box, so it doesn't visibly drift downward.
+            Positioned(
+              top: 0,
+              right: 0,
+              width: 48,
+              height: 48,
+              child: InkWell(
+                onTap: onInfo,
+                customBorder: const CircleBorder(),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2, right: 2),
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Icon(LucideIcons.info, size: 14, color: muted),
+                  ),
+                ),
               ),
             ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              subtitle!,
-              style: theme.textTheme.labelSmall?.copyWith(color: muted),
-            ),
-          ],
         ],
       ),
     );
@@ -296,4 +340,41 @@ String _money(double value, {bool compact = false}) {
     return '$symbol${value.toStringAsFixed(0)}';
   }
   return '$symbol${NumberFormat('#,##0.00').format(value)}';
+}
+
+/// Explains what the Avg Daily figure actually averages. Tap-to-open rather
+/// than a long-press tooltip — a tooltip is undiscoverable on a phone.
+void _showAvgDailyInfo(BuildContext context) {
+  final theme = Theme.of(context);
+  showDialog<void>(
+    context: context,
+    barrierColor:
+        AppDialog.scrimColor(theme.brightness == Brightness.dark),
+    builder: (context) => AppDialog(
+      title: 'Avg Daily',
+      leadingIcon: LucideIcons.barChart3,
+      onClose: () => Navigator.of(context).pop(),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Your average sales per day this month, counting only days that '
+            'have finished.',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "It adds up sales from the 1st up to yesterday, then divides by "
+            "that many days. Today isn't counted yet because it's still "
+            "going.",
+            style: theme.textTheme.bodySmall?.copyWith(
+              height: 1.45,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

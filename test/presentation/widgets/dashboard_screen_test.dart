@@ -48,7 +48,7 @@ void main() {
           todaysSalesProvider
               .overrideWith((ref) => Stream.value(const <SaleEntity>[])),
           todaysSalesSummaryProvider.overrideWith((ref) async => emptySummary),
-          monthToDateSummaryProvider.overrideWith((ref) async => emptySummary),
+          monthCompletedDaysSummaryProvider.overrideWith((ref) async => emptySummary),
           unsettledBusinessDayProvider.overrideWith((ref) async => null),
           ...extra,
         ],

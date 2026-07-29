@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeftIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useProduct } from '@/presentation/hooks/useProduct';
 import { useCreateProduct, useUpdateProduct } from '@/presentation/hooks/useProductMutations';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
@@ -12,7 +12,7 @@ import { useCostCode } from '@/presentation/hooks/useCostCode';
 import { useProductRepo, useCategoryRepo } from '@/infrastructure/di/container';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
-import { generateSku, composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
+import { composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
 import { encodeCostCode, type Category, type Supplier } from '@/domain/entities';
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
@@ -76,6 +76,9 @@ export function InventoryFormPage() {
   const { data: costCodeMapping } = useCostCode();
 
   const [autoSku, setAutoSku] = useState(true);
+  const [skuHint, setSkuHint] = useState<string | null>(
+    'Pick a category to generate the SKU.',
+  );
   const [loadNotice, setLoadNotice] = useState<string | null>(null);
   const [barcodes, setBarcodes] = useState<string[]>([]);
   const [barcodeInput, setBarcodeInput] = useState('');
@@ -186,39 +189,25 @@ export function InventoryFormPage() {
   const categoryEntityForName = (name: string): Category | undefined =>
     (productCats ?? []).find((c) => c.name === name);
 
-  /** True when the currently selected category carries a Code128 `code` —
-   *  meaning its peeked sequence is what's driving the SKU field, not the
-   *  name-based generator. */
-  const categoryDrivesSku = () =>
-    categoryEntityForName(getValues('category') ?? '')?.code !== undefined;
-
-  /** Re-rolls the SKU using the current product name. No-op while a coded
-   *  category is driving the field (see categoryDrivesSku) — regenerating
-   *  from the name would silently drop the category's claim pattern. */
-  const regenerateSku = () => {
-    if (categoryDrivesSku()) return;
-    setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
-  };
-
   /** Re-derives the SKU for `category` when auto-generate is on (`autoOn`
-   *  passed explicitly rather than read from state, since this can be
-   *  invoked in the same handler that just flipped the checkbox — React
-   *  state updates aren't synchronous). No-op when editing (auto-SKU is a
-   *  create-time convenience only). A coded category asynchronously peeks
-   *  the next sequence and composes `code+sequence`; a code-less (or
-   *  cleared) category falls back to the name-based generator.
-   *  `skuPeekToken` guards a stale response from clobbering the field after
-   *  a later switch/edit superseded it; the resolved category's code is also
-   *  re-checked against what's currently selected, in case the token was
-   *  bumped by something that didn't reset it (belt-and-suspenders with the
-   *  token check). Peek failures (offline, unknown code) degrade silently to
-   *  the name-based generator — never block the form. */
+   *  passed explicitly rather than read from state, since this can be invoked
+   *  in the same handler that just flipped the checkbox). No-op when editing.
+   *  A coded category peeks the next sequence and composes `code+sequence`;
+   *  anything else — no category, no code, or a failed peek — leaves the
+   *  field EMPTY with an explanatory hint. It must never fall back to the old
+   *  name-based format. `skuPeekToken` guards a stale response from
+   *  clobbering the field after a later switch superseded it. */
   const applyCategoryForSku = (category: Category | undefined, autoOn: boolean) => {
     if (isEditing || !autoOn) return;
     const token = ++skuPeekToken.current;
     const code = category?.code;
     if (code === undefined) {
-      setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
+      setValue('sku', '', { shouldValidate: false });
+      setSkuHint(
+        category === undefined
+          ? 'Pick a category to generate the SKU.'
+          : 'This category has no code — pick another, or turn off auto-generate and type a SKU.',
+      );
       return;
     }
     categoryRepo
@@ -227,10 +216,17 @@ export function InventoryFormPage() {
         if (token !== skuPeekToken.current) return;
         if (categoryEntityForName(getValues('category') ?? '')?.code !== code) return;
         setValue('sku', composeAutoSku(code, sequence), { shouldValidate: true });
+        setSkuHint(null);
       })
       .catch(() => {
         if (token !== skuPeekToken.current) return;
-        setValue('sku', generateSku(getValues('name')), { shouldValidate: true });
+        setValue('sku', '', { shouldValidate: false });
+        // The category DOES have a code — the lookup failed. Saying "no code"
+        // here would send the admin hunting for a settings problem that
+        // doesn't exist.
+        setSkuHint(
+          "Couldn't reach the server — try again, or turn off auto-generate and type a SKU.",
+        );
       });
   };
 
@@ -302,9 +298,7 @@ export function InventoryFormPage() {
     if (start !== null && end !== null) el.setSelectionRange(start, end);
   };
 
-  const nameField = register('name', {
-    onBlur: () => { if (skuLocked && !categoryDrivesSku()) regenerateSku(); },
-  });
+  const nameField = register('name');
   const skuField = register('sku', {
     onChange: () => {
       if (update.error) update.reset();
@@ -414,14 +408,7 @@ export function InventoryFormPage() {
     await doSave(values);
   };
 
-  // In add mode with auto-SKU on, the SKU is filled by the Name field's blur.
-  // A keyboard-Enter submit fires before that blur, so populate it here too —
-  // before handleSubmit runs the resolver — so a valid name never yields a
-  // spurious "SKU is required".
   const onFormSubmit = (e: FormEvent<HTMLFormElement>) => {
-    if (skuLocked && !getValues('sku').trim()) {
-      setValue('sku', generateSku(getValues('name')));
-    }
     void handleSubmit(onSubmit)(e);
   };
 
@@ -477,31 +464,23 @@ export function InventoryFormPage() {
                   }
                 }}
               />
-              Auto-generate SKU from name
+              Auto-generate SKU from category
             </label>
           ) : null}
 
           <Field label="SKU" error={errors.sku?.message}
             input={
-              <div className="flex items-center gap-tk-sm">
-                <input
-                  type="text"
-                  readOnly={skuLocked}
-                  className={cn(inputCls(!!errors.sku), skuLocked && 'bg-light-subtle text-light-text-secondary')}
-                  {...skuField}
-                  onChange={(e) => { upperizeInput(e); void skuField.onChange(e); }}
-                />
-                {skuLocked ? (
-                  <button
-                    type="button"
-                    onClick={regenerateSku}
-                    className="inline-flex shrink-0 items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-[10px] text-bodySmall text-light-text hover:bg-light-subtle"
-                  >
-                    <ArrowPathIcon className="h-3.5 w-3.5" /> Regenerate
-                  </button>
-                ) : null}
-              </div>
+              <input
+                type="text"
+                readOnly={skuLocked}
+                className={cn(inputCls(!!errors.sku), skuLocked && 'bg-light-subtle text-light-text-secondary')}
+                {...skuField}
+                onChange={(e) => { upperizeInput(e); void skuField.onChange(e); }}
+              />
             } />
+          {skuLocked && skuHint ? (
+            <p className="text-[12px] text-light-text-hint">{skuHint}</p>
+          ) : null}
           {isEditing ? (
             <p className="text-[12px] text-light-text-hint">
               Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.
