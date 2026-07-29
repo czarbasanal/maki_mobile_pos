@@ -252,69 +252,73 @@ class _StatCard extends StatelessWidget {
         boxShadow: AppShadows.card(dark: isDark),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      // A Stack, not a bare Column: the info hit region below is a
+      // `Positioned` child, and Positioned children are excluded from a
+      // Stack's own size computation — so it can genuinely report a
+      // larger tappable box (unlike the previous OverflowBox attempt,
+      // whose own `hitTest` was still gated on its small parent size)
+      // without the card growing even a pixel. Only the Column below
+      // determines this Stack's — and therefore the card's — height.
+      child: Stack(
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon, size: 18, color: iconColor ?? muted),
-              if (onInfo != null) ...[
-                const Spacer(),
-                // The glyph stays a quiet 14px — this card is a third of
-                // the screen and the design language is deliberately airy
-                // — but Material's minimum touch target is 48x48, so the
-                // OverflowBox expands the *hit area* (and splash) to 48px
-                // while reporting the original ~18px footprint upward.
-                // That keeps the Row's height (and the card's, inside the
-                // IntrinsicHeight comparison row) exactly as before.
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: OverflowBox(
-                    minWidth: 48,
-                    minHeight: 48,
-                    maxWidth: 48,
-                    maxHeight: 48,
-                    child: InkWell(
-                      onTap: onInfo,
-                      customBorder: const CircleBorder(),
-                      child: Center(
-                        child:
-                            Icon(LucideIcons.info, size: 14, color: muted),
-                      ),
-                    ),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: muted,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: muted,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 2),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+          if (onInfo != null)
+            // Real 48x48 tap target (Material's minimum) anchored on the
+            // same top-right corner the old 18x18 box occupied. None of
+            // the card's content is interactive, so the region overlapping
+            // the label below steals no other tap. The glyph itself stays
+            // pinned to the top-right (matching where it used to sit,
+            // level with the leading icon) rather than centred in the
+            // full 48px box, so it doesn't visibly drift downward.
+            Positioned(
+              top: 0,
+              right: 0,
+              width: 48,
+              height: 48,
+              child: InkWell(
+                onTap: onInfo,
+                customBorder: const CircleBorder(),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2, right: 2),
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Icon(LucideIcons.info, size: 14, color: muted),
+                  ),
+                ),
               ),
             ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              subtitle!,
-              style: theme.textTheme.labelSmall?.copyWith(color: muted),
-            ),
-          ],
         ],
       ),
     );
