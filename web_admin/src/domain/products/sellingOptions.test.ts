@@ -93,4 +93,51 @@ describe('parseSellingOptions', () => {
     const options = [opt('a', 'By 6', 6, 600), opt('b', 'By 3', 3, 330)];
     expect(parseSellingOptions(serializeSellingOptions(options))).toEqual(options);
   });
+
+  describe('type tolerance for pieces and price', () => {
+    it('falls back to pieces: 1 for string pieces', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: 'abc', price: 600 }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 1, 600)]);
+    });
+
+    it('falls back to pieces: 1 for boolean pieces', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: false, price: 600 }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 1, 600)]);
+    });
+
+    it('truncates fractional pieces (6.7 → 6)', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: 6.7, price: 600 }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 6, 600)]);
+    });
+
+    it('falls back to price: 0 for string price', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: 6, price: 'abc' }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 6, 0)]);
+    });
+
+    it('falls back to price: 0 for boolean price', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: 6, price: true }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 6, 0)]);
+    });
+
+    it('falls back to pieces: 1 for array pieces', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: [], price: 600 }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 1, 600)]);
+    });
+
+    it('falls back to pieces: 1 for object pieces', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: {}, price: 600 }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 1, 600)]);
+    });
+
+    it('falls back to price: 0 for array price', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: 6, price: [] }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 6, 0)]);
+    });
+
+    it('falls back to price: 0 for object price', () => {
+      const parsed = parseSellingOptions([{ id: 'a', label: 'By 6', pieces: 6, price: {} }]);
+      expect(parsed).toEqual([opt('a', 'By 6', 6, 0)]);
+    });
+  });
 });

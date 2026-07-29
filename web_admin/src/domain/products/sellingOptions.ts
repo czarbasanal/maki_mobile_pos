@@ -44,8 +44,8 @@ export function parseSellingOptions(raw: unknown): SellingOption[] {
     result.push({
       id,
       label,
-      pieces: Number(rec.pieces ?? 1),
-      price: Number(rec.price ?? 0),
+      pieces: typeof rec.pieces === 'number' && Number.isFinite(rec.pieces) ? Math.trunc(rec.pieces) : 1,
+      price: typeof rec.price === 'number' && Number.isFinite(rec.price) ? rec.price : 0,
     });
   }
   return result;
