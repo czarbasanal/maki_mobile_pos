@@ -11,6 +11,7 @@ export 'product_entity.dart';
 export 'supplier_entity.dart';
 export 'sale_entity.dart';
 export 'sale_item_entity.dart';
+export 'selling_option_entity.dart';
 export 'labor_line_entity.dart';
 export 'fee_line_entity.dart';
 export 'job_order_entity.dart';
