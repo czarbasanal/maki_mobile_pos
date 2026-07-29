@@ -238,7 +238,9 @@ void main() {
       );
     });
 
-    testWidgets('a failed peek leaves it empty rather than falling back',
+    testWidgets(
+        'a failed peek leaves it empty with a network hint, not the '
+        'no-code message',
         (tester) async {
       // thenAnswer((_) async => throw …), not thenThrow: the mocked method
       // returns a Future, and thenThrow makes mocktail throw synchronously at
@@ -253,6 +255,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(skuField(tester).controller!.text, isEmpty);
+      // Not the no-code hint: _codedCategory genuinely has a code ('0007'—
+      // the peek is what failed), so telling the admin "this category has
+      // no code" would be false and would send them hunting for a
+      // miscoded category that doesn't exist.
+      expect(
+        find.text("Couldn't reach the server — try again, or turn off "
+            'auto-generate and type a SKU.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('This category has no code — pick another, or turn off '
+            'auto-generate and type a SKU.'),
+        findsNothing,
+      );
     });
 
     testWidgets('no regenerate button while auto-generate is on',

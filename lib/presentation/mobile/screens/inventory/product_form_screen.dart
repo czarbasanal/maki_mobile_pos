@@ -509,7 +509,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (!mounted || token != _skuPeekToken || !_autoGenerateSku) return;
       setState(() {
         _skuController.text = '';
-        _skuHint = 'This category has no code — pick another, or turn off '
+        // Deliberately a different string from the no-code branch above:
+        // this category DOES have a code — the peek itself failed (offline,
+        // server hiccup). Telling the admin "this category has no code"
+        // here would be false and send them hunting for a miscoded category
+        // that doesn't exist.
+        _skuHint = "Couldn't reach the server — try again, or turn off "
             'auto-generate and type a SKU.';
       });
     });
