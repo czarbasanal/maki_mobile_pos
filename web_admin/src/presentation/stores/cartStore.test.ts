@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createCartStore, useCartStore } from './cartStore';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { JobOrder, Product } from '@/domain/entities';
+import type { SellingOption } from '@/domain/entities/SellingOption';
 
 const product = (over: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'A', price: 100, cost: 60, unit: 'pcs', quantity: 10, ...over } as Product);
@@ -139,5 +140,83 @@ describe('cartStore', () => {
     a.getState().addLine(product());
     expect(a.getState().lines).toHaveLength(1);
     expect(b.getState().lines).toHaveLength(0);
+  });
+});
+
+describe('cartStore selling options', () => {
+  const by6: SellingOption = { id: 'o1', label: 'By 6', pieces: 6, price: 600 };
+  const by3: SellingOption = { id: 'o2', label: 'By 3', pieces: 3, price: 330 };
+
+  const optionProduct = () =>
+    ({
+      id: 'p1',
+      sku: 'ABC-1',
+      name: 'Pulley Ball',
+      cost: 60,
+      price: 120,
+      unit: 'pcs',
+      quantity: 12,
+      sellingOptions: [by6, by3],
+    }) as Product;
+
+  it('merges the same option and keeps quantity in pieces', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    const { lines } = store.getState();
+    expect(lines).toHaveLength(1);
+    expect(lines[0].quantity).toBe(6);
+    expect(lines[0].unitPrice).toBe(110);
+  });
+
+  it('keeps two different options of one product as separate lines', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by6);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    expect(store.getState().lines.map((l) => l.id)).toEqual(['p1::o1', 'p1::o2']);
+  });
+
+  it('keeps a plain line separate from an option line', () => {
+    const store = createCartStore();
+    store.getState().addLine(optionProduct());
+    store.getState().addLineWithOption(optionProduct(), by3);
+    expect(store.getState().lines).toHaveLength(2);
+  });
+
+  it('setQty targets one option line by its line id', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by6);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().setQty('p1::o2', 2);
+    const byLine = Object.fromEntries(store.getState().lines.map((l) => [l.id, l.quantity]));
+    // by6 line untouched (still its initial 1 set = 6 pieces); by3 line now 2
+    // sets = 6 pieces. If setQty mistakenly stored sets as pieces, this would
+    // be 2 instead of 6 and would be indistinguishable from the by6 line by
+    // coincidence alone if we didn't also assert the untouched line.
+    expect(byLine['p1::o2']).toBe(6);
+    expect(byLine['p1::o1']).toBe(6);
+  });
+
+  it('setQty on an option line is in sets and stores pieces', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().setQty('p1::o2', 3);
+    // 3 sets of 3 pieces = 9 pieces. A wrong implementation that treats the
+    // typed number as pieces directly would leave this at 3.
+    expect(store.getState().lines[0].quantity).toBe(9);
+  });
+
+  it('removeLine targets one option line', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by6);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().removeLine('p1::o1');
+    expect(store.getState().lines.map((l) => l.id)).toEqual(['p1::o2']);
+  });
+
+  it('a plain line still uses the product id as its line id', () => {
+    const store = createCartStore();
+    store.getState().addLine(optionProduct());
+    expect(store.getState().lines[0].id).toBe('p1');
   });
 });

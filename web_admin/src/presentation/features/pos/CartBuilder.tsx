@@ -3,7 +3,7 @@ import { TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { lowStockLines } from '@/domain/sales/cart';
-import { saleItemNet } from '@/domain/entities/SaleItem';
+import { saleItemNet, saleItemOptionSets } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { formatMoney } from '@/core/utils/money';
 import { LaborSection } from './LaborSection';
@@ -87,24 +87,25 @@ export function CartBuilder({ store }: { store: CartStore }) {
           ) : (
             <ul className="divide-y divide-light-hairline">
               {lines.map((l) => (
-                <li key={l.productId} className="space-y-tk-xs px-tk-md py-tk-sm">
+                <li key={l.id} className="space-y-tk-xs px-tk-md py-tk-sm">
                   <div className="flex items-center justify-between gap-tk-sm">
                     <span className="text-bodySmall text-light-text">{l.name}</span>
-                    <button type="button" onClick={() => removeLine(l.productId)} className="text-light-text-hint hover:text-error">
+                    <button type="button" onClick={() => removeLine(l.id)} className="text-light-text-hint hover:text-error">
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
                     <label className="flex items-center gap-tk-xs">
                       Qty
-                      <input type="number" min={1} value={l.quantity}
-                        onChange={(e) => setQty(l.productId, Number(e.target.value))}
+                      {/* An option line's box shows SETS (setQty takes sets); quantity itself is always pieces. */}
+                      <input type="number" min={1} value={saleItemOptionSets(l) ?? l.quantity}
+                        onChange={(e) => setQty(l.id, Number(e.target.value))}
                         className="w-16 rounded-md border border-light-border px-tk-sm py-[4px]" />
                     </label>
                     <label className="flex items-center gap-tk-xs">
                       {isPct ? '%' : '₱'} off
                       <input type="number" min={0} step="0.01" value={l.discountValue}
-                        onChange={(e) => setLineDiscount(l.productId, Number(e.target.value))}
+                        onChange={(e) => setLineDiscount(l.id, Number(e.target.value))}
                         className="w-20 rounded-md border border-light-border px-tk-sm py-[4px]" />
                     </label>
                     <span className="ml-auto font-medium text-light-text">{formatMoney(saleItemNet(l, isPct))}</span>

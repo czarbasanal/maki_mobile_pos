@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cartFeesTotal, cartGrandTotal, lowStockLines } from './cart';
+import { cartFeesTotal, cartGrandTotal, cartLineId, lowStockLines } from './cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { Product } from '@/domain/entities';
 import type { CartLine } from './cart';
@@ -70,5 +70,36 @@ describe('lowStockLines', () => {
     const products = [{ id: 'p1', quantity: 1 }, { id: 'p2', quantity: 5 }] as Product[];
     const flagged = lowStockLines([line({ quantity: 3 }), line({ productId: 'p2', quantity: 2 })], products);
     expect([...flagged]).toEqual(['p1']);
+  });
+
+  // Two option lines of the same product draw on the same on-hand pieces, so
+  // stock must be checked against their SUMMED quantity, not each line alone.
+  // Neither line here exceeds 8 individually (6 and 3) — only the sum (9) does.
+  it('sums quantity across option lines of the same product', () => {
+    const lines = [
+      line({ id: 'p1::o1', productId: 'p1', quantity: 6 }),
+      line({ id: 'p1::o2', productId: 'p1', quantity: 3 }),
+    ];
+    const products = [{ id: 'p1', quantity: 8 }] as Product[];
+    expect(lowStockLines(lines, products)).toEqual(new Set(['p1']));
+  });
+
+  it('does not flag when the summed quantity fits', () => {
+    const lines = [
+      line({ id: 'p1::o1', productId: 'p1', quantity: 6 }),
+      line({ id: 'p1::o2', productId: 'p1', quantity: 3 }),
+    ];
+    const products = [{ id: 'p1', quantity: 9 }] as Product[];
+    expect(lowStockLines(lines, products)).toEqual(new Set());
+  });
+});
+
+describe('cartLineId', () => {
+  it('is the product id when there is no option', () => {
+    expect(cartLineId('p1', null)).toBe('p1');
+  });
+
+  it('combines product and option ids when there is one', () => {
+    expect(cartLineId('p1', 'o2')).toBe('p1::o2');
   });
 });

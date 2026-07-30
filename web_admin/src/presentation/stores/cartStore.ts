@@ -2,7 +2,10 @@ import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import type { JobOrder, Product } from '@/domain/entities';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { FeeLine } from '@/domain/entities/FeeLine';
-import type { CartLine } from '@/domain/sales/cart';
+import type { SellingOption } from '@/domain/entities/SellingOption';
+import { sellingOptionPricePerPiece } from '@/domain/entities/SellingOption';
+import { saleItemQuantityStep } from '@/domain/entities/SaleItem';
+import { cartLineId, type CartLine } from '@/domain/sales/cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
 
 interface CartState {
@@ -22,9 +25,10 @@ interface CartState {
   // null before writing.
   notes: string | null;
   addLine: (product: Product) => void;
-  setQty: (productId: string, quantity: number) => void;
-  setLineDiscount: (productId: string, discountValue: number) => void;
-  removeLine: (productId: string) => void;
+  addLineWithOption: (product: Product, option: SellingOption) => void;
+  setQty: (lineId: string, quantity: number) => void;
+  setLineDiscount: (lineId: string, discountValue: number) => void;
+  removeLine: (lineId: string) => void;
   setDiscountType: (discountType: DiscountType) => void;
   addLaborLine: () => void;
   setLaborLine: (id: string, patch: Partial<Pick<LaborLine, 'description' | 'fee'>>) => void;
@@ -48,10 +52,12 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     notes: null,
     addLine: (product) =>
       set((s) => {
-        if (s.lines.some((l) => l.productId === product.id)) {
+        // Match on id, not productId, so this never merges into an option
+        // line (a plain sale of a product that also has selling options).
+        if (s.lines.some((l) => l.id === product.id)) {
           return {
             lines: s.lines.map((l) =>
-              l.productId === product.id ? { ...l, quantity: l.quantity + 1 } : l,
+              l.id === product.id ? { ...l, quantity: l.quantity + 1 } : l,
             ),
           };
         }
@@ -72,23 +78,56 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         };
         return { lines: [...s.lines, line] };
       }),
-    setQty: (productId, quantity) =>
+    addLineWithOption: (product, option) =>
+      set((s) => {
+        const id = cartLineId(product.id, option.id);
+        if (s.lines.some((l) => l.id === id)) {
+          return {
+            lines: s.lines.map((l) =>
+              l.id === id ? { ...l, quantity: l.quantity + option.pieces } : l,
+            ),
+          };
+        }
+        const line: CartLine = {
+          id,
+          productId: product.id,
+          sku: product.sku,
+          name: product.name,
+          // Per-piece, so every existing report that multiplies unitPrice by
+          // quantity keeps working. optionPrice below is what the UI shows.
+          unitPrice: sellingOptionPricePerPiece(option),
+          unitCost: product.cost,
+          quantity: option.pieces,
+          discountValue: 0,
+          unit: product.unit,
+          optionId: option.id,
+          optionLabel: option.label,
+          optionPieces: option.pieces,
+          optionPrice: option.price,
+        };
+        return { lines: [...s.lines, line] };
+      }),
+    setQty: (lineId, quantity) =>
       set((s) => ({
-        lines: s.lines.map((l) =>
-          l.productId === productId ? { ...l, quantity: Math.max(1, Math.floor(quantity) || 1) } : l,
-        ),
+        lines: s.lines.map((l) => {
+          if (l.id !== lineId) return l;
+          // On an option line the typed number is SETS; stored quantity is pieces.
+          const step = saleItemQuantityStep(l);
+          const n = Math.max(1, Math.floor(quantity) || 1);
+          return { ...l, quantity: n * step };
+        }),
       })),
-    setLineDiscount: (productId, discountValue) =>
+    setLineDiscount: (lineId, discountValue) =>
       set((s) => {
         // Percentage discounts cap at 100 so a line can't go negative.
         const max = s.discountType === DiscountType.percentage ? 100 : Infinity;
         const value = Math.min(max, Math.max(0, discountValue));
         return {
-          lines: s.lines.map((l) => (l.productId === productId ? { ...l, discountValue: value } : l)),
+          lines: s.lines.map((l) => (l.id === lineId ? { ...l, discountValue: value } : l)),
         };
       }),
-    removeLine: (productId) =>
-      set((s) => ({ lines: s.lines.filter((l) => l.productId !== productId) })),
+    removeLine: (lineId) =>
+      set((s) => ({ lines: s.lines.filter((l) => l.id !== lineId) })),
     setDiscountType: (discountType) =>
       set((s) => ({ discountType, lines: s.lines.map((l) => ({ ...l, discountValue: 0 })) })),
     addLaborLine: () =>
