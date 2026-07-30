@@ -28,7 +28,7 @@ export function OrderSummary({
       </div>
       <ul className="divide-y divide-light-hairline">
         {lines.map((l) => (
-          <li key={l.productId} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm text-bodySmall">
+          <li key={l.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm text-bodySmall">
             <span className="min-w-0">
               <span className="block text-light-text">{l.name}</span>
               <span className="block text-[12px] text-light-text-hint">
