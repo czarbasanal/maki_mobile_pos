@@ -18,6 +18,17 @@ class SaleItemModel {
   final double discountValue;
   final String unit;
 
+  /// Snapshot of the selling option used for this line, if any. Kept on the
+  /// line rather than looked up, so editing or deleting the option later
+  /// never rewrites a past receipt.
+  final String? optionId;
+  final String? optionLabel;
+  final int? optionPieces;
+
+  /// Price of one whole set, as typed by the admin. [unitPrice] is this
+  /// divided by [optionPieces]; this field is what the receipt shows.
+  final double? optionPrice;
+
   const SaleItemModel({
     required this.id,
     required this.productId,
@@ -28,6 +39,10 @@ class SaleItemModel {
     required this.quantity,
     this.discountValue = 0,
     this.unit = 'pcs',
+    this.optionId,
+    this.optionLabel,
+    this.optionPieces,
+    this.optionPrice,
   });
 
   // ==================== FIRESTORE SERIALIZATION ====================
@@ -44,6 +59,10 @@ class SaleItemModel {
       quantity: (map['quantity'] as num?)?.toInt() ?? 0,
       discountValue: (map['discountValue'] as num?)?.toDouble() ?? 0.0,
       unit: map['unit'] as String? ?? 'pcs',
+      optionId: map['optionId'] as String?,
+      optionLabel: map['optionLabel'] as String?,
+      optionPieces: (map['optionPieces'] as num?)?.toInt(),
+      optionPrice: (map['optionPrice'] as num?)?.toDouble(),
     );
   }
 
@@ -67,6 +86,13 @@ class SaleItemModel {
       'unit': unit,
     };
 
+    if (optionId != null) {
+      map['optionId'] = optionId;
+      map['optionLabel'] = optionLabel;
+      map['optionPieces'] = optionPieces;
+      map['optionPrice'] = optionPrice;
+    }
+
     if (includeId) {
       map['id'] = id;
     }
@@ -88,6 +114,10 @@ class SaleItemModel {
       quantity: quantity,
       discountValue: discountValue,
       unit: unit,
+      optionId: optionId,
+      optionLabel: optionLabel,
+      optionPieces: optionPieces,
+      optionPrice: optionPrice,
     );
   }
 
@@ -103,6 +133,10 @@ class SaleItemModel {
       quantity: entity.quantity,
       discountValue: entity.discountValue,
       unit: entity.unit,
+      optionId: entity.optionId,
+      optionLabel: entity.optionLabel,
+      optionPieces: entity.optionPieces,
+      optionPrice: entity.optionPrice,
     );
   }
 
@@ -132,6 +166,34 @@ class SaleItemModel {
     );
   }
 
+  /// Creates a cart line for a product sold through a selling option.
+  ///
+  /// [sets] is the number of whole sets; the resulting [quantity] is in
+  /// PIECES ([sets] x option pieces) so every downstream report, receipt and
+  /// stock deduction keeps working unchanged.
+  factory SaleItemModel.fromProductOption({
+    required String itemId,
+    required ProductEntity product,
+    required SellingOptionEntity option,
+    int sets = 1,
+  }) {
+    return SaleItemModel(
+      id: itemId,
+      productId: product.id,
+      sku: product.sku,
+      name: product.name,
+      unitPrice: option.pricePerPiece,
+      unitCost: product.cost,
+      quantity: option.pieces * sets,
+      discountValue: 0,
+      unit: product.unit,
+      optionId: option.id,
+      optionLabel: option.label,
+      optionPieces: option.pieces,
+      optionPrice: option.price,
+    );
+  }
+
   /// Creates an empty item (for initial states).
   factory SaleItemModel.empty() {
     return const SaleItemModel(
@@ -157,6 +219,10 @@ class SaleItemModel {
     int? quantity,
     double? discountValue,
     String? unit,
+    String? optionId,
+    String? optionLabel,
+    int? optionPieces,
+    double? optionPrice,
   }) {
     return SaleItemModel(
       id: id ?? this.id,
@@ -168,6 +234,10 @@ class SaleItemModel {
       quantity: quantity ?? this.quantity,
       discountValue: discountValue ?? this.discountValue,
       unit: unit ?? this.unit,
+      optionId: optionId ?? this.optionId,
+      optionLabel: optionLabel ?? this.optionLabel,
+      optionPieces: optionPieces ?? this.optionPieces,
+      optionPrice: optionPrice ?? this.optionPrice,
     );
   }
 

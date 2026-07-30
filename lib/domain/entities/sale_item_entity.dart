@@ -40,6 +40,17 @@ class SaleItemEntity extends Equatable {
   /// Unit of measurement (snapshot)
   final String unit;
 
+  /// Snapshot of the selling option used for this line, if any. Kept on the
+  /// line rather than looked up, so editing or deleting the option later
+  /// never rewrites a past receipt.
+  final String? optionId;
+  final String? optionLabel;
+  final int? optionPieces;
+
+  /// Price of one whole set, as typed by the admin. [unitPrice] is this
+  /// divided by [optionPieces]; this field is what the receipt shows.
+  final double? optionPrice;
+
   const SaleItemEntity({
     required this.id,
     required this.productId,
@@ -50,6 +61,10 @@ class SaleItemEntity extends Equatable {
     required this.quantity,
     this.discountValue = 0,
     this.unit = 'pcs',
+    this.optionId,
+    this.optionLabel,
+    this.optionPieces,
+    this.optionPrice,
   });
 
   // ==================== COMPUTED PROPERTIES ====================
@@ -102,6 +117,16 @@ class SaleItemEntity extends Equatable {
   /// Whether this item has a discount applied
   bool get hasDiscount => discountValue > 0;
 
+  /// Whether this line was rung up through a selling option.
+  bool get hasOption => optionId != null && optionPieces != null && optionPieces! > 0;
+
+  /// Number of whole sets on this line, or null when there's no option.
+  /// [quantity] is always pieces, so sets is quantity / pieces.
+  int? get optionSets => hasOption ? quantity ~/ optionPieces! : null;
+
+  /// How much the +/- buttons move this line. A "By 3" line steps 3 -> 6.
+  int get quantityStep => hasOption ? optionPieces! : 1;
+
   // ==================== COPY WITH ====================
 
   SaleItemEntity copyWith({
@@ -114,6 +139,10 @@ class SaleItemEntity extends Equatable {
     int? quantity,
     double? discountValue,
     String? unit,
+    String? optionId,
+    String? optionLabel,
+    int? optionPieces,
+    double? optionPrice,
   }) {
     return SaleItemEntity(
       id: id ?? this.id,
@@ -125,6 +154,10 @@ class SaleItemEntity extends Equatable {
       quantity: quantity ?? this.quantity,
       discountValue: discountValue ?? this.discountValue,
       unit: unit ?? this.unit,
+      optionId: optionId ?? this.optionId,
+      optionLabel: optionLabel ?? this.optionLabel,
+      optionPieces: optionPieces ?? this.optionPieces,
+      optionPrice: optionPrice ?? this.optionPrice,
     );
   }
 
@@ -139,6 +172,10 @@ class SaleItemEntity extends Equatable {
         quantity,
         discountValue,
         unit,
+        optionId,
+        optionLabel,
+        optionPieces,
+        optionPrice,
       ];
 
   @override
