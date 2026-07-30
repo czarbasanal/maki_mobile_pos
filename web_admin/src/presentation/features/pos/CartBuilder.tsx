@@ -5,15 +5,18 @@ import type { CartStore } from '@/presentation/stores/cartStore';
 import { lowStockLines } from '@/domain/sales/cart';
 import { saleItemNet, saleItemOptionSets } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
+import { productHasSellingOptions, type Product } from '@/domain/entities/Product';
 import { formatMoney } from '@/core/utils/money';
 import { LaborSection } from './LaborSection';
 import { CartTotals } from './CartTotals';
+import { SellingOptionDialog } from './SellingOptionDialog';
 
 export function CartBuilder({ store }: { store: CartStore }) {
   const { data: products } = useProducts();
   const lines = store((s) => s.lines);
   const discountType = store((s) => s.discountType);
   const addLine = store((s) => s.addLine);
+  const addLineWithOption = store((s) => s.addLineWithOption);
   const setQty = store((s) => s.setQty);
   const setLineDiscount = store((s) => s.setLineDiscount);
   const removeLine = store((s) => s.removeLine);
@@ -22,7 +25,19 @@ export function CartBuilder({ store }: { store: CartStore }) {
   const feeLines = store((s) => s.feeLines);
 
   const [search, setSearch] = useState('');
+  // Product with selling options awaiting the picker's decision. Every path
+  // that puts a product on this ticket must route through this gate — the
+  // base price is not directly sellable once a product carries options.
+  const [pending, setPending] = useState<Product | null>(null);
   const isPct = discountType === DiscountType.percentage;
+
+  const handlePick = (p: Product) => {
+    if (!productHasSellingOptions(p)) {
+      addLine(p);
+      return;
+    }
+    setPending(p);
+  };
 
   const active = useMemo(() => (products ?? []).filter((p) => p.isActive), [products]);
   const results = useMemo(() => {
@@ -54,7 +69,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
                 </p>
               ) : (
                 results.map((p) => (
-                  <button key={p.id} type="button" onClick={() => addLine(p)}
+                  <button key={p.id} type="button" onClick={() => handlePick(p)}
                     className="flex w-full items-center justify-between gap-tk-md px-tk-md py-tk-sm text-left hover:bg-light-subtle">
                     <span>
                       <span className="block text-bodySmall text-light-text">{p.name}</span>
@@ -119,6 +134,17 @@ export function CartBuilder({ store }: { store: CartStore }) {
           <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
         </div>
       </section>
+
+      {pending ? (
+        <SellingOptionDialog
+          product={pending}
+          onPick={(option) => {
+            addLineWithOption(pending, option);
+            setPending(null);
+          }}
+          onClose={() => setPending(null)}
+        />
+      ) : null}
     </div>
   );
 }
