@@ -88,4 +88,25 @@ describe('OrderSummary', () => {
       expect(dupKeyWarning).toBe(false);
     });
   });
+
+  describe('selling option (found beyond the brief — the pre-checkout order review is the same "cart tile" surface)', () => {
+    it('shows the option label beside the name for a single set', () => {
+      // by3Line: quantity 3, optionPieces 3 — exactly one set.
+      render(<OrderSummary lines={[by3Line]} discountType={DiscountType.amount} laborLines={[]} />);
+      expect(screen.getByText(/By 3/)).toBeInTheDocument();
+      expect(screen.queryByText(/× 2/)).not.toBeInTheDocument();
+    });
+
+    it('shows the set count and total pieces for more than one set', () => {
+      const twoSets: CartLine = { ...by3Line, quantity: 6 };
+      render(<OrderSummary lines={[twoSets]} discountType={DiscountType.amount} laborLines={[]} />);
+      expect(screen.getByText(/By 3 × 2/)).toBeInTheDocument();
+      expect(screen.getByText(/6 pcs/)).toBeInTheDocument();
+    });
+
+    it('a plain line renders unchanged', () => {
+      render(<OrderSummary lines={[line]} discountType={DiscountType.amount} laborLines={[]} />);
+      expect(screen.queryByText(/By /)).not.toBeInTheDocument();
+    });
+  });
 });

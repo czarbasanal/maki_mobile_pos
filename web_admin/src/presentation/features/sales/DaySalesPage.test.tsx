@@ -125,6 +125,77 @@ describe('DaySalesPage', () => {
     expect(getById).not.toHaveBeenCalled();
   });
 
+  describe('selling option (found beyond the brief)', () => {
+    // The expanded sale row renders "{quantity} × {name}" straight from
+    // pieces — a By-3 line at 6 pieces would read "6 × Pulley Ball" with no
+    // hint it's two sets of three, not six loose pieces.
+    const optionItem = (quantity: number) => ({
+      id: 'i1',
+      productId: 'p1',
+      sku: 'ABC-1',
+      name: 'Pulley Ball',
+      unitPrice: 110,
+      unitCost: 60,
+      quantity,
+      discountValue: 0,
+      unit: 'pcs',
+      optionId: 'o2',
+      optionLabel: 'By 3',
+      optionPieces: 3,
+      optionPrice: 330,
+    });
+
+    async function expandSale(list: ReturnType<typeof vi.fn>) {
+      harness({ list });
+      await screen.findByText('SN-0001');
+      await userEvent.click(screen.getByRole('button', { name: /SN-0001/i }));
+    }
+
+    it('shows the option label beside the name for a single set', async () => {
+      const list = vi.fn().mockResolvedValue([fakeSale({ items: [optionItem(3)] })]);
+      await expandSale(list);
+
+      expect(await screen.findByText(/By 3/)).toBeInTheDocument();
+      expect(screen.queryByText(/× 2/)).not.toBeInTheDocument();
+    });
+
+    it('shows the set count and total pieces for more than one set', async () => {
+      const list = vi.fn().mockResolvedValue([fakeSale({ items: [optionItem(6)] })]);
+      await expandSale(list);
+
+      expect(await screen.findByText(/By 3 × 2/)).toBeInTheDocument();
+      expect(screen.getByText(/6 pcs/)).toBeInTheDocument();
+    });
+
+    it('a line with no option renders unchanged', async () => {
+      const list = vi.fn().mockResolvedValue([
+        fakeSale({
+          items: [
+            {
+              id: 'i1',
+              productId: 'p1',
+              sku: 'SKU1',
+              name: 'Brake Pad',
+              unitPrice: 100,
+              unitCost: 50,
+              quantity: 2,
+              discountValue: 0,
+              unit: 'pcs',
+              optionId: null,
+              optionLabel: null,
+              optionPieces: null,
+              optionPrice: null,
+            },
+          ],
+        }),
+      ]);
+      await expandSale(list);
+
+      expect(await screen.findByText(/Brake Pad/)).toBeInTheDocument();
+      expect(screen.queryByText(/By /)).not.toBeInTheDocument();
+    });
+  });
+
   it('prev/next day buttons change the queried range', async () => {
     const list = vi.fn().mockResolvedValue([]);
     harness({ list });

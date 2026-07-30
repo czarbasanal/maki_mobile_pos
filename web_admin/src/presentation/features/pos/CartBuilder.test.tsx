@@ -103,3 +103,28 @@ describe('CartBuilder — routing product picks through the selling-option gate'
     expect(screen.queryByRole('button', { name: /^cancel$/i })).not.toBeInTheDocument();
   });
 });
+
+describe('CartBuilder — qty box label disambiguates sets from pieces', () => {
+  // Found via review of an earlier task: the qty input already binds to
+  // SETS for an option line (saleItemOptionSets(l) ?? l.quantity), but its
+  // label still read the same bare "Qty" either way — a cashier can't tell
+  // whether they're typing sets or pieces in a money-entry field.
+  it('labels the box "Qty" for a plain line', async () => {
+    harness([plainProduct()]);
+    await search('plug');
+    await userEvent.click(await screen.findByRole('button', { name: /spark plug/i }));
+
+    expect(screen.getByText('Qty')).toBeInTheDocument();
+    expect(screen.queryByText('Sets')).not.toBeInTheDocument();
+  });
+
+  it('labels the box "Sets" for an option line', async () => {
+    harness([optionProduct()]);
+    await search('pulley');
+    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(screen.getByText('By 3'));
+
+    expect(screen.getByText('Sets')).toBeInTheDocument();
+    expect(screen.queryByText('Qty')).not.toBeInTheDocument();
+  });
+});

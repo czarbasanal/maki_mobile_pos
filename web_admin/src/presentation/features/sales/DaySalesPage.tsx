@@ -11,7 +11,9 @@ import {
   saleGrandTotal,
   saleIsPercentageDiscount,
   saleIsVoided,
+  saleItemHasOption,
   saleItemNet,
+  saleItemOptionSets,
   type Sale,
 } from '@/domain/entities';
 import { PaymentMethod, paymentMethodDisplayName } from '@/domain/enums';
@@ -193,14 +195,31 @@ function SaleTile({
       {expanded ? (
         <div className="border-t border-light-hairline bg-light-subtle px-tk-md py-tk-md">
           <div className="space-y-tk-xs text-bodySmall">
-            {sale.items.map((item) => (
-              <div key={item.id} className="flex justify-between text-light-text">
-                <span>
-                  {item.quantity} × {item.name}
-                </span>
-                <span className="tabular-nums">{formatMoney(saleItemNet(item, isPct))}</span>
-              </div>
-            ))}
+            {sale.items.map((item) => {
+              const hasOption = saleItemHasOption(item);
+              const sets = saleItemOptionSets(item);
+              return (
+                <div key={item.id} className="flex justify-between text-light-text">
+                  {hasOption ? (
+                    <span>
+                      <span className="block">
+                        {item.name} · {item.optionLabel}
+                      </span>
+                      {(sets ?? 0) > 1 ? (
+                        <span className="block text-[11px] text-light-text-hint">
+                          {item.optionLabel} × {sets} ({item.quantity} pcs)
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span>
+                      {item.quantity} × {item.name}
+                    </span>
+                  )}
+                  <span className="tabular-nums">{formatMoney(saleItemNet(item, isPct))}</span>
+                </div>
+              );
+            })}
             {sale.laborLines.map((l) => (
               <div key={l.id} className="flex justify-between text-light-text">
                 <span>🔧 {l.description || 'Service'}</span>

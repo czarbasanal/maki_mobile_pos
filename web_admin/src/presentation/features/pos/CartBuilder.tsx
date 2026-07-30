@@ -3,7 +3,7 @@ import { TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { lowStockLines } from '@/domain/sales/cart';
-import { saleItemNet, saleItemOptionSets } from '@/domain/entities/SaleItem';
+import { saleItemHasOption, saleItemNet, saleItemOptionSets } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { productHasSellingOptions, type Product } from '@/domain/entities/Product';
 import { formatMoney } from '@/core/utils/money';
@@ -111,8 +111,10 @@ export function CartBuilder({ store }: { store: CartStore }) {
                   </div>
                   <div className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
                     <label className="flex items-center gap-tk-xs">
-                      Qty
-                      {/* An option line's box shows SETS (setQty takes sets); quantity itself is always pieces. */}
+                      {/* An option line's box shows SETS (setQty takes sets); quantity itself is always
+                          pieces. The label must say so — otherwise the cashier can't tell whether they're
+                          typing sets or pieces into a money-entry field. */}
+                      {saleItemHasOption(l) ? 'Sets' : 'Qty'}
                       <input type="number" min={1} value={saleItemOptionSets(l) ?? l.quantity}
                         onChange={(e) => setQty(l.id, Number(e.target.value))}
                         className="w-16 rounded-md border border-light-border px-tk-sm py-[4px]" />

@@ -68,4 +68,39 @@ describe('Receipt', () => {
     // single-method cash tender line, since tenders defaults to the grand total).
     expect(screen.getAllByText(formatMoney(700)).length).toBeGreaterThanOrEqual(1);
   });
+
+  describe('selling option', () => {
+    const optionItem = (quantity: number) => ({
+      id: 'i1',
+      productId: 'p1',
+      sku: 'ABC-1',
+      name: 'Pulley Ball',
+      unitPrice: 110,
+      unitCost: 60,
+      quantity,
+      discountValue: 0,
+      unit: 'pcs',
+      optionId: 'o2',
+      optionLabel: 'By 3',
+      optionPieces: 3,
+      optionPrice: 330,
+    });
+
+    it('shows the option label beside the name for a single set', () => {
+      render(<Receipt sale={sale({ items: [optionItem(3)] })} />);
+      expect(screen.getByText(/By 3/)).toBeInTheDocument();
+      expect(screen.queryByText(/× 2/)).not.toBeInTheDocument();
+    });
+
+    it('shows the set count and total pieces for more than one set', () => {
+      render(<Receipt sale={sale({ items: [optionItem(6)] })} />);
+      expect(screen.getByText(/By 3 × 2/)).toBeInTheDocument();
+      expect(screen.getByText(/6 pcs/)).toBeInTheDocument();
+    });
+
+    it('a line with no option renders unchanged', () => {
+      render(<Receipt sale={sale()} />);
+      expect(screen.queryByText(/By /)).not.toBeInTheDocument();
+    });
+  });
 });

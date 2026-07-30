@@ -1,6 +1,6 @@
 import type { CartLine } from '@/domain/sales/cart';
 import { describedLaborLines } from '@/domain/sales/labor';
-import { saleItemNet } from '@/domain/entities/SaleItem';
+import { saleItemHasOption, saleItemNet, saleItemOptionSets } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { FeeLine } from '@/domain/entities/FeeLine';
@@ -27,17 +27,29 @@ export function OrderSummary({
         Order summary
       </div>
       <ul className="divide-y divide-light-hairline">
-        {lines.map((l) => (
-          <li key={l.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm text-bodySmall">
-            <span className="min-w-0">
-              <span className="block text-light-text">{l.name}</span>
-              <span className="block text-[12px] text-light-text-hint">
-                {l.quantity} × {formatMoney(l.unitPrice)}
+        {lines.map((l) => {
+          const hasOption = saleItemHasOption(l);
+          const sets = saleItemOptionSets(l);
+          return (
+            <li key={l.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm text-bodySmall">
+              <span className="min-w-0">
+                <span className="block text-light-text">
+                  {l.name}
+                  {hasOption ? ` · ${l.optionLabel}` : ''}
+                </span>
+                <span className="block text-[12px] text-light-text-hint">
+                  {l.quantity} × {formatMoney(l.unitPrice)}
+                </span>
+                {hasOption && (sets ?? 0) > 1 ? (
+                  <span className="block text-[12px] text-light-text-hint">
+                    {l.optionLabel} × {sets} ({l.quantity} pcs)
+                  </span>
+                ) : null}
               </span>
-            </span>
-            <span className="font-medium text-light-text tabular-nums">{formatMoney(saleItemNet(l, isPct))}</span>
-          </li>
-        ))}
+              <span className="font-medium text-light-text tabular-nums">{formatMoney(saleItemNet(l, isPct))}</span>
+            </li>
+          );
+        })}
         {described.map((l) => (
           <li key={l.id} className="flex items-center justify-between gap-tk-md bg-light-subtle px-tk-md py-tk-sm text-bodySmall">
             <span className="text-light-text">🔧 {l.description || 'Service'}</span>
