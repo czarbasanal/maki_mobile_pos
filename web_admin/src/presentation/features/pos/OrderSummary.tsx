@@ -1,6 +1,6 @@
 import type { CartLine } from '@/domain/sales/cart';
 import { describedLaborLines } from '@/domain/sales/labor';
-import { saleItemHasOption, saleItemNet, saleItemOptionSets } from '@/domain/entities/SaleItem';
+import { saleItemDisplayName, saleItemNet, saleItemOptionSetsCaption } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { FeeLine } from '@/domain/entities/FeeLine';
@@ -28,22 +28,16 @@ export function OrderSummary({
       </div>
       <ul className="divide-y divide-light-hairline">
         {lines.map((l) => {
-          const hasOption = saleItemHasOption(l);
-          const sets = saleItemOptionSets(l);
+          const caption = saleItemOptionSetsCaption(l);
           return (
             <li key={l.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm text-bodySmall">
               <span className="min-w-0">
-                <span className="block text-light-text">
-                  {l.name}
-                  {hasOption ? ` · ${l.optionLabel}` : ''}
-                </span>
+                <span className="block text-light-text">{saleItemDisplayName(l)}</span>
                 <span className="block text-[12px] text-light-text-hint">
                   {l.quantity} × {formatMoney(l.unitPrice)}
                 </span>
-                {hasOption && (sets ?? 0) > 1 ? (
-                  <span className="block text-[12px] text-light-text-hint">
-                    {l.optionLabel} × {sets} ({l.quantity} pcs)
-                  </span>
+                {caption ? (
+                  <span className="block text-[12px] text-light-text-hint">{caption}</span>
                 ) : null}
               </span>
               <span className="font-medium text-light-text tabular-nums">{formatMoney(saleItemNet(l, isPct))}</span>

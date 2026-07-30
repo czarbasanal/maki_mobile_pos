@@ -109,4 +109,53 @@ void main() {
       expect(parsed.toEntity().hasOption, isFalse);
     });
   });
+
+  group('SaleItemEntity display helpers', () {
+    // Extracted so every render site (cart tile, receipts, sale detail,
+    // checkout, void-request receipt, job-order previews) builds the same
+    // strings from one place instead of hand-copying the ternary/caption.
+    SaleItemEntity item({String? label, int? pieces, double? optionPrice, int quantity = 1}) {
+      return SaleItemEntity(
+        id: 'i1',
+        productId: 'p1',
+        sku: 'ABC-1',
+        name: 'Pulley Ball',
+        unitPrice: pieces == null ? 120 : (optionPrice ?? 0) / pieces,
+        unitCost: 60,
+        quantity: quantity,
+        optionId: label == null ? null : 'o2',
+        optionLabel: label,
+        optionPieces: pieces,
+        optionPrice: optionPrice,
+      );
+    }
+
+    test('displayName is the bare name with no option', () {
+      expect(item(quantity: 2).displayName, 'Pulley Ball');
+    });
+
+    test('displayName appends the option label for exactly one set', () {
+      final line = item(label: 'By 3', pieces: 3, optionPrice: 330, quantity: 3);
+      expect(line.displayName, 'Pulley Ball · By 3');
+    });
+
+    test('displayName appends the option label for more than one set', () {
+      final line = item(label: 'By 3', pieces: 3, optionPrice: 330, quantity: 6);
+      expect(line.displayName, 'Pulley Ball · By 3');
+    });
+
+    test('optionSetsCaption is null with no option', () {
+      expect(item(quantity: 2).optionSetsCaption, isNull);
+    });
+
+    test('optionSetsCaption is null for exactly one set', () {
+      final line = item(label: 'By 3', pieces: 3, optionPrice: 330, quantity: 3);
+      expect(line.optionSetsCaption, isNull);
+    });
+
+    test('optionSetsCaption shows sets and total pieces for more than one set', () {
+      final line = item(label: 'By 3', pieces: 3, optionPrice: 330, quantity: 6);
+      expect(line.optionSetsCaption, 'By 3 × 2 (6 pcs)');
+    });
+  });
 }

@@ -127,6 +127,22 @@ class SaleItemEntity extends Equatable {
   /// How much the +/- buttons move this line. A "By 3" line steps 3 -> 6.
   int get quantityStep => hasOption ? optionPieces! : 1;
 
+  /// Name for display, with the option label appended when there is one —
+  /// e.g. "Pulley Ball · By 3". Falls back to the bare [name] with no
+  /// option. Centralised here so every render site (cart tile, receipts,
+  /// sale detail, checkout, void-request receipt, job-order previews)
+  /// constructs this string identically.
+  String get displayName => hasOption ? '$name · $optionLabel' : name;
+
+  /// Sets + total pieces caption for display, e.g. "By 3 × 2 (6 pcs)" — null
+  /// when there's no option or there's only one set (a single set is fully
+  /// said by [displayName] alone, so no extra caption is shown).
+  String? get optionSetsCaption {
+    final sets = optionSets;
+    if (sets == null || sets <= 1) return null;
+    return '$optionLabel × $sets ($quantity pcs)';
+  }
+
   // ==================== COPY WITH ====================
 
   SaleItemEntity copyWith({

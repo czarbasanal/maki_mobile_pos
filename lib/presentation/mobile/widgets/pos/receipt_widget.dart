@@ -252,9 +252,7 @@ class ReceiptWidget extends ConsumerWidget {
                           Text(
                             // Selling-option line: label beside the name,
                             // e.g. "Pulley Ball · By 3" — neutral, no tint.
-                            item.hasOption
-                                ? '${item.name} · ${item.optionLabel}'
-                                : item.name,
+                            item.displayName,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.black,
@@ -270,10 +268,9 @@ class ReceiptWidget extends ConsumerWidget {
                           ),
                           // Sets + total pieces, only once there's more than
                           // one set.
-                          if (item.hasOption && (item.optionSets ?? 0) > 1)
+                          if (item.optionSetsCaption != null)
                             Text(
-                              '${item.optionLabel} × ${item.optionSets} '
-                              '(${item.quantity} pcs)',
+                              item.optionSetsCaption!,
                               style: const TextStyle(
                                 fontSize: 10,
                                 color: _ReceiptColors.label,

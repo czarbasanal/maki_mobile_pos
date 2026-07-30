@@ -15,7 +15,7 @@ import {
   saleIsPercentageDiscount,
   saleItemHasOption,
   saleItemNet,
-  saleItemOptionSets,
+  saleItemOptionSetsCaption,
   saleLaborSubtotal,
   salePartsSubtotal,
   saleTotalDiscount,
@@ -130,8 +130,13 @@ export function SaleDetailPage() {
           </thead>
           <tbody className="divide-y divide-light-hairline">
             {sale.items.map((it) => {
+              // Name and option label stay in their own differently-coloured
+              // spans on this surface (unlike the single-string sites), so
+              // only the caption — byte-identical everywhere — is shared via
+              // saleItemOptionSetsCaption; saleItemHasOption still guards the
+              // label span directly to keep that per-surface styling intact.
               const hasOption = saleItemHasOption(it);
-              const sets = saleItemOptionSets(it);
+              const caption = saleItemOptionSetsCaption(it);
               return (
                 <tr key={it.id}>
                   <td className="px-tk-md py-tk-sm">
@@ -142,10 +147,8 @@ export function SaleDetailPage() {
                       ) : null}
                       <span className="ml-tk-sm text-light-text-hint">{it.sku}</span>
                     </div>
-                    {hasOption && (sets ?? 0) > 1 ? (
-                      <div className="text-[11px] text-light-text-hint">
-                        {it.optionLabel} × {sets} ({it.quantity} pcs)
-                      </div>
+                    {caption ? (
+                      <div className="text-[11px] text-light-text-hint">{caption}</div>
                     ) : null}
                   </td>
                   <td className="px-tk-md py-tk-sm text-right tabular-nums">{it.quantity}</td>

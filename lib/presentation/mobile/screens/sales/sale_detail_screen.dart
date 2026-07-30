@@ -345,9 +345,7 @@ class SaleDetailScreen extends ConsumerWidget {
                         Text(
                           // Selling-option line: label beside the name,
                           // e.g. "Pulley Ball · By 3" — neutral, no tint.
-                          item.hasOption
-                              ? '${item.name} · ${item.optionLabel}'
-                              : item.name,
+                          item.displayName,
                           style: AppTextStyles.productName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -365,10 +363,9 @@ class SaleDetailScreen extends ConsumerWidget {
                         ),
                         // Sets + total pieces, only once there's more than
                         // one set.
-                        if (item.hasOption && (item.optionSets ?? 0) > 1)
+                        if (item.optionSetsCaption != null)
                           Text(
-                            '${item.optionLabel} × ${item.optionSets} '
-                            '(${item.quantity} pcs)',
+                            item.optionSetsCaption!,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),

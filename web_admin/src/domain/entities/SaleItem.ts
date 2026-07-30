@@ -53,3 +53,20 @@ export function saleItemOptionSets(item: SaleItem): number | null {
 export function saleItemQuantityStep(item: SaleItem): number {
   return saleItemHasOption(item) ? (item.optionPieces as number) : 1;
 }
+
+/** Name for display, with the option label appended when there is one —
+ * e.g. "Pulley Ball · By 3". Falls back to the bare name with no option.
+ * Centralised here so every render site (Receipt, SaleDetailPage,
+ * OrderSummary, DaySalesPage) constructs this string identically. */
+export function saleItemDisplayName(item: SaleItem): string {
+  return saleItemHasOption(item) ? `${item.name} · ${item.optionLabel}` : item.name;
+}
+
+/** Sets + total pieces caption for display, e.g. "By 3 × 2 (6 pcs)" — null
+ * when there's no option or there's only one set (a single set is fully
+ * said by saleItemDisplayName alone, so no extra caption is shown). */
+export function saleItemOptionSetsCaption(item: SaleItem): string | null {
+  const sets = saleItemOptionSets(item);
+  if (sets === null || sets <= 1) return null;
+  return `${item.optionLabel} × ${sets} (${item.quantity} pcs)`;
+}

@@ -67,9 +67,7 @@ class CartItemTile extends StatelessWidget {
                           // A selling-option line carries its label beside
                           // the name (e.g. "Pulley Ball · By 3") — informational,
                           // neutral-coloured, never tinted.
-                          item.hasOption
-                              ? '${item.name} · ${item.optionLabel}'
-                              : item.name,
+                          item.displayName,
                           style: AppTextStyles.productName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -77,10 +75,9 @@ class CartItemTile extends StatelessWidget {
                         // Sets + total pieces, only once there's more than
                         // one set — a single set is fully said by the label
                         // above.
-                        if (item.hasOption && (item.optionSets ?? 0) > 1)
+                        if (item.optionSetsCaption != null)
                           Text(
-                            '${item.optionLabel} × ${item.optionSets} '
-                            '(${item.quantity} pcs)',
+                            item.optionSetsCaption!,
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(color: muted),
                           ),

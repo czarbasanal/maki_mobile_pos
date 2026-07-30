@@ -450,14 +450,12 @@ class _Receipt extends StatelessWidget {
         leading: _qtyChip(theme, '×${item.quantity}'),
         // Selling-option line: label beside the name, e.g.
         // "Pulley Ball · By 3" — neutral, no tint.
-        name: item.hasOption ? '${item.name} · ${item.optionLabel}' : item.name,
+        name: item.displayName,
         sub: '${item.sku} · ${item.unitPrice.toCurrency()}/pc',
         amount: net.toCurrency(),
         mono: true,
         // Sets + total pieces, only once there's more than one set.
-        extraCaption: item.hasOption && (item.optionSets ?? 0) > 1
-            ? '${item.optionLabel} × ${item.optionSets} (${item.quantity} pcs)'
-            : null,
+        extraCaption: item.optionSetsCaption,
       ));
     }
     for (var i = 0; i < sale.laborLines.length; i++) {

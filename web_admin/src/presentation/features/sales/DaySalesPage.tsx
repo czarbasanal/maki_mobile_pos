@@ -11,9 +11,10 @@ import {
   saleGrandTotal,
   saleIsPercentageDiscount,
   saleIsVoided,
+  saleItemDisplayName,
   saleItemHasOption,
   saleItemNet,
-  saleItemOptionSets,
+  saleItemOptionSetsCaption,
   type Sale,
 } from '@/domain/entities';
 import { PaymentMethod, paymentMethodDisplayName } from '@/domain/enums';
@@ -197,18 +198,14 @@ function SaleTile({
           <div className="space-y-tk-xs text-bodySmall">
             {sale.items.map((item) => {
               const hasOption = saleItemHasOption(item);
-              const sets = saleItemOptionSets(item);
+              const caption = saleItemOptionSetsCaption(item);
               return (
                 <div key={item.id} className="flex justify-between text-light-text">
                   {hasOption ? (
                     <span>
-                      <span className="block">
-                        {item.name} · {item.optionLabel}
-                      </span>
-                      {(sets ?? 0) > 1 ? (
-                        <span className="block text-[11px] text-light-text-hint">
-                          {item.optionLabel} × {sets} ({item.quantity} pcs)
-                        </span>
+                      <span className="block">{saleItemDisplayName(item)}</span>
+                      {caption ? (
+                        <span className="block text-[11px] text-light-text-hint">{caption}</span>
                       ) : null}
                     </span>
                   ) : (
