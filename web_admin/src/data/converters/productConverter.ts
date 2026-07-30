@@ -7,10 +7,11 @@ import type {
 } from 'firebase/firestore';
 import type { Product } from '@/domain/entities';
 import { parseBarcodes } from '@/domain/products/barcodes';
+import { parseSellingOptions, serializeSellingOptions } from '@/domain/products/sellingOptions';
 import { requireDate, toDate } from './timestamps';
 
 export const productConverter: FirestoreDataConverter<Product> = {
-  toFirestore(product) {
+  toFirestore(product: Product) {
     return {
       sku: product.sku,
       name: product.name,
@@ -31,6 +32,7 @@ export const productConverter: FirestoreDataConverter<Product> = {
       baseSku: product.baseSku,
       variationNumber: product.variationNumber,
       barcodes: product.barcodes,
+      sellingOptions: serializeSellingOptions(product.sellingOptions),
       category: product.category,
       imageUrl: product.imageUrl,
       notes: product.notes,
@@ -61,6 +63,7 @@ export const productConverter: FirestoreDataConverter<Product> = {
       baseSku: d.baseSku ?? null,
       variationNumber: d.variationNumber == null ? null : Number(d.variationNumber),
       barcodes: parseBarcodes(d),
+      sellingOptions: parseSellingOptions(d.sellingOptions),
       category: d.category ?? null,
       imageUrl: d.imageUrl ?? null,
       notes: d.notes ?? null,
