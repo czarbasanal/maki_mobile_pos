@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:uuid/uuid.dart';
 
@@ -368,8 +369,9 @@ class CartNotifier extends StateNotifier<CartState> {
   /// Adds a product to the cart.
   /// If the product already exists, increases quantity.
   void addProduct(ProductEntity product, {int quantity = 1}) {
-    final existingIndex =
-        state.items.indexWhere((item) => item.productId == product.id);
+    final existingIndex = state.items.indexWhere(
+      (item) => item.productId == product.id && item.optionId == null,
+    );
 
     if (existingIndex >= 0) {
       // Update existing item
@@ -399,11 +401,43 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
+  /// Adds [sets] of a selling option to the cart.
+  ///
+  /// Lines are keyed by (product, option): the same option merges, a
+  /// different option of the same product becomes its own line — they carry
+  /// different prices, so folding them would lose money.
+  void addProductOption(
+    ProductEntity product,
+    SellingOptionEntity option, {
+    int sets = 1,
+  }) {
+    final existingIndex = state.items.indexWhere(
+      (item) => item.productId == product.id && item.optionId == option.id,
+    );
+
+    final updatedItems = List<SaleItemEntity>.from(state.items);
+    if (existingIndex >= 0) {
+      final existing = updatedItems[existingIndex];
+      updatedItems[existingIndex] = existing.copyWith(
+        quantity: existing.quantity + option.pieces * sets,
+      );
+    } else {
+      updatedItems.add(SaleItemModel.fromProductOption(
+        itemId: _uuid.v4(),
+        product: product,
+        option: option,
+        sets: sets,
+      ).toEntity());
+    }
+    state = state.copyWith(items: updatedItems, clearErrorMessage: true);
+  }
+
   /// Adds a SaleItemEntity directly to the cart.
   /// Used when loading from a job order.
   void addItem(SaleItemEntity item) {
-    final existingIndex =
-        state.items.indexWhere((i) => i.productId == item.productId);
+    final existingIndex = state.items.indexWhere(
+      (i) => i.productId == item.productId && i.optionId == item.optionId,
+    );
 
     if (existingIndex >= 0) {
       final existingItem = state.items[existingIndex];
@@ -438,22 +472,22 @@ class CartNotifier extends StateNotifier<CartState> {
     state = state.copyWith(items: updatedItems, clearErrorMessage: true);
   }
 
-  /// Increments the quantity of an item.
+  /// Increments by one whole set (one piece when there's no option).
   void incrementItemQuantity(String itemId) {
     final index = state.items.indexWhere((item) => item.id == itemId);
     if (index < 0) return;
 
     final item = state.items[index];
-    updateItemQuantity(itemId, item.quantity + 1);
+    updateItemQuantity(itemId, item.quantity + item.quantityStep);
   }
 
-  /// Decrements the quantity of an item.
+  /// Decrements by one whole set. Dropping below one set removes the line.
   void decrementItemQuantity(String itemId) {
     final index = state.items.indexWhere((item) => item.id == itemId);
     if (index < 0) return;
 
     final item = state.items[index];
-    updateItemQuantity(itemId, item.quantity - 1);
+    updateItemQuantity(itemId, item.quantity - item.quantityStep);
   }
 
   /// Removes an item from the cart.
