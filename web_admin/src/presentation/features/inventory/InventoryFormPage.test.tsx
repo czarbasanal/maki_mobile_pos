@@ -5,7 +5,7 @@
 // _applyCategoryForSku); unchecking auto-generate hands the field back to
 // the user and a manual edit survives further category churn.
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -232,7 +232,7 @@ describe('InventoryFormPage — edit-mode supplier mapping', () => {
       quantity: 5, reorderLevel: 1, unit: 'pcs', category: 'Brakes',
       supplierId: 'sup-1', supplierName: 'FUGO', barcodes: [], notes: null,
       costCode: 'AA', imageUrl: null, isActive: true,
-      createdAt: new Date(), updatedAt: null,
+      createdAt: new Date(), updatedAt: null, sellingOptions: [],
     } as unknown as Product;
     const categoryRepo: Partial<Container['categoryRepo']> = {
       watchAll: (kind, cb) => { cb(kind === 'product' ? [codedCategory] : []); return () => {}; },
@@ -287,5 +287,168 @@ describe('InventoryFormPage — uppercase inputs', () => {
     await user.clear(sku);
     await user.type(sku, 'abc123x');
     expect(sku.value).toBe('ABC123X');
+  });
+});
+
+describe('InventoryFormPage — selling options', () => {
+  const editableProduct = (o: Partial<Product> = {}): Product =>
+    ({
+      id: 'p1',
+      sku: 'SPRNG18',
+      name: 'CENTER SPRING',
+      cost: 60,
+      price: 100,
+      quantity: 5,
+      reorderLevel: 1,
+      unit: 'pcs',
+      category: null,
+      supplierId: null,
+      supplierName: null,
+      barcodes: [],
+      notes: null,
+      costCode: 'AA',
+      imageUrl: null,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: null,
+      createdBy: null,
+      updatedBy: null,
+      createdByName: null,
+      updatedByName: null,
+      searchKeywords: [],
+      baseSku: null,
+      variationNumber: null,
+      sellingOptions: [],
+      ...o,
+    }) as Product;
+
+  function editHarness(
+    opts: {
+      role?: UserRole;
+      target?: Product;
+      update?: ReturnType<typeof vi.fn>;
+    } = {},
+  ) {
+    useAuthStore.setState({
+      user: {
+        id: 'u1',
+        email: 'a@b.co',
+        displayName: 'Tester',
+        role: opts.role ?? UserRole.admin,
+        isActive: true,
+      } as never,
+      status: 'signedIn',
+    });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const target = opts.target ?? editableProduct();
+    const categoryRepo: Partial<Container['categoryRepo']> = {
+      watchAll: (_kind, cb) => {
+        cb([]);
+        return () => {};
+      },
+      peekNextSequence: vi.fn().mockResolvedValue(1),
+    };
+    const supplierRepo: Partial<Container['supplierRepo']> = {
+      watchAll: (cb) => {
+        cb([]);
+        return () => {};
+      },
+    };
+    const costCodeRepo: Partial<Container['costCodeRepo']> = {
+      watch: (cb) => {
+        cb(defaultCostCode);
+        return () => {};
+      },
+    };
+    const productRepo: Partial<Container['productRepo']> = {
+      getById: vi.fn().mockResolvedValue(target),
+      update: opts.update ?? vi.fn().mockResolvedValue(undefined),
+      skuExists: vi.fn().mockResolvedValue(false),
+      barcodeExists: vi.fn().mockResolvedValue(false),
+      recordPriceChange: vi.fn().mockResolvedValue(undefined),
+    };
+    const activityLogRepo = {
+      log: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Container['activityLogRepo'];
+    return render(
+      <DiProvider
+        override={{
+          categoryRepo: categoryRepo as Container['categoryRepo'],
+          supplierRepo: supplierRepo as Container['supplierRepo'],
+          costCodeRepo: costCodeRepo as Container['costCodeRepo'],
+          productRepo: productRepo as Container['productRepo'],
+          activityLogRepo,
+        }}
+      >
+        <QueryClientProvider client={qc}>
+          <MemoryRouter initialEntries={[`/inventory/edit/${target.id}`]}>
+            <Routes>
+              <Route path="/inventory/edit/:id" element={<InventoryFormPage />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </DiProvider>,
+    );
+  }
+
+  it('shows the Selling options section to an admin editing a product', async () => {
+    editHarness({ role: UserRole.admin });
+    expect(await screen.findByText('Selling options')).toBeInTheDocument();
+  });
+
+  it('hides the Selling options section from a staff user editing a product', async () => {
+    editHarness({ role: UserRole.staff });
+    // Wait for the async product load to resolve before asserting absence —
+    // otherwise "not found" could just mean "still loading", not "hidden".
+    await screen.findByLabelText('Name');
+    expect(screen.queryByText('Selling options')).toBeNull();
+  });
+
+  it('hides the Selling options section from a cashier editing a product', async () => {
+    editHarness({ role: UserRole.cashier });
+    await screen.findByLabelText('Name');
+    expect(screen.queryByText('Selling options')).toBeNull();
+  });
+
+  it('does not show the Selling options section on the new-product form, even for an admin', () => {
+    signIn();
+    harness();
+    expect(screen.queryByText('Selling options')).toBeNull();
+  });
+
+  it('blocks submit while an added selling option is invalid, and never calls the mutation', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    editHarness({ update });
+    const heading = await screen.findByText('Selling options');
+    // Scoped to the section: the top-level Pricing section also has a field
+    // labelled "Price", so an unscoped query would be ambiguous.
+    const section = within(heading.closest('section') as HTMLElement);
+
+    await userEvent.click(section.getByRole('button', { name: /add option/i }));
+    // Freshly-added row has an empty label — invalid per validateSellingOptions.
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByText(/label/i)).toBeInTheDocument();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('allows submit once the selling option is valid, and forwards it to the write', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    editHarness({ update });
+    const heading = await screen.findByText('Selling options');
+    const section = within(heading.closest('section') as HTMLElement);
+
+    await userEvent.click(section.getByRole('button', { name: /add option/i }));
+    await userEvent.type(section.getByLabelText('Label'), 'By 6');
+    await userEvent.type(section.getByLabelText('Price'), '600');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    const [, patch, , includeSellingOptions] = update.mock.calls[0];
+    expect(includeSellingOptions).toBe(true);
+    expect(patch.sellingOptions).toEqual([
+      expect.objectContaining({ label: 'By 6', pieces: 1, price: 600 }),
+    ]);
   });
 });
