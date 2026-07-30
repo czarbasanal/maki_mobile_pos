@@ -410,10 +410,55 @@ describe('InventoryFormPage — selling options', () => {
     expect(screen.queryByText('Selling options')).toBeNull();
   });
 
-  it('does not show the Selling options section on the new-product form, even for an admin', () => {
+  it('shows the Selling options section to an admin creating a new product', () => {
     signIn();
     harness();
+    expect(screen.getByText('Selling options')).toBeInTheDocument();
+  });
+
+  it('hides the Selling options section from a staff user creating a new product', () => {
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Tester', role: UserRole.staff, isActive: true } as never,
+      status: 'signedIn',
+    });
+    harness();
     expect(screen.queryByText('Selling options')).toBeNull();
+  });
+
+  it('hides the Selling options section from a cashier user creating a new product', () => {
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Tester', role: UserRole.cashier, isActive: true } as never,
+      status: 'signedIn',
+    });
+    harness();
+    expect(screen.queryByText('Selling options')).toBeNull();
+  });
+
+  it('creating a product with a selling option forwards it to the create mutation, as an empty-array-safe write', async () => {
+    signIn();
+    const create = vi.fn().mockResolvedValue({ id: 'new-product' } as Product);
+    harness({ create });
+
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await waitFor(() => expect(screen.getByLabelText('SKU')).toHaveValue('00070005'));
+    await userEvent.type(screen.getByLabelText('Name'), 'Brake Pad');
+    await userEvent.type(screen.getByLabelText('Cost'), '60');
+    await userEvent.type(screen.getByLabelText('Price'), '100');
+    await userEvent.type(screen.getByLabelText('Initial quantity'), '10');
+
+    const heading = await screen.findByText('Selling options');
+    const section = within(heading.closest('section') as HTMLElement);
+    await userEvent.click(section.getByRole('button', { name: /add option/i }));
+    await userEvent.type(section.getByLabelText('Label'), 'By 6');
+    await userEvent.type(section.getByLabelText('Price'), '600');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
+
+    await waitFor(() => expect(create).toHaveBeenCalled());
+    const [input] = create.mock.calls[0];
+    expect(input.sellingOptions).toEqual([
+      expect.objectContaining({ label: 'By 6', pieces: 1, price: 600 }),
+    ]);
   });
 
   it('blocks submit while an added selling option is invalid, and never calls the mutation', async () => {

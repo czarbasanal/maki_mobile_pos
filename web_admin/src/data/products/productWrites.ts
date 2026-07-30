@@ -68,6 +68,15 @@ export function buildProductWrites(
       baseSku: input.baseSku,
       variationNumber: input.variationNumber,
       barcodes: input.barcodes,
+      // Unrestricted at creation — matching how `price` already works (staff
+      // may set it at creation, not edit it after; firestore.rules has no
+      // create-time restriction on this field either). `?? []` because
+      // `CreateProductInput.sellingOptions` is optional on the hook's own
+      // input type, so this can genuinely be `undefined` at runtime despite
+      // `ProductCreateInput` typing it as required (see useCreateProduct's
+      // `as ProductCreateInput` cast) — a bare pass-through would write
+      // `undefined` into the doc instead of an empty array.
+      sellingOptions: input.sellingOptions ?? [],
       category: input.category,
       imageUrl: input.imageUrl,
       notes: input.notes,

@@ -87,9 +87,9 @@ export function InventoryFormPage() {
   );
   const [loadNotice, setLoadNotice] = useState<string | null>(null);
   const [barcodes, setBarcodes] = useState<string[]>([]);
-  // Seeded from the product being edited; empty for a new product. Only
-  // rendered/editable for admins editing an existing product — see the
-  // "Selling options" Section below for why create-mode is excluded.
+  // Seeded from the product being edited; empty for a new product.
+  // Admin-only in both modes (see the "Selling options" Section below) —
+  // unrestricted at creation, same posture as `price` (Task 13).
   const [sellingOptions, setSellingOptions] = useState<SellingOption[]>([]);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
@@ -410,6 +410,9 @@ export function InventoryFormPage() {
         notes: blank(values.notes),
         imageBlob,
         autoSkuCategoryCode: autoSkuCategoryCodeForSubmit(values),
+        // Unrestricted at creation (Task 13's posture, same as `price`) — no
+        // role check needed here, unlike the edit-mode patch above.
+        sellingOptions,
       });
       navigate(RoutePaths.inventory);
     } catch (e) {
@@ -578,12 +581,10 @@ export function InventoryFormPage() {
           </div>
         </Section>
 
-        {/* Admin-only, same as InventoryListPage's totals strip. Edit-mode
-            only, not create: the create write path (buildProductWrites)
-            doesn't persist sellingOptions at all today, so surfacing this
-            editor on a new-product form would silently drop whatever an
-            admin typed in. See the Task 15b report for the full finding. */}
-        {isEditing && isAdmin ? (
+        {/* Admin-only, same as InventoryListPage's totals strip. Shown in
+            both create and edit — creation is unrestricted for this field,
+            matching how `price` already works (Task 13). */}
+        {isAdmin ? (
           <Section title="Selling options">
             <SellingOptionsEditor
               value={sellingOptions}
@@ -591,6 +592,7 @@ export function InventoryFormPage() {
               unitCost={Number(watch('cost')) || 0}
               unit={watch('unit') || 'pcs'}
               showMargin={isAdmin}
+              error={sellingOptionsError}
             />
           </Section>
         ) : null}

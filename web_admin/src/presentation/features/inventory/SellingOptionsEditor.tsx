@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { SellingOption } from '@/domain/entities/SellingOption';
 import { sellingOptionPricePerPiece } from '@/domain/entities/SellingOption';
-import {
-  MAX_SELLING_OPTIONS,
-  MAX_SELLING_OPTION_LABEL,
-  validateSellingOptions,
-} from '@/domain/products/sellingOptions';
+import { MAX_SELLING_OPTIONS, MAX_SELLING_OPTION_LABEL } from '@/domain/products/sellingOptions';
 import { formatMoney } from '@/core/utils/money';
 
 interface SellingOptionsEditorProps {
@@ -29,6 +25,11 @@ interface SellingOptionsEditorProps {
    *  back-solve unitCost from the per-piece price and a visible margin
    *  percentage, defeating that same reveal toggle. Defaults to true. */
   showMargin?: boolean;
+  /** `validateSellingOptions(value)`'s result, computed by the host. Passed
+   *  down rather than recomputed here — the host already needs the same
+   *  result for its own submit guard, and duplicating the call here would
+   *  give the message two independent sources of truth for the same list. */
+  error: string | null;
 }
 
 /**
@@ -51,8 +52,8 @@ export function SellingOptionsEditor({
   unitCost,
   unit,
   showMargin = true,
+  error,
 }: SellingOptionsEditorProps) {
-  const error = validateSellingOptions(value);
   // >= rather than === : a defensive superset in case the list ever arrives
   // already over the cap (e.g. legacy data) — the add control should stay
   // hidden rather than allow piling on more.

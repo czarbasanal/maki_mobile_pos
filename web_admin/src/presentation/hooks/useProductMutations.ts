@@ -3,7 +3,7 @@ import { useActivityLogRepo, useProductRepo } from '@/infrastructure/di/containe
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { logActivity } from '@/application/activityLogger';
 import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
-import { ActivityType, type Product } from '@/domain/entities';
+import { ActivityType, type Product, type SellingOption } from '@/domain/entities';
 import { UserRole } from '@/domain/enums';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
 import { matchesAutoPattern } from '@/domain/products/sku';
@@ -196,6 +196,12 @@ export interface CreateProductInput {
   category: string | null;
   notes: string | null;
   imageBlob?: Blob | null;
+  /** Unrestricted at creation — matching how `price` already works. Left
+   *  optional here (rather than mirroring `ProductCreateInput`'s required
+   *  `SellingOption[]`) because most create-mode callers never touch it;
+   *  `buildProductWrites` defaults a missing value to `[]` at the write
+   *  layer, so this hook doesn't need to. */
+  sellingOptions?: SellingOption[];
   /** Set when a coded category drove the SKU field; relied on by the create
    *  transaction's peek-then-claim scan (see FirestoreProductRepository.create).
    *  Ignored (falls back to the plain manual path) unless `sku` still matches

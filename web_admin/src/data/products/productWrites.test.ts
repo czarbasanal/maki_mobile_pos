@@ -5,12 +5,84 @@
 // landing in diff().affectedKeys() and tripping the staff/cashier denylist on
 // an otherwise-legitimate edit. serverTimestamp()/deleteField() are pure
 // sentinel factories — no emulator or app init needed to call them directly.
-import { describe, expect, it } from 'vitest';
-import { buildProductUpdate } from './productWrites';
-import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
+import { describe, expect, it, vi } from 'vitest';
+import type { Firestore } from 'firebase/firestore';
+import { buildProductUpdate, buildProductWrites } from './productWrites';
+import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import type { SellingOption } from '@/domain/entities/SellingOption';
 
+// buildProductWrites() calls doc(db, ...) to build refs, but productData —
+// what these tests inspect — doesn't depend on what doc() returns, so a
+// lightweight fake avoids needing a real Firestore app instance. Everything
+// else (serverTimestamp, deleteField, ...) stays the real implementation via
+// importOriginal, so the buildProductUpdate tests above are unaffected.
+vi.mock('firebase/firestore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase/firestore')>();
+  return {
+    ...actual,
+    doc: vi.fn(() => ({ id: 'fake-id', path: 'fake/path' })),
+  };
+});
+
 const by6: SellingOption = { id: 'o1', label: 'By 6', pieces: 6, price: 600 };
+
+/** Full ProductCreateInput, including sellingOptions: [] like every real
+ *  call site (FirestoreProductRepository.create, executeReceivePlan). */
+function createInput(o: Partial<ProductCreateInput> = {}): ProductCreateInput {
+  return {
+    sku: 'ABC1',
+    name: 'Widget',
+    costCode: 'AA',
+    cost: 10,
+    price: 20,
+    quantity: 5,
+    reorderLevel: 1,
+    unit: 'pcs',
+    supplierId: null,
+    supplierName: null,
+    isActive: true,
+    createdBy: null,
+    updatedBy: null,
+    createdByName: null,
+    updatedByName: null,
+    baseSku: null,
+    variationNumber: null,
+    barcodes: [],
+    sellingOptions: [],
+    category: null,
+    imageUrl: null,
+    notes: null,
+    ...o,
+  };
+}
+
+describe('buildProductWrites — create path (unrestricted, matching how price already works)', () => {
+  it('persists selling options supplied at creation — asserted on the write payload itself, not on whether a function was merely called', () => {
+    const options: SellingOption[] = [by6];
+    const { productData } = buildProductWrites(
+      {} as Firestore,
+      createInput({ sellingOptions: options }),
+      'actor-1',
+      'p1',
+    );
+    expect(productData.sellingOptions).toEqual(options);
+  });
+
+  it('writes an empty array, not undefined, when the caller supplies none', () => {
+    // Deliberately omits the key rather than passing `sellingOptions: []` —
+    // this is the actual runtime shape once CreateProductInput.sellingOptions
+    // is optional and an admin creates a product without touching the
+    // editor: the `as ProductCreateInput` cast in useCreateProduct means the
+    // "required" field can genuinely be absent at runtime despite the type.
+    const { sellingOptions: _omitted, ...rest } = createInput();
+    const input = rest as ProductCreateInput;
+
+    const { productData } = buildProductWrites({} as Firestore, input, 'actor-1', 'p1');
+
+    expect(productData.sellingOptions).toEqual([]);
+    expect(productData.sellingOptions).not.toBeUndefined();
+  });
+});
 
 describe('buildProductUpdate', () => {
   it('omits sellingOptions by default even when the caller supplies it', () => {

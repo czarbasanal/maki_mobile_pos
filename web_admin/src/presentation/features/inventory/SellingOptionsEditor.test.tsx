@@ -3,11 +3,19 @@
 // — same two review-caught bugs guarded here: a cleared numeric field must
 // propagate 0 (not silently keep the stale value), and the margin segment
 // must be independently gate-able from the always-shown per-piece price.
+//
+// `error` is a required prop (Task 15 fix round 1): the host computes
+// validateSellingOptions(value) once for its own submit guard and passes the
+// result down, rather than this component recomputing it a second time. Every
+// render call below computes it the same way a real host would — directly
+// from the same `value` being rendered — so these tests still exercise real
+// validation output, not a hand-picked string.
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SellingOptionsEditor } from './SellingOptionsEditor';
+import { validateSellingOptions } from '@/domain/products/sellingOptions';
 import { formatMoney } from '@/core/utils/money';
 import type { SellingOption } from '@/domain/entities/SellingOption';
 
@@ -27,7 +35,9 @@ function tenOptions(): SellingOption[] {
  * next `value`, same as the mobile test file's StatefulBuilder harness. Tests
  * that build on more than one interaction (add-twice, clear-then-type) need
  * this — without it, the component would keep re-deriving from the same
- * stale `value` prop instead of the state a real host would maintain. */
+ * stale `value` prop instead of the state a real host would maintain.
+ * `error` is recomputed from `value` on every render, same as a real host's
+ * render-time `validateSellingOptions(sellingOptions)` call. */
 function Harness({
   initial,
   onChange,
@@ -52,25 +62,50 @@ function Harness({
       unitCost={unitCost}
       unit={unit}
       showMargin={showMargin}
+      error={validateSellingOptions(value)}
     />
   );
 }
 
 describe('SellingOptionsEditor', () => {
   it('renders one row per option', () => {
-    render(<SellingOptionsEditor value={[by3]} onChange={vi.fn()} unitCost={60} unit="pcs" />);
+    render(
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions([by3])}
+      />,
+    );
     expect(screen.getByDisplayValue('By 3')).toBeInTheDocument();
   });
 
   it('shows the derived per-piece price', () => {
-    render(<SellingOptionsEditor value={[by3]} onChange={vi.fn()} unitCost={60} unit="pcs" />);
+    render(
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions([by3])}
+      />,
+    );
     // 330 / 3 = 110/pc — a quotient nothing else on screen coincides with.
     expect(screen.getByText(/110/)).toBeInTheDocument();
   });
 
   it('adds a row with a fresh id', async () => {
     const onChange = vi.fn();
-    render(<SellingOptionsEditor value={[]} onChange={onChange} unitCost={60} unit="pcs" />);
+    render(
+      <SellingOptionsEditor
+        value={[]}
+        onChange={onChange}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions([])}
+      />,
+    );
     await userEvent.click(screen.getByRole('button', { name: /add option/i }));
     expect(onChange).toHaveBeenCalledWith([expect.objectContaining({ id: expect.any(String) })]);
   });
@@ -91,14 +126,30 @@ describe('SellingOptionsEditor', () => {
 
   it('removes a row', async () => {
     const onChange = vi.fn();
-    render(<SellingOptionsEditor value={[by3]} onChange={onChange} unitCost={60} unit="pcs" />);
+    render(
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={onChange}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions([by3])}
+      />,
+    );
     await userEvent.click(screen.getByRole('button', { name: /remove/i }));
     expect(onChange).toHaveBeenCalledWith([]);
   });
 
   it('removing the first of two rows keeps the second option — catches index/id confusion', async () => {
     const onChange = vi.fn();
-    render(<SellingOptionsEditor value={[by6, by3]} onChange={onChange} unitCost={60} unit="pcs" />);
+    render(
+      <SellingOptionsEditor
+        value={[by6, by3]}
+        onChange={onChange}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions([by6, by3])}
+      />,
+    );
     const removeButtons = screen.getAllByRole('button', { name: /remove/i });
     await userEvent.click(removeButtons[0]);
     expect(onChange).toHaveBeenCalledWith([by3]);
@@ -106,44 +157,105 @@ describe('SellingOptionsEditor', () => {
 
   it('shows the add control under the 10-option cap (9 options) — paired with the cap test below, so an always-hidden control also fails', () => {
     const nine = tenOptions().slice(0, 9);
-    render(<SellingOptionsEditor value={nine} onChange={vi.fn()} unitCost={60} unit="pcs" />);
+    render(
+      <SellingOptionsEditor
+        value={nine}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions(nine)}
+      />,
+    );
     expect(screen.getByRole('button', { name: /add option/i })).toBeInTheDocument();
   });
 
   it('hides the add control at the 10-option cap — paired with the 9-option test above, so an always-shown control also fails', () => {
-    render(<SellingOptionsEditor value={tenOptions()} onChange={vi.fn()} unitCost={60} unit="pcs" />);
+    const ten = tenOptions();
+    render(
+      <SellingOptionsEditor
+        value={ten}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions(ten)}
+      />,
+    );
     expect(screen.queryByRole('button', { name: /add option/i })).toBeNull();
   });
 
   it('shows the exact validation message for a duplicate label — catches a generic/placeholder error string', () => {
+    const dup = [by3, { ...by3, id: 'o9' }];
     render(
       <SellingOptionsEditor
-        value={[by3, { ...by3, id: 'o9' }]}
+        value={dup}
         onChange={vi.fn()}
         unitCost={60}
         unit="pcs"
+        error={validateSellingOptions(dup)}
       />,
     );
     expect(screen.getByText('Option labels must be unique — "By 3" is used twice.')).toBeInTheDocument();
   });
 
   it('shows the exact validation message for less than 1 piece', () => {
+    const zeroPieces = [{ ...by3, pieces: 0 }];
     render(
-      <SellingOptionsEditor value={[{ ...by3, pieces: 0 }]} onChange={vi.fn()} unitCost={60} unit="pcs" />,
+      <SellingOptionsEditor
+        value={zeroPieces}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions(zeroPieces)}
+      />,
     );
     expect(screen.getByText('"By 3" must cover at least 1 piece.')).toBeInTheDocument();
   });
 
   it('shows the exact validation message for a non-positive price', () => {
+    const zeroPrice = [{ ...by3, price: 0 }];
     render(
-      <SellingOptionsEditor value={[{ ...by3, price: 0 }]} onChange={vi.fn()} unitCost={60} unit="pcs" />,
+      <SellingOptionsEditor
+        value={zeroPrice}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions(zeroPrice)}
+      />,
     );
     expect(screen.getByText('"By 3" needs a price above zero.')).toBeInTheDocument();
   });
 
   it('shows no validation message for an already-valid list', () => {
-    render(<SellingOptionsEditor value={[by3]} onChange={vi.fn()} unitCost={60} unit="pcs" />);
+    render(
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error={validateSellingOptions([by3])}
+      />,
+    );
     expect(screen.queryByText(/must cover|needs a price|unique|At most/)).toBeNull();
+  });
+
+  it('renders whatever error string the host passes, verbatim — the component no longer computes its own', () => {
+    // A valid list (by3 alone has no validation error) paired with a
+    // host-supplied error proves the message comes from the prop, not from
+    // an internal recomputation — a component that ignored `error` and
+    // recomputed validateSellingOptions(value) itself would show nothing
+    // here instead.
+    render(
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        error="Host-supplied message that validateSellingOptions([by3]) would never produce"
+      />,
+    );
+    expect(
+      screen.getByText('Host-supplied message that validateSellingOptions([by3]) would never produce'),
+    ).toBeInTheDocument();
   });
 
   it('editing the label propagates the new label without minting a new id', async () => {
@@ -225,14 +337,30 @@ describe('SellingOptionsEditor', () => {
   });
 
   it('shows the margin segment alongside the per-piece price when showMargin is true', () => {
-    render(<SellingOptionsEditor value={[by3]} onChange={vi.fn()} unitCost={60} unit="pcs" showMargin />);
+    render(
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        showMargin
+        error={validateSellingOptions([by3])}
+      />,
+    );
     // 330/3 = 110/pc; (110-60)/110 = 45% margin.
     expect(screen.getByText(`${formatMoney(110)}/pc · 45% margin`)).toBeInTheDocument();
   });
 
   it('hides the margin segment when showMargin is false but keeps the per-piece price — catches gating the whole caption instead of just the cost-derived half', () => {
     render(
-      <SellingOptionsEditor value={[by3]} onChange={vi.fn()} unitCost={60} unit="pcs" showMargin={false} />,
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="pcs"
+        showMargin={false}
+        error={validateSellingOptions([by3])}
+      />,
     );
     expect(screen.getByText(`${formatMoney(110)}/pc`)).toBeInTheDocument();
     expect(screen.queryByText(/margin/)).toBeNull();
