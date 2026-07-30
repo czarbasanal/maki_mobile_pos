@@ -842,7 +842,12 @@ function snap(data: Record<string, unknown>): QueryDocumentSnapshot<DocumentData
       reorderLevel: 3,
       unit: 'pcs',
       isActive: true,
-      createdAt: { toDate: () => new Date('2026-07-29') },
+      // A plain Date — `timestamps.ts` accepts Date / Timestamp / ISO string /
+      // {seconds,nanoseconds} and nothing else, so a duck-typed
+      // `{ toDate: () => ... }` stub falls through to null and requireDate
+      // throws, failing the RED for the wrong reason. Matches every sibling
+      // converter test.
+      createdAt: new Date('2026-07-29'),
       ...data,
     }),
   } as unknown as QueryDocumentSnapshot<DocumentData>;
