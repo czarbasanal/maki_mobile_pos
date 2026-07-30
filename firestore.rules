@@ -101,11 +101,12 @@ service cloud.firestore {
       // Admin can update any product field
       allow update: if isAdmin() && isActiveUser();
 
-      // Staff can update product fields EXCEPT sku, price, cost, and costCode
-      // (SKU edits are admin-only). Unchanged values never appear in
-      // affectedKeys(), so a staff edit that leaves sku alone still passes.
+      // Staff can update product fields EXCEPT sku, price, cost, costCode, and
+      // sellingOptions (SKU edits are admin-only; selling options set prices,
+      // so they carry the same lock as price). Unchanged values never appear
+      // in affectedKeys(), so a staff edit that leaves them alone still passes.
       allow update: if hasRole('staff') && isActiveUser() &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['sku', 'price', 'cost', 'costCode']);
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['sku', 'price', 'cost', 'costCode', 'sellingOptions']);
 
       // Cashier can update name + imageUrl. Denylist is intentionally
       // limited to **non-nullable** fields (sku, costCode, cost, price,
@@ -115,10 +116,15 @@ service cloud.firestore {
       // would otherwise count their addition as a "change" and fail the
       // rule even when the cashier didn't touch them. Defense-in-depth
       // for less-critical fields (category, notes, supplier, etc.) is
-      // enforced client-side by UpdateProductUseCase.
+      // enforced client-side by UpdateProductUseCase. sellingOptions is the
+      // one exception added to the denylist despite being nullable-ish
+      // (often absent) — it sets prices, so it's locked to admin the same
+      // as price/cost/costCode; the client only writes it via
+      // toUpdateMap(includeSellingOptions: true) on the admin edit path, so
+      // it never appears in a cashier's diff unless deliberately smuggled in.
       allow update: if hasRole('cashier') && isActiveUser() &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'sku', 'costCode', 'cost', 'price', 'quantity', 'isActive'
+          'sku', 'costCode', 'cost', 'price', 'quantity', 'isActive', 'sellingOptions'
         ]);
 
       // Any valid user can update stock (quantity) during sale processing.

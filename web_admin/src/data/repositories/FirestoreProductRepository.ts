@@ -5,7 +5,6 @@ import {
   addDoc,
   collection,
   collectionGroup,
-  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -27,7 +26,6 @@ import type { Product } from '@/domain/entities';
 import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/collections';
 import { productConverter } from '@/data/converters/productConverter';
 import { toDate } from '@/data/converters/timestamps';
-import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import {
   normalizeSku,
   normalizeBarcode,
@@ -37,7 +35,7 @@ import {
   composeAutoSku,
 } from '@/domain/products/sku';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
-import { buildProductWrites, newProductId } from '@/data/products/productWrites';
+import { buildProductUpdate, buildProductWrites, newProductId } from '@/data/products/productWrites';
 import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
 import type { PriceChangeEntry } from '@/domain/products/priceChangeReport';
 import type {
@@ -134,6 +132,7 @@ export class FirestoreProductRepository implements ProductRepository {
     barcode: { old: string[]; next: string[] },
     actorId: string,
     actorName: string | null,
+    includeSellingOptions = false,
   ): Promise<void> {
     // Variation children (baseSku == old) must be read OUTSIDE the transaction
     // (Firestore transactions can't run queries) — only needed on a SKU rename.
@@ -177,11 +176,12 @@ export class FirestoreProductRepository implements ProductRepository {
       ) {
         throw new DuplicateBarcodeError();
       }
-      // Product doc: reuse updateData so searchKeywords rebuild + whitelist
-      // apply. input already carries the new sku + barcodes from the form patch.
+      // Product doc: reuse buildProductUpdate so searchKeywords rebuild +
+      // the value-field whitelist apply. input already carries the new sku +
+      // barcodes from the form patch.
       tx.update(
         doc(this.db, FirestoreCollections.products, id),
-        this.updateData(input, actorId),
+        buildProductUpdate(input, actorId, includeSellingOptions),
       );
       if (sku.changed) {
         for (const child of children!.docs) {
@@ -337,39 +337,18 @@ export class FirestoreProductRepository implements ProductRepository {
   /** Cap on claim-read scan attempts inside the auto-SKU candidate loop. */
   private static readonly autoSkuScanCap = 25;
 
-  async update(id: string, input: ProductUpdateInput, actorId: string): Promise<void> {
+  async update(
+    id: string,
+    input: ProductUpdateInput,
+    actorId: string,
+    includeSellingOptions = false,
+  ): Promise<void> {
     await updateDoc(
       doc(this.db, FirestoreCollections.products, id),
-      this.updateData(input, actorId),
+      buildProductUpdate(input, actorId, includeSellingOptions),
     );
   }
 
-  private updateData(input: ProductUpdateInput, actorId: string) {
-    const data: Record<string, unknown> = {
-      updatedBy: actorId,
-      updatedAt: serverTimestamp(),
-    };
-    const valueFields = [
-      'sku', 'name', 'costCode', 'cost', 'price', 'quantity', 'reorderLevel',
-      'unit', 'supplierId', 'supplierName', 'isActive', 'baseSku',
-      'variationNumber', 'barcodes', 'category', 'imageUrl', 'notes', 'updatedByName',
-    ] as const;
-    for (const key of valueFields) {
-      if (input[key] !== undefined) data[key] = input[key];
-    }
-    // Drop the legacy singular `barcode` whenever we write the array form.
-    if (input.barcodes !== undefined) data.barcode = deleteField();
-    // Keywords only need rebuilding if the name changes (import never does this;
-    // a future inventory edit might).
-    if (input.name !== undefined) {
-      data.searchKeywords = generateSearchKeywords([
-        input.sku ?? input.name,
-        input.name,
-        input.category ?? null,
-      ]);
-    }
-    return data;
-  }
   async adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void> {
     await updateDoc(doc(this.db, FirestoreCollections.products, id), {
       quantity: increment(delta),

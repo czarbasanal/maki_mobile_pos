@@ -102,6 +102,7 @@ void main() {
           product: any(named: 'product'),
           updatedBy: any(named: 'updatedBy'),
           updatedByName: any(named: 'updatedByName'),
+          includeSellingOptions: any(named: 'includeSellingOptions'),
         )).thenAnswer(
         (inv) async => inv.namedArguments[#product] as ProductEntity);
     when(() => logRepo.logActivity(any()))
@@ -225,6 +226,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       expect((captured.single as ProductEntity).imageUrl,
           'https://fake.test/p-1/main.jpg');
@@ -254,6 +256,7 @@ void main() {
             product: any(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           ));
     });
 
@@ -280,6 +283,7 @@ void main() {
             product: any(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           ));
     });
   });

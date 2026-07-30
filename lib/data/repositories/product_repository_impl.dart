@@ -506,6 +506,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required ProductEntity product,
     required String updatedBy,
     String? updatedByName,
+    bool includeSellingOptions = false,
   }) async {
     try {
       // Capture prior cost/price before the update so we can detect a change
@@ -516,6 +517,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final updateMap = productModel.toUpdateMap(
         updatedBy,
         updatedByDisplayName: updatedByName,
+        includeSellingOptions: includeSellingOptions,
       );
 
       final skuChanged = prior != null && prior.sku != product.sku;

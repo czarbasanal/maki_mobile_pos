@@ -125,6 +125,7 @@ void main() {
           product: any(named: 'product'),
           updatedBy: any(named: 'updatedBy'),
           updatedByName: any(named: 'updatedByName'),
+          includeSellingOptions: any(named: 'includeSellingOptions'),
         )).thenAnswer(
         (inv) async => inv.namedArguments[#product] as ProductEntity);
     when(() => logRepo.logActivity(any()))

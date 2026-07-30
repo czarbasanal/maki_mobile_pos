@@ -377,6 +377,62 @@ describe("/products", () => {
     );
   });
 
+  // sellingOptions sets prices (a By-6 / By-3 pack price), so it carries the
+  // same admin-only lock as price/cost/costCode. The p-1 seed above has NO
+  // sellingOptions field — that's the load-bearing case: a staff/cashier
+  // client that writes every product field (ProductModel.toUpdateMap /
+  // productWrites.ts) must not accidentally ADD the key and trip the new
+  // denylist entry on an edit they're otherwise entitled to make.
+  const sellingOptionsPatch = {
+    sellingOptions: [{ id: "o1", label: "By 6", pieces: 6, price: 600 }],
+  };
+
+  it("admin can set sellingOptions", async () => {
+    await assertSucceeds(
+      as("admin").collection("products").doc("p-1").update(sellingOptionsPatch)
+    );
+  });
+
+  it("staff CANNOT set sellingOptions", async () => {
+    await assertFails(
+      as("staff").collection("products").doc("p-1").update(sellingOptionsPatch)
+    );
+  });
+
+  it("cashier CANNOT set sellingOptions", async () => {
+    await assertFails(
+      as("cashier").collection("products").doc("p-1").update(sellingOptionsPatch)
+    );
+  });
+
+  it("staff can still edit permitted fields on a product with no sellingOptions field", async () => {
+    await assertSucceeds(
+      as("staff").collection("products").doc("p-1").update({
+        name: "Coke Renamed",
+        reorderLevel: 5,
+      })
+    );
+  });
+
+  it("cashier can still edit name on a product with no sellingOptions field", async () => {
+    await assertSucceeds(
+      as("cashier").collection("products").doc("p-1").update({
+        name: "Coke Renamed",
+      })
+    );
+  });
+
+  it("any valid user can still deduct stock during a sale (sellingOptions lock doesn't touch the quantity-update rule)", async () => {
+    await assertSucceeds(
+      as("cashier").collection("products").doc("p-1").update({
+        quantity: 90,
+        updatedAt: new Date(),
+        updatedBy: USERS.cashier.uid,
+        updatedByName: "cashier user",
+      })
+    );
+  });
+
   it("only admin can read price_history", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx

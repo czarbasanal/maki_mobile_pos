@@ -43,7 +43,18 @@ export interface ProductRepository {
    * byte-identical to before this param existed.
    */
   create(input: ProductCreateInput, actorId: string, autoSkuCategoryCode?: string): Promise<Product>;
-  update(id: string, input: ProductUpdateInput, actorId: string): Promise<void>;
+  /**
+   * `includeSellingOptions`: must stay false for non-admin writers.
+   * sellingOptions sets prices and is admin-only in firestore.rules, so the
+   * write payload only includes it when the caller has confirmed the actor
+   * is an admin (see useProductMutations.ts). Defaults to false.
+   */
+  update(
+    id: string,
+    input: ProductUpdateInput,
+    actorId: string,
+    includeSellingOptions?: boolean,
+  ): Promise<void>;
   adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void>;
   setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;
   deactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
@@ -62,6 +73,7 @@ export interface ProductRepository {
     barcode: { old: string[]; next: string[] },
     actorId: string,
     actorName: string | null,
+    includeSellingOptions?: boolean,
   ): Promise<void>;
   barcodeExists(barcode: string, excludeProductId?: string): Promise<boolean>;
 }

@@ -142,6 +142,9 @@ class UpdateProductUseCase {
         product: productToSave,
         updatedBy: actor.id,
         updatedByName: actor.displayName,
+        // sellingOptions sets prices, so it's locked to the same tier as
+        // price/cost/costCode — hasFullEdit is exactly that admin check.
+        includeSellingOptions: hasFullEdit,
       );
 
       await _logger.log(

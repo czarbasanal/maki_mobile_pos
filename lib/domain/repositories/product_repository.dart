@@ -117,12 +117,18 @@ abstract class ProductRepository {
   /// [product] - The product with updated values
   /// [updatedBy] - The ID of the user making the update
   /// [updatedByName] - Display name of the editor (denormalized for audit info).
+  /// [includeSellingOptions] - Must stay false for non-admin writers.
+  /// Selling options set prices and are admin-only in firestore.rules; the
+  /// underlying write map includes every product field, so writing this key
+  /// on a doc that lacks it would get an otherwise-legitimate staff/cashier
+  /// edit rejected. Callers must only pass true on a confirmed admin path.
   ///
   /// Returns the updated product.
   Future<ProductEntity> updateProduct({
     required ProductEntity product,
     required String updatedBy,
     String? updatedByName,
+    bool includeSellingOptions = false,
   });
 
   /// Updates product stock quantity.

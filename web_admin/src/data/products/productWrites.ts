@@ -1,12 +1,16 @@
 import {
   collection,
+  deleteField,
   doc,
   serverTimestamp,
   type DocumentData,
   type DocumentReference,
   type Firestore,
 } from 'firebase/firestore';
-import type { ProductCreateInput } from '@/domain/repositories/ProductRepository';
+import type {
+  ProductCreateInput,
+  ProductUpdateInput,
+} from '@/domain/repositories/ProductRepository';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import { isValidSku, normalizeSku } from '@/domain/products/sku';
@@ -83,4 +87,52 @@ export function buildProductWrites(
 /** Generates a fresh product doc id (used to allocate ids before a transaction). */
 export function newProductId(db: Firestore): string {
   return doc(collection(db, FirestoreCollections.products)).id;
+}
+
+/**
+ * Builds the update payload for `products/{id}` — the web mirror of
+ * `ProductModel.toUpdateMap` on mobile. Shared by `FirestoreProductRepository`'s
+ * `update` and `updateProductWithClaims` so the field-shape lives in one place.
+ *
+ * [includeSellingOptions] must stay false for non-admin writers. Selling
+ * options set prices and are admin-only in firestore.rules; because this map
+ * only writes fields the caller actually supplied (`input[key] !== undefined`),
+ * a doc missing `sellingOptions` would have the key ADDED the moment any
+ * caller passes it, landing in `diff().affectedKeys()` and getting an
+ * otherwise-legitimate staff/cashier edit rejected — same hazard the mobile
+ * `toUpdateMap` doc comment and the cashier rules-comment both describe.
+ * Callers must only pass true on a confirmed admin path.
+ */
+export function buildProductUpdate(
+  input: ProductUpdateInput,
+  actorId: string,
+  includeSellingOptions = false,
+): Record<string, unknown> {
+  const data: Record<string, unknown> = {
+    updatedBy: actorId,
+    updatedAt: serverTimestamp(),
+  };
+  const valueFields = [
+    'sku', 'name', 'costCode', 'cost', 'price', 'quantity', 'reorderLevel',
+    'unit', 'supplierId', 'supplierName', 'isActive', 'baseSku',
+    'variationNumber', 'barcodes', 'category', 'imageUrl', 'notes', 'updatedByName',
+  ] as const;
+  for (const key of valueFields) {
+    if (input[key] !== undefined) data[key] = input[key];
+  }
+  if (includeSellingOptions && input.sellingOptions !== undefined) {
+    data.sellingOptions = input.sellingOptions;
+  }
+  // Drop the legacy singular `barcode` whenever we write the array form.
+  if (input.barcodes !== undefined) data.barcode = deleteField();
+  // Keywords only need rebuilding if the name changes (import never does this;
+  // a future inventory edit might).
+  if (input.name !== undefined) {
+    data.searchKeywords = generateSearchKeywords([
+      input.sku ?? input.name,
+      input.name,
+      input.category ?? null,
+    ]);
+  }
+  return data;
 }
