@@ -821,6 +821,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 unit: _unitController.text.trim().isEmpty
                                     ? 'pcs'
                                     : _unitController.text.trim(),
+                                // Same gate _marginLine() uses just above —
+                                // the margin % is cost-derived and must stay
+                                // behind the reveal toggle even though the
+                                // editor itself (authoring rows) doesn't.
+                                showMargin: showCostField,
                               ),
                             ],
                           ]),

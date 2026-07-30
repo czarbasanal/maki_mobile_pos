@@ -581,6 +581,49 @@ void main() {
     });
   });
 
+  group('ProductFormScreen — selling options margin gating', () {
+    // Closes the gap the editor's own unit tests can't reach: a correct
+    // SellingOptionsEditor.showMargin implementation is worthless if this
+    // screen passes the wrong value in. Must mirror _marginLine()'s own
+    // gate (`showCostField`), not just `canViewCost` — reusing `canViewCost`
+    // here would (wrongly) show the margin even before the cost-reveal
+    // toggle is on.
+    testWidgets(
+        'shows the selling-option margin while creating (cost is auto-shown '
+        'for a new product)', (tester) async {
+      await pumpCreate(tester, UserRole.admin);
+      await tester.enterText(
+          find.byKey(const Key('product-cost-field')), '60');
+      await tester.pump();
+
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+      await tester.enterText(
+          find.byKey(const Key('selling-option-price-0')), '110');
+      await tester.pump();
+
+      // 110/1pc, unitCost 60 → (110-60)/110 = 45%.
+      expect(find.textContaining('45% margin'), findsOneWidget);
+    });
+
+    testWidgets(
+        'hides the selling-option margin while editing before cost is '
+        'revealed, but keeps the per-piece price', (tester) async {
+      await pumpForm(tester, UserRole.admin);
+
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+      await tester.enterText(
+          find.byKey(const Key('selling-option-price-0')), '110');
+      await tester.pump();
+
+      expect(find.textContaining('₱110.00/pc'), findsOneWidget);
+      expect(find.textContaining('margin'), findsNothing);
+    });
+  });
+
   group('ProductFormScreen — selling options save gating (create)', () {
     // Auto-generate SKU is ON by default and no categories are wired up in
     // this harness, so the SKU field stays disabled/empty until we switch to

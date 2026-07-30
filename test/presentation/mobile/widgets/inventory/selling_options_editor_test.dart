@@ -15,6 +15,7 @@ void main() {
     required List<SellingOptionEntity> initial,
     required ValueChanged<List<SellingOptionEntity>> onChanged,
     double unitCost = 60,
+    bool showMargin = true,
   }) {
     var current = initial;
     return MaterialApp(
@@ -35,6 +36,7 @@ void main() {
               },
               unitCost: unitCost,
               unit: 'pcs',
+              showMargin: showMargin,
             ),
           ),
         ),
@@ -45,9 +47,14 @@ void main() {
   /// Simple pump for tests that only assert on rendered state, not on what
   /// gets passed to onChanged.
   Future<void> pump(WidgetTester tester, List<SellingOptionEntity> initial,
-      {double unitCost = 60}) async {
+      {double unitCost = 60, bool showMargin = true}) async {
     await tester.pumpWidget(
-      harness(initial: initial, onChanged: (_) {}, unitCost: unitCost),
+      harness(
+        initial: initial,
+        onChanged: (_) {},
+        unitCost: unitCost,
+        showMargin: showMargin,
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -240,6 +247,68 @@ void main() {
     expect(captured!.single.price, 360);
     // 360 / 3 = 120/pc — distinct from the original 110/pc.
     expect(find.textContaining('₱120.00/pc'), findsOneWidget);
+  });
+
+  testWidgets(
+      'shows the margin segment when showMargin is true, alongside the '
+      'per-piece price', (tester) async {
+    await pump(tester, [by3], showMargin: true);
+    expect(find.text('₱110.00/pc · 45% margin'), findsOneWidget);
+  });
+
+  testWidgets(
+      'hides the margin segment when showMargin is false, but keeps the '
+      'per-piece price — catches gating the whole caption (or nothing at '
+      'all) instead of just the cost-derived half', (tester) async {
+    await pump(tester, [by3], showMargin: false);
+    expect(find.text('₱110.00/pc'), findsOneWidget);
+    expect(find.textContaining('margin'), findsNothing);
+  });
+
+  testWidgets(
+      'clearing the pieces field zeroes pieces (not the stale value) and '
+      'surfaces the "must cover" error — catches silently keeping the old '
+      'value when parsing fails', (tester) async {
+    List<SellingOptionEntity>? captured;
+    await tester.pumpWidget(harness(
+      initial: [by3],
+      onChanged: (next) => captured = next,
+    ));
+    await tester.enterText(
+      find.byKey(const Key('selling-option-pieces-0')),
+      '',
+    );
+    await tester.pumpAndSettle();
+
+    expect(captured, isNotNull);
+    expect(captured!.single.pieces, 0);
+    expect(
+      find.textContaining('must cover at least 1 piece'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'clearing the price field zeroes price (not the stale value) and '
+      'surfaces the "needs a price" error — catches silently keeping the '
+      'old value when parsing fails', (tester) async {
+    List<SellingOptionEntity>? captured;
+    await tester.pumpWidget(harness(
+      initial: [by3],
+      onChanged: (next) => captured = next,
+    ));
+    await tester.enterText(
+      find.byKey(const Key('selling-option-price-0')),
+      '',
+    );
+    await tester.pumpAndSettle();
+
+    expect(captured, isNotNull);
+    expect(captured!.single.price, 0);
+    expect(
+      find.textContaining('needs a price above zero'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(

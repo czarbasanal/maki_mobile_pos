@@ -30,6 +30,7 @@ class SellingOptionsEditor extends StatefulWidget {
     required this.onChanged,
     required this.unitCost,
     required this.unit,
+    this.showMargin = true,
   });
 
   /// The product's current selling options, in display order.
@@ -45,6 +46,17 @@ class SellingOptionsEditor extends StatefulWidget {
   /// The product's stock unit (e.g. "pcs"), shown as the pieces field's
   /// suffix so the count reads unambiguously.
   final String unit;
+
+  /// Whether the cost-derived "% margin" segment of each row's caption may
+  /// be shown. The per-piece price itself is never cost-derived and is
+  /// always shown regardless of this flag.
+  ///
+  /// Callers should pass exactly the same condition the host form already
+  /// uses to gate its own cost-derived margin display (`_marginLine`'s
+  /// `showCostField`) — an admin who has chosen to keep the raw cost hidden
+  /// this session can back-solve `unitCost` from the per-piece price and a
+  /// visible margin percentage, defeating that same reveal toggle.
+  final bool showMargin;
 
   @override
   State<SellingOptionsEditor> createState() => _SellingOptionsEditorState();
@@ -116,6 +128,9 @@ class _SellingOptionsEditorState extends State<SellingOptionsEditor> {
   @override
   Widget build(BuildContext context) {
     final error = validateSellingOptions(widget.value);
+    // >= rather than == : a deliberate defensive superset in case the list
+    // ever arrives already over the cap (e.g. legacy data) — the add button
+    // should stay hidden rather than allow piling on more.
     final atCap = widget.value.length >= kMaxSellingOptions;
 
     return Column(
@@ -130,6 +145,7 @@ class _SellingOptionsEditorState extends State<SellingOptionsEditor> {
             controllers: _rows[i],
             unitCost: widget.unitCost,
             unit: widget.unit,
+            showMargin: widget.showMargin,
             onLabelChanged: (v) => _updateAt(i, (o) => o.copyWith(label: v)),
             onPiecesChanged: (v) => _updateAt(i, (o) => o.copyWith(pieces: v)),
             onPriceChanged: (v) => _updateAt(i, (o) => o.copyWith(price: v)),
@@ -202,6 +218,7 @@ class _OptionRow extends StatelessWidget {
     required this.controllers,
     required this.unitCost,
     required this.unit,
+    required this.showMargin,
     required this.onLabelChanged,
     required this.onPiecesChanged,
     required this.onPriceChanged,
@@ -213,6 +230,7 @@ class _OptionRow extends StatelessWidget {
   final _RowControllers controllers;
   final double unitCost;
   final String unit;
+  final bool showMargin;
   final ValueChanged<String> onLabelChanged;
   final ValueChanged<int> onPiecesChanged;
   final ValueChanged<double> onPriceChanged;
@@ -280,8 +298,15 @@ class _OptionRow extends StatelessWidget {
                     suffixText: unit,
                   ),
                   onChanged: (v) {
-                    final parsed = int.tryParse(v.trim());
-                    if (parsed != null) onPiecesChanged(parsed);
+                    // A cleared field must still round-trip through
+                    // onChanged (as 0, which validateSellingOptions rejects)
+                    // rather than being skipped — otherwise the entity keeps
+                    // its last valid value while the field shows empty, and
+                    // an admin who thinks they cleared it silently saves the
+                    // stale number. Mirrors the label field's unconditional
+                    // propagation just above.
+                    final parsed = int.tryParse(v.trim()) ?? 0;
+                    onPiecesChanged(parsed);
                   },
                 ),
               ),
@@ -301,8 +326,10 @@ class _OptionRow extends StatelessWidget {
                     prefixText: '${AppConstants.currencySymbol} ',
                   ),
                   onChanged: (v) {
-                    final parsed = double.tryParse(v.trim());
-                    if (parsed != null) onPriceChanged(parsed);
+                    // Same reasoning as the pieces field above: a clear must
+                    // zero the entity, not silently keep the stale price.
+                    final parsed = double.tryParse(v.trim()) ?? 0;
+                    onPriceChanged(parsed);
                   },
                 ),
               ),
@@ -310,8 +337,15 @@ class _OptionRow extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            '${option.pricePerPiece.toCurrency()}/pc · '
-            '${_marginPercent.toStringAsFixed(0)}% margin',
+            // The per-piece price is arithmetic on the option's own fields,
+            // never on unitCost — always shown. The margin half IS
+            // cost-derived (unitCost is back-solvable from perPiece + this
+            // percentage), so it's gated on [showMargin], mirroring the
+            // host form's own `showCostField` gate on its margin line.
+            showMargin
+                ? '${option.pricePerPiece.toCurrency()}/pc · '
+                    '${_marginPercent.toStringAsFixed(0)}% margin'
+                : '${option.pricePerPiece.toCurrency()}/pc',
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ],
