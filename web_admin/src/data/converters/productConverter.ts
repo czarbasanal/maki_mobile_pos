@@ -5,13 +5,13 @@ import type {
   FirestoreDataConverter,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import type { Product } from '@/domain/entities';
+import type { Product, SellingOption } from '@/domain/entities';
 import { parseBarcodes } from '@/domain/products/barcodes';
 import { parseSellingOptions, serializeSellingOptions } from '@/domain/products/sellingOptions';
 import { requireDate, toDate } from './timestamps';
 
 export const productConverter: FirestoreDataConverter<Product> = {
-  toFirestore(product: Product) {
+  toFirestore(product) {
     return {
       sku: product.sku,
       name: product.name,
@@ -32,7 +32,9 @@ export const productConverter: FirestoreDataConverter<Product> = {
       baseSku: product.baseSku,
       variationNumber: product.variationNumber,
       barcodes: product.barcodes,
-      sellingOptions: serializeSellingOptions(product.sellingOptions),
+      // Cast — toFirestore receives WithFieldValue<T> by default, but we
+      // never feed FieldValue placeholders through this code path.
+      sellingOptions: serializeSellingOptions(product.sellingOptions as SellingOption[]),
       category: product.category,
       imageUrl: product.imageUrl,
       notes: product.notes,
