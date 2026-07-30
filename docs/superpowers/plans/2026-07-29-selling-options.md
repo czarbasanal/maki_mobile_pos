@@ -1855,7 +1855,9 @@ void main() {
 
   testWidgets('shows on-hand pieces in the header', (tester) async {
     await open(tester, product([by3]), onResult: (_) {});
-    expect(find.textContaining('12'), findsWidgets);
+    // findsOneWidget, not findsWidgets — the loose form would still pass if the
+    // header rendered twice, which is exactly the bug worth catching here.
+    expect(find.textContaining('12'), findsOneWidget);
   });
 
   testWidgets('returns the tapped option', (tester) async {
