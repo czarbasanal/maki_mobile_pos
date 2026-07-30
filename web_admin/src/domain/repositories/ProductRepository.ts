@@ -21,6 +21,14 @@ export interface PriceHistoryEntry {
   /** Free-text context; receiving entries carry the `RCV-…` id. Optional —
    *  web `recordPriceChange` doesn't write it, but mobile-written docs have it. */
   note?: string | null;
+  /** The selling option this entry is about. Absent (or null) means "base
+   *  price" — which is every entry recorded before this feature existed, so
+   *  no backfill is required. */
+  optionId?: string | null;
+  /** Denormalized option label at the time of the change. */
+  optionLabel?: string | null;
+  /** Denormalized option piece count at the time of the change. */
+  optionPieces?: number | null;
 }
 
 export interface ProductRepository {

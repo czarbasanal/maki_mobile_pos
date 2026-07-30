@@ -72,3 +72,77 @@ List<Map<String, dynamic>> sellingOptionsToList(
           })
       .toList();
 }
+
+/// One price_history entry to write for a selling-option change.
+class SellingOptionHistoryEvent {
+  const SellingOptionHistoryEvent({
+    required this.optionId,
+    required this.optionLabel,
+    required this.optionPieces,
+    required this.price,
+    required this.cost,
+    required this.reason,
+  });
+
+  final String optionId;
+  final String optionLabel;
+  final int optionPieces;
+
+  /// Price of the whole set.
+  final double price;
+
+  /// Cost of the whole set — pieces x unit cost — so the report's margin
+  /// column compares like with like against [price].
+  final double cost;
+
+  final String reason;
+}
+
+/// One centavo. Matches the threshold priceHistoryReason-style comparisons
+/// already use elsewhere (see `price_history_view.dart`), so a rounding
+/// wobble never writes a history entry.
+const double _historyEps = 0.01;
+
+/// Diffs a product's selling options and returns the price_history entries to
+/// write. Label-only renames produce nothing — a rename isn't a price event.
+List<SellingOptionHistoryEvent> sellingOptionHistoryEvents(
+  List<SellingOptionEntity> before,
+  List<SellingOptionEntity> after,
+  double unitCost,
+) {
+  final beforeById = {for (final o in before) o.id: o};
+  final afterById = {for (final o in after) o.id: o};
+  final events = <SellingOptionHistoryEvent>[];
+
+  SellingOptionHistoryEvent event(SellingOptionEntity o, String reason) {
+    return SellingOptionHistoryEvent(
+      optionId: o.id,
+      optionLabel: o.label,
+      optionPieces: o.pieces,
+      price: o.price,
+      cost: o.pieces * unitCost,
+      reason: reason,
+    );
+  }
+
+  for (final o in after) {
+    final prior = beforeById[o.id];
+    if (prior == null) {
+      events.add(event(o, 'Option added'));
+      continue;
+    }
+    final piecesChanged = prior.pieces != o.pieces;
+    final priceChanged = (prior.price - o.price).abs() > _historyEps;
+    if (piecesChanged) {
+      events.add(event(o, 'Option changed'));
+    } else if (priceChanged) {
+      events.add(event(o, 'Price update'));
+    }
+  }
+
+  for (final o in before) {
+    if (!afterById.containsKey(o.id)) events.add(event(o, 'Option removed'));
+  }
+
+  return events;
+}

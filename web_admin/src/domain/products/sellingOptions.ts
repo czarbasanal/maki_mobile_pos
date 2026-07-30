@@ -59,3 +59,64 @@ export function serializeSellingOptions(options: SellingOption[]): object[] {
     price: o.price,
   }));
 }
+
+/** One price_history entry to write for a selling-option change. */
+export interface SellingOptionHistoryEvent {
+  optionId: string;
+  optionLabel: string;
+  optionPieces: number;
+  /** Price of the whole set. */
+  price: number;
+  /** Cost of the whole set — pieces x unit cost — so the report's margin
+   *  column compares like with like against `price`. */
+  cost: number;
+  reason: string;
+}
+
+/** One centavo. Matches the threshold `priceHistoryReason` already uses, so a
+ *  rounding wobble never writes a history entry. */
+const HISTORY_EPS = 0.01;
+
+/**
+ * Diffs a product's selling options and returns the price_history entries to
+ * write. Label-only renames produce nothing — a rename isn't a price event.
+ */
+export function sellingOptionHistoryEvents(
+  before: SellingOption[],
+  after: SellingOption[],
+  unitCost: number,
+): SellingOptionHistoryEvent[] {
+  const beforeById = new Map(before.map((o) => [o.id, o]));
+  const afterById = new Map(after.map((o) => [o.id, o]));
+  const events: SellingOptionHistoryEvent[] = [];
+
+  const toEvent = (o: SellingOption, reason: string): SellingOptionHistoryEvent => ({
+    optionId: o.id,
+    optionLabel: o.label,
+    optionPieces: o.pieces,
+    price: o.price,
+    cost: o.pieces * unitCost,
+    reason,
+  });
+
+  for (const o of after) {
+    const prior = beforeById.get(o.id);
+    if (prior === undefined) {
+      events.push(toEvent(o, 'Option added'));
+      continue;
+    }
+    const piecesChanged = prior.pieces !== o.pieces;
+    const priceChanged = Math.abs(prior.price - o.price) > HISTORY_EPS;
+    if (piecesChanged) {
+      events.push(toEvent(o, 'Option changed'));
+    } else if (priceChanged) {
+      events.push(toEvent(o, 'Price update'));
+    }
+  }
+
+  for (const o of before) {
+    if (!afterById.has(o.id)) events.push(toEvent(o, 'Option removed'));
+  }
+
+  return events;
+}

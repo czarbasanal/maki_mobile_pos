@@ -3,6 +3,7 @@ import type { SellingOption } from '../entities/SellingOption';
 import { sellingOptionPricePerPiece } from '../entities/SellingOption';
 import {
   parseSellingOptions,
+  sellingOptionHistoryEvents,
   serializeSellingOptions,
   validateSellingOptions,
 } from './sellingOptions';
@@ -140,4 +141,98 @@ describe('parseSellingOptions', () => {
       expect(parsed).toEqual([opt('a', 'By 6', 6, 0)]);
     });
   });
+});
+
+describe('sellingOptionHistoryEvents', () => {
+  const by3 = opt('o2', 'By 3', 3, 330);
+
+  it('no change yields no events', () => {
+    expect(sellingOptionHistoryEvents([by3], [by3], 60)).toEqual([]);
+  });
+
+  it('an added option logs Option added with its set cost', () => {
+    const events = sellingOptionHistoryEvents([], [by3], 60);
+    expect(events).toHaveLength(1);
+    expect(events[0].reason).toBe('Option added');
+    expect(events[0].price).toBe(330);
+    expect(events[0].cost).toBe(180);
+    expect(events[0].optionPieces).toBe(3);
+  });
+
+  it('a removed option logs Option removed with its last known price', () => {
+    const events = sellingOptionHistoryEvents([by3], [], 60);
+    expect(events[0].reason).toBe('Option removed');
+    expect(events[0].price).toBe(330);
+    expect(events[0].optionLabel).toBe('By 3');
+  });
+
+  it('a price-only change logs Price update', () => {
+    const events = sellingOptionHistoryEvents([by3], [{ ...by3, price: 360 }], 60);
+    expect(events[0].reason).toBe('Price update');
+    expect(events[0].price).toBe(360);
+  });
+
+  it('a piece-count change logs Option changed', () => {
+    const events = sellingOptionHistoryEvents([by3], [{ ...by3, pieces: 4, price: 440 }], 60);
+    expect(events[0].reason).toBe('Option changed');
+    expect(events[0].optionPieces).toBe(4);
+    expect(events[0].cost).toBe(240);
+  });
+
+  it(
+    'a piece-count change with the SAME price still logs Option changed ' +
+      '(not Price update, not silence)',
+    () => {
+      const events = sellingOptionHistoryEvents([by3], [{ ...by3, pieces: 4 }], 60);
+      expect(events[0].reason).toBe('Option changed');
+      expect(events[0].price).toBe(330);
+      expect(events[0].cost).toBe(240);
+    },
+  );
+
+  it('a label-only rename logs nothing', () => {
+    const events = sellingOptionHistoryEvents([by3], [{ ...by3, label: 'Half box' }], 60);
+    expect(events).toEqual([]);
+  });
+
+  it('sub-centavo price drift logs nothing', () => {
+    const events = sellingOptionHistoryEvents([by3], [{ ...by3, price: 330.005 }], 60);
+    expect(events).toEqual([]);
+  });
+
+  it('handles several options changing at once', () => {
+    const by6 = opt('o1', 'By 6', 6, 600);
+    const events = sellingOptionHistoryEvents([by6, by3], [{ ...by6, price: 650 }], 60);
+    expect(new Set(events.map((e) => e.reason))).toEqual(new Set(['Price update', 'Option removed']));
+  });
+
+  it(
+    'a single call can produce every reason at once, and an unchanged ' +
+      'option among the mix still produces nothing',
+    () => {
+      const a = opt('a', 'A', 2, 200); // unchanged
+      const b = opt('b', 'B', 3, 300); // price-only change
+      const c = opt('c', 'C', 4, 400); // pieces change (w/ price)
+      const e = opt('e', 'E', 5, 500); // removed
+
+      const events = sellingOptionHistoryEvents(
+        [a, b, c, e],
+        [a, { ...b, price: 330 }, { ...c, pieces: 6, price: 600 }, opt('d', 'D', 1, 100)],
+        10,
+      );
+
+      const byOptionId = Object.fromEntries(events.map((ev) => [ev.optionId, ev.reason]));
+      expect(byOptionId).toEqual({
+        b: 'Price update',
+        c: 'Option changed',
+        d: 'Option added',
+        e: 'Option removed',
+      });
+      // 'a' is absent entirely — no event for the unchanged option.
+      expect(Object.prototype.hasOwnProperty.call(byOptionId, 'a')).toBe(false);
+
+      const cEvent = events.find((ev) => ev.optionId === 'c')!;
+      expect(cEvent.cost).toBe(60); // 6 pieces * 10 unit cost, not 10 itself.
+    },
+  );
 });

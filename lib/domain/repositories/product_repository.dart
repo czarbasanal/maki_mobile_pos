@@ -305,6 +305,18 @@ class PriceHistoryEntry {
   final String? reason;
   final String? note;
 
+  /// The selling option this entry is about, or null for a base price/cost
+  /// entry — which is every entry recorded before this feature existed, so
+  /// absent means "base price" with no backfill required.
+  final String? optionId;
+
+  /// Denormalized option label at the time of the change, so the report can
+  /// show it without a join back to the (possibly since-edited) product.
+  final String? optionLabel;
+
+  /// Denormalized option piece count at the time of the change.
+  final int? optionPieces;
+
   const PriceHistoryEntry({
     required this.id,
     required this.price,
@@ -313,6 +325,9 @@ class PriceHistoryEntry {
     required this.changedBy,
     this.reason,
     this.note,
+    this.optionId,
+    this.optionLabel,
+    this.optionPieces,
   });
 }
 
