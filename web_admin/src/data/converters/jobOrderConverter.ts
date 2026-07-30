@@ -43,10 +43,10 @@ export function parseJobOrderItems(value: unknown): SaleItem[] {
       quantity: Number(m.quantity ?? 0),
       discountValue: Number(m.discountValue ?? 0),
       unit: typeof m.unit === 'string' ? m.unit : 'pcs',
-      optionId: (m.optionId as string | undefined) ?? null,
-      optionLabel: (m.optionLabel as string | undefined) ?? null,
-      optionPieces: (m.optionPieces as number | undefined) ?? null,
-      optionPrice: (m.optionPrice as number | undefined) ?? null,
+      optionId: typeof m.optionId === 'string' ? m.optionId : null,
+      optionLabel: typeof m.optionLabel === 'string' ? m.optionLabel : null,
+      optionPieces: m.optionPieces == null ? null : Number(m.optionPieces),
+      optionPrice: m.optionPrice == null ? null : Number(m.optionPrice),
     };
   });
 }

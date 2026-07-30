@@ -42,6 +42,23 @@ describe('SaleItem option helpers', () => {
     expect(saleItemHasOption(plain)).toBe(false);
     expect(saleItemQuantityStep(plain)).toBe(1);
   });
+
+  it('truncates a non-exact multiple instead of returning a fraction', () => {
+    // 7 / 3 = 2.333...; a plain `/` would return that fraction. Only a
+    // truncating division (Dart's `~/`, matched here by Math.floor) gives 2.
+    const sevenPieces = { ...withOption, quantity: 7 };
+    expect(saleItemOptionSets(sevenPieces)).toBe(2);
+  });
+
+  it('treats optionPieces: 0 as no option, not a division by zero', () => {
+    // optionId is still set here, so this only passes if hasOption's third
+    // clause (optionPieces! > 0) is actually checked — dropping it would
+    // make this `true` (and optionSets a division-by-zero Infinity/NaN
+    // instead of null).
+    const zeroPieces = { ...withOption, optionPieces: 0 };
+    expect(saleItemHasOption(zeroPieces)).toBe(false);
+    expect(saleItemOptionSets(zeroPieces)).toBeNull();
+  });
 });
 
 describe('saleItemConverter option fields', () => {
@@ -68,5 +85,16 @@ describe('jobOrderConverter option fields', () => {
     expect(back.optionLabel).toBe('By 3');
     expect(back.optionPieces).toBe(3);
     expect(saleItemOptionSets(back)).toBe(2);
+  });
+
+  it('reads a legacy job-order item with no option fields as nulls', () => {
+    const [back] = parseJobOrderItems([
+      { id: 'i2', productId: 'p2', sku: 'XYZ', name: 'Old Item', unitPrice: 50, unitCost: 20, quantity: 3, discountValue: 0, unit: 'pcs' },
+    ]);
+    expect(back.optionId).toBeNull();
+    expect(back.optionLabel).toBeNull();
+    expect(back.optionPieces).toBeNull();
+    expect(back.optionPrice).toBeNull();
+    expect(saleItemHasOption(back)).toBe(false);
   });
 });
