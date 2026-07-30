@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/job_order_number.dart';
+import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/discount_input_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/cart_item_tile.dart';
@@ -21,6 +22,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.d
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/selling_option_sheet.dart';
 
 /// Main POS screen for processing sales.
 class POSScreen extends ConsumerStatefulWidget {
@@ -543,8 +545,19 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   // ==================== EVENT HANDLERS ====================
 
-  void _addProductToCart(dynamic product) {
-    ref.read(cartProvider.notifier).addProduct(product);
+  /// Adds [product] to the cart. Every entry point that puts a product on
+  /// the ticket (grid/search-result tap, barcode scan) routes through here —
+  /// a product with selling options must go through the picker first, since
+  /// its base price is not directly sellable once options exist.
+  Future<void> _addProductToCart(ProductEntity product) async {
+    if (product.hasSellingOptions) {
+      final option = await showSellingOptionSheet(context, product);
+      if (option == null) return;
+      if (!mounted) return;
+      ref.read(cartProvider.notifier).addProductOption(product, option);
+    } else {
+      ref.read(cartProvider.notifier).addProduct(product);
+    }
     _searchController.clear();
     _searchFocusNode.requestFocus();
 
@@ -552,17 +565,18 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     HapticFeedback.lightImpact();
   }
 
-  void _handleBarcodeScanned(String barcode) async {
+  Future<void> _handleBarcodeScanned(String barcode) async {
     // Look up by barcode first (covers vendor codes mapped on the product),
     // then by SKU as a fall-back — see ProductRepositoryImpl.getProductByBarcode.
     final product = await ref.read(productByBarcodeProvider(barcode).future);
+    if (!mounted) return;
 
     if (product != null) {
-      _addProductToCart(product);
+      // Scanning is a back door around the must-pick-an-option rule unless
+      // it too goes through _addProductToCart's picker gate.
+      await _addProductToCart(product);
     } else {
-      if (mounted) {
-        context.showWarningSnackBar('Product not found: $barcode');
-      }
+      context.showWarningSnackBar('Product not found: $barcode');
     }
   }
 

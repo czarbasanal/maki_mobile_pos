@@ -58,6 +58,81 @@ void main() {
       expect(updated.items.first.quantity, 5); // 2 + 3
     });
 
+    test('addItem keeps two different options of one product as separate '
+        'lines (a By 6 and a By 3 must not fold and lose a price)', () {
+      const by6 = SaleItemEntity(
+        id: 'item-by6',
+        productId: 'prod-1',
+        sku: 'SKU-001',
+        name: 'Product 1',
+        unitPrice: 100.0,
+        unitCost: 60.0,
+        quantity: 6,
+        optionId: 'o1',
+        optionLabel: 'By 6',
+        optionPieces: 6,
+        optionPrice: 600.0,
+      );
+      const by3 = SaleItemEntity(
+        id: 'item-by3',
+        productId: 'prod-1',
+        sku: 'SKU-001',
+        name: 'Product 1',
+        unitPrice: 110.0,
+        unitCost: 60.0,
+        quantity: 3,
+        optionId: 'o2',
+        optionLabel: 'By 3',
+        optionPieces: 3,
+        optionPrice: 330.0,
+      );
+
+      final updated = jobOrder.addItem(by6).addItem(by3);
+      // jobOrder already seeds one plain 'prod-1' line, so a productId-only
+      // merge would fold this into it too — expect 3 distinct lines.
+      expect(updated.items, hasLength(3));
+      expect(
+        updated.items.map((i) => i.optionId),
+        containsAll(<String?>[null, 'o1', 'o2']),
+      );
+    });
+
+    test('addItem merges the same option into one line, summing quantity',
+        () {
+      const firstPick = SaleItemEntity(
+        id: 'item-a',
+        productId: 'prod-9',
+        sku: 'SKU-009',
+        name: 'Pulley Ball',
+        unitPrice: 110.0,
+        unitCost: 60.0,
+        quantity: 3,
+        optionId: 'o2',
+        optionLabel: 'By 3',
+        optionPieces: 3,
+        optionPrice: 330.0,
+      );
+      const secondPick = SaleItemEntity(
+        id: 'item-b',
+        productId: 'prod-9',
+        sku: 'SKU-009',
+        name: 'Pulley Ball',
+        unitPrice: 110.0,
+        unitCost: 60.0,
+        quantity: 3,
+        optionId: 'o2',
+        optionLabel: 'By 3',
+        optionPieces: 3,
+        optionPrice: 330.0,
+      );
+
+      final updated = jobOrder.addItem(firstPick).addItem(secondPick);
+      final optionLines =
+          updated.items.where((i) => i.productId == 'prod-9').toList();
+      expect(optionLines, hasLength(1));
+      expect(optionLines.first.quantity, 6);
+    });
+
     test('removeItem removes item', () {
       final updated = jobOrder.removeItem('item-1');
       expect(updated.items.isEmpty, true);

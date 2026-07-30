@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/job_order_bill_out.dart';
+import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
@@ -22,6 +23,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/fee_section.dart
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/labor_line_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/selling_option_sheet.dart';
 import 'package:uuid/uuid.dart';
 
 /// Screen for editing/viewing a job order and converting to checkout.
@@ -162,12 +164,33 @@ class _JobOrderEditScreenState extends ConsumerState<JobOrderEditScreen> {
         unit: product.unit,
       );
 
+  SaleItemEntity _saleItemFromOption(
+    ProductEntity product,
+    SellingOptionEntity option,
+  ) =>
+      SaleItemModel.fromProductOption(
+        itemId: const Uuid().v4(),
+        product: product,
+        option: option,
+      ).toEntity();
+
   /// Appends a product to the current working ticket (uses [_working] so
-  /// several parts added in one sitting accumulate) and persists it.
-  Future<void> _addProduct(ProductEntity product) {
+  /// several parts added in one sitting accumulate) and persists it. A
+  /// product with selling options must go through the picker first — its
+  /// base price is not directly sellable once options exist.
+  Future<void> _addProduct(ProductEntity product) async {
+    if (!product.hasSellingOptions) {
+      final current = _working;
+      if (current == null) return;
+      await _persist(current.addItem(_saleItemFromProduct(product)));
+      return;
+    }
+
+    final option = await showSellingOptionSheet(context, product);
+    if (option == null || !mounted) return;
     final current = _working;
-    if (current == null) return Future.value();
-    return _persist(current.addItem(_saleItemFromProduct(product)));
+    if (current == null) return;
+    await _persist(current.addItem(_saleItemFromOption(product, option)));
   }
 
   void _onAddParts() {

@@ -186,10 +186,15 @@ class JobOrderEntity extends Equatable {
 
   // ==================== ITEM MANAGEMENT ====================
 
-  /// Adds an item to the job order (returns new instance)
+  /// Adds an item to the job order (returns new instance).
+  ///
+  /// Merges on (productId, optionId), not productId alone — a By 6 and a
+  /// By 3 of the same product carry different prices, so folding them would
+  /// silently lose one. Mirrors CartNotifier.addItem's fix for the same bug.
   JobOrderEntity addItem(SaleItemEntity item) {
-    final existingIndex =
-        items.indexWhere((i) => i.productId == item.productId);
+    final existingIndex = items.indexWhere(
+      (i) => i.productId == item.productId && i.optionId == item.optionId,
+    );
 
     if (existingIndex >= 0) {
       // Update existing item quantity
