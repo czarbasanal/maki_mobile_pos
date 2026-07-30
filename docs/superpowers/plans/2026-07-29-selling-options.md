@@ -2098,14 +2098,19 @@ SaleItemEntity item({String? label, int? pieces, double? optionPrice, int quanti
 
 Future<List<int>> pumpTile(WidgetTester tester, SaleItemEntity value) async {
   final emitted = <int>[];
-  await tester.pumpWidget(MaterialApp(
-    home: Scaffold(
-      body: CartItemTile(
-        item: value,
-        discountType: DiscountType.amount,
-        onQuantityChanged: emitted.add,
-        onDiscountTap: () {},
-        onRemove: () {},
+  // ProviderScope is REQUIRED: CartItemTile embeds CostCodePill, a
+  // ConsumerWidget reading encodeCostProvider. Without it the test throws
+  // before any assertion runs, so it fails for the wrong reason.
+  await tester.pumpWidget(ProviderScope(
+    child: MaterialApp(
+      home: Scaffold(
+        body: CartItemTile(
+          item: value,
+          discountType: DiscountType.amount,
+          onQuantityChanged: emitted.add,
+          onDiscountTap: () {},
+          onRemove: () {},
+        ),
       ),
     ),
   ));
