@@ -236,34 +236,51 @@ class JobOrderListTile extends StatelessWidget {
             ),
           ...previewItems.map((item) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: const TextStyle(fontSize: 13),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            // Selling-option line: label beside the name,
+                            // e.g. "Pulley Ball · By 3" — neutral, no tint.
+                            item.hasOption
+                                ? '${item.name} · ${item.optionLabel}'
+                                : item.name,
+                            style: const TextStyle(fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '×${item.quantity}',
+                          style: TextStyle(fontSize: 13, color: muted),
+                        ),
+                        const SizedBox(width: AppSpacing.sm + 4),
+                        Text(
+                          // Net, so preview lines sum to the tile's total even
+                          // when a part carries a per-item discount.
+                          item
+                              .calculateNetAmount(
+                                isPercentage: jobOrder.isPercentageDiscount,
+                              )
+                              .toCurrency(),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Sets + total pieces, only once there's more than one
+                    // set.
+                    if (item.hasOption && (item.optionSets ?? 0) > 1)
+                      Text(
+                        '${item.optionLabel} × ${item.optionSets} '
+                        '(${item.quantity} pcs)',
+                        style: TextStyle(fontSize: 11, color: muted),
                       ),
-                    ),
-                    Text(
-                      '×${item.quantity}',
-                      style: TextStyle(fontSize: 13, color: muted),
-                    ),
-                    const SizedBox(width: AppSpacing.sm + 4),
-                    Text(
-                      // Net, so preview lines sum to the tile's total even
-                      // when a part carries a per-item discount.
-                      item
-                          .calculateNetAmount(
-                            isPercentage: jobOrder.isPercentageDiscount,
-                          )
-                          .toCurrency(),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                   ],
                 ),
               )),

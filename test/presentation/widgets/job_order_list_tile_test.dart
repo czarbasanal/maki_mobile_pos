@@ -334,5 +334,116 @@ void main() {
       // The tile renders job order.grandTotal via .toCurrency() (grouped thousands).
       expect(find.text('₱1,450.00'), findsOneWidget);
     });
+
+    // Found beyond the task brief's named render sites: the items preview
+    // shows a part's name and quantity, the same shape as CartItemTile.
+    testWidgets(
+        'preview shows the option label beside the name for a single set',
+        (tester) async {
+      final jobOrder = JobOrderEntity(
+        id: 'jo-opt-1',
+        name: 'Table 1',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'ABC-1',
+            name: 'Pulley Ball',
+            unitPrice: 110.0,
+            unitCost: 60.0,
+            quantity: 3,
+            optionId: 'o2',
+            optionLabel: 'By 3',
+            optionPieces: 3,
+            optionPrice: 330.0,
+          ),
+        ],
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+        createdAt: DateTime(2025, 2, 5, 10, 30),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: JobOrderListTile(
+              jobOrder: jobOrder,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('By 3'), findsWidgets);
+      expect(find.textContaining('× 2'), findsNothing);
+    });
+
+    testWidgets(
+        'preview shows the set count and total pieces for more than one set',
+        (tester) async {
+      final jobOrder = JobOrderEntity(
+        id: 'jo-opt-2',
+        name: 'Table 2',
+        items: const [
+          SaleItemEntity(
+            id: 'item-1',
+            productId: 'prod-1',
+            sku: 'ABC-1',
+            name: 'Pulley Ball',
+            unitPrice: 110.0,
+            unitCost: 60.0,
+            quantity: 6,
+            optionId: 'o2',
+            optionLabel: 'By 3',
+            optionPieces: 3,
+            optionPrice: 330.0,
+          ),
+        ],
+        discountType: DiscountType.amount,
+        createdBy: 'user-1',
+        createdByName: 'John Doe',
+        createdAt: DateTime(2025, 2, 5, 10, 30),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: JobOrderListTile(
+              jobOrder: jobOrder,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('By 3 × 2'), findsOneWidget);
+      expect(find.textContaining('6 pcs'), findsOneWidget);
+    });
+
+    testWidgets('preview leaves a plain part unchanged', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: JobOrderListTile(
+              jobOrder: testJobOrder,
+              onTap: () {},
+              onLoadTap: () {},
+              onDeleteTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      // Note: this tile legitimately shows "By John Doe" (creator
+      // attribution), so the option-absence check must be specific to the
+      // option-label shape rather than a bare "By" substring.
+      expect(find.textContaining('By 3'), findsNothing);
+      expect(find.textContaining('× 2'), findsNothing);
+    });
   });
 }

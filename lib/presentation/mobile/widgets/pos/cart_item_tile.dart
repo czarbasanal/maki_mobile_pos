@@ -60,11 +60,31 @@ class CartItemTile extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      item.name,
-                      style: AppTextStyles.productName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          // A selling-option line carries its label beside
+                          // the name (e.g. "Pulley Ball · By 3") — informational,
+                          // neutral-coloured, never tinted.
+                          item.hasOption
+                              ? '${item.name} · ${item.optionLabel}'
+                              : item.name,
+                          style: AppTextStyles.productName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        // Sets + total pieces, only once there's more than
+                        // one set — a single set is fully said by the label
+                        // above.
+                        if (item.hasOption && (item.optionSets ?? 0) > 1)
+                          Text(
+                            '${item.optionLabel} × ${item.optionSets} '
+                            '(${item.quantity} pcs)',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: muted),
+                          ),
+                      ],
                     ),
                   ),
                   IconButton(
@@ -98,6 +118,7 @@ class CartItemTile extends StatelessWidget {
                 children: [
                   _QuantityControls(
                     quantity: item.quantity,
+                    step: item.quantityStep,
                     onChanged: onQuantityChanged,
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -148,10 +169,15 @@ class CartItemTile extends StatelessWidget {
 class _QuantityControls extends StatelessWidget {
   const _QuantityControls({
     required this.quantity,
+    required this.step,
     required this.onChanged,
   });
 
   final int quantity;
+
+  /// How many pieces one tap moves this line — the option's piece count on
+  /// an option line, 1 on a plain line. Passed in as `item.quantityStep`.
+  final int step;
   final ValueChanged<int> onChanged;
 
   @override
@@ -172,7 +198,11 @@ class _QuantityControls extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(LucideIcons.minus),
-            onPressed: quantity > 1 ? () => onChanged(quantity - 1) : null,
+            // Disabled at one whole set — stepping below it would price a
+            // partial set the shop never quoted. On a plain line step is 1,
+            // so this is unchanged: disabled at quantity <= 1.
+            onPressed:
+                quantity > step ? () => onChanged(quantity - step) : null,
             iconSize: 18,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints.tightFor(
@@ -184,7 +214,9 @@ class _QuantityControls extends StatelessWidget {
             constraints: const BoxConstraints(minWidth: 36),
             alignment: Alignment.center,
             child: Text(
-              '$quantity',
+              // Sets, not pieces — quantity ~/ step. On a plain line
+              // step == 1, so this is quantity unchanged.
+              '${quantity ~/ step}',
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
@@ -193,7 +225,7 @@ class _QuantityControls extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(LucideIcons.plus),
-            onPressed: () => onChanged(quantity + 1),
+            onPressed: () => onChanged(quantity + step),
             iconSize: 18,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints.tightFor(

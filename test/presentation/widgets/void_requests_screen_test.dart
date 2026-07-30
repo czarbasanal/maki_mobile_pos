@@ -4,8 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/void_request_repository.dart';
-import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
-import 'package:maki_mobile_pos/presentation/providers/void_request_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/void_requests_screen.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -186,5 +185,133 @@ void main() {
     await tester.pumpWidget(_harness([]));
     await tester.pumpAndSettle();
     expect(find.text('No void requests'), findsOneWidget);
+  });
+
+  group('resolve sheet receipt — selling option (found beyond the brief)', () {
+    // The tap-to-resolve sheet renders a receipt-style item list
+    // (_Receipt/_lineRow) that is a separate render site from
+    // ReceiptWidget/receipt_widget.dart — same bug class, found via search.
+    SaleEntity saleWith(SaleItemEntity item) => SaleEntity(
+          id: 'sale-opt',
+          saleNumber: 'SALE-OPT-1',
+          items: [item],
+          paymentMethod: PaymentMethod.cash,
+          amountReceived: 1000,
+          changeGiven: 0,
+          cashierId: 'cashier-1',
+          cashierName: 'Cashier',
+          status: SaleStatus.completed,
+          createdAt: DateTime(2026, 7, 29, 9, 0),
+        );
+
+    Widget harnessWithSale(VoidRequestEntity request, SaleEntity sale) =>
+        ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
+            voidRequestRepositoryProvider
+                .overrideWithValue(_FakeVoidRequestRepository([request])),
+            saleByIdProvider(request.saleId).overrideWith((ref) async => sale),
+          ],
+          child: const MaterialApp(home: VoidRequestsScreen()),
+        );
+
+    testWidgets('shows the option label beside the name for a single set',
+        (tester) async {
+      final request = _req(
+        id: 'opt1',
+        saleNumber: 'SALE-OPT-1',
+        total: 330,
+        by: 'Juan Dela Cruz',
+        reason: 'Wrong item scanned',
+        status: VoidRequestStatus.pending,
+        read: false,
+        at: DateTime.now(),
+      );
+      final sale = saleWith(const SaleItemEntity(
+        id: 'item-1',
+        productId: 'prod-1',
+        sku: 'ABC-1',
+        name: 'Pulley Ball',
+        unitPrice: 110.0,
+        unitCost: 60.0,
+        quantity: 3,
+        optionId: 'o2',
+        optionLabel: 'By 3',
+        optionPieces: 3,
+        optionPrice: 330.0,
+      ));
+
+      await tester.pumpWidget(harnessWithSale(request, sale));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SALE-OPT-1'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('By 3'), findsWidgets);
+      expect(find.textContaining('× 2'), findsNothing);
+    });
+
+    testWidgets('shows the set count and total pieces for more than one set',
+        (tester) async {
+      final request = _req(
+        id: 'opt2',
+        saleNumber: 'SALE-OPT-1',
+        total: 660,
+        by: 'Juan Dela Cruz',
+        reason: 'Wrong item scanned',
+        status: VoidRequestStatus.pending,
+        read: false,
+        at: DateTime.now(),
+      );
+      final sale = saleWith(const SaleItemEntity(
+        id: 'item-1',
+        productId: 'prod-1',
+        sku: 'ABC-1',
+        name: 'Pulley Ball',
+        unitPrice: 110.0,
+        unitCost: 60.0,
+        quantity: 6,
+        optionId: 'o2',
+        optionLabel: 'By 3',
+        optionPieces: 3,
+        optionPrice: 330.0,
+      ));
+
+      await tester.pumpWidget(harnessWithSale(request, sale));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SALE-OPT-1'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('By 3 × 2'), findsOneWidget);
+      expect(find.textContaining('6 pcs'), findsOneWidget);
+    });
+
+    testWidgets('a plain line renders unchanged', (tester) async {
+      final request = _req(
+        id: 'opt3',
+        saleNumber: 'SALE-OPT-1',
+        total: 200,
+        by: 'Juan Dela Cruz',
+        reason: 'Wrong item scanned',
+        status: VoidRequestStatus.pending,
+        read: false,
+        at: DateTime.now(),
+      );
+      final sale = saleWith(const SaleItemEntity(
+        id: 'item-1',
+        productId: 'prod-1',
+        sku: 'SKU-1',
+        name: 'Brake Pad',
+        unitPrice: 100.0,
+        unitCost: 60.0,
+        quantity: 2,
+      ));
+
+      await tester.pumpWidget(harnessWithSale(request, sale));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SALE-OPT-1'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('By'), findsNothing);
+    });
   });
 }
