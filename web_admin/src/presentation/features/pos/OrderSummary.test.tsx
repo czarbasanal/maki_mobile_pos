@@ -9,6 +9,7 @@ import type { FeeLine } from '@/domain/entities/FeeLine';
 const line: CartLine = {
   id: 'p1', productId: 'p1', sku: 'OIL-AX7', name: 'Shell AX7 Oil',
   unitPrice: 320, unitCost: 210, quantity: 2, discountValue: 0, unit: 'pcs',
+  optionId: null, optionLabel: null, optionPieces: null, optionPrice: null,
 };
 const labor: LaborLine = { id: 'l1', description: 'Change oil', fee: 150 };
 const fee: FeeLine = { id: 'f1', name: 'Convenience fee', amount: 50 };

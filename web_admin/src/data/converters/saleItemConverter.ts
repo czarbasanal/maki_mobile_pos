@@ -19,6 +19,10 @@ export const saleItemConverter: FirestoreDataConverter<SaleItem> = {
       quantity: item.quantity,
       discountValue: item.discountValue,
       unit: item.unit,
+      optionId: item.optionId,
+      optionLabel: item.optionLabel,
+      optionPieces: item.optionPieces,
+      optionPrice: item.optionPrice,
     };
   },
   fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): SaleItem {
@@ -33,6 +37,10 @@ export const saleItemConverter: FirestoreDataConverter<SaleItem> = {
       quantity: Number(d.quantity ?? 0),
       discountValue: Number(d.discountValue ?? 0),
       unit: d.unit ?? 'pcs',
+      optionId: d.optionId ?? null,
+      optionLabel: d.optionLabel ?? null,
+      optionPieces: d.optionPieces ?? null,
+      optionPrice: d.optionPrice ?? null,
     };
   },
 };

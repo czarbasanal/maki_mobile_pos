@@ -6,7 +6,9 @@ import type { CartLine } from './cart';
 
 const line = (over: Partial<CartLine> = {}): CartLine => ({
   id: 'p1', productId: 'p1', sku: 'A', name: 'A',
-  unitPrice: 100, unitCost: 60, quantity: 1, discountValue: 0, unit: 'pcs', ...over,
+  unitPrice: 100, unitCost: 60, quantity: 1, discountValue: 0, unit: 'pcs',
+  optionId: null, optionLabel: null, optionPieces: null, optionPrice: null,
+  ...over,
 });
 
 describe('cartGrandTotal', () => {

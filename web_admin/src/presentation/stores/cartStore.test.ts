@@ -84,7 +84,7 @@ describe('cartStore', () => {
       id: 'd1',
       name: 'Mr Cruz bike',
       items: [
-        { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs' },
+        { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs', optionId: null, optionLabel: null, optionPieces: null, optionPrice: null },
       ],
       laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
       feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],

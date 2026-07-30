@@ -65,6 +65,10 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
           quantity: 1,
           discountValue: 0,
           unit: product.unit,
+          optionId: null,
+          optionLabel: null,
+          optionPieces: null,
+          optionPrice: null,
         };
         return { lines: [...s.lines, line] };
       }),

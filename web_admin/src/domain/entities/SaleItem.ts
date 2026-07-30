@@ -9,6 +9,15 @@ export interface SaleItem {
   quantity: number;
   discountValue: number;
   unit: string;
+  /** Snapshot of the selling option used for this line, if any. Kept on the
+   * line rather than looked up, so editing or deleting the option later
+   * never rewrites a past receipt. */
+  optionId: string | null;
+  optionLabel: string | null;
+  optionPieces: number | null;
+  /** Price of one whole set, as typed by the admin. unitPrice is this
+   * divided by optionPieces; this field is what the receipt shows. */
+  optionPrice: number | null;
 }
 
 export function saleItemGross(item: SaleItem): number {
@@ -28,4 +37,19 @@ export function saleItemDiscountAmount(item: SaleItem, isPercentage: boolean): n
 
 export function saleItemNet(item: SaleItem, isPercentage: boolean): number {
   return saleItemGross(item) - saleItemDiscountAmount(item, isPercentage);
+}
+
+/** Whether this line was rung up through a selling option. */
+export function saleItemHasOption(item: SaleItem): boolean {
+  return item.optionId !== null && item.optionPieces !== null && item.optionPieces > 0;
+}
+
+/** Whole sets on this line, or null with no option. quantity is always pieces. */
+export function saleItemOptionSets(item: SaleItem): number | null {
+  return saleItemHasOption(item) ? Math.floor(item.quantity / (item.optionPieces as number)) : null;
+}
+
+/** How much the +/- buttons move this line. A "By 3" line steps 3 -> 6. */
+export function saleItemQuantityStep(item: SaleItem): number {
+  return saleItemHasOption(item) ? (item.optionPieces as number) : 1;
 }

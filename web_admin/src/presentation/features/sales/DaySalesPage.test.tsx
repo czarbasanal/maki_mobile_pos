@@ -100,6 +100,10 @@ describe('DaySalesPage', () => {
           quantity: 2,
           discountValue: 0,
           unit: 'pcs',
+          optionId: null,
+          optionLabel: null,
+          optionPieces: null,
+          optionPrice: null,
         },
       ],
     });

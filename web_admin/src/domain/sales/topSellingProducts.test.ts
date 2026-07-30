@@ -43,6 +43,10 @@ function item(productId: string, name: string, qty: number, price: number, cost:
     quantity: qty,
     discountValue: 0,
     unit: 'pcs',
+    optionId: null,
+    optionLabel: null,
+    optionPieces: null,
+    optionPrice: null,
   };
 }
 

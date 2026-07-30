@@ -24,7 +24,7 @@ function wrap(saleRepo: Partial<Container['saleRepo']>, activityLog: ReturnType<
 
 const checkoutInput: CheckoutInput = {
   lines: [
-    { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs' },
+    { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs', optionId: null, optionLabel: null, optionPieces: null, optionPrice: null },
   ],
   discountType: DiscountType.amount,
   paymentMethod: PaymentMethod.cash,
