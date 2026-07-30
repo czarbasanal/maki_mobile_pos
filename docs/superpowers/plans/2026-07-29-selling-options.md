@@ -1214,6 +1214,23 @@ describe('SaleItem option helpers', () => {
     expect(saleItemHasOption(plain)).toBe(false);
     expect(saleItemQuantityStep(plain)).toBe(1);
   });
+
+  // The two cases above CANNOT discriminate a correct implementation from a
+  // wrong one: 6 / 3 === 2 exactly, so Math.floor and plain `/` agree, and the
+  // no-option case fails clause 1 of hasOption on its own, so clause 3 could be
+  // deleted with every test still green. These two can fail.
+
+  it('truncates a non-exact multiple instead of returning a fraction', () => {
+    // Plain `/` would give 2.333…; only Math.floor gives 2.
+    expect(saleItemOptionSets({ ...withOption, quantity: 7 })).toBe(2);
+  });
+
+  it('treats optionPieces: 0 as no option, not a division by zero', () => {
+    // optionId stays non-null, so only hasOption's third clause can reject this.
+    const zeroPieces = { ...withOption, optionPieces: 0 };
+    expect(saleItemHasOption(zeroPieces)).toBe(false);
+    expect(saleItemOptionSets(zeroPieces)).toBeNull();
+  });
 });
 
 describe('saleItemConverter option fields', () => {
