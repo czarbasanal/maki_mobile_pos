@@ -2733,7 +2733,17 @@ Do **not** touch the receiving path: a cost change still writes exactly one base
 Run: `flutter test && flutter analyze`, then from `web_admin/`: `npm run test && npm run typecheck && npm run build`
 Expected: PASS.
 
-Then prove the receiving path stayed put. Add to the existing receiving repository tests on both surfaces (`web_admin/src/data/receiving/executeReceivePlan.test.ts` and its Dart counterpart) a case asserting that receiving a product **with** selling options writes exactly one `price_history` entry, with no option fields:
+Then prove the receiving path stayed put. Add a case to the existing receiving
+tests on both surfaces — `web_admin/src/data/receiving/applyReceivedItems.test.ts`
+on the web (note: there is no `executeReceivePlan.test.ts`) and the Dart
+counterpart — asserting that receiving a product **with** selling options writes
+**no option fields** on any `price_history` doc.
+
+Assert the *absence of option fields*, not a raw entry count: Dart's receiving
+path already writes two base entries per cost-changing receive (`'Initial price'`
+from `createProduct`, then `'Stock receiving'`), where the web writes one. That
+asymmetry is pre-existing and unrelated; an "exactly one entry" assertion would
+encode it as if it were the invariant.
 
 ```ts
 it('writes one base price_history entry for a product with selling options', async () => {
