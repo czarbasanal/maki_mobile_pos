@@ -227,6 +227,10 @@ abstract class ProductRepository {
   /// [changedBy] - The ID of the user making the change
   /// [reason] - Reason for the change
   /// [note] - Optional free-text context (e.g. source receiving ID)
+  /// [optionId], [optionLabel], [optionPieces] - Set together when this entry
+  /// is about a selling option rather than the base price/cost — see
+  /// [PriceHistoryEntry]. Left null (and therefore omitted from the written
+  /// doc — see the implementation) for a base entry.
   Future<void> recordPriceChange({
     required String productId,
     required double price,
@@ -234,6 +238,9 @@ abstract class ProductRepository {
     required String changedBy,
     String? reason,
     String? note,
+    String? optionId,
+    String? optionLabel,
+    int? optionPieces,
   });
 
   /// Gets price history for a product.

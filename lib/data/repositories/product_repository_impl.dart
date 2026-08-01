@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -621,6 +622,38 @@ class ProductRepositoryImpl implements ProductRepository {
             // History is best-effort — don't fail the product update.
           }
         }
+
+        // Selling-option price history — diffs the ACTUAL persisted
+        // before/after (prior/updated), not the caller's submitted copy: a
+        // non-admin edit never writes the sellingOptions field (see
+        // toUpdateMap's includeSellingOptions gate), so `updated.sellingOptions`
+        // equals `prior.sellingOptions` and this diffs to nothing on its own.
+        // The explicit includeSellingOptions check below is redundant with
+        // that but kept as a clear statement of intent (and cheap — no extra
+        // read, both entities are already in hand).
+        if (includeSellingOptions) {
+          final optionEvents = sellingOptionHistoryEvents(
+            prior.sellingOptions,
+            updated.sellingOptions,
+            updated.cost,
+          );
+          for (final event in optionEvents) {
+            try {
+              await recordPriceChange(
+                productId: updated.id,
+                price: event.price,
+                cost: event.cost,
+                changedBy: updatedBy,
+                reason: event.reason,
+                optionId: event.optionId,
+                optionLabel: event.optionLabel,
+                optionPieces: event.optionPieces,
+              );
+            } catch (_) {
+              // History is best-effort — don't fail the product update.
+            }
+          }
+        }
       }
 
       return updated;
@@ -852,6 +885,9 @@ class ProductRepositoryImpl implements ProductRepository {
     required String changedBy,
     String? reason,
     String? note,
+    String? optionId,
+    String? optionLabel,
+    int? optionPieces,
   }) async {
     try {
       final historyRef = _productsRef
@@ -865,6 +901,12 @@ class ProductRepositoryImpl implements ProductRepository {
         'changedBy': changedBy,
         'reason': reason,
         'note': note,
+        // Conditionally included — a base entry must leave these keys
+        // ABSENT (not present-with-null), so the report can tell "base" from
+        // "no option data available" apart with a plain field-presence check.
+        if (optionId != null) 'optionId': optionId,
+        if (optionLabel != null) 'optionLabel': optionLabel,
+        if (optionPieces != null) 'optionPieces': optionPieces,
       });
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -911,6 +953,9 @@ class ProductRepositoryImpl implements ProductRepository {
       changedBy: data['changedBy'] as String? ?? '',
       reason: data['reason'] as String?,
       note: data['note'] as String?,
+      optionId: data['optionId'] as String?,
+      optionLabel: data['optionLabel'] as String?,
+      optionPieces: (data['optionPieces'] as num?)?.toInt(),
     );
   }
 
