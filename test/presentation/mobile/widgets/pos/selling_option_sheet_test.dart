@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/selling_option_sheet.dart';
 
-ProductEntity product(List<SellingOptionEntity> options) => ProductEntity(
+ProductEntity product(List<SellingOptionEntity> options, {String unit = 'pcs'}) => ProductEntity(
       id: 'p1',
       sku: 'ABC-1',
       name: 'Pulley Ball',
@@ -12,7 +12,7 @@ ProductEntity product(List<SellingOptionEntity> options) => ProductEntity(
       price: 120,
       quantity: 12,
       reorderLevel: 3,
-      unit: 'pcs',
+      unit: unit,
       isActive: true,
       createdAt: DateTime(2026, 7, 29),
       sellingOptions: options,
@@ -99,5 +99,13 @@ void main() {
       (tester) async {
     await open(tester, product([by3]), onResult: (_) {});
     expect(find.textContaining('Low stock'), findsNothing);
+  });
+
+  testWidgets(
+      'uses the product\'s own unit as the per-piece suffix, not a hardcoded "pc"',
+      (tester) async {
+    await open(tester, product([by3], unit: 'box'), onResult: (_) {});
+    expect(find.textContaining('/box'), findsOneWidget);
+    expect(find.textContaining('/pc'), findsNothing);
   });
 }

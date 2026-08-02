@@ -478,7 +478,7 @@ class _JobOrderEditScreenState extends ConsumerState<JobOrderEditScreen> {
     showDialog(
       context: context,
       builder: (context) => DiscountInputDialog(
-        itemName: item.name,
+        itemName: item.displayName,
         currentDiscount: item.discountValue,
         discountType: jobOrder.discountType,
         maxAmount: item.grossAmount,

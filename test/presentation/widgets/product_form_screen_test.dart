@@ -624,6 +624,30 @@ void main() {
     });
   });
 
+  group('ProductFormScreen — price field notes when options exist', () {
+    // The spec requires the form make clear the base price stops being
+    // directly sellable once a product carries options. Paired, like the
+    // gating tests above: one case alone can't distinguish a working
+    // condition from a helper line that's always shown or never shown.
+    testWidgets(
+        'shows no options note on the price field when the product has none',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin); // testProduct has no options.
+      expect(find.textContaining('inventory value'), findsNothing);
+    });
+
+    testWidgets(
+        'shows a note on the price field once a selling option is added',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+
+      expect(find.textContaining('inventory value'), findsOneWidget);
+    });
+  });
+
   group('ProductFormScreen — selling options save gating (create)', () {
     // Auto-generate SKU is ON by default and no categories are wired up in
     // this harness, so the SKU field stays disabled/empty until we switch to

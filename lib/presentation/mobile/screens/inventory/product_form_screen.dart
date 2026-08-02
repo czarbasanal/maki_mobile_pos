@@ -227,28 +227,47 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       ? Opacity(opacity: 0.6, child: AbsorbPointer(child: child))
       : child;
 
-  Widget _priceField(bool canEditPrice) => TextFormField(
-        key: const Key('product-price-field'),
-        controller: _priceController,
-        style: AppTextStyles.fieldInput,
-        decoration: InputDecoration(
-          labelText: 'Selling (${AppConstants.currencySymbol}) *',
-          prefixIcon: const Icon(LucideIcons.tag),
-          helperText: canEditPrice ? null : 'Only admin can change price',
-          helperStyle: const TextStyle(
+  Widget _priceField(bool canEditPrice) {
+    // The admin-lock message takes priority when the field is disabled — a
+    // cashier looking at a greyed-out field needs to know why, first. Once
+    // options exist, the base price stops being directly sellable at the
+    // register (a picker gates every sale instead), which a plain admin-lock
+    // message doesn't say — so an admin who CAN edit price sees that note
+    // instead.
+    final String? helperText = !canEditPrice
+        ? 'Only admin can change price'
+        : (_sellingOptions.isNotEmpty
+            ? 'The POS will ask for a selling option — this price is used '
+                'for inventory value, not charged directly.'
+            : null);
+    final TextStyle? helperStyle = !canEditPrice
+        ? const TextStyle(
             color: AppColors.warningDark,
             fontStyle: FontStyle.italic,
-          ),
-        ),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        enabled: canEditPrice,
-        validator: (value) {
-          if (value == null || value.isEmpty) return 'Price is required';
-          final price = double.tryParse(value);
-          if (price == null || price < 0) return 'Enter a valid price';
-          return null;
-        },
-      );
+          )
+        : null;
+
+    return TextFormField(
+      key: const Key('product-price-field'),
+      controller: _priceController,
+      style: AppTextStyles.fieldInput,
+      decoration: InputDecoration(
+        labelText: 'Selling (${AppConstants.currencySymbol}) *',
+        prefixIcon: const Icon(LucideIcons.tag),
+        helperText: helperText,
+        helperMaxLines: 2,
+        helperStyle: helperStyle,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      enabled: canEditPrice,
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Price is required';
+        final price = double.tryParse(value);
+        if (price == null || price < 0) return 'Enter a valid price';
+        return null;
+      },
+    );
+  }
 
   Widget _costField(bool canEditCost) => TextFormField(
         key: const Key('product-cost-field'),

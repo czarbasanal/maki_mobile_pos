@@ -600,7 +600,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     showDialog(
       context: context,
       builder: (context) => DiscountInputDialog(
-        itemName: item.name,
+        itemName: item.displayName,
         currentDiscount: item.discountValue,
         discountType: discountType,
         maxAmount: item.grossAmount,

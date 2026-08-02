@@ -164,7 +164,7 @@ class _OptionRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${option.pricePerPiece.toCurrency()}/pc',
+                '${option.pricePerPiece.toCurrency()}/${product.unit}',
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
             ],
