@@ -116,6 +116,26 @@ describe('PriceHistoryView — selling-option series', () => {
     expect(screen.queryByText(formatMoney(230))).toBeNull();
   });
 
+  it('does not chart when the selected (base) series has too few entries, even though the combined stream does — catches a canChart gate keyed on the raw entry count', async () => {
+    const { container } = harness(mixed);
+    // Default selection is the base series, which has exactly ONE entry in
+    // `mixed`, even though the combined base+option stream has three. A gate
+    // reading `entries.length` (the raw, unsplit stream) instead of
+    // `selectedEntries.length` would wrongly think there's enough to chart
+    // here — this is the default render of this exact fixture.
+    await screen.findByText(formatMoney(130));
+    expect(screen.getByText('Not enough changes to chart')).toBeInTheDocument();
+    // 'uppercase' is unique to the Price/Cost sparkline captions in this
+    // component — its absence means the chart section didn't render at all.
+    expect(container.querySelector('.uppercase')).toBeNull();
+
+    // The option series has two entries, so switching to it should chart.
+    await userEvent.click(screen.getByRole('button', { name: 'By 3' }));
+    await screen.findByText(formatMoney(360));
+    expect(screen.queryByText('Not enough changes to chart')).toBeNull();
+    expect(container.querySelector('.uppercase')).not.toBeNull();
+  });
+
   it('the sparkline plots only the selected series', async () => {
     const { container } = harness(mixed);
     await screen.findByRole('button', { name: 'By 3' });

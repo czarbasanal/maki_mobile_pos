@@ -69,7 +69,12 @@ export function PriceHistoryView({ productId }: { productId: string }) {
   // mixed stream zigzags between per-piece base prices and whole-set option
   // prices. Defensive clamp: series only shrinks if the entries change shape
   // mid-session, which never happens for a fixed productId, but a stale index
-  // must never index out of range.
+  // must never index out of range. The clamp only guards range, not identity:
+  // it can't detect a *stable* index quietly pointing at a different series if
+  // option ordering ever shifted mid-session. That's unreachable today —
+  // usePriceHistory is a one-shot read (react-query, no refetchOnWindowFocus)
+  // and PriceHistoryPage remounts this view on every product switch — but if
+  // price history ever becomes a live subscription, revisit this.
   const series = useMemo(() => splitPriceHistorySeries(entries), [entries]);
   const selectedIndex = selectedSeriesIndex < series.length ? selectedSeriesIndex : 0;
   const selectedEntries = series[selectedIndex]?.entries ?? [];
@@ -93,12 +98,12 @@ export function PriceHistoryView({ productId }: { productId: string }) {
 
   const showPrice = metric !== PriceMetric.cost;
   const showCost = metric !== PriceMetric.price;
-  const canChart = entries.length >= 2;
+  const canChart = selectedEntries.length >= 2;
 
   return (
     <div className="space-y-tk-lg">
       {series.length > 1 ? (
-        <div className="inline-flex flex-wrap gap-[2px] rounded-md border border-light-hairline p-[2px]">
+        <div className="inline-flex rounded-md border border-light-hairline p-[2px]">
           {series.map((s, i) => (
             <button
               key={s.optionId ?? 'base'}
