@@ -14,7 +14,10 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
 PriceHistoryEntry _e(String id, double price, double cost, DateTime at,
-        {String? reason}) =>
+        {String? reason,
+        String? optionId,
+        String? optionLabel,
+        int? optionPieces}) =>
     PriceHistoryEntry(
       id: id,
       price: price,
@@ -22,6 +25,29 @@ PriceHistoryEntry _e(String id, double price, double cost, DateTime at,
       changedAt: at,
       changedBy: 'u1',
       reason: reason,
+      optionId: optionId,
+      optionLabel: optionLabel,
+      optionPieces: optionPieces,
+    );
+
+PriceHistoryEntry _o(
+  String id,
+  double price,
+  DateTime at, {
+  required String optionId,
+  required String optionLabel,
+  required int optionPieces,
+}) =>
+    PriceHistoryEntry(
+      id: id,
+      price: price,
+      cost: 180,
+      changedAt: at,
+      changedBy: 'u1',
+      reason: 'Price update',
+      optionId: optionId,
+      optionLabel: optionLabel,
+      optionPieces: optionPieces,
     );
 
 final _actor = UserEntity(
@@ -59,7 +85,8 @@ void main() {
     expect(find.byType(LineChart), findsNothing);
   });
 
-  testWidgets('single entry hides the sparkline with a caption', (tester) async {
+  testWidgets('single entry hides the sparkline with a caption',
+      (tester) async {
     await _pump(tester,
         [_e('e1', 100, 60, DateTime(2026, 1, 1), reason: 'Initial price')]);
     expect(find.text('Not enough changes to chart'), findsOneWidget);
@@ -96,5 +123,86 @@ void main() {
     // Two-part trend header carries the from→to range.
     expect(find.textContaining('→'), findsWidgets);
     expect(find.text('CHANGES'), findsOneWidget);
+  });
+
+  group('selling-option series', () {
+    final baseOnly = [
+      _e('e2', 130, 60, DateTime(2026, 7, 2)),
+      _e('e1', 120, 60, DateTime(2026, 7, 1)),
+    ];
+    final mixed = [
+      _o('o-e2', 360, DateTime(2026, 7, 3),
+          optionId: 'o2', optionLabel: 'By 3', optionPieces: 3),
+      _e('e2', 130, 60, DateTime(2026, 7, 2)),
+      _o('o-e1', 330, DateTime(2026, 7, 1),
+          optionId: 'o2', optionLabel: 'By 3', optionPieces: 3),
+    ];
+
+    testWidgets('renders no selector when there is only a base series',
+        (tester) async {
+      await _pump(tester, baseOnly);
+      expect(find.byKey(const Key('series-selector')), findsNothing);
+      expect(find.text('Base price'), findsNothing);
+      expect(find.text('By 3'), findsNothing);
+      expect(find.byType(FilterChip), findsNothing);
+    });
+
+    testWidgets('renders a chip per series when options are present',
+        (tester) async {
+      await _pump(tester, mixed);
+      expect(find.byKey(const Key('series-selector')), findsOneWidget);
+      expect(find.text('Base price'), findsOneWidget);
+      expect(find.text('By 3'), findsOneWidget);
+      expect(find.byType(FilterChip), findsNWidgets(2));
+    });
+
+    testWidgets('defaults to the base series', (tester) async {
+      await _pump(tester, mixed);
+      // The base series in `mixed` has a single entry (₱130). Nothing from
+      // the option series (₱360 / ₱330) should be on screen yet.
+      expect(find.text('₱130'), findsWidgets);
+      expect(find.text('₱360'), findsNothing);
+      expect(find.text('₱330'), findsNothing);
+    });
+
+    testWidgets('selecting an option shows that series and not the base',
+        (tester) async {
+      await _pump(tester, mixed);
+      await tester.tap(find.text('By 3'));
+      await tester.pumpAndSettle();
+      expect(find.text('₱360'), findsWidgets);
+      expect(find.text('₱330'), findsWidgets);
+      expect(find.text('₱130'), findsNothing);
+    });
+
+    testWidgets(
+        'the option series delta is the option-to-option jump (₱30), not a '
+        'base-to-option jump', (tester) async {
+      await _pump(tester, mixed);
+      await tester.tap(find.text('By 3'));
+      await tester.pumpAndSettle();
+      // ₱30 = 360 - 330, the two option entries. A wrong implementation that
+      // fails to split series first would interleave the base (₱130) entry
+      // in between and compute ₱230 (360-130) and ₱200 (130-330) instead.
+      // Assert exact rendered strings, not substrings: '330' itself contains
+      // '30', so a `textContaining('30')` check would pass no matter which
+      // delta was actually computed and would prove nothing.
+      expect(find.text('₱30'), findsOneWidget);
+      expect(find.text('₱230'), findsNothing);
+      expect(find.text('₱200'), findsNothing);
+    });
+
+    testWidgets('the chart plots only the selected series values',
+        (tester) async {
+      await _pump(tester, mixed);
+      await tester.tap(find.text('By 3'));
+      await tester.pumpAndSettle();
+      // Metric defaults to All, so both a price and a cost sparkline render;
+      // the price chart is the first LineChart in the tree.
+      final priceChart =
+          tester.widgetList<LineChart>(find.byType(LineChart)).first;
+      final spots = priceChart.data.lineBarsData.first.spots;
+      expect(spots.map((s) => s.y).toList(), [330.0, 360.0]);
+    });
   });
 }

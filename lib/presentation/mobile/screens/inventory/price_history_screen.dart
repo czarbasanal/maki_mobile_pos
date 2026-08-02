@@ -27,12 +27,12 @@ class PriceHistoryScreen extends ConsumerStatefulWidget {
   final String productId;
 
   @override
-  ConsumerState<PriceHistoryScreen> createState() =>
-      _PriceHistoryScreenState();
+  ConsumerState<PriceHistoryScreen> createState() => _PriceHistoryScreenState();
 }
 
 class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
   PriceMetric _metric = PriceMetric.all;
+  int _selectedSeriesIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +50,7 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
         loading: () => const ListSkeleton(),
         error: (_, __) => ErrorStateView(
           message: 'Could not load price history',
-          onRetry: () =>
-              ref.invalidate(priceHistoryProvider(widget.productId)),
+          onRetry: () => ref.invalidate(priceHistoryProvider(widget.productId)),
         ),
       ),
     );
@@ -65,11 +64,27 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
         subtitle: 'Cost and price updates will show up here.',
       );
     }
-    final rows = buildPriceHistoryRows(entries, _metric);
+    final series = splitPriceHistorySeries(entries);
+    // Defensive clamp: series count only shrinks if the underlying entries
+    // change shape mid-session, which this screen (one product per instance)
+    // never does, but a stale index must never index out of range.
+    final selectedIndex =
+        _selectedSeriesIndex < series.length ? _selectedSeriesIndex : 0;
+    final selectedEntries = series[selectedIndex].entries;
+    final rows = buildPriceHistoryRows(selectedEntries, _metric);
     final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
+        if (series.length > 1) ...[
+          _SeriesSelector(
+            key: const Key('series-selector'),
+            series: series,
+            selectedIndex: selectedIndex,
+            onChanged: (i) => setState(() => _selectedSeriesIndex = i),
+          ),
+          const SizedBox(height: 14),
+        ],
         SegmentedPillFilter<PriceMetric>(
           key: const Key('metric-filter'),
           values: PriceMetric.values,
@@ -83,7 +98,7 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
           segmentKeyPrefix: 'metric-seg',
         ),
         const SizedBox(height: 14),
-        _SparklineSection(entries: entries, metric: _metric),
+        _SparklineSection(entries: selectedEntries, metric: _metric),
         Padding(
           padding: const EdgeInsets.only(left: 2, top: 18, bottom: 8),
           child: Text(
@@ -107,6 +122,80 @@ class _PriceHistoryScreenState extends ConsumerState<PriceHistoryScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Horizontal chip row for picking which price series (base, or one of the
+/// product's selling options) the sparkline and change rows below reflect.
+/// Only ever built when there is more than one series — a plain product with
+/// no options never shows this row. Selection is state, not status, so the
+/// chips reuse the app's existing neutral selected/unselected chip treatment
+/// (slate/gold fill) rather than any status colour.
+class _SeriesSelector extends StatelessWidget {
+  const _SeriesSelector({
+    super.key,
+    required this.series,
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  final List<PriceHistorySeries> series;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Theme(
+      // Neutralize the chip ink feedback — the global gold `secondary`
+      // would otherwise tint the tap splash/hover yellow, reading as status.
+      data: theme.copyWith(
+        splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+        highlightColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+        hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+        focusColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < series.length; i++)
+              Padding(
+                padding: EdgeInsets.only(right: i == series.length - 1 ? 0 : 8),
+                child: _chip(context, theme, isDark, i),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(BuildContext context, ThemeData theme, bool isDark, int i) {
+    final isSelected = i == selectedIndex;
+    return FilterChip(
+      label: Text(series[i].label),
+      selected: isSelected,
+      showCheckmark: false,
+      labelStyle: TextStyle(
+        fontSize: 13,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+        color: isSelected
+            ? (isDark ? AppColors.primaryDark : Colors.white)
+            : theme.colorScheme.onSurface,
+      ),
+      selectedColor: isDark ? AppColors.primaryAccent : AppColors.brandSlate,
+      backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+      side: BorderSide(
+        color: isSelected
+            ? Colors.transparent
+            : (isDark ? AppColors.darkHairline : AppColors.lightHairline),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      onSelected: (_) => onChanged(i),
     );
   }
 }
@@ -262,8 +351,7 @@ class _HistoryRow extends ConsumerWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final isDark = theme.brightness == Brightness.dark;
-    final hairline =
-        isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
 
     final entry = row.entry;
     final showPrice = metric != PriceMetric.cost;
