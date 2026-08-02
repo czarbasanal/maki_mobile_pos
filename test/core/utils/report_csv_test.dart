@@ -193,8 +193,10 @@ void main() {
       ]);
       final csv = buildPriceChangeReportCsv(rows, {'p1': 'Widget (SKU-1)'});
       final lines = csv.trim().split('\n');
+      // Deliberately re-pinned: Option was inserted at index 3, adjacent to
+      // SKU, shifting every column after it by one.
       expect(lines.first,
-          'Date,Product,SKU,New Price,Price Delta,New Cost,Cost Delta,Reason,Changed By');
+          'Date,Product,SKU,Option,New Price,Price Delta,New Cost,Cost Delta,Reason,Changed By');
       expect(lines.length, 3); // header + 2 changes
       expect(lines[1], contains('Widget (SKU-1)'));
       expect(lines[1], contains('+20.00')); // newest row's price delta
@@ -223,6 +225,40 @@ void main() {
       // SKU column should contain formatted 8-digit codes and pass-through SKUs
       expect(lines[1], contains('0007-0153')); // 8-digit formatted
       expect(lines[2], contains('MLK-A3B7')); // Manual SKU passed through
+    });
+
+    test('Option column: the label for an option row, an empty cell (not '
+        '"Base" or a dash) for a base row of the same product', () {
+      final rows = priceChangeRowsInRange([
+        PriceChangeEntry(
+            id: 'a',
+            productId: 'p1',
+            price: 330,
+            cost: 150,
+            changedAt: DateTime(2026, 6, 10, 9),
+            changedBy: 'u1',
+            reason: 'Price update',
+            optionId: 'o2',
+            optionLabel: 'By 3',
+            optionPieces: 3),
+        PriceChangeEntry(
+            id: 'b',
+            productId: 'p1',
+            price: 120,
+            cost: 70,
+            changedAt: DateTime(2026, 6, 1, 9),
+            changedBy: 'u1'),
+      ]);
+      final csv = buildPriceChangeReportCsv(rows, {'p1': 'Pulley Ball (ABC-1)'});
+      final lines = csv.trim().split('\n');
+      // Newest-first: the By-3 row (Jun 10), then the base row (Jun 1).
+      final optionCells = lines[1].split(',');
+      final baseCells = lines[2].split(',');
+      expect(optionCells[3], 'By 3');
+      expect(baseCells[3], '');
+      // SKU (index 2) stays put either way.
+      expect(optionCells[2], 'ABC-1');
+      expect(baseCells[2], 'ABC-1');
     });
   });
 

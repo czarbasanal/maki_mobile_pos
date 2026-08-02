@@ -74,6 +74,12 @@ class ProductPriceChangeSummary {
   final bool isNew;
   final bool hasPrev;
 
+  /// The selling option this series is about (from the newest in-range
+  /// entry). Null for the base-price series — the report must show this
+  /// blank, not "Base" or a dash, so a shop with no selling options at all
+  /// sees no change from today.
+  final String? optionLabel;
+
   const ProductPriceChangeSummary({
     required this.productId,
     required this.prevPrice,
@@ -84,6 +90,7 @@ class ProductPriceChangeSummary {
     required this.lastChangedAt,
     required this.isNew,
     required this.hasPrev,
+    this.optionLabel,
   });
 
   double get priceDiff => currPrice - prevPrice;
@@ -137,6 +144,7 @@ List<ProductPriceChangeSummary> priceChangeProductSummaries(
       lastChangedAt: newest.changedAt,
       isNew: baseline == null && oldest.reason == _initialPriceReason,
       hasPrev: baseline != null || group.length > 1,
+      optionLabel: newest.optionLabel,
     ));
   });
 

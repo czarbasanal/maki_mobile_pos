@@ -350,6 +350,27 @@ void main() {
       expect(base.prevPrice, 150); // falls back to oldest-in-range (itself)
       expect(base.hasPrev, isFalse);
     });
+
+    test('summary carries the option label for an option series, and null '
+        'for the base series of the same product', () {
+      final s = priceChangeProductSummaries(
+        [
+          _entry('e1', 'p1', 150, 90, DateTime(2026, 6, 10)), // base
+          _entry('e2', 'p1', 330, 150, DateTime(2026, 6, 15),
+              optionId: _by3Id,
+              optionLabel: _by3Label,
+              optionPieces: _by3Pieces),
+        ],
+        {'p1': null},
+      );
+      expect(s, hasLength(2));
+      final base = s.firstWhere((x) => x.currPrice == 150);
+      // Wrong (dropping the field, or defaulting to '') would make the base
+      // and option cards indistinguishable, or print a fake blank-string label.
+      expect(base.optionLabel, isNull);
+      final by3 = s.firstWhere((x) => x.currPrice == 330);
+      expect(by3.optionLabel, _by3Label);
+    });
   });
 
   group('sortPriceChangeSummaries', () {
