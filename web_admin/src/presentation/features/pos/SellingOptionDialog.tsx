@@ -28,7 +28,10 @@ export function SellingOptionDialog({
       title={product.name}
       description={`${product.sku} · ${product.quantity} ${product.unit} on hand`}
     >
-      <div className="space-y-tk-sm">
+      {/* The shared Dialog locks body scroll while open, and this panel has
+          no scroll of its own — with enough options (cap is 10) rows past
+          the fold would be unreachable without this cap + its own scroll. */}
+      <div className="max-h-[70vh] space-y-tk-sm overflow-y-auto">
         {product.sellingOptions.map((option) => {
           // The POS warns rather than blocks on low stock (see lowStockLines
           // elsewhere in the register) — this row stays clickable either way.
@@ -54,7 +57,7 @@ export function SellingOptionDialog({
                   {formatMoney(option.price)}
                 </span>
                 <span className="block text-[12px] text-light-text-hint">
-                  {formatMoney(sellingOptionPricePerPiece(option))}/pc
+                  {formatMoney(sellingOptionPricePerPiece(option))}/{product.unit}
                 </span>
               </span>
             </button>

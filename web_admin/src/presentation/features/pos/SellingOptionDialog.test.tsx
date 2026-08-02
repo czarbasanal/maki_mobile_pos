@@ -87,6 +87,14 @@ describe('SellingOptionDialog', () => {
     expect(screen.getByText(/600/)).toBeInTheDocument();
   });
 
+  it('uses the product\'s own unit as the per-piece suffix, not a hardcoded "pc"', () => {
+    render(<SellingOptionDialog product={product({ unit: 'box' })} onPick={vi.fn()} onClose={vi.fn()} />);
+    // By 6 -> 600/6 = 100/box, By 3 -> 330/3 = 110/box. A hardcoded "pc"
+    // suffix would show "/pc" here regardless of the product's own unit.
+    expect(screen.getByText(/100\.00\/box/)).toBeInTheDocument();
+    expect(screen.getByText(/110\.00\/box/)).toBeInTheDocument();
+  });
+
   describe('short stock', () => {
     // 4 on hand: By 6 (6 pieces) is short, By 3 (3 pieces) is not.
     const shortProduct = () => product({ quantity: 4 });

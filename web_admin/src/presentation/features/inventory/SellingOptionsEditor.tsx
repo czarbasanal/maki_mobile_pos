@@ -161,8 +161,8 @@ function SellingOptionRow({
   const perPiece = sellingOptionPricePerPiece(option);
   const marginPercent = perPiece === 0 ? 0 : ((perPiece - unitCost) / perPiece) * 100;
   const caption = showMargin
-    ? `${formatMoney(perPiece)}/pc · ${Math.round(marginPercent)}% margin`
-    : `${formatMoney(perPiece)}/pc`;
+    ? `${formatMoney(perPiece)}/${unit} · ${Math.round(marginPercent)}% margin`
+    : `${formatMoney(perPiece)}/${unit}`;
 
   return (
     <div className="space-y-tk-xs rounded-lg border border-light-hairline bg-light-card p-tk-md">

@@ -282,4 +282,59 @@ describe('FirestoreSaleRepository.create — item write shape (selling options)'
     expect(data).toHaveProperty('optionPieces', null);
     expect(data).toHaveProperty('optionPrice', null);
   });
+
+  // Newest structural path in the branch: a resumed job order (or a web POS
+  // ticket) can carry two DIFFERENT selling-option lines of the SAME
+  // product (a By 6 and a By 3 of one Pulley Ball) into create(). The SDKs
+  // compose multiple increment() writes against one doc correctly, but
+  // nothing pinned that here — this test is the pin.
+  it('persists two option lines of the same product as two item docs and issues two separate stock decrements', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = baseInput();
+    const by6Item = itemWithOption({
+      id: 'i1',
+      optionId: 'o1',
+      optionLabel: 'By 6',
+      optionPieces: 6,
+      optionPrice: 600,
+      unitPrice: 100,
+      quantity: 6,
+    });
+    const by3Item = itemWithOption({
+      id: 'i2',
+      optionId: 'o2',
+      optionLabel: 'By 3',
+      optionPieces: 3,
+      optionPrice: 330,
+      unitPrice: 110,
+      quantity: 3,
+    });
+    input.items = [by6Item, by3Item];
+
+    await repo.create(input, 'actor-1');
+
+    // Two independent item docs, each keeping its own option fields — a
+    // wrong implementation that dedupes by productId or overwrites one line
+    // with the other would leave only one write here.
+    const itemWrites = state.writes.filter((w) => w.kind === 'set' && w.path.includes('/items/'));
+    expect(itemWrites).toHaveLength(2);
+
+    const by6Write = itemWrites.find((w) => (w.data as Record<string, unknown>).optionId === 'o1')
+      ?.data as Record<string, unknown>;
+    const by3Write = itemWrites.find((w) => (w.data as Record<string, unknown>).optionId === 'o2')
+      ?.data as Record<string, unknown>;
+    expect(by6Write).toMatchObject({ optionId: 'o1', optionLabel: 'By 6', optionPieces: 6, optionPrice: 600 });
+    expect(by3Write).toMatchObject({ optionId: 'o2', optionLabel: 'By 3', optionPieces: 3, optionPrice: 330 });
+
+    // Two separate stock decrements against the SAME product doc (products/p1)
+    // — one per line — not a single combined decrement. A wrong
+    // implementation that collapses same-productId lines into one update
+    // would leave only one write here (or a wrong total).
+    const stockWrites = state.writes.filter((w) => w.kind === 'update' && w.path === 'products/p1');
+    expect(stockWrites).toHaveLength(2);
+    const decrements = stockWrites
+      .map((w) => ((w.data as Record<string, unknown>).quantity as { __increment: number }).__increment)
+      .sort((a, b) => a - b);
+    expect(decrements).toEqual([-6, -3].sort((a, b) => a - b));
+  });
 });

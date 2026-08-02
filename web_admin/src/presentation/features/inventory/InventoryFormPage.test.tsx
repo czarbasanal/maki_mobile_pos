@@ -15,6 +15,7 @@ import { defaultCostCode } from '@/domain/entities/CostCode';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import type { Category, Product } from '@/domain/entities';
+import type { SellingOption } from '@/domain/entities/SellingOption';
 
 function signIn() {
   useAuthStore.setState({
@@ -390,6 +391,18 @@ describe('InventoryFormPage — selling options', () => {
       </DiProvider>,
     );
   }
+
+  it('shows no options note on the Price field when the product has no selling options', async () => {
+    editHarness({ role: UserRole.admin, target: editableProduct({ sellingOptions: [] }) });
+    await screen.findByLabelText('Name');
+    expect(screen.queryByText(/inventory value/)).toBeNull();
+  });
+
+  it('shows a note on the Price field once the product has a selling option', async () => {
+    const by3: SellingOption = { id: 'o2', label: 'By 3', pieces: 3, price: 330 };
+    editHarness({ role: UserRole.admin, target: editableProduct({ sellingOptions: [by3] }) });
+    expect(await screen.findByText(/inventory value/)).toBeInTheDocument();
+  });
 
   it('shows the Selling options section to an admin editing a product', async () => {
     editHarness({ role: UserRole.admin });

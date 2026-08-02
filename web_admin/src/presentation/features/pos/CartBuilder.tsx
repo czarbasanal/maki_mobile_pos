@@ -3,7 +3,13 @@ import { TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { lowStockLines } from '@/domain/sales/cart';
-import { saleItemHasOption, saleItemNet, saleItemOptionSets } from '@/domain/entities/SaleItem';
+import {
+  saleItemDisplayName,
+  saleItemHasOption,
+  saleItemNet,
+  saleItemOptionSets,
+  saleItemOptionSetsCaption,
+} from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { productHasSellingOptions, type Product } from '@/domain/entities/Product';
 import { formatMoney } from '@/core/utils/money';
@@ -101,35 +107,48 @@ export function CartBuilder({ store }: { store: CartStore }) {
             <p className="px-tk-md py-tk-lg text-center text-bodySmall text-light-text-hint">Cart is empty.</p>
           ) : (
             <ul className="divide-y divide-light-hairline">
-              {lines.map((l) => (
-                <li key={l.id} className="space-y-tk-xs px-tk-md py-tk-sm">
-                  <div className="flex items-center justify-between gap-tk-sm">
-                    <span className="text-bodySmall text-light-text">{l.name}</span>
-                    <button type="button" onClick={() => removeLine(l.id)} className="text-light-text-hint hover:text-error">
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
-                    <label className="flex items-center gap-tk-xs">
-                      {/* An option line's box shows SETS (setQty takes sets); quantity itself is always
-                          pieces. The label must say so — otherwise the cashier can't tell whether they're
-                          typing sets or pieces into a money-entry field. */}
-                      {saleItemHasOption(l) ? 'Sets' : 'Qty'}
-                      <input type="number" min={1} value={saleItemOptionSets(l) ?? l.quantity}
-                        onChange={(e) => setQty(l.id, Number(e.target.value))}
-                        className="w-16 rounded-md border border-light-border px-tk-sm py-[4px]" />
-                    </label>
-                    <label className="flex items-center gap-tk-xs">
-                      {isPct ? '%' : '₱'} off
-                      <input type="number" min={0} step="0.01" value={l.discountValue}
-                        onChange={(e) => setLineDiscount(l.id, Number(e.target.value))}
-                        className="w-20 rounded-md border border-light-border px-tk-sm py-[4px]" />
-                    </label>
-                    <span className="ml-auto font-medium text-light-text">{formatMoney(saleItemNet(l, isPct))}</span>
-                  </div>
-                  {lowStock.has(l.productId) ? <p className="text-[11px] text-warning-dark">⚠ exceeds on-hand stock</p> : null}
-                </li>
-              ))}
+              {lines.map((l) => {
+                // Mirrors OrderSummary's name + caption treatment — this row
+                // is the cart's own render site and must not fall back to
+                // the bare product name (that's what left two option lines
+                // of one product indistinguishable except by the money
+                // column).
+                const caption = saleItemOptionSetsCaption(l);
+                return (
+                  <li key={l.id} className="space-y-tk-xs px-tk-md py-tk-sm">
+                    <div className="flex items-center justify-between gap-tk-sm">
+                      <span className="min-w-0">
+                        <span className="block text-bodySmall text-light-text">{saleItemDisplayName(l)}</span>
+                        {caption ? (
+                          <span className="block text-[12px] text-light-text-hint">{caption}</span>
+                        ) : null}
+                      </span>
+                      <button type="button" onClick={() => removeLine(l.id)} className="text-light-text-hint hover:text-error">
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
+                      <label className="flex items-center gap-tk-xs">
+                        {/* An option line's box shows SETS (setQty takes sets); quantity itself is always
+                            pieces. The label must say so — otherwise the cashier can't tell whether they're
+                            typing sets or pieces into a money-entry field. */}
+                        {saleItemHasOption(l) ? 'Sets' : 'Qty'}
+                        <input type="number" min={1} value={saleItemOptionSets(l) ?? l.quantity}
+                          onChange={(e) => setQty(l.id, Number(e.target.value))}
+                          className="w-16 rounded-md border border-light-border px-tk-sm py-[4px]" />
+                      </label>
+                      <label className="flex items-center gap-tk-xs">
+                        {isPct ? '%' : '₱'} off
+                        <input type="number" min={0} step="0.01" value={l.discountValue}
+                          onChange={(e) => setLineDiscount(l.id, Number(e.target.value))}
+                          className="w-20 rounded-md border border-light-border px-tk-sm py-[4px]" />
+                      </label>
+                      <span className="ml-auto font-medium text-light-text">{formatMoney(saleItemNet(l, isPct))}</span>
+                    </div>
+                    {lowStock.has(l.productId) ? <p className="text-[11px] text-warning-dark">⚠ exceeds on-hand stock</p> : null}
+                  </li>
+                );
+              })}
             </ul>
           )}
           <LaborSection store={store} />

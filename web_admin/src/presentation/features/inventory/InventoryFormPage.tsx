@@ -579,6 +579,14 @@ export function InventoryFormPage() {
             <Field label="Price" error={errors.price?.message}
               input={<input type="number" step="0.01" className={inputCls(!!errors.price)} {...register('price')} />} />
           </div>
+          {/* The base price stops being directly sellable once a product
+              carries selling options — a picker gates every sale instead.
+              Say so in plain shop-owner language, not developer jargon. */}
+          {sellingOptions.length > 0 ? (
+            <p className="text-[12px] text-light-text-hint">
+              The POS will ask for a selling option — this price is used for inventory value, not charged directly.
+            </p>
+          ) : null}
         </Section>
 
         {/* Admin-only, same as InventoryListPage's totals strip. Shown in

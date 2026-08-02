@@ -52,12 +52,19 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     notes: null,
     addLine: (product) =>
       set((s) => {
-        // Match on id, not productId, so this never merges into an option
-        // line (a plain sale of a product that also has selling options).
-        if (s.lines.some((l) => l.id === product.id)) {
+        // Match on productId + optionId === null, mirroring mobile's
+        // CartNotifier.addProduct — NOT on line id. A resumed job order's
+        // line id is the JO item id minted on the phone (see
+        // job_order_model.dart's SaleItemModel.toMap(includeId: true)), so
+        // matching on id would never find it and would append a duplicate
+        // line instead of incrementing the existing one. Matching on
+        // productId + optionId still never merges into an option line (a
+        // plain sale of a product that also has selling options).
+        const existing = s.lines.find((l) => l.productId === product.id && l.optionId === null);
+        if (existing) {
           return {
             lines: s.lines.map((l) =>
-              l.id === product.id ? { ...l, quantity: l.quantity + 1 } : l,
+              l === existing ? { ...l, quantity: l.quantity + 1 } : l,
             ),
           };
         }
@@ -80,14 +87,20 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
       }),
     addLineWithOption: (product, option) =>
       set((s) => {
-        const id = cartLineId(product.id, option.id);
-        if (s.lines.some((l) => l.id === id)) {
+        // Same reasoning as addLine above: match on productId + optionId,
+        // not on line id, so a resumed job order's option line (id = its
+        // JO-minted item id) still merges instead of duplicating.
+        const existing = s.lines.find((l) => l.productId === product.id && l.optionId === option.id);
+        if (existing) {
           return {
             lines: s.lines.map((l) =>
-              l.id === id ? { ...l, quantity: l.quantity + option.pieces } : l,
+              l === existing ? { ...l, quantity: l.quantity + option.pieces } : l,
             ),
           };
         }
+        // cartLineId is only for MINTING a brand-new line's id — an
+        // existing (possibly JO-minted) line's id is never rewritten.
+        const id = cartLineId(product.id, option.id);
         const line: CartLine = {
           id,
           productId: product.id,

@@ -348,7 +348,22 @@ describe('SellingOptionsEditor', () => {
       />,
     );
     // 330/3 = 110/pc; (110-60)/110 = 45% margin.
-    expect(screen.getByText(`${formatMoney(110)}/pc · 45% margin`)).toBeInTheDocument();
+    expect(screen.getByText(`${formatMoney(110)}/pcs · 45% margin`)).toBeInTheDocument();
+  });
+
+  it('uses the product\'s own unit as the per-piece suffix, not a hardcoded "pc"', () => {
+    render(
+      <SellingOptionsEditor
+        value={[by3]}
+        onChange={vi.fn()}
+        unitCost={60}
+        unit="box"
+        error={validateSellingOptions([by3])}
+      />,
+    );
+    // 330 / 3 = 110/box. A hardcoded "pc" suffix would show "/pc" here
+    // regardless of the `unit` prop.
+    expect(screen.getByText(new RegExp(`${formatMoney(110)}/box`))).toBeInTheDocument();
   });
 
   it('hides the margin segment when showMargin is false but keeps the per-piece price — catches gating the whole caption instead of just the cost-derived half', () => {
@@ -362,7 +377,7 @@ describe('SellingOptionsEditor', () => {
         error={validateSellingOptions([by3])}
       />,
     );
-    expect(screen.getByText(`${formatMoney(110)}/pc`)).toBeInTheDocument();
+    expect(screen.getByText(`${formatMoney(110)}/pcs`)).toBeInTheDocument();
     expect(screen.queryByText(/margin/)).toBeNull();
   });
 });

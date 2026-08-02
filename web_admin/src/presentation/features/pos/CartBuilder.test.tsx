@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { CartBuilder } from './CartBuilder';
@@ -101,6 +101,50 @@ describe('CartBuilder — routing product picks through the selling-option gate'
 
     expect(store.getState().lines).toHaveLength(0);
     expect(screen.queryByRole('button', { name: /^cancel$/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('CartBuilder — cart row shows the selling-option label (10th render site the migration missed)', () => {
+  it("shows the option label on an option line's cart row, not just the checkout screen", async () => {
+    const { store } = harness([optionProduct()]);
+    await search('pulley');
+    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(screen.getByText('By 3'));
+    // Clear the search box so the results panel — which independently shows
+    // the bare product name — doesn't make the cart row's text ambiguous.
+    await userEvent.clear(screen.getByPlaceholderText(/search products/i));
+
+    expect(store.getState().lines).toHaveLength(1);
+    // A wrong implementation (bare l.name) would show "Pulley Ball" with no
+    // way to tell this line apart from a By 6 line of the same product.
+    expect(screen.getByText('Pulley Ball · By 3')).toBeInTheDocument();
+  });
+
+  it('shows the set-count caption for more than one set, mirroring OrderSummary', async () => {
+    const { store } = harness([optionProduct()]);
+    await search('pulley');
+    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(screen.getByText('By 3'));
+    await userEvent.clear(screen.getByPlaceholderText(/search products/i));
+    // Second set: bumps the line to 2 sets (6 pieces) — the caption should
+    // then read "By 3 × 2 (6 pcs)", same rule as OrderSummary/Receipt.
+    // A direct store mutation (not routed through userEvent) needs its own
+    // act() so React flushes the resulting re-render before we assert.
+    act(() => {
+      store.getState().addLineWithOption(optionProduct(), by3);
+    });
+
+    expect(screen.getByText(/By 3 × 2/)).toBeInTheDocument();
+    expect(screen.getByText(/6 pcs/)).toBeInTheDocument();
+  });
+
+  it("a plain line's cart row is unchanged — bare name, no option caption", async () => {
+    harness([plainProduct()]);
+    await search('plug');
+    await userEvent.click(await screen.findByRole('button', { name: /spark plug/i }));
+    await userEvent.clear(screen.getByPlaceholderText(/search products/i));
+
+    expect(screen.getByText('Spark Plug')).toBeInTheDocument();
   });
 });
 
