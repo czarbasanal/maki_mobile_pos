@@ -77,6 +77,57 @@ List<double> sparklineSeries(
   return values.reversed.toList();
 }
 
+/// One continuous price series — the base price, or one selling option.
+///
+/// [buildPriceHistoryRows] and the sparkline both subtract each entry from
+/// the next, so they are only meaningful within a single series. Mixing base
+/// and option entries produces a chart that zigzags between the per-piece
+/// base price and the whole-set option price, with deltas to match.
+class PriceHistorySeries {
+  const PriceHistorySeries({
+    required this.optionId,
+    required this.label,
+    required this.entries,
+  });
+
+  /// Null for the base price series.
+  final String? optionId;
+
+  /// Display name — 'Base price', or the option's label.
+  final String label;
+
+  /// Newest-first, matching the order the repository returns.
+  final List<PriceHistoryEntry> entries;
+}
+
+/// Splits [entriesNewestFirst] into independent series: base first (when it
+/// has any entries), then one per option in first-seen order.
+List<PriceHistorySeries> splitPriceHistorySeries(
+  List<PriceHistoryEntry> entriesNewestFirst,
+) {
+  final base = <PriceHistoryEntry>[];
+  final byOption = <String, List<PriceHistoryEntry>>{};
+  final labels = <String, String>{};
+
+  for (final entry in entriesNewestFirst) {
+    final optionId = entry.optionId;
+    if (optionId == null) {
+      base.add(entry);
+      continue;
+    }
+    byOption.putIfAbsent(optionId, () => <PriceHistoryEntry>[]).add(entry);
+    labels[optionId] ??= entry.optionLabel ?? optionId;
+  }
+
+  return [
+    if (base.isNotEmpty)
+      PriceHistorySeries(optionId: null, label: 'Base price', entries: base),
+    for (final id in byOption.keys)
+      PriceHistorySeries(
+          optionId: id, label: labels[id]!, entries: byOption[id]!),
+  ];
+}
+
 /// Maps a price-history [reason] (a `PriceChangeReason` constant) plus optional
 /// [note] to a human label for the "Source" column.
 String derivePriceHistorySource(String? reason, String? note) {
