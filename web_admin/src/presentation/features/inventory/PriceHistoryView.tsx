@@ -4,6 +4,7 @@ import {
   buildPriceHistoryRows,
   sparklineSeries,
   derivePriceHistorySource,
+  splitPriceHistorySeries,
 } from '@/domain/products/priceHistory';
 import { useQuery } from '@tanstack/react-query';
 import { usePriceHistory } from '@/presentation/hooks/usePriceHistory';
@@ -45,6 +46,7 @@ function Delta({ value, delta }: { value: number; delta: number }) {
 
 export function PriceHistoryView({ productId }: { productId: string }) {
   const [metric, setMetric] = useState<PriceMetric>(PriceMetric.all);
+  const [selectedSeriesIndex, setSelectedSeriesIndex] = useState(0);
   const { data, isLoading, error } = usePriceHistory(productId);
 
   // One-shot directory read (not a live subscription) to resolve actor names;
@@ -61,9 +63,23 @@ export function PriceHistoryView({ productId }: { productId: string }) {
     () => new Map((users ?? []).map((u) => [u.id, u.displayName])),
     [users],
   );
-  const rows = useMemo(() => buildPriceHistoryRows(entries, metric), [entries, metric]);
-  const priceSeries = useMemo(() => sparklineSeries(entries, false), [entries]);
-  const costSeries = useMemo(() => sparklineSeries(entries, true), [entries]);
+
+  // Base price + one series per selling option — buildPriceHistoryRows and the
+  // sparkline both diff each entry against the next, so feeding them the raw
+  // mixed stream zigzags between per-piece base prices and whole-set option
+  // prices. Defensive clamp: series only shrinks if the entries change shape
+  // mid-session, which never happens for a fixed productId, but a stale index
+  // must never index out of range.
+  const series = useMemo(() => splitPriceHistorySeries(entries), [entries]);
+  const selectedIndex = selectedSeriesIndex < series.length ? selectedSeriesIndex : 0;
+  const selectedEntries = series[selectedIndex]?.entries ?? [];
+
+  const rows = useMemo(
+    () => buildPriceHistoryRows(selectedEntries, metric),
+    [selectedEntries, metric],
+  );
+  const priceSeries = useMemo(() => sparklineSeries(selectedEntries, false), [selectedEntries]);
+  const costSeries = useMemo(() => sparklineSeries(selectedEntries, true), [selectedEntries]);
 
   if (isLoading) {
     return <p className="text-bodySmall text-light-text-secondary">Loading…</p>;
@@ -81,6 +97,26 @@ export function PriceHistoryView({ productId }: { productId: string }) {
 
   return (
     <div className="space-y-tk-lg">
+      {series.length > 1 ? (
+        <div className="inline-flex flex-wrap gap-[2px] rounded-md border border-light-hairline p-[2px]">
+          {series.map((s, i) => (
+            <button
+              key={s.optionId ?? 'base'}
+              type="button"
+              onClick={() => setSelectedSeriesIndex(i)}
+              className={cn(
+                'rounded px-tk-md py-[4px] text-bodySmall transition-colors',
+                i === selectedIndex
+                  ? 'bg-light-subtle font-semibold text-light-text'
+                  : 'text-light-text-secondary hover:text-light-text',
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <div className="inline-flex rounded-md border border-light-hairline p-[2px]">
         {METRICS.map((m) => (
           <button
