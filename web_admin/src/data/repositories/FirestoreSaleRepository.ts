@@ -195,6 +195,13 @@ export class FirestoreSaleRepository implements SaleRepository {
           quantity: item.quantity,
           discountValue: item.discountValue,
           unit: item.unit,
+          // Keep this list in sync with saleItemConverter.toFirestore — see
+          // FirestoreSaleRepository.test.ts's "item write shape" tests,
+          // which pin the two against each other.
+          optionId: item.optionId,
+          optionLabel: item.optionLabel,
+          optionPieces: item.optionPieces,
+          optionPrice: item.optionPrice,
         });
       });
       tx.set(counterRef, { [key]: seq }, { merge: true });

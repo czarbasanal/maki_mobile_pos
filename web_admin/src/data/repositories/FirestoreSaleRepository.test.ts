@@ -8,8 +8,9 @@
 // rollover, Task 7).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Firestore } from 'firebase/firestore';
-import type { Sale } from '@/domain/entities';
+import type { Sale, SaleItem } from '@/domain/entities';
 import { DiscountType, PaymentMethod, SaleStatus } from '@/domain/enums';
+import { saleItemConverter } from '@/data/converters/saleItemConverter';
 
 interface FakeRef {
   path: string;
@@ -191,5 +192,94 @@ describe('FirestoreSaleRepository.create — drawer_state stamping', () => {
 
     const drawerWrite = state.writes.find((w) => w.path === 'drawer_state/state');
     expect(drawerWrite?.data).toEqual({ lastSaleDay: 20260726 });
+  });
+});
+
+// Item docs are written with a hand-picked field list inside the transaction
+// (tx.set on a converter-less ref — see the file header comment on why this
+// duplication is intentionally *not* collapsed into `.withConverter`), so it
+// can independently drift from saleItemConverter.toFirestore, which is what
+// reads use. That drift is exactly what silently dropped the four selling-
+// option fields (optionId/optionLabel/optionPieces/optionPrice) from every
+// web-completed sale until this fix.
+describe('FirestoreSaleRepository.create — item write shape (selling options)', () => {
+  beforeEach(() => {
+    state.writes = [];
+    state.autoIdSeq = 0;
+    state.counterExists = false;
+    state.counterData = {};
+    state.jobOrderDoc = null;
+    vi.useRealTimers();
+  });
+
+  function itemWithOption(overrides: Partial<SaleItem> = {}): SaleItem {
+    return {
+      id: 'i1',
+      productId: 'p1',
+      sku: 'ABC-1',
+      name: 'Pulley Ball',
+      unitPrice: 110,
+      unitCost: 60,
+      quantity: 6,
+      discountValue: 0,
+      unit: 'pcs',
+      optionId: 'o2',
+      optionLabel: 'By 3',
+      optionPieces: 3,
+      optionPrice: 330,
+      ...overrides,
+    };
+  }
+
+  function findItemWrite() {
+    return state.writes.find((w) => w.kind === 'set' && w.path.includes('/items/'));
+  }
+
+  it('writes exactly the field set saleItemConverter.toFirestore produces for the same item (pins the shape against future drift)', async () => {
+    // Primary regression test: the transaction's hand-picked item write and
+    // saleItemConverter.toFirestore are two independent lists of the same
+    // fields. If a field is ever added to (or renamed in) the converter and
+    // this call site isn't updated to match — the exact way selling options
+    // were dropped — the sorted key sets stop matching and this fails.
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = baseInput();
+    input.items = [itemWithOption()];
+
+    await repo.create(input, 'actor-1');
+
+    const itemWrite = findItemWrite();
+    expect(itemWrite).toBeDefined();
+
+    const converterShape = saleItemConverter.toFirestore(input.items[0]) as Record<string, unknown>;
+    expect(Object.keys(itemWrite!.data as object).sort()).toEqual(Object.keys(converterShape).sort());
+  });
+
+  it('persists optionId/optionLabel/optionPieces/optionPrice for a line rung up through a selling option', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = baseInput();
+    input.items = [itemWithOption()];
+
+    await repo.create(input, 'actor-1');
+
+    const data = findItemWrite()?.data as Record<string, unknown>;
+    expect(data.optionId).toBe('o2');
+    expect(data.optionLabel).toBe('By 3');
+    expect(data.optionPieces).toBe(3);
+    expect(data.optionPrice).toBe(330);
+  });
+
+  it('persists the option fields as null (not omitted) for a line with no selling option', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    // baseInput()'s single item already carries optionId/optionLabel/
+    // optionPieces/optionPrice: null — i.e. no selling option.
+    const input = baseInput();
+
+    await repo.create(input, 'actor-1');
+
+    const data = findItemWrite()?.data as Record<string, unknown>;
+    expect(data).toHaveProperty('optionId', null);
+    expect(data).toHaveProperty('optionLabel', null);
+    expect(data).toHaveProperty('optionPieces', null);
+    expect(data).toHaveProperty('optionPrice', null);
   });
 });
