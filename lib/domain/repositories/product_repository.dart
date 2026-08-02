@@ -350,6 +350,18 @@ class PriceChangeEntry {
   final String? reason;
   final String? note;
 
+  /// The selling option this entry is about, or null for a base price/cost
+  /// entry — mirrors [PriceHistoryEntry.optionId]. Report grouping must key
+  /// on (productId, optionId), not productId alone: a base per-piece price
+  /// and an option's set price are different series.
+  final String? optionId;
+
+  /// Denormalized option label at the time of the change.
+  final String? optionLabel;
+
+  /// Denormalized option piece count at the time of the change.
+  final int? optionPieces;
+
   const PriceChangeEntry({
     required this.id,
     required this.productId,
@@ -359,5 +371,8 @@ class PriceChangeEntry {
     required this.changedBy,
     this.reason,
     this.note,
+    this.optionId,
+    this.optionLabel,
+    this.optionPieces,
   });
 }

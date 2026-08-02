@@ -517,6 +517,12 @@ export class FirestoreProductRepository implements ProductRepository {
         changedBy: (data.changedBy as string) ?? '',
         reason: (data.reason as string | null) ?? null,
         note: (data.note as string | null) ?? null,
+        // Without these, every entry here looks like a base entry regardless
+        // of what's in Firestore, and the (productId, optionId) report
+        // grouping has nothing to key off.
+        optionId: (data.optionId as string | null | undefined) ?? null,
+        optionLabel: (data.optionLabel as string | null | undefined) ?? null,
+        optionPieces: (data.optionPieces as number | null | undefined) ?? null,
       } satisfies PriceChangeEntry;
     });
   }

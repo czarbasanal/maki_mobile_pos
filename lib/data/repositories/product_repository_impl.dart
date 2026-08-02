@@ -940,8 +940,9 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  /// Shared doc → [PriceHistoryEntry] mapping so the history list and the
-  /// baseline query can never drift in parsing semantics.
+  /// Shared doc → [PriceHistoryEntry] mapping so the history list, the
+  /// baseline query, and the cross-product range query can never drift in
+  /// parsing semantics.
   PriceHistoryEntry _priceHistoryEntryFromDoc(
       QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
@@ -1001,17 +1002,24 @@ class ProductRepositoryImpl implements ProductRepository {
           .get();
 
       return snapshot.docs.map((doc) {
-        final data = doc.data();
+        // Reuse the shared price-history parsing so this cross-product query
+        // can never drift from getPriceHistory/getPriceHistoryBaseline on
+        // which fields it reads — including optionId/optionLabel/
+        // optionPieces, without which every entry here would look like a
+        // base entry regardless of what's actually in Firestore.
+        final base = _priceHistoryEntryFromDoc(doc);
         return PriceChangeEntry(
-          id: doc.id,
+          id: base.id,
           productId: doc.reference.parent.parent!.id,
-          price: (data['price'] as num?)?.toDouble() ?? 0,
-          cost: (data['cost'] as num?)?.toDouble() ?? 0,
-          changedAt:
-              (data['changedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          changedBy: data['changedBy'] as String? ?? '',
-          reason: data['reason'] as String?,
-          note: data['note'] as String?,
+          price: base.price,
+          cost: base.cost,
+          changedAt: base.changedAt,
+          changedBy: base.changedBy,
+          reason: base.reason,
+          note: base.note,
+          optionId: base.optionId,
+          optionLabel: base.optionLabel,
+          optionPieces: base.optionPieces,
         );
       }).toList();
     } on FirebaseException catch (e) {
