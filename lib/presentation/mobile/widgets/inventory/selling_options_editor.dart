@@ -343,9 +343,9 @@ class _OptionRow extends StatelessWidget {
             // percentage), so it's gated on [showMargin], mirroring the
             // host form's own `showCostField` gate on its margin line.
             showMargin
-                ? '${option.pricePerPiece.toCurrency()}/$unit · '
+                ? '${option.pricePerPiece.toCurrency()}/${sellingOptionRateSuffix(unit)} · '
                     '${_marginPercent.toStringAsFixed(0)}% margin'
-                : '${option.pricePerPiece.toCurrency()}/$unit',
+                : '${option.pricePerPiece.toCurrency()}/${sellingOptionRateSuffix(unit)}',
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
@@ -164,7 +165,7 @@ class _OptionRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${option.pricePerPiece.toCurrency()}/${product.unit}',
+                '${option.pricePerPiece.toCurrency()}/${sellingOptionRateSuffix(product.unit)}',
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
             ],

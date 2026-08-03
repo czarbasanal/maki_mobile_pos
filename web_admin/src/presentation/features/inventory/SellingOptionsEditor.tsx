@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { SellingOption } from '@/domain/entities/SellingOption';
-import { sellingOptionPricePerPiece } from '@/domain/entities/SellingOption';
+import { sellingOptionPricePerPiece, sellingOptionRateSuffix } from '@/domain/entities/SellingOption';
 import { MAX_SELLING_OPTIONS, MAX_SELLING_OPTION_LABEL } from '@/domain/products/sellingOptions';
 import { formatMoney } from '@/core/utils/money';
 
@@ -161,8 +161,8 @@ function SellingOptionRow({
   const perPiece = sellingOptionPricePerPiece(option);
   const marginPercent = perPiece === 0 ? 0 : ((perPiece - unitCost) / perPiece) * 100;
   const caption = showMargin
-    ? `${formatMoney(perPiece)}/${unit} · ${Math.round(marginPercent)}% margin`
-    : `${formatMoney(perPiece)}/${unit}`;
+    ? `${formatMoney(perPiece)}/${sellingOptionRateSuffix(unit)} · ${Math.round(marginPercent)}% margin`
+    : `${formatMoney(perPiece)}/${sellingOptionRateSuffix(unit)}`;
 
   return (
     <div className="space-y-tk-xs rounded-lg border border-light-hairline bg-light-card p-tk-md">

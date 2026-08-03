@@ -7,6 +7,21 @@ SellingOptionEntity opt(String id, String label, int pieces, double price) =>
     SellingOptionEntity(id: id, label: label, pieces: pieces, price: price);
 
 void main() {
+  group('sellingOptionRateSuffix', () {
+    // "pcs" is the only plural default in the product data — every other
+    // unit (box, set, pack, ...) already reads fine as typed, so only this
+    // one gets special-cased down to its singular "pc".
+    test('special-cases "pcs" to "pc"', () {
+      expect(sellingOptionRateSuffix('pcs'), 'pc');
+    });
+
+    test('returns any other unit unchanged', () {
+      expect(sellingOptionRateSuffix('box'), 'box');
+      expect(sellingOptionRateSuffix('set'), 'set');
+      expect(sellingOptionRateSuffix('pack'), 'pack');
+    });
+  });
+
   group('validateSellingOptions', () {
     test('accepts an empty list', () {
       expect(validateSellingOptions(const []), isNull);

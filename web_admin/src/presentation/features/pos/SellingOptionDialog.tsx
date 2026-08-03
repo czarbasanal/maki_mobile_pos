@@ -9,7 +9,7 @@
 import { Dialog } from '@/presentation/components/common/Dialog';
 import type { Product } from '@/domain/entities/Product';
 import type { SellingOption } from '@/domain/entities/SellingOption';
-import { sellingOptionPricePerPiece } from '@/domain/entities/SellingOption';
+import { sellingOptionPricePerPiece, sellingOptionRateSuffix } from '@/domain/entities/SellingOption';
 import { formatMoney } from '@/core/utils/money';
 
 export function SellingOptionDialog({
@@ -57,7 +57,7 @@ export function SellingOptionDialog({
                   {formatMoney(option.price)}
                 </span>
                 <span className="block text-[12px] text-light-text-hint">
-                  {formatMoney(sellingOptionPricePerPiece(option))}/{product.unit}
+                  {formatMoney(sellingOptionPricePerPiece(option))}/{sellingOptionRateSuffix(product.unit)}
                 </span>
               </span>
             </button>

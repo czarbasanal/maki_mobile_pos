@@ -74,7 +74,7 @@ void main() {
     // Margin vs unitCost 60: (110 - 60) / 110 = 45% (not round, not 50,
     // so it can't pass by a lucky coincidence with some other number).
     await pump(tester, [by3]);
-    expect(find.text('₱110.00/pcs · 45% margin'), findsOneWidget);
+    expect(find.text('₱110.00/pc · 45% margin'), findsOneWidget);
   });
 
   testWidgets(
@@ -254,7 +254,7 @@ void main() {
       'shows the margin segment when showMargin is true, alongside the '
       'per-piece price', (tester) async {
     await pump(tester, [by3], showMargin: true);
-    expect(find.text('₱110.00/pcs · 45% margin'), findsOneWidget);
+    expect(find.text('₱110.00/pc · 45% margin'), findsOneWidget);
   });
 
   testWidgets(
@@ -262,7 +262,7 @@ void main() {
       'per-piece price — catches gating the whole caption (or nothing at '
       'all) instead of just the cost-derived half', (tester) async {
     await pump(tester, [by3], showMargin: false);
-    expect(find.text('₱110.00/pcs'), findsOneWidget);
+    expect(find.text('₱110.00/pc'), findsOneWidget);
     expect(find.textContaining('margin'), findsNothing);
   });
 

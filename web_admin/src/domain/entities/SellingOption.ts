@@ -12,3 +12,13 @@ export interface SellingOption {
 export function sellingOptionPricePerPiece(option: SellingOption): number {
   return option.pieces === 0 ? 0 : option.price / option.pieces;
 }
+
+/** Per-piece rate suffix for a product's `unit` — e.g. the "pc" in a
+ * "₱110.00/pc" caption. `pcs` is special-cased down to `pc` because it's the
+ * only plural default in the product data; every other unit (box, set,
+ * pack, ...) is shown exactly as typed. Single source for this mapping —
+ * every render site (POS picker, inventory editor, both surfaces) calls
+ * this rather than hand-rolling the same conditional. */
+export function sellingOptionRateSuffix(unit: string): string {
+  return unit === 'pcs' ? 'pc' : unit;
+}

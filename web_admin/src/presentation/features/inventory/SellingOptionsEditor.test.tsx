@@ -348,7 +348,7 @@ describe('SellingOptionsEditor', () => {
       />,
     );
     // 330/3 = 110/pc; (110-60)/110 = 45% margin.
-    expect(screen.getByText(`${formatMoney(110)}/pcs · 45% margin`)).toBeInTheDocument();
+    expect(screen.getByText(`${formatMoney(110)}/pc · 45% margin`)).toBeInTheDocument();
   });
 
   it('uses the product\'s own unit as the per-piece suffix, not a hardcoded "pc"', () => {
@@ -377,7 +377,7 @@ describe('SellingOptionsEditor', () => {
         error={validateSellingOptions([by3])}
       />,
     );
-    expect(screen.getByText(`${formatMoney(110)}/pcs`)).toBeInTheDocument();
+    expect(screen.getByText(`${formatMoney(110)}/pc`)).toBeInTheDocument();
     expect(screen.queryByText(/margin/)).toBeNull();
   });
 });
