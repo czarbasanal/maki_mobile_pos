@@ -29,6 +29,10 @@ function sale(overrides: Partial<Sale> = {}): Sale {
         quantity: 2,
         discountValue: 20,
         unit: 'pcs',
+        optionId: null,
+        optionLabel: null,
+        optionPieces: null,
+        optionPrice: null,
       },
     ],
     laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
@@ -98,6 +102,47 @@ describe('SaleDetailPage', () => {
     // Rendered twice: once in the on-screen table, once in the hidden print receipt.
     expect(screen.getAllByText(/Convenience fee/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Shop fees').length).toBeGreaterThanOrEqual(1);
+  });
+
+  describe('selling option', () => {
+    const optionItem = (quantity: number) => ({
+      id: 'i1',
+      productId: 'p1',
+      sku: 'ABC-1',
+      name: 'Pulley Ball',
+      unitPrice: 110,
+      unitCost: 60,
+      quantity,
+      discountValue: 0,
+      unit: 'pcs',
+      optionId: 'o2',
+      optionLabel: 'By 3',
+      optionPieces: 3,
+      optionPrice: 330,
+    });
+
+    it('shows the option label beside the name for a single set', async () => {
+      harness({ getById: vi.fn().mockResolvedValue(sale({ items: [optionItem(3)] })) });
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());
+
+      expect(screen.getAllByText(/By 3/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText(/× 2/)).not.toBeInTheDocument();
+    });
+
+    it('shows the set count and total pieces for more than one set', async () => {
+      harness({ getById: vi.fn().mockResolvedValue(sale({ items: [optionItem(6)] })) });
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());
+
+      expect(screen.getAllByText(/By 3 × 2/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/6 pcs/).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('a line with no option renders unchanged', async () => {
+      harness({ getById: vi.fn().mockResolvedValue(sale()) });
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());
+
+      expect(screen.queryByText(/By /)).not.toBeInTheDocument();
+    });
   });
 
   it('reconciles: rendered Total equals parts − discount + labor + fees for a composite sale', async () => {

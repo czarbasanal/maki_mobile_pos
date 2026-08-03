@@ -10,11 +10,15 @@ import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { useSuppliers } from '@/presentation/hooks/useSuppliers';
 import { useCostCode } from '@/presentation/hooks/useCostCode';
 import { useProductRepo, useCategoryRepo } from '@/infrastructure/di/container';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { UserRole } from '@/domain/enums';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
 import { composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
-import { encodeCostCode, type Category, type Supplier } from '@/domain/entities';
+import { validateSellingOptions } from '@/domain/products/sellingOptions';
+import { encodeCostCode, type Category, type SellingOption, type Supplier } from '@/domain/entities';
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
+import { SellingOptionsEditor } from './SellingOptionsEditor';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
@@ -66,6 +70,8 @@ export function InventoryFormPage() {
   const navigate = useNavigate();
   const repo = useProductRepo();
   const categoryRepo = useCategoryRepo();
+  const authUser = useAuthStore((s) => s.user);
+  const isAdmin = authUser?.role === UserRole.admin;
 
   const { data: target, isLoading, error } = useProduct(id);
   const update = useUpdateProduct();
@@ -81,6 +87,10 @@ export function InventoryFormPage() {
   );
   const [loadNotice, setLoadNotice] = useState<string | null>(null);
   const [barcodes, setBarcodes] = useState<string[]>([]);
+  // Seeded from the product being edited; empty for a new product.
+  // Admin-only in both modes (see the "Selling options" Section below) —
+  // unrestricted at creation, same posture as `price` (Task 13).
+  const [sellingOptions, setSellingOptions] = useState<SellingOption[]>([]);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
@@ -105,6 +115,7 @@ export function InventoryFormPage() {
     setError,
     setValue,
     getValues,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -137,6 +148,7 @@ export function InventoryFormPage() {
       notes: target.notes ?? '',
     });
     setBarcodes(target.barcodes);
+    setSellingOptions(target.sellingOptions);
   }, [target, reset]);
 
   useEffect(() => {
@@ -183,6 +195,7 @@ export function InventoryFormPage() {
   const submitting = isSubmitting || update.isPending || create.isPending;
   const mutationError = update.error?.message ?? create.error?.message ?? null;
   const skuLocked = !isEditing && autoSku;
+  const sellingOptionsError = validateSellingOptions(sellingOptions);
 
   /** Looks up the active product category matching `name` (case-sensitive,
    *  mirrors the dropdown's exact-name matching). */
@@ -345,6 +358,13 @@ export function InventoryFormPage() {
         supplierName: supplier.name,
         barcodes: allBarcodes,
         notes: blank(values.notes),
+        // Always included in the patch — same as every other field here.
+        // Whether it actually reaches Firestore is decided one layer down
+        // (useUpdateProduct's includeSellingOptions, gated on the actor's
+        // role per Task 13), not by this form. For a non-admin this is just
+        // the target's own unchanged value (the editor is hidden from them),
+        // so it's a safe no-op even before that gate drops it.
+        sellingOptions,
       };
       try {
         await update.mutateAsync({
@@ -390,6 +410,9 @@ export function InventoryFormPage() {
         notes: blank(values.notes),
         imageBlob,
         autoSkuCategoryCode: autoSkuCategoryCodeForSubmit(values),
+        // Unrestricted at creation (Task 13's posture, same as `price`) — no
+        // role check needed here, unlike the edit-mode patch above.
+        sellingOptions,
       });
       navigate(RoutePaths.inventory);
     } catch (e) {
@@ -400,6 +423,12 @@ export function InventoryFormPage() {
   };
 
   const onSubmit = async (values: FormValues) => {
+    // Not covered by the zod schema (sellingOptions lives in its own local
+    // state, not an RHF field) — handleSubmit's own validation can't block
+    // it, so guard here too. The submit button is also disabled while this
+    // is truthy, but a native Enter-to-submit bypasses a disabled button, so
+    // this is the actual enforcement point.
+    if (sellingOptionsError) return;
     if (isEditing && target && values.sku.trim() !== target.sku) {
       const count = await repo.countSkuVariations(target.sku);
       setSkuDialog({ open: true, count, values });
@@ -550,7 +579,31 @@ export function InventoryFormPage() {
             <Field label="Price" error={errors.price?.message}
               input={<input type="number" step="0.01" className={inputCls(!!errors.price)} {...register('price')} />} />
           </div>
+          {/* The base price stops being directly sellable once a product
+              carries selling options — a picker gates every sale instead.
+              Say so in plain shop-owner language, not developer jargon. */}
+          {sellingOptions.length > 0 ? (
+            <p className="text-[12px] text-light-text-hint">
+              The POS will ask for a selling option — this price is used for inventory value, not charged directly.
+            </p>
+          ) : null}
         </Section>
+
+        {/* Admin-only, same as InventoryListPage's totals strip. Shown in
+            both create and edit — creation is unrestricted for this field,
+            matching how `price` already works (Task 13). */}
+        {isAdmin ? (
+          <Section title="Selling options">
+            <SellingOptionsEditor
+              value={sellingOptions}
+              onChange={setSellingOptions}
+              unitCost={Number(watch('cost')) || 0}
+              unit={watch('unit') || 'pcs'}
+              showMargin={isAdmin}
+              error={sellingOptionsError}
+            />
+          </Section>
+        ) : null}
 
         <Section title="Stock & classification">
           <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
@@ -599,7 +652,7 @@ export function InventoryFormPage() {
             className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
             Cancel
           </Link>
-          <button type="submit" disabled={submitting}
+          <button type="submit" disabled={submitting || !!sellingOptionsError}
             className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60">
             {submitting ? <Spinner className="h-3.5 w-3.5" /> : null}
             {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create product'}

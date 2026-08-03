@@ -343,7 +343,9 @@ class SaleDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.name,
+                          // Selling-option line: label beside the name,
+                          // e.g. "Pulley Ball · By 3" — neutral, no tint.
+                          item.displayName,
                           style: AppTextStyles.productName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -359,6 +361,15 @@ class SaleDetailScreen extends ConsumerWidget {
                           child:
                               CostCodePill(cost: item.unitCost, compact: true),
                         ),
+                        // Sets + total pieces, only once there's more than
+                        // one set.
+                        if (item.optionSetsCaption != null)
+                          Text(
+                            item.optionSetsCaption!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         if (item.hasDiscount)
                           Text(
                             sale.isPercentageDiscount

@@ -30,6 +30,7 @@ function product(overrides: Partial<Product> = {}): Product {
     baseSku: null,
     variationNumber: null,
     barcodes: [],
+    sellingOptions: [],
     category: null,
     imageUrl: null,
     notes: null,

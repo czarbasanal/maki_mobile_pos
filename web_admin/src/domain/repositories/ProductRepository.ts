@@ -21,6 +21,14 @@ export interface PriceHistoryEntry {
   /** Free-text context; receiving entries carry the `RCV-…` id. Optional —
    *  web `recordPriceChange` doesn't write it, but mobile-written docs have it. */
   note?: string | null;
+  /** The selling option this entry is about. Absent (or null) means "base
+   *  price" — which is every entry recorded before this feature existed, so
+   *  no backfill is required. */
+  optionId?: string | null;
+  /** Denormalized option label at the time of the change. */
+  optionLabel?: string | null;
+  /** Denormalized option piece count at the time of the change. */
+  optionPieces?: number | null;
 }
 
 export interface ProductRepository {
@@ -43,7 +51,18 @@ export interface ProductRepository {
    * byte-identical to before this param existed.
    */
   create(input: ProductCreateInput, actorId: string, autoSkuCategoryCode?: string): Promise<Product>;
-  update(id: string, input: ProductUpdateInput, actorId: string): Promise<void>;
+  /**
+   * `includeSellingOptions`: must stay false for non-admin writers.
+   * sellingOptions sets prices and is admin-only in firestore.rules, so the
+   * write payload only includes it when the caller has confirmed the actor
+   * is an admin (see useProductMutations.ts). Defaults to false.
+   */
+  update(
+    id: string,
+    input: ProductUpdateInput,
+    actorId: string,
+    includeSellingOptions?: boolean,
+  ): Promise<void>;
   adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void>;
   setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;
   deactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
@@ -62,6 +81,7 @@ export interface ProductRepository {
     barcode: { old: string[]; next: string[] },
     actorId: string,
     actorName: string | null,
+    includeSellingOptions?: boolean,
   ): Promise<void>;
   barcodeExists(barcode: string, excludeProductId?: string): Promise<boolean>;
 }

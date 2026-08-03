@@ -10,12 +10,14 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/formatters.dart';
+import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'dart:typed_data';
 
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_image_uploader.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/selling_options_editor.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/services/product_image_storage_service.dart';
@@ -97,6 +99,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Uint8List? _pendingImageBytes;
   bool _imageMarkedForRemoval = false;
 
+  // Working list backing the admin-only SellingOptionsEditor. Seeded from the
+  // product being edited (empty for a new product); the editor is a
+  // controlled widget and never holds this state itself.
+  List<SellingOptionEntity> _sellingOptions = [];
+
   /// Snapshot of the editable fields at load — the Update button stays
   /// disabled until something diverges (edit mode only).
   String _initialSig = '';
@@ -113,9 +120,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _notesController.text.trim(),
         _selectedSupplierId ?? '',
         _barcodes.join(','),
+        _sellingOptionsSig(),
         // image dirtiness: a pending replacement or an explicit removal
         (_pendingImageBytes != null || _imageMarkedForRemoval).toString(),
       ].join('|');
+
+  /// Stable string form of [_sellingOptions] for [_sig] — a plain list
+  /// can't be joined directly, and without this an admin who only edits
+  /// selling options would find the Update button never leaves its
+  /// disabled state (see [_isDirty]).
+  String _sellingOptionsSig() => _sellingOptions
+      .map((o) => '${o.id}:${o.label}:${o.pieces}:${o.price}')
+      .join(',');
 
   bool get _isDirty => _sig() != _initialSig;
 
@@ -211,28 +227,47 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       ? Opacity(opacity: 0.6, child: AbsorbPointer(child: child))
       : child;
 
-  Widget _priceField(bool canEditPrice) => TextFormField(
-        key: const Key('product-price-field'),
-        controller: _priceController,
-        style: AppTextStyles.fieldInput,
-        decoration: InputDecoration(
-          labelText: 'Selling (${AppConstants.currencySymbol}) *',
-          prefixIcon: const Icon(LucideIcons.tag),
-          helperText: canEditPrice ? null : 'Only admin can change price',
-          helperStyle: const TextStyle(
+  Widget _priceField(bool canEditPrice) {
+    // The admin-lock message takes priority when the field is disabled — a
+    // cashier looking at a greyed-out field needs to know why, first. Once
+    // options exist, the base price stops being directly sellable at the
+    // register (a picker gates every sale instead), which a plain admin-lock
+    // message doesn't say — so an admin who CAN edit price sees that note
+    // instead.
+    final String? helperText = !canEditPrice
+        ? 'Only admin can change price'
+        : (_sellingOptions.isNotEmpty
+            ? 'The POS will ask for a selling option — this price is used '
+                'for inventory value, not charged directly.'
+            : null);
+    final TextStyle? helperStyle = !canEditPrice
+        ? const TextStyle(
             color: AppColors.warningDark,
             fontStyle: FontStyle.italic,
-          ),
-        ),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        enabled: canEditPrice,
-        validator: (value) {
-          if (value == null || value.isEmpty) return 'Price is required';
-          final price = double.tryParse(value);
-          if (price == null || price < 0) return 'Enter a valid price';
-          return null;
-        },
-      );
+          )
+        : null;
+
+    return TextFormField(
+      key: const Key('product-price-field'),
+      controller: _priceController,
+      style: AppTextStyles.fieldInput,
+      decoration: InputDecoration(
+        labelText: 'Selling (${AppConstants.currencySymbol}) *',
+        prefixIcon: const Icon(LucideIcons.tag),
+        helperText: helperText,
+        helperMaxLines: 2,
+        helperStyle: helperStyle,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      enabled: canEditPrice,
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Price is required';
+        final price = double.tryParse(value);
+        if (price == null || price < 0) return 'Enter a valid price';
+        return null;
+      },
+    );
+  }
 
   Widget _costField(bool canEditCost) => TextFormField(
         key: const Key('product-cost-field'),
@@ -552,6 +587,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _categoryController.text = product.category ?? '';
         _notesController.text = product.notes ?? '';
         _selectedSupplierId = product.supplierId;
+        _sellingOptions = List<SellingOptionEntity>.from(
+          product.sellingOptions,
+        );
         _initialSig = _sig();
       }
     } finally {
@@ -788,6 +826,27 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               _costCodeField(),
                             ],
                             if (showCostField) _marginLine(),
+                            // Admin-only, same gate as the cost field itself
+                            // (`canViewCost`) rather than a fresh role check.
+                            if (canViewCost) ...[
+                              const SizedBox(height: 14),
+                              SellingOptionsEditor(
+                                value: _sellingOptions,
+                                onChanged: (next) =>
+                                    setState(() => _sellingOptions = next),
+                                unitCost:
+                                    double.tryParse(_costController.text) ??
+                                        0.0,
+                                unit: _unitController.text.trim().isEmpty
+                                    ? 'pcs'
+                                    : _unitController.text.trim(),
+                                // Same gate _marginLine() uses just above —
+                                // the margin % is cost-derived and must stay
+                                // behind the reveal toggle even though the
+                                // editor itself (authoring rows) doesn't.
+                                showMargin: showCostField,
+                              ),
+                            ],
                           ]),
 
                           _sectionHeader('STOCK'),
@@ -1050,6 +1109,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // SellingOptionsEditor's rows are plain TextFields (not TextFormFields),
+    // so the Form's own validate() above never sees them — this is the
+    // separate save-blocking check for that section. The editor already
+    // renders this same message inline, so no extra snackbar is needed here.
+    if (validateSellingOptions(_sellingOptions) != null) return;
+
     // Commit any pending text in the "Add barcode" input so the user
     // doesn't silently lose a barcode they typed but didn't tap Add for.
     final pendingBarcode = _barcodeInputController.text.trim();
@@ -1156,6 +1221,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 : _notesController.text.trim(),
             imageUrl: newImageUrl,
             clearImageUrl: clearImage,
+            // Locked to the admin tier server-side (Task 13:
+            // includeSellingOptions: hasFullEdit) — this is only reachable
+            // for admins in the first place.
+            sellingOptions: _sellingOptions,
           );
 
           final productOps = ref.read(productOperationsProvider.notifier);
@@ -1399,6 +1468,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
+          // Create is unrestricted for this field (same as price/cost), and
+          // the editor is only reachable here for admins — carry through
+          // whatever they authored.
+          sellingOptions: _sellingOptions,
         );
 
         final productOps = ref.read(productOperationsProvider.notifier);

@@ -3,7 +3,8 @@ import { useActivityLogRepo, useProductRepo } from '@/infrastructure/di/containe
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { logActivity } from '@/application/activityLogger';
 import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
-import { ActivityType, type Product } from '@/domain/entities';
+import { ActivityType, type Product, type SellingOption } from '@/domain/entities';
+import { UserRole } from '@/domain/enums';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
 import { matchesAutoPattern } from '@/domain/products/sku';
 import { uploadProductImage, deleteProductImage } from '@/infrastructure/firebase/productImageStorage';
@@ -27,6 +28,9 @@ export function useUpdateProduct() {
   return useMutation<void, Error, UpdateProductInput>({
     mutationFn: async ({ id, oldSku, oldBarcodes, patch, priceChange, image }) => {
       if (!actor) throw new Error('Not signed in');
+      // sellingOptions sets prices, so it's admin-only in firestore.rules —
+      // only an admin actor's write payload may include the key (Task 13).
+      const includeSellingOptions = actor.role === UserRole.admin;
       const actorName = actor.displayName.trim() || null;
       const fullPatch: ProductUpdateInput = { ...patch, updatedByName: actorName };
       if (image?.kind === 'replace') {
@@ -57,9 +61,10 @@ export function useUpdateProduct() {
           { old: oldBarcodes, next: newBarcodes },
           actor.id,
           actorName,
+          includeSellingOptions,
         );
       } else {
-        await repo.update(id, fullPatch, actor.id);
+        await repo.update(id, fullPatch, actor.id, includeSellingOptions);
       }
 
       if (priceChange) {
@@ -191,6 +196,12 @@ export interface CreateProductInput {
   category: string | null;
   notes: string | null;
   imageBlob?: Blob | null;
+  /** Unrestricted at creation — matching how `price` already works. Left
+   *  optional here (rather than mirroring `ProductCreateInput`'s required
+   *  `SellingOption[]`) because most create-mode callers never touch it;
+   *  `buildProductWrites` defaults a missing value to `[]` at the write
+   *  layer, so this hook doesn't need to. */
+  sellingOptions?: SellingOption[];
   /** Set when a coded category drove the SKU field; relied on by the create
    *  transaction's peek-then-claim scan (see FirestoreProductRepository.create).
    *  Ignored (falls back to the plain manual path) unless `sku` still matches

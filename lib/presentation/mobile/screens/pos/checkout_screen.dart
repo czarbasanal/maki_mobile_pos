@@ -188,7 +188,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.name,
+                          // Selling-option line: label beside the name,
+                          // e.g. "Pulley Ball · By 3" — neutral, no tint.
+                          item.displayName,
                           style: AppTextStyles.productName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -197,6 +199,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           item.sku,
                           style: AppTextStyles.code.copyWith(color: muted),
                         ),
+                        // Sets + total pieces, only once there's more than
+                        // one set.
+                        if (item.optionSetsCaption != null)
+                          Text(
+                            item.optionSetsCaption!,
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: muted),
+                          ),
                         if (item.hasDiscount)
                           Text(
                             cart.isPercentageDiscount

@@ -17,6 +17,7 @@ import 'package:maki_mobile_pos/domain/repositories/category_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/inventory/product_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_image_uploader.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/selling_options_editor.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/cost_code_provider.dart';
@@ -102,8 +103,16 @@ void main() {
           product: any(named: 'product'),
           updatedBy: any(named: 'updatedBy'),
           updatedByName: any(named: 'updatedByName'),
+          includeSellingOptions: any(named: 'includeSellingOptions'),
         )).thenAnswer(
         (inv) async => inv.namedArguments[#product] as ProductEntity);
+    when(() => repo.createProduct(
+          product: any(named: 'product'),
+          createdBy: any(named: 'createdBy'),
+          createdByName: any(named: 'createdByName'),
+          autoSkuCategoryCode: any(named: 'autoSkuCategoryCode'),
+        )).thenAnswer((inv) async =>
+        (inv.namedArguments[#product] as ProductEntity).copyWith(id: 'p-new'));
     when(() => logRepo.logActivity(any()))
         .thenAnswer((inv) async => inv.positionalArguments.first);
     // A completed save invalidates the product list providers — give the
@@ -225,6 +234,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       expect((captured.single as ProductEntity).imageUrl,
           'https://fake.test/p-1/main.jpg');
@@ -254,6 +264,7 @@ void main() {
             product: any(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           ));
     });
 
@@ -280,6 +291,7 @@ void main() {
             product: any(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           ));
     });
   });
@@ -544,5 +556,207 @@ void main() {
           .text,
       'ABC123X',
     );
+  });
+
+  group('ProductFormScreen — selling options gating', () {
+    // Mirrors the SKU-gating pair above: one case alone can't distinguish a
+    // working admin gate from a section that's always shown or always
+    // hidden — both sides are needed.
+    testWidgets('admin sees the selling options editor when editing',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      expect(find.byType(SellingOptionsEditor), findsOneWidget);
+    });
+
+    testWidgets('staff does not see the selling options editor when editing',
+        (tester) async {
+      await pumpForm(tester, UserRole.staff);
+      expect(find.byType(SellingOptionsEditor), findsNothing);
+    });
+
+    testWidgets('cashier does not see the selling options editor when editing',
+        (tester) async {
+      await pumpForm(tester, UserRole.cashier);
+      expect(find.byType(SellingOptionsEditor), findsNothing);
+    });
+  });
+
+  group('ProductFormScreen — selling options margin gating', () {
+    // Closes the gap the editor's own unit tests can't reach: a correct
+    // SellingOptionsEditor.showMargin implementation is worthless if this
+    // screen passes the wrong value in. Must mirror _marginLine()'s own
+    // gate (`showCostField`), not just `canViewCost` — reusing `canViewCost`
+    // here would (wrongly) show the margin even before the cost-reveal
+    // toggle is on.
+    testWidgets(
+        'shows the selling-option margin while creating (cost is auto-shown '
+        'for a new product)', (tester) async {
+      await pumpCreate(tester, UserRole.admin);
+      await tester.enterText(
+          find.byKey(const Key('product-cost-field')), '60');
+      await tester.pump();
+
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+      await tester.enterText(
+          find.byKey(const Key('selling-option-price-0')), '110');
+      await tester.pump();
+
+      // 110/1pc, unitCost 60 → (110-60)/110 = 45%.
+      expect(find.textContaining('45% margin'), findsOneWidget);
+    });
+
+    testWidgets(
+        'hides the selling-option margin while editing before cost is '
+        'revealed, but keeps the per-piece price', (tester) async {
+      await pumpForm(tester, UserRole.admin);
+
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+      await tester.enterText(
+          find.byKey(const Key('selling-option-price-0')), '110');
+      await tester.pump();
+
+      expect(find.textContaining('₱110.00/pc'), findsOneWidget);
+      expect(find.textContaining('margin'), findsNothing);
+    });
+  });
+
+  group('ProductFormScreen — price field notes when options exist', () {
+    // The spec requires the form make clear the base price stops being
+    // directly sellable once a product carries options. Paired, like the
+    // gating tests above: one case alone can't distinguish a working
+    // condition from a helper line that's always shown or never shown.
+    testWidgets(
+        'shows no options note on the price field when the product has none',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin); // testProduct has no options.
+      expect(find.textContaining('inventory value'), findsNothing);
+    });
+
+    testWidgets(
+        'shows a note on the price field once a selling option is added',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin);
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+
+      expect(find.textContaining('inventory value'), findsOneWidget);
+    });
+  });
+
+  group('ProductFormScreen — selling options save gating (create)', () {
+    // Auto-generate SKU is ON by default and no categories are wired up in
+    // this harness, so the SKU field stays disabled/empty until we switch to
+    // manual mode — same setup the auto-SKU group above uses.
+    Future<void> fillRequiredCreateFields(WidgetTester tester) async {
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+      await tester.enterText(_skuFieldFinder, 'SKU-NEW-1');
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Product Name *'), 'Widget');
+      await tester.enterText(
+          find.byKey(const Key('product-price-field')), '500');
+      await tester.enterText(
+          find.byKey(const Key('product-cost-field')), '300');
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Quantity *'), '10');
+      await tester.pump();
+    }
+
+    Future<void> tapSubmit(WidgetTester tester) async {
+      await tester.ensureVisible(find.byKey(const Key('product-form-submit')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('product-form-submit')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    // A freshly-added row starts with an empty label, which
+    // validateSellingOptions rejects — this alone is enough to prove the
+    // block, without touching the pieces/price fields.
+    testWidgets('blocks save when a selling option is invalid',
+        (tester) async {
+      await pumpCreate(tester, UserRole.admin);
+      await fillRequiredCreateFields(tester);
+
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+
+      await tapSubmit(tester);
+
+      verifyNever(() => repo.createProduct(
+            product: any(named: 'product'),
+            createdBy: any(named: 'createdBy'),
+            createdByName: any(named: 'createdByName'),
+            autoSkuCategoryCode: any(named: 'autoSkuCategoryCode'),
+          ));
+    });
+
+    // The counterpart to the test above: once the same row is filled in, the
+    // save must actually go through — proving the block is specific to
+    // invalid options, not a save path that's broken outright. Also answers
+    // "does create carry the field through?" (task question 1): it does,
+    // once the form passes the working list into the created entity.
+    testWidgets(
+        'permits save and carries the option through once it is valid',
+        (tester) async {
+      await pumpCreate(tester, UserRole.admin);
+      await fillRequiredCreateFields(tester);
+
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+      await tester.enterText(
+          find.byKey(const Key('selling-option-label-0')), 'By 3');
+      await tester.enterText(
+          find.byKey(const Key('selling-option-price-0')), '330');
+      await tester.pump();
+
+      await tapSubmit(tester);
+
+      final captured = verify(() => repo.createProduct(
+            product: captureAny(named: 'product'),
+            createdBy: any(named: 'createdBy'),
+            createdByName: any(named: 'createdByName'),
+            autoSkuCategoryCode: any(named: 'autoSkuCategoryCode'),
+          )).captured;
+      expect(captured, hasLength(1));
+      final createdProduct = captured.single as ProductEntity;
+      expect(createdProduct.sellingOptions, hasLength(1));
+      expect(createdProduct.sellingOptions.single.label, 'By 3');
+      expect(createdProduct.sellingOptions.single.price, 330);
+    });
+  });
+
+  group('ProductFormScreen — selling options dirty tracking', () {
+    // Regression guard for task 14b's question 2: the Update button used to
+    // stay disabled — and the edit silently unsavable — when only the
+    // selling options changed, because the dirty signature ignored them.
+    testWidgets('editing only the selling options enables the Update button',
+        (tester) async {
+      await pumpForm(tester, UserRole.admin);
+
+      FilledButton submitButton() => tester
+          .widget<FilledButton>(find.byKey(const Key('product-form-submit')));
+
+      // Nothing touched yet — Update stays disabled (pre-existing behavior).
+      expect(submitButton().onPressed, isNull);
+
+      await tester.ensureVisible(find.byKey(const Key('add-selling-option')));
+      await tester.tap(find.byKey(const Key('add-selling-option')));
+      await tester.pump();
+      await tester.enterText(
+          find.byKey(const Key('selling-option-label-0')), 'By 3');
+      await tester.enterText(
+          find.byKey(const Key('selling-option-price-0')), '330');
+      await tester.pump();
+
+      expect(submitButton().onPressed, isNotNull);
+    });
   });
 }

@@ -214,13 +214,32 @@ class _ProductChangeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600, fontSize: 13.5)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600, fontSize: 13.5)),
+                    // Screen width is tight and this list is already dense,
+                    // so the selling option rides as a caption on the
+                    // product cell instead of its own column — blank for a
+                    // base-price summary (most products, today).
+                    if (summary.optionLabel != null &&
+                        summary.optionLabel!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(summary.optionLabel!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: muted, fontSize: 11)),
+                    ],
+                  ],
+                ),
               ),
               if (summary.isNew) ...[
                 const SizedBox(width: 6),

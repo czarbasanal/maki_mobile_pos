@@ -38,4 +38,26 @@ describe('priceChangeCsvRow', () => {
     const csvRow = priceChangeCsvRow(row(), undefined);
     expect(csvRow[2]).toBe('');
   });
+
+  // Option lives at index 3, right after SKU (index 2) — the assertions above
+  // pin the SKU column and must keep passing unchanged; Option was added
+  // after it, not before, so it never shifts them.
+  describe('Option column', () => {
+    it("puts the option's label at index 3, adjacent to the SKU column", () => {
+      const optionRow = row({ optionId: 'o2', optionLabel: 'By 3', optionPieces: 3 });
+      const csvRow = priceChangeCsvRow(optionRow, { name: 'Pulley Ball', sku: 'ABC-1' });
+      expect(csvRow[3]).toBe('By 3');
+    });
+
+    it('leaves the Option cell an empty string for a base row — not "Base" or a dash', () => {
+      const csvRow = priceChangeCsvRow(row(), { name: 'Pulley Ball', sku: 'ABC-1' });
+      expect(csvRow[3]).toBe('');
+    });
+
+    it('does not disturb the SKU pinning column when Option is present', () => {
+      const optionRow = row({ optionId: 'o2', optionLabel: 'By 3', optionPieces: 3 });
+      const csvRow = priceChangeCsvRow(optionRow, { name: 'Oil Filter', sku: '00070153' });
+      expect(csvRow[2]).toBe('0007-0153');
+    });
+  });
 });

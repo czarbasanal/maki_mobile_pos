@@ -16,7 +16,9 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 const csvSigned = (v: number) => (v >= 0 ? '+' : '') + v.toFixed(2);
 const stamp = (d: Date) => d.toISOString().slice(0, 10);
 
-/** One price-change-CSV row. Exported for a focused pinning test on the leading-zero-safe SKU display. */
+/** One price-change-CSV row. Exported for a focused pinning test on the leading-zero-safe SKU display.
+ *  Option (index 3) sits right after SKU (index 2, pinned) — blank for a base row,
+ *  the selling option's label otherwise. */
 export function priceChangeCsvRow(
   r: PriceChangeRow,
   product: { name: string; sku: string } | undefined,
@@ -25,6 +27,7 @@ export function priceChangeCsvRow(
     r.entry.changedAt.toISOString(),
     product?.name ?? r.entry.productId,
     displaySku(product?.sku ?? ''),
+    r.entry.optionLabel ?? '',
     r.entry.price.toFixed(2),
     r.hasPrior ? csvSigned(r.priceDelta) : '',
     r.entry.cost.toFixed(2),
@@ -51,7 +54,7 @@ export function PriceChangeReportPage() {
 
   const exportCsv = () => {
     const headers = [
-      'Date', 'Product', 'SKU', 'New Price', 'Price Delta', 'New Cost',
+      'Date', 'Product', 'SKU', 'Option', 'New Price', 'Price Delta', 'New Cost',
       'Cost Delta', 'Reason', 'Changed By',
     ];
     const body = rows.map((r) => priceChangeCsvRow(r, productById.get(r.entry.productId)));
@@ -109,6 +112,7 @@ export function PriceChangeReportPage() {
                 <tr>
                   <th className="py-tk-xs text-left font-medium">Product</th>
                   <th className="py-tk-xs text-left font-medium">SKU</th>
+                  <th className="py-tk-xs text-left font-medium">Option</th>
                   <th className="py-tk-xs text-right font-medium">New Price</th>
                   <th className="py-tk-xs text-right font-medium">Δ</th>
                   <th className="py-tk-xs text-right font-medium">New Cost</th>
@@ -124,6 +128,7 @@ export function PriceChangeReportPage() {
                     <tr key={`${r.entry.productId}-${r.entry.id}`}>
                       <td className="py-tk-xs">{p?.name ?? r.entry.productId}</td>
                       <td className="py-tk-xs text-light-text-secondary">{p?.sku ?? ''}</td>
+                      <td className="py-tk-xs text-light-text-secondary">{r.entry.optionLabel ?? ''}</td>
                       <td className="py-tk-xs text-right tabular-nums">{formatMoney(r.entry.price)}</td>
                       <td className={`py-tk-xs text-right tabular-nums ${r.priceDelta > 0 ? 'text-error-dark' : r.priceDelta < 0 ? 'text-success-dark' : 'text-light-text-hint'}`}>
                         {r.hasPrior && r.priceDelta !== 0 ? csvSigned(r.priceDelta) : ''}

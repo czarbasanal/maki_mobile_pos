@@ -37,12 +37,27 @@ export function cartGrandTotal(
 export function cartFeesTotal(feeLines: FeeLine[]): number {
   return feeLines.reduce((sum, l) => sum + (l.amount || 0), 0);
 }
-/** Product ids whose cart qty exceeds on-hand stock (for the low-stock warning). */
+/**
+ * Stable identity for a cart line. Plain lines keep the product id, so
+ * nothing changes for products without options; an option line appends the
+ * option id, because a By 6 and a By 3 of one product are different prices
+ * and must not merge.
+ */
+export function cartLineId(productId: string, optionId: string | null): string {
+  return optionId === null ? productId : `${productId}::${optionId}`;
+}
+
+/** Product ids whose TOTAL cart quantity exceeds on-hand stock. Summed across
+ *  option lines — two lines of one product draw on the same pieces. */
 export function lowStockLines(lines: CartLine[], products: Product[]): Set<string> {
   const onHand = new Map(products.map((p) => [p.id, p.quantity]));
-  const flagged = new Set<string>();
+  const wanted = new Map<string, number>();
   for (const l of lines) {
-    if (l.quantity > (onHand.get(l.productId) ?? 0)) flagged.add(l.productId);
+    wanted.set(l.productId, (wanted.get(l.productId) ?? 0) + l.quantity);
+  }
+  const flagged = new Set<string>();
+  for (const [productId, qty] of wanted) {
+    if (qty > (onHand.get(productId) ?? 0)) flagged.add(productId);
   }
   return flagged;
 }

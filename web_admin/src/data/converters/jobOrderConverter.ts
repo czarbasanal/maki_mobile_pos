@@ -21,6 +21,10 @@ export function jobOrderItemsToMaps(items: SaleItem[]): object[] {
     quantity: it.quantity,
     discountValue: it.discountValue,
     unit: it.unit,
+    optionId: it.optionId,
+    optionLabel: it.optionLabel,
+    optionPieces: it.optionPieces,
+    optionPrice: it.optionPrice,
   }));
 }
 
@@ -39,6 +43,10 @@ export function parseJobOrderItems(value: unknown): SaleItem[] {
       quantity: Number(m.quantity ?? 0),
       discountValue: Number(m.discountValue ?? 0),
       unit: typeof m.unit === 'string' ? m.unit : 'pcs',
+      optionId: typeof m.optionId === 'string' ? m.optionId : null,
+      optionLabel: typeof m.optionLabel === 'string' ? m.optionLabel : null,
+      optionPieces: m.optionPieces == null ? null : Number(m.optionPieces),
+      optionPrice: m.optionPrice == null ? null : Number(m.optionPrice),
     };
   });
 }

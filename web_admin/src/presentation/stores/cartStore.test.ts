@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createCartStore, useCartStore } from './cartStore';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { JobOrder, Product } from '@/domain/entities';
+import type { SellingOption } from '@/domain/entities/SellingOption';
 
 const product = (over: Partial<Product> = {}): Product =>
   ({ id: 'p1', sku: 'A', name: 'A', price: 100, cost: 60, unit: 'pcs', quantity: 10, ...over } as Product);
@@ -84,7 +85,7 @@ describe('cartStore', () => {
       id: 'd1',
       name: 'Mr Cruz bike',
       items: [
-        { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs' },
+        { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs', optionId: null, optionLabel: null, optionPieces: null, optionPrice: null },
       ],
       laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
       feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
@@ -125,6 +126,54 @@ describe('cartStore', () => {
     expect(s.notes).toBeNull();
   });
 
+  it('addLine merges into a resumed job-order line matching productId, not the JO item id', () => {
+    const store = useCartStore.getState();
+    // Mirrors a job order created on a phone: the line's `id` is the
+    // mobile-minted JO item id ('i1'), never the product id ('p1'). See
+    // job_order_model.dart's SaleItemModel.toMap(includeId: true).
+    const jobOrder: JobOrder = {
+      id: 'd2',
+      name: 'Resumed ticket',
+      items: [
+        { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs', optionId: null, optionLabel: null, optionPieces: null, optionPrice: null },
+      ],
+      laborLines: [],
+      feeLines: [],
+      mechanicId: null,
+      mechanicName: null,
+      discountType: DiscountType.amount,
+      createdBy: 'u1',
+      createdByName: 'Cashier',
+      createdAt: new Date('2026-02-01'),
+      updatedAt: null,
+      updatedBy: null,
+      isConverted: false,
+      convertedToSaleId: null,
+      convertedAt: null,
+      notes: null,
+    };
+
+    store.loadJobOrder(jobOrder);
+    // Re-adding the same product from the search panel — the shop's real
+    // mobile-JO -> web-bill-out workflow — must increment the resumed line,
+    // not append a duplicate ('i1' !== 'p1', so a merge predicate keyed on
+    // line id rather than productId would wrongly create a second line).
+    store.addLine(product());
+    let s = useCartStore.getState();
+    expect(s.lines).toHaveLength(1);
+    expect(s.lines[0].id).toBe('i1'); // the pre-existing line's id is preserved
+    expect(s.lines[0].quantity).toBe(3); // 2 (resumed) + 1 (re-added)
+
+    // setQty / setLineDiscount / removeLine target by line id — confirm they
+    // still hit the resumed (JO-minted-id) line correctly after the merge.
+    store.setQty('i1', 5);
+    expect(useCartStore.getState().lines[0].quantity).toBe(5);
+    store.setLineDiscount('i1', 20);
+    expect(useCartStore.getState().lines[0].discountValue).toBe(20);
+    store.removeLine('i1');
+    expect(useCartStore.getState().lines).toHaveLength(0);
+  });
+
   it('setNotes sets and clears sale notes', () => {
     const store = useCartStore.getState();
     store.setNotes('Customer waiting');
@@ -139,5 +188,115 @@ describe('cartStore', () => {
     a.getState().addLine(product());
     expect(a.getState().lines).toHaveLength(1);
     expect(b.getState().lines).toHaveLength(0);
+  });
+});
+
+describe('cartStore selling options', () => {
+  const by6: SellingOption = { id: 'o1', label: 'By 6', pieces: 6, price: 600 };
+  const by3: SellingOption = { id: 'o2', label: 'By 3', pieces: 3, price: 330 };
+
+  const optionProduct = () =>
+    ({
+      id: 'p1',
+      sku: 'ABC-1',
+      name: 'Pulley Ball',
+      cost: 60,
+      price: 120,
+      unit: 'pcs',
+      quantity: 12,
+      sellingOptions: [by6, by3],
+    }) as Product;
+
+  it('merges the same option and keeps quantity in pieces', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    const { lines } = store.getState();
+    expect(lines).toHaveLength(1);
+    expect(lines[0].quantity).toBe(6);
+    expect(lines[0].unitPrice).toBe(110);
+  });
+
+  it('keeps two different options of one product as separate lines', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by6);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    expect(store.getState().lines.map((l) => l.id)).toEqual(['p1::o1', 'p1::o2']);
+  });
+
+  it('keeps a plain line separate from an option line', () => {
+    const store = createCartStore();
+    store.getState().addLine(optionProduct());
+    store.getState().addLineWithOption(optionProduct(), by3);
+    expect(store.getState().lines).toHaveLength(2);
+  });
+
+  it('setQty targets one option line by its line id', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by6);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().setQty('p1::o2', 2);
+    const byLine = Object.fromEntries(store.getState().lines.map((l) => [l.id, l.quantity]));
+    // by6 line untouched (still its initial 1 set = 6 pieces); by3 line now 2
+    // sets = 6 pieces. If setQty mistakenly stored sets as pieces, this would
+    // be 2 instead of 6 and would be indistinguishable from the by6 line by
+    // coincidence alone if we didn't also assert the untouched line.
+    expect(byLine['p1::o2']).toBe(6);
+    expect(byLine['p1::o1']).toBe(6);
+  });
+
+  it('setQty on an option line is in sets and stores pieces', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().setQty('p1::o2', 3);
+    // 3 sets of 3 pieces = 9 pieces. A wrong implementation that treats the
+    // typed number as pieces directly would leave this at 3.
+    expect(store.getState().lines[0].quantity).toBe(9);
+  });
+
+  it('removeLine targets one option line', () => {
+    const store = createCartStore();
+    store.getState().addLineWithOption(optionProduct(), by6);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    store.getState().removeLine('p1::o1');
+    expect(store.getState().lines.map((l) => l.id)).toEqual(['p1::o2']);
+  });
+
+  it('a plain line still uses the product id as its line id', () => {
+    const store = createCartStore();
+    store.getState().addLine(optionProduct());
+    expect(store.getState().lines[0].id).toBe('p1');
+  });
+
+  it('addLineWithOption merges into a resumed job-order option line matching productId+optionId, not the JO item id', () => {
+    const store = createCartStore();
+    const jobOrder: JobOrder = {
+      id: 'd3',
+      name: 'Resumed ticket w/ option',
+      items: [
+        { id: 'i9', productId: 'p1', sku: 'ABC-1', name: 'Pulley Ball', unitPrice: 110, unitCost: 60, quantity: 3, discountValue: 0, unit: 'pcs', optionId: 'o2', optionLabel: 'By 3', optionPieces: 3, optionPrice: 330 },
+      ],
+      laborLines: [],
+      feeLines: [],
+      mechanicId: null,
+      mechanicName: null,
+      discountType: DiscountType.amount,
+      createdBy: 'u1',
+      createdByName: 'Cashier',
+      createdAt: new Date('2026-02-01'),
+      updatedAt: null,
+      updatedBy: null,
+      isConverted: false,
+      convertedToSaleId: null,
+      convertedAt: null,
+      notes: null,
+    };
+
+    store.getState().loadJobOrder(jobOrder);
+    store.getState().addLineWithOption(optionProduct(), by3);
+    const { lines } = store.getState();
+    expect(lines).toHaveLength(1);
+    expect(lines[0].id).toBe('i9'); // the pre-existing line's id is preserved
+    expect(lines[0].quantity).toBe(6); // 3 (resumed) + 3 (by3.pieces)
   });
 });

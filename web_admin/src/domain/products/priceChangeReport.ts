@@ -12,14 +12,19 @@ export interface PriceChangeRow {
   hasPrior: boolean;
 }
 
-/** Groups by product, computes deltas vs the prior in-range change per product
- *  (oldest-per-product has no prior), returns rows newest-first. */
+/** Groups by product AND selling option, computes deltas vs the prior in-range
+ *  change per group (oldest-per-group has no prior), returns rows newest-first.
+ *  A base per-piece price and an option's set price (e.g. a By-6 pack) are
+ *  different series and must never be differenced against each other. */
 export function priceChangeRowsInRange(entries: PriceChangeEntry[]): PriceChangeRow[] {
   const byProduct = new Map<string, PriceChangeEntry[]>();
   for (const e of entries) {
-    const list = byProduct.get(e.productId) ?? [];
+    // A base entry's optionId is null/undefined, so its key is stable and
+    // distinct from any option's.
+    const key = `${e.productId}::${e.optionId ?? ''}`;
+    const list = byProduct.get(key) ?? [];
     list.push(e);
-    byProduct.set(e.productId, list);
+    byProduct.set(key, list);
   }
 
   const rows: PriceChangeRow[] = [];

@@ -163,6 +163,8 @@ String _extractSkuFromLabel(String label) {
 /// Change log: one row per price/cost change, newest-first (as [rows] arrive).
 /// [productLabelById] maps productId -> "Name (SKU)"; a missing product falls
 /// back to the id. No TOTAL row (a change log has no meaningful column totals).
+/// Option sits right after SKU: the selling option's label for an option row,
+/// an empty string (not "Base" or a dash) for a base row.
 String buildPriceChangeReportCsv(
   List<PriceChangeRow> rows,
   Map<String, String> productLabelById,
@@ -170,8 +172,8 @@ String buildPriceChangeReportCsv(
   final fmt = DateFormat('yyyy-MM-dd HH:mm');
   final out = <List<dynamic>>[
     [
-      'Date', 'Product', 'SKU', 'New Price', 'Price Delta', 'New Cost',
-      'Cost Delta', 'Reason', 'Changed By',
+      'Date', 'Product', 'SKU', 'Option', 'New Price', 'Price Delta',
+      'New Cost', 'Cost Delta', 'Reason', 'Changed By',
     ],
   ];
   for (final r in rows) {
@@ -183,6 +185,7 @@ String buildPriceChangeReportCsv(
       fmt.format(e.changedAt),
       label,
       displayedSku,
+      e.optionLabel ?? '',
       e.price.toStringAsFixed(2),
       r.hasPrior ? _signed(r.priceDelta) : '',
       e.cost.toStringAsFixed(2),

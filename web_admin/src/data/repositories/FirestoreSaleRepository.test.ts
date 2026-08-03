@@ -8,8 +8,9 @@
 // rollover, Task 7).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Firestore } from 'firebase/firestore';
-import type { Sale } from '@/domain/entities';
+import type { Sale, SaleItem } from '@/domain/entities';
 import { DiscountType, PaymentMethod, SaleStatus } from '@/domain/enums';
+import { saleItemConverter } from '@/data/converters/saleItemConverter';
 
 interface FakeRef {
   path: string;
@@ -130,6 +131,10 @@ function baseInput(): Omit<Sale, 'id' | 'createdAt' | 'updatedAt'> {
         quantity: 1,
         discountValue: 0,
         unit: 'pcs',
+        optionId: null,
+        optionLabel: null,
+        optionPieces: null,
+        optionPrice: null,
       },
     ],
     laborLines: [],
@@ -187,5 +192,149 @@ describe('FirestoreSaleRepository.create — drawer_state stamping', () => {
 
     const drawerWrite = state.writes.find((w) => w.path === 'drawer_state/state');
     expect(drawerWrite?.data).toEqual({ lastSaleDay: 20260726 });
+  });
+});
+
+// Item docs are written with a hand-picked field list inside the transaction
+// (tx.set on a converter-less ref — see the file header comment on why this
+// duplication is intentionally *not* collapsed into `.withConverter`), so it
+// can independently drift from saleItemConverter.toFirestore, which is what
+// reads use. That drift is exactly what silently dropped the four selling-
+// option fields (optionId/optionLabel/optionPieces/optionPrice) from every
+// web-completed sale until this fix.
+describe('FirestoreSaleRepository.create — item write shape (selling options)', () => {
+  beforeEach(() => {
+    state.writes = [];
+    state.autoIdSeq = 0;
+    state.counterExists = false;
+    state.counterData = {};
+    state.jobOrderDoc = null;
+    vi.useRealTimers();
+  });
+
+  function itemWithOption(overrides: Partial<SaleItem> = {}): SaleItem {
+    return {
+      id: 'i1',
+      productId: 'p1',
+      sku: 'ABC-1',
+      name: 'Pulley Ball',
+      unitPrice: 110,
+      unitCost: 60,
+      quantity: 6,
+      discountValue: 0,
+      unit: 'pcs',
+      optionId: 'o2',
+      optionLabel: 'By 3',
+      optionPieces: 3,
+      optionPrice: 330,
+      ...overrides,
+    };
+  }
+
+  function findItemWrite() {
+    return state.writes.find((w) => w.kind === 'set' && w.path.includes('/items/'));
+  }
+
+  it('writes exactly the field set saleItemConverter.toFirestore produces for the same item (pins the shape against future drift)', async () => {
+    // Primary regression test: the transaction's hand-picked item write and
+    // saleItemConverter.toFirestore are two independent lists of the same
+    // fields. If a field is ever added to (or renamed in) the converter and
+    // this call site isn't updated to match — the exact way selling options
+    // were dropped — the sorted key sets stop matching and this fails.
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = baseInput();
+    input.items = [itemWithOption()];
+
+    await repo.create(input, 'actor-1');
+
+    const itemWrite = findItemWrite();
+    expect(itemWrite).toBeDefined();
+
+    const converterShape = saleItemConverter.toFirestore(input.items[0]) as Record<string, unknown>;
+    expect(Object.keys(itemWrite!.data as object).sort()).toEqual(Object.keys(converterShape).sort());
+  });
+
+  it('persists optionId/optionLabel/optionPieces/optionPrice for a line rung up through a selling option', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = baseInput();
+    input.items = [itemWithOption()];
+
+    await repo.create(input, 'actor-1');
+
+    const data = findItemWrite()?.data as Record<string, unknown>;
+    expect(data.optionId).toBe('o2');
+    expect(data.optionLabel).toBe('By 3');
+    expect(data.optionPieces).toBe(3);
+    expect(data.optionPrice).toBe(330);
+  });
+
+  it('persists the option fields as null (not omitted) for a line with no selling option', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    // baseInput()'s single item already carries optionId/optionLabel/
+    // optionPieces/optionPrice: null — i.e. no selling option.
+    const input = baseInput();
+
+    await repo.create(input, 'actor-1');
+
+    const data = findItemWrite()?.data as Record<string, unknown>;
+    expect(data).toHaveProperty('optionId', null);
+    expect(data).toHaveProperty('optionLabel', null);
+    expect(data).toHaveProperty('optionPieces', null);
+    expect(data).toHaveProperty('optionPrice', null);
+  });
+
+  // Newest structural path in the branch: a resumed job order (or a web POS
+  // ticket) can carry two DIFFERENT selling-option lines of the SAME
+  // product (a By 6 and a By 3 of one Pulley Ball) into create(). The SDKs
+  // compose multiple increment() writes against one doc correctly, but
+  // nothing pinned that here — this test is the pin.
+  it('persists two option lines of the same product as two item docs and issues two separate stock decrements', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = baseInput();
+    const by6Item = itemWithOption({
+      id: 'i1',
+      optionId: 'o1',
+      optionLabel: 'By 6',
+      optionPieces: 6,
+      optionPrice: 600,
+      unitPrice: 100,
+      quantity: 6,
+    });
+    const by3Item = itemWithOption({
+      id: 'i2',
+      optionId: 'o2',
+      optionLabel: 'By 3',
+      optionPieces: 3,
+      optionPrice: 330,
+      unitPrice: 110,
+      quantity: 3,
+    });
+    input.items = [by6Item, by3Item];
+
+    await repo.create(input, 'actor-1');
+
+    // Two independent item docs, each keeping its own option fields — a
+    // wrong implementation that dedupes by productId or overwrites one line
+    // with the other would leave only one write here.
+    const itemWrites = state.writes.filter((w) => w.kind === 'set' && w.path.includes('/items/'));
+    expect(itemWrites).toHaveLength(2);
+
+    const by6Write = itemWrites.find((w) => (w.data as Record<string, unknown>).optionId === 'o1')
+      ?.data as Record<string, unknown>;
+    const by3Write = itemWrites.find((w) => (w.data as Record<string, unknown>).optionId === 'o2')
+      ?.data as Record<string, unknown>;
+    expect(by6Write).toMatchObject({ optionId: 'o1', optionLabel: 'By 6', optionPieces: 6, optionPrice: 600 });
+    expect(by3Write).toMatchObject({ optionId: 'o2', optionLabel: 'By 3', optionPieces: 3, optionPrice: 330 });
+
+    // Two separate stock decrements against the SAME product doc (products/p1)
+    // — one per line — not a single combined decrement. A wrong
+    // implementation that collapses same-productId lines into one update
+    // would leave only one write here (or a wrong total).
+    const stockWrites = state.writes.filter((w) => w.kind === 'update' && w.path === 'products/p1');
+    expect(stockWrites).toHaveLength(2);
+    const decrements = stockWrites
+      .map((w) => ((w.data as Record<string, unknown>).quantity as { __increment: number }).__increment)
+      .sort((a, b) => a - b);
+    expect(decrements).toEqual([-6, -3].sort((a, b) => a - b));
   });
 });

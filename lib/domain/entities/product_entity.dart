@@ -94,6 +94,14 @@ class ProductEntity extends Equatable {
   /// Optional notes
   final String? notes;
 
+  /// Optional ways this product may be sold, e.g. "By 6" and "By 3".
+  ///
+  /// Empty means the product sells at [price] per piece, which is how every
+  /// product behaved before selling options existed. When NON-empty the POS
+  /// requires the cashier to pick an option — [price] is then used only for
+  /// inventory valuation and the reorder engine, never charged directly.
+  final List<SellingOptionEntity> sellingOptions;
+
   const ProductEntity({
     required this.id,
     required this.sku,
@@ -120,6 +128,7 @@ class ProductEntity extends Equatable {
     this.category,
     this.imageUrl,
     this.notes,
+    this.sellingOptions = const [],
   });
 
   // ==================== COMPUTED PROPERTIES ====================
@@ -163,6 +172,9 @@ class ProductEntity extends Equatable {
 
   /// Whether this is a variation of another product.
   bool get isVariation => variationNumber != null && variationNumber! > 0;
+
+  /// Whether the POS must show the option picker for this product.
+  bool get hasSellingOptions => sellingOptions.isNotEmpty;
 
   /// Display SKU (shows variation if applicable).
   String get displaySku => sku;
@@ -227,6 +239,7 @@ class ProductEntity extends Equatable {
     String? imageUrl,
     bool clearImageUrl = false,
     String? notes,
+    List<SellingOptionEntity>? sellingOptions,
   }) {
     return ProductEntity(
       id: id ?? this.id,
@@ -254,6 +267,7 @@ class ProductEntity extends Equatable {
       category: category ?? this.category,
       imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       notes: notes ?? this.notes,
+      sellingOptions: sellingOptions ?? this.sellingOptions,
     );
   }
 
@@ -284,6 +298,7 @@ class ProductEntity extends Equatable {
         category,
         imageUrl,
         notes,
+        sellingOptions,
       ];
 
   @override

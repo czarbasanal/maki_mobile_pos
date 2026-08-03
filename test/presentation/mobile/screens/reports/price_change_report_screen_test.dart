@@ -104,4 +104,45 @@ void main() {
     expect(find.text('—'), findsNothing);
     expect(find.text('New'), findsNothing); // unknown history ≠ new product
   });
+
+  group('selling option', () {
+    testWidgets(
+        'shows the option label as a neutral caption on the product cell',
+        (tester) async {
+      final withOption = priceChangeProductSummaries(
+        [
+          PriceChangeEntry(
+            id: 'a',
+            productId: 'p1',
+            price: 330,
+            cost: 150,
+            changedAt: DateTime(2026, 6, 10),
+            changedBy: 'u1',
+            reason: 'Price update',
+            optionId: 'o2',
+            optionLabel: 'By 3',
+            optionPieces: 3,
+          ),
+        ],
+        {'p1': null},
+      );
+      await pumpScreen(tester, data: withOption);
+
+      final caption = find.text('By 3');
+      expect(caption, findsOneWidget);
+
+      // Neutral: the option label is information, not status — it must use
+      // the same muted caption color as the rest of the card's captions
+      // ("New", the change-count line), not a delta-style accent color.
+      final style = tester.widget<Text>(caption).style;
+      final theme = Theme.of(tester.element(caption));
+      expect(style?.color, theme.colorScheme.onSurfaceVariant);
+    });
+
+    testWidgets('shows no option caption for a base-price-only summary',
+        (tester) async {
+      await pumpScreen(tester); // default summaries() fixture has no option
+      expect(find.text('By 3'), findsNothing);
+    });
+  });
 }

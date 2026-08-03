@@ -117,12 +117,18 @@ abstract class ProductRepository {
   /// [product] - The product with updated values
   /// [updatedBy] - The ID of the user making the update
   /// [updatedByName] - Display name of the editor (denormalized for audit info).
+  /// [includeSellingOptions] - Must stay false for non-admin writers.
+  /// Selling options set prices and are admin-only in firestore.rules; the
+  /// underlying write map includes every product field, so writing this key
+  /// on a doc that lacks it would get an otherwise-legitimate staff/cashier
+  /// edit rejected. Callers must only pass true on a confirmed admin path.
   ///
   /// Returns the updated product.
   Future<ProductEntity> updateProduct({
     required ProductEntity product,
     required String updatedBy,
     String? updatedByName,
+    bool includeSellingOptions = false,
   });
 
   /// Updates product stock quantity.
@@ -221,6 +227,10 @@ abstract class ProductRepository {
   /// [changedBy] - The ID of the user making the change
   /// [reason] - Reason for the change
   /// [note] - Optional free-text context (e.g. source receiving ID)
+  /// [optionId], [optionLabel], [optionPieces] - Set together when this entry
+  /// is about a selling option rather than the base price/cost — see
+  /// [PriceHistoryEntry]. Left null (and therefore omitted from the written
+  /// doc — see the implementation) for a base entry.
   Future<void> recordPriceChange({
     required String productId,
     required double price,
@@ -228,6 +238,9 @@ abstract class ProductRepository {
     required String changedBy,
     String? reason,
     String? note,
+    String? optionId,
+    String? optionLabel,
+    int? optionPieces,
   });
 
   /// Gets price history for a product.
@@ -299,6 +312,18 @@ class PriceHistoryEntry {
   final String? reason;
   final String? note;
 
+  /// The selling option this entry is about, or null for a base price/cost
+  /// entry — which is every entry recorded before this feature existed, so
+  /// absent means "base price" with no backfill required.
+  final String? optionId;
+
+  /// Denormalized option label at the time of the change, so the report can
+  /// show it without a join back to the (possibly since-edited) product.
+  final String? optionLabel;
+
+  /// Denormalized option piece count at the time of the change.
+  final int? optionPieces;
+
   const PriceHistoryEntry({
     required this.id,
     required this.price,
@@ -307,6 +332,9 @@ class PriceHistoryEntry {
     required this.changedBy,
     this.reason,
     this.note,
+    this.optionId,
+    this.optionLabel,
+    this.optionPieces,
   });
 }
 
@@ -322,6 +350,18 @@ class PriceChangeEntry {
   final String? reason;
   final String? note;
 
+  /// The selling option this entry is about, or null for a base price/cost
+  /// entry — mirrors [PriceHistoryEntry.optionId]. Report grouping must key
+  /// on (productId, optionId), not productId alone: a base per-piece price
+  /// and an option's set price are different series.
+  final String? optionId;
+
+  /// Denormalized option label at the time of the change.
+  final String? optionLabel;
+
+  /// Denormalized option piece count at the time of the change.
+  final int? optionPieces;
+
   const PriceChangeEntry({
     required this.id,
     required this.productId,
@@ -331,5 +371,8 @@ class PriceChangeEntry {
     required this.changedBy,
     this.reason,
     this.note,
+    this.optionId,
+    this.optionLabel,
+    this.optionPieces,
   });
 }

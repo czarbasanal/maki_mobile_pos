@@ -70,6 +70,7 @@ void main() {
           product: any(named: 'product'),
           updatedBy: any(named: 'updatedBy'),
           updatedByName: any(named: 'updatedByName'),
+          includeSellingOptions: any(named: 'includeSellingOptions'),
         )).thenAnswer((inv) async => inv.namedArguments[#product] as ProductEntity);
     when(() => logRepo.logActivity(any()))
         .thenAnswer((inv) async => inv.positionalArguments.first);
@@ -95,6 +96,57 @@ void main() {
             product: any(named: 'product'),
             updatedBy: 'u-admin',
             updatedByName: 'admin user',
+            includeSellingOptions: true,
+          )).called(1);
+    });
+
+    test('admin update passes includeSellingOptions: true (full-edit tier)',
+        () async {
+      final original = _product();
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
+
+      final result = await useCase.execute(
+        actor: _user(UserRole.admin),
+        product: original.copyWith(name: 'Renamed'),
+      );
+
+      expect(result.success, true);
+      verify(() => repo.updateProduct(
+            product: any(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: true,
+          )).called(1);
+    });
+
+    test(
+        'staff/cashier updates pass includeSellingOptions: false '
+        '(sellingOptions is admin-only, mirrors price)', () async {
+      final original = _product();
+      when(() => repo.getProductById('p-1')).thenAnswer((_) async => original);
+
+      final staffResult = await useCase.execute(
+        actor: _user(UserRole.staff),
+        product: original.copyWith(name: 'Renamed by staff'),
+      );
+      expect(staffResult.success, true);
+      verify(() => repo.updateProduct(
+            product: any(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: false,
+          )).called(1);
+
+      final cashierResult = await useCase.execute(
+        actor: _user(UserRole.cashier),
+        product: original.copyWith(name: 'Renamed by cashier'),
+      );
+      expect(cashierResult.success, true);
+      verify(() => repo.updateProduct(
+            product: any(named: 'product'),
+            updatedBy: any(named: 'updatedBy'),
+            updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: false,
           )).called(1);
     });
 
@@ -130,6 +182,7 @@ void main() {
             product: any(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           ));
     });
 
@@ -215,6 +268,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       final saved = captured.single as ProductEntity;
       expect(saved.name, 'Renamed by cashier');
@@ -237,6 +291,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       expect((captured.single as ProductEntity).imageUrl, isNull);
     });
@@ -259,6 +314,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       final saved = captured.single as ProductEntity;
       expect(saved.sku, 'SKU-001');
@@ -286,6 +342,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       final saved = captured.single as ProductEntity;
       expect(saved.quantity, 16);
@@ -308,6 +365,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       expect((captured.single as ProductEntity).quantity, 40);
     });
@@ -328,6 +386,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           )).captured;
       expect((captured.single as ProductEntity).quantity, 16);
     });
@@ -364,6 +423,7 @@ void main() {
             product: captureAny(named: 'product'),
             updatedBy: 'u-admin',
             updatedByName: 'admin user',
+            includeSellingOptions: true,
           )).captured;
       final saved = captured.single as ProductEntity;
       expect(saved.sku, 'SKU-NEW');
@@ -387,6 +447,7 @@ void main() {
             product: any(named: 'product'),
             updatedBy: any(named: 'updatedBy'),
             updatedByName: any(named: 'updatedByName'),
+            includeSellingOptions: any(named: 'includeSellingOptions'),
           ));
     });
 

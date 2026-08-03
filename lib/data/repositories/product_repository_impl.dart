@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -506,6 +507,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required ProductEntity product,
     required String updatedBy,
     String? updatedByName,
+    bool includeSellingOptions = false,
   }) async {
     try {
       // Capture prior cost/price before the update so we can detect a change
@@ -516,6 +518,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final updateMap = productModel.toUpdateMap(
         updatedBy,
         updatedByDisplayName: updatedByName,
+        includeSellingOptions: includeSellingOptions,
       );
 
       final skuChanged = prior != null && prior.sku != product.sku;
@@ -617,6 +620,38 @@ class ProductRepositoryImpl implements ProductRepository {
             );
           } catch (_) {
             // History is best-effort — don't fail the product update.
+          }
+        }
+
+        // Selling-option price history — diffs the ACTUAL persisted
+        // before/after (prior/updated), not the caller's submitted copy: a
+        // non-admin edit never writes the sellingOptions field (see
+        // toUpdateMap's includeSellingOptions gate), so `updated.sellingOptions`
+        // equals `prior.sellingOptions` and this diffs to nothing on its own.
+        // The explicit includeSellingOptions check below is redundant with
+        // that but kept as a clear statement of intent (and cheap — no extra
+        // read, both entities are already in hand).
+        if (includeSellingOptions) {
+          final optionEvents = sellingOptionHistoryEvents(
+            prior.sellingOptions,
+            updated.sellingOptions,
+            updated.cost,
+          );
+          for (final event in optionEvents) {
+            try {
+              await recordPriceChange(
+                productId: updated.id,
+                price: event.price,
+                cost: event.cost,
+                changedBy: updatedBy,
+                reason: event.reason,
+                optionId: event.optionId,
+                optionLabel: event.optionLabel,
+                optionPieces: event.optionPieces,
+              );
+            } catch (_) {
+              // History is best-effort — don't fail the product update.
+            }
           }
         }
       }
@@ -850,6 +885,9 @@ class ProductRepositoryImpl implements ProductRepository {
     required String changedBy,
     String? reason,
     String? note,
+    String? optionId,
+    String? optionLabel,
+    int? optionPieces,
   }) async {
     try {
       final historyRef = _productsRef
@@ -863,6 +901,12 @@ class ProductRepositoryImpl implements ProductRepository {
         'changedBy': changedBy,
         'reason': reason,
         'note': note,
+        // Conditionally included — a base entry must leave these keys
+        // ABSENT (not present-with-null), so the report can tell "base" from
+        // "no option data available" apart with a plain field-presence check.
+        if (optionId != null) 'optionId': optionId,
+        if (optionLabel != null) 'optionLabel': optionLabel,
+        if (optionPieces != null) 'optionPieces': optionPieces,
       });
     } on FirebaseException catch (e) {
       throw DatabaseException(
@@ -896,8 +940,9 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  /// Shared doc → [PriceHistoryEntry] mapping so the history list and the
-  /// baseline query can never drift in parsing semantics.
+  /// Shared doc → [PriceHistoryEntry] mapping so the history list, the
+  /// baseline query, and the cross-product range query can never drift in
+  /// parsing semantics.
   PriceHistoryEntry _priceHistoryEntryFromDoc(
       QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
@@ -909,6 +954,9 @@ class ProductRepositoryImpl implements ProductRepository {
       changedBy: data['changedBy'] as String? ?? '',
       reason: data['reason'] as String?,
       note: data['note'] as String?,
+      optionId: data['optionId'] as String?,
+      optionLabel: data['optionLabel'] as String?,
+      optionPieces: (data['optionPieces'] as num?)?.toInt(),
     );
   }
 
@@ -954,17 +1002,24 @@ class ProductRepositoryImpl implements ProductRepository {
           .get();
 
       return snapshot.docs.map((doc) {
-        final data = doc.data();
+        // Reuse the shared price-history parsing so this cross-product query
+        // can never drift from getPriceHistory/getPriceHistoryBaseline on
+        // which fields it reads — including optionId/optionLabel/
+        // optionPieces, without which every entry here would look like a
+        // base entry regardless of what's actually in Firestore.
+        final base = _priceHistoryEntryFromDoc(doc);
         return PriceChangeEntry(
-          id: doc.id,
+          id: base.id,
           productId: doc.reference.parent.parent!.id,
-          price: (data['price'] as num?)?.toDouble() ?? 0,
-          cost: (data['cost'] as num?)?.toDouble() ?? 0,
-          changedAt:
-              (data['changedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          changedBy: data['changedBy'] as String? ?? '',
-          reason: data['reason'] as String?,
-          note: data['note'] as String?,
+          price: base.price,
+          cost: base.cost,
+          changedAt: base.changedAt,
+          changedBy: base.changedBy,
+          reason: base.reason,
+          note: base.note,
+          optionId: base.optionId,
+          optionLabel: base.optionLabel,
+          optionPieces: base.optionPieces,
         );
       }).toList();
     } on FirebaseException catch (e) {

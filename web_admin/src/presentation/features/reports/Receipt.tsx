@@ -4,7 +4,9 @@ import {
   saleGrandTotal,
   saleIsPercentageDiscount,
   saleIsVoided,
+  saleItemDisplayName,
   saleItemNet,
+  saleItemOptionSetsCaption,
   saleLaborSubtotal,
   salePartsSubtotal,
   saleTotalDiscount,
@@ -39,17 +41,23 @@ export function Receipt({ sale }: { sale: Sale }) {
 
       <Divider />
 
-      {sale.items.map((it) => (
-        <div key={it.id} className="flex justify-between gap-tk-sm">
-          <span className="min-w-0 truncate">
-            {it.name}{' '}
-            <span className="text-[10px] text-light-text-hint">
-              {it.quantity}×{formatMoney(it.unitPrice)}
+      {sale.items.map((it) => {
+        const caption = saleItemOptionSetsCaption(it);
+        return (
+          <div key={it.id} className="flex justify-between gap-tk-sm">
+            <span className="min-w-0 truncate">
+              {saleItemDisplayName(it)}{' '}
+              <span className="text-[10px] text-light-text-hint">
+                {it.quantity}×{formatMoney(it.unitPrice)}
+              </span>
+              {caption ? (
+                <span className="block text-[10px] text-light-text-hint">{caption}</span>
+              ) : null}
             </span>
-          </span>
-          <span className="tabular-nums">{formatMoney(saleItemNet(it, isPct))}</span>
-        </div>
-      ))}
+            <span className="tabular-nums">{formatMoney(saleItemNet(it, isPct))}</span>
+          </div>
+        );
+      })}
       {sale.laborLines.map((l) => (
         <div key={l.id} className="flex justify-between gap-tk-sm">
           <span className="min-w-0 truncate">🔧 {l.description || 'Service'}</span>

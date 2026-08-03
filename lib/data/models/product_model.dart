@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/extensions/extensions.dart';
+import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 /// Data model for Product with Firestore serialization.
@@ -32,6 +33,10 @@ class ProductModel {
   final String? category;
   final String? imageUrl;
   final String? notes;
+  /// Optional ways this product may be sold, e.g. "By 6" and "By 3". Empty
+  /// means the product sells at [price] per piece — see
+  /// [ProductEntity.sellingOptions] for the full contract.
+  final List<SellingOptionEntity> sellingOptions;
 
   const ProductModel({
     required this.id,
@@ -59,6 +64,7 @@ class ProductModel {
     this.category,
     this.imageUrl,
     this.notes,
+    this.sellingOptions = const [],
   });
 
   // ==================== FIRESTORE SERIALIZATION ====================
@@ -99,6 +105,7 @@ class ProductModel {
       category: map['category'] as String?,
       imageUrl: map['imageUrl'] as String?,
       notes: map['notes'] as String?,
+      sellingOptions: sellingOptionsFromList(map['sellingOptions']),
     );
   }
 
@@ -126,6 +133,7 @@ class ProductModel {
       'category': category,
       'imageUrl': imageUrl,
       'notes': notes,
+      'sellingOptions': sellingOptionsToList(sellingOptions),
     };
 
     if (forCreate) {
@@ -180,15 +188,24 @@ class ProductModel {
 
   /// Converts to a Map for updating a product. [updatedByDisplayName] is
   /// denormalized onto the doc to keep audit info readable for non-admins.
+  ///
+  /// [includeSellingOptions] must stay false for non-admin writers. Selling
+  /// options are admin-only in firestore.rules; because this map writes every
+  /// field, including the key on a doc that lacks it would put it in
+  /// `diff().affectedKeys()` and get an otherwise-legitimate staff or cashier
+  /// edit rejected. Same hazard the cashier rule comment documents.
   Map<String, dynamic> toUpdateMap(
     String updatedByUserId, {
     String? updatedByDisplayName,
+    bool includeSellingOptions = false,
   }) {
-    return copyWith(
+    final map = copyWith(
       updatedBy: updatedByUserId,
       updatedByName: updatedByDisplayName,
       searchKeywords: _generateSearchKeywords(),
     ).toMap(forUpdate: true);
+    if (!includeSellingOptions) map.remove('sellingOptions');
+    return map;
   }
 
   // ==================== ENTITY CONVERSION ====================
@@ -221,6 +238,7 @@ class ProductModel {
       category: category,
       imageUrl: imageUrl,
       notes: notes,
+      sellingOptions: sellingOptions,
     );
   }
 
@@ -252,6 +270,7 @@ class ProductModel {
       category: entity.category,
       imageUrl: entity.imageUrl,
       notes: entity.notes,
+      sellingOptions: entity.sellingOptions,
     );
   }
 
@@ -422,6 +441,7 @@ class ProductModel {
     String? category,
     String? imageUrl,
     String? notes,
+    List<SellingOptionEntity>? sellingOptions,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -449,6 +469,7 @@ class ProductModel {
       category: category ?? this.category,
       imageUrl: imageUrl ?? this.imageUrl,
       notes: notes ?? this.notes,
+      sellingOptions: sellingOptions ?? this.sellingOptions,
     );
   }
 

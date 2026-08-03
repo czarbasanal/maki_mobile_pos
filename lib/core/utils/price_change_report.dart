@@ -16,13 +16,21 @@ class PriceChangeRow {
   });
 }
 
-/// Groups [entries] by product, computes each change's delta against the prior
-/// (older) in-range change for that product — the oldest change per product has
-/// no prior (deltas 0) — then returns all rows newest-first by changedAt.
+/// Groups by product AND selling option: a base per-piece price and an
+/// option's set price (e.g. a By-6 pack) are different series and must never
+/// be differenced against each other. A base entry has a null optionId, so
+/// its key is stable and distinct from any option's.
+String _groupKey(String productId, String? optionId) =>
+    '$productId::${optionId ?? ''}';
+
+/// Groups [entries] by (product, selling option), computes each change's delta
+/// against the prior (older) in-range change in the same series — the oldest
+/// change per group has no prior (deltas 0) — then returns all rows
+/// newest-first by changedAt.
 List<PriceChangeRow> priceChangeRowsInRange(List<PriceChangeEntry> entries) {
   final byProduct = <String, List<PriceChangeEntry>>{};
   for (final e in entries) {
-    byProduct.putIfAbsent(e.productId, () => []).add(e);
+    byProduct.putIfAbsent(_groupKey(e.productId, e.optionId), () => []).add(e);
   }
 
   final rows = <PriceChangeRow>[];
@@ -66,6 +74,12 @@ class ProductPriceChangeSummary {
   final bool isNew;
   final bool hasPrev;
 
+  /// The selling option this series is about (from the newest in-range
+  /// entry). Null for the base-price series — the report must show this
+  /// blank, not "Base" or a dash, so a shop with no selling options at all
+  /// sees no change from today.
+  final String? optionLabel;
+
   const ProductPriceChangeSummary({
     required this.productId,
     required this.prevPrice,
@@ -76,6 +90,7 @@ class ProductPriceChangeSummary {
     required this.lastChangedAt,
     required this.isNew,
     required this.hasPrev,
+    this.optionLabel,
   });
 
   double get priceDiff => currPrice - prevPrice;
@@ -86,26 +101,41 @@ class ProductPriceChangeSummary {
 /// ProductRepositoryImpl.createProduct).
 const String _initialPriceReason = 'Initial price';
 
-/// Groups in-range [entries] by product and summarizes each product's net
-/// movement against its baseline (last change before the range; null when the
-/// product has none). Newest [ProductPriceChangeSummary.lastChangedAt] first.
+/// Groups in-range [entries] by (product, selling option) and summarizes each
+/// group's net movement against its baseline (last change before the range,
+/// for that same series; null when unknown). A product with multiple selling
+/// options produces one summary per series — merging them would difference a
+/// By-6 set price against a base per-piece price.
+///
+/// [baselines] is keyed by productId only (one baseline lookup per product,
+/// regardless of how many series it has), so a baseline is only trusted for
+/// the series it actually matches: its own optionId must equal the group's.
+/// A baseline recorded against the base price must never seed an option
+/// group's "prev", and vice versa — that mismatch is exactly the cross-series
+/// contamination this function's grouping fix is about. When a baseline
+/// doesn't match, the group falls back to "no baseline" (oldest in-range
+/// entry as prev, hasPrev by entry count) exactly as if [baselines] had no
+/// entry for it. Newest [ProductPriceChangeSummary.lastChangedAt] first.
 List<ProductPriceChangeSummary> priceChangeProductSummaries(
   List<PriceChangeEntry> entries,
   Map<String, PriceHistoryEntry?> baselines,
 ) {
   final byProduct = <String, List<PriceChangeEntry>>{};
   for (final e in entries) {
-    byProduct.putIfAbsent(e.productId, () => []).add(e);
+    byProduct.putIfAbsent(_groupKey(e.productId, e.optionId), () => []).add(e);
   }
 
   final summaries = <ProductPriceChangeSummary>[];
-  byProduct.forEach((productId, group) {
+  byProduct.forEach((groupKey, group) {
     group.sort((a, b) => a.changedAt.compareTo(b.changedAt));
-    final baseline = baselines[productId];
     final oldest = group.first;
     final newest = group.last;
+    final candidateBaseline = baselines[oldest.productId];
+    final baseline = candidateBaseline?.optionId == oldest.optionId
+        ? candidateBaseline
+        : null;
     summaries.add(ProductPriceChangeSummary(
-      productId: productId,
+      productId: oldest.productId,
       prevPrice: baseline?.price ?? oldest.price,
       prevCost: baseline?.cost ?? oldest.cost,
       currPrice: newest.price,
@@ -114,6 +144,7 @@ List<ProductPriceChangeSummary> priceChangeProductSummaries(
       lastChangedAt: newest.changedAt,
       isNew: baseline == null && oldest.reason == _initialPriceReason,
       hasPrev: baseline != null || group.length > 1,
+      optionLabel: newest.optionLabel,
     ));
   });
 

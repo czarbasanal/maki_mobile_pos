@@ -10,7 +10,7 @@ function product(over: Partial<Product> = {}): Product {
   return {
     id: 'p1', sku: 'BANGUS-1KG', name: 'Bangus 1kg', category: 'Fish', unit: 'kg',
     cost: 180, price: 220, quantity: 5, reorderLevel: 2, costCode: 'AB-CD',
-    barcodes: [], supplierId: null, supplierName: null, baseSku: null,
+    barcodes: [], sellingOptions: [], supplierId: null, supplierName: null, baseSku: null,
     variationNumber: null, isActive: true, imageUrl: null, notes: null,
     searchKeywords: [], createdAt: new Date(), updatedAt: null,
     createdBy: 'u1', updatedBy: 'u1', createdByName: 'Czar', updatedByName: 'Czar', ...over,
@@ -72,6 +72,31 @@ describe('applyReceivedItems', () => {
     expect(out.items[0]).toMatchObject({ productId: 'p1', sku: 'SP-1', unitCost: 200, isNewVariation: true });
     expect(out.items[0].newProductId).toMatch(/.+/);
   });
+
+  it(
+    'mismatch → a product WITH selling options still records exactly one base price ' +
+      'change, never one per option (Task 16b: the receiving path is deliberately not ' +
+      'option-aware — option cost is reconstructible as pieces x unitCost)',
+    async () => {
+      const p = product({
+        id: 'p1', sku: 'SP', baseSku: null, cost: 180,
+        sellingOptions: [
+          { id: 'o1', label: 'By 6', pieces: 6, price: 600 },
+          { id: 'o2', label: 'By 3', pieces: 3, price: 330 },
+        ],
+      });
+      const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }];
+      const repo = fakeRepo();
+      await applyReceivedItems(items, repo, ctx({ knownSkus: ['SP'] }));
+
+      expect(repo.recordPriceChange).toHaveBeenCalledTimes(1);
+      const [, entry] = vi.mocked(repo.recordPriceChange).mock.calls[0];
+      expect(entry).toMatchObject({ price: p.price, cost: 200, reason: 'receiving' });
+      expect(entry.optionId).toBeUndefined();
+      expect(entry.optionLabel).toBeUndefined();
+      expect(entry.optionPieces).toBeUndefined();
+    },
+  );
 
   it('mismatch → retries the next variation number on DuplicateSkuError', async () => {
     const p = product({ id: 'p1', sku: 'SP', cost: 180 });

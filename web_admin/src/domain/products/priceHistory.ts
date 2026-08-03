@@ -50,6 +50,53 @@ export function sparklineSeries(entriesNewestFirst: PriceHistoryEntry[], forCost
   return entriesNewestFirst.map((entry) => (forCost ? entry.cost : entry.price)).reverse();
 }
 
+/**
+ * One continuous price series — the base price, or one selling option.
+ *
+ * `buildPriceHistoryRows` and the sparkline both subtract each entry from the
+ * next, so they are only meaningful within a single series. Mixing base and
+ * option entries produces a chart that zigzags between the per-piece base
+ * price and the whole-set option price, with deltas to match.
+ */
+export interface PriceHistorySeries {
+  /** Null for the base price series. */
+  optionId: string | null;
+  /** Display name — 'Base price', or the option's label. */
+  label: string;
+  /** Newest-first, matching the order the repository returns. */
+  entries: PriceHistoryEntry[];
+}
+
+/**
+ * Splits `entriesNewestFirst` into independent series: base first (when it
+ * has any entries), then one per option in first-seen order.
+ */
+export function splitPriceHistorySeries(
+  entriesNewestFirst: PriceHistoryEntry[],
+): PriceHistorySeries[] {
+  const base: PriceHistoryEntry[] = [];
+  const byOption = new Map<string, PriceHistoryEntry[]>();
+  const labels = new Map<string, string>();
+
+  for (const entry of entriesNewestFirst) {
+    const optionId = entry.optionId ?? null;
+    if (optionId === null) {
+      base.push(entry);
+      continue;
+    }
+    if (!byOption.has(optionId)) byOption.set(optionId, []);
+    byOption.get(optionId)!.push(entry);
+    if (!labels.has(optionId)) labels.set(optionId, entry.optionLabel ?? optionId);
+  }
+
+  const series: PriceHistorySeries[] = [];
+  if (base.length > 0) series.push({ optionId: null, label: 'Base price', entries: base });
+  for (const [id, entries] of byOption) {
+    series.push({ optionId: id, label: labels.get(id)!, entries });
+  }
+  return series;
+}
+
 /** Maps a price-history reason (+ optional note) to a "Source" column label. */
 export function derivePriceHistorySource(
   reason: string | null | undefined,

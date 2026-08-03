@@ -448,10 +448,14 @@ class _Receipt extends StatelessWidget {
         hairline: hairline,
         last: i == sale.items.length - 1 && sale.laborLines.isEmpty,
         leading: _qtyChip(theme, '×${item.quantity}'),
-        name: item.name,
+        // Selling-option line: label beside the name, e.g.
+        // "Pulley Ball · By 3" — neutral, no tint.
+        name: item.displayName,
         sub: '${item.sku} · ${item.unitPrice.toCurrency()}/pc',
         amount: net.toCurrency(),
         mono: true,
+        // Sets + total pieces, only once there's more than one set.
+        extraCaption: item.optionSetsCaption,
       ));
     }
     for (var i = 0; i < sale.laborLines.length; i++) {
@@ -565,6 +569,9 @@ class _Receipt extends StatelessWidget {
     required String sub,
     required String amount,
     bool mono = false,
+    // Sets + total pieces caption for a selling-option line with more than
+    // one set (e.g. "By 3 × 2 (6 pcs)"). Null for every other line.
+    String? extraCaption,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
@@ -590,6 +597,8 @@ class _Receipt extends StatelessWidget {
                       ? AppTextStyles.code.copyWith(color: muted)
                       : TextStyle(fontSize: 12, color: muted),
                 ),
+                if (extraCaption != null)
+                  Text(extraCaption, style: TextStyle(fontSize: 11, color: muted)),
               ],
             ),
           ),

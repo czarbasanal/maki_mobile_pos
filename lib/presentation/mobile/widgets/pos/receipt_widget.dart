@@ -250,7 +250,9 @@ class ReceiptWidget extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.name,
+                            // Selling-option line: label beside the name,
+                            // e.g. "Pulley Ball · By 3" — neutral, no tint.
+                            item.displayName,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.black,
@@ -264,6 +266,16 @@ class ReceiptWidget extends ConsumerWidget {
                               color: _ReceiptColors.label,
                             ),
                           ),
+                          // Sets + total pieces, only once there's more than
+                          // one set.
+                          if (item.optionSetsCaption != null)
+                            Text(
+                              item.optionSetsCaption!,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: _ReceiptColors.label,
+                              ),
+                            ),
                         ],
                       ),
                     ),

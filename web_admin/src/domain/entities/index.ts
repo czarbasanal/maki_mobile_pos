@@ -12,3 +12,4 @@ export * from './ActivityLog';
 export * from './CostCode';
 export * from './Category';
 export * from './Mechanic';
+export * from './SellingOption';

@@ -26,6 +26,24 @@ void main() {
     });
   }
 
+  Future<void> seedOption(String productId, DateTime at, double price,
+      double cost, String optionId, String optionLabel, int optionPieces) {
+    return fake
+        .collection('products')
+        .doc(productId)
+        .collection('price_history')
+        .add({
+      'price': price,
+      'cost': cost,
+      'changedAt': Timestamp.fromDate(at),
+      'changedBy': 'u1',
+      'reason': 'Option added',
+      'optionId': optionId,
+      'optionLabel': optionLabel,
+      'optionPieces': optionPieces,
+    });
+  }
+
   test(
       'getPriceChangesInRange returns in-range changes across products, '
       'newest-first, each tagged with its productId', () async {
@@ -43,6 +61,31 @@ void main() {
     expect(changes.map((c) => c.productId).toSet(), {'p1', 'p2'});
     expect(changes.first.productId, 'p2'); // Jun 20 newest
     expect(changes.first.price, 250);
+  });
+
+  test(
+      'getPriceChangesInRange carries optionId/optionLabel/optionPieces onto '
+      'the entry — without this, a By-3 entry looks identical to a base '
+      'entry and the (productId, optionId) report grouping has nothing to '
+      'key off', () async {
+    await seedOption('p1', DateTime(2026, 6, 10), 330, 180, 'o2', 'By 3', 3);
+    await seed('p1', DateTime(2026, 6, 12), 120, 60); // base, same product
+
+    final changes = await repo.getPriceChangesInRange(
+      startDate: DateTime(2026, 6, 1),
+      endDate: DateTime(2026, 6, 30, 23, 59, 59),
+    );
+
+    expect(changes, hasLength(2));
+    final optionEntry = changes.firstWhere((c) => c.optionId != null);
+    expect(optionEntry.optionId, 'o2');
+    expect(optionEntry.optionLabel, 'By 3');
+    expect(optionEntry.optionPieces, 3);
+
+    final baseEntry = changes.firstWhere((c) => c.optionId == null);
+    expect(baseEntry.price, 120);
+    expect(baseEntry.optionLabel, isNull);
+    expect(baseEntry.optionPieces, isNull);
   });
 
   group('getPriceHistoryBaseline', () {

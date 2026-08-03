@@ -1,6 +1,6 @@
 import type { CartLine } from '@/domain/sales/cart';
 import { describedLaborLines } from '@/domain/sales/labor';
-import { saleItemNet } from '@/domain/entities/SaleItem';
+import { saleItemDisplayName, saleItemNet, saleItemOptionSetsCaption } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { FeeLine } from '@/domain/entities/FeeLine';
@@ -27,17 +27,23 @@ export function OrderSummary({
         Order summary
       </div>
       <ul className="divide-y divide-light-hairline">
-        {lines.map((l) => (
-          <li key={l.productId} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm text-bodySmall">
-            <span className="min-w-0">
-              <span className="block text-light-text">{l.name}</span>
-              <span className="block text-[12px] text-light-text-hint">
-                {l.quantity} × {formatMoney(l.unitPrice)}
+        {lines.map((l) => {
+          const caption = saleItemOptionSetsCaption(l);
+          return (
+            <li key={l.id} className="flex items-center justify-between gap-tk-md px-tk-md py-tk-sm text-bodySmall">
+              <span className="min-w-0">
+                <span className="block text-light-text">{saleItemDisplayName(l)}</span>
+                <span className="block text-[12px] text-light-text-hint">
+                  {l.quantity} × {formatMoney(l.unitPrice)}
+                </span>
+                {caption ? (
+                  <span className="block text-[12px] text-light-text-hint">{caption}</span>
+                ) : null}
               </span>
-            </span>
-            <span className="font-medium text-light-text tabular-nums">{formatMoney(saleItemNet(l, isPct))}</span>
-          </li>
-        ))}
+              <span className="font-medium text-light-text tabular-nums">{formatMoney(saleItemNet(l, isPct))}</span>
+            </li>
+          );
+        })}
         {described.map((l) => (
           <li key={l.id} className="flex items-center justify-between gap-tk-md bg-light-subtle px-tk-md py-tk-sm text-bodySmall">
             <span className="text-light-text">🔧 {l.description || 'Service'}</span>

@@ -5,7 +5,6 @@ import {
   addDoc,
   collection,
   collectionGroup,
-  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -27,7 +26,6 @@ import type { Product } from '@/domain/entities';
 import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/collections';
 import { productConverter } from '@/data/converters/productConverter';
 import { toDate } from '@/data/converters/timestamps';
-import { generateSearchKeywords } from '@/domain/products/searchKeywords';
 import {
   normalizeSku,
   normalizeBarcode,
@@ -37,7 +35,8 @@ import {
   composeAutoSku,
 } from '@/domain/products/sku';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
-import { buildProductWrites, newProductId } from '@/data/products/productWrites';
+import { buildProductUpdate, buildProductWrites, newProductId } from '@/data/products/productWrites';
+import { sellingOptionHistoryEvents } from '@/domain/products/sellingOptions';
 import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
 import type { PriceChangeEntry } from '@/domain/products/priceChangeReport';
 import type {
@@ -134,7 +133,15 @@ export class FirestoreProductRepository implements ProductRepository {
     barcode: { old: string[]; next: string[] },
     actorId: string,
     actorName: string | null,
+    includeSellingOptions = false,
   ): Promise<void> {
+    // Read the prior sellingOptions (if this save might touch them) BEFORE
+    // the transaction — mirrors mobile's updateProduct, which reads `prior`
+    // ahead of its own write. Only reads when includeSellingOptions AND the
+    // caller actually supplied a value, so a plain SKU/barcode edit (the
+    // common case) costs nothing extra.
+    const priorForHistory = await this.readPriorForSellingOptionHistory(id, input, includeSellingOptions);
+
     // Variation children (baseSku == old) must be read OUTSIDE the transaction
     // (Firestore transactions can't run queries) — only needed on a SKU rename.
     const children = sku.changed
@@ -177,11 +184,12 @@ export class FirestoreProductRepository implements ProductRepository {
       ) {
         throw new DuplicateBarcodeError();
       }
-      // Product doc: reuse updateData so searchKeywords rebuild + whitelist
-      // apply. input already carries the new sku + barcodes from the form patch.
+      // Product doc: reuse buildProductUpdate so searchKeywords rebuild +
+      // the value-field whitelist apply. input already carries the new sku +
+      // barcodes from the form patch.
       tx.update(
         doc(this.db, FirestoreCollections.products, id),
-        this.updateData(input, actorId),
+        buildProductUpdate(input, actorId, includeSellingOptions),
       );
       if (sku.changed) {
         for (const child of children!.docs) {
@@ -212,6 +220,10 @@ export class FirestoreProductRepository implements ProductRepository {
         });
       });
     });
+
+    if (priorForHistory) {
+      await this.recordSellingOptionHistory(id, priorForHistory, input, actorId);
+    }
   }
 
   async barcodeExists(barcode: string, excludeProductId?: string): Promise<boolean> {
@@ -337,39 +349,75 @@ export class FirestoreProductRepository implements ProductRepository {
   /** Cap on claim-read scan attempts inside the auto-SKU candidate loop. */
   private static readonly autoSkuScanCap = 25;
 
-  async update(id: string, input: ProductUpdateInput, actorId: string): Promise<void> {
+  async update(
+    id: string,
+    input: ProductUpdateInput,
+    actorId: string,
+    includeSellingOptions = false,
+  ): Promise<void> {
+    const priorForHistory = await this.readPriorForSellingOptionHistory(id, input, includeSellingOptions);
+
     await updateDoc(
       doc(this.db, FirestoreCollections.products, id),
-      this.updateData(input, actorId),
+      buildProductUpdate(input, actorId, includeSellingOptions),
     );
+
+    if (priorForHistory) {
+      await this.recordSellingOptionHistory(id, priorForHistory, input, actorId);
+    }
   }
 
-  private updateData(input: ProductUpdateInput, actorId: string) {
-    const data: Record<string, unknown> = {
-      updatedBy: actorId,
-      updatedAt: serverTimestamp(),
-    };
-    const valueFields = [
-      'sku', 'name', 'costCode', 'cost', 'price', 'quantity', 'reorderLevel',
-      'unit', 'supplierId', 'supplierName', 'isActive', 'baseSku',
-      'variationNumber', 'barcodes', 'category', 'imageUrl', 'notes', 'updatedByName',
-    ] as const;
-    for (const key of valueFields) {
-      if (input[key] !== undefined) data[key] = input[key];
-    }
-    // Drop the legacy singular `barcode` whenever we write the array form.
-    if (input.barcodes !== undefined) data.barcode = deleteField();
-    // Keywords only need rebuilding if the name changes (import never does this;
-    // a future inventory edit might).
-    if (input.name !== undefined) {
-      data.searchKeywords = generateSearchKeywords([
-        input.sku ?? input.name,
-        input.name,
-        input.category ?? null,
-      ]);
-    }
-    return data;
+  /**
+   * Reads the product's CURRENT (pre-write) sellingOptions + cost, but only
+   * when this save could actually change sellingOptions — i.e. the caller is
+   * on the admin-gated tier (`includeSellingOptions`) AND the patch supplies
+   * the field. A plain edit that never touches sellingOptions (the common
+   * case, and the only case for staff/cashier) skips this read entirely, so
+   * this feature adds zero Firestore reads to those saves.
+   */
+  private async readPriorForSellingOptionHistory(
+    id: string,
+    input: ProductUpdateInput,
+    includeSellingOptions: boolean,
+  ): Promise<{ sellingOptions: Product['sellingOptions']; cost: number } | null> {
+    if (!includeSellingOptions || input.sellingOptions === undefined) return null;
+    const prior = await this.getById(id);
+    if (!prior) return null;
+    return { sellingOptions: prior.sellingOptions, cost: prior.cost };
   }
+
+  /**
+   * Diffs the prior sellingOptions against the patch and writes one
+   * price_history doc per event (best-effort — mirrors the base price_history
+   * write's failure posture: never fails the caller's save). Unit cost for
+   * the option's SET cost is the NEW cost when this same edit also changes
+   * it, else the prior (unchanged) cost.
+   */
+  private async recordSellingOptionHistory(
+    productId: string,
+    prior: { sellingOptions: Product['sellingOptions']; cost: number },
+    input: ProductUpdateInput,
+    changedBy: string,
+  ): Promise<void> {
+    const unitCost = input.cost ?? prior.cost;
+    const events = sellingOptionHistoryEvents(prior.sellingOptions, input.sellingOptions!, unitCost);
+    for (const event of events) {
+      try {
+        await this.recordPriceChange(productId, {
+          price: event.price,
+          cost: event.cost,
+          changedBy,
+          reason: event.reason,
+          optionId: event.optionId,
+          optionLabel: event.optionLabel,
+          optionPieces: event.optionPieces,
+        });
+      } catch {
+        // Best-effort — matches the base price_history write's failure posture.
+      }
+    }
+  }
+
   async adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void> {
     await updateDoc(doc(this.db, FirestoreCollections.products, id), {
       quantity: increment(delta),
@@ -406,15 +454,22 @@ export class FirestoreProductRepository implements ProductRepository {
     productId: string,
     entry: Omit<PriceHistoryEntry, 'changedAt'>,
   ): Promise<void> {
+    const data: Record<string, unknown> = {
+      price: entry.price,
+      cost: entry.cost,
+      changedAt: serverTimestamp(),
+      changedBy: entry.changedBy,
+      reason: entry.reason,
+    };
+    // Conditionally included — a base entry must leave these keys ABSENT
+    // (not present-with-null), so a plain field-presence check can tell
+    // "base" apart from "no option data available".
+    if (entry.optionId != null) data.optionId = entry.optionId;
+    if (entry.optionLabel != null) data.optionLabel = entry.optionLabel;
+    if (entry.optionPieces != null) data.optionPieces = entry.optionPieces;
     await addDoc(
       collection(this.db, FirestoreCollections.products, productId, Subcollections.priceHistory),
-      {
-        price: entry.price,
-        cost: entry.cost,
-        changedAt: serverTimestamp(),
-        changedBy: entry.changedBy,
-        reason: entry.reason,
-      },
+      data,
     );
   }
   async listPriceHistory(productId: string): Promise<PriceHistoryEntry[]> {
@@ -434,6 +489,9 @@ export class FirestoreProductRepository implements ProductRepository {
         changedBy: (data.changedBy as string) ?? '',
         reason: (data.reason as string | null) ?? null,
         note: (data.note as string | null) ?? null,
+        optionId: (data.optionId as string | null | undefined) ?? null,
+        optionLabel: (data.optionLabel as string | null | undefined) ?? null,
+        optionPieces: (data.optionPieces as number | null | undefined) ?? null,
       };
     });
   }
@@ -459,6 +517,12 @@ export class FirestoreProductRepository implements ProductRepository {
         changedBy: (data.changedBy as string) ?? '',
         reason: (data.reason as string | null) ?? null,
         note: (data.note as string | null) ?? null,
+        // Without these, every entry here looks like a base entry regardless
+        // of what's in Firestore, and the (productId, optionId) report
+        // grouping has nothing to key off.
+        optionId: (data.optionId as string | null | undefined) ?? null,
+        optionLabel: (data.optionLabel as string | null | undefined) ?? null,
+        optionPieces: (data.optionPieces as number | null | undefined) ?? null,
       } satisfies PriceChangeEntry;
     });
   }

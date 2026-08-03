@@ -41,7 +41,7 @@ function buildProductInput(p: NewProductFields, actor: ReceiveContext['actor']):
     supplierId: p.supplierId, supplierName: p.supplierName, isActive: true,
     createdBy: actor.id, updatedBy: actor.id, createdByName: actorName, updatedByName: actorName,
     searchKeywords: generateSearchKeywords([p.sku, p.name, p.category]),
-    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [],
+    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [], sellingOptions: [],
     category: p.category, imageUrl: null, notes: null,
   };
 }

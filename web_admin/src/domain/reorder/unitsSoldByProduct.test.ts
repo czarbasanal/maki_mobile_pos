@@ -17,6 +17,7 @@ function item(productId: string, qty: number) {
   return {
     id: `${productId}-${qty}`, productId, sku: productId, name: productId,
     unitPrice: 10, unitCost: 5, quantity: qty, discountValue: 0, unit: 'pcs',
+    optionId: null, optionLabel: null, optionPieces: null, optionPrice: null,
   };
 }
 

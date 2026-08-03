@@ -13,7 +13,9 @@ import {
   saleFeesTotal,
   saleGrandTotal,
   saleIsPercentageDiscount,
+  saleItemHasOption,
   saleItemNet,
+  saleItemOptionSetsCaption,
   saleLaborSubtotal,
   salePartsSubtotal,
   saleTotalDiscount,
@@ -127,19 +129,36 @@ export function SaleDetailPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-light-hairline">
-            {sale.items.map((it) => (
-              <tr key={it.id}>
-                <td className="px-tk-md py-tk-sm">
-                  <span className="font-medium text-light-text">{it.name}</span>
-                  <span className="ml-tk-sm text-light-text-hint">{it.sku}</span>
-                </td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">{it.quantity}</td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(it.unitPrice)}</td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">
-                  {formatMoney(saleItemNet(it, isPct))}
-                </td>
-              </tr>
-            ))}
+            {sale.items.map((it) => {
+              // Name and option label stay in their own differently-coloured
+              // spans on this surface (unlike the single-string sites), so
+              // only the caption — byte-identical everywhere — is shared via
+              // saleItemOptionSetsCaption; saleItemHasOption still guards the
+              // label span directly to keep that per-surface styling intact.
+              const hasOption = saleItemHasOption(it);
+              const caption = saleItemOptionSetsCaption(it);
+              return (
+                <tr key={it.id}>
+                  <td className="px-tk-md py-tk-sm">
+                    <div>
+                      <span className="font-medium text-light-text">{it.name}</span>
+                      {hasOption ? (
+                        <span className="text-light-text-secondary"> · {it.optionLabel}</span>
+                      ) : null}
+                      <span className="ml-tk-sm text-light-text-hint">{it.sku}</span>
+                    </div>
+                    {caption ? (
+                      <div className="text-[11px] text-light-text-hint">{caption}</div>
+                    ) : null}
+                  </td>
+                  <td className="px-tk-md py-tk-sm text-right tabular-nums">{it.quantity}</td>
+                  <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(it.unitPrice)}</td>
+                  <td className="px-tk-md py-tk-sm text-right tabular-nums">
+                    {formatMoney(saleItemNet(it, isPct))}
+                  </td>
+                </tr>
+              );
+            })}
             {sale.laborLines.map((l) => (
               <tr key={l.id} className="bg-light-subtle">
                 <td className="px-tk-md py-tk-sm" colSpan={3}>
