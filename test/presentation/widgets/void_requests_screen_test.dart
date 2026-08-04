@@ -313,5 +313,69 @@ void main() {
 
       expect(find.textContaining('By'), findsNothing);
     });
+
+    testWidgets('rate suffix reads the item unit for a non-pcs product',
+        (tester) async {
+      final request = _req(
+        id: 'opt4',
+        saleNumber: 'SALE-OPT-1',
+        total: 100,
+        by: 'Juan Dela Cruz',
+        reason: 'Wrong item scanned',
+        status: VoidRequestStatus.pending,
+        read: false,
+        at: DateTime.now(),
+      );
+      final sale = saleWith(const SaleItemEntity(
+        id: 'item-1',
+        productId: 'prod-1',
+        sku: 'SKU-BOX',
+        name: 'Chain Lube',
+        unitPrice: 100.0,
+        unitCost: 60.0,
+        quantity: 1,
+        unit: 'box',
+      ));
+
+      await tester.pumpWidget(harnessWithSale(request, sale));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SALE-OPT-1'));
+      await tester.pumpAndSettle();
+
+      // Discriminator: a hardcoded "/pc" suffix renders this too, so this
+      // only passes when the sub-line reads item.unit via the helper.
+      expect(find.text('SKU-BOX · ₱100.00/box'), findsOneWidget);
+      expect(find.textContaining('/pc'), findsNothing);
+    });
+
+    testWidgets('rate suffix stays /pc for a pcs product (regression)',
+        (tester) async {
+      final request = _req(
+        id: 'opt5',
+        saleNumber: 'SALE-OPT-1',
+        total: 200,
+        by: 'Juan Dela Cruz',
+        reason: 'Wrong item scanned',
+        status: VoidRequestStatus.pending,
+        read: false,
+        at: DateTime.now(),
+      );
+      final sale = saleWith(const SaleItemEntity(
+        id: 'item-1',
+        productId: 'prod-1',
+        sku: 'SKU-1',
+        name: 'Brake Pad',
+        unitPrice: 100.0,
+        unitCost: 60.0,
+        quantity: 2,
+      ));
+
+      await tester.pumpWidget(harnessWithSale(request, sale));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SALE-OPT-1'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('SKU-1 · ₱100.00/pc'), findsOneWidget);
+    });
   });
 }

@@ -62,11 +62,14 @@ export function saleItemDisplayName(item: SaleItem): string {
   return saleItemHasOption(item) ? `${item.name} · ${item.optionLabel}` : item.name;
 }
 
-/** Sets + total pieces caption for display, e.g. "By 3 × 2 (6 pcs)" — null
- * when there's no option or there's only one set (a single set is fully
- * said by saleItemDisplayName alone, so no extra caption is shown). */
+/** Sets + total pieces caption for display, e.g. "By 3 × 2 (6 pcs)" for a
+ * pcs product — null when there's no option or there's only one set (a
+ * single set is fully said by saleItemDisplayName alone, so no extra
+ * caption is shown). The unit suffix comes from item.unit itself (a plural,
+ * unlike the per-piece rate suffix elsewhere), so a box-measured product
+ * reads "By 3 × 2 (6 box)". */
 export function saleItemOptionSetsCaption(item: SaleItem): string | null {
   const sets = saleItemOptionSets(item);
   if (sets === null || sets <= 1) return null;
-  return `${item.optionLabel} × ${sets} (${item.quantity} pcs)`;
+  return `${item.optionLabel} × ${sets} (${item.quantity} ${item.unit})`;
 }

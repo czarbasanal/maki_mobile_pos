@@ -114,7 +114,13 @@ void main() {
     // Extracted so every render site (cart tile, receipts, sale detail,
     // checkout, void-request receipt, job-order previews) builds the same
     // strings from one place instead of hand-copying the ternary/caption.
-    SaleItemEntity item({String? label, int? pieces, double? optionPrice, int quantity = 1}) {
+    SaleItemEntity item({
+      String? label,
+      int? pieces,
+      double? optionPrice,
+      int quantity = 1,
+      String unit = 'pcs',
+    }) {
       return SaleItemEntity(
         id: 'i1',
         productId: 'p1',
@@ -123,6 +129,7 @@ void main() {
         unitPrice: pieces == null ? 120 : (optionPrice ?? 0) / pieces,
         unitCost: 60,
         quantity: quantity,
+        unit: unit,
         optionId: label == null ? null : 'o2',
         optionLabel: label,
         optionPieces: pieces,
@@ -156,6 +163,19 @@ void main() {
     test('optionSetsCaption shows sets and total pieces for more than one set', () {
       final line = item(label: 'By 3', pieces: 3, optionPrice: 330, quantity: 6);
       expect(line.optionSetsCaption, 'By 3 × 2 (6 pcs)');
+    });
+
+    test('optionSetsCaption uses the item\'s own unit for a non-pcs product', () {
+      // Discriminator: a hardcoded "pcs" literal produces "6 pcs" here too,
+      // so this only passes when the caption reads item.unit.
+      final line = item(
+        label: 'By 3',
+        pieces: 3,
+        optionPrice: 330,
+        quantity: 6,
+        unit: 'box',
+      );
+      expect(line.optionSetsCaption, 'By 3 × 2 (6 box)');
     });
   });
 }

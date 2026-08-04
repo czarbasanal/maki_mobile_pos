@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
@@ -451,7 +452,8 @@ class _Receipt extends StatelessWidget {
         // Selling-option line: label beside the name, e.g.
         // "Pulley Ball · By 3" — neutral, no tint.
         name: item.displayName,
-        sub: '${item.sku} · ${item.unitPrice.toCurrency()}/pc',
+        sub: '${item.sku} · ${item.unitPrice.toCurrency()}/'
+            '${sellingOptionRateSuffix(item.unit)}',
         amount: net.toCurrency(),
         mono: true,
         // Sets + total pieces, only once there's more than one set.

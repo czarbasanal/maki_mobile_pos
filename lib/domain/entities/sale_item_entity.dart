@@ -134,13 +134,16 @@ class SaleItemEntity extends Equatable {
   /// constructs this string identically.
   String get displayName => hasOption ? '$name · $optionLabel' : name;
 
-  /// Sets + total pieces caption for display, e.g. "By 3 × 2 (6 pcs)" — null
-  /// when there's no option or there's only one set (a single set is fully
-  /// said by [displayName] alone, so no extra caption is shown).
+  /// Sets + total pieces caption for display, e.g. "By 3 × 2 (6 pcs)" for a
+  /// pcs product — null when there's no option or there's only one set (a
+  /// single set is fully said by [displayName] alone, so no extra caption is
+  /// shown). The unit suffix comes from [unit] itself (a plural, unlike the
+  /// per-piece rate suffix elsewhere), so a box-measured product reads
+  /// "By 3 × 2 (6 box)".
   String? get optionSetsCaption {
     final sets = optionSets;
     if (sets == null || sets <= 1) return null;
-    return '$optionLabel × $sets ($quantity pcs)';
+    return '$optionLabel × $sets ($quantity $unit)';
   }
 
   // ==================== COPY WITH ====================

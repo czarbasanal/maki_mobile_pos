@@ -24,10 +24,11 @@ function item(overrides: Partial<SaleItem> = {}): SaleItem {
   };
 }
 
-const optionItem = (quantity: number) =>
+const optionItem = (quantity: number, unit = 'pcs') =>
   item({
     unitPrice: 110,
     quantity,
+    unit,
     optionId: 'o2',
     optionLabel: 'By 3',
     optionPieces: 3,
@@ -59,5 +60,11 @@ describe('saleItemOptionSetsCaption', () => {
 
   it('shows sets and total pieces for more than one set', () => {
     expect(saleItemOptionSetsCaption(optionItem(6))).toBe('By 3 × 2 (6 pcs)');
+  });
+
+  it('uses the item\'s own unit for a non-pcs product', () => {
+    // Discriminator: a hardcoded "pcs" literal produces "6 pcs" here too, so
+    // this only passes when the caption reads item.unit.
+    expect(saleItemOptionSetsCaption(optionItem(6, 'box'))).toBe('By 3 × 2 (6 box)');
   });
 });
