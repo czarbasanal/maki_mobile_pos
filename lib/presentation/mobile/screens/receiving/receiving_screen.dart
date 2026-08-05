@@ -201,7 +201,7 @@ class ReceivingScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '${receiving.totalQuantity} items',
+                '${receiving.totalQuantity} units',
                 style: TextStyle(fontSize: 12, color: muted),
               ),
               if (isAdmin)

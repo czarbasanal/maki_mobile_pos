@@ -195,7 +195,7 @@ class _ReceivingHistoryItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${receiving.totalQuantity} items',
+                '${receiving.totalQuantity} units',
                 style: TextStyle(fontSize: 12, color: muted),
               ),
               if (isAdmin)
