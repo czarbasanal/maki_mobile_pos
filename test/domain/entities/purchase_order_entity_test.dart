@@ -86,6 +86,7 @@ void main() {
     test('returns null when any entry is blank — an unknown unit cannot agree', () {
       expect(sharedUnitOf(const ['set', '']), isNull);
       expect(sharedUnitOf(const ['   ']), isNull);
+      expect(sharedUnitOf(const ['', 'set']), isNull);
     });
   });
 
