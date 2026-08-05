@@ -336,7 +336,9 @@ git commit -m "fix(receiving): label the quantity sum units, not items (web)"
 
 - [ ] `flutter test` — full suite green; `flutter analyze` — no issues
 - [ ] From `web_admin/`: `npm run typecheck`, `npm run test`, `npm run build` — all green
-- [ ] Sweep for stragglers: `rg -n "totalQuantity} items|>Items<|Total items" lib/ web_admin/src/` returns nothing
+- [ ] Sweep for stragglers by searching the *quantity expressions*, not the noun (the noun is regexable but too narrow — e.g. it can't match a site where the number and word sit in separate DOM nodes — and too noisy, since it also matches unrelated features and this branch's own negative-assertion test literals):
+      `rg -n "(totalQuantity|totals\.quantity)" lib/ web_admin/src/ --glob '!*test*'`
+      This is reviewed by eye, not expected to return nothing.
 - [ ] Confirm the two already-correct sites are untouched: `receiving_drafts_screen.dart:105` still reads `item(s) · … units`, `bulk_receiving_screen.dart:556` still reads `total units`
 
 ## Non-goals
