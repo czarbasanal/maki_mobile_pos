@@ -65,7 +65,7 @@ export function ReceivingDashboardPage() {
                       <tr key={r.id} className="hover:bg-light-subtle">
                         <td className="px-tk-md py-tk-sm font-medium text-light-text">{r.referenceNumber}</td>
                         <td className="px-tk-md py-tk-sm text-light-text-secondary">{r.supplierName ?? '—'}</td>
-                        <td className="px-tk-md py-tk-sm text-right tabular-nums">{r.totalQuantity} items</td>
+                        <td className="px-tk-md py-tk-sm text-right tabular-nums">{r.totalQuantity} units</td>
                         <td className="px-tk-md py-tk-sm text-right">
                           <Link to={`/receiving/new/${r.id}`} className="text-light-text underline hover:opacity-80">
                             Resume
@@ -99,7 +99,7 @@ export function ReceivingDashboardPage() {
                       <th className="px-tk-md py-tk-sm text-left font-medium">Reference</th>
                       <th className="px-tk-md py-tk-sm text-left font-medium">Date</th>
                       <th className="px-tk-md py-tk-sm text-left font-medium">Supplier</th>
-                      <th className="px-tk-md py-tk-sm text-right font-medium">Items</th>
+                      <th className="px-tk-md py-tk-sm text-right font-medium">Units</th>
                       <th className="px-tk-md py-tk-sm text-right font-medium">Total</th>
                       <th className="px-tk-md py-tk-sm text-left font-medium">Status</th>
                     </tr>

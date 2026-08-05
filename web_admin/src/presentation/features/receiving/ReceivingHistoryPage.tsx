@@ -60,7 +60,7 @@ export function ReceivingHistoryPage() {
                 <th className="px-tk-md py-tk-sm text-left font-medium">Reference</th>
                 <th className="px-tk-md py-tk-sm text-left font-medium">Date</th>
                 <th className="px-tk-md py-tk-sm text-left font-medium">Supplier</th>
-                <th className="px-tk-md py-tk-sm text-right font-medium">Items</th>
+                <th className="px-tk-md py-tk-sm text-right font-medium">Units</th>
                 <th className="px-tk-md py-tk-sm text-right font-medium">Total</th>
                 <th className="px-tk-md py-tk-sm text-left font-medium">Status</th>
               </tr>

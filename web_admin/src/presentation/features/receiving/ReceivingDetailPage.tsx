@@ -108,7 +108,7 @@ export function ReceivingDetailPage() {
 
       <section className="ml-auto w-full max-w-sm space-y-tk-xs rounded-lg border border-light-hairline bg-light-card p-tk-lg text-bodySmall">
         <div className="flex justify-between">
-          <span className="text-light-text-secondary">Total items</span>
+          <span className="text-light-text-secondary">Total units</span>
           <span className="tabular-nums text-light-text">{receiving.totalQuantity}</span>
         </div>
         <div className="flex justify-between border-t border-light-hairline pt-tk-xs">
