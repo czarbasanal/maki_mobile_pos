@@ -1,57 +1,189 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:maki_mobile_pos/core/enums/enums.dart';
-import 'package:maki_mobile_pos/domain/entities/entities.dart';
-import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
-import 'package:maki_mobile_pos/presentation/providers/receiving_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/receiving/receiving_history_screen.dart';
+import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
-ReceivingItemEntity _item(String id, int qty) => ReceivingItemEntity(
-      id: id,
-      sku: 'SKU-$id',
-      name: 'Item $id',
-      quantity: qty,
-      unit: 'pcs',
-      unitCost: 10,
-      costCode: 'AB',
-    );
+ReceivingEntity _completed({
+  required String id,
+  required DateTime completedAt,
+  String? supplierName,
+  List<ReceivingItemEntity> items = const [],
+  int totalQuantity = 1,
+}) {
+  return ReceivingEntity(
+    id: id,
+    referenceNumber: id.toUpperCase(),
+    items: items,
+    totalCost: 100,
+    totalQuantity: totalQuantity,
+    status: ReceivingStatus.completed,
+    createdAt: completedAt,
+    completedAt: completedAt,
+    supplierName: supplierName,
+    createdBy: 'u',
+    createdByName: 'User',
+  );
+}
 
-// 3 lines, 12 pieces — so "12" can never be mistaken for a line count.
-ReceivingEntity _receiving() => ReceivingEntity(
-      id: 'r1',
-      referenceNumber: 'RCV-20260805-001',
-      items: [_item('a', 5), _item('b', 4), _item('c', 3)],
-      totalCost: 120,
-      totalQuantity: 12,
-      status: ReceivingStatus.completed,
-      createdAt: DateTime(2026, 8, 5),
-      createdBy: 'u1',
-      createdByName: 'Admin',
-    );
+ReceivingEntity _draft({
+  required String id,
+  required DateTime createdAt,
+}) {
+  return ReceivingEntity(
+    id: id,
+    referenceNumber: id.toUpperCase(),
+    items: const [],
+    totalCost: 0,
+    totalQuantity: 0,
+    status: ReceivingStatus.draft,
+    createdAt: createdAt,
+    createdBy: 'u',
+    createdByName: 'User',
+  );
+}
 
-final _admin = UserEntity(
-  id: 'u1',
-  email: 'a@test',
-  displayName: 'Alice Admin',
-  role: UserRole.admin,
-  isActive: true,
-  createdAt: DateTime(2024, 1, 1),
-);
+GoRouter _buildTestRouter() {
+  return GoRouter(
+    initialLocation: '/receiving/history',
+    routes: [
+      GoRoute(
+        path: '/receiving/history',
+        builder: (_, __) => const ReceivingHistoryScreen(),
+      ),
+      // Placeholder routes the screen pushes onto — keeping them as
+      // empty Scaffolds so go_router can resolve the deep link without
+      // pulling in the rest of the app.
+      GoRoute(
+        path: '/receiving',
+        builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+      ),
+      GoRoute(
+        path: '/receiving/bulk/:id',
+        builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+      ),
+    ],
+  );
+}
+
+Future<void> _pump(
+  WidgetTester tester,
+  List<ReceivingEntity> sales,
+) {
+  return tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        recentReceivingsProvider.overrideWith((ref) => Stream.value(sales)),
+      ],
+      child: MaterialApp.router(routerConfig: _buildTestRouter()),
+    ),
+  );
+}
 
 void main() {
-  testWidgets('labels the quantity sum "units", not "items"', (tester) async {
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        recentReceivingsProvider
-            .overrideWith((ref) => Stream.value([_receiving()])),
-        currentUserProvider.overrideWith((ref) => Stream.value(_admin)),
-      ],
-      child: const MaterialApp(home: ReceivingHistoryScreen()),
-    ));
-    await tester.pumpAndSettle();
+  group('ReceivingHistoryScreen', () {
+    testWidgets('renders the empty state when no completed receivings',
+        (tester) async {
+      await _pump(tester, const []);
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('12 units'), findsOneWidget);
-    expect(find.textContaining('12 items'), findsNothing);
+      expect(find.text('No Receiving History'), findsOneWidget);
+    });
+
+    testWidgets('shows month headers most-recent first when records span months',
+        (tester) async {
+      final receivings = [
+        _completed(id: 'apr-1', completedAt: DateTime(2026, 4, 5)),
+        _completed(id: 'may-1', completedAt: DateTime(2026, 5, 2)),
+        _completed(id: 'mar-1', completedAt: DateTime(2026, 3, 28)),
+      ];
+      await _pump(tester, receivings);
+      await tester.pumpAndSettle();
+
+      expect(find.text('May 2026'), findsOneWidget);
+      expect(find.text('April 2026'), findsOneWidget);
+      expect(find.text('March 2026'), findsOneWidget);
+
+      // Each month header carries a count badge — three single-item
+      // groups means three "1" labels rendered alongside the headers.
+      expect(find.text('1'), findsNWidgets(3));
+    });
+
+    testWidgets('multiple receivings in a month show under one header',
+        (tester) async {
+      final receivings = [
+        _completed(id: 'a', completedAt: DateTime(2026, 5, 1)),
+        _completed(id: 'b', completedAt: DateTime(2026, 5, 15)),
+        _completed(id: 'c', completedAt: DateTime(2026, 5, 28)),
+      ];
+      await _pump(tester, receivings);
+      await tester.pumpAndSettle();
+
+      expect(find.text('May 2026'), findsOneWidget);
+      // Group's count badge reflects all three items.
+      expect(find.text('3'), findsOneWidget);
+      // All three reference numbers render.
+      expect(find.text('A'), findsOneWidget);
+      expect(find.text('B'), findsOneWidget);
+      expect(find.text('C'), findsOneWidget);
+    });
+
+    testWidgets('drafts in the source stream are not shown in history',
+        (tester) async {
+      final receivings = [
+        _completed(id: 'completed', completedAt: DateTime(2026, 5, 5)),
+        _draft(id: 'draft', createdAt: DateTime(2026, 5, 10)),
+      ];
+      await _pump(tester, receivings);
+      await tester.pumpAndSettle();
+
+      expect(find.text('COMPLETED'), findsOneWidget);
+      expect(find.text('DRAFT'), findsNothing);
+    });
+
+    testWidgets('labels the quantity sum "units", not "items"', (tester) async {
+      // 3 lines, 12 pieces — so "12" can never be mistaken for a line count.
+      final receiving = _completed(
+        id: 'r1',
+        completedAt: DateTime(2026, 8, 5),
+        items: [
+          ReceivingItemEntity(
+            id: 'a',
+            sku: 'SKU-a',
+            name: 'Item a',
+            quantity: 5,
+            unit: 'pcs',
+            unitCost: 10,
+            costCode: 'AB',
+          ),
+          ReceivingItemEntity(
+            id: 'b',
+            sku: 'SKU-b',
+            name: 'Item b',
+            quantity: 4,
+            unit: 'pcs',
+            unitCost: 10,
+            costCode: 'AB',
+          ),
+          ReceivingItemEntity(
+            id: 'c',
+            sku: 'SKU-c',
+            name: 'Item c',
+            quantity: 3,
+            unit: 'pcs',
+            unitCost: 10,
+            costCode: 'AB',
+          ),
+        ],
+        totalQuantity: 12,
+      );
+      await _pump(tester, [receiving]);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('12 units'), findsOneWidget);
+      expect(find.textContaining('12 items'), findsNothing);
+    });
   });
 }

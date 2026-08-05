@@ -179,7 +179,7 @@ class ReceivingScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Status badge + item count + ₱ total (admin)
+          // Status badge + unit quantity + ₱ total (admin)
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -200,6 +200,9 @@ class ReceivingScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 3),
+              // Generic "units", not the line's real unit or poQuantityLabel:
+              // a receiving can span suppliers/units, and sibling web tables
+              // head this same sum as a plain column header.
               Text(
                 '${receiving.totalQuantity} units',
                 style: TextStyle(fontSize: 12, color: muted),
