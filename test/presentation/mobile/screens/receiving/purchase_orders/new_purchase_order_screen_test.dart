@@ -13,7 +13,7 @@ import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.d
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
 void main() {
-  ProductEntity product(String id, {String? supplier = 'Acme'}) =>
+  ProductEntity product(String id, {String? supplier = 'Acme', String unit = 'pcs'}) =>
       ProductEntity(
         id: id,
         sku: 'SKU-$id',
@@ -23,7 +23,7 @@ void main() {
         price: 80,
         quantity: 0,
         reorderLevel: 2,
-        unit: 'pcs',
+        unit: unit,
         supplierId: supplier == null ? null : 'sup-$supplier',
         supplierName: supplier,
         isActive: true,
@@ -109,6 +109,27 @@ void main() {
     expect(find.text('4'), findsOneWidget);
     // No supplier headers in status view.
     expect(find.text('Acme'), findsNothing);
+  });
+
+  testWidgets('footer shows the shared unit when checked lines agree',
+      (tester) async {
+    await pump(tester, suggestions: [
+      suggestion(product('p1', unit: 'set'), 5),
+      suggestion(product('p2', unit: 'set', supplier: null), 7),
+    ]);
+    expect(find.textContaining('12 set'), findsOneWidget);
+    expect(find.textContaining('12 pcs'), findsNothing);
+  });
+
+  testWidgets('footer shows a bare count when checked lines disagree on unit',
+      (tester) async {
+    await pump(tester, suggestions: [
+      suggestion(product('p1', unit: 'set'), 5),
+      suggestion(product('p2', unit: 'pcs', supplier: null), 7),
+    ]);
+    expect(find.textContaining('12 pcs'), findsNothing);
+    expect(find.textContaining('12 set'), findsNothing);
+    expect(find.textContaining('checked · 12 ·'), findsOneWidget);
   });
 
   testWidgets('supplier toggle shows supplier groups', (tester) async {
