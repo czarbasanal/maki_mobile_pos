@@ -2,14 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/domain/entities/purchase_order_entity.dart';
 
 void main() {
-  PurchaseOrderItemEntity item({String id = 'p1', int qty = 2, double cost = 50}) =>
+  PurchaseOrderItemEntity item({String id = 'p1', int qty = 2, double cost = 50, String unit = 'pcs'}) =>
       PurchaseOrderItemEntity(
         id: id,
         productId: id,
         sku: 'SKU-$id',
         name: 'Item $id',
         quantity: qty,
-        unit: 'pcs',
+        unit: unit,
         unitCost: cost,
         costCode: 'AB',
       );
@@ -56,5 +56,66 @@ void main() {
     expect(cleared.receivingId, isNull);
     expect(cleared.orderedAt, isNull);
     expect(cleared.referenceNumber, 'PO-20260703-001');
+  });
+
+  group('sharedUnitOf', () {
+    test('returns null for no units at all', () {
+      expect(sharedUnitOf(const <String>[]), isNull);
+    });
+
+    test('returns the only unit when there is one', () {
+      expect(sharedUnitOf(const ['set']), 'set');
+    });
+
+    test('returns the shared unit when every entry agrees', () {
+      expect(sharedUnitOf(const ['set', 'set', 'set']), 'set');
+    });
+
+    test('returns null when entries disagree', () {
+      expect(sharedUnitOf(const ['pcs', 'set']), isNull);
+    });
+
+    test('returns null when a later entry disagrees', () {
+      expect(sharedUnitOf(const ['set', 'set', 'box']), isNull);
+    });
+
+    test('trims surrounding whitespace before comparing', () {
+      expect(sharedUnitOf(const ['set', ' set ']), 'set');
+    });
+
+    test('returns null when any entry is blank — an unknown unit cannot agree', () {
+      expect(sharedUnitOf(const ['set', '']), isNull);
+      expect(sharedUnitOf(const ['   ']), isNull);
+    });
+  });
+
+  group('poQuantityLabel', () {
+    test('appends the unit when there is one', () {
+      expect(poQuantityLabel(12, 'set'), '12 set');
+    });
+
+    test('renders a bare count when there is no shared unit', () {
+      expect(poQuantityLabel(12, null), '12');
+    });
+
+    test('leaves no trailing space on the bare form', () {
+      expect(poQuantityLabel(12, null).endsWith(' '), isFalse);
+    });
+  });
+
+  group('PurchaseOrderItemsTotals.sharedUnit', () {
+    test('returns the unit when every item agrees', () {
+      final items = [item(unit: 'set'), item(id: 'p2', unit: 'set')];
+      expect(items.sharedUnit, 'set');
+    });
+
+    test('returns null when items disagree', () {
+      final items = [item(unit: 'pcs'), item(id: 'p2', unit: 'set')];
+      expect(items.sharedUnit, isNull);
+    });
+
+    test('returns null for an empty list', () {
+      expect(<PurchaseOrderItemEntity>[].sharedUnit, isNull);
+    });
   });
 }

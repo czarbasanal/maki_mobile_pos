@@ -191,10 +191,43 @@ class PurchaseOrderItemEntity extends Equatable {
       [id, productId, sku, name, quantity, unit, unitCost, costCode];
 }
 
+/// The unit every entry shares, or null when they differ, the iterable is
+/// empty, or any entry is blank.
+///
+/// A purchase order's total quantity is a bare sum across its lines, so it
+/// only has a meaningful unit when every line agrees. A blank entry counts as
+/// disagreement: an unknown unit cannot be claimed to match anything.
+String? sharedUnitOf(Iterable<String> units) {
+  String? shared;
+  for (final raw in units) {
+    final unit = raw.trim();
+    if (unit.isEmpty) return null;
+    if (shared == null) {
+      shared = unit;
+    } else if (shared != unit) {
+      return null;
+    }
+  }
+  return shared;
+}
+
+/// Renders a PO total with its unit when the lines agree, bare when they
+/// don't. One definition so the four display sites can't drift apart.
+///
+/// Deliberately NOT routed through `sellingOptionRateSuffix`: that maps
+/// `pcs` -> `pc` for a per-piece RATE, while this is a QUANTITY and wants
+/// the plural. "12 pcs", never "12 pc".
+String poQuantityLabel(int total, String? unit) =>
+    unit == null ? '$total' : '$total $unit';
+
 /// The one summation rule for PO item lists — used by [recalculateTotals]
 /// and every UI surface that previews totals (detail footer, staged edits),
 /// so persisted and displayed totals can never drift apart.
 extension PurchaseOrderItemsTotals on List<PurchaseOrderItemEntity> {
   int get totalQuantity => fold(0, (sum, item) => sum + item.quantity);
   double get totalCost => fold(0.0, (sum, item) => sum + item.totalCost);
+
+  /// The unit shared by every line, or null when they differ. See
+  /// [sharedUnitOf].
+  String? get sharedUnit => sharedUnitOf(map((item) => item.unit));
 }
