@@ -49,6 +49,15 @@ void main() {
         currentWeekReceivingsProvider
             .overrideWith((ref) => AsyncValue.data([_receiving()])),
         currentUserProvider.overrideWith((ref) => Stream.value(_admin)),
+        // ReceivingScreen also composes ReceivingSummaryCardsRow, which watches
+        // receivingCountsProvider and monthToDateReceivingTotalProvider — both
+        // derive from the real recentReceivingsProvider, which reaches
+        // Firestore. Without this override that chain throws (no Firebase app
+        // in tests); the row swallows it into an error banner, so the failure
+        // is silent rather than loud. Overriding recentReceivingsProvider here
+        // isolates it deliberately instead of relying on that swallow.
+        recentReceivingsProvider
+            .overrideWith((ref) => Stream.value([_receiving()])),
       ],
       child: const MaterialApp(home: ReceivingScreen()),
     ));
