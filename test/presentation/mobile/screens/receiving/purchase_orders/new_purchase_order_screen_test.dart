@@ -132,6 +132,18 @@ void main() {
     expect(find.textContaining('checked · 12 ·'), findsOneWidget);
   });
 
+  testWidgets(
+      'footer reads a bare 0 on first paint when nothing is checked '
+      '(reorder result with only out-of-stock/low-stock rows)',
+      (tester) async {
+    // Out-of-stock/low-stock rows default unchecked (_LineSource.defaultChecked).
+    // With no recommended suggestions to default-check, the footer opens at
+    // zero checked — this pins that the empty case still routes through
+    // sharedUnitOf/poQuantityLabel rather than a hardcoded 'pcs'.
+    await pump(tester, suggestions: const [], outOfStock: [product('p1')]);
+    expect(find.textContaining('checked · 0 ·'), findsOneWidget);
+  });
+
   testWidgets('supplier toggle shows supplier groups', (tester) async {
     await pump(tester, suggestions: [
       suggestion(product('p1'), 9),

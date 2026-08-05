@@ -61,7 +61,9 @@ String? sharedUnitOf(Iterable<String> units);
 ```
 
 Empty input returns `null`. A single unit returns that unit. Two or more
-distinct units return `null`.
+distinct units return `null`. Each unit is trimmed before comparison, and a
+blank entry (empty or whitespace-only, after trimming) counts as disagreement
+and also returns `null` — an unknown unit cannot be claimed to match anything.
 
 ### The extension getter
 

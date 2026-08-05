@@ -81,6 +81,10 @@ void main() {
     expect(find.text('Brake Pad'), findsOneWidget);
     expect(find.text('Mark ordered'), findsOneWidget);
     expect(find.text('Receive delivery'), findsNothing);
+    // Pins the pcs-only spacing at both sites (section-header trailing and
+    // footer total) — a stray double space or dropped separator would pass
+    // the `sharedUnit`-agreement tests above but fail here.
+    expect(find.textContaining('1 item · 4 pcs'), findsNWidgets(2));
   });
 
   testWidgets('shows the shared unit when every line agrees', (tester) async {

@@ -293,7 +293,7 @@ class PurchaseOrderDetailScreenState
               )
             else
               Text(
-                '${item.quantity} ${item.unit}',
+                poQuantityLabel(item.quantity, item.unit),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
