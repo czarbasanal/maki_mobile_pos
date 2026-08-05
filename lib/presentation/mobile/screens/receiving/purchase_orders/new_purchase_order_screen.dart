@@ -363,7 +363,7 @@ class NewPurchaseOrderScreenState
   Widget _footer(List<_Line> lines) {
     final theme = Theme.of(context);
     final checked = lines.where((l) => l.checked).toList();
-    final pcs = checked.fold<int>(0, (sum, l) => sum + l.qty);
+    final totalQty = checked.fold<int>(0, (sum, l) => sum + l.qty);
     final total = checked.fold<double>(0, (sum, l) => sum + l.lineCost);
     final groupCount = checked.map((l) => l.product.supplierId).toSet().length;
     final label = checked.isEmpty
@@ -381,7 +381,8 @@ class NewPurchaseOrderScreenState
                   TextSpan(
                     text: '${checked.length} '
                         '${checked.length == 1 ? 'item' : 'items'} '
-                        'checked · $pcs pcs',
+                        'checked · '
+                        '${poQuantityLabel(totalQty, sharedUnitOf(checked.map((l) => l.product.unit)))}',
                     style: TextStyle(
                       fontSize: 12.5,
                       color: theme.colorScheme.onSurfaceVariant,

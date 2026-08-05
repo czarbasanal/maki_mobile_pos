@@ -13,7 +13,7 @@ import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.d
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
 void main() {
-  ProductEntity product(String id, {String? supplier = 'Acme'}) =>
+  ProductEntity product(String id, {String? supplier = 'Acme', String unit = 'pcs'}) =>
       ProductEntity(
         id: id,
         sku: 'SKU-$id',
@@ -23,7 +23,7 @@ void main() {
         price: 80,
         quantity: 0,
         reorderLevel: 2,
-        unit: 'pcs',
+        unit: unit,
         supplierId: supplier == null ? null : 'sup-$supplier',
         supplierName: supplier,
         isActive: true,
@@ -109,6 +109,39 @@ void main() {
     expect(find.text('4'), findsOneWidget);
     // No supplier headers in status view.
     expect(find.text('Acme'), findsNothing);
+  });
+
+  testWidgets('footer shows the shared unit when checked lines agree',
+      (tester) async {
+    await pump(tester, suggestions: [
+      suggestion(product('p1', unit: 'set'), 5),
+      suggestion(product('p2', unit: 'set', supplier: null), 7),
+    ]);
+    expect(find.textContaining('12 set'), findsOneWidget);
+    expect(find.textContaining('12 pcs'), findsNothing);
+  });
+
+  testWidgets('footer shows a bare count when checked lines disagree on unit',
+      (tester) async {
+    await pump(tester, suggestions: [
+      suggestion(product('p1', unit: 'set'), 5),
+      suggestion(product('p2', unit: 'pcs', supplier: null), 7),
+    ]);
+    expect(find.textContaining('12 pcs'), findsNothing);
+    expect(find.textContaining('12 set'), findsNothing);
+    expect(find.textContaining('checked · 12 ·'), findsOneWidget);
+  });
+
+  testWidgets(
+      'footer reads a bare 0 on first paint when nothing is checked '
+      '(reorder result with only out-of-stock/low-stock rows)',
+      (tester) async {
+    // Out-of-stock/low-stock rows default unchecked (_LineSource.defaultChecked).
+    // With no recommended suggestions to default-check, the footer opens at
+    // zero checked — this pins that the empty case still routes through
+    // sharedUnitOf/poQuantityLabel rather than a hardcoded 'pcs'.
+    await pump(tester, suggestions: const [], outOfStock: [product('p1')]);
+    expect(find.textContaining('checked · 0 ·'), findsOneWidget);
   });
 
   testWidgets('supplier toggle shows supplier groups', (tester) async {

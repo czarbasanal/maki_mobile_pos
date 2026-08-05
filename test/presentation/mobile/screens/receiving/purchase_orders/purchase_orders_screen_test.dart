@@ -8,12 +8,9 @@ import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.d
 
 void main() {
   PurchaseOrderEntity po(String ref, PurchaseOrderStatus status,
-          {double totalCost = 0}) =>
-      PurchaseOrderEntity(
-        id: ref,
-        referenceNumber: ref,
-        supplierName: 'Acme',
-        items: const [
+      {double totalCost = 0, List<PurchaseOrderItemEntity>? items}) {
+    final lineItems = items ??
+        const [
           PurchaseOrderItemEntity(
             id: 'p1',
             productId: 'p1',
@@ -24,14 +21,20 @@ void main() {
             unitCost: 55,
             costCode: 'NBF',
           ),
-        ],
-        totalCost: totalCost,
-        totalQuantity: 3,
-        status: status,
-        createdAt: DateTime(2026, 7, 3, 9, 41),
-        createdBy: 'u1',
-        createdByName: 'Admin',
-      );
+        ];
+    return PurchaseOrderEntity(
+      id: ref,
+      referenceNumber: ref,
+      supplierName: 'Acme',
+      items: lineItems,
+      totalCost: totalCost,
+      totalQuantity: lineItems.totalQuantity,
+      status: status,
+      createdAt: DateTime(2026, 7, 3, 9, 41),
+      createdBy: 'u1',
+      createdByName: 'Admin',
+    );
+  }
 
   Future<void> pump(WidgetTester tester, List<PurchaseOrderEntity> pos) async {
     await tester.pumpWidget(ProviderScope(
@@ -59,6 +62,65 @@ void main() {
     // Friendly dates + meta line.
     expect(find.text('Jul 3, 9:41 AM'), findsNWidgets(2));
     expect(find.text('1 item · 3 pcs · by Admin'), findsNWidgets(2));
+  });
+
+  testWidgets('shows the shared unit when every line agrees', (tester) async {
+    await pump(tester, [
+      po('PO-20260703-001', PurchaseOrderStatus.draft, items: const [
+        PurchaseOrderItemEntity(
+          id: 'p1',
+          productId: 'p1',
+          sku: 'SKU-1',
+          name: 'Item 1',
+          quantity: 5,
+          unit: 'set',
+          unitCost: 55,
+          costCode: 'NBF',
+        ),
+        PurchaseOrderItemEntity(
+          id: 'p2',
+          productId: 'p2',
+          sku: 'SKU-2',
+          name: 'Item 2',
+          quantity: 7,
+          unit: 'set',
+          unitCost: 55,
+          costCode: 'NBF',
+        ),
+      ]),
+    ]);
+    expect(find.textContaining('· 12 set · by'), findsOneWidget);
+    expect(find.textContaining('12 pcs'), findsNothing);
+  });
+
+  testWidgets('shows a bare count when lines disagree', (tester) async {
+    await pump(tester, [
+      po('PO-20260703-001', PurchaseOrderStatus.draft, items: const [
+        PurchaseOrderItemEntity(
+          id: 'p1',
+          productId: 'p1',
+          sku: 'SKU-1',
+          name: 'Item 1',
+          quantity: 5,
+          unit: 'set',
+          unitCost: 55,
+          costCode: 'NBF',
+        ),
+        PurchaseOrderItemEntity(
+          id: 'p2',
+          productId: 'p2',
+          sku: 'SKU-2',
+          name: 'Item 2',
+          quantity: 7,
+          unit: 'pcs',
+          unitCost: 55,
+          costCode: 'NBF',
+        ),
+      ]),
+    ]);
+    expect(find.textContaining('12 pcs'), findsNothing);
+    expect(find.textContaining('12 set'), findsNothing);
+    expect(find.textContaining('· 12 · by'), findsOneWidget);
   });
 
   testWidgets('status pill filters the list', (tester) async {

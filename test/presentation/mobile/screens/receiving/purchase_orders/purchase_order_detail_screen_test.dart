@@ -28,26 +28,30 @@ void main() {
         createdAt: DateTime(2026, 1, 1),
       );
 
-  Future<PurchaseOrderEntity> seed(
-      {PurchaseOrderStatus status = PurchaseOrderStatus.draft}) async {
+  Future<PurchaseOrderEntity> seed({
+    PurchaseOrderStatus status = PurchaseOrderStatus.draft,
+    List<PurchaseOrderItemEntity>? items,
+  }) async {
+    final lineItems = items ??
+        const [
+          PurchaseOrderItemEntity(
+            id: 'p1',
+            productId: 'p1',
+            sku: 'SKU-1',
+            name: 'Brake Pad',
+            quantity: 4,
+            unit: 'pcs',
+            unitCost: 55,
+            costCode: 'NBF',
+          ),
+        ];
     final po = await repo.createPurchaseOrder(PurchaseOrderEntity(
       id: '',
       referenceNumber: 'PO-20260703-001',
       supplierName: 'Acme',
-      items: const [
-        PurchaseOrderItemEntity(
-          id: 'p1',
-          productId: 'p1',
-          sku: 'SKU-1',
-          name: 'Brake Pad',
-          quantity: 4,
-          unit: 'pcs',
-          unitCost: 55,
-          costCode: 'NBF',
-        ),
-      ],
-      totalCost: 220,
-      totalQuantity: 4,
+      items: lineItems,
+      totalCost: lineItems.totalCost,
+      totalQuantity: lineItems.totalQuantity,
       status: PurchaseOrderStatus.draft,
       createdAt: DateTime(2026, 7, 3),
       createdBy: 'u1',
@@ -77,6 +81,69 @@ void main() {
     expect(find.text('Brake Pad'), findsOneWidget);
     expect(find.text('Mark ordered'), findsOneWidget);
     expect(find.text('Receive delivery'), findsNothing);
+    // Pins the pcs-only spacing at both sites (section-header trailing and
+    // footer total) — a stray double space or dropped separator would pass
+    // the `sharedUnit`-agreement tests above but fail here.
+    expect(find.textContaining('1 item · 4 pcs'), findsNWidgets(2));
+  });
+
+  testWidgets('shows the shared unit when every line agrees', (tester) async {
+    final po = await seed(items: const [
+      PurchaseOrderItemEntity(
+        id: 'p1',
+        productId: 'p1',
+        sku: 'SKU-1',
+        name: 'Item 1',
+        quantity: 5,
+        unit: 'set',
+        unitCost: 55,
+        costCode: 'NBF',
+      ),
+      PurchaseOrderItemEntity(
+        id: 'p2',
+        productId: 'p2',
+        sku: 'SKU-2',
+        name: 'Item 2',
+        quantity: 7,
+        unit: 'set',
+        unitCost: 55,
+        costCode: 'NBF',
+      ),
+    ]);
+    await pump(tester, po.id, UserRole.staff);
+    // Both the section-header trailing and the footer total render the
+    // shared unit — this exercises both `:123` and `:354`.
+    expect(find.textContaining('12 set'), findsNWidgets(2));
+    expect(find.textContaining('12 pcs'), findsNothing);
+  });
+
+  testWidgets('shows a bare count when lines disagree', (tester) async {
+    final po = await seed(items: const [
+      PurchaseOrderItemEntity(
+        id: 'p1',
+        productId: 'p1',
+        sku: 'SKU-1',
+        name: 'Item 1',
+        quantity: 5,
+        unit: 'set',
+        unitCost: 55,
+        costCode: 'NBF',
+      ),
+      PurchaseOrderItemEntity(
+        id: 'p2',
+        productId: 'p2',
+        sku: 'SKU-2',
+        name: 'Item 2',
+        quantity: 7,
+        unit: 'pcs',
+        unitCost: 55,
+        costCode: 'NBF',
+      ),
+    ]);
+    await pump(tester, po.id, UserRole.staff);
+    expect(find.textContaining('12 pcs'), findsNothing);
+    expect(find.textContaining('12 set'), findsNothing);
+    expect(find.textContaining('· 12'), findsNWidgets(2));
   });
 
   testWidgets('Mark ordered transitions to ordered with Receive',

@@ -120,7 +120,7 @@ class PurchaseOrderDetailScreenState
                 label: 'Items',
                 trailing: '${items.length} '
                     '${items.length == 1 ? 'item' : 'items'} · '
-                    '$totalQuantity pcs',
+                    '${poQuantityLabel(totalQuantity, items.sharedUnit)}',
               ),
               for (final item in items) _itemRow(po, item),
             ],
@@ -293,7 +293,7 @@ class PurchaseOrderDetailScreenState
               )
             else
               Text(
-                '${item.quantity} ${item.unit}',
+                poQuantityLabel(item.quantity, item.unit),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -351,7 +351,7 @@ class PurchaseOrderDetailScreenState
                   TextSpan(
                     text: '(${items.length} '
                         '${items.length == 1 ? 'item' : 'items'} · '
-                        '$totalQuantity pcs)',
+                        '${poQuantityLabel(totalQuantity, items.sharedUnit)})',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,

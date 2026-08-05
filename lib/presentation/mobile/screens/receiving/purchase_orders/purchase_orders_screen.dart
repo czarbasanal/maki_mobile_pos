@@ -220,7 +220,8 @@ class _OrderCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   '$items ${items == 1 ? 'item' : 'items'} · '
-                  '${order.totalQuantity} pcs · by ${order.createdByName}',
+                  '${poQuantityLabel(order.totalQuantity, order.items.sharedUnit)}'
+                  ' · by ${order.createdByName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 12, color: secondary),
