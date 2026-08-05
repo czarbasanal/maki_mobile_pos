@@ -60,10 +60,19 @@ Read each screen's imports to find where those providers are declared before wri
 
 Create `test/presentation/mobile/screens/receiving/receiving_screen_test.dart`. The fixture builds a receiving of 3 lines totalling 12 — so the "12" cannot be mistaken for a line count:
 
-All three providers are `StreamProvider`s, so each override returns a stream:
-`currentWeekReceivingsProvider` and `recentReceivingsProvider` are
-`StreamProvider<List<ReceivingEntity>>`, and `currentUserProvider` is
-`StreamProvider<UserEntity?>`.
+The three providers are **not** all the same kind, so the overrides differ:
+
+| Provider | Type | Override |
+|---|---|---|
+| `recentReceivingsProvider` | `StreamProvider<List<ReceivingEntity>>` | `.overrideWith((ref) => Stream.value([...]))` |
+| `currentUserProvider` | `StreamProvider<UserEntity?>` | `.overrideWith((ref) => Stream.value(user))` |
+| `currentWeekReceivingsProvider` | plain `Provider<AsyncValue<List<ReceivingEntity>>>`, **derived** from `recentReceivingsProvider` | `.overrideWith((ref) => AsyncValue.data([...]))` |
+
+Read the declarations in `lib/presentation/providers/receiving_provider.dart`
+before writing the harness — the doc comment above `currentWeekReceivingsProvider`
+says it is derived rather than sourced from Firestore, which is why its type
+differs from its sibling's. Getting this wrong fails at compile time, not
+silently.
 
 ```dart
 import 'package:flutter/material.dart';
