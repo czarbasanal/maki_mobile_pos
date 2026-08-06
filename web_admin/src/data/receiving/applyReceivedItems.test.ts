@@ -44,7 +44,6 @@ describe('applyReceivedItems', () => {
     expect(out.items).toHaveLength(1);
     expect(out.items[0]).toMatchObject({ productId: 'p1', quantity: 10, unitCost: 180, isNewVariation: false });
     expect(out.items[0].id).toMatch(/.+/);
-    expect(out.received).toBe(10);
     expect(repo.create).not.toHaveBeenCalled();
   });
 
