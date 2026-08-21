@@ -249,7 +249,7 @@ export function ReceivingEntryPage() {
       {/* Footer */}
       <div className="flex items-center justify-between">
         <div className="text-bodySmall text-light-text-secondary">
-          Total <span className="tabular-nums text-light-text">{entry.totals.quantity}</span> items ·{' '}
+          Total <span className="tabular-nums text-light-text">{entry.totals.quantity}</span> units ·{' '}
           <span className="tabular-nums font-semibold text-light-text">{formatMoney(entry.totals.cost)}</span>
         </div>
         <div className="flex gap-tk-sm">

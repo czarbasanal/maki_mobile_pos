@@ -194,8 +194,11 @@ class _ReceivingHistoryItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              // Generic "units", not the line's real unit or poQuantityLabel:
+              // a receiving can span suppliers/units, and sibling web tables
+              // head this same sum as a plain column header.
               Text(
-                '${receiving.totalQuantity} items',
+                '${receiving.totalQuantity} units',
                 style: TextStyle(fontSize: 12, color: muted),
               ),
               if (isAdmin)

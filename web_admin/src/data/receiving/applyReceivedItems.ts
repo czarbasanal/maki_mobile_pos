@@ -20,7 +20,6 @@ export interface ReceiveOutcome {
   increments: Map<string, number>;
   newProducts: number;
   variations: number;
-  received: number;
   failed: { ref: string | number; message: string }[];
 }
 
@@ -135,6 +134,5 @@ export async function applyReceivedItems(
     }
   }
 
-  const received = items.reduce((n, it) => n + it.quantity, 0);
-  return { items, increments, newProducts, variations, received, failed };
+  return { items, increments, newProducts, variations, failed };
 }

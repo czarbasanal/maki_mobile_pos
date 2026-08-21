@@ -10,13 +10,15 @@ ReceivingEntity _completed({
   required String id,
   required DateTime completedAt,
   String? supplierName,
+  List<ReceivingItemEntity> items = const [],
+  int totalQuantity = 1,
 }) {
   return ReceivingEntity(
     id: id,
     referenceNumber: id.toUpperCase(),
-    items: const [],
+    items: items,
     totalCost: 100,
-    totalQuantity: 1,
+    totalQuantity: totalQuantity,
     status: ReceivingStatus.completed,
     createdAt: completedAt,
     completedAt: completedAt,
@@ -139,6 +141,49 @@ void main() {
 
       expect(find.text('COMPLETED'), findsOneWidget);
       expect(find.text('DRAFT'), findsNothing);
+    });
+
+    testWidgets('labels the quantity sum "units", not "items"', (tester) async {
+      // 3 lines, 12 pieces — so "12" can never be mistaken for a line count.
+      final receiving = _completed(
+        id: 'r1',
+        completedAt: DateTime(2026, 8, 5),
+        items: [
+          ReceivingItemEntity(
+            id: 'a',
+            sku: 'SKU-a',
+            name: 'Item a',
+            quantity: 5,
+            unit: 'pcs',
+            unitCost: 10,
+            costCode: 'AB',
+          ),
+          ReceivingItemEntity(
+            id: 'b',
+            sku: 'SKU-b',
+            name: 'Item b',
+            quantity: 4,
+            unit: 'pcs',
+            unitCost: 10,
+            costCode: 'AB',
+          ),
+          ReceivingItemEntity(
+            id: 'c',
+            sku: 'SKU-c',
+            name: 'Item c',
+            quantity: 3,
+            unit: 'pcs',
+            unitCost: 10,
+            costCode: 'AB',
+          ),
+        ],
+        totalQuantity: 12,
+      );
+      await _pump(tester, [receiving]);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('12 units'), findsOneWidget);
+      expect(find.textContaining('12 items'), findsNothing);
     });
   });
 }
