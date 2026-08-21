@@ -281,3 +281,57 @@ export function useCreateProduct() {
     },
   });
 }
+
+export interface CreateVariationInput {
+  /** The product whose SKU the user's typed code collided with. */
+  existing: Product;
+  cost: number;
+  costCode: string;
+}
+
+/**
+ * Spawns a cost variation of an existing product from the New Product form.
+ *
+ * The variation inherits everything from `existing` and overrides only cost,
+ * cost code and the allocated `<base>-N` SKU — identical to a variation
+ * spawned by receiving, so the two are indistinguishable afterwards. Whatever
+ * else the user typed into the form is deliberately not carried over; the
+ * confirm dialog says so before this runs.
+ */
+export function useCreateVariation() {
+  const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<Product, Error, CreateVariationInput>({
+    mutationFn: async ({ existing, cost, costCode }) => {
+      if (!actor) throw new Error('Not signed in');
+      const actorName = actor.displayName.trim() || null;
+      const created = await repo.createVariation(existing, {
+        cost,
+        costCode,
+        actorId: actor.id,
+        actorName,
+      });
+      try {
+        await repo.recordPriceChange(created.id, {
+          price: created.price,
+          cost: created.cost,
+          changedBy: actor.id,
+          reason: 'Cost variation',
+        });
+      } catch {
+        // best-effort; a history write must never strand a created product
+      }
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.inventory,
+        action: `Created cost variation: ${created.name}`,
+        details: `SKU ${created.sku} • from ${existing.sku} • ₱${created.cost.toFixed(2)}`,
+        entityId: created.id,
+        entityType: 'product',
+      }));
+      qc.invalidateQueries({ queryKey: ['product', created.id] });
+      return created;
+    },
+  });
+}

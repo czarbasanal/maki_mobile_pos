@@ -35,6 +35,8 @@ import {
   composeAutoSku,
 } from '@/domain/products/sku';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
+import { nextVariationNumberFrom } from '@/domain/products/costVariation';
+import { allocateVariation } from '@/data/products/createVariation';
 import { buildProductUpdate, buildProductWrites, newProductId } from '@/data/products/productWrites';
 import { sellingOptionHistoryEvents } from '@/domain/products/sellingOptions';
 import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
@@ -121,9 +123,53 @@ export class FirestoreProductRepository implements ProductRepository {
     return (snap.data() as { productId?: string }).productId !== excludeId;
   }
 
+  /** Every product filed under `baseSku`. Shared so countSkuVariations and
+   *  nextVariationNumber can't drift apart on what "a variation" means. */
+  private variationsOf(baseSku: string) {
+    return query(this.col(), where('baseSku', '==', baseSku));
+  }
+
   async countSkuVariations(baseSku: string): Promise<number> {
-    const snap = await getDocs(query(this.col(), where('baseSku', '==', baseSku)));
+    const snap = await getDocs(this.variationsOf(baseSku));
     return snap.size;
+  }
+
+  /**
+   * The product a SKU's claim points at, resolved through the NORMALIZED claim
+   * key rather than the sku field.
+   *
+   * `getBySku` matches verbatim, so it would find nothing for `abc123` when the
+   * product is stored as `ABC123` — yet the create transaction collides on the
+   * normalized key and rejects that save as a duplicate. Only this lookup
+   * agrees with the error the caller is reacting to.
+   */
+  async findBySkuClaim(sku: string): Promise<Product | null> {
+    const claimSnap = await getDoc(
+      doc(this.db, FirestoreCollections.productSkus, normalizeSku(sku)),
+    );
+    if (!claimSnap.exists()) return null;
+    const productId = (claimSnap.data() as { productId?: string } | undefined)?.productId;
+    // A claim outliving its product would otherwise surface as a crash on the
+    // form; treat the dangling case as "nothing to vary".
+    if (!productId) return null;
+    return this.getById(productId);
+  }
+
+  /** Next free `<baseSku>-N`. Reads the structured `variationNumber` field —
+   *  see nextVariationNumberFrom for why this maxes rather than counts. */
+  async nextVariationNumber(baseSku: string): Promise<number> {
+    const snap = await getDocs(this.variationsOf(baseSku));
+    return nextVariationNumberFrom(snap.docs.map((d) => d.data().variationNumber));
+  }
+
+  async createVariation(
+    existing: Product,
+    opts: { cost: number; costCode: string; actorId: string; actorName: string | null },
+  ): Promise<Product> {
+    return allocateVariation(existing, opts, {
+      nextNumber: () => this.nextVariationNumber(existing.baseSku ?? existing.sku),
+      create: (input) => this.create(input, opts.actorId),
+    });
   }
 
   async updateProductWithClaims(

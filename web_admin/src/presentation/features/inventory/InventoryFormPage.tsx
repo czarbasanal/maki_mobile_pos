@@ -5,7 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useProduct } from '@/presentation/hooks/useProduct';
-import { useCreateProduct, useUpdateProduct } from '@/presentation/hooks/useProductMutations';
+import {
+  useCreateProduct,
+  useCreateVariation,
+  useUpdateProduct,
+} from '@/presentation/hooks/useProductMutations';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { useSuppliers } from '@/presentation/hooks/useSuppliers';
 import { useCostCode } from '@/presentation/hooks/useCostCode';
@@ -14,9 +18,16 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
+import { costsDiffer } from '@/domain/products/costVariation';
 import { composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
 import { validateSellingOptions } from '@/domain/products/sellingOptions';
-import { encodeCostCode, type Category, type SellingOption, type Supplier } from '@/domain/entities';
+import {
+  encodeCostCode,
+  type Category,
+  type Product,
+  type SellingOption,
+  type Supplier,
+} from '@/domain/entities';
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { SellingOptionsEditor } from './SellingOptionsEditor';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
@@ -76,6 +87,15 @@ export function InventoryFormPage() {
   const { data: target, isLoading, error } = useProduct(id);
   const update = useUpdateProduct();
   const create = useCreateProduct();
+  const createVariation = useCreateVariation();
+  /** Open when a typed SKU collided with a product carrying a different cost. */
+  const [variationDialog, setVariationDialog] = useState<{
+    open: boolean;
+    existing: Product | null;
+    cost: number;
+    costCode: string;
+    nextSku: string;
+  }>({ open: false, existing: null, cost: 0, costCode: '', nextSku: '' });
   const { data: productCats } = useActiveCategories(CategoryKind.product);
   const { data: units } = useActiveCategories(CategoryKind.unit);
   const { data: suppliers } = useSuppliers();
@@ -248,6 +268,52 @@ export function InventoryFormPage() {
    *  auto-generate is on AND the SKU currently in `values` still matches
    *  that category's coded pattern — a manual edit after the last peek
    *  silently falls back to undefined, same as an uncoded category. */
+  /**
+   * Decides whether a rejected duplicate SKU is really a cost variation.
+   *
+   * Resolves the product holding that SKU's claim (via the NORMALIZED key, so
+   * a case-different entry can't be missed) and opens the confirm dialog when
+   * its cost differs from the one just entered. Returns true when it took
+   * over, leaving the caller to show the plain duplicate error otherwise.
+   */
+  const offerVariation = async (
+    sku: string,
+    cost: number,
+    costCode: string,
+  ): Promise<boolean> => {
+    let existing: Product | null = null;
+    try {
+      existing = await repo.findBySkuClaim(sku);
+    } catch {
+      // A failed lookup must not swallow the duplicate error the user needs.
+      return false;
+    }
+    if (!existing || !costsDiffer(existing.cost, cost)) return false;
+
+    const base = existing.baseSku ?? existing.sku;
+    let nextSku = `${base}-1`;
+    try {
+      nextSku = `${base}-${await repo.nextVariationNumber(base)}`;
+    } catch {
+      // Preview only — createVariation allocates the real number itself, and
+      // re-allocates if a concurrent writer takes it first.
+    }
+    // Clear the failed create so its "SKU already exists" banner stops
+    // contradicting the dialog now offering a way forward.
+    create.reset();
+    setVariationDialog({ open: true, existing, cost, costCode, nextSku });
+    return true;
+  };
+
+  /** Declining the offer: the save still didn't happen, so put the reason back. */
+  const declineVariation = () => {
+    setVariationDialog((v) => ({ ...v, open: false }));
+    setError('sku', {
+      type: 'duplicate',
+      message: 'A product with this SKU already exists',
+    });
+  };
+
   const autoSkuCategoryCodeForSubmit = (values: FormValues): string | undefined => {
     if (!autoSku) return undefined;
     const code = categoryEntityForName(values.category ?? '')?.code;
@@ -417,8 +483,15 @@ export function InventoryFormPage() {
       navigate(RoutePaths.inventory);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Save failed';
-      if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
-      else if (msg.toLowerCase().includes('barcode already exists')) setBarcodeError(msg);
+      if (msg.toLowerCase().includes('sku already exists')) {
+        // A SKU taken at a DIFFERENT cost is a cost variation waiting to
+        // happen, not a typo — offer to spawn `<base>-N` rather than just
+        // blocking the save. An identical cost stays a plain duplicate.
+        if (await offerVariation(values.sku.trim(), costNum, encodeCostCode(costCodeMapping, costNum))) {
+          return;
+        }
+        setError('sku', { type: 'duplicate', message: msg });
+      } else if (msg.toLowerCase().includes('barcode already exists')) setBarcodeError(msg);
     }
   };
 
@@ -692,6 +765,64 @@ export function InventoryFormPage() {
               }}
               className="inline-flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60">
               {submitting ? <Spinner className="h-3.5 w-3.5" /> : null} Change SKU
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={variationDialog.open}
+        onClose={() => {
+          if (!createVariation.isPending) declineVariation();
+        }}
+        title="SKU already exists"
+        dismissable={!createVariation.isPending}
+      >
+        <div className="space-y-tk-md">
+          <p className="text-bodySmall text-light-text">
+            “{variationDialog.existing?.name}” is on file at a cost of ₱
+            {variationDialog.existing?.cost.toFixed(2)}.
+          </p>
+          <p className="text-bodySmall text-light-text">
+            Create variation{' '}
+            <span className="font-mono">{variationDialog.nextSku}</span> at ₱
+            {variationDialog.cost.toFixed(2)}?
+          </p>
+          <p className="text-bodySmall text-light-text-secondary">
+            It copies the existing product’s name, price and unit, and starts at 0 stock with
+            no barcodes. The name, price, quantity and barcodes you typed will not be saved.
+          </p>
+          <div className="flex justify-end gap-tk-sm pt-tk-sm">
+            <button
+              type="button"
+              disabled={createVariation.isPending}
+              onClick={declineVariation}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={createVariation.isPending}
+              onClick={async () => {
+                const { existing, cost, costCode } = variationDialog;
+                if (!existing) return;
+                try {
+                  await createVariation.mutateAsync({ existing, cost, costCode });
+                  setVariationDialog((v) => ({ ...v, open: false }));
+                  navigate(RoutePaths.inventory);
+                } catch (e) {
+                  setVariationDialog((v) => ({ ...v, open: false }));
+                  setError('sku', {
+                    type: 'duplicate',
+                    message: e instanceof Error ? e.message : 'Could not create the variation',
+                  });
+                }
+              }}
+              className="inline-flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
+            >
+              {createVariation.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Create
+              variation
             </button>
           </div>
         </div>

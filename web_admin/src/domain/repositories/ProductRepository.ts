@@ -74,6 +74,18 @@ export interface ProductRepository {
   listPriceChangesInRange(start: Date, end: Date, limit?: number): Promise<PriceChangeEntry[]>;
   skuExists(sku: string, excludeId?: string): Promise<boolean>;
   countSkuVariations(baseSku: string): Promise<number>;
+  /** The product holding this SKU's claim, matched on the NORMALIZED key so it
+   *  agrees with the duplicate error the create transaction throws. */
+  findBySkuClaim(sku: string): Promise<Product | null>;
+  /** Next free `<baseSku>-N`, from the structured `variationNumber` field. */
+  nextVariationNumber(baseSku: string): Promise<number>;
+  /** Spawns a cost variation of `existing` — copies it, overrides cost/costCode
+   *  and the allocated SKU, starts at zero stock with no barcodes. Retries when
+   *  a concurrent writer claims the number first. */
+  createVariation(
+    existing: Product,
+    opts: { cost: number; costCode: string; actorId: string; actorName: string | null },
+  ): Promise<Product>;
   updateProductWithClaims(
     id: string,
     input: ProductUpdateInput,
