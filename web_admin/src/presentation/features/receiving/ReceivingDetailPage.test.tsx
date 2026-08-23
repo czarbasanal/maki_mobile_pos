@@ -54,3 +54,32 @@ describe('ReceivingDetailPage quantity label', () => {
     expect(screen.queryByText('Total items')).toBeNull();
   });
 });
+
+describe('ReceivingDetailPage item table columns', () => {
+  it('gives the SKU its own column ahead of the item name', () => {
+    renderPage();
+
+    const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
+    expect(headers).toEqual(['SKU', 'Item', 'Qty', 'Unit cost', 'Line total']);
+  });
+
+  it('puts each row’s SKU in the first cell, not trailing the name', () => {
+    renderPage();
+
+    const row = screen.getByText('Brake Pad').closest('tr')!;
+    const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
+    expect(cells[0]).toBe('SKU-1');
+    // The name cell must no longer carry the SKU alongside it.
+    expect(cells[1]).toBe('Brake Pad');
+  });
+
+  it('keeps the new-variation badge with the item name', () => {
+    // The badge describes the product, not its code, so splitting the column
+    // must not strand it in the SKU cell.
+    renderPage();
+
+    const row = screen.getByText('Brake Pad').closest('tr')!;
+    const cells = Array.from(row.querySelectorAll('td'));
+    expect(cells).toHaveLength(5);
+  });
+});

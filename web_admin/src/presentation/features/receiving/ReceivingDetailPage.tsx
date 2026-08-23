@@ -73,6 +73,7 @@ export function ReceivingDetailPage() {
         <table className="w-full text-bodySmall">
           <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
             <tr>
+              <th className="px-tk-md py-tk-sm text-left font-medium">SKU</th>
               <th className="px-tk-md py-tk-sm text-left font-medium">Item</th>
               <th className="px-tk-md py-tk-sm text-right font-medium">Qty</th>
               <th className="px-tk-md py-tk-sm text-right font-medium">Unit cost</th>
@@ -84,9 +85,13 @@ export function ReceivingDetailPage() {
               // Legacy/web-written items can have an empty id; fall back to the
               // (stable, non-reordering) array index so keys stay unique.
               <tr key={it.id || index}>
+                <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">
+                  {it.sku}
+                </td>
+                {/* The new-variation badge describes the product, so it stays
+                    with the name rather than the code. */}
                 <td className="px-tk-md py-tk-sm">
                   <span className="font-medium text-light-text">{it.name}</span>
-                  <span className="ml-tk-sm text-light-text-hint">{it.sku}</span>
                   {it.isNewVariation ? (
                     <span className="ml-tk-sm rounded-full bg-info-light px-tk-sm py-[1px] text-[10px] font-semibold uppercase text-info-dark">
                       New variation
