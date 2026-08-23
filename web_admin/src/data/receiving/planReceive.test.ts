@@ -34,15 +34,18 @@ describe('planReceive', () => {
     expect(plan.received).toBe(1);
   });
 
-  it('new → a planned create + line item; auto-generates SKU when asked', () => {
+  it('new → a planned create + line item; auto rows keep placeholder + code', () => {
     const plan = planReceive(
-      [{ ref: 1, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1, autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [], }],
+      [{ ref: 1, kind: 'new', sku: '00090001', autoGenerateSku: true, name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1, autoSkuCategoryCode: '0009', barcodes: [], notes: null, sellingOptions: [], }],
       ctx(), counter(),
     );
     expect(plan.creates).toHaveLength(1);
     expect(plan.newProducts).toBe(1);
     expect(plan.creates[0].productId).toBe('prod-1');
-    expect(plan.creates[0].input.sku).not.toBe('GENERATE');
+    // Placeholder survives to the create; executeReceivePlan's claim-scan
+    // allocates the real sequence under the code.
+    expect(plan.creates[0].input.sku).toBe('00090001');
+    expect(plan.creates[0].autoSkuCategoryCode).toBe('0009');
     expect(plan.creates[0].input.quantity).toBe(3);
     expect(plan.creates[0].priceHistory.reason).toBe('Initial price');
     expect(plan.items[0]).toMatchObject({ productId: 'prod-1', name: 'Squid', isNewVariation: false, newProductId: null });
@@ -117,12 +120,10 @@ describe('planReceive — new products from the receiving modal', () => {
     expect(plan.creates[0].autoSkuCategoryCode).toBe('0007');
   });
 
-  it('still name-generates for legacy auto rows with no category code (CSV)', () => {
-    const plan = planReceive(
-      [newItem({ sku: 'GENERATE', autoSkuCategoryCode: null })], ctx(), counter(),
-    );
-    expect(plan.creates[0].input.sku).not.toBe('GENERATE');
-    expect(plan.creates[0].autoSkuCategoryCode).toBeNull();
+  it('an auto row with no category code throws — the name generator is gone', () => {
+    expect(() =>
+      planReceive([newItem({ sku: 'GENERATE', autoSkuCategoryCode: null })], ctx(), counter()),
+    ).toThrow(/no code|category/i);
   });
 
   it('passes barcodes, notes and selling options onto the planned product', () => {

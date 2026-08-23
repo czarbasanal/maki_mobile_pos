@@ -47,18 +47,18 @@ describe('applyReceivedItems', () => {
     expect(repo.create).not.toHaveBeenCalled();
   });
 
-  it('new → creates a product and emits an item; auto-generates SKU when asked', async () => {
+  it('new → creates a product and emits an item; auto rows go through the code', async () => {
     const items: ReceivableItem[] = [{
-      ref: 1, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid',
+      ref: 1, kind: 'new', sku: '00090001', autoGenerateSku: true, name: 'Squid',
       category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1,
-      autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
+      autoSkuCategoryCode: '0009', barcodes: [], notes: null, sellingOptions: [],
     }];
     const repo = fakeRepo();
     const out = await applyReceivedItems(items, repo, ctx());
     expect(repo.create).toHaveBeenCalledTimes(1);
     expect(out.newProducts).toBe(1);
     expect(out.items[0]).toMatchObject({ name: 'Squid', quantity: 3, unitCost: 90, isNewVariation: false, newProductId: null });
-    expect(out.items[0].sku).not.toBe('GENERATE'); // auto-generated
+    expect(out.items[0].sku).toBe('00090001');
   });
 
   it('mismatch → the variation inherits the base product’s image and selling options', async () => {
@@ -159,3 +159,35 @@ describe('applyReceivedItems', () => {
     expect(out.failed).toEqual([{ ref: 9, message: 'boom' }]);
   });
 });
+
+describe('applyReceivedItems — category-driven auto-SKU', () => {
+  it('hands the category code to create() so its transaction allocates the SKU', async () => {
+    const items: ReceivableItem[] = [{
+      ref: 1, kind: 'new', sku: '00070001', autoGenerateSku: true, name: 'Brake shoe',
+      category: 'Brakes', unit: 'set', cost: 90, price: 130, quantity: 2, reorderLevel: 1,
+      autoSkuCategoryCode: '0007', barcodes: [], notes: null, sellingOptions: [],
+    }];
+    const repo = fakeRepo();
+    const out = await applyReceivedItems(items, repo, ctx());
+    expect(out.failed).toHaveLength(0);
+    const call = (repo.create as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[0].sku).toBe('00070001');
+    expect(call[2]).toBe('0007');
+  });
+
+  it('an auto row with NO code fails its row instead of minting a name-based SKU', async () => {
+    // Classification rejects these before they get here; this is the
+    // defensive backstop, and the retired generator must never run.
+    const items: ReceivableItem[] = [{
+      ref: 9, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid',
+      category: null, unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1,
+      autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
+    }];
+    const repo = fakeRepo();
+    const out = await applyReceivedItems(items, repo, ctx());
+    expect(out.failed).toHaveLength(1);
+    expect(out.failed[0].message).toMatch(/no code|category/i);
+    expect(repo.create).not.toHaveBeenCalled();
+  });
+});
+

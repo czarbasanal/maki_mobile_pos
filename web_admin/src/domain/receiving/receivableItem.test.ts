@@ -33,35 +33,63 @@ function row(
 describe('classifiedToReceivable', () => {
   it('maps a match to {kind:match, product, quantity}', () => {
     const p = product();
-    expect(classifiedToReceivable(row('match', { quantity: 10 }, p))).toEqual({
+    expect(classifiedToReceivable(row('match', { quantity: 10 }, p), new Map())).toEqual({
       ref: 1, kind: 'match', product: p, quantity: 10,
     });
   });
 
   it('maps a mismatch to {kind:mismatch, product, quantity, cost}', () => {
     const p = product();
-    expect(classifiedToReceivable(row('mismatch', { quantity: 4, cost: 200 }, p))).toEqual({
+    expect(classifiedToReceivable(row('mismatch', { quantity: 4, cost: 200 }, p), new Map())).toEqual({
       ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200,
     });
   });
 
-  it('maps a new row to {kind:new, ...row fields}', () => {
+  it('maps a new GENERATE row, resolving its category code and placeholder', () => {
     expect(
       classifiedToReceivable(
         row('new', {
           sku: 'GENERATE', autoGenerateSku: true, name: 'Squid', category: 'Fish',
           unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1, rowNumber: 7,
         }),
+        new Map([['Fish', '0009']]),
       ),
     ).toEqual({
-      ref: 7, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid',
+      // The literal 'GENERATE' never survives: the placeholder engages
+      // create()'s claim-scan, which allocates the real sequence.
+      ref: 7, kind: 'new', sku: '00090001', autoGenerateSku: true, name: 'Squid',
       category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1,
+      autoSkuCategoryCode: '0009',
       // CSV rows carry none of the modal-only fields.
-      autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
+      barcodes: [], notes: null, sellingOptions: [],
     });
   });
 
   it('returns null for error rows', () => {
-    expect(classifiedToReceivable(row('error'))).toBeNull();
+    expect(classifiedToReceivable(row('error'), new Map())).toBeNull();
   });
 });
+
+describe('classifiedToReceivable — auto rows carry the category code', () => {
+  it('resolves the code and emits a pattern-matching placeholder SKU', () => {
+    const rowIn = {
+      row: {
+        rowNumber: 3, sku: 'GENERATE', name: 'Brake shoe', category: 'Brakes',
+        unit: 'set', cost: 90, price: 130, quantity: 2, reorderLevel: 1,
+        autoGenerateSku: true, errors: [], warnings: [],
+      },
+      status: 'new' as const,
+      existing: null,
+    };
+    const out = classifiedToReceivable(rowIn, new Map([['Brakes', '0007']]));
+    expect(out).toMatchObject({
+      kind: 'new',
+      autoGenerateSku: true,
+      autoSkuCategoryCode: '0007',
+      // Placeholder only — create()'s transaction allocates the real
+      // sequence; it must match the auto pattern for the scan to engage.
+      sku: '00070001',
+    });
+  });
+});
+

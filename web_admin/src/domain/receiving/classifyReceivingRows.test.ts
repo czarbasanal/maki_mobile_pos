@@ -23,30 +23,72 @@ function product(over: Partial<Product> = {}): Product {
 
 describe('classifyReceivingRows', () => {
   it('match when SKU found and cost within 0.01', () => {
-    const [c] = classifyReceivingRows([row({ cost: 60.005 })], [product()]);
+    const [c] = classifyReceivingRows([row({ cost: 60.005 })], [product()], new Map());
     expect(c.status).toBe('match');
     expect(c.existing?.id).toBe('p1');
   });
 
   it('mismatch when SKU found but cost differs', () => {
-    const [c] = classifyReceivingRows([row({ cost: 75 })], [product()]);
+    const [c] = classifyReceivingRows([row({ cost: 75 })], [product()], new Map());
     expect(c.status).toBe('mismatch');
     expect(c.existing?.id).toBe('p1');
   });
 
   it('new when SKU not found', () => {
-    const [c] = classifyReceivingRows([row({ sku: 'NOPE' })], [product()]);
+    const [c] = classifyReceivingRows([row({ sku: 'NOPE' })], [product()], new Map());
     expect(c.status).toBe('new');
     expect(c.existing).toBeNull();
   });
 
   it('new when GENERATE, even if the literal collides', () => {
-    const [c] = classifyReceivingRows([row({ sku: 'GENERATE', autoGenerateSku: true })], [product({ sku: 'GENERATE' })]);
+    const [c] = classifyReceivingRows([row({ sku: 'GENERATE', autoGenerateSku: true })], [product({ sku: 'GENERATE' })], new Map([['Engine', '0003']]));
     expect(c.status).toBe('new');
   });
 
   it('error rows stay error', () => {
-    const [c] = classifyReceivingRows([row({ errors: ['name is required.'] })], [product()]);
+    const [c] = classifyReceivingRows([row({ errors: ['name is required.'] })], [product()], new Map());
     expect(c.status).toBe('error');
   });
 });
+
+describe('classifyReceivingRows — GENERATE rows and category codes', () => {
+  const codes = new Map([['Brakes', '0007']]);
+
+  it('a GENERATE row with a coded category stays new', () => {
+    const [r] = classifyReceivingRows(
+      [row({ sku: 'GENERATE', autoGenerateSku: true, category: 'Brakes' })],
+      [],
+      codes,
+    );
+    expect(r.status).toBe('new');
+  });
+
+  it('a GENERATE row with an uncoded category is rejected, not name-generated', () => {
+    const [r] = classifyReceivingRows(
+      [row({ sku: 'GENERATE', autoGenerateSku: true, category: 'Engine' })],
+      [],
+      codes,
+    );
+    expect(r.status).toBe('error');
+    expect(r.row.errors.join(' ')).toMatch(/no code/i);
+  });
+
+  it('a GENERATE row with no category at all is rejected', () => {
+    const [r] = classifyReceivingRows(
+      [row({ sku: 'GENERATE', autoGenerateSku: true, category: null })],
+      [],
+      codes,
+    );
+    expect(r.status).toBe('error');
+  });
+
+  it('an explicit-SKU row never needs a category code', () => {
+    const [r] = classifyReceivingRows(
+      [row({ sku: 'MANUAL-1', autoGenerateSku: false, category: 'Engine' })],
+      [],
+      codes,
+    );
+    expect(r.status).toBe('new');
+  });
+});
+

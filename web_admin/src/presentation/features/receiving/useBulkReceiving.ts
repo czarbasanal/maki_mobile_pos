@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useActiveCategories } from '@/presentation/hooks/useCategories';
+import { CategoryKind } from '@/domain/categories/categoryKind';
 import {
   useProductRepo,
   useSupplierRepo,
@@ -29,6 +31,18 @@ export function useBulkReceiving() {
 
   const productsQuery = useQuery({ queryKey: ['products', 'all'], queryFn: () => productRepo.list() });
   const suppliersQuery = useQuery({ queryKey: ['suppliers', 'all'], queryFn: () => supplierRepo.list() });
+  // Category name → auto-SKU code, for GENERATE rows. Rows whose category has
+  // no code are rejected at classification.
+  const { data: productCats } = useActiveCategories(CategoryKind.product);
+  const categoryCodes = useMemo(
+    () =>
+      new Map(
+        (productCats ?? [])
+          .filter((c) => c.code !== undefined)
+          .map((c) => [c.name, c.code as string]),
+      ),
+    [productCats],
+  );
 
   const [state, setState] = useState<ReceivingState | null>(null);
   const [supplierId, setSupplierId] = useState<string>('');
@@ -36,7 +50,7 @@ export function useBulkReceiving() {
   const [result, setResult] = useState<ReceivingResult | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
 
-  const ready = !!costCode && !!productsQuery.data && !!suppliersQuery.data;
+  const ready = !!costCode && !!productsQuery.data && !!suppliersQuery.data && productCats !== undefined;
 
   async function parseFile(file: File) {
     setParseError(null);
@@ -63,7 +77,7 @@ export function useBulkReceiving() {
       setState({ rows: [], headerError: parsed.headerError });
       return;
     }
-    setState({ rows: classifyReceivingRows(parsed.rows, productsQuery.data!), headerError: null });
+    setState({ rows: classifyReceivingRows(parsed.rows, productsQuery.data!, categoryCodes), headerError: null });
   }
 
   function reset() {
@@ -97,6 +111,7 @@ export function useBulkReceiving() {
           supplier: supplier ? { id: supplier.id, name: supplier.name } : null,
           cipher: costCode,
           actor: { id: user.id, name: user.displayName },
+          categoryCodes,
         }),
       );
     } finally {

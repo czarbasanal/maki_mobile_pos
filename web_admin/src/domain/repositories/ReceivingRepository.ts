@@ -10,6 +10,8 @@ export interface BulkReceiveInput {
   supplier: { id: string; name: string } | null;
   cipher: CostCode;
   actor: { id: string; name: string };
+  /** Category name → auto-SKU code, resolving GENERATE rows. */
+  categoryCodes: ReadonlyMap<string, string>;
 }
 
 export interface ReceivingResult {
