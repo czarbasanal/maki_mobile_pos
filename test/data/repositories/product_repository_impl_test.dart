@@ -437,15 +437,42 @@ void main() {
       );
     });
 
-    test('throws DatabaseException after exhausting retries', () async {
+    test('advances past a claimed SKU carrying no variation number', () async {
       final parentId = await seedProduct({'sku': 'BASE', 'name': 'Parent'});
-      // Orphan claim on BASE-1 with NO product → getNextVariationNumber keeps
-      // returning 1, so every attempt collides and retries are exhausted.
+      // Orphan claim on BASE-1 with NO product behind it — a hand-typed SKU, or
+      // a row from the bulk import. getNextVariationNumber reads the structured
+      // `variationNumber` field, so it keeps answering 1 while createProduct
+      // keeps colliding on the claim. The rising floor is what makes the retry
+      // progress; without it this base could never be varied at all.
       await firestore.collection('product_skus').doc('BASE-1').set({
         'sku': 'BASE-1',
         'productId': 'ghost',
         'claimedBy': 'x',
       });
+
+      final parent = await repository.getProductById(parentId);
+      final v = await repository.createVariation(
+        originalProduct: parent!,
+        newCost: 5,
+        newCostCode: 'X',
+        createdBy: 'admin-1',
+      );
+
+      expect(v.sku, 'BASE-2');
+      expect(v.variationNumber, 2);
+    });
+
+    test('throws DatabaseException only once every candidate is taken',
+        () async {
+      final parentId = await seedProduct({'sku': 'BASE', 'name': 'Parent'});
+      // Five orphan claims — one per attempt the allocator is allowed.
+      for (var n = 1; n <= 5; n++) {
+        await firestore.collection('product_skus').doc('BASE-$n').set({
+          'sku': 'BASE-$n',
+          'productId': 'ghost-$n',
+          'claimedBy': 'x',
+        });
+      }
 
       final parent = await repository.getProductById(parentId);
       expect(
