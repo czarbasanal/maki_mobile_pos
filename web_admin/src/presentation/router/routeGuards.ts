@@ -73,7 +73,12 @@ export function canAccess(path: string, user: User | null): boolean {
 }
 
 function checkDynamicRoute(path: string, user: User): boolean {
-  if (path.startsWith('/inventory/edit/')) {
+  // Editing lives at /inventory/:id/edit (inside the product drawer). The
+  // legacy /inventory/edit/:id still redirects there, and the guard runs before
+  // the redirect, so BOTH shapes must gate identically — otherwise the old URL
+  // becomes a hole or the new one locks everyone out. Must come before the
+  // single-segment view rule below, which this path would never match anyway.
+  if (path.startsWith('/inventory/edit/') || /^\/inventory\/[^/]+\/edit$/.test(path)) {
     return (
       hasPermission(user.role, Permission.editProduct) ||
       hasPermission(user.role, Permission.editProductLimited)

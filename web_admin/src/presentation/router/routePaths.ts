@@ -16,7 +16,8 @@ export const RoutePaths = {
 
   inventory: '/inventory',
   productAdd: '/inventory/add',
-  productEdit: '/inventory/edit/:id',
+  // Editing lives inside the product drawer; /inventory/edit/:id redirects here.
+  productEdit: '/inventory/:id/edit',
   priceHistory: '/inventory/price-history',
   reorder: '/inventory/reorder',
   productDetail: '/inventory/:id',

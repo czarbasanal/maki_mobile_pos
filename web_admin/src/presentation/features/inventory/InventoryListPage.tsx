@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -15,6 +15,7 @@ import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
+import { ProductImage } from '@/presentation/components/common/ProductImage';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 
@@ -194,8 +195,13 @@ export function InventoryListPage() {
                     className={cn('cursor-pointer hover:bg-light-subtle', !p.isActive && 'opacity-50')}
                   >
                     <Td className="font-medium text-light-text">
-                      {p.name}
-                      {!p.isActive ? <span className="ml-tk-xs text-light-text-hint">(inactive)</span> : null}
+                      <div className="flex items-center gap-tk-sm">
+                        <ProductImage src={p.imageUrl} alt={p.name} />
+                        <span className="min-w-0">
+                          {p.name}
+                          {!p.isActive ? <span className="ml-tk-xs text-light-text-hint">(inactive)</span> : null}
+                        </span>
+                      </div>
                     </Td>
                     <Td className="font-mono text-light-text-secondary">{displaySku(p.sku)}</Td>
                     <Td className="text-light-text-secondary">{p.category ?? '—'}</Td>
@@ -215,6 +221,9 @@ export function InventoryListPage() {
             onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </div>
       )}
+
+      {/* The product drawer (/inventory/:id) renders here, over this list. */}
+      <Outlet />
     </div>
   );
 }

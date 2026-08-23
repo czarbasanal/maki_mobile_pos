@@ -104,3 +104,29 @@ describe('canAccess — Job Orders (renamed from Drafts)', () => {
     expect(canAccess('/drafts/abc123', admin)).toBe(false);
   });
 });
+
+describe('canAccess — product edit moved into the drawer', () => {
+  // The edit URL changed from /inventory/edit/:id to /inventory/:id/edit when
+  // editing moved into the product drawer. The new shape matches NEITHER the
+  // old '/inventory/edit/' prefix nor the single-segment '/inventory/:id'
+  // view rule, so without its own rule it falls through and the gate is wrong.
+  it('lets a role that may edit products reach the drawer edit route', () => {
+    expect(canAccess('/inventory/p9/edit', admin)).toBe(true);
+    expect(canAccess('/inventory/p9/edit', staff)).toBe(true);
+  });
+
+  it('keeps a cashier out of the drawer edit route', () => {
+    expect(canAccess('/inventory/p9/edit', cashier)).toBe(false);
+  });
+
+  it('still gates the legacy /inventory/edit/:id URL the same way', () => {
+    // The redirect runs inside the router, so the guard sees the old path
+    // first — it must not become a hole.
+    expect(canAccess('/inventory/edit/p9', admin)).toBe(true);
+    expect(canAccess('/inventory/edit/p9', cashier)).toBe(false);
+  });
+
+  it('still lets a view-only role open the product drawer', () => {
+    expect(canAccess('/inventory/p9', cashier)).toBe(true);
+  });
+});
