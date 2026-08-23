@@ -6,7 +6,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { usePayslipRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, usePayslipRepo } from '@/infrastructure/di/container';
+import { logActivity } from '@/application/activityLogger';
+import { ActivityType } from '@/domain/entities';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
@@ -28,6 +30,7 @@ function slugify(value: string): string {
 export function PayslipDetailPage() {
   const { id = '' } = useParams();
   const repo = usePayslipRepo();
+  const activityLogRepo = useActivityLogRepo();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -40,7 +43,15 @@ export function PayslipDetailPage() {
   } = useQuery({ queryKey: ['payslips', id], queryFn: () => repo.getById(id) });
 
   const del = useMutation<void, Error, void>({
-    mutationFn: () => repo.delete(id),
+    mutationFn: async () => {
+      await repo.delete(id);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Deleted payslip: ${payslip?.employeeName ?? id}`,
+        entityId: id,
+        entityType: 'payslip',
+      }));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payslips'] });
       navigate(RoutePaths.hrPayslips);

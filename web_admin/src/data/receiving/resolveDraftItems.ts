@@ -17,6 +17,11 @@ export function resolveDraftItems(items: ReceivingItem[], products: Product[]): 
         ref: index, kind: 'new', sku: it.sku, autoGenerateSku: np.autoGenerateSku,
         name: it.name, category: np.category, unit: it.unit, cost: it.unitCost,
         price: np.price, quantity: it.quantity, reorderLevel: np.reorderLevel,
+        // Older drafts predate these fields; ?? keeps them loadable.
+        autoSkuCategoryCode: np.autoSkuCategoryCode ?? null,
+        barcodes: np.barcodes ?? [],
+        notes: np.notes ?? null,
+        sellingOptions: np.sellingOptions ?? [],
       });
       return;
     }

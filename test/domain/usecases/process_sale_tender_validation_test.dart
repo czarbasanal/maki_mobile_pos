@@ -1,7 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/sale_entity.dart';
+import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/sale_item_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/job_order_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
@@ -9,6 +13,10 @@ import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 
 class _MockSaleRepo extends Mock implements SaleRepository {}
+
+class _MockActivityLogRepo extends Mock implements ActivityLogRepository {}
+
+class _FakeActivityLog extends Fake implements ActivityLogEntity {}
 
 class _MockProductRepo extends Mock implements ProductRepository {}
 
@@ -35,7 +43,20 @@ SaleEntity _salmonSale() => SaleEntity(
       cashierId: 'c', cashierName: 'C', createdAt: DateTime(2026, 5, 28),
     );
 
+UserEntity _actor() => UserEntity(
+      id: 'u-1',
+      email: 'u@test',
+      displayName: 'U',
+      role: UserRole.cashier,
+      isActive: true,
+      createdAt: DateTime(2025, 1, 1),
+    );
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeActivityLog());
+  });
+
   setUpAll(() => registerFallbackValue(_FakeSale()));
 
   late _MockSaleRepo sales;
@@ -47,10 +68,14 @@ void main() {
     sales = _MockSaleRepo();
     products = _MockProductRepo();
     jobOrders = _MockJobOrderRepo();
+    final logRepo = _MockActivityLogRepo();
+    when(() => logRepo.logActivity(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
     useCase = ProcessSaleUseCase(
       saleRepository: sales,
       productRepository: products,
       jobOrderRepository: jobOrders,
+      logger: ActivityLogger(logRepo),
     );
     when(() => sales.generateSaleNumber(any()))
         .thenAnswer((_) async => 'SALE-1');
@@ -65,6 +90,7 @@ void main() {
 
   test('salmon sale (collected < grandTotal) is accepted', () async {
     final result = await useCase.execute(
+      actor: _actor(),
       sale: _salmonSale(),
       checkoutId: 'chk-test',
       updateInventory: false,
@@ -77,7 +103,7 @@ void main() {
       tenders: const {PaymentMethod.cash: 400, PaymentMethod.salmon: 100},
     );
     final result = await useCase.execute(
-        sale: bad, checkoutId: 'chk-test', updateInventory: false);
+        actor: _actor(), sale: bad, checkoutId: 'chk-test', updateInventory: false);
     expect(result.success, false);
   });
 }

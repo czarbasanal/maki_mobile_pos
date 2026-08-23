@@ -4,13 +4,18 @@ import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/void_request_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/base/use_case.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Rejects a void request (admin). Permission: [Permission.voidSale].
 class RejectVoidRequestUseCase {
   final VoidRequestRepository _repository;
+  final ActivityLogger _logger;
 
-  RejectVoidRequestUseCase({required VoidRequestRepository repository})
-      : _repository = repository;
+  RejectVoidRequestUseCase({
+    required VoidRequestRepository repository,
+    required ActivityLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
   Future<UseCaseResult<void>> execute({
     required UserEntity actor,
@@ -35,6 +40,17 @@ class RejectVoidRequestUseCase {
         resolvedBy: actor.id,
         resolvedByName: actor.displayName,
         rejectionReason: trimmed,
+      );
+
+      await _logger.log(
+        type: ActivityType.voidSale,
+        action: 'Rejected void request for sale ${request.saleNumber}',
+        details: 'Rejection reason: $trimmed',
+        userId: actor.id,
+        userName: actor.displayName,
+        userRole: actor.role.value,
+        entityId: request.saleId,
+        entityType: 'sale',
       );
 
       return const UseCaseResult.successVoid();

@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/process_sale_usecase.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 class MockSaleRepository extends Mock implements SaleRepository {}
 
@@ -12,11 +13,28 @@ class MockProductRepository extends Mock implements ProductRepository {}
 
 class MockJobOrderRepository extends Mock implements JobOrderRepository {}
 
+class MockActivityLogRepository extends Mock implements ActivityLogRepository {}
+
+class _FakeActivityLog extends Fake implements ActivityLogEntity {}
+
+UserEntity _cashier() => UserEntity(
+      id: 'cashier-1',
+      email: 'c@test',
+      displayName: 'John Doe',
+      role: UserRole.cashier,
+      isActive: true,
+      createdAt: DateTime(2025, 1, 1),
+    );
+
 class _FakeSaleEntity extends Fake implements SaleEntity {}
 
 class _FakeJobOrderEntity extends Fake implements JobOrderEntity {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeActivityLog());
+  });
+
   setUpAll(() {
     registerFallbackValue(_FakeSaleEntity());
   });
@@ -25,16 +43,21 @@ void main() {
   late MockSaleRepository mockSaleRepo;
   late MockProductRepository mockProductRepo;
   late MockJobOrderRepository mockJobOrderRepo;
+  late MockActivityLogRepository mockLogRepo;
 
   setUp(() {
     mockSaleRepo = MockSaleRepository();
     mockProductRepo = MockProductRepository();
     mockJobOrderRepo = MockJobOrderRepository();
 
+    mockLogRepo = MockActivityLogRepository();
+    when(() => mockLogRepo.logActivity(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
     useCase = ProcessSaleUseCase(
       saleRepository: mockSaleRepo,
       productRepository: mockProductRepo,
       jobOrderRepository: mockJobOrderRepo,
+      logger: ActivityLogger(mockLogRepo),
     );
     // Idempotency pre-check defaults to "no existing sale" unless a test
     // overrides it for a specific checkout id.
@@ -87,7 +110,7 @@ void main() {
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => null);
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-1');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-1');
 
       expect(result.success, isTrue);
       expect(result.sale!.id, 'chk-1');
@@ -112,7 +135,7 @@ void main() {
       when(() => mockProductRepo.getProductById(any()))
           .thenAnswer((_) async => null);
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-x');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-x');
 
       expect(result.success, isFalse);
       expect(result.sale, isNull);
@@ -136,7 +159,7 @@ void main() {
             saleId: any(named: 'saleId'),
           )).thenThrow(Exception('ignored')); // caught; we verify the attempt
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-3');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-3');
 
       expect(result.success, isTrue);
       verify(() => mockJobOrderRepo.markJobOrderAsConverted(
@@ -169,7 +192,7 @@ void main() {
                 isActive: true,
                 createdAt: DateTime.now(),
               ));
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true);
       expect(result.sale, isNotNull);
@@ -184,7 +207,7 @@ void main() {
     test('should fail when cart is empty', () async {
       final sale = createTestSale(items: []);
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, false);
       expect(result.errorMessage, contains('empty'));
@@ -209,7 +232,7 @@ void main() {
               (inv.positionalArguments.first as SaleEntity)
                   .copyWith(id: 'sale-300', saleNumber: 'SALE-003'));
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-fee');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-fee');
 
       expect(result.success, true, reason: result.errorMessage);
       expect(result.sale!.feesTotal, 50);
@@ -243,7 +266,7 @@ void main() {
               (inv.positionalArguments.first as SaleEntity)
                   .copyWith(id: 'sale-400', saleNumber: 'SALE-004'));
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-labor');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-labor');
 
       expect(result.success, true, reason: result.errorMessage);
       expect(result.sale!.laborRevenue, 450);
@@ -256,7 +279,7 @@ void main() {
       final sale =
           createTestSale().copyWith(tenders: const {PaymentMethod.cash: 100});
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, false);
       expect(result.errorMessage, contains('Payment'));
@@ -296,7 +319,7 @@ void main() {
                 isActive: true,
                 createdAt: DateTime.now(),
               ));
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-test');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-test');
 
       expect(result.success, true, reason: result.errorMessage);
       expect(result.sale!.laborSubtotal, 450);
@@ -321,7 +344,7 @@ void main() {
             saleId: any(named: 'saleId'),
           )).thenAnswer((_) async => _FakeJobOrderEntity());
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-conv');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-conv');
 
       expect(result.success, isTrue);
       verify(() => mockJobOrderRepo.markJobOrderAsConverted(
@@ -347,7 +370,7 @@ void main() {
       ));
 
       final result =
-          await useCase.execute(sale: sale, checkoutId: 'chk-blocked');
+          await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-blocked');
 
       expect(result.success, isFalse);
       expect(
@@ -369,7 +392,7 @@ void main() {
         code: 'unavailable',
       ));
 
-      final result = await useCase.execute(sale: sale, checkoutId: 'chk-other');
+      final result = await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-other');
 
       expect(result.success, isFalse);
       expect(result.errorMessage, 'Failed to create sale: network blip');
@@ -385,13 +408,59 @@ void main() {
           .thenAnswer((_) async => null);
 
       final result =
-          await useCase.execute(sale: sale, checkoutId: 'chk-walkin');
+          await useCase.execute(actor: _cashier(), sale: sale, checkoutId: 'chk-walkin');
 
       expect(result.success, isTrue);
       verifyNever(() => mockJobOrderRepo.markJobOrderAsConverted(
             jobOrderId: any(named: 'jobOrderId'),
             saleId: any(named: 'saleId'),
           ));
+    });
+  });
+
+  group('ProcessSaleUseCase activity logging', () {
+    test('a completed sale writes a sale entry with number and amount',
+        () async {
+      final sale = createTestSale();
+      // Unknown products only produce stock warnings; the sale still commits.
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
+          .thenAnswer((_) async => sale.copyWith(
+                id: 'sale-9',
+                saleNumber: 'SALE-0042',
+              ));
+
+      await useCase.execute(
+          actor: _cashier(), sale: sale, checkoutId: 'chk-log');
+
+      final logged = verify(() => mockLogRepo.logActivity(captureAny()))
+          .captured
+          .cast<ActivityLogEntity>()
+          .where((e) => e.type == ActivityType.sale)
+          .toList();
+      expect(logged, hasLength(1));
+      expect(logged.single.action, contains('SALE-0042'));
+      expect(logged.single.entityId, 'sale-9');
+    });
+
+    test('a duplicate retry does not log the sale a second time', () async {
+      // The retry path reloads the already-committed sale; logging there would
+      // show one sale twice in the audit trail.
+      final sale = createTestSale();
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'), decrementStock: any(named: 'decrementStock')))
+          .thenThrow(const DuplicateSaleException(saleId: 'chk-dup'));
+      when(() => mockSaleRepo.getSaleById('chk-dup'))
+          .thenAnswer((_) async => sale.copyWith(id: 'chk-dup'));
+
+      await useCase.execute(
+          actor: _cashier(), sale: sale, checkoutId: 'chk-dup');
+
+      verifyNever(() => mockLogRepo.logActivity(any()));
     });
   });
 }

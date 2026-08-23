@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -446,6 +447,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         saleRepository: ref.read(saleRepositoryProvider),
         productRepository: ref.read(productRepositoryProvider),
         jobOrderRepository: ref.read(jobOrderRepositoryProvider),
+        logger: ref.read(activityLoggerProvider),
       );
 
       final cartNotifier = ref.read(cartProvider.notifier);
@@ -456,7 +458,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       );
 
       final checkoutId = ref.read(cartProvider.notifier).ensureCheckoutId();
-      final result = await useCase.execute(sale: sale, checkoutId: checkoutId);
+      final result = await useCase.execute(
+          actor: currentUser, sale: sale, checkoutId: checkoutId);
 
       if (result.success && result.sale != null) {
         cartNotifier.resetAfterCheckout();

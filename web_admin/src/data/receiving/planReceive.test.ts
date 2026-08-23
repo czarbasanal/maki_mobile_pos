@@ -36,7 +36,7 @@ describe('planReceive', () => {
 
   it('new → a planned create + line item; auto-generates SKU when asked', () => {
     const plan = planReceive(
-      [{ ref: 1, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1 }],
+      [{ ref: 1, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1, autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [], }],
       ctx(), counter(),
     );
     expect(plan.creates).toHaveLength(1);
@@ -79,7 +79,7 @@ describe('planReceive', () => {
   it('new → a genuinely new product still starts with no image or selling options', () => {
     // Only a VARIATION inherits; a brand-new product has nothing to inherit from.
     const plan = planReceive(
-      [{ ref: 1, kind: 'new', sku: 'SQ', autoGenerateSku: false, name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1 }],
+      [{ ref: 1, kind: 'new', sku: 'SQ', autoGenerateSku: false, name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1, autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [], }],
       ctx(), counter(),
     );
     expect(plan.creates[0].input.imageUrl).toBeNull();
@@ -98,3 +98,40 @@ describe('planReceive', () => {
     expect(plan.creates.map((c) => c.input.sku)).toEqual(['SP-1', 'SP-2']);
   });
 });
+
+describe('planReceive — new products from the receiving modal', () => {
+  const newItem = (over: Record<string, unknown> = {}) => ({
+    ref: 1, kind: 'new' as const, sku: '00070005', autoGenerateSku: true,
+    name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130,
+    quantity: 3, reorderLevel: 1,
+    autoSkuCategoryCode: '0007', barcodes: ['4800111222333'], notes: 'fresh',
+    sellingOptions: [{ id: 'o1', label: 'Half kilo', pieces: 2, price: 70 }],
+    ...over,
+  });
+
+  it('keeps the peeked SKU and carries the category code for the real claim', () => {
+    // The preview SKU may be stale by receive time; the executing transaction
+    // scans forward from it, so the CODE must survive to the planned create.
+    const plan = planReceive([newItem()], ctx(), counter());
+    expect(plan.creates[0].input.sku).toBe('00070005');
+    expect(plan.creates[0].autoSkuCategoryCode).toBe('0007');
+  });
+
+  it('still name-generates for legacy auto rows with no category code (CSV)', () => {
+    const plan = planReceive(
+      [newItem({ sku: 'GENERATE', autoSkuCategoryCode: null })], ctx(), counter(),
+    );
+    expect(plan.creates[0].input.sku).not.toBe('GENERATE');
+    expect(plan.creates[0].autoSkuCategoryCode).toBeNull();
+  });
+
+  it('passes barcodes, notes and selling options onto the planned product', () => {
+    const plan = planReceive([newItem()], ctx(), counter());
+    expect(plan.creates[0].input.barcodes).toEqual(['4800111222333']);
+    expect(plan.creates[0].input.notes).toBe('fresh');
+    expect(plan.creates[0].input.sellingOptions).toEqual([
+      { id: 'o1', label: 'Half kilo', pieces: 2, price: 70 },
+    ]);
+  });
+});
+

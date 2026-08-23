@@ -32,6 +32,7 @@ function harness(opts?: {
   settings?: HrSettings;
   create?: ReturnType<typeof vi.fn>;
   update?: ReturnType<typeof vi.fn>;
+  activityLog?: ReturnType<typeof vi.fn>;
 }) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const employeeRepo: Partial<Container['employeeRepo']> = {
@@ -47,6 +48,8 @@ function harness(opts?: {
   const payslipRepo: Partial<Container['payslipRepo']> = {
     create: opts?.create ?? vi.fn(async () => 'ps1'),
   };
+  const activityLog = opts?.activityLog ?? vi.fn(async () => undefined);
+  const activityLogRepo = { log: activityLog } as unknown as Container['activityLogRepo'];
 
   useAuthStore.setState({
     status: 'signedIn',
@@ -59,6 +62,7 @@ function harness(opts?: {
         employeeRepo: employeeRepo as Container['employeeRepo'],
         hrSettingsRepo: hrSettingsRepo as Container['hrSettingsRepo'],
         payslipRepo: payslipRepo as Container['payslipRepo'],
+        activityLogRepo,
       }}
     >
       <QueryClientProvider client={qc}>
@@ -353,5 +357,24 @@ describe('PayrollPage', () => {
       await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e1');
       expect(screen.getByRole('button', { name: /save as defaults/i })).toBeEnabled();
     });
+  });
+});
+
+describe('payroll activity logging', () => {
+  it('generating a payslip writes a user_management entry', async () => {
+    const activityLog = vi.fn(async (_entry: unknown) => undefined);
+    const create = vi.fn(async () => 'ps-99');
+    await renderForm({ create, activityLog });
+
+    await userEvent.selectOptions(screen.getByLabelText('Employee'), 'e1');
+    await userEvent.type(screen.getByLabelText('Hours worked'), '48');
+    await userEvent.click(screen.getByRole('button', { name: /generate payslip/i }));
+
+    await waitFor(() => expect(activityLog).toHaveBeenCalled());
+    const entry = activityLog.mock.calls[0][0] as unknown as { type: string; action: string; entityId: string };
+    expect(entry.type).toBe('user_management');
+    expect(entry.action).toContain('Juan');
+    expect(entry.action.toLowerCase()).toContain('payslip');
+    expect(entry.entityId).toBe('ps-99');
   });
 });

@@ -1,4 +1,5 @@
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 
@@ -13,14 +14,17 @@ class ProcessSaleUseCase {
   final SaleRepository _saleRepository;
   final ProductRepository _productRepository;
   final JobOrderRepository _jobOrderRepository;
+  final ActivityLogger _logger;
 
   ProcessSaleUseCase({
     required SaleRepository saleRepository,
     required ProductRepository productRepository,
     required JobOrderRepository jobOrderRepository,
+    required ActivityLogger logger,
   })  : _saleRepository = saleRepository,
         _productRepository = productRepository,
-        _jobOrderRepository = jobOrderRepository;
+        _jobOrderRepository = jobOrderRepository,
+        _logger = logger;
 
   /// Processes a sale transaction.
   ///
@@ -30,6 +34,7 @@ class ProcessSaleUseCase {
   /// Returns the created sale with ID populated.
   /// Throws [ProcessSaleException] on failure.
   Future<ProcessSaleResult> execute({
+    required UserEntity actor,
     required SaleEntity sale,
     required String checkoutId,
     bool updateInventory = true,
@@ -68,6 +73,17 @@ class ProcessSaleUseCase {
 
       // 4. Mark the source job order converted (if any)
       await _reconcileJobOrder(sale, createdSale.id, warnings);
+
+      // Fresh creates only — the DuplicateSaleException retry path above
+      // reloads a sale that was already recorded (and already logged), so
+      // logging there would show one sale twice in the audit trail.
+      await _logger.logSale(
+        user: actor,
+        saleId: createdSale.id,
+        saleNumber: createdSale.saleNumber,
+        amount: createdSale.grandTotal,
+        itemCount: createdSale.items.length,
+      );
 
       return ProcessSaleResult(
         success: true,

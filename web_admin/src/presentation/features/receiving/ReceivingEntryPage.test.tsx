@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { ReceivingEntryPage } from './ReceivingEntryPage';
 
 // 3 lines, 12 pieces — totalQuantity is a piece sum, never a line count.
@@ -40,12 +41,18 @@ vi.mock('@/presentation/hooks/useCategories', () => ({
 
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // The NewProductDialog (mounted even while closed) pulls categoryRepo from DI.
+  const categoryRepo: Partial<Container['categoryRepo']> = {
+    peekNextSequence: vi.fn(async () => 1),
+  };
   return render(
-    <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={['/receiving/new']}>
-        <ReceivingEntryPage />
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <DiProvider override={{ categoryRepo: categoryRepo as Container['categoryRepo'] }}>
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/receiving/new']}>
+          <ReceivingEntryPage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    </DiProvider>,
   );
 }
 

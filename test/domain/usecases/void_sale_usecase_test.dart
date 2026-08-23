@@ -5,12 +5,17 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/void_sale_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 class MockSaleRepository extends Mock implements SaleRepository {}
 
 class MockProductRepository extends Mock implements ProductRepository {}
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockActivityLogRepository extends Mock implements ActivityLogRepository {}
+
+class _FakeActivityLog extends Fake implements ActivityLogEntity {}
 
 UserEntity _user(UserRole role) => UserEntity(
       id: 'u-${role.value}',
@@ -22,22 +27,39 @@ UserEntity _user(UserRole role) => UserEntity(
     );
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeActivityLog());
+  });
+
   late VoidSaleUseCase useCase;
   late MockSaleRepository mockSaleRepo;
   late MockProductRepository mockProductRepo;
   late MockAuthRepository mockAuthRepo;
+  late MockActivityLogRepository mockLogRepo;
 
   setUp(() {
     mockSaleRepo = MockSaleRepository();
     mockProductRepo = MockProductRepository();
     mockAuthRepo = MockAuthRepository();
+    mockLogRepo = MockActivityLogRepository();
+    when(() => mockLogRepo.logActivity(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
 
     useCase = VoidSaleUseCase(
       saleRepository: mockSaleRepo,
       productRepository: mockProductRepo,
       authRepository: mockAuthRepo,
+      logger: ActivityLogger(mockLogRepo),
     );
   });
+
+  /// Every log entry the use case wrote, by type.
+  List<ActivityLogEntity> loggedOf(ActivityType type) =>
+      verify(() => mockLogRepo.logActivity(captureAny()))
+          .captured
+          .cast<ActivityLogEntity>()
+          .where((e) => e.type == type)
+          .toList();
 
   SaleEntity createTestSale({
     SaleStatus status = SaleStatus.completed,
@@ -258,6 +280,106 @@ void main() {
             updatedByName: any(named: 'updatedByName'),
           )).called(1);
       verifyNoMoreInteractions(mockProductRepo);
+    });
+  });
+
+  group('VoidSaleUseCase activity logging', () {
+    // The void is the shop's fraud-sensitive action; before this, a void from
+    // the phone left NO trace in user_logs — the password check also bypassed
+    // the logging wrapper, so not even a password event appeared.
+    test('a successful void writes a void_sale entry with reason and amount',
+        () async {
+      final sale = createTestSale();
+      final voidedSale = sale.void_(
+        voidedById: 'admin-1',
+        voidedByUserName: 'Admin User',
+        reason: 'Wrong item',
+      );
+      when(() => mockSaleRepo.getSaleById('sale-1'))
+          .thenAnswer((_) async => sale);
+      when(() => mockAuthRepo.verifyPassword(any()))
+          .thenAnswer((_) async => true);
+      when(() => mockSaleRepo.voidSale(
+            saleId: any(named: 'saleId'),
+            voidedBy: any(named: 'voidedBy'),
+            voidedByName: any(named: 'voidedByName'),
+            reason: any(named: 'reason'),
+          )).thenAnswer((_) async => voidedSale);
+      await useCase.execute(
+        actor: _user(UserRole.admin),
+        saleId: 'sale-1',
+        password: 'pw',
+        reason: 'Wrong item',
+        voidedBy: 'admin-1',
+        voidedByName: 'Admin User',
+        restoreInventory: false,
+      );
+
+      final entries = loggedOf(ActivityType.voidSale);
+      expect(entries, hasLength(1));
+      expect(entries.single.action, contains('SALE-001'));
+      expect(entries.single.details, contains('Wrong item'));
+      expect(entries.single.entityId, 'sale-1');
+    });
+
+    test('the password check goes through the logging path — success', () async {
+      final sale = createTestSale();
+      when(() => mockSaleRepo.getSaleById('sale-1'))
+          .thenAnswer((_) async => sale);
+      when(() => mockAuthRepo.verifyPassword(any()))
+          .thenAnswer((_) async => true);
+      when(() => mockSaleRepo.voidSale(
+            saleId: any(named: 'saleId'),
+            voidedBy: any(named: 'voidedBy'),
+            voidedByName: any(named: 'voidedByName'),
+            reason: any(named: 'reason'),
+          )).thenAnswer((_) async => sale.void_(
+            voidedById: 'admin-1',
+            voidedByUserName: 'Admin User',
+            reason: 'r',
+          ));
+
+      await useCase.execute(
+        actor: _user(UserRole.admin),
+        saleId: 'sale-1',
+        password: 'pw',
+        reason: 'r',
+        voidedBy: 'admin-1',
+        voidedByName: 'Admin User',
+        restoreInventory: false,
+      );
+
+      expect(loggedOf(ActivityType.passwordVerified), hasLength(1));
+    });
+
+    test('a wrong password writes password_failed and never void_sale',
+        () async {
+      final sale = createTestSale();
+      when(() => mockSaleRepo.getSaleById('sale-1'))
+          .thenAnswer((_) async => sale);
+      when(() => mockAuthRepo.verifyPassword(any()))
+          .thenAnswer((_) async => false);
+
+      await expectLater(
+        useCase.execute(
+          actor: _user(UserRole.admin),
+          saleId: 'sale-1',
+          password: 'wrong',
+          reason: 'r',
+          voidedBy: 'admin-1',
+          voidedByName: 'Admin User',
+        ),
+        throwsA(isA<VoidSaleException>()),
+      );
+
+      final captured = verify(() => mockLogRepo.logActivity(captureAny()))
+          .captured
+          .cast<ActivityLogEntity>();
+      expect(
+          captured.where((e) => e.type == ActivityType.passwordFailed).length,
+          1);
+      expect(
+          captured.where((e) => e.type == ActivityType.voidSale), isEmpty);
     });
   });
 }

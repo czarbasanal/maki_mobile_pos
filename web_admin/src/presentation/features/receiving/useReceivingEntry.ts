@@ -12,7 +12,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { useReceivingRepo } from '@/infrastructure/di/container';
 import { filterProducts } from '@/domain/products/filterProducts';
 import { RoutePaths } from '@/presentation/router/routePaths';
-import type { Product, ReceivingItem } from '@/domain/entities';
+import type { Product, ReceivingItem, SellingOption } from '@/domain/entities';
 import type { ReceivingInput } from '@/domain/repositories/ReceivingRepository';
 
 /** A new-product line carries `pendingNewProduct`; an existing-product line has a
@@ -27,6 +27,12 @@ export interface NewProductSpec {
   price: number;
   quantity: number;
   reorderLevel: number;
+  /** Category code when auto-SKU is on — the sku is then a peeked preview and
+   *  the receive transaction claims the real sequence under this code. */
+  autoSkuCategoryCode: string | null;
+  barcodes: string[];
+  notes: string | null;
+  sellingOptions: SellingOption[];
 }
 
 export function useReceivingEntry() {
@@ -128,6 +134,10 @@ export function useReceivingEntry() {
           price: spec.price,
           reorderLevel: spec.reorderLevel,
           autoGenerateSku: spec.autoGenerateSku,
+          autoSkuCategoryCode: spec.autoSkuCategoryCode,
+          barcodes: spec.barcodes,
+          notes: spec.notes,
+          sellingOptions: spec.sellingOptions,
         },
       },
     ]);

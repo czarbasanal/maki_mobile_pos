@@ -1,4 +1,5 @@
 // Mirror of lib/domain/entities/receiving_entity.dart.
+import type { SellingOption } from './SellingOption';
 export const ReceivingStatus = {
   draft: 'draft',
   completed: 'completed',
@@ -26,6 +27,13 @@ export interface ReceivingItem {
     price: number;
     reorderLevel: number;
     autoGenerateSku: boolean;
+    /** Category code driving auto-SKU; the item's sku is then only a peeked
+     *  preview. Optional — drafts saved before the receiving modal existed
+     *  don't carry these. */
+    autoSkuCategoryCode?: string | null;
+    barcodes?: string[];
+    notes?: string | null;
+    sellingOptions?: SellingOption[];
   } | null;
 }
 

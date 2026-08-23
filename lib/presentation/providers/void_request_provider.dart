@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/domain/usecases/pos/approve_void_request_usecase
 import 'package:maki_mobile_pos/domain/usecases/pos/reject_void_request_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/request_void_sale_usecase.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/void_sale_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
@@ -25,13 +26,17 @@ final voidRequestRepositoryProvider = Provider<VoidRequestRepository>((ref) {
 
 final requestVoidSaleUseCaseProvider = Provider<RequestVoidSaleUseCase>((ref) {
   return RequestVoidSaleUseCase(
-      repository: ref.watch(voidRequestRepositoryProvider));
+    repository: ref.watch(voidRequestRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
 });
 
 final rejectVoidRequestUseCaseProvider =
     Provider<RejectVoidRequestUseCase>((ref) {
   return RejectVoidRequestUseCase(
-      repository: ref.watch(voidRequestRepositoryProvider));
+    repository: ref.watch(voidRequestRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
 });
 
 final approveVoidRequestUseCaseProvider =
@@ -42,6 +47,7 @@ final approveVoidRequestUseCaseProvider =
       saleRepository: ref.watch(saleRepositoryProvider),
       productRepository: ref.watch(productRepositoryProvider),
       authRepository: ref.watch(authRepositoryProvider),
+      logger: ref.watch(activityLoggerProvider),
     ),
   );
 });
