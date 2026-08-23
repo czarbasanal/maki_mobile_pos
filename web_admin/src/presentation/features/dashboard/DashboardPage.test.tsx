@@ -51,9 +51,9 @@ const fakeSale = (o: Partial<Sale> = {}): Sale => ({
   ...o,
 });
 
-function harness(sales: Sale[] = [fakeSale()]) {
+function harness(sales: Sale[] = [fakeSale()], role: UserRole = UserRole.admin) {
   useAuthStore.setState({
-    user: { id: 'u1', email: 'a@b.co', displayName: 'Tester', role: UserRole.admin, isActive: true } as never,
+    user: { id: 'u1', email: 'a@b.co', displayName: 'Tester', role, isActive: true } as never,
   });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const saleRepo: Partial<Container['saleRepo']> = {
@@ -115,3 +115,14 @@ describe('DashboardPage', () => {
     });
   });
 });
+
+describe('DashboardPage cost visibility', () => {
+  it('hides Total COGS and Gross profit from a cashier — mobile parity', async () => {
+    harness([fakeSale()], UserRole.cashier);
+
+    expect(await screen.findByText('Sales today')).toBeInTheDocument();
+    expect(screen.queryByText('Total COGS')).toBeNull();
+    expect(screen.queryByText('Gross profit')).toBeNull();
+  });
+});
+

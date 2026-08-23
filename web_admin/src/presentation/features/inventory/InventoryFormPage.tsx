@@ -17,6 +17,7 @@ import { useCostCode } from '@/presentation/hooks/useCostCode';
 import { useProductRepo, useCategoryRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
 import { costsDiffer } from '@/domain/products/costVariation';
@@ -97,6 +98,12 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   const categoryRepo = useCategoryRepo();
   const authUser = useAuthStore((s) => s.user);
   const isAdmin = authUser?.role === UserRole.admin;
+  // Per-item cost is admin-only (viewProductCost; password-gated on the
+  // phone). In EDIT mode the field would display the STORED figure, so it is
+  // hidden from everyone else; in CREATE mode it stays — the author is typing
+  // a number they already know, and rules allow create-time cost for staff.
+  const canSeeCost =
+    !!authUser && hasPermission(authUser.role, Permission.viewProductCost);
 
   const { data: target, isLoading, error } = useProduct(id);
   const update = useUpdateProduct();
@@ -664,10 +671,16 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
 
         <Section title="Pricing">
           <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
-            <Field label="Cost" error={errors.cost?.message}
-              input={<input type="number" step="0.01" className={inputCls(!!errors.cost)} {...register('cost')} />} />
+            {!isEditing || canSeeCost ? (
+              <Field label="Cost" error={errors.cost?.message}
+                input={<input type="number" step="0.01" className={inputCls(!!errors.cost)} {...register('cost')} />} />
+            ) : null}
+            {/* Staff/cashier may not CHANGE price (rules reject the whole
+                update), so editing it would only invite a save that cannot
+                succeed. The seeded value still rides the patch unchanged. */}
             <Field label="Price" error={errors.price?.message}
-              input={<input type="number" step="0.01" className={inputCls(!!errors.price)} {...register('price')} />} />
+              input={<input type="number" step="0.01" disabled={isEditing && !isAdmin}
+                className={inputCls(!!errors.price)} {...register('price')} />} />
           </div>
           {/* The base price stops being directly sellable once a product
               carries selling options — a picker gates every sale instead.

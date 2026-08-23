@@ -162,3 +162,24 @@ describe('InventoryListPage thumbnails', () => {
     expect(screen.getByLabelText('No image')).toBeInTheDocument();
   });
 });
+
+describe('InventoryListPage cost visibility', () => {
+  // viewProductCost is admin-only (and password-gated on mobile); the web list
+  // showed the Cost column to every role that could view inventory.
+  it('hides the Cost column from staff', () => {
+    signIn(UserRole.staff);
+    harness([widget()]);
+
+    expect(screen.queryByText('Cost')).toBeNull();
+    expect(screen.queryByText(formatMoney(110))).toBeNull();
+  });
+
+  it('shows the Cost column to admins', () => {
+    signIn(UserRole.admin);
+    harness([widget()]);
+
+    expect(screen.getByText('Cost')).toBeInTheDocument();
+    expect(screen.getByText(formatMoney(110))).toBeInTheDocument();
+  });
+});
+

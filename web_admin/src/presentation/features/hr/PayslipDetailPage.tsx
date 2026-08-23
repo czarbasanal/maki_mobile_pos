@@ -18,10 +18,13 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 import { downloadElementAsJpg } from '@/core/utils/downloadJpg';
 import { PayslipCard } from './PayslipCard';
 
-// Lowercases and replaces runs of non-alphanumerics with a single dash,
-// trimming any leading/trailing dash left behind.
+// Lowercases, strips diacritics to their base letters (ñ→n, é→e — Filipino
+// names must not lose characters to the filename), then replaces runs of
+// remaining non-alphanumerics with a single dash, trimming the edges.
 function slugify(value: string): string {
   return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
@@ -34,6 +37,8 @@ export function PayslipDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isRenderingJpg, setIsRenderingJpg] = useState(false);
+  const [jpgError, setJpgError] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -87,18 +92,26 @@ export function PayslipDetailPage() {
           backLabel="Back to payslips"
         />
         <div className="flex flex-wrap items-center gap-tk-sm">
+          {/* html2canvas can take a beat on a long slip and can fail outright
+              (fonts, detached nodes) — silence either way reads as a broken
+              button, so the render gets a busy state and a visible error. */}
           <button
             type="button"
+            disabled={isRenderingJpg}
             onClick={() => {
-              if (!cardRef.current) return;
-              void downloadElementAsJpg(
+              if (!cardRef.current || isRenderingJpg) return;
+              setJpgError(null);
+              setIsRenderingJpg(true);
+              downloadElementAsJpg(
                 cardRef.current,
                 `payslip-${slugify(payslip.employeeName)}-${payslip.periodStart}.jpg`,
-              );
+              )
+                .catch(() => setJpgError('Could not create the JPG — try again.'))
+                .finally(() => setIsRenderingJpg(false));
             }}
-            className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
           >
-            Download JPG
+            {isRenderingJpg ? 'Preparing…' : 'Download JPG'}
           </button>
           <button
             type="button"
@@ -111,6 +124,7 @@ export function PayslipDetailPage() {
       </div>
 
       {del.error ? <p className="text-bodySmall text-error-dark">{del.error.message}</p> : null}
+      {jpgError ? <p className="text-bodySmall text-error-dark">{jpgError}</p> : null}
 
       <div ref={cardRef}>
         <PayslipCard payslip={payslip} />
