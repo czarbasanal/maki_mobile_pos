@@ -12,11 +12,11 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import type { Product } from '@/domain/entities';
 
-function signIn() {
+function signIn(role: UserRole = UserRole.admin) {
   useAuthStore.setState({
     user: {
       id: 'u1', email: 'a@b.co', displayName: 'Tester',
-      role: UserRole.admin, isActive: true,
+      role, isActive: true,
     } as never,
     status: 'signedIn',
   });
@@ -138,3 +138,25 @@ describe('ProductDrawer', () => {
     expect(await screen.findByText('Product not found')).toBeInTheDocument();
   });
 });
+
+describe('ProductDrawer cost visibility', () => {
+  it('hides Cost and Margin from staff — price stays', async () => {
+    signIn(UserRole.staff);
+    harness();
+    await screen.findByRole('dialog', { name: /Brake shoe/ });
+
+    expect(screen.queryByText('Cost')).toBeNull();
+    expect(screen.queryByText('Margin')).toBeNull();
+    expect(screen.getByText('Price')).toBeInTheDocument();
+  });
+
+  it('shows Cost and Margin to admins', async () => {
+    signIn(UserRole.admin);
+    harness();
+    await screen.findByRole('dialog', { name: /Brake shoe/ });
+
+    expect(screen.getByText('Cost')).toBeInTheDocument();
+    expect(screen.getByText('Margin')).toBeInTheDocument();
+  });
+});
+

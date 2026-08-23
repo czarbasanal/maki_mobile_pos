@@ -196,3 +196,50 @@ describe('payslip delete activity logging', () => {
     expect(entry.action.toLowerCase()).toContain('deleted payslip');
   });
 });
+
+describe('payslip JPG download — feedback and names', () => {
+  it('keeps diacritics as letters in the filename instead of dropping them', async () => {
+    // 'Muñoz' used to slugify to 'mu-oz' — names are the one thing a payslip
+    // is about, so ñ→n, é→e rather than a hole.
+    harness({ payslip: payslip({ employeeName: 'Ana Muñoz' }) });
+    await screen.findByText('NET PAY');
+
+    await userEvent.click(screen.getByRole('button', { name: /download jpg/i }));
+
+    await waitFor(() => expect(downloadElementAsJpg).toHaveBeenCalled());
+    const [, filename] = vi.mocked(downloadElementAsJpg).mock.calls[0];
+    expect(filename).toContain('ana-munoz');
+  });
+
+  it('shows a busy state while the JPG renders and re-enables after', async () => {
+    let resolveRender!: () => void;
+    vi.mocked(downloadElementAsJpg).mockReturnValueOnce(
+      new Promise<void>((res) => { resolveRender = res; }),
+    );
+    harness();
+    await screen.findByText('NET PAY');
+
+    await userEvent.click(screen.getByRole('button', { name: /download jpg/i }));
+
+    const busy = screen.getByRole('button', { name: /preparing/i });
+    expect(busy).toBeDisabled();
+
+    resolveRender();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /download jpg/i })).not.toBeDisabled(),
+    );
+  });
+
+  it('surfaces a failed render instead of silently doing nothing', async () => {
+    vi.mocked(downloadElementAsJpg).mockRejectedValueOnce(new Error('canvas boom'));
+    harness();
+    await screen.findByText('NET PAY');
+
+    await userEvent.click(screen.getByRole('button', { name: /download jpg/i }));
+
+    expect(
+      await screen.findByText(/could not create the jpg/i),
+    ).toBeInTheDocument();
+  });
+});
+

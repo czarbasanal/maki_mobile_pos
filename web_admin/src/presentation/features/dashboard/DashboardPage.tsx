@@ -2,6 +2,8 @@
 // in a grid, recent sales + inventory side-by-side.
 
 import { useEffect, useMemo } from 'react';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
+import { useAuthStore } from '@/presentation/stores/authStore';
 import { Link } from 'react-router-dom';
 import {
   ArrowTrendingUpIcon,
@@ -25,6 +27,9 @@ export function DashboardPage() {
   const summary = useMemo(() => summarizeSales(sales ?? []), [sales]);
   const revenue = summary.netAmount + summary.laborRevenue + summary.feesRevenue;
   const profit = summary.totalProfit;
+  const user = useAuthStore((s) => s.user);
+  const canSeeCost =
+    !!user && hasPermission(user.role, Permission.viewProductCost);
   const count = summary.totalSalesCount;
   const averageOrder = count === 0 ? 0 : revenue / count;
 
@@ -63,18 +68,25 @@ export function DashboardPage() {
             icon={BanknotesIcon}
             tone="yellow"
           />
-          <SummaryCard
-            title="Total COGS"
-            value={formatMoney(summary.totalCost)}
-            icon={CubeIcon}
-            tone="orange"
-          />
-          <SummaryCard
-            title="Gross profit"
-            value={formatMoney(profit)}
-            icon={ArrowTrendingUpIcon}
-            tone="green"
-          />
+          {/* COGS and profit derive from product costs — admin-only, matching
+              the phone dashboard, which hides this whole block from other
+              roles. Sales/avg-order stay: they're register figures. */}
+          {canSeeCost ? (
+            <SummaryCard
+              title="Total COGS"
+              value={formatMoney(summary.totalCost)}
+              icon={CubeIcon}
+              tone="orange"
+            />
+          ) : null}
+          {canSeeCost ? (
+            <SummaryCard
+              title="Gross profit"
+              value={formatMoney(profit)}
+              icon={ArrowTrendingUpIcon}
+              tone="green"
+            />
+          ) : null}
           <SummaryCard
             title="Avg order"
             value={formatMoney(averageOrder)}

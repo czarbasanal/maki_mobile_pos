@@ -16,6 +16,8 @@ import {
 import { useProduct } from '@/presentation/hooks/useProduct';
 import { useReactivateProduct } from '@/presentation/hooks/useProductMutations';
 import { getStockStatus, StockStatus } from '@/domain/entities';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
+import { useAuthStore } from '@/presentation/stores/authStore';
 import { displaySku } from '@/domain/products/sku';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -43,6 +45,11 @@ export function ProductDrawer() {
   const { data: product, isLoading, error } = useProduct(id);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const reactivate = useReactivateProduct();
+  const user = useAuthStore((s) => s.user);
+  // Cost (and margin, which reveals it) is admin-only — the phone hides it
+  // behind a password; the web must not hand it to anyone who can browse.
+  const canSeeCost =
+    !!user && hasPermission(user.role, Permission.viewProductCost);
 
   useEffect(() => {
     document.title = product ? `${product.name} · Inventory` : 'Inventory';
@@ -128,13 +135,17 @@ export function ProductDrawer() {
             </Card>
             <Card title="Pricing">
               <Field label="Price" value={formatMoney(product.price)} />
-              <Field label="Cost" value={formatMoney(product.cost)} />
-              <Field
-                label="Margin"
-                value={`${formatMoney(product.price - product.cost)} (${(
-                  product.price > 0 ? ((product.price - product.cost) / product.price) * 100 : 0
-                ).toFixed(1)}%)`}
-              />
+              {canSeeCost ? (
+                <>
+                  <Field label="Cost" value={formatMoney(product.cost)} />
+                  <Field
+                    label="Margin"
+                    value={`${formatMoney(product.price - product.cost)} (${(
+                      product.price > 0 ? ((product.price - product.cost) / product.price) * 100 : 0
+                    ).toFixed(1)}%)`}
+                  />
+                </>
+              ) : null}
             </Card>
             <Card title="Details">
               <Field label="Category" value={product.category ?? '—'} />

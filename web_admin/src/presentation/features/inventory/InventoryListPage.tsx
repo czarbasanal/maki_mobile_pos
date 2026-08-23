@@ -18,6 +18,7 @@ import { cn } from '@/core/utils/cn';
 import { ProductImage } from '@/presentation/components/common/ProductImage';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 
 const STOCK_LABEL: Record<StockStatus, string> = {
   [StockStatus.inStock]: 'In stock',
@@ -87,6 +88,10 @@ export function InventoryListPage() {
 
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === UserRole.admin;
+  // viewProductCost is admin-only (and password-gated on the phone) — per-item
+  // cost is the shop's secret, so the column only renders for holders.
+  const canSeeCost =
+    !!user && hasPermission(user.role, Permission.viewProductCost);
   const totals = useMemo(() => stockTotals(filtered), [filtered]);
 
   // If the selected category drops out of the option set (e.g. it only existed
@@ -182,7 +187,7 @@ export function InventoryListPage() {
                 <Th>Category</Th>
                 <Th>Stock</Th>
                 <Th className="text-right">Price</Th>
-                <Th className="text-right">Cost</Th>
+                {canSeeCost ? <Th className="text-right">Cost</Th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-light-hairline">
@@ -211,7 +216,9 @@ export function InventoryListPage() {
                       </span>
                     </Td>
                     <Td className="text-right text-light-text">{formatMoney(p.price)}</Td>
-                    <Td className="text-right text-light-text">{formatMoney(p.cost)}</Td>
+                    {canSeeCost ? (
+                      <Td className="text-right text-light-text">{formatMoney(p.cost)}</Td>
+                    ) : null}
                   </tr>
                 );
               })}
