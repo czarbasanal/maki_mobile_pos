@@ -1,5 +1,6 @@
 import type { ProductCreateInput } from '../../domain/repositories/ProductRepository';
 import type { ReceivingItem } from '../../domain/entities';
+import type { SellingOption } from '../../domain/entities/SellingOption';
 import type { CostCode } from '../../domain/entities/CostCode';
 import { encodeCostCode } from '../../domain/entities/CostCode';
 import type { ReceivableItem } from '../../domain/receiving/receivableItem';
@@ -36,6 +37,9 @@ function productInput(
     sku: string; name: string; cost: number; costCode: string; price: number; quantity: number;
     reorderLevel: number; unit: string; category: string | null; supplierId: string | null;
     supplierName: string | null; baseSku: string | null; variationNumber: number | null;
+    // Inherited by a VARIATION from the product it varies; a genuinely new
+    // product has nothing to inherit and leaves both at their defaults.
+    imageUrl?: string | null; sellingOptions?: SellingOption[];
   },
   actor: ReceiveContext['actor'],
 ): ProductCreateInput {
@@ -45,8 +49,9 @@ function productInput(
     quantity: p.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
     supplierId: p.supplierId, supplierName: p.supplierName, isActive: true,
     createdBy: actor.id, updatedBy: actor.id, createdByName: actorName, updatedByName: actorName,
-    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [], sellingOptions: [],
-    category: p.category, imageUrl: null, notes: null,
+    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [],
+    sellingOptions: p.sellingOptions ?? [],
+    category: p.category, imageUrl: p.imageUrl ?? null, notes: null,
     // searchKeywords intentionally omitted — buildProductWrites generates them.
   };
 }
@@ -99,6 +104,7 @@ export function planReceive(
           quantity: rec.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
           category: p.category, supplierId: p.supplierId, supplierName: p.supplierName,
           baseSku: base, variationNumber: n,
+          imageUrl: p.imageUrl, sellingOptions: p.sellingOptions,
         }, ctx.actor),
         priceHistory: { price: p.price, cost: rec.cost, reason: 'receiving' },
       });

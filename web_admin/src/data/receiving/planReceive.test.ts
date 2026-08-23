@@ -57,6 +57,35 @@ describe('planReceive', () => {
     expect(plan.items[0]).toMatchObject({ productId: 'p1', sku: 'SP-1', unitCost: 200, isNewVariation: true, newProductId: 'prod-1' });
   });
 
+  it('mismatch → the variation carries the base product’s image and selling options', () => {
+    // Full parity with mobile's createVariation and the New Product form: a
+    // cost variation is the same physical part, so it keeps the photo and the
+    // pack sizes it can be sold in.
+    const p = product({
+      id: 'p1', sku: 'SP', cost: 180,
+      imageUrl: 'https://example.test/sp.jpg',
+      sellingOptions: [{ id: 'o1', label: 'Half set', pieces: 2, price: 130 }],
+    });
+    const plan = planReceive(
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }],
+      ctx({ knownSkus: ['SP'] }), counter(),
+    );
+    expect(plan.creates[0].input.imageUrl).toBe('https://example.test/sp.jpg');
+    expect(plan.creates[0].input.sellingOptions).toEqual([
+      { id: 'o1', label: 'Half set', pieces: 2, price: 130 },
+    ]);
+  });
+
+  it('new → a genuinely new product still starts with no image or selling options', () => {
+    // Only a VARIATION inherits; a brand-new product has nothing to inherit from.
+    const plan = planReceive(
+      [{ ref: 1, kind: 'new', sku: 'SQ', autoGenerateSku: false, name: 'Squid', category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1 }],
+      ctx(), counter(),
+    );
+    expect(plan.creates[0].input.imageUrl).toBeNull();
+    expect(plan.creates[0].input.sellingOptions).toEqual([]);
+  });
+
   it('two mismatches of the same base allocate SP-1 then SP-2 (no self-collision)', () => {
     const p = product({ id: 'p1', sku: 'SP', cost: 180 });
     const plan = planReceive(

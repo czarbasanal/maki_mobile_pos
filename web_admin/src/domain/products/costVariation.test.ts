@@ -130,7 +130,7 @@ describe('buildVariationInput', () => {
     // Pinned on purpose. Both docs then reference products/{baseId}/main.jpg,
     // so removing the BASE image breaks the variation's photo — an accepted
     // trade (a variation is the same physical part) rather than an oversight.
-    // Web receiving does the opposite and spawns variations with no image.
+    // Both web receiving paths do the same — see planReceive.test.ts.
     const input = buildVariationInput(product(), opts);
     expect(input.imageUrl).toBe('https://example.test/img.png');
   });

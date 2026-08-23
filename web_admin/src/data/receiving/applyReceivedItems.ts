@@ -1,4 +1,5 @@
 import type { Product, ReceivingItem } from '../../domain/entities';
+import type { SellingOption } from '../../domain/entities/SellingOption';
 import type { ProductCreateInput, ProductRepository } from '../../domain/repositories/ProductRepository';
 import type { ReceivableItem } from '../../domain/receiving/receivableItem';
 import type { CostCode } from '../../domain/entities/CostCode';
@@ -30,6 +31,9 @@ interface NewProductFields {
   quantity: number; reorderLevel: number; unit: string; category: string | null;
   supplierId: string | null; supplierName: string | null;
   baseSku: string | null; variationNumber: number | null;
+  // Inherited by a VARIATION from the product it varies; a genuinely new
+  // product has nothing to inherit and leaves both at their defaults.
+  imageUrl?: string | null; sellingOptions?: SellingOption[];
 }
 
 function buildProductInput(p: NewProductFields, actor: ReceiveContext['actor']): ProductCreateInput {
@@ -40,8 +44,9 @@ function buildProductInput(p: NewProductFields, actor: ReceiveContext['actor']):
     supplierId: p.supplierId, supplierName: p.supplierName, isActive: true,
     createdBy: actor.id, updatedBy: actor.id, createdByName: actorName, updatedByName: actorName,
     searchKeywords: generateSearchKeywords([p.sku, p.name, p.category]),
-    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [], sellingOptions: [],
-    category: p.category, imageUrl: null, notes: null,
+    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [],
+    sellingOptions: p.sellingOptions ?? [],
+    category: p.category, imageUrl: p.imageUrl ?? null, notes: null,
   };
 }
 
@@ -87,6 +92,7 @@ export async function applyReceivedItems(
                 quantity: rec.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
                 category: p.category, supplierId: p.supplierId, supplierName: p.supplierName,
                 baseSku: base, variationNumber: n,
+                imageUrl: p.imageUrl, sellingOptions: p.sellingOptions,
               }, ctx.actor),
               ctx.actor.id,
             );
