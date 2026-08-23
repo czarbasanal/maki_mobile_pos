@@ -104,9 +104,8 @@ void main() {
     });
   });
 
-  group('monthCompletedDaysSummaryProvider', () {
-    test('queries the 1st through end of YESTERDAY, and follows the flip',
-        () async {
+  group('rolling7DaysSummaryProvider', () {
+    test('queries the last 7 completed days and follows the flip', () async {
       final repo = _MockSaleRepository();
       when(() => repo.getSalesSummary(
             startDate: any(named: 'startDate'),
@@ -121,30 +120,33 @@ void main() {
       ]);
       addTearDown(container.dispose);
       final sub =
-          container.listen(monthCompletedDaysSummaryProvider, (_, __) {});
+          container.listen(rolling7DaysSummaryProvider, (_, __) {});
       addTearDown(sub.close);
 
-      await container.read(monthCompletedDaysSummaryProvider.future);
+      await container.read(rolling7DaysSummaryProvider.future);
       var captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime(2026, 7, 1));
-      // End of the 23rd — today (the 24th) is NOT included.
+      // On the 24th: the 17th 00:00 → end of the 23rd. Today NOT included.
+      expect(captured[0], DateTime(2026, 7, 17));
       expect(captured[1], DateTime(2026, 7, 23, 23, 59, 59, 999));
 
       dayNotifier.set(DateTime(2026, 7, 25));
       await Future<void>.delayed(Duration.zero);
-      await container.read(monthCompletedDaysSummaryProvider.future);
+      await container.read(rolling7DaysSummaryProvider.future);
       captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime(2026, 7, 1));
+      expect(captured[0], DateTime(2026, 7, 18));
       expect(captured[1], DateTime(2026, 7, 24, 23, 59, 59, 999));
     });
 
-    test('issues NO query on the 1st — there are no completed days', () async {
+    test('the 1st of a month reaches back into the previous month — no reset',
+        () async {
+      // The old month-scoped average showed — every 1st. Rolling has no reset:
+      // on Aug 1 the window is Jul 25 00:00 → end of Jul 31.
       final repo = _MockSaleRepository();
       when(() => repo.getSalesSummary(
             startDate: any(named: 'startDate'),
@@ -155,25 +157,25 @@ void main() {
         currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
         saleRepositoryProvider.overrideWithValue(repo),
         businessDayProvider
-            .overrideWith(() => _FixedBusinessDayNotifier(DateTime(2026, 7, 1))),
+            .overrideWith(() => _FixedBusinessDayNotifier(DateTime(2026, 8, 1))),
       ]);
       addTearDown(container.dispose);
       final sub =
-          container.listen(monthCompletedDaysSummaryProvider, (_, __) {});
+          container.listen(rolling7DaysSummaryProvider, (_, __) {});
       addTearDown(sub.close);
 
-      final summary =
-          await container.read(monthCompletedDaysSummaryProvider.future);
+      await container.read(rolling7DaysSummaryProvider.future);
 
-      expect(summary.grossAmount, 0);
-      verifyNever(() => repo.getSalesSummary(
-            startDate: any(named: 'startDate'),
-            endDate: any(named: 'endDate'),
-          ));
+      final captured = verify(() => repo.getSalesSummary(
+            startDate: captureAny(named: 'startDate'),
+            endDate: captureAny(named: 'endDate'),
+          )).captured;
+      expect(captured[0], DateTime(2026, 7, 25));
+      expect(captured[1], DateTime(2026, 7, 31, 23, 59, 59, 999));
     });
   });
 
-  group('avgDailySalesProvider — completed-days average', () {
+  group('avgDailySalesProvider — rolling 7-day average', () {
     Future<AsyncValue<double?>> readAvg(DateTime day, double gross) async {
       final repo = _MockSaleRepository();
       when(() => repo.getSalesSummary(
@@ -198,21 +200,21 @@ void main() {
       ]);
       addTearDown(container.dispose);
       final sub =
-          container.listen(monthCompletedDaysSummaryProvider, (_, __) {});
+          container.listen(rolling7DaysSummaryProvider, (_, __) {});
       addTearDown(sub.close);
-      await container.read(monthCompletedDaysSummaryProvider.future);
+      await container.read(rolling7DaysSummaryProvider.future);
       return container.read(avgDailySalesProvider);
     }
 
-    test('divides by completed days only', () async {
-      // The 25th → 24 completed days. 2400 / 24 = 100.
-      final avg = await readAvg(DateTime(2026, 7, 25), 2400);
-      expect(avg.valueOrNull, 100);
+    test('always divides by 7 — a quiet day is a real ₱0 day', () async {
+      final avg = await readAvg(DateTime(2026, 7, 25), 2800);
+      expect(avg.valueOrNull, 400);
     });
 
-    test('returns null on the 1st rather than a misleading zero', () async {
-      final avg = await readAvg(DateTime(2026, 7, 1), 0);
-      expect(avg.valueOrNull, isNull);
+    test('the 1st averages last week like any other day — no more — reset',
+        () async {
+      final avg = await readAvg(DateTime(2026, 8, 1), 700);
+      expect(avg.valueOrNull, 100);
     });
 
     // Retained from the pre-existing `avgDailySalesProvider` group (not
@@ -223,7 +225,7 @@ void main() {
         () async {
       final dayNotifier = _FixedBusinessDayNotifier(DateTime(2026, 7, 15));
       final container = ProviderContainer(overrides: [
-        monthCompletedDaysSummaryProvider.overrideWith(
+        rolling7DaysSummaryProvider.overrideWith(
           (ref) async => const SalesSummary(
             totalSalesCount: 1,
             voidedSalesCount: 0,
@@ -239,13 +241,14 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      // Day 15 → 14 completed days → 1400 / 14 = 100.
+      // The divisor is a constant 7 now, so a clock flip must NOT change the
+      // average while the summary is held fixed — 1400 / 7 = 200 either day.
+      // (The flip re-querying the WINDOW is covered in the summary group.)
       final sub = container.listen(avgDailySalesProvider, (_, __) {});
       addTearDown(sub.close);
-      await container.read(monthCompletedDaysSummaryProvider.future);
-      expect(container.read(avgDailySalesProvider).valueOrNull, 100);
+      await container.read(rolling7DaysSummaryProvider.future);
+      expect(container.read(avgDailySalesProvider).valueOrNull, 200);
 
-      // Flip to day 8 (still July) → 7 completed days → 1400 / 7 = 200.
       dayNotifier.set(DateTime(2026, 7, 8));
       expect(container.read(avgDailySalesProvider).valueOrNull, 200);
     });

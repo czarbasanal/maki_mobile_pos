@@ -111,4 +111,25 @@ void main() {
       expect(avgDailyFromGross(0, 5), 0);
     });
   });
+
+  group('rolling7Days', () {
+    test('spans midnight 7 days ago through end of yesterday', () {
+      final r = rolling7Days(DateTime(2026, 7, 24, 14, 30));
+      expect(r.start, DateTime(2026, 7, 17));
+      expect(r.end, DateTime(2026, 7, 23, 23, 59, 59, 999));
+      expect(r.days, 7);
+    });
+
+    test('rolls cleanly across a month boundary', () {
+      final r = rolling7Days(DateTime(2026, 8, 3));
+      expect(r.start, DateTime(2026, 7, 27));
+      expect(r.end, DateTime(2026, 8, 2, 23, 59, 59, 999));
+    });
+
+    test('rolls cleanly across a year boundary', () {
+      final r = rolling7Days(DateTime(2027, 1, 2));
+      expect(r.start, DateTime(2026, 12, 26));
+      expect(r.end, DateTime(2027, 1, 1, 23, 59, 59, 999));
+    });
+  });
 }

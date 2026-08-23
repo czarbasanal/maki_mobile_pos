@@ -70,3 +70,28 @@ double avgDailyFromGross(double gross, int daysElapsed) {
   if (daysElapsed <= 0) return 0;
   return gross / daysElapsed;
 }
+
+/// The last 7 *completed* days: midnight seven days before [now] through the
+/// end of yesterday (23:59:59.999). Always exactly [days] = 7 — the divisor
+/// for the Avg Daily card. A rolling window, so unlike [MonthToDate] it never
+/// resets on the 1st; the y/m/d constructor rolls negative days correctly
+/// across month and year boundaries.
+class Rolling7Days {
+  final DateTime start;
+  final DateTime end;
+  final int days;
+
+  const Rolling7Days({
+    required this.start,
+    required this.end,
+    required this.days,
+  });
+}
+
+/// Computes the rolling last-7-completed-days range for [now].
+Rolling7Days rolling7Days(DateTime now) {
+  final start = DateTime(now.year, now.month, now.day - 7);
+  final end = DateTime(now.year, now.month, now.day)
+      .subtract(const Duration(milliseconds: 1));
+  return Rolling7Days(start: start, end: end, days: 7);
+}
