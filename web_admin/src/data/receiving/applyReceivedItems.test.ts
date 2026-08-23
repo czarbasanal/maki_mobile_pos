@@ -51,6 +51,7 @@ describe('applyReceivedItems', () => {
     const items: ReceivableItem[] = [{
       ref: 1, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid',
       category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1,
+      autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
     }];
     const repo = fakeRepo();
     const out = await applyReceivedItems(items, repo, ctx());
@@ -80,6 +81,7 @@ describe('applyReceivedItems', () => {
     const items: ReceivableItem[] = [{
       ref: 1, kind: 'new', sku: 'SQ', autoGenerateSku: false, name: 'Squid',
       category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1,
+      autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
     }];
     const repo = fakeRepo();
     await applyReceivedItems(items, repo, ctx());
@@ -150,7 +152,7 @@ describe('applyReceivedItems', () => {
       recordPriceChange: vi.fn(async () => {}),
     });
     const out = await applyReceivedItems(
-      [{ ref: 9, kind: 'new', sku: 'X', autoGenerateSku: false, name: 'X', category: null, unit: 'pcs', cost: 1, price: 2, quantity: 1, reorderLevel: 0 }],
+      [{ ref: 9, kind: 'new', sku: 'X', autoGenerateSku: false, name: 'X', category: null, unit: 'pcs', cost: 1, price: 2, quantity: 1, reorderLevel: 0, autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [], }],
       repo, ctx(),
     );
     expect(out.items).toHaveLength(0);

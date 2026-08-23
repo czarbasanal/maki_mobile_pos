@@ -56,6 +56,8 @@ describe('classifiedToReceivable', () => {
     ).toEqual({
       ref: 7, kind: 'new', sku: 'GENERATE', autoGenerateSku: true, name: 'Squid',
       category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1,
+      // CSV rows carry none of the modal-only fields.
+      autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
     });
   });
 

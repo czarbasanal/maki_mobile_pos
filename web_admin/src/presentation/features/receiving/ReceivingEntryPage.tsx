@@ -1,29 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { useReceivingEntry, type NewProductSpec } from './useReceivingEntry';
-import { useActiveCategories } from '@/presentation/hooks/useCategories';
-import { CategoryKind } from '@/domain/categories/categoryKind';
-import { generateSku } from '@/domain/products/sku';
+import { useReceivingEntry } from './useReceivingEntry';
+import { NewProductDialog } from './NewProductDialog';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Product } from '@/domain/entities';
 
-const blankNew: NewProductSpec = {
-  name: '', sku: '', autoGenerateSku: true, category: null, unit: 'pcs',
-  cost: 0, price: 0, quantity: 1, reorderLevel: 0,
-};
 
 export function ReceivingEntryPage() {
   const entry = useReceivingEntry();
-  const { data: productCats } = useActiveCategories(CategoryKind.product);
-  const { data: units } = useActiveCategories(CategoryKind.unit);
 
   const [picked, setPicked] = useState<Product | null>(null);
   const [qty, setQty] = useState('1');
   const [cost, setCost] = useState('');
   const [showNew, setShowNew] = useState(false);
-  const [np, setNp] = useState<NewProductSpec>(blankNew);
 
   useEffect(() => {
     document.title = `${entry.isResuming ? 'Resume' : 'New'} receiving · MAKI POS Admin`;
@@ -44,15 +35,6 @@ export function ReceivingEntryPage() {
     setPicked(null);
   }
 
-  function confirmNew() {
-    const name = np.name.trim();
-    if (!name) return;
-    const sku = np.autoGenerateSku ? generateSku(name) : np.sku.trim();
-    if (!sku) return;
-    entry.addNew({ ...np, name, sku, autoGenerateSku: false });
-    setNp(blankNew);
-    setShowNew(false);
-  }
 
   return (
     <div className="space-y-tk-lg px-tk-xl py-tk-lg">
@@ -100,61 +82,13 @@ export function ReceivingEntryPage() {
           <h2 className="text-bodyMedium font-semibold text-light-text">Add items</h2>
           <button
             type="button"
-            onClick={() => { setShowNew((v) => !v); setPicked(null); }}
+            onClick={() => { setShowNew(true); setPicked(null); }}
             className="rounded-md border border-light-border px-tk-md py-[6px] text-bodySmall text-light-text hover:bg-light-subtle"
           >
             + New product
           </button>
         </div>
 
-        {showNew ? (
-          <div className="grid grid-cols-2 gap-tk-sm rounded-md border border-light-hairline bg-light-subtle p-tk-md md:grid-cols-3">
-            <Field label="Name">
-              <input className={inputCls} value={np.name}
-                onChange={(e) => setNp({ ...np, name: e.target.value })} />
-            </Field>
-            <Field label="SKU">
-              <div className="flex items-center gap-tk-xs">
-                <input className={inputCls} disabled={np.autoGenerateSku}
-                  value={np.autoGenerateSku ? '(auto)' : np.sku}
-                  onChange={(e) => setNp({ ...np, sku: e.target.value })} />
-                <label className="flex shrink-0 items-center gap-1 text-[11px] text-light-text-secondary">
-                  <input type="checkbox" checked={np.autoGenerateSku}
-                    onChange={(e) => setNp({ ...np, autoGenerateSku: e.target.checked })} />
-                  auto
-                </label>
-              </div>
-            </Field>
-            <Field label="Category">
-              <select className={inputCls} value={np.category ?? ''}
-                onChange={(e) => setNp({ ...np, category: e.target.value || null })}>
-                <option value="">—</option>
-                {(productCats ?? []).map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Unit">
-              <select className={inputCls} value={np.unit}
-                onChange={(e) => setNp({ ...np, unit: e.target.value })}>
-                {(units ?? []).map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
-                {(units ?? []).every((u) => u.name !== np.unit) ? <option value={np.unit}>{np.unit}</option> : null}
-              </select>
-            </Field>
-            <Field label="Cost"><input type="number" className={inputCls} value={np.cost || ''}
-              onChange={(e) => setNp({ ...np, cost: Number(e.target.value) })} /></Field>
-            <Field label="Price"><input type="number" className={inputCls} value={np.price || ''}
-              onChange={(e) => setNp({ ...np, price: Number(e.target.value) })} /></Field>
-            <Field label="Quantity"><input type="number" className={inputCls} value={np.quantity || ''}
-              onChange={(e) => setNp({ ...np, quantity: Number(e.target.value) })} /></Field>
-            <Field label="Reorder level"><input type="number" className={inputCls} value={np.reorderLevel || ''}
-              onChange={(e) => setNp({ ...np, reorderLevel: Number(e.target.value) })} /></Field>
-            <div className="col-span-2 flex items-end md:col-span-3">
-              <button type="button" onClick={confirmNew}
-                className="rounded-md bg-primary-dark px-tk-md py-[8px] text-bodySmall font-medium text-white hover:opacity-90">
-                Add new product
-              </button>
-            </div>
-          </div>
-        ) : (
           <div className="relative">
             <input
               value={entry.search}
@@ -176,7 +110,6 @@ export function ReceivingEntryPage() {
               </ul>
             ) : null}
           </div>
-        )}
 
         {picked ? (
           <div className="flex flex-wrap items-end gap-tk-sm rounded-md border border-light-hairline bg-light-subtle p-tk-md">
@@ -206,6 +139,12 @@ export function ReceivingEntryPage() {
       </section>
 
       {/* Items */}
+      <NewProductDialog
+        open={showNew}
+        onClose={() => setShowNew(false)}
+        onAdd={(spec) => entry.addNew(spec)}
+      />
+
       <section className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
         <table className="w-full text-bodySmall">
           <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">

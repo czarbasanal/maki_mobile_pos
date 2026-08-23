@@ -1,4 +1,5 @@
 import type { Product } from '../entities';
+import type { SellingOption } from '../entities/SellingOption';
 import type { ClassifiedReceivingRow } from './classifyReceivingRows';
 
 /** A line ready to be received, normalized so both the CSV path (classified
@@ -19,6 +20,13 @@ export type ReceivableItem = { ref: string | number } & (
       price: number;
       quantity: number;
       reorderLevel: number;
+      /** Set when auto-SKU is category-driven: `sku` is then only a peeked
+       *  preview, and the executing transaction re-scans from it under this
+       *  code. Null = legacy name-based generation (CSV rows). */
+      autoSkuCategoryCode: string | null;
+      barcodes: string[];
+      notes: string | null;
+      sellingOptions: SellingOption[];
     }
 );
 
@@ -38,5 +46,7 @@ export function classifiedToReceivable(row: ClassifiedReceivingRow): ReceivableI
     ref: r.rowNumber, kind: 'new', sku: r.sku, autoGenerateSku: r.autoGenerateSku,
     name: r.name, category: r.category, unit: r.unit, cost: r.cost, price: r.price,
     quantity: r.quantity, reorderLevel: r.reorderLevel,
+    // CSV rows carry none of the modal-only fields.
+    autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
   };
 }

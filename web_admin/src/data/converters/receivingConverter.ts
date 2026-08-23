@@ -47,6 +47,19 @@ function parseItems(value: unknown): ReceivingItem[] {
               autoGenerateSku: Boolean(
                 (it.pendingNewProduct as Record<string, unknown>).autoGenerateSku ?? false,
               ),
+              autoSkuCategoryCode:
+                ((it.pendingNewProduct as Record<string, unknown>).autoSkuCategoryCode as
+                  | string
+                  | null) ?? null,
+              barcodes:
+                ((it.pendingNewProduct as Record<string, unknown>).barcodes as string[]) ?? [],
+              notes:
+                ((it.pendingNewProduct as Record<string, unknown>).notes as string | null) ??
+                null,
+              sellingOptions:
+                ((it.pendingNewProduct as Record<string, unknown>).sellingOptions as
+                  | { id: string; label: string; pieces: number; price: number }[]
+                  | undefined) ?? [],
             }
           : null,
     };

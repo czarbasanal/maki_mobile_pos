@@ -19,6 +19,11 @@ export interface ReceiveContext {
 export interface PlannedCreate {
   productId: string;
   input: ProductCreateInput;
+  /** Set for category-coded auto-SKU rows: `input.sku` is a peeked preview,
+   *  and executeReceivePlan scans forward from it under this code inside the
+   *  transaction — mirroring FirestoreProductRepository.create's auto path.
+   *  Null = the sku is literal (manual, variation, or legacy name-based). */
+  autoSkuCategoryCode: string | null;
   priceHistory: { price: number; cost: number; reason: string };
 }
 
@@ -37,9 +42,10 @@ function productInput(
     sku: string; name: string; cost: number; costCode: string; price: number; quantity: number;
     reorderLevel: number; unit: string; category: string | null; supplierId: string | null;
     supplierName: string | null; baseSku: string | null; variationNumber: number | null;
-    // Inherited by a VARIATION from the product it varies; a genuinely new
-    // product has nothing to inherit and leaves both at their defaults.
+    // Inherited by a VARIATION from the product it varies, or supplied by the
+    // receiving modal for a NEW product; absent everywhere else.
     imageUrl?: string | null; sellingOptions?: SellingOption[];
+    barcodes?: string[]; notes?: string | null;
   },
   actor: ReceiveContext['actor'],
 ): ProductCreateInput {
@@ -49,9 +55,10 @@ function productInput(
     quantity: p.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
     supplierId: p.supplierId, supplierName: p.supplierName, isActive: true,
     createdBy: actor.id, updatedBy: actor.id, createdByName: actorName, updatedByName: actorName,
-    baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [],
+    baseSku: p.baseSku, variationNumber: p.variationNumber,
+    barcodes: p.barcodes ?? [],
     sellingOptions: p.sellingOptions ?? [],
-    category: p.category, imageUrl: p.imageUrl ?? null, notes: null,
+    category: p.category, imageUrl: p.imageUrl ?? null, notes: p.notes ?? null,
     // searchKeywords intentionally omitted — buildProductWrites generates them.
   };
 }
@@ -99,6 +106,7 @@ export function planReceive(
       const productId = makeId();
       creates.push({
         productId,
+        autoSkuCategoryCode: null,
         input: productInput({
           sku, name: p.name, cost: rec.cost, costCode, price: p.price,
           quantity: rec.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
@@ -114,7 +122,13 @@ export function planReceive(
         unitCost: rec.cost, costCode, isNewVariation: true, newProductId: productId,
       }));
     } else {
-      const sku = rec.autoGenerateSku ? generateSku(rec.name) : rec.sku;
+      // Category-coded auto rows keep their peeked preview — the executing
+      // transaction re-scans under the code, so a stale preview can't fail
+      // the receiving. The name-based generator survives only for legacy
+      // CSV auto rows, which carry no category code.
+      const sku = rec.autoGenerateSku && rec.autoSkuCategoryCode == null
+          ? generateSku(rec.name)
+          : rec.sku;
       knownSkus.push(sku);
       const costCode = encodeCostCode(ctx.cipher, rec.cost);
       const productId = makeId();
@@ -125,7 +139,9 @@ export function planReceive(
           quantity: rec.quantity, reorderLevel: rec.reorderLevel, unit: rec.unit,
           category: rec.category, supplierId: ctx.supplier?.id ?? null,
           supplierName: ctx.supplier?.name ?? null, baseSku: null, variationNumber: null,
+          barcodes: rec.barcodes, notes: rec.notes, sellingOptions: rec.sellingOptions,
         }, ctx.actor),
+        autoSkuCategoryCode: rec.autoGenerateSku ? rec.autoSkuCategoryCode : null,
         priceHistory: { price: rec.price, cost: rec.cost, reason: 'Initial price' },
       });
       newProducts += 1;
