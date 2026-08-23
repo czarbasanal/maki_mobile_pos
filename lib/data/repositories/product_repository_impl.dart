@@ -815,8 +815,17 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final baseSku = originalProduct.baseSku ?? originalProduct.sku;
       const maxAttempts = 5;
+      // Rises past every number that turned out to be taken, guaranteeing a
+      // strictly increasing candidate. getNextVariationNumber reads the
+      // structured `variationNumber` field while createProduct collides on the
+      // SKU *claim*, so a `<base>-N` claimed by a product carrying no variation
+      // number (hand-typed, or from the bulk import) would otherwise be
+      // re-proposed on every attempt — the retry would make no progress and
+      // that base could never be varied at all.
+      var floor = 0;
       for (var attempt = 0; attempt < maxAttempts; attempt++) {
-        final variationNum = await getNextVariationNumber(baseSku);
+        final nextFree = await getNextVariationNumber(baseSku);
+        final variationNum = nextFree > floor ? nextFree : floor + 1;
         final newSku = SkuGenerator.generateVariation(baseSku, variationNum);
 
         final variation = originalProduct.copyWith(
@@ -842,8 +851,11 @@ class ProductRepositoryImpl implements ProductRepository {
             createdByName: createdByName,
           );
         } on DuplicateSkuException {
-          // A concurrent writer claimed this variation number; once their
-          // product commits, getNextVariationNumber advances. Recompute & retry.
+          // Either a concurrent writer claimed this number (once their product
+          // commits, getNextVariationNumber advances on its own) or the SKU is
+          // held by a product with no variation number, which it never will.
+          // The floor covers the second case.
+          floor = variationNum;
         }
       }
       throw DatabaseException(
