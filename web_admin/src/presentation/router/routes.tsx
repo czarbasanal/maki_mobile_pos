@@ -31,7 +31,8 @@ import { ReceivingEntryPage } from '@/presentation/features/receiving/ReceivingE
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
 import { ReorderSuggestionsPage } from '@/presentation/features/inventory/ReorderSuggestionsPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
-import { InventoryDetailPage } from '@/presentation/features/inventory/InventoryDetailPage';
+import { ProductDrawer } from '@/presentation/features/inventory/ProductDrawer';
+import { ProductEditDrawer } from '@/presentation/features/inventory/ProductEditDrawer';
 import { InventoryFormPage } from '@/presentation/features/inventory/InventoryFormPage';
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
@@ -56,6 +57,11 @@ function HrPayslipDetailRedirect() {
 }
 
 // Drafts renamed to Job Orders — these keep old bookmarks/links alive.
+function ProductEditRedirect() {
+  const { id = '' } = useParams();
+  return <Navigate to={`/inventory/${id}/edit`} replace />;
+}
+
 function JobOrderDetailRedirect() {
   const { id = '' } = useParams();
   return <Navigate to={`${RoutePaths.jobOrders}/${id}`} replace />;
@@ -83,10 +89,18 @@ export const router = createBrowserRouter(
         { path: RoutePaths.checkout, element: <CheckoutPage /> },
         { path: RoutePaths.jobOrders, element: <JobOrdersPage /> },
         { path: RoutePaths.jobOrderEdit, element: <JobOrderEditPage /> },
-        { path: RoutePaths.inventory, element: <InventoryListPage /> },
+        // The product view is a drawer rendered OVER the list, so it is a
+        // child route: the list stays mounted and keeps its scroll, filters
+        // and page. Static siblings like /inventory/add outrank ':id'.
+        {
+          path: RoutePaths.inventory,
+          element: <InventoryListPage />,
+          children: [
+            { path: ':id', element: <ProductDrawer /> },
+            { path: ':id/edit', element: <ProductEditDrawer /> },
+          ],
+        },
         { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
-        { path: RoutePaths.productEdit, element: <InventoryFormPage /> },
-        { path: RoutePaths.productDetail, element: <InventoryDetailPage /> },
         { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
         { path: RoutePaths.reorder, element: <ReorderSuggestionsPage /> },
         { path: RoutePaths.receiving, element: <ReceivingDashboardPage /> },
@@ -130,6 +144,8 @@ export const router = createBrowserRouter(
     { path: '/hr/payslips', element: <Navigate to={RoutePaths.hrPayslips} replace /> },
     { path: '/hr/payslips/:id', element: <HrPayslipDetailRedirect /> },
     { path: '/hr/settings', element: <Navigate to={RoutePaths.hrSettings} replace /> },
+    // Old edit bookmarks — product editing moved into the drawer.
+    { path: '/inventory/edit/:id', element: <ProductEditRedirect /> },
     // Old /drafts bookmarks — Drafts renamed to Job Orders.
     { path: '/drafts', element: <Navigate to={RoutePaths.jobOrders} replace /> },
     { path: '/drafts/:id', element: <JobOrderDetailRedirect /> },

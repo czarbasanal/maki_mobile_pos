@@ -143,3 +143,22 @@ describe('InventoryListPage SKU cell', () => {
     expect(screen.getByText('A1')).toBeInTheDocument();
   });
 });
+
+describe('InventoryListPage thumbnails', () => {
+  it('shows each product’s photo in its row', () => {
+    harness([widget({ imageUrl: 'https://example.test/widget.jpg' })]);
+
+    expect(screen.getByRole('img', { name: 'Widget' })).toHaveAttribute(
+      'src',
+      'https://example.test/widget.jpg',
+    );
+  });
+
+  it('shows a placeholder for a product with no photo yet', () => {
+    // Most of the catalogue was bulk imported without images, so this is the
+    // common row, not the exception — it must not look like a load error.
+    harness([widget({ imageUrl: null })]);
+
+    expect(screen.getByLabelText('No image')).toBeInTheDocument();
+  });
+});

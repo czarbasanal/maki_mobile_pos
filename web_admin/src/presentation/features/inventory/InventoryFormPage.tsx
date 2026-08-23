@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, generatePath } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { AdjustmentsHorizontalIcon, ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useProduct } from '@/presentation/hooks/useProduct';
 import {
   useCreateProduct,
   useCreateVariation,
+  useDeactivateProduct,
   useUpdateProduct,
 } from '@/presentation/hooks/useProductMutations';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
@@ -30,9 +31,11 @@ import {
 } from '@/domain/entities';
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { SellingOptionsEditor } from './SellingOptionsEditor';
+import { AdjustStockDialog } from './AdjustStockDialog';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
+import { ProductImage } from '@/presentation/components/common/ProductImage';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 import Cropper, { type Area } from 'react-easy-crop';
@@ -75,9 +78,20 @@ function withCurrent(names: string[], current: string | null): string[] {
   return names;
 }
 
-export function InventoryFormPage() {
+interface InventoryFormPageProps {
+  /** Rendered inside the product drawer: the drawer supplies the title, close
+   *  button and padding, so the form drops its own page chrome and returns to
+   *  the product view rather than the list. */
+  embedded?: boolean;
+}
+
+export function InventoryFormPage({ embedded = false }: InventoryFormPageProps = {}) {
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
+  // Embedded, the form sits over the product view it was opened from — going
+  // back to the list would throw away more context than the user asked to
+  // leave.
+  const exitTo = embedded && id ? generatePath(RoutePaths.productDetail, { id }) : RoutePaths.inventory;
   const navigate = useNavigate();
   const repo = useProductRepo();
   const categoryRepo = useCategoryRepo();
@@ -88,6 +102,9 @@ export function InventoryFormPage() {
   const update = useUpdateProduct();
   const create = useCreateProduct();
   const createVariation = useCreateVariation();
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deactivate = useDeactivateProduct();
   /** Open when a typed SKU collided with a product carrying a different cost. */
   const [variationDialog, setVariationDialog] = useState<{
     open: boolean;
@@ -445,7 +462,7 @@ export function InventoryFormPage() {
               ? { kind: 'remove' }
               : { kind: 'keep' },
         });
-        navigate(RoutePaths.inventory);
+        navigate(exitTo);
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Save failed';
         if (msg.toLowerCase().includes('sku already exists')) setError('sku', { type: 'duplicate', message: msg });
@@ -480,7 +497,7 @@ export function InventoryFormPage() {
         // role check needed here, unlike the edit-mode patch above.
         sellingOptions,
       });
-      navigate(RoutePaths.inventory);
+      navigate(exitTo);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Save failed';
       if (msg.toLowerCase().includes('sku already exists')) {
@@ -515,17 +532,23 @@ export function InventoryFormPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className={embedded ? 'space-y-tk-lg' : 'space-y-tk-xl px-tk-xl py-tk-lg'}>
       <header className="space-y-tk-sm">
-        <Link
-          to={RoutePaths.inventory}
-          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Inventory
-        </Link>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          {isEditing ? 'Edit product' : 'New product'}
-        </h1>
+        {/* The drawer already shows the product name and a close button, so
+            embedding these would say the same thing twice. */}
+        {!embedded ? (
+          <Link
+            to={RoutePaths.inventory}
+            className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
+          >
+            <ArrowLeftIcon className="h-3.5 w-3.5" /> Inventory
+          </Link>
+        ) : null}
+        {!embedded ? (
+          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
+            {isEditing ? 'Edit product' : 'New product'}
+          </h1>
+        ) : null}
       </header>
 
       {mutationError && !errors.sku ? (
@@ -622,13 +645,7 @@ export function InventoryFormPage() {
           <Field label="Image"
             input={
               <div className="flex items-center gap-tk-md">
-                {shownImage ? (
-                  <img src={shownImage} alt="" className="h-16 w-16 rounded-md object-cover" />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-md border border-dashed border-light-border text-[11px] text-light-text-hint">
-                    No image
-                  </div>
-                )}
+                <ProductImage src={shownImage} alt={target?.name ?? 'Product'} size="md" />
                 <div className="flex items-center gap-tk-sm">
                   <label className="cursor-pointer rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
                     {shownImage ? 'Change' : 'Upload'}
@@ -678,7 +695,24 @@ export function InventoryFormPage() {
           </Section>
         ) : null}
 
-        <Section title="Stock & classification">
+        {/* Stock moves through an audited adjustment, not by typing over the
+            quantity — so the control sits on this section's heading rather
+            than among the fields, where it would read as an alternative to
+            them. Create mode has no stock to adjust yet. */}
+        <Section
+          title="Stock & classification"
+          action={
+            isEditing && target ? (
+              <button
+                type="button"
+                onClick={() => setAdjustOpen(true)}
+                className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-[4px] text-bodySmall text-light-text hover:bg-light-subtle"
+              >
+                <AdjustmentsHorizontalIcon className="h-3.5 w-3.5" /> Adjust stock
+              </button>
+            ) : null
+          }
+        >
           <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
             {!isEditing ? (
               <Field label="Initial quantity" error={errors.quantity?.message}
@@ -720,8 +754,20 @@ export function InventoryFormPage() {
             input={<textarea rows={3} className={cn(inputCls(!!errors.notes), 'resize-y leading-relaxed')} {...register('notes')} />} />
         </Section>
 
-        <div className="flex justify-end gap-tk-sm">
-          <Link to={RoutePaths.inventory}
+        <div className="flex flex-wrap items-center justify-end gap-tk-sm">
+          {/* Deleting lives here rather than in the read-only view, so the
+              destructive action sits behind the deliberate act of editing.
+              Pushed to the far left, away from Save. */}
+          {isEditing && target ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="mr-auto inline-flex items-center gap-tk-xs rounded-md border border-error-light px-tk-md py-tk-sm text-bodySmall text-error-dark hover:bg-error-light/40"
+            >
+              <TrashIcon className="h-4 w-4" /> Delete
+            </button>
+          ) : null}
+          <Link to={exitTo}
             className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
             Cancel
           </Link>
@@ -810,7 +856,7 @@ export function InventoryFormPage() {
                 try {
                   await createVariation.mutateAsync({ existing, cost, costCode });
                   setVariationDialog((v) => ({ ...v, open: false }));
-                  navigate(RoutePaths.inventory);
+                  navigate(exitTo);
                 } catch (e) {
                   setVariationDialog((v) => ({ ...v, open: false }));
                   setError('sku', {
@@ -827,6 +873,59 @@ export function InventoryFormPage() {
           </div>
         </div>
       </Dialog>
+
+      {isEditing && target ? (
+        <Dialog
+          open={confirmDelete}
+          onClose={() => { if (!deactivate.isPending) setConfirmDelete(false); }}
+          title="Delete Product?"
+          dismissable={!deactivate.isPending}
+        >
+          <div className="space-y-tk-md">
+            <p className="text-bodySmall text-light-text-secondary">
+              Delete “{target.name}”? This product will be hidden from POS and inventory lists.
+              Past sales and receivings that reference it remain intact.
+            </p>
+            {deactivate.error ? (
+              <p className="text-bodySmall text-error-dark">{deactivate.error.message}</p>
+            ) : null}
+            <div className="flex justify-end gap-tk-sm pt-tk-sm">
+              <button
+                type="button"
+                disabled={deactivate.isPending}
+                onClick={() => setConfirmDelete(false)}
+                className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deactivate.isPending}
+                onClick={async () => {
+                  await deactivate.mutateAsync({ id: target.id, name: target.name, sku: target.sku });
+                  setConfirmDelete(false);
+                  // The product is hidden from inventory now, so the product
+                  // view we came from would show a record the list no longer
+                  // carries — go back to the list instead.
+                  navigate(RoutePaths.inventory);
+                }}
+                className="inline-flex items-center gap-tk-xs rounded-md bg-error-dark px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:opacity-90 disabled:opacity-60"
+              >
+                {deactivate.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      ) : null}
+
+      {isEditing && target ? (
+        <AdjustStockDialog
+          key={adjustOpen ? target.id : 'closed'}
+          product={target}
+          open={adjustOpen}
+          onClose={() => setAdjustOpen(false)}
+        />
+      ) : null}
 
       <Dialog open={!!cropSrc} onClose={closeCrop} title="Crop image" dismissable>
         <div className="space-y-tk-md">
@@ -882,10 +981,22 @@ function Field({ label, error, input }: { label: string; error?: string; input: 
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  /** Optional control sitting opposite the heading, right-aligned. */
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="space-y-tk-sm">
-      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-light-text-hint">{title}</h2>
+      <div className="flex items-center justify-between gap-tk-md">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-light-text-hint">{title}</h2>
+        {action}
+      </div>
       <div className="space-y-tk-md rounded-lg border border-light-hairline bg-light-card p-tk-md">{children}</div>
     </section>
   );

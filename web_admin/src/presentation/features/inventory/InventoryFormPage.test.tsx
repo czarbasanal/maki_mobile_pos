@@ -259,9 +259,9 @@ describe('InventoryFormPage — edit-mode supplier mapping', () => {
         }}
       >
         <QueryClientProvider client={qc}>
-          <MemoryRouter initialEntries={['/inventory/edit/p1']}>
+          <MemoryRouter initialEntries={['/inventory/p1/edit']}>
             <Routes>
-              <Route path="/inventory/edit/:id" element={<InventoryFormPage />} />
+              <Route path="/inventory/:id/edit" element={<InventoryFormPage />} />
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
@@ -382,9 +382,9 @@ describe('InventoryFormPage — selling options', () => {
         }}
       >
         <QueryClientProvider client={qc}>
-          <MemoryRouter initialEntries={[`/inventory/edit/${target.id}`]}>
+          <MemoryRouter initialEntries={[`/inventory/${target.id}/edit`]}>
             <Routes>
-              <Route path="/inventory/edit/:id" element={<InventoryFormPage />} />
+              <Route path="/inventory/:id/edit" element={<InventoryFormPage />} />
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
