@@ -7,9 +7,12 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 /// Router used by the mobile app (admin / staff / cashier).
 ///
-/// Role gating is delegated to [RouteGuards.canAccess]; the dashboard's menu
-/// is also driven by [RouteGuards.getMenuItems] so each role sees only the
-/// tabs it can use.
+/// Role gating is delegated to [RouteGuards.canAccess], which decides what a
+/// role may REACH. What a role can SEE is built per screen — the dashboard
+/// composes its own tiles and Settings its own rows, each checking permissions
+/// inline. There is deliberately no central menu registry: one existed, drove
+/// no UI, and let supplier management look reachable for months while nothing
+/// rendered a way in.
 final mobileRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(currentUserProvider);
 

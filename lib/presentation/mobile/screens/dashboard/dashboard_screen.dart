@@ -81,18 +81,29 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
 
   bool get _isAdmin => _role == UserRole.admin;
 
-  bool get _canViewInventory =>
-      RolePermissions.hasPermission(_role, Permission.viewInventory);
+  /// Destinations this role may reach, from the single menu registry.
+  ///
+  /// The quick actions are a SUBSET of these, rendered with the dashboard's own
+  /// tiles. Reading the registry rather than re-deriving each permission here
+  /// means the menu and the tiles cannot disagree about who sees what — and a
+  /// destination added to the registry with no tile is caught by
+  /// test/config/router/menu_reachability_test.dart rather than silently
+  /// becoming unreachable.
+  late final Set<String> _menuPaths =
+      RouteGuards.getMenuItems(_role).map((m) => m.path).toSet();
 
-  bool get _canAccessReceiving =>
-      RolePermissions.hasPermission(_role, Permission.accessReceiving);
+  bool get _canViewInventory => _menuPaths.contains(RoutePaths.inventory);
 
-  bool get _canViewReports =>
-      RolePermissions.hasPermission(_role, Permission.viewSalesReports);
+  bool get _canAccessReceiving => _menuPaths.contains(RoutePaths.receiving);
 
-  bool get _canViewExpenses =>
-      RolePermissions.hasPermission(_role, Permission.viewExpenses);
+  bool get _canReorder => _menuPaths.contains(RoutePaths.purchaseOrders);
 
+  bool get _canViewReports => _menuPaths.contains(RoutePaths.reports);
+
+  bool get _canViewExpenses => _menuPaths.contains(RoutePaths.expenses);
+
+  /// Closing the day is an action on the current shift, not a place you go, so
+  /// it is not a menu destination and keeps its own permission check.
   bool get _canCloseDay =>
       RolePermissions.hasPermission(_role, Permission.closeDay);
 
@@ -251,7 +262,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
                 onInventory: _canViewInventory
                     ? () => context.go(RoutePaths.inventory)
                     : null,
-                onReorder: _canAccessReceiving
+                onReorder: _canReorder
                     ? () => context.go(RoutePaths.purchaseOrders)
                     : null,
                 onExpenses: _canViewExpenses
