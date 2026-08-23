@@ -75,7 +75,10 @@ describe('PayslipCard', () => {
   it('renders the shop header, employee, and period', () => {
     render(<PayslipCard payslip={payslip()} />);
 
-    expect(screen.getByText('MAKI MOTORCYCLE PARTS & SERVICES')).toBeInTheDocument();
+    // Two-line company name + address, per the design handoff.
+    expect(screen.getByText(/MAKI MOTORCYCLE PARTS/)).toBeInTheDocument();
+    expect(screen.getByText(/& ACCESSORIES SHOP/)).toBeInTheDocument();
+    expect(screen.getByText('Buanoy, Balamban, Cebu')).toBeInTheDocument();
     expect(screen.getByText('Juan Dela Cruz')).toBeInTheDocument();
   });
 
@@ -83,7 +86,10 @@ describe('PayslipCard', () => {
     render(<PayslipCard payslip={payslip()} />);
 
     expect(screen.getAllByText('✓')).toHaveLength(6);
-    expect(screen.getByText('off')).toBeInTheDocument();
+    // Day-off chips use the design's em-dash mark, with MON…SUN labels above.
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.getByText('MON')).toBeInTheDocument();
+    expect(screen.getByText('SUN')).toBeInTheDocument();
   });
 
   it('renders an absent day as ✗', () => {
@@ -124,7 +130,8 @@ describe('PayslipCard', () => {
 
     // Gross / total deductions.
     expect(screen.getByText(formatMoney(5564))).toBeInTheDocument();
-    expect(screen.getByText(formatMoney(720))).toBeInTheDocument();
+    // Total Deductions carries the design's minus prefix.
+    expect(screen.getByText(`– ${formatMoney(720)}`)).toBeInTheDocument();
 
     // Nonzero standard deduction lines render.
     expect(rowText('SSS')).toContain(formatMoney(45));
@@ -171,3 +178,20 @@ describe('PayslipCard', () => {
     expect(screen.getByText('Generated Jul 22, 2026')).toBeInTheDocument();
   });
 });
+
+describe('PayslipCard — design handoff details', () => {
+  it('shows the system-generated footnote', () => {
+    render(<PayslipCard payslip={payslip()} />);
+
+    expect(
+      screen.getByText('This is a System-Generated payslip. No signature required.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the MAKI logo in the header', () => {
+    render(<PayslipCard payslip={payslip()} />);
+
+    expect(screen.getByRole('img', { name: /maki/i })).toBeInTheDocument();
+  });
+});
+

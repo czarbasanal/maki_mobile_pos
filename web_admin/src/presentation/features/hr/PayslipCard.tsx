@@ -1,19 +1,38 @@
-// Receipt-style payslip. This is a deliberate placeholder layout — monochrome,
-// fixed-width — structured (header / attendance row / earnings / deductions /
-// totals / NET PAY / footer) so a future design handoff can restyle in place
-// without reshaping the markup. Mirrors reports/Receipt.tsx's plain-Line
-// idiom.
+// Receipt-style payslip, per design/design_handoff_payslip (hifi): dark
+// header with the yellow MAKI mark, centered employee block, dashed-rule
+// attendance chips, earnings/deductions rows, dashed totals, the dark
+// NET PAY bar with the brand-yellow label, and the system-generated
+// footnote. 380px receipt width (min(380px,100%) per the handoff's
+// production note). Inter for text, JetBrains Mono for notes — the two
+// faces the handoff names; the rest of the app stays on Roboto.
+//
+// One deliberate extension beyond the handoff: it defines only present (✓,
+// green) and off (—, gray) chips, but a payslip carries an Absences
+// deduction, so an indistinguishable absent day would hide the reason money
+// was docked. Absent renders on the off chip's gray with an ✗ in the
+// deduction red.
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/800.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
 
 import type { DayStatus, Payslip } from '@/domain/hr/types';
 import { formatMoney } from '@/core/utils/money';
+import makiLogo from '@/assets/maki_logo_yellow.png';
 
-const SHOP_NAME = 'MAKI MOTORCYCLE PARTS & SERVICES';
+const INTER = "'Inter', system-ui, sans-serif";
+const MONO = "'JetBrains Mono', monospace";
 
-const DAY_SYMBOL: Record<DayStatus, string> = {
-  present: '✓',
-  absent: '✗',
-  dayOff: 'off',
+const DAY_CHIP: Record<DayStatus, { bg: string; fg: string; mark: string }> = {
+  present: { bg: '#e8f0ec', fg: '#2f7d5b', mark: '✓' },
+  dayOff: { bg: '#f0f1f1', fg: '#b0b6b6', mark: '—' },
+  absent: { bg: '#f0f1f1', fg: '#b23b3b', mark: '✗' },
 };
+
+const WEEKDAY_LABEL = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 function parseIsoLocal(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
@@ -69,79 +88,156 @@ export function PayslipCard({ payslip }: { payslip: Payslip }) {
   const rows = deductionRows(payslip);
 
   return (
-    <div className="w-[420px] max-w-full space-y-tk-md bg-white p-tk-lg text-[13px] text-black">
-      <header className="space-y-tk-xs text-center">
-        <div className="text-[14px] font-bold uppercase tracking-wide">{SHOP_NAME}</div>
-        <div className="font-semibold">{payslip.employeeName}</div>
-        <div className="text-[12px] text-neutral-600">
-          {periodLabel(payslip.periodStart, payslip.periodEnd)}
+    <div
+      className="w-[380px] max-w-full overflow-hidden rounded-[14px] bg-white shadow-[0_20px_50px_-20px_rgba(18,28,29,.45),0_2px_8px_rgba(18,28,29,.08)]"
+      style={{ fontFamily: INTER }}
+    >
+      {/* Header — dark bar with the yellow mark */}
+      <header className="flex items-center gap-[14px] bg-[#121c1d] px-[28px] pb-[20px] pt-[22px]">
+        <img src={makiLogo} alt="Maki" className="h-10 w-10 shrink-0 object-contain" />
+        <div className="flex flex-col gap-[2px]">
+          <div className="text-[13px] font-bold leading-[1.15] tracking-[.01em] text-white">
+            MAKI MOTORCYCLE PARTS
+            <br />
+            &amp; ACCESSORIES SHOP
+          </div>
+          <div className="mt-[1px] text-[10px] font-medium tracking-[.02em] text-[#9aa5a6]">
+            Buanoy, Balamban, Cebu
+          </div>
         </div>
       </header>
 
-      <Divider />
-
-      <section className="grid grid-cols-7 gap-tk-xs text-center text-[11px]">
-        {payslip.days.map((day) => (
-          <div key={day.date} className="font-semibold">
-            {DAY_SYMBOL[day.status]}
+      <div className="px-[28px] pb-[20px] pt-[24px]">
+        {/* Employee */}
+        <div className="mb-[20px] text-center">
+          <div className="mb-[6px] text-[11px] font-semibold uppercase tracking-[.14em] text-[#8a9192]">
+            Payslip
           </div>
-        ))}
-      </section>
+          <div className="text-[19px] font-bold leading-[1.2] text-[#121c1d]">
+            {payslip.employeeName}
+          </div>
+          <div className="mt-[4px] text-[13px] text-[#6b7273]">
+            {periodLabel(payslip.periodStart, payslip.periodEnd)}
+          </div>
+        </div>
 
-      <Divider />
+        {/* Attendance */}
+        <div className="mb-[20px] border-y border-dashed border-[#cfd3d3] py-[14px]">
+          <div className="mb-[12px] text-center text-[10px] font-semibold uppercase tracking-[.14em] text-[#8a9192]">
+            Attendance
+          </div>
+          <div className="grid grid-cols-7 gap-[2px] text-center">
+            {payslip.days.map((day) => {
+              const chip = DAY_CHIP[day.status];
+              return (
+                <div key={day.date} className="flex flex-col items-center gap-[6px]">
+                  <div className="text-[10px] font-semibold tracking-[.04em] text-[#8a9192]">
+                    {WEEKDAY_LABEL[parseIsoLocal(day.date).getDay()]}
+                  </div>
+                  <div
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold"
+                    style={{ background: chip.bg, color: chip.fg }}
+                  >
+                    {chip.mark}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-      <section className="space-y-tk-xs">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wide">Earnings</h3>
-        <Row
-          label="Base Pay"
-          caption={`${inputs.hoursWorked}h × ${formatMoney(computed.hourlyRate)}/hr`}
-          value={formatMoney(computed.basePay)}
-        />
-        <Row label="Overtime" value={formatMoney(computed.overtimePay)} />
-        <Row label="Holiday Pay" value={formatMoney(computed.holidayPay)} />
-        <Row label="Incentives" value={formatMoney(inputs.incentives)} />
-      </section>
+        {/* Earnings */}
+        <div className="mb-[10px] text-[10px] font-bold uppercase tracking-[.14em] text-[#8a9192]">
+          Earnings
+        </div>
+        <div className="mb-[18px] flex flex-col gap-[9px]">
+          <Row
+            label="Base Pay"
+            note={`${inputs.hoursWorked}h × ${formatMoney(computed.hourlyRate)}/hr`}
+            value={formatMoney(computed.basePay)}
+          />
+          <Row label="Overtime" value={formatMoney(computed.overtimePay)} />
+          <Row label="Holiday Pay" value={formatMoney(computed.holidayPay)} />
+          <Row label="Incentives" value={formatMoney(inputs.incentives)} />
+        </div>
 
-      {rows.length > 0 ? (
-        <section className="space-y-tk-xs">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide">Deductions</h3>
-          {rows.map((row) => (
-            <Row key={row.key} label={row.label} value={formatMoney(row.amount)} />
-          ))}
-        </section>
-      ) : null}
+        {/* Deductions */}
+        {rows.length > 0 ? (
+          <>
+            <div className="mb-[10px] text-[10px] font-bold uppercase tracking-[.14em] text-[#8a9192]">
+              Deductions
+            </div>
+            <div className="mb-[18px] flex flex-col gap-[9px]">
+              {rows.map((row) => (
+                <Row key={row.key} label={row.label} value={formatMoney(row.amount)} deduction />
+              ))}
+            </div>
+          </>
+        ) : null}
 
-      <Divider />
+        {/* Totals */}
+        <div className="mb-[16px] flex flex-col gap-[8px] border-t border-dashed border-[#cfd3d3] pt-[14px]">
+          <div className="flex justify-between text-[14px] text-[#4a5152]">
+            <span>Gross</span>
+            <span className="tabular-nums">{formatMoney(computed.gross)}</span>
+          </div>
+          <div className="flex justify-between text-[14px] text-[#4a5152]">
+            <span>Total Deductions</span>
+            <span className="tabular-nums">{`– ${formatMoney(computed.totalDeductions)}`}</span>
+          </div>
+        </div>
 
-      <section className="space-y-tk-xs">
-        <Row label="Gross" value={formatMoney(computed.gross)} />
-        <Row label="Total Deductions" value={formatMoney(computed.totalDeductions)} />
-      </section>
-
-      <div className="flex items-baseline justify-between border-t-2 border-black pt-tk-sm text-[16px] font-bold">
-        <span>NET PAY</span>
-        <span className="tabular-nums">{formatMoney(computed.net)}</span>
+        {/* Net pay bar */}
+        <div className="flex items-center justify-between rounded-[10px] bg-[#121c1d] px-[18px] py-[16px]">
+          <span className="text-[12px] font-bold uppercase tracking-[.14em] text-[#f5b921]">
+            NET PAY
+          </span>
+          <span className="text-[23px] font-extrabold tabular-nums text-white">
+            {formatMoney(computed.net)}
+          </span>
+        </div>
       </div>
 
-      <p className="pt-tk-sm text-center text-[10px] text-neutral-500">
-        Generated {generatedDateLabel(payslip.createdAt)}
-      </p>
+      {/* Footer */}
+      <footer className="border-t border-dashed border-[#cfd3d3] px-[28px] pb-[22px] pt-[16px] text-center">
+        <div className="mb-[4px] text-[12px] text-[#6b7273]">
+          Generated {generatedDateLabel(payslip.createdAt)}
+        </div>
+        <div className="text-[10.5px] tracking-[.04em] text-[#a3a9a9]" style={{ fontFamily: MONO }}>
+          This is a System-Generated payslip. No signature required.
+        </div>
+      </footer>
     </div>
   );
 }
 
-function Divider() {
-  return <div className="border-t border-dashed border-neutral-400" />;
-}
-
-function Row({ label, caption, value }: { label: string; caption?: string; value: string }) {
+function Row({
+  label,
+  note,
+  value,
+  deduction = false,
+}: {
+  label: string;
+  note?: string;
+  value: string;
+  deduction?: boolean;
+}) {
   return (
-    <div className="flex items-baseline justify-between gap-tk-sm">
-      <span>
-        <span>{label}</span>
-        {caption ? <span className="ml-tk-xs text-[10px] text-neutral-500">{caption}</span> : null}
+    <div className="flex items-baseline justify-between gap-[12px]">
+      <span className="text-[14px] text-[#1e2829]">
+        {label}
+        {note ? (
+          <span className="ml-[6px] text-[11px] text-[#9aa0a0]" style={{ fontFamily: MONO }}>
+            {note}
+          </span>
+        ) : null}
       </span>
-      <span className="tabular-nums">{value}</span>
+      <span
+        className="whitespace-nowrap text-[14px] font-medium tabular-nums"
+        style={{ color: deduction ? '#b23b3b' : '#1e2829' }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
