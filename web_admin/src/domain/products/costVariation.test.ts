@@ -126,6 +126,15 @@ describe('buildVariationInput', () => {
     expect(input.isActive).toBe(true);
   });
 
+  it('carries the base product’s image URL, sharing the Storage object', () => {
+    // Pinned on purpose. Both docs then reference products/{baseId}/main.jpg,
+    // so removing the BASE image breaks the variation's photo — an accepted
+    // trade (a variation is the same physical part) rather than an oversight.
+    // Web receiving does the opposite and spawns variations with no image.
+    const input = buildVariationInput(product(), opts);
+    expect(input.imageUrl).toBe('https://example.test/img.png');
+  });
+
   it('is created active even when varying an archived product', () => {
     // Inheriting isActive:false would create a product the inventory list
     // hides by default: the user sees nothing, assumes the save failed, and

@@ -84,6 +84,17 @@ export function buildVariationInput(
     isActive: true,
     sellingOptions: existing.sellingOptions,
     category: existing.category,
+    // DELIBERATELY shared, not duplicated. Both docs end up pointing at
+    // `products/{baseId}/main.jpg`, so removing the BASE product's image
+    // deletes the file out from under every variation and their photos break.
+    // That is a known, accepted trade: a cost variation is the same physical
+    // part, and carrying the photo across is worth more day to day than the
+    // rare broken image. Copying the file instead would need a CORS config on
+    // the Storage bucket to fetch it client-side.
+    //
+    // Note this differs from a receiving-spawned variation on web, which gets
+    // `imageUrl: null` (planReceive.ts) — mobile's createVariation carries the
+    // URL over, and matching mobile is the intent here.
     imageUrl: existing.imageUrl,
     notes: existing.notes,
     createdBy: opts.actorId,
