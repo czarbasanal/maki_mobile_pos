@@ -4,7 +4,6 @@ import type { ProductCreateInput, ProductRepository } from '../../domain/reposit
 import type { ReceivableItem } from '../../domain/receiving/receivableItem';
 import type { CostCode } from '../../domain/entities/CostCode';
 import { encodeCostCode } from '../../domain/entities/CostCode';
-import { generateSku } from '../../domain/products/sku';
 import { generateSearchKeywords } from '../../domain/products/searchKeywords';
 import { nextVariationNumber, variationSku } from '../../domain/receiving/variations';
 import { DuplicateSkuError } from '../errors';
@@ -113,8 +112,15 @@ export async function applyReceivedItems(
           unitCost: rec.cost, costCode, isNewVariation: true, newProductId: created.id,
         }));
       } else {
-        // new
-        const sku = rec.autoGenerateSku ? generateSku(rec.name) : rec.sku;
+        // new. An auto row without a category code should have been rejected
+        // at classification — refuse here too rather than reviving the
+        // retired name-based generator.
+        if (rec.autoGenerateSku && rec.autoSkuCategoryCode == null) {
+          throw new Error(
+            'GENERATE needs a category with a code — this row has none.',
+          );
+        }
+        const sku = rec.sku;
         const costCode = encodeCostCode(ctx.cipher, rec.cost);
         const created = await products.create(
           buildProductInput({
@@ -124,6 +130,9 @@ export async function applyReceivedItems(
             supplierName: ctx.supplier?.name ?? null, baseSku: null, variationNumber: null,
           }, ctx.actor),
           ctx.actor.id,
+          // Engages create()'s in-transaction claim-scan: the placeholder SKU
+          // is only a floor, and the registry allocates the real sequence.
+          rec.autoSkuCategoryCode ?? undefined,
         );
         knownSkus.push(created.sku);
         await products.recordPriceChange(created.id, {

@@ -74,7 +74,7 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     const referenceNumber = await this.generateReferenceNumber();
 
     const receivables = rows
-      .map(classifiedToReceivable)
+      .map((row) => classifiedToReceivable(row, input.categoryCodes))
       .filter((r): r is NonNullable<typeof r> => r !== null);
     if (receivables.length > MAX_BULK_RECEIVING_ITEMS) {
       throw new Error(

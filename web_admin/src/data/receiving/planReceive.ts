@@ -4,7 +4,6 @@ import type { SellingOption } from '../../domain/entities/SellingOption';
 import type { CostCode } from '../../domain/entities/CostCode';
 import { encodeCostCode } from '../../domain/entities/CostCode';
 import type { ReceivableItem } from '../../domain/receiving/receivableItem';
-import { generateSku } from '../../domain/products/sku';
 import { nextVariationNumber, variationSku } from '../../domain/receiving/variations';
 
 export interface ReceiveContext {
@@ -122,13 +121,17 @@ export function planReceive(
         unitCost: rec.cost, costCode, isNewVariation: true, newProductId: productId,
       }));
     } else {
-      // Category-coded auto rows keep their peeked preview — the executing
-      // transaction re-scans under the code, so a stale preview can't fail
-      // the receiving. The name-based generator survives only for legacy
-      // CSV auto rows, which carry no category code.
-      const sku = rec.autoGenerateSku && rec.autoSkuCategoryCode == null
-          ? generateSku(rec.name)
-          : rec.sku;
+      // Category-coded auto rows keep their peeked/placeholder preview — the
+      // executing transaction re-scans under the code. An auto row WITHOUT a
+      // code should have been rejected upstream (modal validation, CSV
+      // classification); the retired name-based generator is gone, so refuse
+      // rather than invent a SKU.
+      if (rec.autoGenerateSku && rec.autoSkuCategoryCode == null) {
+        throw new Error(
+          `Row ${rec.ref}: GENERATE needs a category with a code — this row has none.`,
+        );
+      }
+      const sku = rec.sku;
       knownSkus.push(sku);
       const costCode = encodeCostCode(ctx.cipher, rec.cost);
       const productId = makeId();
