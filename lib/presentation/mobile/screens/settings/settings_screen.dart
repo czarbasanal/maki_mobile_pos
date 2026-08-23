@@ -79,6 +79,12 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () => context.push(RoutePaths.userLogs),
                 ),
                 SettingsTile(
+                  icon: LucideIcons.truck,
+                  title: 'Suppliers',
+                  subtitle: 'Add, edit, and manage suppliers',
+                  onTap: () => context.push(RoutePaths.suppliers),
+                ),
+                SettingsTile(
                   icon: LucideIcons.code,
                   title: 'Cost Code Settings',
                   subtitle: 'Configure cost encoding',
