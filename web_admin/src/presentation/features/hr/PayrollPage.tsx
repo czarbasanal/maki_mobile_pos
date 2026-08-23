@@ -8,7 +8,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-import { useEmployeeRepo, useHrSettingsRepo, usePayslipRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useEmployeeRepo, useHrSettingsRepo, usePayslipRepo } from '@/infrastructure/di/container';
+import { logActivity } from '@/application/activityLogger';
+import { ActivityType } from '@/domain/entities';
 import { useFirestoreSubscription } from '@/presentation/hooks/useFirestoreSubscription';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
@@ -77,6 +79,7 @@ export function PayrollPage() {
 
 function PayrollForm({ employees, settings }: { employees: Employee[]; settings: HrSettings }) {
   const payslipRepo = usePayslipRepo();
+  const activityLogRepo = useActivityLogRepo();
   const employeeRepo = useEmployeeRepo();
   const actor = useAuthStore((s) => s.user);
   const navigate = useNavigate();
@@ -148,7 +151,7 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
     mutationFn: async () => {
       if (!actor) throw new Error('Not signed in');
       if (!employee) throw new Error('Select an employee');
-      return payslipRepo.create({
+      const id = await payslipRepo.create({
         employeeId: employee.id,
         employeeName: employee.name,
         periodStart: period.start,
@@ -159,6 +162,16 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
         createdBy: actor.id,
         createdByName: actor.displayName.trim() || actor.email,
       });
+      // Payroll is money leaving the shop — employees were already logged
+      // (user_management); payslip generation joins them under the same type.
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Generated payslip: ${employee.name}`,
+        details: `${period.start} – ${period.end}`,
+        entityId: id,
+        entityType: 'payslip',
+      }));
+      return id;
     },
     onSuccess: (id) => navigate(`${RoutePaths.hrPayslips}/${id}`),
   });

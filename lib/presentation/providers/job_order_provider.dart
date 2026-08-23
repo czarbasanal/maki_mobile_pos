@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/data/repositories/job_order_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -73,17 +74,24 @@ final activeJobOrderCountProvider = Provider<AsyncValue<int>>((ref) {
 // ==================== USE CASE PROVIDERS ====================
 
 final saveJobOrderUseCaseProvider = Provider<SaveJobOrderUseCase>((ref) {
-  return SaveJobOrderUseCase(repository: ref.watch(jobOrderRepositoryProvider));
+  return SaveJobOrderUseCase(
+    repository: ref.watch(jobOrderRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
 });
 
 final updateJobOrderUseCaseProvider = Provider<UpdateJobOrderUseCase>((ref) {
   return UpdateJobOrderUseCase(
-      repository: ref.watch(jobOrderRepositoryProvider));
+    repository: ref.watch(jobOrderRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
 });
 
 final deleteJobOrderUseCaseProvider = Provider<DeleteJobOrderUseCase>((ref) {
   return DeleteJobOrderUseCase(
-      repository: ref.watch(jobOrderRepositoryProvider));
+    repository: ref.watch(jobOrderRepositoryProvider),
+    logger: ref.watch(activityLoggerProvider),
+  );
 });
 
 // ==================== JOB ORDER OPERATIONS ====================

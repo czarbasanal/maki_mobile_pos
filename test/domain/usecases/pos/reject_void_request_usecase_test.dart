@@ -3,10 +3,16 @@ import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/user_role.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/void_request_repository.dart';
+import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/reject_void_request_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 class _MockVoidRequestRepository extends Mock
     implements VoidRequestRepository {}
+
+class _MockActivityLogRepository extends Mock implements ActivityLogRepository {}
+
+class _FakeActivityLog extends Fake implements ActivityLogEntity {}
 
 UserEntity _user(UserRole role) => UserEntity(
     id: 'u-${role.value}',
@@ -28,14 +34,23 @@ VoidRequestEntity _req() => VoidRequestEntity(
     createdAt: DateTime(2025, 1, 1));
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeActivityLog());
+  });
+
   setUpAll(() => registerFallbackValue(VoidRequestStatus.pending));
 
   late _MockVoidRequestRepository repo;
   late RejectVoidRequestUseCase useCase;
+  late _MockActivityLogRepository logRepo;
 
   setUp(() {
     repo = _MockVoidRequestRepository();
-    useCase = RejectVoidRequestUseCase(repository: repo);
+    logRepo = _MockActivityLogRepository();
+    when(() => logRepo.logActivity(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
+    useCase = RejectVoidRequestUseCase(
+        repository: repo, logger: ActivityLogger(logRepo));
     when(() => repo.resolve(
           requestId: any(named: 'requestId'),
           saleId: any(named: 'saleId'),
@@ -69,5 +84,32 @@ void main() {
         rejectionReason: 'x');
     expect(result.success, isFalse);
     expect(result.errorCode, 'permission-denied');
+  });
+
+  test('a rejection writes a void_sale log entry with the rejection reason',
+      () async {
+    when(() => repo.resolve(
+          requestId: any(named: 'requestId'),
+          saleId: any(named: 'saleId'),
+          status: any(named: 'status'),
+          resolvedBy: any(named: 'resolvedBy'),
+          resolvedByName: any(named: 'resolvedByName'),
+          rejectionReason: any(named: 'rejectionReason'),
+        )).thenAnswer((_) async {});
+
+    await useCase.execute(
+      actor: _user(UserRole.admin),
+      request: _req(),
+      rejectionReason: 'sale is legitimate',
+    );
+
+    final logged = verify(() => logRepo.logActivity(captureAny()))
+        .captured
+        .cast<ActivityLogEntity>()
+        .where((e) => e.type == ActivityType.voidSale)
+        .toList();
+    expect(logged, hasLength(1));
+    expect(logged.single.action.toLowerCase(), contains('reject'));
+    expect(logged.single.details, contains('sale is legitimate'));
   });
 }

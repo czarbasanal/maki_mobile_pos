@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
+import { useAuthStore } from '@/presentation/stores/authStore';
 import { PayslipDetailPage } from './PayslipDetailPage';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Payslip } from '@/domain/hr/types';
@@ -59,7 +60,7 @@ function harness(opts?: {
   payslip?: Payslip | null;
   getById?: ReturnType<typeof vi.fn>;
   del?: ReturnType<typeof vi.fn>;
-}) {
+ activityLog?: ReturnType<typeof vi.fn>; }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const payslipRepo: Partial<Container['payslipRepo']> = {
     getById: opts?.getById ?? vi.fn(async () => (opts?.payslip !== undefined ? opts.payslip : payslip())),
@@ -67,7 +68,12 @@ function harness(opts?: {
   };
 
   return render(
-    <DiProvider override={{ payslipRepo: payslipRepo as Container['payslipRepo'] }}>
+    <DiProvider
+      override={{
+        payslipRepo: payslipRepo as Container['payslipRepo'],
+        activityLogRepo: { log: opts?.activityLog ?? vi.fn(async () => undefined) } as unknown as Container['activityLogRepo'],
+      }}
+    >
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={[`${RoutePaths.hrPayslips}/ps1`]}>
           <Routes>
@@ -165,5 +171,28 @@ describe('PayslipDetailPage', () => {
     const h1 = header?.querySelector('h1');
     expect(h1).toHaveTextContent('Juan Dela Cruz');
     expect(backLink).toHaveAttribute('href', RoutePaths.hrPayslips);
+  });
+});
+
+describe('payslip delete activity logging', () => {
+  it('deleting a payslip writes a user_management entry', async () => {
+    const activityLog = vi.fn(async (_entry: unknown) => undefined);
+    const del = vi.fn(async () => {});
+    // logActivity silently no-ops with no signed-in user — sign in as the
+    // admin who would actually be deleting.
+    useAuthStore.setState({
+      status: 'signedIn',
+      user: { id: 'u1', email: 'a@b.co', displayName: 'Admin', role: 'admin', isActive: true } as never,
+    });
+    harness({ del, activityLog });
+
+    await screen.findByText('NET PAY');
+    await userEvent.click(screen.getByRole('button', { name: /delete payslip/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+
+    await waitFor(() => expect(activityLog).toHaveBeenCalled());
+    const entry = activityLog.mock.calls[0][0] as unknown as { type: string; action: string };
+    expect(entry.type).toBe('user_management');
+    expect(entry.action.toLowerCase()).toContain('deleted payslip');
   });
 });

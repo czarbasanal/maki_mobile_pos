@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -328,6 +329,23 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
         },
         message: 'Updating…',
       );
+
+      if (result != null) {
+        // The audit entry for a manual correction — and the only place the
+        // typed reason survives; before this the dialog asked for a reason
+        // and then discarded it. Logging never throws (ActivityLogger.log
+        // swallows failures), so a failed write cannot undo the adjustment.
+        final note = _noteController.text.trim();
+        await ref.read(activityLoggerProvider).logStockAdjustment(
+              user: currentUser,
+              productId: widget.product.id,
+              productName: widget.product.name,
+              sku: widget.product.sku,
+              oldQuantity: widget.product.quantity,
+              newQuantity: _newQuantity,
+              reason: note.isEmpty ? null : note,
+            );
+      }
 
       if (result != null && mounted) {
         final newQty = _newQuantity;

@@ -4,9 +4,16 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/job_order_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/job_order_repository.dart';
+import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
+import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/job_order/update_job_order_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 class _MockJobOrderRepository extends Mock implements JobOrderRepository {}
+
+class _MockActivityLogRepository extends Mock implements ActivityLogRepository {}
+
+class _FakeActivityLog extends Fake implements ActivityLogEntity {}
 
 class _FakeJobOrder extends Fake implements JobOrderEntity {}
 
@@ -37,15 +44,21 @@ JobOrderEntity _draft({
 
 void main() {
   setUpAll(() {
+    registerFallbackValue(_FakeActivityLog());
     registerFallbackValue(_FakeJobOrder());
   });
 
   late _MockJobOrderRepository repo;
   late UpdateJobOrderUseCase useCase;
+  late _MockActivityLogRepository logRepo;
 
   setUp(() {
     repo = _MockJobOrderRepository();
-    useCase = UpdateJobOrderUseCase(repository: repo);
+    logRepo = _MockActivityLogRepository();
+    when(() => logRepo.logActivity(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
+    useCase = UpdateJobOrderUseCase(
+        repository: repo, logger: ActivityLogger(logRepo));
     when(() => repo.updateJobOrder(
               jobOrder: any(named: 'jobOrder'),
               updatedBy: any(named: 'updatedBy'),

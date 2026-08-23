@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Toggle button for showing/hiding cost information.
@@ -38,19 +39,31 @@ class CostDisplayToggle extends ConsumerWidget {
       return;
     }
 
-    // Showing costs requires password verification
+    // Showing costs requires password verification. The check runs through
+    // VerifyPasswordUseCase so success AND failed attempts land in user_logs
+    // — cost secrecy is what the cost-code cipher exists for, and calling the
+    // repository directly here used to leave no trace of either.
+    final actor = ref.read(currentUserProvider).value;
     final verified = await PasswordDialog.show(
       context: context,
       title: 'View Costs',
       subtitle: 'Enter your password to view cost information.',
       confirmButtonText: 'Verify',
       onVerify: (password) async {
-        final authRepo = ref.read(authRepositoryProvider);
-        return await authRepo.verifyPassword(password);
+        if (actor == null) return false;
+        final result = await ref.read(verifyPasswordUseCaseProvider).execute(
+              actor: actor,
+              password: password,
+              purpose: 'view costs',
+            );
+        return result.success && (result.data ?? false);
       },
     );
 
     if (verified) {
+      if (actor != null) {
+        await ref.read(activityLoggerProvider).logCostViewed(user: actor);
+      }
       onToggle(true);
 
       // Auto-hide after 5 minutes for security

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -300,6 +301,7 @@ class _VoidSaleDialogState extends ConsumerState<VoidSaleDialog> {
         saleRepository: ref.read(saleRepositoryProvider),
         productRepository: ref.read(productRepositoryProvider),
         authRepository: ref.read(authRepositoryProvider),
+        logger: ref.read(activityLoggerProvider),
       );
 
       final reason = VoidReasonField.resolveReason(

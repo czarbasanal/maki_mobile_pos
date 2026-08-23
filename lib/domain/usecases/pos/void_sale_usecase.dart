@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/permissions/permission_assert.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 /// Use case for voiding a sale transaction.
 ///
@@ -17,14 +18,17 @@ class VoidSaleUseCase {
   final SaleRepository _saleRepository;
   final ProductRepository _productRepository;
   final AuthRepository _authRepository;
+  final ActivityLogger _logger;
 
   VoidSaleUseCase({
     required SaleRepository saleRepository,
     required ProductRepository productRepository,
     required AuthRepository authRepository,
+    required ActivityLogger logger,
   })  : _saleRepository = saleRepository,
         _productRepository = productRepository,
-        _authRepository = authRepository;
+        _authRepository = authRepository,
+        _logger = logger;
 
   /// Voids a sale transaction.
   ///
@@ -67,14 +71,19 @@ class VoidSaleUseCase {
       // 3. Validate sale can be voided
       _validateSaleCanBeVoided(sale);
 
-      // 4. Verify password
+      // 4. Verify password. Logged both ways — the void is the shop's most
+      // fraud-sensitive action, and before this the check called the
+      // repository directly, bypassing the logging wrapper, so a phone void
+      // left no trace at all in user_logs.
       final isPasswordValid = await _authRepository.verifyPassword(password);
       if (!isPasswordValid) {
+        await _logger.logPasswordFailed(user: actor, purpose: 'void sale');
         throw const VoidSaleException(
           message: 'Invalid password',
           code: 'invalid-password',
         );
       }
+      await _logger.logPasswordVerified(user: actor, purpose: 'void sale');
 
       // 5. Void the sale
       final voidedSale = await _saleRepository.voidSale(
@@ -93,6 +102,16 @@ class VoidSaleUseCase {
         );
         warnings.addAll(inventoryWarnings);
       }
+
+      // The void itself. ActivityLogger.log never throws, so a failed log
+      // write cannot un-void the sale.
+      await _logger.logVoidSale(
+        user: actor,
+        saleId: saleId,
+        saleNumber: voidedSale.saleNumber,
+        reason: reason,
+        amount: voidedSale.grandTotal,
+      );
 
       return VoidSaleResult(
         success: true,

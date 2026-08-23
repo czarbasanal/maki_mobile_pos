@@ -3,11 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
+import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/data/repositories/job_order_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/job_orders/job_order_edit_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/fee_line_row.dart';
+
+/// Firestore-free stand-in: the JO use-cases now write activity logs, and the
+/// real activityLoggerProvider chain reaches FirebaseService.
+class _NoopActivityLogRepository extends Fake implements ActivityLogRepository {
+  @override
+  Future<ActivityLogEntity> logActivity(ActivityLogEntity log) async => log;
+}
 
 void main() {
   UserEntity admin() => UserEntity(
@@ -76,6 +85,8 @@ void main() {
       activeShopFeesProvider.overrideWith((ref) => Stream.value(activeFees)),
       currentUserProvider.overrideWith((ref) => Stream.value(admin())),
       jobOrderRepositoryProvider.overrideWithValue(repo),
+      activityLoggerProvider
+          .overrideWithValue(ActivityLogger(_NoopActivityLogRepository())),
       unsettledBusinessDayProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);

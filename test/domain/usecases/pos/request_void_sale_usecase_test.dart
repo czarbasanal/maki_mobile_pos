@@ -3,10 +3,16 @@ import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/void_request_repository.dart';
+import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/pos/request_void_sale_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 class _MockVoidRequestRepository extends Mock
     implements VoidRequestRepository {}
+
+class _MockActivityLogRepository extends Mock implements ActivityLogRepository {}
+
+class _FakeActivityLog extends Fake implements ActivityLogEntity {}
 
 class _FakeVoidRequest extends Fake implements VoidRequestEntity {}
 
@@ -43,14 +49,22 @@ SaleEntity _sale() => SaleEntity(
     );
 
 void main() {
-  setUpAll(() => registerFallbackValue(_FakeVoidRequest()));
+  setUpAll(() {
+    registerFallbackValue(_FakeVoidRequest());
+    registerFallbackValue(_FakeActivityLog());
+  });
 
   late _MockVoidRequestRepository repo;
   late RequestVoidSaleUseCase useCase;
+  late _MockActivityLogRepository logRepo;
 
   setUp(() {
     repo = _MockVoidRequestRepository();
-    useCase = RequestVoidSaleUseCase(repository: repo);
+    logRepo = _MockActivityLogRepository();
+    when(() => logRepo.logActivity(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
+    useCase = RequestVoidSaleUseCase(
+        repository: repo, logger: ActivityLogger(logRepo));
     when(() => repo.hasPendingForSale(any())).thenAnswer((_) async => false);
     when(() => repo.createRequest(any())).thenAnswer(
         (inv) async => (inv.positionalArguments.first as VoidRequestEntity)
@@ -333,5 +347,26 @@ void main() {
         verify(() => repo.createRequest(captureAny())).captured.single
             as VoidRequestEntity;
     expect(captured.itemsSummary, isNull);
+  });
+
+  test('a created request writes a void_sale log entry', () async {
+    when(() => repo.hasPendingForSale(any())).thenAnswer((_) async => false);
+    when(() => repo.createRequest(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as VoidRequestEntity);
+
+    await useCase.execute(
+      actor: _user(UserRole.cashier),
+      sale: _sale(),
+      reason: 'wrong item',
+    );
+
+    final logged = verify(() => logRepo.logActivity(captureAny()))
+        .captured
+        .cast<ActivityLogEntity>()
+        .where((e) => e.type == ActivityType.voidSale)
+        .toList();
+    expect(logged, hasLength(1));
+    expect(logged.single.action.toLowerCase(), contains('request'));
+    expect(logged.single.details, contains('wrong item'));
   });
 }

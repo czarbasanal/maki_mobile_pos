@@ -4,9 +4,16 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/job_order_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/job_order_repository.dart';
+import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
+import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/domain/usecases/job_order/delete_job_order_usecase.dart';
+import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 class _MockJobOrderRepository extends Mock implements JobOrderRepository {}
+
+class _MockActivityLogRepository extends Mock implements ActivityLogRepository {}
+
+class _FakeActivityLog extends Fake implements ActivityLogEntity {}
 
 UserEntity _user(UserRole role, {String? id, bool isActive = true}) =>
     UserEntity(
@@ -29,12 +36,21 @@ JobOrderEntity _draft({String createdBy = 'u-cashier'}) => JobOrderEntity(
     );
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeActivityLog());
+  });
+
   late _MockJobOrderRepository repo;
   late DeleteJobOrderUseCase useCase;
+  late _MockActivityLogRepository logRepo;
 
   setUp(() {
     repo = _MockJobOrderRepository();
-    useCase = DeleteJobOrderUseCase(repository: repo);
+    logRepo = _MockActivityLogRepository();
+    when(() => logRepo.logActivity(any())).thenAnswer(
+        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
+    useCase = DeleteJobOrderUseCase(
+        repository: repo, logger: ActivityLogger(logRepo));
     when(() => repo.deleteJobOrder(any())).thenAnswer((_) async {});
   });
 
@@ -113,5 +129,20 @@ void main() {
       expect(result.success, false);
       expect(result.errorCode, 'permission-denied');
     });
+  });
+
+  test('deleting a job order writes an activity entry, matching web', () async {
+    when(() => repo.getJobOrderById('d-1'))
+        .thenAnswer((_) async => _draft(createdBy: 'u-cashier'));
+
+    await useCase.execute(actor: _user(UserRole.cashier), jobOrderId: 'd-1');
+
+    final logged = verify(() => logRepo.logActivity(captureAny()))
+        .captured
+        .cast<ActivityLogEntity>()
+        .where((e) => e.type == ActivityType.other)
+        .toList();
+    expect(logged, hasLength(1));
+    expect(logged.single.action.toLowerCase(), contains('deleted job order'));
   });
 }
