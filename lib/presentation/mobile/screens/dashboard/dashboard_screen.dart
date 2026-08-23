@@ -140,7 +140,7 @@ class _DashboardContentState extends ConsumerState<_DashboardContent> {
     ref.invalidate(inventorySummaryProvider);
     // Feeds the Avg Daily Sales card — without this, its completed-days query
     // keeps yesterday's answer after a pull-to-refresh.
-    ref.invalidate(monthCompletedDaysSummaryProvider);
+    ref.invalidate(rolling7DaysSummaryProvider);
   }
 
   // ==================== BUILD ====================

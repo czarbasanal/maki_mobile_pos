@@ -162,28 +162,23 @@ final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   return result.data!;
 });
 
-/// Sales summary over the *completed* days of the current month
-/// (1st 00:00 → end of yesterday). Today is deliberately excluded: it is
-/// still in progress, and dividing a partial day's takings by a whole-day
-/// count inflates the Avg Daily figure.
-final monthCompletedDaysSummaryProvider =
+/// Sales summary over the last 7 *completed* days (rolling window ending at
+/// yesterday 23:59). Today is deliberately excluded: it is still in progress,
+/// and dividing a partial day's takings by a whole-day count inflates the
+/// Avg Daily figure. Rolling, not calendar-month scoped — the 1st reaches
+/// back into the previous month instead of resetting to —.
+final rolling7DaysSummaryProvider =
     FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
   // Watch the clock (not a raw DateTime.now() snapshot) so a midnight
-  // rollover re-runs this query with one more completed day.
+  // rollover slides the window forward a day.
   final today = ref.watch(businessDayProvider);
-  final m = monthToDate(today);
-
-  // On the 1st nothing has completed yet — skip the round-trip entirely.
-  if (m.daysElapsed <= 0) return SalesSummary.empty();
-
-  final yesterdayEnd = DateTime(today.year, today.month, today.day)
-      .subtract(const Duration(milliseconds: 1));
+  final window = rolling7Days(today);
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
-        startDate: m.start,
-        endDate: yesterdayEnd,
+        startDate: window.start,
+        endDate: window.end,
       );
   if (!result.success) {
     throw AppExceptionWrapper(
@@ -193,19 +188,19 @@ final monthCompletedDaysSummaryProvider =
   return result.data!;
 });
 
-/// Average daily gross sales across the *completed* days of this month.
+/// Average daily gross sales across the last 7 completed days.
 ///
-/// Total from [monthCompletedDaysSummaryProvider] (1st → end of yesterday)
-/// divided by the number of completed days, so numerator and denominator
-/// cover the same span. Returns null on the 1st — there is no completed day
-/// to average, and the card renders `—` rather than a misleading ₱0.
+/// Total from [rolling7DaysSummaryProvider] divided by a constant 7 — a quiet
+/// or closed day is a real ₱0 day and stays in the average. Numerator and
+/// denominator cover the same span, and there is no month reset: the 1st
+/// averages last week like any other day. Stays `double?` so the card's
+/// null-renders-— handling is untouched (loading/error still show —).
 final avgDailySalesProvider = Provider<AsyncValue<double?>>((ref) {
-  final summaryAsync = ref.watch(monthCompletedDaysSummaryProvider);
+  final summaryAsync = ref.watch(rolling7DaysSummaryProvider);
   final today = ref.watch(businessDayProvider);
-  final daysElapsed = monthToDate(today).daysElapsed;
-  if (daysElapsed <= 0) return const AsyncValue.data(null);
+  final days = rolling7Days(today).days;
   return summaryAsync.whenData<double?>(
-    (summary) => avgDailyFromGross(summary.grossAmount, daysElapsed),
+    (summary) => avgDailyFromGross(summary.grossAmount, days),
   );
 });
 

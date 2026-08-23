@@ -271,7 +271,7 @@ void main() {
       );
     });
 
-    testWidgets('tapping the info button explains the completed-days rule',
+    testWidgets('tapping the info button explains the rolling 7-day rule',
         (tester) async {
       await pump(tester, avgDaily: 1234);
 
@@ -291,15 +291,16 @@ void main() {
 
       expect(
         find.text(
-          'Your average sales per day this month, counting only days that '
-          'have finished.',
+          'Your average sales per day over the last 7 days, counting only '
+          'days that have finished.',
         ),
         findsOneWidget,
       );
       expect(
         find.text(
-          "It adds up sales from the 1st up to yesterday, then divides by that "
-          "many days. Today isn't counted yet because it's still going.",
+          "It adds up the last 7 finished days — yesterday back one week — "
+          "and divides by 7. Today isn't counted yet because it's still "
+          "going. A closed or quiet day counts as ₱0.",
         ),
         findsOneWidget,
       );
@@ -359,8 +360,8 @@ void main() {
 
       expect(
         find.text(
-          'Your average sales per day this month, counting only days that '
-          'have finished.',
+          'Your average sales per day over the last 7 days, counting only '
+          'days that have finished.',
         ),
         findsOneWidget,
       );
