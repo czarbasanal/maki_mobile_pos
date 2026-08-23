@@ -60,6 +60,34 @@ describe('applyReceivedItems', () => {
     expect(out.items[0].sku).not.toBe('GENERATE'); // auto-generated
   });
 
+  it('mismatch → the variation inherits the base product’s image and selling options', async () => {
+    // Parity with mobile's createVariation and the New Product form: a cost
+    // variation is the same physical part, so it keeps the photo and pack sizes.
+    const p = product({
+      id: 'p1', sku: 'SP', cost: 180,
+      imageUrl: 'https://example.test/sp.jpg',
+      sellingOptions: [{ id: 'o1', label: 'Half set', pieces: 2, price: 130 }],
+    });
+    const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }];
+    const repo = fakeRepo();
+    await applyReceivedItems(items, repo, ctx({ knownSkus: ['SP'] }));
+    const input = (repo.create as unknown as { mock: { calls: [{ imageUrl: string | null; sellingOptions: unknown }][] } }).mock.calls[0][0];
+    expect(input.imageUrl).toBe('https://example.test/sp.jpg');
+    expect(input.sellingOptions).toEqual([{ id: 'o1', label: 'Half set', pieces: 2, price: 130 }]);
+  });
+
+  it('new → a genuinely new product still starts with no image or selling options', async () => {
+    const items: ReceivableItem[] = [{
+      ref: 1, kind: 'new', sku: 'SQ', autoGenerateSku: false, name: 'Squid',
+      category: 'Fish', unit: 'kg', cost: 90, price: 130, quantity: 3, reorderLevel: 1,
+    }];
+    const repo = fakeRepo();
+    await applyReceivedItems(items, repo, ctx());
+    const input = (repo.create as unknown as { mock: { calls: [{ imageUrl: string | null; sellingOptions: unknown }][] } }).mock.calls[0][0];
+    expect(input.imageUrl).toBeNull();
+    expect(input.sellingOptions).toEqual([]);
+  });
+
   it('mismatch → creates a <base>-N variation, records a price change, emits a variation item', async () => {
     const p = product({ id: 'p1', sku: 'SP', baseSku: null, cost: 180 });
     const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }];

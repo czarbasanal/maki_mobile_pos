@@ -92,9 +92,9 @@ export function buildVariationInput(
     // rare broken image. Copying the file instead would need a CORS config on
     // the Storage bucket to fetch it client-side.
     //
-    // Note this differs from a receiving-spawned variation on web, which gets
-    // `imageUrl: null` (planReceive.ts) — mobile's createVariation carries the
-    // URL over, and matching mobile is the intent here.
+    // All four variation-spawning paths agree on this: mobile's
+    // createVariation, this form, and both web receiving paths (planReceive
+    // and applyReceivedItems) carry the URL over.
     imageUrl: existing.imageUrl,
     notes: existing.notes,
     createdBy: opts.actorId,
