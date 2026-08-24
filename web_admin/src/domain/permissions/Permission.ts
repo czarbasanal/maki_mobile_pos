@@ -10,6 +10,7 @@ export const Permission = {
   processSale: 'processSale',
   applyDiscount: 'applyDiscount',
   voidSale: 'voidSale',
+  requestVoidSale: 'requestVoidSale',
   // Job Orders
   saveJobOrder: 'saveJobOrder',
   viewJobOrders: 'viewJobOrders',
@@ -21,6 +22,7 @@ export const Permission = {
   addProduct: 'addProduct',
   editProduct: 'editProduct',
   editProductLimited: 'editProductLimited',
+  editProductNameOnly: 'editProductNameOnly',
   deleteProduct: 'deleteProduct',
   // Receiving
   accessReceiving: 'accessReceiving',
@@ -38,10 +40,14 @@ export const Permission = {
   addExpense: 'addExpense',
   editExpense: 'editExpense',
   deleteExpense: 'deleteExpense',
+  // End-of-day closing
+  viewEndOfDay: 'viewEndOfDay',
+  closeDay: 'closeDay',
   // Reports
   viewSalesReports: 'viewSalesReports',
   viewProfitReports: 'viewProfitReports',
   viewDailySalesOnly: 'viewDailySalesOnly',
+  viewJobOrderReports: 'viewJobOrderReports',
   // Users
   viewUsers: 'viewUsers',
   addUser: 'addUser',
@@ -53,6 +59,8 @@ export const Permission = {
   editOwnProfile: 'editOwnProfile',
   editCostCodeMapping: 'editCostCodeMapping',
   manageCategories: 'manageCategories',
+  editLists: 'editLists',
+  editProductCategories: 'editProductCategories',
   // Logs
   viewUserLogs: 'viewUserLogs',
   // HR / Payroll
@@ -65,11 +73,13 @@ const cashier: ReadonlySet<Permission> = new Set<Permission>([
   Permission.accessPos,
   Permission.processSale,
   Permission.applyDiscount,
+  Permission.requestVoidSale,
   Permission.saveJobOrder,
   Permission.viewJobOrders,
   Permission.editJobOrder,
   Permission.deleteJobOrder,
   Permission.viewInventory,
+  Permission.editProductNameOnly,
   Permission.viewSalesReports,
   Permission.viewDailySalesOnly,
   Permission.viewExpenses,
@@ -78,20 +88,29 @@ const cashier: ReadonlySet<Permission> = new Set<Permission>([
   // their own entry mistakes; activity log keeps the trail)
   Permission.editExpense,
   Permission.deleteExpense,
+  Permission.viewEndOfDay,
+  Permission.closeDay,
   Permission.viewSettings,
   Permission.editOwnProfile,
+  // Shared lists (2026-07-24): cashiers add and edit entries; deactivate /
+  // reactivate stays staff+admin (manageCategories).
+  Permission.editLists,
 ]);
 
 const staff: ReadonlySet<Permission> = new Set<Permission>([
   Permission.accessPos,
   Permission.processSale,
   Permission.applyDiscount,
+  Permission.requestVoidSale,
   Permission.saveJobOrder,
   Permission.viewJobOrders,
   Permission.editJobOrder,
   Permission.deleteJobOrder,
   Permission.viewInventory,
   Permission.editProductLimited,
+  // Staff add products by entering a cost CODE; the numeric cost is decoded
+  // in the create flow and never shown in the staff UI (mobile parity).
+  Permission.addProduct,
   Permission.accessReceiving,
   Permission.receiveStock,
   Permission.bulkReceive,
@@ -104,8 +123,14 @@ const staff: ReadonlySet<Permission> = new Set<Permission>([
   // their own entry mistakes; activity log keeps the trail)
   Permission.editExpense,
   Permission.deleteExpense,
+  Permission.viewEndOfDay,
+  Permission.closeDay,
   Permission.viewSettings,
   Permission.editOwnProfile,
+  // Shared lists (2026-07-24): staff fully manage incl. deactivate.
+  Permission.editLists,
+  Permission.manageCategories,
+  Permission.editProductCategories,
 ]);
 
 const admin: ReadonlySet<Permission> = new Set<Permission>([
@@ -136,8 +161,11 @@ const admin: ReadonlySet<Permission> = new Set<Permission>([
   Permission.addExpense,
   Permission.editExpense,
   Permission.deleteExpense,
+  Permission.viewEndOfDay,
+  Permission.closeDay,
   Permission.viewSalesReports,
   Permission.viewProfitReports,
+  Permission.viewJobOrderReports,
   Permission.viewUsers,
   Permission.addUser,
   Permission.editUser,
@@ -147,6 +175,8 @@ const admin: ReadonlySet<Permission> = new Set<Permission>([
   Permission.editOwnProfile,
   Permission.editCostCodeMapping,
   Permission.manageCategories,
+  Permission.editLists,
+  Permission.editProductCategories,
   Permission.viewUserLogs,
   Permission.manageHr,
 ]);

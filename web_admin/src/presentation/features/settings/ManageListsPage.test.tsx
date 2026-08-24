@@ -10,13 +10,13 @@ import { CategoryKind } from '@/domain/categories/categoryKind';
 import type { Category } from '@/domain/entities';
 import { ManageListsPage } from './ManageListsPage';
 
-function harness(categories: Category[]) {
+function harness(categories: Category[], role: UserRole = UserRole.admin) {
   useAuthStore.setState({
     user: {
       id: 'admin-1',
       email: 'a@shop.test',
       displayName: 'Admin',
-      role: UserRole.admin,
+      role,
       isActive: true,
       phoneNumber: null,
       photoUrl: null,
@@ -111,5 +111,47 @@ describe('ManageListsPage — delete action', () => {
     await waitFor(() =>
       expect(categoryRepo.delete).toHaveBeenCalledWith(CategoryKind.product, 'c1'),
     );
+  });
+});
+
+describe('ManageListsPage — cashier add/rename only (mobile parity)', () => {
+  const entry: Category = {
+    id: 'c1',
+    name: 'Wrong item',
+    isActive: true,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: null,
+    createdBy: null,
+    updatedBy: null,
+  };
+
+  it('hides the Product tab and lands on the first visible kind', () => {
+    harness([entry], UserRole.cashier);
+    expect(screen.queryByRole('button', { name: 'Product categories' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expense categories' })).toBeInTheDocument();
+    // The initially-selected hidden Product tab must be clamped away.
+    expect(screen.getByText('Wrong item')).toBeInTheDocument();
+  });
+
+  it('offers Add and Edit but neither Deactivate nor Delete', () => {
+    harness([entry], UserRole.cashier);
+    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /deactivate/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it('the edit dialog has no Active checkbox for a cashier', async () => {
+    harness([entry], UserRole.cashier);
+    await userEvent.click(screen.getByRole('button', { name: /edit/i }));
+    expect(screen.getByDisplayValue('Wrong item')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('admin keeps the Product tab and the destructive controls', () => {
+    harness([entry]);
+    expect(screen.getByRole('button', { name: 'Product categories' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /deactivate/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   });
 });

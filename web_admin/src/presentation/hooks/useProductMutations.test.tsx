@@ -42,8 +42,18 @@ function wrapperFor(productRepo: Partial<Container['productRepo']>) {
 
 async function runUpdate(role: UserRole, update: ReturnType<typeof vi.fn>) {
   signIn(role);
+  // The name-only (cashier) path re-reads the doc to rebase — stub the read.
+  const getById = vi.fn().mockResolvedValue({
+    id: 'p1', sku: 'SKU1', name: 'X', costCode: null, cost: 1, price: 2,
+    quantity: 0, reorderLevel: 0, unit: 'pcs', supplierId: null,
+    supplierName: null, isActive: true, createdAt: new Date('2026-01-01'),
+    updatedAt: null, createdBy: null, updatedBy: null, createdByName: null,
+    updatedByName: null, searchKeywords: [], baseSku: null,
+    variationNumber: null, barcodes: [], sellingOptions: [], category: null,
+    imageUrl: null, notes: null,
+  });
   const { result } = renderHook(() => useUpdateProduct(), {
-    wrapper: wrapperFor({ update }),
+    wrapper: wrapperFor({ update, getById }),
   });
   await result.current.mutateAsync({
     id: 'p1',

@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { UserRole } from '@/domain/enums';
+import type { User } from '@/domain/entities';
 import { SalesReportPage } from './SalesReportPage';
 import { DiscountType, PaymentMethod, SaleStatus } from '@/domain/enums';
 import type { Sale } from '@/domain/entities';
@@ -54,12 +57,30 @@ function sale(overrides: Partial<Sale> = {}): Sale {
   };
 }
 
-function harness(sales: Sale[]) {
+function webUser(role: UserRole): User {
+  return {
+    id: `u-${role}`,
+    email: `${role}@shop.test`,
+    displayName: `${role} user`,
+    role,
+    isActive: true,
+    phoneNumber: null,
+    photoUrl: null,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: null,
+    createdBy: null,
+    updatedBy: null,
+    lastLoginAt: null,
+  };
+}
+
+function harness(sales: Sale[], role: UserRole = UserRole.admin) {
+  useAuthStore.setState({ status: 'signedIn', user: webUser(role) });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const saleRepo: Partial<Container['saleRepo']> = {
     list: vi.fn().mockResolvedValue(sales),
   };
-  return render(
+  const view = render(
     <DiProvider override={{ saleRepo: saleRepo as Container['saleRepo'] }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter>
@@ -68,6 +89,7 @@ function harness(sales: Sale[]) {
       </QueryClientProvider>
     </DiProvider>,
   );
+  return { view, saleRepo };
 }
 
 describe('SalesReportPage', () => {
@@ -103,5 +125,35 @@ describe('SalesReportPage', () => {
 
     expect(screen.getByText('OR-0026')).toBeInTheDocument();
     expect(screen.queryByText('OR-0001')).not.toBeInTheDocument();
+  });
+});
+
+describe('SalesReportPage — cashier daily lock + cost gating', () => {
+  it('locks a cashier to today: notice instead of picker, query clamped', async () => {
+    const { saleRepo } = harness([sale()], UserRole.cashier);
+    await screen.findByText(
+      "Showing today's sales only. Contact an admin for historical reports.",
+    );
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    const arg = (saleRepo.list as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const now = new Date();
+    expect(arg.start.getFullYear()).toBe(now.getFullYear());
+    expect(arg.start.getMonth()).toBe(now.getMonth());
+    expect(arg.start.getDate()).toBe(now.getDate());
+    expect(arg.start.getHours()).toBe(0);
+    expect(arg.end.getDate()).toBe(now.getDate());
+  });
+
+  it('hides the cost-derived Profit column from a cashier', async () => {
+    harness([sale()], UserRole.cashier);
+    await screen.findByText('Top products');
+    expect(screen.queryByText('Profit')).not.toBeInTheDocument();
+  });
+
+  it('admin keeps the range picker and the Profit column', async () => {
+    harness([sale()]);
+    await screen.findByText('Top products');
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByText('Profit')).toBeInTheDocument();
   });
 });

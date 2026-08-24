@@ -160,3 +160,29 @@ describe('ProductDrawer cost visibility', () => {
   });
 });
 
+
+describe('ProductDrawer — cashier action gating (mobile parity)', () => {
+  it('cashier keeps Edit (name-only) but loses stock/cost actions', async () => {
+    signIn(UserRole.cashier);
+    harness();
+    await screen.findByRole('dialog', { name: /Brake shoe/ });
+    expect(screen.getByRole('link', { name: /edit/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /adjust stock/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /price history/i })).not.toBeInTheDocument();
+  });
+
+  it('cashier cannot reactivate an inactive product (isActive is rules-denied)', async () => {
+    signIn(UserRole.cashier);
+    harness({ ...product(), isActive: false });
+    await screen.findByRole('dialog', { name: /Brake shoe/ });
+    expect(screen.queryByRole('button', { name: /reactivate/i })).not.toBeInTheDocument();
+  });
+
+  it('staff keeps Adjust stock and Reactivate', async () => {
+    signIn(UserRole.staff);
+    harness({ ...product(), isActive: false });
+    await screen.findByRole('dialog', { name: /Brake shoe/ });
+    expect(screen.getByRole('button', { name: /adjust stock/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reactivate/i })).toBeInTheDocument();
+  });
+});

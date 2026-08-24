@@ -50,6 +50,11 @@ export function ProductDrawer() {
   // behind a password; the web must not hand it to anyone who can browse.
   const canSeeCost =
     !!user && hasPermission(user.role, Permission.viewProductCost);
+  // Stock and activation are in the cashier rules denylist — staff/admin only.
+  const canEditStock =
+    !!user &&
+    (hasPermission(user.role, Permission.editProduct) ||
+      hasPermission(user.role, Permission.editProductLimited));
 
   useEffect(() => {
     document.title = product ? `${product.name} · Inventory` : 'Inventory';
@@ -80,7 +85,7 @@ export function ProductDrawer() {
               repeated here. */}
           <div className="flex items-start gap-tk-md">
             <ProductImage src={product.imageUrl} alt={product.name} size="lg" />
-            {!product.isActive ? (
+            {!product.isActive && canEditStock ? (
               <span className="inline-block rounded-full bg-light-subtle px-tk-sm py-[2px] text-[11px] font-medium text-light-text-secondary">
                 Inactive
               </span>
@@ -89,12 +94,15 @@ export function ProductDrawer() {
 
           {/* The three actions share the drawer's full width equally. */}
           <div className="flex items-stretch gap-tk-sm">
+            {canSeeCost ? (
             <Link
               to={`${RoutePaths.priceHistory}?product=${product.id}`}
               className="inline-flex flex-1 items-center justify-center gap-tk-xs whitespace-nowrap rounded-md border border-light-border px-tk-sm py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
             >
               <ClockIcon className="h-4 w-4" /> Price history
             </Link>
+            ) : null}
+            {canEditStock ? (
             <button
               type="button"
               onClick={() => setAdjustOpen(true)}
@@ -102,6 +110,7 @@ export function ProductDrawer() {
             >
               <AdjustmentsHorizontalIcon className="h-4 w-4" /> Adjust stock
             </button>
+            ) : null}
             <Link
               to={generatePath(RoutePaths.productEdit, { id: product.id })}
               className="inline-flex flex-1 items-center justify-center gap-tk-xs whitespace-nowrap rounded-md border border-light-border px-tk-sm py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
@@ -111,7 +120,7 @@ export function ProductDrawer() {
             {/* Delete moved into the edit drawer — the read-only view stays
                 free of destructive actions. Reactivate stays: it is a recovery
                 action you reach for while looking at an inactive product. */}
-            {!product.isActive ? (
+            {!product.isActive && canEditStock ? (
               <button
                 type="button"
                 disabled={reactivate.isPending}

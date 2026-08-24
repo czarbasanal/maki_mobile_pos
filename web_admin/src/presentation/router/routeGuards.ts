@@ -1,6 +1,6 @@
-// Mirror of lib/config/router/route_guards.dart. The React app is admin-only
-// for now, but `canAccess` is implemented faithfully so the same gating logic
-// can be reused as more roles get web access in the future.
+// Mirror of lib/config/router/route_guards.dart. Admins and cashiers have web
+// access (cashiers since 2026-08-24, with mobile-parity privileges enforced
+// here); the role allowlist itself lives in ProtectedRoute/LoginPage.
 
 import type { User } from '@/domain/entities';
 import { Permission, hasPermission } from '@/domain/permissions/Permission';
@@ -40,8 +40,10 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.userAdd, Permission.addUser],
   [RoutePaths.settings, Permission.viewSettings],
   [RoutePaths.costCodeSettings, Permission.editCostCodeMapping],
-  [RoutePaths.manageLists, Permission.manageCategories],
-  [RoutePaths.mechanics, Permission.manageCategories],
+  // Route-level gate is editLists (mobile parity) — deactivate/reactivate and
+  // delete are gated in-page by manageCategories.
+  [RoutePaths.manageLists, Permission.editLists],
+  [RoutePaths.mechanics, Permission.editLists],
   [RoutePaths.userLogs, Permission.viewUserLogs],
   [RoutePaths.hr, Permission.manageHr],
   [RoutePaths.hrEmployees, Permission.manageHr],
@@ -82,7 +84,8 @@ function checkDynamicRoute(path: string, user: User): boolean {
   if (path.startsWith('/inventory/edit/') || /^\/inventory\/[^/]+\/edit$/.test(path)) {
     return (
       hasPermission(user.role, Permission.editProduct) ||
-      hasPermission(user.role, Permission.editProductLimited)
+      hasPermission(user.role, Permission.editProductLimited) ||
+      hasPermission(user.role, Permission.editProductNameOnly)
     );
   }
   if (/^\/inventory\/[^/]+$/.test(path)) {

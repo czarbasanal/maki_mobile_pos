@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { EyeIcon, EyeSlashIcon, PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { CategoryKind, labelForKind } from '@/domain/categories/categoryKind';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { useCategories } from '@/presentation/hooks/useCategories';
 import {
   useCreateCategory,
@@ -27,17 +29,33 @@ export function ManageListsPage() {
     document.title = 'Manage Lists · MAKI POS Admin';
   }, []);
 
+  const user = useAuthStore((st) => st.user);
+  // Route-level gate is editLists; destructive actions (deactivate/delete +
+  // the Active checkbox) need manageCategories, and the Product tab needs
+  // editProductCategories — mobile parity (both staff+admin).
+  const canManage = !!user && hasPermission(user.role, Permission.manageCategories);
+  const canProductTab =
+    !!user && hasPermission(user.role, Permission.editProductCategories);
+  const visibleKinds = canProductTab
+    ? KINDS
+    : KINDS.filter((k) => k !== CategoryKind.product);
+
   const [kind, setKind] = useState<CategoryKind>(CategoryKind.product);
-  const { data: categories, isLoading, error } = useCategories(kind, { includeInactive: true });
+  // The state's default is the (possibly hidden) Product tab — clamp any
+  // invisible selection to the first tab the user may see.
+  const effectiveKind = visibleKinds.includes(kind) ? kind : visibleKinds[0];
+  const { data: categories, isLoading, error } = useCategories(effectiveKind, {
+    includeInactive: true,
+  });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState('');
   const [active, setActive] = useState(true);
 
-  const create = useCreateCategory(kind);
-  const update = useUpdateCategory(kind);
-  const del = useDeleteCategory(kind);
+  const create = useCreateCategory(effectiveKind);
+  const update = useUpdateCategory(effectiveKind);
+  const del = useDeleteCategory(effectiveKind);
   const busy = create.isPending || update.isPending || del.isPending;
 
   const [deleting, setDeleting] = useState<Category | null>(null);
@@ -93,14 +111,14 @@ export function ManageListsPage() {
       </div>
 
       <div className="inline-flex flex-wrap rounded-md border border-light-hairline p-[2px]">
-        {KINDS.map((k) => (
+        {visibleKinds.map((k) => (
           <button
             key={k}
             type="button"
             onClick={() => setKind(k)}
             className={cn(
               'rounded px-tk-md py-[4px] text-bodySmall transition-colors',
-              kind === k
+              effectiveKind === k
                 ? 'bg-light-subtle font-semibold text-light-text'
                 : 'text-light-text-secondary hover:text-light-text',
             )}
@@ -146,27 +164,31 @@ export function ManageListsPage() {
                   >
                     <PencilIcon className="h-3.5 w-3.5" /> Edit
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleActive(c)}
-                    disabled={busy}
-                    className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
-                  >
-                    {c.isActive ? (
-                      <EyeSlashIcon className="h-3.5 w-3.5" />
-                    ) : (
-                      <EyeIcon className="h-3.5 w-3.5" />
-                    )}
-                    {c.isActive ? 'Deactivate' : 'Reactivate'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleting(c)}
-                    disabled={busy}
-                    className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-error-dark hover:bg-error-light/40"
-                  >
-                    <TrashIcon className="h-3.5 w-3.5" /> Delete
-                  </button>
+                  {canManage ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleActive(c)}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
+                    >
+                      {c.isActive ? (
+                        <EyeSlashIcon className="h-3.5 w-3.5" />
+                      ) : (
+                        <EyeIcon className="h-3.5 w-3.5" />
+                      )}
+                      {c.isActive ? 'Deactivate' : 'Reactivate'}
+                    </button>
+                  ) : null}
+                  {canManage ? (
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(c)}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-error-dark hover:bg-error-light/40"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -193,7 +215,7 @@ export function ManageListsPage() {
               className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
             />
           </div>
-          {editing ? (
+          {editing && canManage ? (
             <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">
               <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
               Active

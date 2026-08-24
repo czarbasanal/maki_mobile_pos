@@ -8,12 +8,21 @@ import { summarizeLabor } from '@/domain/sales/laborReport';
 import { formatMoney } from '@/core/utils/money';
 import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
 import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
+import { DailyLockNotice } from './DailyLockNotice';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 
 export function LaborReportPage() {
+  const user = useAuthStore((st) => st.user);
+  const dailyOnly = !!user && hasPermission(user.role, Permission.viewDailySalesOnly);
   const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
-  const { sales, isLoading, error } = useReportData(range);
+  const effectiveRange = useMemo(
+    () => (dailyOnly ? resolvePreset('today') : range),
+    [dailyOnly, range],
+  );
+  const { sales, isLoading, error } = useReportData(effectiveRange);
   const report = useMemo(() => summarizeLabor(sales), [sales]);
 
   useEffect(() => {
@@ -37,7 +46,13 @@ export function LaborReportPage() {
             Service revenue and per-mechanic breakdown for the selected range.
           </p>
         </div>
-        <DateRangePicker onChange={setRange} />
+        {dailyOnly ? (
+          <DailyLockNotice>
+            {"Showing today's labor only. Contact an admin for historical reports."}
+          </DailyLockNotice>
+        ) : (
+          <DateRangePicker onChange={setRange} />
+        )}
       </header>
 
       {error ? (

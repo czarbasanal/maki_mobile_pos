@@ -98,6 +98,19 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   const categoryRepo = useCategoryRepo();
   const authUser = useAuthStore((s) => s.user);
   const isAdmin = authUser?.role === UserRole.admin;
+  // Mobile parity: cashiers may change ONLY the name and image. Everything
+  // else is disabled here AND rebased onto a fresh read at save time.
+  const nameOnly =
+    !!authUser &&
+    hasPermission(authUser.role, Permission.editProductNameOnly) &&
+    !hasPermission(authUser.role, Permission.editProductLimited) &&
+    !hasPermission(authUser.role, Permission.editProduct);
+  const canEditStock =
+    !!authUser &&
+    (hasPermission(authUser.role, Permission.editProduct) ||
+      hasPermission(authUser.role, Permission.editProductLimited));
+  const canDeleteProduct =
+    !!authUser && hasPermission(authUser.role, Permission.deleteProduct);
   // Per-item cost is admin-only (viewProductCost; password-gated on the
   // phone). In EDIT mode the field would display the STORED figure, so it is
   // hidden from everyone else; in CREATE mode it stays — the author is typing
@@ -238,8 +251,12 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
 
   const submitting = isSubmitting || update.isPending || create.isPending;
   const mutationError = update.error?.message ?? create.error?.message ?? null;
-  const skuLocked = !isEditing && autoSku;
-  const sellingOptionsError = validateSellingOptions(sellingOptions);
+  const skuLocked = (!isEditing && autoSku) || (isEditing && nameOnly);
+  // Only admins can SEE (and fix) the selling-options editor, and every
+  // non-admin save drops the key anyway — so only admins carry the
+  // validation lock. Otherwise one malformed stored option would silently
+  // dead-end staff/cashier saves behind a section they cannot render.
+  const sellingOptionsError = isAdmin ? validateSellingOptions(sellingOptions) : null;
 
   /** Looks up the active product category matching `name` (case-sensitive,
    *  mirrors the dropdown's exact-name matching). */
@@ -570,6 +587,12 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
       ) : null}
 
       <form onSubmit={onFormSubmit} className="space-y-tk-lg" noValidate>
+        {isEditing && nameOnly ? (
+          <div className="rounded-md border border-light-hairline bg-light-subtle px-tk-md py-tk-sm text-bodySmall text-light-text-secondary">
+            You can edit the product name and image.
+          </div>
+        ) : null}
+
         <Section title="Identity">
           <Field label="Name" error={errors.name?.message}
             input={
@@ -627,11 +650,14 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                     {barcodes.map((code) => (
                       <span key={code} className="inline-flex items-center gap-tk-xs rounded-full bg-light-subtle px-tk-sm py-[2px] text-[12px] text-light-text">
                         <span className="font-mono">{code}</span>
-                        <button type="button" onClick={() => removeBarcode(code)} className="text-light-text-hint hover:text-error" aria-label={`Remove ${code}`}>×</button>
+                        {nameOnly ? null : (
+                          <button type="button" onClick={() => removeBarcode(code)} className="text-light-text-hint hover:text-error" aria-label={`Remove ${code}`}>×</button>
+                        )}
                       </span>
                     ))}
                   </div>
                 ) : null}
+                {nameOnly ? null : (
                 <div className="flex items-center gap-tk-sm">
                   <input
                     type="text"
@@ -646,6 +672,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                     Add
                   </button>
                 </div>
+                )}
               </div>
             } />
 
@@ -715,7 +742,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
         <Section
           title="Stock & classification"
           action={
-            isEditing && target ? (
+            isEditing && target && canEditStock ? (
               <button
                 type="button"
                 onClick={() => setAdjustOpen(true)}
@@ -732,16 +759,16 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                 input={<input type="number" className={inputCls(!!errors.quantity)} {...register('quantity')} />} />
             ) : null}
             <Field label="Reorder level" error={errors.reorderLevel?.message}
-              input={<input type="number" className={inputCls(!!errors.reorderLevel)} {...register('reorderLevel')} />} />
+              input={<input type="number" disabled={nameOnly} className={inputCls(!!errors.reorderLevel)} {...register('reorderLevel')} />} />
             <Field label="Unit" error={errors.unit?.message}
               input={
-                <select className={cn(inputCls(!!errors.unit), 'pr-8')} {...register('unit')}>
+                <select disabled={nameOnly} className={cn(inputCls(!!errors.unit), 'pr-8')} {...register('unit')}>
                   {unitOptions.map((u) => (<option key={u} value={u}>{u}</option>))}
                 </select>
               } />
             <Field label="Category" error={errors.category?.message}
               input={
-                <select className={cn(inputCls(false), 'pr-8')}
+                <select disabled={nameOnly} className={cn(inputCls(false), 'pr-8')}
                   {...register('category', {
                     onChange: (e) => applyCategoryForSku(categoryEntityForName(e.target.value), autoSku),
                   })}
@@ -752,7 +779,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               } />
             <Field label="Supplier" error={errors.supplierId?.message}
               input={
-                <select className={cn(inputCls(false), 'pr-8')} {...register('supplierId')}>
+                <select disabled={nameOnly} className={cn(inputCls(false), 'pr-8')} {...register('supplierId')}>
                   <option value="">No supplier</option>
                   {supplierOptions.map((s) => (
                     <option key={s.id} value={s.id}>{s.isActive ? s.name : `${s.name} (inactive)`}</option>
@@ -764,14 +791,14 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
 
         <Section title="Notes">
           <Field label="Notes" error={errors.notes?.message}
-            input={<textarea rows={3} className={cn(inputCls(!!errors.notes), 'resize-y leading-relaxed')} {...register('notes')} />} />
+            input={<textarea rows={3} disabled={nameOnly} className={cn(inputCls(!!errors.notes), 'resize-y leading-relaxed')} {...register('notes')} />} />
         </Section>
 
         <div className="flex flex-wrap items-center justify-end gap-tk-sm">
           {/* Deleting lives here rather than in the read-only view, so the
               destructive action sits behind the deliberate act of editing.
               Pushed to the far left, away from Save. */}
-          {isEditing && target ? (
+          {isEditing && target && canDeleteProduct ? (
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}

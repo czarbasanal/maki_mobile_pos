@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -24,8 +24,8 @@ const admin: User = {
   lastLoginAt: null,
 };
 
-function harness(initialPath: string) {
-  useAuthStore.setState({ user: admin });
+function harness(initialPath: string, user: User = admin) {
+  useAuthStore.setState({ user });
   const authRepo = { signOut: vi.fn() } as unknown as Container['authRepo'];
   const activityLogRepo = {
     log: vi.fn().mockResolvedValue(undefined),
@@ -77,5 +77,88 @@ describe('Sidebar — Inventory dropdown', () => {
     expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /expand inventory/i }));
     expect(screen.getByRole('link', { name: /reorder/i })).toBeInTheDocument();
+  });
+});
+
+function stubMatchMedia(matches: boolean) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockReturnValue({
+      matches,
+      media: '',
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }),
+  );
+}
+
+describe('Sidebar — collapsible rail', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('collapses to an icon rail and expands back', async () => {
+    harness('/pos');
+    expect(screen.getByText('Job Orders')).toBeInTheDocument();
+    expect(screen.getByText('Money')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+
+    // Labels and section headings gone; destinations still reachable by
+    // accessible name (icon-only links).
+    expect(screen.queryByText('Job Orders')).not.toBeInTheDocument();
+    expect(screen.queryByText('Money')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /job orders/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /expand sidebar/i }));
+    expect(screen.getByText('Job Orders')).toBeInTheDocument();
+  });
+
+  it('starts collapsed on a tablet-width viewport', () => {
+    stubMatchMedia(true);
+    harness('/pos');
+    expect(screen.queryByText('Job Orders')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument();
+  });
+
+  it('starts expanded on a desktop viewport', () => {
+    stubMatchMedia(false);
+    harness('/pos');
+    expect(screen.getByText('Job Orders')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /collapse sidebar/i })).toBeInTheDocument();
+  });
+
+  it('a collapsed group still exposes its parent as an icon link, children hidden', async () => {
+    harness('/hr/employees');
+    // Expanded: the HR children are visible (active subtree).
+    expect(screen.getByRole('link', { name: /payroll/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+    expect(screen.getByRole('link', { name: /^hr$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /payroll/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('Sidebar — cashier filtering (characterization)', () => {
+  const cashier: User = { ...admin, id: 'u2', role: UserRole.cashier };
+
+  it('collapses to the mobile-parity destinations', () => {
+    harness('/pos', cashier);
+    // Present: the cashier surface.
+    for (const label of ['POS', 'Job Orders', 'Inventory', 'Expenses', 'Reports', 'Settings']) {
+      expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
+    }
+    // Absent: stock ops, admin surfaces, HR.
+    for (const label of ['Receiving', 'Suppliers', 'Users', 'Activity Logs', 'HR']) {
+      expect(screen.queryByRole('link', { name: label })).not.toBeInTheDocument();
+    }
+  });
+
+  it('hides the cost-facing inventory children even inside the subtree', () => {
+    harness('/inventory', cashier);
+    expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /price history/i })).not.toBeInTheDocument();
   });
 });

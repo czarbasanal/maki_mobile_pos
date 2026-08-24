@@ -92,6 +92,7 @@ export function InventoryListPage() {
   // cost is the shop's secret, so the column only renders for holders.
   const canSeeCost =
     !!user && hasPermission(user.role, Permission.viewProductCost);
+  const canAddProduct = !!user && hasPermission(user.role, Permission.addProduct);
   const totals = useMemo(() => stockTotals(filtered), [filtered]);
 
   // If the selected category drops out of the option set (e.g. it only existed
@@ -114,13 +115,15 @@ export function InventoryListPage() {
             Products, stock levels, and pricing.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate(RoutePaths.productAdd)}
-          className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
-        >
-          <PlusIcon className="h-3.5 w-3.5" /> Add product
-        </button>
+        {canAddProduct ? (
+          <button
+            type="button"
+            onClick={() => navigate(RoutePaths.productAdd)}
+            className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
+          >
+            <PlusIcon className="h-3.5 w-3.5" /> Add product
+          </button>
+        ) : null}
       </header>
 
       <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-3">

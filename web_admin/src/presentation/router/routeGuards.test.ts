@@ -117,18 +117,68 @@ describe('canAccess — product edit moved into the drawer', () => {
     expect(canAccess('/inventory/p9/edit', staff)).toBe(true);
   });
 
-  it('keeps a cashier out of the drawer edit route', () => {
-    expect(canAccess('/inventory/p9/edit', cashier)).toBe(false);
+  it('lets a cashier into the drawer edit route (name-only editing)', () => {
+    expect(canAccess('/inventory/p9/edit', cashier)).toBe(true);
   });
 
   it('still gates the legacy /inventory/edit/:id URL the same way', () => {
     // The redirect runs inside the router, so the guard sees the old path
-    // first — it must not become a hole.
+    // first — it must gate identically to the new shape.
     expect(canAccess('/inventory/edit/p9', admin)).toBe(true);
-    expect(canAccess('/inventory/edit/p9', cashier)).toBe(false);
+    expect(canAccess('/inventory/edit/p9', cashier)).toBe(true);
   });
 
   it('still lets a view-only role open the product drawer', () => {
     expect(canAccess('/inventory/p9', cashier)).toBe(true);
+  });
+});
+
+// Pinned when cashiers gained web access (2026-08-24) — the full mobile-parity
+// access map for the cashier role.
+describe('canAccess — cashier web access map', () => {
+  it('reaches the mobile-parity destinations', () => {
+    for (const path of [
+      '/',
+      '/pos',
+      '/pos/checkout',
+      '/job-orders',
+      '/job-orders/j1',
+      '/inventory',
+      '/inventory/p9',
+      '/expenses',
+      '/expenses/add',
+      '/expenses/edit/e1',
+      '/reports',
+      '/reports/sales',
+      '/reports/labor',
+      '/reports/sale/s1',
+      '/sales/day',
+      '/settings',
+      '/settings/about',
+      '/settings/lists',
+      '/settings/mechanics',
+    ]) {
+      expect(canAccess(path, cashier)).toBe(true);
+    }
+  });
+
+  it('stays out of everything cost-, admin-, or stock-facing', () => {
+    for (const path of [
+      '/reports/profit',
+      '/reports/price-changes',
+      '/inventory/add',
+      '/inventory/price-history',
+      '/inventory/reorder',
+      '/users',
+      '/logs',
+      '/hr',
+      '/hr/payroll',
+      '/receiving',
+      '/receiving/new',
+      '/suppliers',
+      '/settings/cost-codes',
+    ]) {
+      expect(canAccess(path, cashier)).toBe(false);
+    }
   });
 });
