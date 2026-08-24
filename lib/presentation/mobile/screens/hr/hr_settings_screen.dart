@@ -57,7 +57,7 @@ class _HrSettingsScreenState extends ConsumerState<HrSettingsScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.goBackOr(RoutePaths.settings),
+          onPressed: () => context.goBackOr(RoutePaths.hr),
         ),
         title: const Text('HR Settings'),
       ),

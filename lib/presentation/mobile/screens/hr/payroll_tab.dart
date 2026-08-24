@@ -24,14 +24,20 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
-class PayrollScreen extends ConsumerStatefulWidget {
-  const PayrollScreen({super.key});
+class PayrollTab extends ConsumerStatefulWidget {
+  const PayrollTab({super.key});
 
   @override
-  ConsumerState<PayrollScreen> createState() => _PayrollScreenState();
+  ConsumerState<PayrollTab> createState() => _PayrollTabState();
 }
 
-class _PayrollScreenState extends ConsumerState<PayrollScreen> {
+class _PayrollTabState extends ConsumerState<PayrollTab>
+    with AutomaticKeepAliveClientMixin {
+  // Keep the tab alive across tab switches — losing a half-filled payroll
+  // form to a peek at Payslips would be brutal.
+  @override
+  bool get wantKeepAlive => true;
+
   PayslipDraftController? _draft;
   HrSettingsEntity? _settings;
   EmployeeEntity? _employee;
@@ -73,17 +79,11 @@ class _PayrollScreenState extends ConsumerState<PayrollScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin
     final settingsAsync = ref.watch(hrSettingsProvider);
     final employeesAsync = ref.watch(activeEmployeesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.goBackOr(RoutePaths.settings),
-        ),
-        title: const Text('Payroll'),
-      ),
       body: settingsAsync.when(
         loading: () => const ListSkeleton(),
         error: (e, _) => ErrorStateView(

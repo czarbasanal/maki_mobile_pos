@@ -38,7 +38,7 @@ class _PayslipDetailScreenState extends ConsumerState<PayslipDetailScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.goBackOr(RoutePaths.hrPayslips),
+          onPressed: () => context.goBackOr(RoutePaths.hr),
         ),
         title: const Text('Payslip'),
         actions: [
@@ -144,7 +144,7 @@ class _PayslipDetailScreenState extends ConsumerState<PayslipDetailScreen> {
     if (!mounted) return;
     if (ok) {
       context.showSuccessSnackBar('Payslip deleted');
-      context.goBackOr(RoutePaths.hrPayslips);
+      context.goBackOr(RoutePaths.hr);
     } else {
       context.showErrorSnackBar('Failed to delete');
     }

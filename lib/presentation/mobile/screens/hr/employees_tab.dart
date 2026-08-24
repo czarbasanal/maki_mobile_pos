@@ -1,11 +1,10 @@
-// Admin CRUD editor for the payroll employees registry — a mechanic-editor
-// clone with dailyRate + weekStartDay. Web-parity behaviors: inactive rows
+// Admin CRUD editor for the payroll employees registry (a tab inside the HR
+// hub) — a mechanic-editor clone with dailyRate + weekStartDay. Web-parity behaviors: inactive rows
 // stay listed (greyed) for reactivation; hard Delete is offered ONLY on
 // inactive rows (deactivate-first); dailyRate must be strictly > 0.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -18,27 +17,20 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
-class EmployeeEditorScreen extends ConsumerStatefulWidget {
-  const EmployeeEditorScreen({super.key});
+class EmployeesTab extends ConsumerStatefulWidget {
+  const EmployeesTab({super.key});
 
   @override
-  ConsumerState<EmployeeEditorScreen> createState() =>
-      _EmployeeEditorScreenState();
+  ConsumerState<EmployeesTab> createState() =>
+      _EmployeesTabState();
 }
 
-class _EmployeeEditorScreenState extends ConsumerState<EmployeeEditorScreen> {
+class _EmployeesTabState extends ConsumerState<EmployeesTab> {
   @override
   Widget build(BuildContext context) {
     final employeesAsync = ref.watch(allEmployeesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.goBackOr(RoutePaths.settings),
-        ),
-        title: const Text('Employees'),
-      ),
       body: employeesAsync.when(
         data: (employees) => _buildList(context, employees),
         loading: () => const ListSkeleton(),

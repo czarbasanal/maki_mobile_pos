@@ -50,7 +50,8 @@ import { HrSettingsPage } from '@/presentation/features/hr/HrSettingsPage';
 import { ExpensesPage } from '@/presentation/features/expenses/ExpensesPage';
 import { ExpenseFormPage } from '@/presentation/features/expenses/ExpenseFormPage';
 
-// HR moved under /settings/hr/* — these keep old bookmarks/links alive.
+// HR moved back to top-level /hr/* (its own Admin sidebar group) — these keep
+// the interim /settings/hr/* bookmarks/links alive.
 function HrPayslipDetailRedirect() {
   const { id = '' } = useParams();
   return <Navigate to={`${RoutePaths.hrPayslips}/${id}`} replace />;
@@ -138,12 +139,14 @@ export const router = createBrowserRouter(
         { path: RoutePaths.hrSettings, element: <HrSettingsPage /> },
       ],
     },
-    // Old /hr/* bookmarks — redirect to the new /settings/hr/* homes.
-    { path: '/hr/employees', element: <Navigate to={RoutePaths.hrEmployees} replace /> },
-    { path: '/hr/payroll', element: <Navigate to={RoutePaths.hrPayroll} replace /> },
-    { path: '/hr/payslips', element: <Navigate to={RoutePaths.hrPayslips} replace /> },
-    { path: '/hr/payslips/:id', element: <HrPayslipDetailRedirect /> },
-    { path: '/hr/settings', element: <Navigate to={RoutePaths.hrSettings} replace /> },
+    // Bare /hr (the sidebar group's header link) lands on Employees.
+    { path: RoutePaths.hr, element: <Navigate to={RoutePaths.hrEmployees} replace /> },
+    // Old /settings/hr/* bookmarks — redirect to the top-level /hr/* homes.
+    { path: '/settings/hr/employees', element: <Navigate to={RoutePaths.hrEmployees} replace /> },
+    { path: '/settings/hr/payroll', element: <Navigate to={RoutePaths.hrPayroll} replace /> },
+    { path: '/settings/hr/payslips', element: <Navigate to={RoutePaths.hrPayslips} replace /> },
+    { path: '/settings/hr/payslips/:id', element: <HrPayslipDetailRedirect /> },
+    { path: '/settings/hr/config', element: <Navigate to={RoutePaths.hrSettings} replace /> },
     // Old edit bookmarks — product editing moved into the drawer.
     { path: '/inventory/edit/:id', element: <ProductEditRedirect /> },
     // Old /drafts bookmarks — Drafts renamed to Job Orders.

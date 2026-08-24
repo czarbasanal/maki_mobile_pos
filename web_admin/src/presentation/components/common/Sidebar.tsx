@@ -10,7 +10,9 @@ import { useEffect, useRef, useState, type ComponentType, type SVGProps } from '
 import {
   ArrowRightStartOnRectangleIcon,
   BanknotesIcon,
+  BriefcaseIcon,
   BuildingStorefrontIcon,
+  CalendarDaysIcon,
   ChartBarIcon,
   ChevronDownIcon,
   ChevronUpIcon,
@@ -87,15 +89,18 @@ const sections: NavSection[] = [
       { label: 'Users', path: RoutePaths.users, icon: UsersIcon },
       { label: 'Activity Logs', path: RoutePaths.userLogs, icon: ClockIcon },
       {
-        label: 'Settings',
-        path: RoutePaths.settings,
-        icon: Cog6ToothIcon,
+        // The header link lands on Employees via the /hr redirect.
+        label: 'HR',
+        path: RoutePaths.hr,
+        icon: BriefcaseIcon,
         children: [
           { label: 'Employees', path: RoutePaths.hrEmployees, icon: IdentificationIcon },
           { label: 'Payroll', path: RoutePaths.hrPayroll, icon: BanknotesIcon },
           { label: 'Payslips', path: RoutePaths.hrPayslips, icon: DocumentTextIcon },
+          { label: 'HR Settings', path: RoutePaths.hrSettings, icon: CalendarDaysIcon },
         ],
       },
+      { label: 'Settings', path: RoutePaths.settings, icon: Cog6ToothIcon },
     ],
   },
 ];

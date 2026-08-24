@@ -24,6 +24,30 @@ describe('router — /drafts → /job-orders redirects', () => {
   });
 });
 
+describe('router — HR moved back to top-level /hr/*', () => {
+  it('redirects the bare /hr group link to Employees', async () => {
+    render(<RouterProvider router={router} />);
+    await act(async () => {
+      await router.navigate('/hr');
+    });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/hr/employees'));
+  });
+
+  it('redirects the interim /settings/hr/* bookmarks, preserving any :id', async () => {
+    render(<RouterProvider router={router} />);
+    await act(async () => {
+      await router.navigate('/settings/hr/payslips/abc123');
+    });
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/hr/payslips/abc123'),
+    );
+    await act(async () => {
+      await router.navigate('/settings/hr/config');
+    });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/hr/settings'));
+  });
+});
+
 describe('router — product view is a drawer over the inventory list', () => {
   const paths = () => router.state.matches.map((m) => m.route.path);
 

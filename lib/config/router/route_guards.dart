@@ -66,10 +66,8 @@ abstract class RouteGuards {
     '/settings/cost-codes': Permission.editCostCodeMapping,
     '/settings/categories': Permission.editLists,
     '/settings/mechanics': Permission.editLists,
-    '/settings/hr/employees': Permission.manageHr,
-    '/settings/hr/payroll': Permission.manageHr,
-    '/settings/hr/payslips': Permission.manageHr,
-    '/settings/hr/settings': Permission.manageHr,
+    '/hr': Permission.manageHr,
+    '/hr/settings': Permission.manageHr,
     '/settings/shop-fees': Permission.editLists,
     '/settings/motorcycle-models': Permission.editLists,
     // Logs
@@ -147,9 +145,9 @@ abstract class RouteGuards {
 
   /// Checks access for dynamic routes (with parameters).
   static bool _checkDynamicRoute(String path, UserEntity user) {
-    // HR payslip detail — /settings/hr/payslips/:id. Fail-safe deny keeps
-    // any unlisted /settings/hr/* path admin-inaccessible too.
-    if (path.startsWith('/settings/hr/payslips/')) {
+    // HR payslip detail — /hr/payslips/:id. Fail-safe deny keeps any
+    // unlisted /hr/* path admin-inaccessible too.
+    if (path.startsWith('/hr/payslips/')) {
       return RolePermissions.hasPermission(user.role, Permission.manageHr);
     }
     // Inventory edit routes - staff needs editProductLimited, admin needs editProduct
@@ -295,6 +293,15 @@ abstract class RouteGuards {
         title: 'Suppliers',
         icon: Icons.people,
         path: '/suppliers',
+      ));
+    }
+
+    // HR - admin only (hub with Employees | Payroll | Payslips tabs)
+    if (RolePermissions.hasPermission(role, Permission.manageHr)) {
+      items.add(const MenuItem(
+        title: 'HR',
+        icon: Icons.badge,
+        path: '/hr',
       ));
     }
 

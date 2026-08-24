@@ -1,9 +1,10 @@
 // Screen-level wiring for the HR slice, against FakeFirebaseFirestore + real
 // repositories (the mechanic-test convention). Semantics live in
 // PayslipDraftController and the use-cases — these tests only prove the
-// screens are wired to them: rows render from the stream, deactivate-first
-// delete, the generator writes the frozen doc + log, and the detail screen
-// renders STORED figures and survives a deleted doc.
+// screens are wired to them: the hub hosts the three tabs (gear -> HR
+// Settings), rows render from the stream, the generator writes the frozen
+// doc + log, and the detail screen renders STORED figures and survives a
+// deleted doc.
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -17,10 +18,11 @@ import 'package:maki_mobile_pos/data/repositories/payslip_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/hr_provider.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/settings/employee_editor_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/settings/payroll_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/settings/payslip_detail_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/screens/settings/payslips_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/employees_tab.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/hr_hub_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/payroll_tab.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/payslip_detail_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/payslips_tab.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 
 UserEntity _admin() => UserEntity(
@@ -46,17 +48,13 @@ void main() {
     final router = GoRouter(routes: [
       GoRoute(path: '/', builder: (_, __) => screen),
       GoRoute(
-        path: '/settings/hr/payslips/:id',
+        path: '/hr/payslips/:id',
         builder: (_, state) =>
             Scaffold(body: Text('DETAIL ${state.pathParameters['id']}')),
       ),
       GoRoute(
-        path: '/settings/hr/payslips',
-        builder: (_, __) => const Scaffold(body: Text('PAYSLIPS LIST')),
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (_, __) => const Scaffold(body: Text('SETTINGS')),
+        path: '/hr/settings',
+        builder: (_, __) => const Scaffold(body: Text('HR SETTINGS STUB')),
       ),
     ]);
     await tester.pumpWidget(
@@ -121,19 +119,41 @@ void main() {
     return ref.id;
   }
 
-  group('EmployeeEditorScreen', () {
+  group('HrHubScreen', () {
+    testWidgets('hosts the three tabs and switches between them',
+        (tester) async {
+      await seedPayslip();
+      await pump(tester, const HrHubScreen());
+
+      // Employees tab first (its empty state showing).
+      expect(find.text('No employees yet'), findsOneWidget);
+
+      await tester.tap(find.text('Payslips'));
+      await tester.pumpAndSettle();
+      expect(find.text('Maybelle Tampos'), findsOneWidget);
+    });
+
+    testWidgets('the gear opens HR Settings', (tester) async {
+      await pump(tester, const HrHubScreen());
+      await tester.tap(find.byTooltip('HR Settings'));
+      await tester.pumpAndSettle();
+      expect(find.text('HR SETTINGS STUB'), findsOneWidget);
+    });
+  });
+
+  group('EmployeesTab', () {
     testWidgets('lists employees from the stream, inactive rows greyed in',
         (tester) async {
       await seedEmployee(name: 'Ana');
       await seedEmployee(name: 'Ben', isActive: false);
-      await pump(tester, const EmployeeEditorScreen());
+      await pump(tester, const EmployeesTab());
 
       expect(find.text('Ana'), findsOneWidget);
       expect(find.text('Ben'), findsOneWidget);
     });
 
     testWidgets('the add dialog refuses a zero daily rate', (tester) async {
-      await pump(tester, const EmployeeEditorScreen());
+      await pump(tester, const EmployeesTab());
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
 
@@ -148,18 +168,18 @@ void main() {
     });
   });
 
-  group('PayslipsScreen', () {
+  group('PayslipsTab', () {
     testWidgets('renders the seeded payslip with its stored net',
         (tester) async {
       await seedPayslip();
-      await pump(tester, const PayslipsScreen());
+      await pump(tester, const PayslipsTab());
 
       expect(find.text('Maybelle Tampos'), findsOneWidget);
       expect(find.text('₱7,777.00'), findsOneWidget);
     });
 
     testWidgets('empty state points at Payroll', (tester) async {
-      await pump(tester, const PayslipsScreen());
+      await pump(tester, const PayslipsTab());
       expect(find.text('No payslips yet'), findsOneWidget);
     });
   });
@@ -181,12 +201,12 @@ void main() {
     });
   });
 
-  group('PayrollScreen', () {
+  group('PayrollTab', () {
     testWidgets(
         'pick → rate populates; generate writes the frozen doc AND a log',
         (tester) async {
       await seedEmployee();
-      await pump(tester, const PayrollScreen());
+      await pump(tester, const PayrollTab());
 
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();

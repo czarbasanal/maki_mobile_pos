@@ -1,7 +1,8 @@
-// HR route gating — mirrors route_guards_mechanics_test. manageHr is
-// admin-only, so every /settings/hr/* path (including the dynamic payslip
-// detail) admits admins and turns everyone else away; an unlisted
-// /settings/hr/* path stays denied by the fail-safe default.
+// HR route gating — mirrors route_guards_mechanics_test. HR is a top-level
+// Admin destination now (hub at /hr with Employees | Payroll | Payslips tabs,
+// gear -> /hr/settings), all behind admin-only manageHr; the dynamic payslip
+// detail is gated the same and unlisted /hr/* paths stay denied by the
+// fail-safe default. The old /settings/hr/* homes are gone, not aliased.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/config/router/route_guards.dart';
 import 'package:maki_mobile_pos/config/router/route_names.dart';
@@ -19,20 +20,14 @@ UserEntity _user(UserRole role) => UserEntity(
 
 void main() {
   test('paths and names', () {
-    expect(RoutePaths.hrEmployees, '/settings/hr/employees');
-    expect(RoutePaths.hrPayroll, '/settings/hr/payroll');
-    expect(RoutePaths.hrPayslips, '/settings/hr/payslips');
-    expect(RoutePaths.hrSettings, '/settings/hr/settings');
+    expect(RoutePaths.hr, '/hr');
+    expect(RoutePaths.hrPayslips, '/hr/payslips');
+    expect(RoutePaths.hrSettings, '/hr/settings');
     expect(RouteNames.hrPayslipDetail, 'hrPayslipDetail');
   });
 
   test('static HR routes: admin yes, staff and cashier no', () {
-    for (final path in [
-      RoutePaths.hrEmployees,
-      RoutePaths.hrPayroll,
-      RoutePaths.hrPayslips,
-      RoutePaths.hrSettings,
-    ]) {
+    for (final path in [RoutePaths.hr, RoutePaths.hrSettings]) {
       expect(RouteGuards.canAccess(path, _user(UserRole.admin)), isTrue,
           reason: 'admin $path');
       expect(RouteGuards.canAccess(path, _user(UserRole.staff)), isFalse,
@@ -44,21 +39,40 @@ void main() {
 
   test('dynamic payslip detail is gated the same', () {
     expect(
-      RouteGuards.canAccess(
-          '/settings/hr/payslips/abc123', _user(UserRole.admin)),
+      RouteGuards.canAccess('/hr/payslips/abc123', _user(UserRole.admin)),
       isTrue,
     );
     expect(
-      RouteGuards.canAccess(
-          '/settings/hr/payslips/abc123', _user(UserRole.staff)),
+      RouteGuards.canAccess('/hr/payslips/abc123', _user(UserRole.staff)),
       isFalse,
     );
   });
 
-  test('an unlisted /settings/hr/* path stays denied (fail-safe default)', () {
+  test('an unlisted /hr/* path stays denied (fail-safe default)', () {
     expect(
-      RouteGuards.canAccess('/settings/hr/unknown', _user(UserRole.admin)),
+      RouteGuards.canAccess('/hr/unknown', _user(UserRole.admin)),
       isFalse,
     );
+  });
+
+  test('the old /settings/hr/* homes are gone, not aliased', () {
+    expect(
+      RouteGuards.canAccess('/settings/hr/employees', _user(UserRole.admin)),
+      isFalse,
+    );
+  });
+
+  test('HR is a menu destination for admin only', () {
+    expect(
+      RouteGuards.getMenuItems(UserRole.admin).map((m) => m.path),
+      contains(RoutePaths.hr),
+    );
+    for (final role in [UserRole.staff, UserRole.cashier]) {
+      expect(
+        RouteGuards.getMenuItems(role).map((m) => m.path),
+        isNot(contains(RoutePaths.hr)),
+        reason: role.value,
+      );
+    }
   });
 }

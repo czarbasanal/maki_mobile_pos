@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
-import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -16,21 +15,14 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_skeleton.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
 
-class PayslipsScreen extends ConsumerWidget {
-  const PayslipsScreen({super.key});
+class PayslipsTab extends ConsumerWidget {
+  const PayslipsTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final payslipsAsync = ref.watch(payslipsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.goBackOr(RoutePaths.settings),
-        ),
-        title: const Text('Payslips'),
-      ),
       body: payslipsAsync.when(
         loading: () => const ListSkeleton(),
         error: (e, _) => ErrorStateView(

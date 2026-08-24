@@ -30,20 +30,22 @@ describe('canAccess — settings routes', () => {
   });
 });
 
-describe('canAccess — HR routes (now under /settings/hr/*)', () => {
+describe('canAccess — HR routes (top-level /hr/*, grouped under Admin)', () => {
   const hrPaths = [
+    RoutePaths.hr,
     RoutePaths.hrEmployees,
     RoutePaths.hrPayroll,
     RoutePaths.hrPayslips,
     RoutePaths.hrSettings,
   ];
 
-  it('paths are rooted at /settings/hr', () => {
-    expect(RoutePaths.hrEmployees).toBe('/settings/hr/employees');
-    expect(RoutePaths.hrPayroll).toBe('/settings/hr/payroll');
-    expect(RoutePaths.hrPayslips).toBe('/settings/hr/payslips');
-    expect(RoutePaths.hrPayslipDetail).toBe('/settings/hr/payslips/:id');
-    expect(RoutePaths.hrSettings).toBe('/settings/hr/config');
+  it('paths are rooted at /hr', () => {
+    expect(RoutePaths.hr).toBe('/hr');
+    expect(RoutePaths.hrEmployees).toBe('/hr/employees');
+    expect(RoutePaths.hrPayroll).toBe('/hr/payroll');
+    expect(RoutePaths.hrPayslips).toBe('/hr/payslips');
+    expect(RoutePaths.hrPayslipDetail).toBe('/hr/payslips/:id');
+    expect(RoutePaths.hrSettings).toBe('/hr/settings');
   });
 
   it('admin can reach all HR pages, including a concrete payslip detail', () => {
@@ -67,12 +69,12 @@ describe('canAccess — HR routes (now under /settings/hr/*)', () => {
     expect(canAccess(`${RoutePaths.hrPayslips}/abc123`, staff)).toBe(false);
   });
 
-  it('old /hr/* paths are no longer routed — they moved, they were not aliased', () => {
-    expect(canAccess('/hr/employees', admin)).toBe(false);
-    expect(canAccess('/hr/payroll', admin)).toBe(false);
-    expect(canAccess('/hr/payslips', admin)).toBe(false);
-    expect(canAccess('/hr/payslips/abc123', admin)).toBe(false);
-    expect(canAccess('/hr/settings', admin)).toBe(false);
+  it('old /settings/hr/* paths are not guarded routes — redirects handle them', () => {
+    expect(canAccess('/settings/hr/employees', admin)).toBe(false);
+    expect(canAccess('/settings/hr/payroll', admin)).toBe(false);
+    expect(canAccess('/settings/hr/payslips', admin)).toBe(false);
+    expect(canAccess('/settings/hr/payslips/abc123', admin)).toBe(false);
+    expect(canAccess('/settings/hr/config', admin)).toBe(false);
   });
 });
 
