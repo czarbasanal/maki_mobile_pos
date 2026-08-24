@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -77,5 +77,66 @@ describe('Sidebar — Inventory dropdown', () => {
     expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /expand inventory/i }));
     expect(screen.getByRole('link', { name: /reorder/i })).toBeInTheDocument();
+  });
+});
+
+function stubMatchMedia(matches: boolean) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockReturnValue({
+      matches,
+      media: '',
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }),
+  );
+}
+
+describe('Sidebar — collapsible rail', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('collapses to an icon rail and expands back', async () => {
+    harness('/pos');
+    expect(screen.getByText('Job Orders')).toBeInTheDocument();
+    expect(screen.getByText('Money')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+
+    // Labels and section headings gone; destinations still reachable by
+    // accessible name (icon-only links).
+    expect(screen.queryByText('Job Orders')).not.toBeInTheDocument();
+    expect(screen.queryByText('Money')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /job orders/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /expand sidebar/i }));
+    expect(screen.getByText('Job Orders')).toBeInTheDocument();
+  });
+
+  it('starts collapsed on a tablet-width viewport', () => {
+    stubMatchMedia(true);
+    harness('/pos');
+    expect(screen.queryByText('Job Orders')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument();
+  });
+
+  it('starts expanded on a desktop viewport', () => {
+    stubMatchMedia(false);
+    harness('/pos');
+    expect(screen.getByText('Job Orders')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /collapse sidebar/i })).toBeInTheDocument();
+  });
+
+  it('a collapsed group still exposes its parent as an icon link, children hidden', async () => {
+    harness('/hr/employees');
+    // Expanded: the HR children are visible (active subtree).
+    expect(screen.getByRole('link', { name: /payroll/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+    expect(screen.getByRole('link', { name: /^hr$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /payroll/i })).not.toBeInTheDocument();
   });
 });

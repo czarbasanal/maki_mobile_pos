@@ -14,6 +14,8 @@ import {
   BuildingStorefrontIcon,
   CalendarDaysIcon,
   ChartBarIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   ClipboardDocumentListIcon,
@@ -105,6 +107,24 @@ const sections: NavSection[] = [
   },
 ];
 
+// Tablets (and anything narrower than a desktop monitor) start collapsed;
+// the toggle overrides either way for the rest of the session.
+const TABLET_QUERY = '(max-width: 1279px)';
+
+function useTabletViewport(): boolean {
+  const [isTablet, setIsTablet] = useState(
+    () => window.matchMedia?.(TABLET_QUERY).matches ?? false,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia?.(TABLET_QUERY);
+    if (!mql) return;
+    const onChange = (e: MediaQueryListEvent) => setIsTablet(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return isTablet;
+}
+
 function isActive(currentPath: string, itemPath: string): boolean {
   if (itemPath === RoutePaths.dashboard) return currentPath === itemPath;
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
@@ -113,13 +133,41 @@ function isActive(currentPath: string, itemPath: string): boolean {
 export function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const location = useLocation();
+  const isTablet = useTabletViewport();
+  const [manualCollapsed, setManualCollapsed] = useState<boolean | null>(null);
+  const collapsed = manualCollapsed ?? isTablet;
 
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-light-hairline bg-light-background">
-      <div className="flex h-14 items-center px-tk-lg">
-        <span className="text-bodyMedium font-semibold tracking-tight text-light-text">
-          MAKI POS
-        </span>
+    <aside
+      className={cn(
+        'flex h-full shrink-0 flex-col border-r border-light-hairline bg-light-background transition-all duration-200',
+        collapsed ? 'w-14' : 'w-60',
+      )}
+    >
+      <div
+        className={cn(
+          'flex h-14 items-center',
+          collapsed ? 'justify-center' : 'justify-between px-tk-lg',
+        )}
+      >
+        {collapsed ? null : (
+          <span className="text-bodyMedium font-semibold tracking-tight text-light-text">
+            MAKI POS
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => setManualCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
+        >
+          {collapsed ? (
+            <ChevronDoubleRightIcon className="h-4 w-4" />
+          ) : (
+            <ChevronDoubleLeftIcon className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-tk-sm py-tk-sm">
@@ -128,21 +176,26 @@ export function Sidebar() {
           path={RoutePaths.dashboard}
           icon={Squares2X2Icon}
           active={isActive(location.pathname, RoutePaths.dashboard)}
+          collapsed={collapsed}
         />
 
         {sections.map((section) => {
           const allowed = section.items.filter((item) => canAccess(item.path, user));
           if (allowed.length === 0) return null;
           return (
-            <div key={section.label} className="mt-tk-lg">
-              <div className="px-tk-sm pb-tk-xs text-[11px] font-medium uppercase tracking-wider text-light-text-hint">
-                {section.label}
-              </div>
+            <div key={section.label} className={collapsed ? 'mt-tk-sm' : 'mt-tk-lg'}>
+              {collapsed ? (
+                <div className="mx-tk-xs mb-tk-sm border-t border-light-hairline" />
+              ) : (
+                <div className="px-tk-sm pb-tk-xs text-[11px] font-medium uppercase tracking-wider text-light-text-hint">
+                  {section.label}
+                </div>
+              )}
               {allowed.map((item) => {
                 const children = (item.children ?? []).filter((c) =>
                   canAccess(c.path, user),
                 );
-                if (children.length > 0) {
+                if (!collapsed && children.length > 0) {
                   return (
                     <SidebarGroup
                       key={item.path}
@@ -159,6 +212,7 @@ export function Sidebar() {
                     path={item.path}
                     icon={item.icon}
                     active={isActive(location.pathname, item.path)}
+                    collapsed={collapsed}
                   />
                 );
               })}
@@ -167,7 +221,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      {user ? <SidebarAccount email={user.email} role={user.role} /> : null}
+      {user ? (
+        <SidebarAccount email={user.email} role={user.role} collapsed={collapsed} />
+      ) : null}
     </aside>
   );
 }
@@ -233,30 +289,43 @@ function SidebarLink({
   path,
   icon: Icon,
   active,
+  collapsed = false,
 }: {
   label: string;
   path: string;
   icon: IconComponent;
   active: boolean;
+  collapsed?: boolean;
 }) {
   return (
     <NavLink
       to={path}
       end={path === RoutePaths.dashboard}
+      aria-label={label}
+      title={collapsed ? label : undefined}
       className={cn(
-        'flex items-center gap-tk-sm rounded-md px-tk-sm py-[6px] text-bodySmall transition-colors',
+        'flex items-center rounded-md text-bodySmall transition-colors',
+        collapsed ? 'justify-center py-[8px]' : 'gap-tk-sm px-tk-sm py-[6px]',
         active
           ? 'bg-light-subtle font-semibold text-light-text'
           : 'text-light-text-secondary hover:bg-light-subtle hover:text-light-text',
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
-      <span className="truncate">{label}</span>
+      {collapsed ? null : <span className="truncate">{label}</span>}
     </NavLink>
   );
 }
 
-function SidebarAccount({ email, role }: { email: string; role: string }) {
+function SidebarAccount({
+  email,
+  role,
+  collapsed = false,
+}: {
+  email: string;
+  role: string;
+  collapsed?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -280,7 +349,12 @@ function SidebarAccount({ email, role }: { email: string; role: string }) {
   return (
     <div ref={ref} className="relative border-t border-light-hairline p-tk-sm">
       {open ? (
-        <div className="absolute bottom-full left-tk-sm right-tk-sm mb-tk-xs overflow-hidden rounded-md border border-light-hairline bg-light-card shadow-lg">
+        <div
+          className={cn(
+            'absolute bottom-full left-tk-sm z-20 mb-tk-xs overflow-hidden rounded-md border border-light-hairline bg-light-card shadow-lg',
+            collapsed ? 'w-56' : 'right-tk-sm',
+          )}
+        >
           <div className="border-b border-light-hairline px-tk-md py-tk-sm">
             <div className="truncate text-bodySmall text-light-text">{email}</div>
             <div className="mt-[2px] text-[11px] uppercase tracking-wider text-light-text-hint">
@@ -300,23 +374,32 @@ function SidebarAccount({ email, role }: { email: string; role: string }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-tk-sm rounded-md px-tk-sm py-tk-sm text-left transition-colors hover:bg-light-subtle"
+        aria-label="Account menu"
+        title={collapsed ? email : undefined}
+        className={cn(
+          'flex w-full items-center rounded-md text-left transition-colors hover:bg-light-subtle',
+          collapsed ? 'justify-center py-tk-sm' : 'gap-tk-sm px-tk-sm py-tk-sm',
+        )}
       >
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-dark text-[12px] font-medium text-white">
           {email[0]?.toUpperCase() ?? '?'}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-bodySmall text-light-text">{email}</span>
-          <span className="block text-[11px] uppercase tracking-wider text-light-text-hint">
-            {role}
-          </span>
-        </span>
-        <ChevronUpIcon
-          className={cn(
-            'h-4 w-4 shrink-0 text-light-text-secondary transition-transform',
-            open ? 'rotate-180' : '',
-          )}
-        />
+        {collapsed ? null : (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-bodySmall text-light-text">{email}</span>
+              <span className="block text-[11px] uppercase tracking-wider text-light-text-hint">
+                {role}
+              </span>
+            </span>
+            <ChevronUpIcon
+              className={cn(
+                'h-4 w-4 shrink-0 text-light-text-secondary transition-transform',
+                open ? 'rotate-180' : '',
+              )}
+            />
+          </>
+        )}
       </button>
     </div>
   );
