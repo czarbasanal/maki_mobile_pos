@@ -42,13 +42,18 @@ export function ChangePasswordDialog({
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   });
 
+  // Depend on the STABLE reset callbacks, not the mutation object — the
+  // object is a new identity every render, so depending on it re-runs this
+  // effect each render and change.reset() while closed re-renders again:
+  // an unbounded loop (it killed the test worker before it showed anywhere).
+  const resetChange = change.reset;
   useEffect(() => {
     if (!open) {
       reset();
-      change.reset();
+      resetChange();
       setGenericError(null);
     }
-  }, [open, reset, change]);
+  }, [open, reset, resetChange]);
 
   const onSubmit = async (values: ChangePasswordValues) => {
     setGenericError(null);

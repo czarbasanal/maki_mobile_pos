@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom';
 import { addDays, format, subDays } from 'date-fns';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useDaySales } from '@/presentation/hooks/useDaySales';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import {
   saleGrandTotal,
   saleIsPercentageDiscount,
@@ -36,6 +38,9 @@ const timeFmt = new Intl.DateTimeFormat('en-PH', {
 });
 
 export function DaySalesPage() {
+  const user = useAuthStore((st) => st.user);
+  // Daily-only roles are pinned to today (state already starts there).
+  const dailyOnly = !!user && hasPermission(user.role, Permission.viewDailySalesOnly);
   const [date, setDate] = useState(() => new Date());
   const { sales, isLoading, error } = useDaySales(date);
   const [page, setPage] = useState(1);
@@ -80,32 +85,37 @@ export function DaySalesPage() {
           </p>
         </div>
         <div className="flex items-center gap-tk-sm">
-          <button
-            type="button"
-            aria-label="Previous day"
-            onClick={() => setDate((d) => subDays(d, 1))}
-            className="rounded-md border border-light-border px-tk-sm py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
-          >
-            ← Prev day
-          </button>
+          {dailyOnly ? null : (
+            <button
+              type="button"
+              aria-label="Previous day"
+              onClick={() => setDate((d) => subDays(d, 1))}
+              className="rounded-md border border-light-border px-tk-sm py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              ← Prev day
+            </button>
+          )}
           <input
             type="date"
             aria-label="Date"
             value={format(date, 'yyyy-MM-dd')}
+            disabled={dailyOnly}
             onChange={(e) => {
               if (!e.target.value) return;
               setDate(new Date(`${e.target.value}T00:00:00`));
             }}
-            className="rounded-md border border-light-border bg-light-card px-tk-md py-[8px] text-bodySmall text-light-text outline-none focus:border-light-text"
+            className="rounded-md border border-light-border bg-light-card px-tk-md py-[8px] text-bodySmall text-light-text outline-none focus:border-light-text disabled:opacity-60"
           />
-          <button
-            type="button"
-            aria-label="Next day"
-            onClick={() => setDate((d) => addDays(d, 1))}
-            className="rounded-md border border-light-border px-tk-sm py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
-          >
-            Next day →
-          </button>
+          {dailyOnly ? null : (
+            <button
+              type="button"
+              aria-label="Next day"
+              onClick={() => setDate((d) => addDays(d, 1))}
+              className="rounded-md border border-light-border px-tk-sm py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Next day →
+            </button>
+          )}
         </div>
       </header>
 

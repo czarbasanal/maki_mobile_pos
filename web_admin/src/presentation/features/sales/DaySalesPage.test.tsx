@@ -9,6 +9,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { UserRole } from '@/domain/enums';
+import type { User } from '@/domain/entities';
 import { PaymentMethod, SaleStatus, DiscountType } from '@/domain/enums';
 import type { Sale } from '@/domain/entities';
 import { DaySalesPage } from './DaySalesPage';
@@ -42,13 +45,33 @@ function fakeSale(o: Partial<Sale> = {}): Sale {
   };
 }
 
+function webUser(role: UserRole): User {
+  return {
+    id: `u-${role}`,
+    email: `${role}@shop.test`,
+    displayName: `${role} user`,
+    role,
+    isActive: true,
+    phoneNumber: null,
+    photoUrl: null,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: null,
+    createdBy: null,
+    updatedBy: null,
+    lastLoginAt: null,
+  };
+}
+
 function harness({
   list,
   getById,
+  role = UserRole.admin,
 }: {
   list: ReturnType<typeof vi.fn>;
   getById?: ReturnType<typeof vi.fn>;
+  role?: UserRole;
 }) {
+  useAuthStore.setState({ status: 'signedIn', user: webUser(role) });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const saleRepo: Partial<Container['saleRepo']> = {
     list,
@@ -209,5 +232,16 @@ describe('DaySalesPage', () => {
     const secondArgs = list.mock.calls[1][0];
     expect(secondArgs.start.getTime()).toBeGreaterThan(firstArgs.start.getTime());
     expect(secondArgs.end.getTime()).toBeGreaterThan(firstArgs.end.getTime());
+  });
+});
+
+describe('DaySalesPage — cashier daily lock', () => {
+  it('pins a cashier to today: no day navigation, date input disabled', async () => {
+    const list = vi.fn().mockResolvedValue([]);
+    harness({ list, role: UserRole.cashier });
+    await screen.findByText(/no sales/i);
+    expect(screen.queryByRole('button', { name: 'Previous day' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next day' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Date')).toBeDisabled();
   });
 });

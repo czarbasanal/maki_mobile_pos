@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActivityLogRepo, useProductRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { logActivity } from '@/application/activityLogger';
 import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { ActivityType, type Product, type SellingOption } from '@/domain/entities';
@@ -32,17 +33,52 @@ export function useUpdateProduct() {
       // only an admin actor's write payload may include the key (Task 13).
       const includeSellingOptions = actor.role === UserRole.admin;
       const actorName = actor.displayName.trim() || null;
-      const fullPatch: ProductUpdateInput = { ...patch, updatedByName: actorName };
+      let fullPatch: ProductUpdateInput = { ...patch, updatedByName: actorName };
       if (image?.kind === 'replace') {
         fullPatch.imageUrl = await uploadProductImage(id, image.blob);
       } else if (image?.kind === 'remove') {
         await deleteProductImage(id);
         fullPatch.imageUrl = null;
       }
-      const newSku = (fullPatch.sku ?? oldSku) as string;
-      const skuChanged = fullPatch.sku !== undefined && fullPatch.sku !== oldSku;
-      const newBarcodes = (fullPatch.barcodes ?? oldBarcodes) as string[];
-      const { added, removed } = diffBarcodeClaims(oldBarcodes, newBarcodes);
+      // Name-only actors (cashier): REBASE like mobile's UpdateProductUseCase —
+      // re-read the doc and keep only name/image from the submission. The
+      // seeded form values could be stale, and fields like notes/category are
+      // NOT in the rules' cashier denylist, so without this a cashier save
+      // would silently revert someone's concurrent edit.
+      const nameOnly =
+        hasPermission(actor.role, Permission.editProductNameOnly) &&
+        !hasPermission(actor.role, Permission.editProductLimited) &&
+        !hasPermission(actor.role, Permission.editProduct);
+      let effOldSku = oldSku;
+      let effOldBarcodes = oldBarcodes;
+      if (nameOnly) {
+        const fresh = await repo.getById(id);
+        if (!fresh) throw new Error('Product not found');
+        const imagePatch =
+          'imageUrl' in fullPatch ? { imageUrl: fullPatch.imageUrl } : {};
+        fullPatch = {
+          name: fullPatch.name,
+          sku: fresh.sku,
+          category: fresh.category,
+          cost: fresh.cost,
+          costCode: fresh.costCode,
+          price: fresh.price,
+          reorderLevel: fresh.reorderLevel,
+          unit: fresh.unit,
+          supplierId: fresh.supplierId,
+          supplierName: fresh.supplierName,
+          barcodes: fresh.barcodes,
+          notes: fresh.notes,
+          updatedByName: actorName,
+          ...imagePatch,
+        };
+        effOldSku = fresh.sku;
+        effOldBarcodes = fresh.barcodes;
+      }
+      const newSku = (fullPatch.sku ?? effOldSku) as string;
+      const skuChanged = fullPatch.sku !== undefined && fullPatch.sku !== effOldSku;
+      const newBarcodes = (fullPatch.barcodes ?? effOldBarcodes) as string[];
+      const { added, removed } = diffBarcodeClaims(effOldBarcodes, newBarcodes);
       const barcodesChanged = added.length > 0 || removed.length > 0;
 
       if (skuChanged || barcodesChanged) {
@@ -57,8 +93,8 @@ export function useUpdateProduct() {
         await repo.updateProductWithClaims(
           id,
           fullPatch,
-          { old: oldSku, next: newSku, changed: skuChanged },
-          { old: oldBarcodes, next: newBarcodes },
+          { old: effOldSku, next: newSku, changed: skuChanged },
+          { old: effOldBarcodes, next: newBarcodes },
           actor.id,
           actorName,
           includeSellingOptions,

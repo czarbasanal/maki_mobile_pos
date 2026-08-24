@@ -39,12 +39,15 @@ export function EditDisplayNameDialog({
     defaultValues: { displayName: user.displayName },
   });
 
+  // Same stable-deps rule as ChangePasswordDialog — the mutation object is a
+  // fresh identity every render; depending on it loops the effect while open.
+  const resetUpdate = update.reset;
   useEffect(() => {
     if (open) {
       reset({ displayName: user.displayName });
-      update.reset();
+      resetUpdate();
     }
-  }, [open, user.displayName, reset, update]);
+  }, [open, user.displayName, reset, resetUpdate]);
 
   const onSubmit = async (values: Values) => {
     if (values.displayName === user.displayName) {

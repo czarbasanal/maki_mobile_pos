@@ -24,8 +24,8 @@ const admin: User = {
   lastLoginAt: null,
 };
 
-function harness(initialPath: string) {
-  useAuthStore.setState({ user: admin });
+function harness(initialPath: string, user: User = admin) {
+  useAuthStore.setState({ user });
   const authRepo = { signOut: vi.fn() } as unknown as Container['authRepo'];
   const activityLogRepo = {
     log: vi.fn().mockResolvedValue(undefined),
@@ -138,5 +138,27 @@ describe('Sidebar — collapsible rail', () => {
     await userEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
     expect(screen.getByRole('link', { name: /^hr$/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /payroll/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('Sidebar — cashier filtering (characterization)', () => {
+  const cashier: User = { ...admin, id: 'u2', role: UserRole.cashier };
+
+  it('collapses to the mobile-parity destinations', () => {
+    harness('/pos', cashier);
+    // Present: the cashier surface.
+    for (const label of ['POS', 'Job Orders', 'Inventory', 'Expenses', 'Reports', 'Settings']) {
+      expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
+    }
+    // Absent: stock ops, admin surfaces, HR.
+    for (const label of ['Receiving', 'Suppliers', 'Users', 'Activity Logs', 'HR']) {
+      expect(screen.queryByRole('link', { name: label })).not.toBeInTheDocument();
+    }
+  });
+
+  it('hides the cost-facing inventory children even inside the subtree', () => {
+    harness('/inventory', cashier);
+    expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /price history/i })).not.toBeInTheDocument();
   });
 });

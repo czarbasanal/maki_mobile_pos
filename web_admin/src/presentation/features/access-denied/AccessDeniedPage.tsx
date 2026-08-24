@@ -19,9 +19,7 @@ export function AccessDeniedPage() {
       </div>
       <h1 className="text-headingMedium font-semibold text-light-text">Access denied</h1>
       <p className="text-bodySmall text-light-text-secondary">
-        Your account does not have permission to use the web admin. Sign in with an admin account
-        to continue.
-      </p>
+        Your account does not have access to the web admin. Ask an admin if you think this is a mistake.</p>
       <button
         type="button"
         onClick={onSignOut}

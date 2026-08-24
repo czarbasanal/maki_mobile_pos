@@ -48,7 +48,7 @@ export function LoginPage() {
   }, []);
 
   if (status === 'loading') return <LoadingView label="Restoring session…" />;
-  if (status === 'signedIn' && user?.role === 'admin') {
+  if (status === 'signedIn' && (user?.role === 'admin' || user?.role === 'cashier')) {
     return <Navigate to={from} replace />;
   }
 
@@ -56,7 +56,7 @@ export function LoginPage() {
     signIn.reset();
     try {
       const signedIn = await signIn.mutateAsync(values);
-      if (signedIn.role !== 'admin') {
+      if (signedIn.role !== 'admin' && signedIn.role !== 'cashier') {
         navigate(RoutePaths.accessDenied, { replace: true });
         return;
       }

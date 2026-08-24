@@ -20,6 +20,7 @@ import { FirestoreEmployeeRepository } from '@/data/repositories/FirestoreEmploy
 import { FirestorePayslipRepository } from '@/data/repositories/FirestorePayslipRepository';
 import { FirestoreHrSettingsRepository } from '@/data/repositories/FirestoreHrSettingsRepository';
 import { FirestoreExpenseRepository } from '@/data/repositories/FirestoreExpenseRepository';
+import { FirestoreVoidRequestRepository } from '@/data/repositories/FirestoreVoidRequestRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -35,6 +36,7 @@ import type { EmployeeRepository } from '@/domain/repositories/EmployeeRepositor
 import type { PayslipRepository } from '@/domain/repositories/PayslipRepository';
 import type { HrSettingsRepository } from '@/domain/repositories/HrSettingsRepository';
 import type { ExpenseRepository } from '@/domain/repositories/ExpenseRepository';
+import type { VoidRequestRepository } from '@/domain/repositories/VoidRequestRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -52,6 +54,7 @@ export interface Container {
   payslipRepo: PayslipRepository;
   hrSettingsRepo: HrSettingsRepository;
   expenseRepo: ExpenseRepository;
+  voidRequestRepo: VoidRequestRepository;
 }
 
 function buildDefaultContainer(): Container {
@@ -71,6 +74,7 @@ function buildDefaultContainer(): Container {
     payslipRepo: new FirestorePayslipRepository(db),
     hrSettingsRepo: new FirestoreHrSettingsRepository(db),
     expenseRepo: new FirestoreExpenseRepository(db),
+    voidRequestRepo: new FirestoreVoidRequestRepository(db),
   };
 }
 
@@ -154,4 +158,8 @@ export function useHrSettingsRepo(): HrSettingsRepository {
 
 export function useExpenseRepo(): ExpenseRepository {
   return useContainer().expenseRepo;
+}
+
+export function useVoidRequestRepo(): VoidRequestRepository {
+  return useContainer().voidRequestRepo;
 }

@@ -19,11 +19,15 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { EditDisplayNameDialog } from './EditDisplayNameDialog';
 import { userRoleDisplayName } from '@/domain/enums';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { toneBadgeClasses, type Tone } from '@/core/theme/tones';
 import { cn } from '@/core/utils/cn';
 
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
+  // Each row shows only to holders of its route's permission — the guard
+  // would bounce anyone else, so an ungated row is just a dead end.
+  const can = (p: Permission) => !!user && hasPermission(user.role, p);
   const [pwOpen, setPwOpen] = useState(false);
   const [pwSuccess, setPwSuccess] = useState(false);
   const [nameOpen, setNameOpen] = useState(false);
@@ -85,41 +89,51 @@ export function SettingsPage() {
       </Section>
 
       <Section title="Administration">
-        <Row
-          to={RoutePaths.users}
-          icon={UsersIcon}
-          tone="blue"
-          title="User management"
-          subtitle="Add, edit, and manage users"
-        />
-        <Row
-          to={RoutePaths.userLogs}
-          icon={ClockIcon}
-          tone="violet"
-          title="Activity logs"
-          subtitle="View user activity and audit trail"
-        />
-        <Row
-          to={RoutePaths.costCodeSettings}
-          icon={CodeBracketSquareIcon}
-          tone="orange"
-          title="Cost code settings"
-          subtitle="Configure cost encoding"
-        />
-        <Row
-          to={RoutePaths.manageLists}
-          icon={QueueListIcon}
-          tone="blue"
-          title="Manage lists"
-          subtitle="Categories, units, and other dropdown values"
-        />
-        <Row
-          to={RoutePaths.mechanics}
-          icon={WrenchScrewdriverIcon}
-          tone="orange"
-          title="Mechanics"
-          subtitle="Mechanics for labor on service sales"
-        />
+        {can(Permission.viewUsers) ? (
+          <Row
+            to={RoutePaths.users}
+            icon={UsersIcon}
+            tone="blue"
+            title="User management"
+            subtitle="Add, edit, and manage users"
+          />
+        ) : null}
+        {can(Permission.viewUserLogs) ? (
+          <Row
+            to={RoutePaths.userLogs}
+            icon={ClockIcon}
+            tone="violet"
+            title="Activity logs"
+            subtitle="View user activity and audit trail"
+          />
+        ) : null}
+        {can(Permission.editCostCodeMapping) ? (
+          <Row
+            to={RoutePaths.costCodeSettings}
+            icon={CodeBracketSquareIcon}
+            tone="orange"
+            title="Cost code settings"
+            subtitle="Configure cost encoding"
+          />
+        ) : null}
+        {can(Permission.editLists) ? (
+          <Row
+            to={RoutePaths.manageLists}
+            icon={QueueListIcon}
+            tone="blue"
+            title="Manage lists"
+            subtitle="Categories, units, and other dropdown values"
+          />
+        ) : null}
+        {can(Permission.editLists) ? (
+          <Row
+            to={RoutePaths.mechanics}
+            icon={WrenchScrewdriverIcon}
+            tone="orange"
+            title="Mechanics"
+            subtitle="Mechanics for labor on service sales"
+          />
+        ) : null}
       </Section>
 
       <Section title="General">

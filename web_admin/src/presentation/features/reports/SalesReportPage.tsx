@@ -7,6 +7,9 @@ import { SALES_FETCH_CAP, useReportData } from '@/presentation/hooks/useReportDa
 import { salesToCsv, downloadCsv } from '@/core/utils/csv';
 import { formatMoney } from '@/core/utils/money';
 import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
+import { DailyLockNotice } from './DailyLockNotice';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
 import { SalesTable } from './SalesTable';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
@@ -22,8 +25,17 @@ const fileStamp = (d: Date) =>
   ).padStart(2, '0')}`;
 
 export function SalesReportPage() {
+  const user = useAuthStore((st) => st.user);
+  const dailyOnly = !!user && hasPermission(user.role, Permission.viewDailySalesOnly);
+  const canSeeCost = !!user && hasPermission(user.role, Permission.viewProductCost);
   const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
-  const { sales, summary, topProducts, capped, isLoading, error } = useReportData(range);
+  // Daily-only roles are clamped to today regardless of picker state —
+  // derived, not forced into state (the query is keyed by timestamps).
+  const effectiveRange = useMemo(
+    () => (dailyOnly ? resolvePreset('today') : range),
+    [dailyOnly, range],
+  );
+  const { sales, summary, topProducts, capped, isLoading, error } = useReportData(effectiveRange);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('salesReport');
   usePageClamp(page, setPage, sales.length, pageSize);
@@ -60,7 +72,13 @@ export function SalesReportPage() {
             Sales and payment breakdown for the selected range.
           </p>
         </div>
-        <DateRangePicker onChange={setRange} />
+        {dailyOnly ? (
+          <DailyLockNotice>
+            {"Showing today's sales only. Contact an admin for historical reports."}
+          </DailyLockNotice>
+        ) : (
+          <DateRangePicker onChange={setRange} />
+        )}
       </header>
 
       {error ? (
@@ -103,7 +121,7 @@ export function SalesReportPage() {
               </dl>
             </Panel>
             <Panel title="Top products" className="lg:col-span-2">
-              <TopProducts rows={topProducts} />
+              <TopProducts rows={topProducts} showProfit={canSeeCost} />
             </Panel>
           </div>
 
@@ -139,6 +157,7 @@ export function SalesReportPage() {
 
 function TopProducts({
   rows,
+  showProfit,
 }: {
   rows: {
     sku: string;
@@ -147,6 +166,8 @@ function TopProducts({
     totalRevenue: number;
     totalProfit: number;
   }[];
+  // Profit derives from product costs — admin-only (viewProductCost).
+  showProfit: boolean;
 }) {
   if (rows.length === 0) {
     return <p className="text-bodySmall text-light-text-hint">No products sold in this range.</p>;
@@ -158,7 +179,7 @@ function TopProducts({
           <th className="py-tk-xs text-left font-medium">Product</th>
           <th className="py-tk-xs text-right font-medium">Qty</th>
           <th className="py-tk-xs text-right font-medium">Revenue</th>
-          <th className="py-tk-xs text-right font-medium">Profit</th>
+          {showProfit ? <th className="py-tk-xs text-right font-medium">Profit</th> : null}
         </tr>
       </thead>
       <tbody className="divide-y divide-light-hairline">
@@ -167,7 +188,9 @@ function TopProducts({
             <td className="py-tk-xs">{p.name}</td>
             <td className="py-tk-xs text-right tabular-nums">{p.quantitySold}</td>
             <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalRevenue)}</td>
-            <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalProfit)}</td>
+            {showProfit ? (
+              <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalProfit)}</td>
+            ) : null}
           </tr>
         ))}
       </tbody>

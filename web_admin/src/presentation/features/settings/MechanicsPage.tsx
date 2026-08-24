@@ -13,8 +13,14 @@ import { Dialog } from '@/presentation/components/common/Dialog';
 import type { Mechanic } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
 import { PageHeader } from './PageHeader';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { hasPermission, Permission } from '@/domain/permissions/Permission';
 
 export function MechanicsPage() {
+  const user = useAuthStore((st) => st.user);
+  // editLists holders add + rename; deactivate/reactivate + delete need
+  // manageCategories (mobile parity).
+  const canManage = !!user && hasPermission(user.role, Permission.manageCategories);
   useEffect(() => {
     document.title = 'Mechanics · MAKI POS Admin';
   }, []);
@@ -135,16 +141,18 @@ export function MechanicsPage() {
                   >
                     <PencilIcon className="h-3.5 w-3.5" /> Edit
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleActive(m)}
-                    disabled={busy}
-                    className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
-                  >
-                    {m.isActive ? <EyeSlashIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
-                    {m.isActive ? 'Deactivate' : 'Reactivate'}
-                  </button>
-                  {!m.isActive ? (
+                  {canManage ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleActive(m)}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
+                    >
+                      {m.isActive ? <EyeSlashIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
+                      {m.isActive ? 'Deactivate' : 'Reactivate'}
+                    </button>
+                  ) : null}
+                  {!m.isActive && canManage ? (
                     <button
                       type="button"
                       onClick={() => setDeleting(m)}

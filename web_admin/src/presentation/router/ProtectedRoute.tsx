@@ -19,8 +19,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to={RoutePaths.login} replace state={{ from: location.pathname }} />;
   }
 
-  // Web admin currently restricts to admin role; mirror web_router.dart.
-  if (user && user.role !== 'admin') {
+  // Web role allowlist: admins and cashiers (mobile-parity privileges).
+  // Staff stays mobile-only until asked for.
+  if (user && user.role !== 'admin' && user.role !== 'cashier') {
     return <Navigate to={RoutePaths.accessDenied} replace />;
   }
 

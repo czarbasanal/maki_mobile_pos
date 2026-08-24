@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
+import { useAuthStore } from '@/presentation/stores/authStore';
 import { SaleDetailPage } from './SaleDetailPage';
-import { DiscountType, PaymentMethod, SaleStatus } from '@/domain/enums';
-import type { Category, Sale } from '@/domain/entities';
+import { DiscountType, PaymentMethod, SaleStatus, UserRole } from '@/domain/enums';
+import type { Category, Sale, User } from '@/domain/entities';
 import { formatMoney } from '@/core/utils/money';
 import {
   saleGrandTotal,
@@ -59,19 +61,69 @@ function sale(overrides: Partial<Sale> = {}): Sale {
   };
 }
 
-function harness(saleRepo: Partial<Container['saleRepo']>) {
+function webUser(role: UserRole): User {
+  return {
+    id: `u-${role}`,
+    email: `${role}@shop.test`,
+    displayName: `${role[0].toUpperCase()}${role.slice(1)} User`,
+    role,
+    isActive: true,
+    phoneNumber: null,
+    photoUrl: null,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: null,
+    createdBy: null,
+    updatedBy: null,
+    lastLoginAt: null,
+  };
+}
+
+interface HarnessOptions {
+  user?: User;
+  pending?: boolean;
+  voidReasons?: string[];
+  voidRequestRepo?: Partial<Container['voidRequestRepo']>;
+  activityLogRepo?: Partial<Container['activityLogRepo']>;
+}
+
+function harness(saleRepo: Partial<Container['saleRepo']>, opts: HarnessOptions = {}) {
+  const user = opts.user ?? webUser(UserRole.admin);
+  useAuthStore.setState({ status: 'signedIn', user });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const categoryRepo: Partial<Container['categoryRepo']> = {
     watchAll: (_kind, cb: (categories: Category[]) => void) => {
-      cb([]);
+      cb(
+        (opts.voidReasons ?? []).map((name, i) => ({
+          id: `vr${i}`,
+          name,
+          isActive: true,
+          createdAt: new Date('2026-01-01'),
+          updatedAt: null,
+          createdBy: null,
+          updatedBy: null,
+        })),
+      );
       return () => {};
     },
   };
-  return render(
+  // The container falls back to REAL Firestore repos for anything not
+  // overridden — the void-request repo must always be stubbed here.
+  const voidRequestRepo: Partial<Container['voidRequestRepo']> = {
+    hasPendingForSale: vi.fn().mockResolvedValue(opts.pending ?? false),
+    createRequest: vi.fn().mockResolvedValue(undefined),
+    ...(opts.voidRequestRepo ?? {}),
+  };
+  const activityLogRepo: Partial<Container['activityLogRepo']> = {
+    log: vi.fn().mockResolvedValue(undefined),
+    ...(opts.activityLogRepo ?? {}),
+  };
+  const view = render(
     <DiProvider
       override={{
         saleRepo: saleRepo as Container['saleRepo'],
         categoryRepo: categoryRepo as Container['categoryRepo'],
+        voidRequestRepo: voidRequestRepo as Container['voidRequestRepo'],
+        activityLogRepo: activityLogRepo as Container['activityLogRepo'],
       }}
     >
       <QueryClientProvider client={qc}>
@@ -83,6 +135,7 @@ function harness(saleRepo: Partial<Container['saleRepo']>) {
       </QueryClientProvider>
     </DiProvider>,
   );
+  return { view, voidRequestRepo, activityLogRepo };
 }
 
 describe('SaleDetailPage', () => {
@@ -159,5 +212,122 @@ describe('SaleDetailPage', () => {
       50; // fees
     expect(expectedTotal).toBe(saleGrandTotal(composite));
     expect(screen.getAllByText(formatMoney(expectedTotal)).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('SaleDetailPage — void gating by role (cashier web access)', () => {
+  it('admin gets the direct Void button, no Request void', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale()) });
+    await screen.findByRole('heading', { name: 'OR-0001' });
+    expect(screen.getByRole('button', { name: 'Void sale' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Request void' })).not.toBeInTheDocument();
+  });
+
+  it('cashier gets Request void, never the direct Void', async () => {
+    harness(
+      { getById: vi.fn().mockResolvedValue(sale()) },
+      { user: webUser(UserRole.cashier) },
+    );
+    await screen.findByRole('heading', { name: 'OR-0001' });
+    expect(screen.getByRole('button', { name: 'Request void' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Void sale' })).not.toBeInTheDocument();
+  });
+
+  it('a pending request replaces the cashier action with the banner', async () => {
+    harness(
+      { getById: vi.fn().mockResolvedValue(sale()) },
+      { user: webUser(UserRole.cashier), pending: true },
+    );
+    await screen.findByText('Void pending approval');
+    expect(screen.queryByRole('button', { name: 'Request void' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Void sale' })).not.toBeInTheDocument();
+  });
+
+  it('a pending request tells the admin to resolve it on the phone', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale()) }, { pending: true });
+    await screen.findByText('Void pending approval');
+    expect(screen.getByText(/approve or reject from the mobile app/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Void sale' })).not.toBeInTheDocument();
+  });
+
+  it('a voided sale offers neither action to anyone', async () => {
+    harness(
+      {
+        getById: vi.fn().mockResolvedValue(
+          sale({ status: SaleStatus.voided, voidedAt: new Date('2026-05-14') }),
+        ),
+      },
+      { user: webUser(UserRole.cashier) },
+    );
+    await screen.findByRole('heading', { name: 'OR-0001' });
+    expect(screen.queryByRole('button', { name: 'Request void' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Void sale' })).not.toBeInTheDocument();
+  });
+
+  it('the request writes the mobile-shaped doc and logs the mobile string', async () => {
+    // Stateful stub: the pending flag flips once the request lands, so the
+    // page's cache invalidation can surface the banner like production would.
+    let pendingNow = false;
+    const { voidRequestRepo, activityLogRepo } = harness(
+      { getById: vi.fn().mockResolvedValue(sale()) },
+      {
+        user: webUser(UserRole.cashier),
+        voidReasons: ['Wrong item', 'Customer changed mind'],
+        voidRequestRepo: {
+          hasPendingForSale: vi.fn().mockImplementation(() => Promise.resolve(pendingNow)),
+          createRequest: vi.fn().mockImplementation(() => {
+            pendingNow = true;
+            return Promise.resolve();
+          }),
+        },
+      },
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Request void' }));
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'Wrong item');
+    await userEvent.click(screen.getByRole('button', { name: 'Send request' }));
+
+    await waitFor(() => expect(voidRequestRepo.createRequest).toHaveBeenCalledTimes(1));
+    const expectedTotal = saleGrandTotal(sale());
+    expect(voidRequestRepo.createRequest).toHaveBeenCalledWith({
+      saleId: 's1',
+      saleNumber: 'OR-0001',
+      saleGrandTotal: expectedTotal,
+      requestedBy: 'u-cashier',
+      requestedByName: 'Cashier User',
+      requestedByRole: 'cashier',
+      reason: 'Wrong item',
+      itemsSummary: '2× Spark Plug',
+    });
+    await waitFor(() =>
+      expect(activityLogRepo.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'Requested void for sale OR-0001',
+          details: `Reason: Wrong item, Amount: ₱${expectedTotal.toFixed(2)}`,
+          entityId: 's1',
+          entityType: 'sale',
+        }),
+      ),
+    );
+    // The pending banner takes over after the request lands.
+    await screen.findByText('Void pending approval');
+  });
+
+  it("the 'Other' reason requires at least 5 characters of detail", async () => {
+    const { voidRequestRepo } = harness(
+      { getById: vi.fn().mockResolvedValue(sale()) },
+      { user: webUser(UserRole.cashier), voidReasons: ['Wrong item'] },
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Request void' }));
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'Other');
+    const detail = screen.getByRole('textbox');
+    await userEvent.type(detail, 'oops');
+    expect(screen.getByRole('button', { name: 'Send request' })).toBeDisabled();
+    await userEvent.type(detail, ' wrong price charged');
+    await userEvent.click(screen.getByRole('button', { name: 'Send request' }));
+    await waitFor(() =>
+      expect(voidRequestRepo.createRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: 'oops wrong price charged' }),
+      ),
+    );
   });
 });

@@ -6,6 +6,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Mechanic } from '@/domain/entities';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { UserRole } from '@/domain/enums';
 import { MechanicsPage } from './MechanicsPage';
 
 function mechanic(o: Partial<Mechanic> = {}): Mechanic {
@@ -23,7 +25,13 @@ function mechanic(o: Partial<Mechanic> = {}): Mechanic {
   };
 }
 
-function harness(mechanics: Mechanic[]) {
+function harness(mechanics: Mechanic[], role: UserRole = UserRole.admin) {
+  useAuthStore.setState({
+    user: {
+      id: 'u1', email: 'a@shop.test', displayName: 'Tester', role, isActive: true,
+    } as never,
+    status: 'signedIn',
+  });
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const mechanicRepo = {
     watchAll: vi.fn((cb: (m: Mechanic[]) => void) => {
@@ -97,5 +105,15 @@ describe('MechanicsPage — delete action (deactivate-first)', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: /cancel/i }));
 
     expect(mechanicRepo.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe('MechanicsPage — cashier add/rename only (mobile parity)', () => {
+  it('hides Deactivate and Delete from a cashier, keeps Add and Edit', () => {
+    harness([mechanic({ id: "m2", name: "Old Mechanic", isActive: false })], UserRole.cashier);
+    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /reactivate/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   });
 });

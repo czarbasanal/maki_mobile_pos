@@ -183,3 +183,21 @@ describe('InventoryListPage cost visibility', () => {
   });
 });
 
+
+describe('InventoryListPage — Add product gating (cashier web access)', () => {
+  it('hides Add product from a cashier', () => {
+    signIn(UserRole.cashier);
+    harness();
+    expect(screen.queryByRole('button', { name: /add product/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /add product/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps Add product for staff (addProduct holders)', () => {
+    signIn(UserRole.staff);
+    harness();
+    expect(
+      screen.queryByRole('button', { name: /add product/i }) ??
+        screen.queryByRole('link', { name: /add product/i }),
+    ).toBeInTheDocument();
+  });
+});
