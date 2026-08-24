@@ -252,7 +252,11 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   const submitting = isSubmitting || update.isPending || create.isPending;
   const mutationError = update.error?.message ?? create.error?.message ?? null;
   const skuLocked = (!isEditing && autoSku) || (isEditing && nameOnly);
-  const sellingOptionsError = validateSellingOptions(sellingOptions);
+  // Only admins can SEE (and fix) the selling-options editor, and every
+  // non-admin save drops the key anyway — so only admins carry the
+  // validation lock. Otherwise one malformed stored option would silently
+  // dead-end staff/cashier saves behind a section they cannot render.
+  const sellingOptionsError = isAdmin ? validateSellingOptions(sellingOptions) : null;
 
   /** Looks up the active product category matching `name` (case-sensitive,
    *  mirrors the dropdown's exact-name matching). */

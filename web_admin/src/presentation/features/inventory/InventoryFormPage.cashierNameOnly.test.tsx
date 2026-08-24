@@ -34,14 +34,14 @@ function product(): Product {
   };
 }
 
-function harness(freshOnSave?: Product) {
+function harness(freshOnSave?: Product, initial?: Product) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const update = vi.fn().mockResolvedValue(undefined);
   const recordPriceChange = vi.fn().mockResolvedValue(undefined);
   const getById = vi.fn().mockResolvedValue(freshOnSave ?? product());
   // First read is the page load; a later read (the save's rebase) sees the
   // "concurrent edit" state when freshOnSave is provided.
-  getById.mockResolvedValueOnce(product());
+  getById.mockResolvedValueOnce(initial ?? product());
   const productRepo: Partial<Container['productRepo']> = {
     getById,
     update,
@@ -110,6 +110,24 @@ describe('InventoryFormPage — cashier name-only editing', () => {
     await screen.findByDisplayValue('Brake shoe');
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /adjust stock/i })).not.toBeInTheDocument();
+  });
+
+  it('a malformed stored selling option cannot lock a cashier out of saving', async () => {
+    signIn(UserRole.cashier);
+    // An empty label fails validateSellingOptions — but the cashier can
+    // neither see nor fix that admin-only section, and their save drops
+    // sellingOptions anyway, so it must not dead-end the Save button.
+    const broken: Product = {
+      ...product(),
+      sellingOptions: [{ id: 'o1', label: '', pieces: 6, price: 600 }],
+    };
+    const { update } = harness(broken, broken);
+    // Page load returns the broken product too.
+    await screen.findByDisplayValue('ABC123');
+    const save = screen.getByRole('button', { name: /Save changes/ });
+    expect(save).not.toBeDisabled();
+    await userEvent.click(save);
+    await waitFor(() => expect(update).toHaveBeenCalled());
   });
 
   it('the save rebases onto the FRESH doc — a concurrent edit survives', async () => {
