@@ -171,6 +171,21 @@ abstract class RouteNames {
   /// Mechanics admin editor — `/settings/mechanics`.
   static const String mechanics = 'mechanics';
 
+  /// HR: employees registry — `/settings/hr/employees`.
+  static const String hrEmployees = 'hrEmployees';
+
+  /// HR: payroll generator — `/settings/hr/payroll`.
+  static const String hrPayroll = 'hrPayroll';
+
+  /// HR: payslips list — `/settings/hr/payslips`.
+  static const String hrPayslips = 'hrPayslips';
+
+  /// HR: payslip detail — `/settings/hr/payslips/:id`.
+  static const String hrPayslipDetail = 'hrPayslipDetail';
+
+  /// HR: settings — `/settings/hr/settings`.
+  static const String hrSettings = 'hrSettings';
+
   /// Shop fees admin editor — `/settings/shop-fees`.
   static const String shopFees = 'shopFees';
 
@@ -269,6 +284,10 @@ abstract class RoutePaths {
   static const String categorySettings = '/settings/categories';
   static const String categoryEditor = '/settings/categories/:kind';
   static const String mechanics = '/settings/mechanics';
+  static const String hrEmployees = '/settings/hr/employees';
+  static const String hrPayroll = '/settings/hr/payroll';
+  static const String hrPayslips = '/settings/hr/payslips';
+  static const String hrSettings = '/settings/hr/settings';
   static const String shopFees = '/settings/shop-fees';
   static const String motorcycleModels = '/settings/motorcycle-models';
   static const String about = '/settings/about';

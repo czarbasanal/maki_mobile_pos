@@ -55,6 +55,12 @@ abstract class FirestoreCollections {
   /// Mechanics collection - admin-managed mechanic list for job orders
   static const String mechanics = 'mechanics';
 
+  /// Employees registry (HR payroll) - shared with the web admin
+  static const String employees = 'employees';
+
+  /// Generated payslips (HR payroll) - frozen snapshots, shared with web
+  static const String payslips = 'payslips';
+
   /// Shop fees collection - admin-managed shop-fee catalog (e.g. environmental
   /// fee, disposal fee) attachable to a sale/draft
   static const String shopFees = 'shop_fees';
@@ -99,6 +105,9 @@ abstract class FirestoreCollections {
 
   /// Document ID for cost code mapping settings
   static const String costCodeSettings = 'cost_code_mapping';
+
+  /// Document ID for HR settings (week start day + holiday percentages)
+  static const String hrSettings = 'hr';
 
   /// Document ID for general app settings
   static const String generalSettings = 'general';

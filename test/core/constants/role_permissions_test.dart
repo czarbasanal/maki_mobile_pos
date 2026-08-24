@@ -145,4 +145,24 @@ void main() {
       );
     });
   });
+
+  group('RolePermissions — manageHr', () {
+    test('admin has manageHr', () {
+      expect(
+        RolePermissions.hasPermission(UserRole.admin, Permission.manageHr),
+        isTrue,
+      );
+    });
+
+    test('staff and cashier do not — payroll is the owner\'s book', () {
+      expect(
+        RolePermissions.hasPermission(UserRole.staff, Permission.manageHr),
+        isFalse,
+      );
+      expect(
+        RolePermissions.hasPermission(UserRole.cashier, Permission.manageHr),
+        isFalse,
+      );
+    });
+  });
 }
