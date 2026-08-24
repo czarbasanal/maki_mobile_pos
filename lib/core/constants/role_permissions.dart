@@ -31,6 +31,11 @@ enum Permission {
   importCsv,
   viewReceivingHistory,
 
+  // HR Permissions
+  /// Full HR access — employees registry, payroll generation, payslips.
+  /// Admin-only, mirroring the web admin's manageHr.
+  manageHr,
+
   // Supplier Permissions
   viewSuppliers,
   addSupplier,
@@ -189,6 +194,8 @@ abstract class RolePermissions {
     Permission.bulkReceive,
     Permission.importCsv,
     Permission.viewReceivingHistory,
+    // HR
+    Permission.manageHr,
     // Suppliers
     Permission.viewSuppliers,
     Permission.addSupplier,

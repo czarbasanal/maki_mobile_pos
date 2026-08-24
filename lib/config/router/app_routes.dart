@@ -47,7 +47,10 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/settings/settings_sc
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/hr_hub_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/hr_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/mechanic_editor_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/hr/payslip_detail_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/shop_fee_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/motorcycle_model_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
@@ -314,6 +317,25 @@ List<RouteBase> featureRoutes() => [
               final id = state.pathParameters['id']!;
               return SupplierFormScreen(supplierId: id);
             },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: RoutePaths.hr,
+        name: RouteNames.hr,
+        builder: (context, state) => const HrHubScreen(),
+        routes: [
+          GoRoute(
+            path: 'payslips/:id',
+            name: RouteNames.hrPayslipDetail,
+            builder: (context, state) => PayslipDetailScreen(
+              payslipId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: 'settings',
+            name: RouteNames.hrSettings,
+            builder: (context, state) => const HrSettingsScreen(),
           ),
         ],
       ),

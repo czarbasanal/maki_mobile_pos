@@ -85,6 +85,12 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () => context.push(RoutePaths.suppliers),
                 ),
                 SettingsTile(
+                  icon: LucideIcons.briefcaseBusiness,
+                  title: 'HR',
+                  subtitle: 'Employees, payroll, and payslips',
+                  onTap: () => context.push(RoutePaths.hr),
+                ),
+                SettingsTile(
                   icon: LucideIcons.code,
                   title: 'Cost Code Settings',
                   subtitle: 'Configure cost encoding',
