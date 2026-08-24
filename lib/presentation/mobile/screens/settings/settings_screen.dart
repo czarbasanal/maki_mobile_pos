@@ -85,6 +85,30 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () => context.push(RoutePaths.suppliers),
                 ),
                 SettingsTile(
+                  icon: LucideIcons.idCard,
+                  title: 'Employees',
+                  subtitle: 'Payroll registry and daily rates',
+                  onTap: () => context.push(RoutePaths.hrEmployees),
+                ),
+                SettingsTile(
+                  icon: LucideIcons.banknote,
+                  title: 'Payroll',
+                  subtitle: 'Generate a weekly payslip',
+                  onTap: () => context.push(RoutePaths.hrPayroll),
+                ),
+                SettingsTile(
+                  icon: LucideIcons.receipt,
+                  title: 'Payslips',
+                  subtitle: 'Past payslips, save as image',
+                  onTap: () => context.push(RoutePaths.hrPayslips),
+                ),
+                SettingsTile(
+                  icon: LucideIcons.calendarCog,
+                  title: 'HR Settings',
+                  subtitle: 'Pay week start and holiday rates',
+                  onTap: () => context.push(RoutePaths.hrSettings),
+                ),
+                SettingsTile(
                   icon: LucideIcons.code,
                   title: 'Cost Code Settings',
                   subtitle: 'Configure cost encoding',

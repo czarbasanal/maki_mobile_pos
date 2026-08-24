@@ -66,6 +66,10 @@ abstract class RouteGuards {
     '/settings/cost-codes': Permission.editCostCodeMapping,
     '/settings/categories': Permission.editLists,
     '/settings/mechanics': Permission.editLists,
+    '/settings/hr/employees': Permission.manageHr,
+    '/settings/hr/payroll': Permission.manageHr,
+    '/settings/hr/payslips': Permission.manageHr,
+    '/settings/hr/settings': Permission.manageHr,
     '/settings/shop-fees': Permission.editLists,
     '/settings/motorcycle-models': Permission.editLists,
     // Logs
@@ -143,6 +147,11 @@ abstract class RouteGuards {
 
   /// Checks access for dynamic routes (with parameters).
   static bool _checkDynamicRoute(String path, UserEntity user) {
+    // HR payslip detail — /settings/hr/payslips/:id. Fail-safe deny keeps
+    // any unlisted /settings/hr/* path admin-inaccessible too.
+    if (path.startsWith('/settings/hr/payslips/')) {
+      return RolePermissions.hasPermission(user.role, Permission.manageHr);
+    }
     // Inventory edit routes - staff needs editProductLimited, admin needs editProduct
     if (path.startsWith('/inventory/edit/')) {
       return user.hasPermission(Permission.editProduct) ||
