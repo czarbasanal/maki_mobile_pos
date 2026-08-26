@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/app_mobile.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time_cache.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
 void main() async {
@@ -37,6 +38,11 @@ void main() async {
     initError = e;
     debugPrint('Firebase init failed: $e\n$st');
   }
+
+  // Apply the last-known shop timezone before the first frame. The Firestore
+  // stream (shopTimezoneProvider) corrects it moments later; without this a
+  // cold or offline start would compute "today" from the default.
+  await ShopTimeCache.restore();
 
   runApp(
     ProviderScope(

@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/utils/business_day.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 
-/// Injectable clock (override in tests).
-final nowProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+export 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart'
+    show nowProvider;
 
 /// The current business day (midnight-truncated), used as the single
 /// source of "today" across the app.
