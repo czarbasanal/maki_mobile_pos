@@ -29,3 +29,4 @@ export 'payslip_entity.dart';
 export 'shop_fee_entity.dart';
 export 'motorcycle_model_entity.dart';
 export 'void_request_entity.dart';
+export 'shop_timezone_entity.dart';

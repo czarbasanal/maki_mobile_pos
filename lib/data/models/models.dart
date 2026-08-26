@@ -26,6 +26,7 @@ export 'receiving_model.dart';
 export 'sale_item_model.dart';
 export 'sale_model.dart';
 export 'shop_fee_model.dart';
+export 'shop_timezone_model.dart';
 export 'supplier_model.dart';
 export 'user_model.dart';
 export 'void_request_model.dart';
