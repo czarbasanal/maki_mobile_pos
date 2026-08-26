@@ -32,7 +32,7 @@ Two representations, strictly separated:
 `settings/general` (already declared in `firestore_collections.dart` as `generalSettings`, currently unused):
 
 ```
-timezone: "Asia/Manila"     // IANA name — for client display and the picker
+timezoneId: "Asia/Manila"   // IANA name — for client display and the picker
 tzOffsetMinutes: 480        // used for all day math; readable by rules
 updatedAt: <serverTimestamp>
 updatedBy: <uid>
@@ -68,7 +68,7 @@ Rewired seams (not all ~138 `DateTime.now()` sites — most are harmless deseria
 
 ## 3. Web admin
 
-- New `src/domain/time/shopTime.ts` built on the already-installed (and currently unimported) `date-fns-tz`, fed by a settings context that loads `settings/general` (default Asia/Manila).
+- New `src/domain/time/shopTime.ts`, fed by a settings subscription that loads `settings/general` (default Asia/Manila). Because only fixed-offset (no-DST) zones are supported, this uses plain offset arithmetic — the same style as the existing `phDayInt` — with the platform's `Intl.DateTimeFormat({ timeZone })` for display. No new dependency; the installed-but-unused `date-fns-tz` stays unused, and `date-fns`' local-time helpers must not be applied to shifted values.
 - Routed through it: `resolvePreset` (all presets in shop tz, boundaries as instants), `saleNumber.counterKey` (must agree with `phDayInt` in the same transaction), `payPeriod.ts`, `ActivityLogsPage` day grouping, `DateRangePicker` date-string parsing fix.
 - `phDayInt` takes the offset from settings instead of hardcoding +8.
 - **Settings UI:** Settings → General → "Time & timezone", admin-only (gated-route pattern: `routePaths.ts` + `routes.tsx` + `routeGuards.ts`). Picker over a curated list of fixed-offset (no-DST) timezones, default Asia/Manila, live current-shop-time display. Saving writes `timezone` + derived `tzOffsetMinutes`. The page notes that changing the timezone requires all devices to run a supporting APK.
