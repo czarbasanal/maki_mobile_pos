@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/domain/entities/expense_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
@@ -31,14 +32,21 @@ SalesSummary _summary(double gross) => SalesSummary(
       },
     );
 
-DateTime get _todayKey {
-  final n = DateTime.now();
-  return DateTime(n.year, n.month, n.day);
+/// [businessDayProvider] now holds a shop wall-clock midnight, and
+/// [dailyClosingDataProvider] takes the "today" path only when its family key
+/// equals that value — so the key has to be a shop wall date too.
+final _todayKey = shopWall(2026, 8, 26);
+
+/// A [businessDayProvider] override with no timer, pinned to [_todayKey].
+class _FixedBusinessDayNotifier extends BusinessDayNotifier {
+  @override
+  DateTime build() => _todayKey;
 }
 
 void main() {
   test('today draft is sourced from the live sales summary + expenses', () async {
     final container = ProviderContainer(overrides: [
+      businessDayProvider.overrideWith(_FixedBusinessDayNotifier.new),
       todaysSalesSummaryProvider.overrideWith((ref) async => _summary(1000)),
       expensesByDateRangeProvider
           .overrideWith((ref, p) async => [_cashExpense(100)]),
@@ -57,6 +65,7 @@ void main() {
   test('today draft recomputes when the live sales summary changes', () async {
     var gross = 1000.0;
     final container = ProviderContainer(overrides: [
+      businessDayProvider.overrideWith(_FixedBusinessDayNotifier.new),
       todaysSalesSummaryProvider.overrideWith((ref) async => _summary(gross)),
       expensesByDateRangeProvider.overrideWith((ref, p) async => const []),
     ]);

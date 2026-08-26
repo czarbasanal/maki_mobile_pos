@@ -1,23 +1,42 @@
 /// Business-day boundary helpers.
 ///
-/// The shop runs on Philippine local time, which has no DST — so "the next
-/// business day" is always plain next 00:00 local time, no offset math.
-/// These helpers are pure (take the reference [DateTime] explicitly) so
-/// they're trivially unit-testable without a clock abstraction.
+/// The business day is defined by the shop's configured timezone
+/// (`settings/general`, default Asia/Manila UTC+8) — NOT by the device's.
+/// A device in another zone would otherwise compute the wrong day and its
+/// `drawer_state` write would be rejected by the security rules, failing
+/// the sale outright.
+///
+/// These are pure (offset passed explicitly) so they're unit-testable
+/// without a clock or a provider. See `shop_time.dart` for the
+/// instant-vs-wall distinction these build on.
 library;
 
-/// Next local midnight strictly after [t] (PH has no DST — plain next 00:00).
-DateTime nextMidnightAfter(DateTime t) => DateTime(t.year, t.month, t.day + 1);
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
-/// Midnight-truncated date for [t].
-DateTime businessDateOf(DateTime t) => DateTime(t.year, t.month, t.day);
+/// The real **instant** of the next shop midnight strictly after [instant].
+/// Returned as an instant so a `Timer` duration is a plain subtraction.
+DateTime nextShopMidnightAfter(DateTime instant, int offsetMinutes) {
+  final w = shopTimeOf(instant, offsetMinutes);
+  return instantOf(shopWall(w.year, w.month, w.day + 1), offsetMinutes);
+}
 
-/// yyyymmdd int for the drawer_state doc / rules comparisons.
-int businessDayInt(DateTime t) => t.year * 10000 + t.month * 100 + t.day;
+/// Shop midnight (a **wall** value) of the business day containing [instant].
+DateTime businessDateOf(DateTime instant, int offsetMinutes) =>
+    shopDateOf(instant, offsetMinutes);
 
-/// Inverse of [businessDayInt] — parses a yyyymmdd int back into a
-/// midnight-truncated [DateTime].
-DateTime dateFromBusinessDayInt(int yyyymmdd) => DateTime(
+/// yyyymmdd int for the `drawer_state` doc. Must equal the rules' `phDay()`
+/// for the same instant.
+int businessDayInt(DateTime instant, int offsetMinutes) =>
+    shopDayInt(instant, offsetMinutes);
+
+/// yyyymmdd for a value that is ALREADY shop wall time (e.g. the
+/// `businessDayProvider` state). No shifting — shifting twice would be a
+/// silent off-by-one.
+int businessDayIntOfWall(DateTime shopWallDate) =>
+    shopWallDate.year * 10000 + shopWallDate.month * 100 + shopWallDate.day;
+
+/// Inverse of [businessDayIntOfWall] — a shop **wall** midnight.
+DateTime dateFromBusinessDayInt(int yyyymmdd) => shopWall(
       yyyymmdd ~/ 10000,
       (yyyymmdd ~/ 100) % 100,
       yyyymmdd % 100,

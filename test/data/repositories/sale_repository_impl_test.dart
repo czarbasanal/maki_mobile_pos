@@ -4,6 +4,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/business_day.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/data/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -283,7 +284,46 @@ void main() {
       final doc =
           await fakeFirestore.collection('drawer_state').doc('state').get();
       expect(doc.exists, isTrue);
-      expect(doc.data()!['lastSaleDay'], businessDayInt(createdAt));
+      // The repository under test was built bare, so it reads the ambient
+      // shop offset — the same supplier the assertion uses.
+      expect(doc.data()!['lastSaleDay'],
+          businessDayInt(createdAt, ShopTimeConfig.offsetMinutes));
+    });
+
+    test('createSale stamps lastSaleDay using the SHOP offset, not the device',
+        () async {
+      // 2026-07-24 16:30 UTC is already 2026-07-25 in shop time at +480,
+      // but still 2026-07-24 at -300. The stamp must follow the injected
+      // shop offset regardless of the device's zone.
+      final createdAt = DateTime.utc(2026, 7, 24, 16, 30);
+      final phRepo = SaleRepositoryImpl(
+        firestore: fakeFirestore,
+        offsetMinutes: () => 480,
+      );
+      await phRepo.createSale(
+        createTestSale().copyWith(createdAt: createdAt),
+        id: 'drawer-ph',
+      );
+      expect(
+        (await fakeFirestore.collection('drawer_state').doc('state').get())
+            .data()!['lastSaleDay'],
+        20260725,
+      );
+
+      final estFirestore = FakeFirebaseFirestore();
+      final estRepo = SaleRepositoryImpl(
+        firestore: estFirestore,
+        offsetMinutes: () => -300,
+      );
+      await estRepo.createSale(
+        createTestSale().copyWith(createdAt: createdAt),
+        id: 'drawer-est',
+      );
+      expect(
+        (await estFirestore.collection('drawer_state').doc('state').get())
+            .data()!['lastSaleDay'],
+        20260724,
+      );
     });
 
     // NOTE: a "merge doesn't clobber lastClosedDay" test is intentionally

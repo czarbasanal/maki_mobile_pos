@@ -51,7 +51,7 @@ void main() {
       expect(doc.exists, isTrue);
       expect(
         doc.data()!['lastClosedDay'],
-        businessDayInt(closing.businessDate),
+        businessDayIntOfWall(closing.businessDate),
       );
       expect(doc.data()!['lastClosedDay'], 20260528);
     });

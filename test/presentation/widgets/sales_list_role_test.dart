@@ -74,6 +74,9 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_harness(UserRole.cashier));
     await tester.pump(const Duration(seconds: 1));
+    // A second frame: the forced range only becomes the shop business day
+    // once currentUserProvider resolves, which re-keys the sales query.
+    await tester.pump(const Duration(seconds: 1));
 
     expect(find.text("Showing today's sales only"), findsOneWidget);
     expect(find.text('Earlier days are not available for your role'),

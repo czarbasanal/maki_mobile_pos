@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/utils/business_day.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/daily_closing_repository.dart';
@@ -22,6 +23,7 @@ import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 
 /// Fake [DailyClosingRepository] — extends [Mock] so unstubbed members
@@ -141,13 +143,15 @@ UserEntity _admin() => UserEntity(
     );
 
 void main() {
-  final today = DateTime(2026, 7, 25);
+  // A shop wall-clock midnight — what businessDayProvider now holds.
+  final today = shopWall(2026, 7, 25);
 
   late _FakeDailyClosingRepository closingRepo;
   late _FakeSaleRepository saleRepo;
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(overrides: [
+      shopOffsetProvider.overrideWithValue(kDefaultShopOffsetMinutes),
       businessDayProvider
           .overrideWith(() => _FixedBusinessDayNotifier(today)),
       dailyClosingRepositoryProvider.overrideWithValue(closingRepo),
@@ -327,7 +331,7 @@ void main() {
         'scan finds nothing, but drawer_state says a past day had a sale '
         'and was never closed -> fallback returns that day', () async {
       final staleDay = today.subtract(const Duration(days: 2));
-      closingRepo.setDrawerState(lastSaleDay: businessDayInt(staleDay));
+      closingRepo.setDrawerState(lastSaleDay: businessDayIntOfWall(staleDay));
 
       final container = makeContainer();
       final result = await readUnsettled(container);
@@ -338,7 +342,7 @@ void main() {
         'fallback reaches a gap OLDER than the 14-day scan cap that the scan '
         'itself can never see', () async {
       final beyondCap = today.subtract(const Duration(days: 20));
-      closingRepo.setDrawerState(lastSaleDay: businessDayInt(beyondCap));
+      closingRepo.setDrawerState(lastSaleDay: businessDayIntOfWall(beyondCap));
 
       final container = makeContainer();
       final result = await readUnsettled(container);
@@ -350,8 +354,8 @@ void main() {
         'stays null', () async {
       final staleDay = today.subtract(const Duration(days: 2));
       closingRepo.setDrawerState(
-        lastSaleDay: businessDayInt(staleDay),
-        lastClosedDay: businessDayInt(staleDay),
+        lastSaleDay: businessDayIntOfWall(staleDay),
+        lastClosedDay: businessDayIntOfWall(staleDay),
       );
 
       final container = makeContainer();
@@ -362,7 +366,7 @@ void main() {
     test(
         'drawer_state says the last sale day is TODAY (still live, nothing '
         'to close yet) -> fallback stays null', () async {
-      closingRepo.setDrawerState(lastSaleDay: businessDayInt(today));
+      closingRepo.setDrawerState(lastSaleDay: businessDayIntOfWall(today));
 
       final container = makeContainer();
       final result = await readUnsettled(container);
@@ -386,7 +390,7 @@ void main() {
       // A different (newer) day per drawer_state — must NOT override the
       // scan's oldest-day answer.
       final newerStaleDay = today.subtract(const Duration(days: 1));
-      closingRepo.setDrawerState(lastSaleDay: businessDayInt(newerStaleDay));
+      closingRepo.setDrawerState(lastSaleDay: businessDayIntOfWall(newerStaleDay));
 
       final container = makeContainer();
       final result = await readUnsettled(container);

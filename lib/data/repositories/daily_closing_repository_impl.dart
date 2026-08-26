@@ -24,11 +24,14 @@ class DailyClosingRepositoryImpl implements DailyClosingRepository {
   DocumentReference<Map<String, dynamic>> get _drawerStateRef =>
       _firestore.collection(FirestoreCollections.drawerState).doc('state');
 
-  /// Formats a date as the deterministic `YYYY-MM-DD` document id.
-  static String docIdFor(DateTime date) {
-    final y = date.year.toString().padLeft(4, '0');
-    final m = date.month.toString().padLeft(2, '0');
-    final d = date.day.toString().padLeft(2, '0');
+  /// Document id for a business day. [shopWallDate] must be a shop
+  /// wall-clock date (businessDayProvider's value / businessDateOf output),
+  /// never a raw instant — a raw instant would key the doc by the device's
+  /// day.
+  static String docIdFor(DateTime shopWallDate) {
+    final y = shopWallDate.year.toString().padLeft(4, '0');
+    final m = shopWallDate.month.toString().padLeft(2, '0');
+    final d = shopWallDate.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
   }
 
@@ -75,13 +78,17 @@ class DailyClosingRepositoryImpl implements DailyClosingRepository {
       // Batch the closing write with the drawer_state stamp so they land
       // atomically. lastClosedDay is the CLOSED day (closing.businessDate),
       // which for a past-day close is < today — allowed by the rules' ≤
-      // phDay constraint (Task 6). Assumes the device clock is PH-local
-      // (same assumption the rest of the app makes).
+      // phDay constraint.
+      //
+      // businessDate is a business DATE, not an instant: its y/m/d fields
+      // already name the shop day (it is derived from businessDayProvider).
+      // So read the fields directly — shifting it by the shop offset here
+      // would be a second shift and a silent off-by-one.
       final batch = _firestore.batch();
       batch.set(docRef, model.toCreateMap());
       batch.set(
         _drawerStateRef,
-        {'lastClosedDay': businessDayInt(closing.businessDate)},
+        {'lastClosedDay': businessDayIntOfWall(closing.businessDate)},
         SetOptions(merge: true),
       );
       await batch.commit();

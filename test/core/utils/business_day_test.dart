@@ -1,63 +1,86 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/utils/business_day.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
 void main() {
-  group('nextMidnightAfter', () {
-    test('mid-day rolls to the next 00:00', () {
-      final t = DateTime(2026, 7, 24, 13, 45, 30);
-      expect(nextMidnightAfter(t), DateTime(2026, 7, 25));
+  const ph = 480;
+  const est = -300;
+
+  group('nextShopMidnightAfter', () {
+    test('returns the instant of the next shop midnight', () {
+      // 2026-07-24 13:45 PH == 05:45 UTC. Next shop midnight is
+      // 2026-07-25 00:00 PH == 2026-07-24 16:00 UTC.
+      final instant = DateTime.utc(2026, 7, 24, 5, 45);
+      expect(nextShopMidnightAfter(instant, ph), DateTime.utc(2026, 7, 24, 16, 0));
     });
 
-    test('23:59:59 rolls to the next day midnight', () {
-      final t = DateTime(2026, 7, 24, 23, 59, 59);
-      expect(nextMidnightAfter(t), DateTime(2026, 7, 25));
+    test('one second before shop midnight rolls within a second', () {
+      final instant = DateTime.utc(2026, 7, 24, 15, 59, 59);
+      final next = nextShopMidnightAfter(instant, ph);
+      expect(next.difference(instant), const Duration(seconds: 1));
     });
 
-    test('month boundary', () {
-      final t = DateTime(2026, 7, 31, 22, 0);
-      expect(nextMidnightAfter(t), DateTime(2026, 8, 1));
+    test('crosses a month boundary', () {
+      // 2026-07-31 22:00 PH == 14:00 UTC → next shop midnight is Aug 1 PH.
+      final instant = DateTime.utc(2026, 7, 31, 14, 0);
+      expect(businessDayInt(nextShopMidnightAfter(instant, ph), ph), 20260801);
     });
 
-    test('year boundary', () {
-      final t = DateTime(2026, 12, 31, 23);
-      expect(nextMidnightAfter(t), DateTime(2027, 1, 1));
+    test('crosses a year boundary', () {
+      final instant = DateTime.utc(2026, 12, 31, 15, 0); // 23:00 PH Dec 31
+      expect(businessDayInt(nextShopMidnightAfter(instant, ph), ph), 20270101);
+    });
+
+    test('honours a negative offset', () {
+      // 2026-07-24 20:00 UTC == 15:00 at UTC-5 → next midnight is Jul 25 local
+      // == 2026-07-25 05:00 UTC.
+      final instant = DateTime.utc(2026, 7, 24, 20, 0);
+      expect(nextShopMidnightAfter(instant, est), DateTime.utc(2026, 7, 25, 5, 0));
     });
   });
 
   group('businessDateOf', () {
-    test('truncates time-of-day', () {
-      final t = DateTime(2026, 7, 24, 13, 45, 30, 500);
-      expect(businessDateOf(t), DateTime(2026, 7, 24));
+    test('truncates to shop midnight as a wall value', () {
+      final instant = DateTime.utc(2026, 7, 24, 5, 45, 30, 500);
+      expect(businessDateOf(instant, ph), shopWall(2026, 7, 24));
     });
 
-    test('midnight is unchanged', () {
-      final t = DateTime(2026, 7, 24);
-      expect(businessDateOf(t), DateTime(2026, 7, 24));
+    test('an instant just before shop midnight still belongs to that day', () {
+      final instant = DateTime.utc(2026, 7, 24, 15, 59, 59); // 23:59:59 PH
+      expect(businessDateOf(instant, ph), shopWall(2026, 7, 24));
+    });
+
+    test('an instant just after shop midnight belongs to the next day', () {
+      final instant = DateTime.utc(2026, 7, 24, 16, 0, 1); // 00:00:01 PH Jul 25
+      expect(businessDateOf(instant, ph), shopWall(2026, 7, 25));
     });
   });
 
   group('businessDayInt', () {
-    test('encodes yyyymmdd', () {
-      expect(businessDayInt(DateTime(2026, 7, 25)), 20260725);
+    test('produces yyyymmdd', () {
+      expect(businessDayInt(DateTime.utc(2026, 7, 24, 5, 0), ph), 20260724);
     });
 
-    test('pads single-digit month and day', () {
-      expect(businessDayInt(DateTime(2026, 1, 5)), 20260105);
+    test('the same instant differs by zone — this is the bug being fixed', () {
+      final instant = DateTime.utc(2026, 7, 24, 16, 30); // 00:30 Jul 25 PH
+      expect(businessDayInt(instant, ph), 20260725);
+      expect(businessDayInt(instant, est), 20260724);
     });
+  });
 
-    test('ignores time-of-day', () {
-      expect(businessDayInt(DateTime(2026, 7, 25, 23, 59)), 20260725);
+  group('businessDayIntOfWall', () {
+    test('reads the fields of an already-shop-wall date', () {
+      expect(businessDayIntOfWall(shopWall(2026, 7, 24)), 20260724);
     });
   });
 
   group('dateFromBusinessDayInt', () {
-    test('inverts businessDayInt', () {
-      expect(dateFromBusinessDayInt(20260725), DateTime(2026, 7, 25));
+    test('round-trips with businessDayIntOfWall', () {
+      expect(businessDayIntOfWall(dateFromBusinessDayInt(20260724)), 20260724);
     });
 
-    test('round-trips through businessDayInt', () {
-      final d = DateTime(2026, 1, 5);
-      expect(dateFromBusinessDayInt(businessDayInt(d)), d);
+    test('returns a shop wall midnight', () {
+      expect(dateFromBusinessDayInt(20260724), shopWall(2026, 7, 24));
     });
   });
 }

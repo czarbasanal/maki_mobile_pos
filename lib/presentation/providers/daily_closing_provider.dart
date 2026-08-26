@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/data/repositories/repositories.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -53,8 +54,12 @@ final dailyClosingDataProvider =
   final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
   // Watch the clock (not a raw DateTime.now() snapshot) so a midnight
   // rollover flips a stale "today" family entry onto the past-day path.
+  // Compared as calendar days, not as DateTime instants: [businessDayProvider]
+  // holds a shop wall-clock midnight while [dayStart] is device-local, so a
+  // raw `==` would never match even on the same day.
   final businessDay = ref.watch(businessDayProvider);
-  final isToday = dayStart == businessDay;
+  final isToday =
+      businessDayIntOfWall(date) == businessDayIntOfWall(businessDay);
 
   if (isToday) {
     final summary = await ref.watch(todaysSalesSummaryProvider.future);

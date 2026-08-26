@@ -15,12 +15,16 @@ import 'package:maki_mobile_pos/domain/usecases/reports/get_sales_report_usecase
 import 'package:maki_mobile_pos/domain/usecases/reports/get_top_selling_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
 /// Provides the SaleRepository instance.
 final saleRepositoryProvider = Provider<SaleRepository>((ref) {
-  return SaleRepositoryImpl(firestore: ref.watch(firestoreProvider));
+  return SaleRepositoryImpl(
+    firestore: ref.watch(firestoreProvider),
+    offsetMinutes: () => ref.read(shopOffsetProvider),
+  );
 });
 
 // ==================== SALE QUERIES ====================

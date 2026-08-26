@@ -3,6 +3,7 @@ import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/business_day.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -16,8 +17,16 @@ import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 class SaleRepositoryImpl implements SaleRepository {
   final FirebaseFirestore _firestore;
 
-  SaleRepositoryImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  /// Shop offset supplier. Defaults to the ambient config so the repository
+  /// still works when constructed outside Riverpod; the provider passes
+  /// `() => ref.read(shopOffsetProvider)`.
+  final int Function() _offsetMinutes;
+
+  SaleRepositoryImpl({
+    FirebaseFirestore? firestore,
+    int Function()? offsetMinutes,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _offsetMinutes = offsetMinutes ?? (() => ShopTimeConfig.offsetMinutes);
 
   /// Reference to the sales collection.
   CollectionReference<Map<String, dynamic>> get _salesRef =>
@@ -71,14 +80,13 @@ class SaleRepositoryImpl implements SaleRepository {
         // Set the sale document
         transaction.set(saleDocRef, saleModel.toCreateMap());
 
-        // Stamp the business-day rollover marker. Reuses sale.createdAt — the
-        // same "now" already used above for the counter's dateKey — as the
-        // write-time reference. Assumes the device clock is PH-local (same
-        // assumption the rest of the app makes), so businessDayInt() here
-        // matches the rules' UTC+8 computation (Task 6).
+        // Stamp the business-day rollover marker. Reuses sale.createdAt —
+        // the same instant already used for the counter's dateKey — and
+        // converts it with the SHOP offset, so this matches the rules'
+        // phDay() no matter what timezone the device is set to.
         transaction.set(
           _drawerStateRef,
-          {'lastSaleDay': businessDayInt(sale.createdAt)},
+          {'lastSaleDay': businessDayInt(sale.createdAt, _offsetMinutes())},
           SetOptions(merge: true),
         );
 
@@ -231,12 +239,21 @@ class SaleRepositoryImpl implements SaleRepository {
     );
   }
 
+  /// [shopWallDate] is a shop wall-clock date (what businessDayProvider
+  /// holds), not a device-local one.
   @override
-  Future<bool> hasCompletedSaleOn(DateTime date) async {
+  Future<bool> hasCompletedSaleOn(DateTime shopWallDate) async {
     try {
-      final start = DateTime(date.year, date.month, date.day);
-      final end =
-          DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
+      final offset = _offsetMinutes();
+      final start = instantOf(
+        shopWall(shopWallDate.year, shopWallDate.month, shopWallDate.day),
+        offset,
+      );
+      final end = instantOf(
+        shopWall(shopWallDate.year, shopWallDate.month, shopWallDate.day, 23,
+            59, 59, 999),
+        offset,
+      );
 
       // orderBy DESC is load-bearing: it makes this query use the existing
       // (status ASC, createdAt DESC) composite index. Without an orderBy the
@@ -391,12 +408,13 @@ class SaleRepositoryImpl implements SaleRepository {
     });
   }
 
-  /// Generates sale number within a transaction.
+  /// Generates sale number within a transaction. [date] is an instant.
   Future<String> _generateSaleNumberInTransaction(
     Transaction transaction,
     DateTime date,
   ) async {
-    final dateKey = _getDateKey(date);
+    final offset = _offsetMinutes();
+    final dateKey = dateKeyFor(date, offset);
     final counterDocRef = _settingsRef.doc('sale_counters');
 
     final counterDoc = await transaction.get(counterDocRef);
@@ -416,13 +434,15 @@ class SaleRepositoryImpl implements SaleRepository {
     // Update counter document
     transaction.set(counterDocRef, counters, SetOptions(merge: true));
 
-    return SaleModel.generateSaleNumber(date, newSequence);
+    // The printed SALE-YYYYMMDD-NNN date must name the same day as the
+    // counter it was drawn from, so read it off the shop wall clock too.
+    return SaleModel.generateSaleNumber(shopTimeOf(date, offset), newSequence);
   }
 
   @override
   Future<int> getSaleSequenceForDate(DateTime date) async {
     try {
-      final dateKey = _getDateKey(date);
+      final dateKey = dateKeyFor(date, _offsetMinutes());
       final counterDoc = await _settingsRef.doc('sale_counters').get();
 
       if (!counterDoc.exists) return 0;
@@ -676,10 +696,11 @@ class SaleRepositoryImpl implements SaleRepository {
     return sales;
   }
 
-  /// Gets date key for counter document (YYYYMMDD format).
-  String _getDateKey(DateTime date) {
-    return '${date.year}${date.month.toString().padLeft(2, '0')}${date.day.toString().padLeft(2, '0')}';
-  }
+  /// `YYYYMMDD` key for the daily sale counter, in shop time. Must agree
+  /// with businessDayInt for the same instant — both feed the same sale
+  /// transaction, and the rules check the day server-side.
+  static String dateKeyFor(DateTime instant, int offsetMinutes) =>
+      shopDayInt(instant, offsetMinutes).toString();
 }
 
 /// Helper class for aggregating product sales data.

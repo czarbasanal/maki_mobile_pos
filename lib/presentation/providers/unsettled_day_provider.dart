@@ -3,6 +3,7 @@ import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/daily_closing_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 
 /// Detects the OLDEST business day that has completed sales but was never
 /// closed — the day a rollover banner/blocker should point the user at.
@@ -25,10 +26,12 @@ final unsettledBusinessDayProvider = FutureProvider<DateTime?>((ref) async {
   // Re-run when a close lands (same invalidation closeDay already fires).
   ref.watch(dailyClosingHistoryProvider);
 
+  final offset = ref.watch(shopOffsetProvider);
   final latest = await closingRepo.latestClosing();
   var start = latest == null
       ? today.subtract(const Duration(days: 14))
-      : latest.businessDate.add(const Duration(days: 1));
+      : businessDateOf(latest.businessDate, offset)
+          .add(const Duration(days: 1));
   final floor = today.subtract(const Duration(days: 14));
   if (start.isBefore(floor)) start = floor; // 14-day scan cap
 
@@ -47,7 +50,7 @@ final unsettledBusinessDayProvider = FutureProvider<DateTime?>((ref) async {
   final lastSaleDay = drawerState.lastSaleDay ?? 0;
   final lastClosedDay = drawerState.lastClosedDay ?? 0;
   if (lastSaleDay > 0 &&
-      lastSaleDay < businessDayInt(today) &&
+      lastSaleDay < businessDayIntOfWall(today) &&
       lastSaleDay > lastClosedDay) {
     return dateFromBusinessDayInt(lastSaleDay);
   }
