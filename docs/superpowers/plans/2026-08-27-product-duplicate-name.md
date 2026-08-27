@@ -49,7 +49,7 @@ const sharedVectors = <List<String>>[
   ['BELT BANDO SKYDRIVE SPORT 115I', '115i bando belt skydrive sport'],
   ['CHAIN GLOBAL 428-120L', '428-120l chain global'],
   ['GLOBAL CHAIN 428-120L', '428-120l chain global'],
-  ['TIRE TL MAXXIS MAV6 46P 90/90-14', '46p 90/90-14 maxxis mav6 tire tl'],
+  ['TIRE TL MAXXIS MAV6 46P 90/90-14', '46p 90/90-14 mav6 maxxis tire tl'],
   ['  Yamalube   AT  Blue Core 10W-40  ', '10w-40 at blue core yamalube'],
 ];
 
@@ -152,7 +152,7 @@ String productDuplicateKey(String name, String? category) =>
 - [ ] **Step 4: Run the Dart test to verify it passes**
 
 Run: `flutter test test/core/utils/product_name_key_test.dart`
-Expected: PASS (9 tests).
+Expected: PASS (7 tests).
 
 - [ ] **Step 5: Write the failing TS test**
 
@@ -168,7 +168,7 @@ const SHARED_VECTORS: [string, string][] = [
   ['BELT BANDO SKYDRIVE SPORT 115I', '115i bando belt skydrive sport'],
   ['CHAIN GLOBAL 428-120L', '428-120l chain global'],
   ['GLOBAL CHAIN 428-120L', '428-120l chain global'],
-  ['TIRE TL MAXXIS MAV6 46P 90/90-14', '46p 90/90-14 maxxis mav6 tire tl'],
+  ['TIRE TL MAXXIS MAV6 46P 90/90-14', '46p 90/90-14 mav6 maxxis tire tl'],
   ['  Yamalube   AT  Blue Core 10W-40  ', '10w-40 at blue core yamalube'],
 ];
 
@@ -461,7 +461,7 @@ const SHARED_VECTORS = [
   ['BELT BANDO SKYDRIVE SPORT 115I', '115i bando belt skydrive sport'],
   ['CHAIN GLOBAL 428-120L', '428-120l chain global'],
   ['GLOBAL CHAIN 428-120L', '428-120l chain global'],
-  ['TIRE TL MAXXIS MAV6 46P 90/90-14', '46p 90/90-14 maxxis mav6 tire tl'],
+  ['TIRE TL MAXXIS MAV6 46P 90/90-14', '46p 90/90-14 mav6 maxxis tire tl'],
   ['  Yamalube   AT  Blue Core 10W-40  ', '10w-40 at blue core yamalube'],
 ];
 
