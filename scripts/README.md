@@ -85,13 +85,18 @@ Planning is pure (`repair-preview-skus-lib.mjs` + node tests); the runner does t
 
 Idempotent — re-running after a successful pass reports zero patches for that scope.
 
-⚠️ **The keyword scope is opt-in for a reason.** As of the 2026-08-27 dry run it matches
-950 of 1,625 products, and those are NOT preview victims: they are `initial-inventory-import`
-products whose `searchKeywords` contain no SKU tokens at all (so they genuinely cannot be
-found by typing their SKU — a separate, real bug) but which also carry a consonant-skeleton
-token family — `pllybllpts` for "PULLEY BALL PITSBIKE" — that NO generator in this repo
-produces (`product_model._generateSearchKeywords`, `searchKeywords.ts` and
-`import-inventory-lib.mjs` all include the SKU and none strip vowels). Their `updatedAt` is
-~42h after the import, so something outside the current codebase rewrote them. Rebuilding
-the keyword set adds the missing SKU tokens but DROPS the skeleton ones. Decide whether
-abbreviation search is still wanted before running this scope.
+**Both scopes were run against production on 2026-08-27 and both now report zero patches.**
+
+- Receivings: 16 docs / 155 lines carried a SKU belonging to another product (one code sat on
+  10 lines of `RCV-20260824-005`). Repaired.
+- Keywords: 950 of 1,625 products. Note these were NOT preview victims — they were
+  `initial-inventory-import` products whose `searchKeywords` held no SKU tokens at all (so they
+  could not be found by typing their own SKU) plus a consonant-skeleton token family
+  (`pllybllpts` for "PULLEY BALL PITSBIKE") that no generator in this repo produces. The shop
+  confirmed the skeleton tokens are unused, so the rebuild — which adds the SKU tokens and drops
+  the skeletons — was the right call. It also cleared stale tokens from the pre-shortening
+  category name (`cvt/transm` vs today's `CVT/TRANS`).
+
+Pre-write snapshots of both collections were taken; ask before assuming they still exist, as they
+were written to a session scratchpad rather than committed.
+
