@@ -47,3 +47,21 @@ Import is idempotent & resumable: existing product names (word-order-insensitive
 skipped, the SKU claim + product doc are written atomically, and orphan import claims
 are cleaned on reconcile. Everything written is tagged
 `createdBy: 'initial-inventory-import'`.
+
+## seed-shop-timezone.mjs
+
+Writes the shop timezone into `settings/general` — the doc the mobile app, the web
+admin and the Firestore rules (`phDay()`) all read to decide what "today" is. Spec:
+`docs/superpowers/specs/2026-08-26-shop-timezone-design.md`.
+
+- Dry run:  `node seed-shop-timezone.mjs` (prints before/after, writes nothing)
+- Execute:  `node seed-shop-timezone.mjs --execute`
+- Custom:   `node seed-shop-timezone.mjs --timezone=Asia/Tokyo --offset=540 --execute`
+- Emulator: prefix with `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080`
+
+Idempotent — it merges only `timezoneId` and `tzOffsetMinutes`, leaving any other keys
+in the shared `general` doc untouched, so re-running is safe. Defaults to Asia/Manila
+(+480), which is also what every surface falls back to when the doc is absent: seeding
+the default changes no behaviour, it just makes the value explicit and editable from
+the Time & Timezone settings screen. The offset is validated the same way the rules
+validate it (an integer in -720..840).
