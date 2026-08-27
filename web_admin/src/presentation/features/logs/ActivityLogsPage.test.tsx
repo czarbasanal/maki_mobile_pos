@@ -5,6 +5,7 @@ import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { ActivityLogsPage } from './ActivityLogsPage';
 import { ActivityType, type ActivityLog } from '@/domain/entities';
 import type { ActivityLogQuery } from '@/domain/repositories/ActivityLogRepository';
+import { shopTimeOf } from '@/domain/time/shopTime';
 
 const log = (o: Partial<ActivityLog> = {}): ActivityLog => ({
   id: 'l1',
@@ -85,12 +86,15 @@ describe('ActivityLogsPage search gating', () => {
     const { listFn } = harness();
     await search();
     const query = listFn.mock.calls[0][0];
-    // Default 00:00–23:59. The end bound must reach :59.999 of the chosen
-    // minute, or a log written at 23:59:30 falls outside an inclusive <=.
-    expect([query.start!.getSeconds(), query.start!.getMilliseconds()]).toEqual([0, 0]);
-    expect([query.end!.getSeconds(), query.end!.getMilliseconds()]).toEqual([59, 999]);
-    expect([query.start!.getHours(), query.start!.getMinutes()]).toEqual([0, 0]);
-    expect([query.end!.getHours(), query.end!.getMinutes()]).toEqual([23, 59]);
+    // Default 00:00–23:59 SHOP time. The end bound must reach :59.999 of the
+    // chosen minute, or a log written at 23:59:30 falls outside an inclusive
+    // <=. The bounds are instants, so read them through the shop clock.
+    const startWall = shopTimeOf(query.start!);
+    const endWall = shopTimeOf(query.end!);
+    expect([startWall.getUTCSeconds(), startWall.getUTCMilliseconds()]).toEqual([0, 0]);
+    expect([endWall.getUTCSeconds(), endWall.getUTCMilliseconds()]).toEqual([59, 999]);
+    expect([startWall.getUTCHours(), startWall.getUTCMinutes()]).toEqual([0, 0]);
+    expect([endWall.getUTCHours(), endWall.getUTCMinutes()]).toEqual([23, 59]);
   });
 
   it('does not refetch when a filter changes after a search', async () => {
@@ -121,7 +125,8 @@ describe('ActivityLogsPage search gating', () => {
 
     expect(listFn).toHaveBeenCalledTimes(2);
     expect(listFn.mock.calls[1][0]).toEqual(listFn.mock.calls[0][0]);
-    expect(listFn.mock.calls[1][0].end!.getHours()).toBe(23);
+    // Read through the shop clock — the bound is an instant now.
+    expect(shopTimeOf(listFn.mock.calls[1][0].end!).getUTCHours()).toBe(23);
     // The pending edit is still pending — Refresh is not a second Search, so
     // it must not clear the "tap Search" prompt.
     expect(screen.getByText('Filters changed — tap Search.')).toBeInTheDocument();

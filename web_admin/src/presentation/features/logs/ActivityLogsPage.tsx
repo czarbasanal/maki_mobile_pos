@@ -41,6 +41,14 @@ import {
   useActivityLogSearch,
 } from '@/presentation/hooks/useActivityLogSearch';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
+import {
+  getAmbientShopTimezone,
+  instantOf,
+  shopDayInt,
+  shopIsoDate,
+  shopTimeOf,
+  shopWall,
+} from '@/domain/time/shopTime';
 import type { ActivityLogQuery } from '@/domain/repositories/ActivityLogRepository';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -104,37 +112,36 @@ function toneFor(type: ActivityType): Tone {
   }
 }
 
+// Rendered in the shop's zone so the day header, the grouping, and the row
+// time all agree — a browser elsewhere would otherwise split one shop day
+// across two headers.
 const dateGroupFmt = new Intl.DateTimeFormat('en-PH', {
   weekday: 'long',
   month: 'long',
   day: 'numeric',
   year: 'numeric',
+  timeZone: getAmbientShopTimezone().timezoneId,
 });
 
 const timeFmt = new Intl.DateTimeFormat('en-PH', {
   hour: 'numeric',
   minute: '2-digit',
   hour12: true,
+  timeZone: getAmbientShopTimezone().timezoneId,
 });
 
 function dayKey(d: Date): string {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return shopIsoDate(d);
 }
 
-function isToday(d: Date): boolean {
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-}
-
-function isYesterday(d: Date): boolean {
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  return d.getFullYear() === y.getFullYear() && d.getMonth() === y.getMonth() && d.getDate() === y.getDate();
+function isSameShopDay(a: Date, b: Date): boolean {
+  return shopDayInt(a) === shopDayInt(b);
 }
 
 function dateLabel(d: Date): string {
-  if (isToday(d)) return 'Today';
-  if (isYesterday(d)) return 'Yesterday';
+  const now = new Date();
+  if (isSameShopDay(d, now)) return 'Today';
+  if (isSameShopDay(d, new Date(now.getTime() - 86_400_000))) return 'Yesterday';
   return dateGroupFmt.format(d);
 }
 
@@ -321,16 +328,28 @@ function parseTime(hhmm: string): { h: number; m: number } | null {
 }
 
 /**
- * Stamps a wall-clock time onto a day. The end bound is pushed to the last
- * millisecond of the chosen minute so an inclusive `<=` never drops a record
- * logged within it. Returns `null` when `hhmm` doesn't parse.
+ * Stamps a SHOP wall-clock time onto the shop day containing `day`, and
+ * returns the instant. The picked time belongs to the shop clock, so the
+ * arithmetic happens on the wall value and converts back — `setHours` would
+ * stamp the browser's clock onto a shop-time instant. The end bound is pushed
+ * to the last millisecond of the chosen minute so an inclusive `<=` never
+ * drops a record logged within it. Returns `null` when `hhmm` doesn't parse.
  */
 function applyTime(day: Date, hhmm: string, endInclusive: boolean): Date | null {
   const parsed = parseTime(hhmm);
   if (!parsed) return null;
-  const d = new Date(day);
-  d.setHours(parsed.h, parsed.m, endInclusive ? 59 : 0, endInclusive ? 999 : 0);
-  return d;
+  const w = shopTimeOf(day);
+  return instantOf(
+    shopWall(
+      w.getUTCFullYear(),
+      w.getUTCMonth() + 1,
+      w.getUTCDate(),
+      parsed.h,
+      parsed.m,
+      endInclusive ? 59 : 0,
+      endInclusive ? 999 : 0,
+    ),
+  );
 }
 
 function LogRow({ log }: { log: ActivityLog }) {

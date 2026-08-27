@@ -11,6 +11,7 @@ import { SalesReportPage } from './SalesReportPage';
 import { DiscountType, PaymentMethod, SaleStatus } from '@/domain/enums';
 import type { Sale } from '@/domain/entities';
 import { formatMoney } from '@/core/utils/money';
+import { shopTimeOf } from '@/domain/time/shopTime';
 
 function sale(overrides: Partial<Sale> = {}): Sale {
   return {
@@ -136,12 +137,15 @@ describe('SalesReportPage — cashier daily lock + cost gating', () => {
     );
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     const arg = (saleRepo.list as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    const now = new Date();
-    expect(arg.start.getFullYear()).toBe(now.getFullYear());
-    expect(arg.start.getMonth()).toBe(now.getMonth());
-    expect(arg.start.getDate()).toBe(now.getDate());
-    expect(arg.start.getHours()).toBe(0);
-    expect(arg.end.getDate()).toBe(now.getDate());
+    // "Today" is the SHOP day now — the bounds are instants, so compare them
+    // through the shop clock rather than the test machine's.
+    const nowWall = shopTimeOf(new Date());
+    const startWall = shopTimeOf(arg.start);
+    expect(startWall.getUTCFullYear()).toBe(nowWall.getUTCFullYear());
+    expect(startWall.getUTCMonth()).toBe(nowWall.getUTCMonth());
+    expect(startWall.getUTCDate()).toBe(nowWall.getUTCDate());
+    expect(startWall.getUTCHours()).toBe(0);
+    expect(shopTimeOf(arg.end).getUTCDate()).toBe(nowWall.getUTCDate());
   });
 
   it('hides the cost-derived Profit column from a cashier', async () => {

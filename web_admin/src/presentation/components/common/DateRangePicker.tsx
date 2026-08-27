@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { endOfDay, format, startOfDay } from 'date-fns';
 import {
   PRESET_LABELS,
   resolvePreset,
   type DateRange,
   type RangePreset,
 } from '@/domain/reports/dateRange';
+import { instantOf, shopIsoDate, shopWall } from '@/domain/time/shopTime';
 
 const inputCls =
   'rounded-md border border-light-border bg-light-card px-tk-md py-[8px] text-bodySmall text-light-text outline-none focus:border-light-text';
@@ -45,9 +45,14 @@ export function DateRangePicker({
     setCustomStart(startStr);
     setCustomEnd(endStr);
     if (startStr && endStr) {
+      // The inputs give plain yyyy-MM-dd — the SHOP calendar days the operator
+      // means. `new Date(str)` would parse them as UTC midnight and then shift
+      // by the browser zone, an off-by-one anywhere outside the shop.
+      const [sy, sm, sd] = startStr.split('-').map(Number);
+      const [ey, em, ed] = endStr.split('-').map(Number);
       onChange({
-        start: startOfDay(new Date(startStr)),
-        end: endOfDay(new Date(endStr)),
+        start: instantOf(shopWall(sy, sm, sd)),
+        end: instantOf(shopWall(ey, em, ed, 23, 59, 59, 999)),
       });
     }
   }
@@ -72,7 +77,7 @@ export function DateRangePicker({
             type="date"
             className={inputCls}
             value={customStart}
-            max={customEnd || format(new Date(), 'yyyy-MM-dd')}
+            max={customEnd || shopIsoDate(new Date())}
             onChange={(e) => applyCustom(e.target.value, customEnd)}
           />
           <span className="text-light-text-hint">–</span>
@@ -81,7 +86,7 @@ export function DateRangePicker({
             className={inputCls}
             value={customEnd}
             min={customStart}
-            max={format(new Date(), 'yyyy-MM-dd')}
+            max={shopIsoDate(new Date())}
             onChange={(e) => applyCustom(customStart, e.target.value)}
           />
         </>

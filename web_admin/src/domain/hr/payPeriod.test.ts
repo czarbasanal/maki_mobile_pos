@@ -34,3 +34,16 @@ describe('payPeriodFor', () => {
     expect(shiftPeriod(p, 1).start).toBe('2026-07-27');
   });
 });
+
+describe('payPeriodFor in shop time', () => {
+  const PH = 480;
+
+  it('anchors on the shop day', () => {
+    // 16:30 UTC Sun Aug 30 is 00:30 Mon Aug 31 in PH — a Monday-start week
+    // must therefore begin on Aug 31, not Aug 24.
+    const p = payPeriodFor(new Date(Date.UTC(2026, 7, 30, 16, 30)), 1, PH);
+    expect(p.start).toBe('2026-08-31');
+    expect(p.end).toBe('2026-09-06');
+    expect(p.dates).toHaveLength(7);
+  });
+});

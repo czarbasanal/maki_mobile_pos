@@ -1,4 +1,11 @@
-import { endOfDay, startOfDay, startOfMonth, subDays } from 'date-fns';
+import {
+  instantOf,
+  shopEndOfDay,
+  shopOffsetMinutes,
+  shopStartOfDay,
+  shopTimeOf,
+  shopWall,
+} from '@/domain/time/shopTime';
 
 export interface DateRange {
   start: Date;
@@ -23,25 +30,35 @@ export const PRESET_LABELS: Record<RangePreset, string> = {
 };
 
 /**
- * Resolves a FIXED preset (not 'custom') to a concrete date range.
- * `now` is injectable so this stays deterministic in tests.
+ * Resolves a FIXED preset (not 'custom') to a concrete range, computed in the
+ * shop's timezone and returned as instants ready for Firestore bounds.
+ * `now` and `offsetMinutes` are injectable so this stays deterministic in tests.
  */
 export function resolvePreset(
   preset: Exclude<RangePreset, 'custom'>,
   now: Date = new Date(),
+  offsetMinutes: number = shopOffsetMinutes(),
 ): DateRange {
+  const dayBefore = (d: Date, n: number) => new Date(d.getTime() - n * 86_400_000);
+  const end = shopEndOfDay(now, offsetMinutes);
+
   switch (preset) {
     case 'today':
-      return { start: startOfDay(now), end: endOfDay(now) };
+      return { start: shopStartOfDay(now, offsetMinutes), end };
     case 'yesterday': {
-      const y = subDays(now, 1);
-      return { start: startOfDay(y), end: endOfDay(y) };
+      const y = dayBefore(now, 1);
+      return { start: shopStartOfDay(y, offsetMinutes), end: shopEndOfDay(y, offsetMinutes) };
     }
     case 'last7':
-      return { start: startOfDay(subDays(now, 6)), end: endOfDay(now) };
+      return { start: shopStartOfDay(dayBefore(now, 6), offsetMinutes), end };
     case 'last30':
-      return { start: startOfDay(subDays(now, 29)), end: endOfDay(now) };
-    case 'thisMonth':
-      return { start: startOfMonth(now), end: endOfDay(now) };
+      return { start: shopStartOfDay(dayBefore(now, 29), offsetMinutes), end };
+    case 'thisMonth': {
+      const w = shopTimeOf(now, offsetMinutes);
+      return {
+        start: instantOf(shopWall(w.getUTCFullYear(), w.getUTCMonth() + 1, 1), offsetMinutes),
+        end,
+      };
+    }
   }
 }
