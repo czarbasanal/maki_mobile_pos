@@ -21,8 +21,9 @@ import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
 import { costsDiffer } from '@/domain/products/costVariation';
-import { composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
+import { composeAutoSku, matchesAutoPattern, displaySku } from '@/domain/products/sku';
 import { validateSellingOptions } from '@/domain/products/sellingOptions';
+import { productDuplicateKey } from '@/domain/products/nameKey';
 import {
   encodeCostCode,
   type Category,
@@ -133,6 +134,14 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
     costCode: string;
     nextSku: string;
   }>({ open: false, existing: null, cost: 0, costCode: '', nextSku: '' });
+  /** Open when the typed name+category already matches an active product —
+   *  the auto-SKU flow never produces a SKU collision, so this is the actual
+   *  gate that catches an accidental duplicate part. */
+  const [dupDialog, setDupDialog] = useState<{
+    open: boolean;
+    existing: Product | null;
+    values: FormValues | null;
+  }>({ open: false, existing: null, values: null });
   const { data: productCats } = useActiveCategories(CategoryKind.product);
   const { data: units } = useActiveCategories(CategoryKind.unit);
   const { data: suppliers } = useSuppliers();
@@ -435,6 +444,58 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
     return { id: idOut, name: null };
   };
 
+  /**
+   * The actual create-a-new-product write. Extracted so both the normal
+   * submit path and the duplicate-name dialog's "Save as a separate
+   * product" button can reach it — the dialog runs AFTER the duplicate-name
+   * gate has already fired once, so it must not re-run that gate.
+   */
+  const submitCreate = async (values: FormValues) => {
+    if (!costCodeMapping) {
+      setLoadNotice('Cost-code mapping is still loading — try again in a moment.');
+      return;
+    }
+    const pending = barcodeInput.trim();
+    const allBarcodes = pending && !barcodes.includes(pending) ? [...barcodes, pending] : barcodes;
+    const costNum = Number(values.cost);
+    const priceNum = Number(values.price);
+    const supplier = resolveSupplier(values.supplierId ?? '');
+    try {
+      await create.mutateAsync({
+        sku: values.sku.trim(),
+        name: values.name.trim(),
+        costCode: encodeCostCode(costCodeMapping, costNum),
+        cost: costNum,
+        price: priceNum,
+        quantity: Number(values.quantity),
+        reorderLevel: Number(values.reorderLevel),
+        unit: values.unit.trim() || 'pcs',
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        barcodes: allBarcodes,
+        category: blank(values.category),
+        notes: blank(values.notes),
+        imageBlob,
+        autoSkuCategoryCode: autoSkuCategoryCodeForSubmit(values),
+        // Unrestricted at creation (Task 13's posture, same as `price`) — no
+        // role check needed here, unlike the edit-mode patch above.
+        sellingOptions,
+      });
+      navigate(exitTo);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Save failed';
+      if (msg.toLowerCase().includes('sku already exists')) {
+        // A SKU taken at a DIFFERENT cost is a cost variation waiting to
+        // happen, not a typo — offer to spawn `<base>-N` rather than just
+        // blocking the save. An identical cost stays a plain duplicate.
+        if (await offerVariation(values.sku.trim(), costNum, encodeCostCode(costCodeMapping, costNum))) {
+          return;
+        }
+        setError('sku', { type: 'duplicate', message: msg });
+      } else if (msg.toLowerCase().includes('barcode already exists')) setBarcodeError(msg);
+    }
+  };
+
   const doSave = async (values: FormValues) => {
     setLoadNotice(null);
     // Auto-commit a barcode typed but not yet added (mirrors mobile's save flow).
@@ -495,45 +556,26 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
       return;
     }
 
-    // Add mode — costCode must be derived, which needs the mapping.
-    if (!costCodeMapping) {
-      setLoadNotice('Cost-code mapping is still loading — try again in a moment.');
+    // Duplicate NAME gate. Runs before create, unlike the SKU gate which can
+    // only fire after Firestore rejects a claim — the auto-SKU flow never
+    // produces a SKU collision, which is why duplicates accumulated. `target`
+    // is always undefined on this path (it's only populated in edit mode,
+    // which returned above), so this can never flag a product against
+    // itself.
+    const dupKey = productDuplicateKey(values.name, values.category ?? null);
+    let dupExisting: Product | null = null;
+    try {
+      dupExisting = await repo.findByNameKey(dupKey);
+    } catch {
+      // A failed lookup must never block a legitimate save.
+      dupExisting = null;
+    }
+    if (dupExisting && dupExisting.id !== target?.id) {
+      setDupDialog({ open: true, existing: dupExisting, values });
       return;
     }
-    try {
-      await create.mutateAsync({
-        sku: values.sku.trim(),
-        name: values.name.trim(),
-        costCode: encodeCostCode(costCodeMapping, costNum),
-        cost: costNum,
-        price: priceNum,
-        quantity: Number(values.quantity),
-        reorderLevel: Number(values.reorderLevel),
-        unit: values.unit.trim() || 'pcs',
-        supplierId: supplier.id,
-        supplierName: supplier.name,
-        barcodes: allBarcodes,
-        category: blank(values.category),
-        notes: blank(values.notes),
-        imageBlob,
-        autoSkuCategoryCode: autoSkuCategoryCodeForSubmit(values),
-        // Unrestricted at creation (Task 13's posture, same as `price`) — no
-        // role check needed here, unlike the edit-mode patch above.
-        sellingOptions,
-      });
-      navigate(exitTo);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Save failed';
-      if (msg.toLowerCase().includes('sku already exists')) {
-        // A SKU taken at a DIFFERENT cost is a cost variation waiting to
-        // happen, not a typo — offer to spawn `<base>-N` rather than just
-        // blocking the save. An identical cost stays a plain duplicate.
-        if (await offerVariation(values.sku.trim(), costNum, encodeCostCode(costCodeMapping, costNum))) {
-          return;
-        }
-        setError('sku', { type: 'duplicate', message: msg });
-      } else if (msg.toLowerCase().includes('barcode already exists')) setBarcodeError(msg);
-    }
+
+    await submitCreate(values);
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -894,7 +936,12 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                 const { existing, cost, costCode } = variationDialog;
                 if (!existing) return;
                 try {
-                  await createVariation.mutateAsync({ existing, cost, costCode });
+                  await createVariation.mutateAsync({
+                    existing,
+                    cost,
+                    costCode,
+                    price: Number(getValues('price')),
+                  });
                   setVariationDialog((v) => ({ ...v, open: false }));
                   navigate(exitTo);
                 } catch (e) {
@@ -908,6 +955,88 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               className="inline-flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
             >
               {createVariation.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Create
+              variation
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={dupDialog.open}
+        onClose={() => {
+          if (!createVariation.isPending) setDupDialog({ open: false, existing: null, values: null });
+        }}
+        title="A product with this name already exists"
+        dismissable={!createVariation.isPending}
+      >
+        <div className="space-y-tk-md">
+          <p className="text-bodySmall text-light-text">
+            “{dupDialog.existing?.name}” ({displaySku(dupDialog.existing?.sku ?? '')}) is already
+            on file in {dupDialog.existing?.category ?? 'no category'}, at a cost of ₱
+            {dupDialog.existing?.cost.toFixed(2)} and selling at ₱
+            {dupDialog.existing?.price.toFixed(2)}.
+          </p>
+          <p className="text-bodySmall text-light-text-secondary">
+            If this is the same part at a new cost, make it a variation — it keeps one item on
+            the shelf and one stock history. If it is genuinely a different part, save it
+            separately.
+          </p>
+          <div className="flex flex-wrap justify-end gap-tk-sm">
+            <button
+              type="button"
+              disabled={createVariation.isPending}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+              onClick={() => setDupDialog({ open: false, existing: null, values: null })}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={createVariation.isPending}
+              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+              onClick={async () => {
+                const v = dupDialog.values;
+                setDupDialog({ open: false, existing: null, values: null });
+                if (v) await submitCreate(v);
+              }}
+            >
+              Save as a separate product
+            </button>
+            <button
+              type="button"
+              disabled={createVariation.isPending}
+              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background disabled:opacity-60"
+              onClick={async () => {
+                const { existing, values: v } = dupDialog;
+                if (!existing || !v) {
+                  setDupDialog({ open: false, existing: null, values: null });
+                  return;
+                }
+                if (!costCodeMapping) {
+                  setDupDialog({ open: false, existing: null, values: null });
+                  setLoadNotice('Cost-code mapping is still loading — try again in a moment.');
+                  return;
+                }
+                const costNum = Number(v.cost);
+                try {
+                  await createVariation.mutateAsync({
+                    existing,
+                    cost: costNum,
+                    costCode: encodeCostCode(costCodeMapping, costNum),
+                    price: Number(v.price),
+                  });
+                  setDupDialog({ open: false, existing: null, values: null });
+                  navigate(exitTo);
+                } catch (e) {
+                  setDupDialog({ open: false, existing: null, values: null });
+                  setError('sku', {
+                    type: 'duplicate',
+                    message: e instanceof Error ? e.message : 'Could not create the variation',
+                  });
+                }
+              }}
+            >
+              {createVariation.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Make it a
               variation
             </button>
           </div>

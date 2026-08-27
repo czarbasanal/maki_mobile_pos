@@ -323,6 +323,7 @@ export interface CreateVariationInput {
   existing: Product;
   cost: number;
   costCode: string;
+  price: number;
 }
 
 /**
@@ -340,12 +341,13 @@ export function useCreateVariation() {
   const actor = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   return useMutation<Product, Error, CreateVariationInput>({
-    mutationFn: async ({ existing, cost, costCode }) => {
+    mutationFn: async ({ existing, cost, costCode, price }) => {
       if (!actor) throw new Error('Not signed in');
       const actorName = actor.displayName.trim() || null;
       const created = await repo.createVariation(existing, {
         cost,
         costCode,
+        price,
         actorId: actor.id,
         actorName,
       });

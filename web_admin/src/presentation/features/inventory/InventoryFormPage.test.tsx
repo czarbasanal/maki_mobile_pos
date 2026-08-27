@@ -4,7 +4,7 @@
 // lib/presentation/mobile/screens/inventory/product_form_screen.dart
 // _applyCategoryForSku); unchecking auto-generate hands the field back to
 // the user and a manual edit survives further category churn.
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -48,14 +48,62 @@ const uncodedCategory: Category = {
 };
 const UNCODED_CATEGORY_NAME = uncodedCategory.name;
 
+// A third coded category so the duplicate-name tests can select a category
+// distinct from the auto-SKU tests' "Brakes" without disturbing them.
+const cvtCategory: Category = {
+  id: 'c3',
+  name: 'CVT',
+  isActive: true,
+  createdAt: new Date(),
+  updatedAt: null,
+  createdBy: null,
+  updatedBy: null,
+  code: '0009',
+};
+
+/** Minimal active product, for duplicate-name-dialog tests. */
+function product(overrides: Partial<Product> = {}): Product {
+  return {
+    id: 'existing-1',
+    sku: '00090001',
+    name: 'A PRODUCT',
+    cost: 0,
+    price: 0,
+    quantity: 0,
+    reorderLevel: 0,
+    unit: 'pcs',
+    category: null,
+    supplierId: null,
+    supplierName: null,
+    barcodes: [],
+    notes: null,
+    costCode: 'AA',
+    imageUrl: null,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: null,
+    createdBy: null,
+    updatedBy: null,
+    createdByName: null,
+    updatedByName: null,
+    searchKeywords: [],
+    baseSku: null,
+    variationNumber: null,
+    sellingOptions: [],
+    ...overrides,
+  } as Product;
+}
+
 function harness(opts: {
   peekNextSequence?: ReturnType<typeof vi.fn>;
   create?: ReturnType<typeof vi.fn>;
+  findByNameKey?: ReturnType<typeof vi.fn>;
+  createVariation?: ReturnType<typeof vi.fn>;
 } = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const categoryRepo: Partial<Container['categoryRepo']> = {
     watchAll: (kind, cb) => {
-      cb(kind === 'product' ? [codedCategory, uncodedCategory] : []);
+      cb(kind === 'product' ? [codedCategory, uncodedCategory, cvtCategory] : []);
       return () => {};
     },
     peekNextSequence: opts.peekNextSequence ?? vi.fn().mockResolvedValue(5),
@@ -76,6 +124,12 @@ function harness(opts: {
     create:
       opts.create ??
       vi.fn().mockResolvedValue({ id: 'new-product' } as Product),
+    findByNameKey: opts.findByNameKey ?? vi.fn().mockResolvedValue(null),
+    createVariation:
+      opts.createVariation ??
+      vi.fn().mockResolvedValue({ id: 'variation-1' } as Product),
+    recordPriceChange: vi.fn().mockResolvedValue(undefined),
+    barcodeExists: vi.fn().mockResolvedValue(false),
   };
   const activityLogRepo = {
     log: vi.fn().mockResolvedValue(undefined),
@@ -101,6 +155,21 @@ function harness(opts: {
 
 async function selectCategory(name: string) {
   await userEvent.selectOptions(screen.getByLabelText('Category'), name);
+}
+
+/** Fills name, category, cost and price by their field labels. */
+async function fillForm(values: { name: string; category?: string; cost: string; price: string }) {
+  await userEvent.type(screen.getByLabelText('Name'), values.name);
+  if (values.category) {
+    await selectCategory(values.category);
+    // Category selection auto-peeks a SKU (create mode); wait for it so the
+    // required-SKU validation doesn't block the submit this helper leads to.
+    await waitFor(() => expect(screen.getByLabelText('SKU')).not.toHaveValue(''));
+  }
+  await userEvent.clear(screen.getByLabelText('Cost'));
+  await userEvent.type(screen.getByLabelText('Cost'), values.cost);
+  await userEvent.clear(screen.getByLabelText('Price'));
+  await userEvent.type(screen.getByLabelText('Price'), values.price);
 }
 
 describe('InventoryFormPage — create-mode auto-SKU', () => {
@@ -508,5 +577,77 @@ describe('InventoryFormPage — selling options', () => {
     expect(patch.sellingOptions).toEqual([
       expect.objectContaining({ label: 'By 6', pieces: 1, price: 600 }),
     ]);
+  });
+});
+
+describe('duplicate name detection', () => {
+  beforeEach(() => {
+    signIn();
+  });
+
+  it('stops the save and offers a choice when name+category already exist', async () => {
+    const findByNameKey = vi.fn(async () =>
+      product({ name: 'BELT BANDO', category: 'CVT', sku: '00020152', cost: 120, price: 250 }),
+    );
+    const create = vi.fn();
+    harness({ findByNameKey, create });
+
+    await fillForm({ name: 'BANDO BELT', category: 'CVT', cost: '130', price: '300' });
+    await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
+
+    expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('makes a variation carrying the typed cost and price', async () => {
+    const existing = product({ name: 'BELT BANDO', category: 'CVT', sku: '00020152', cost: 120, price: 250 });
+    const findByNameKey = vi.fn(async () => existing);
+    const createVariation = vi.fn(async (_existing: Product, _opts: unknown) => existing);
+    harness({ findByNameKey, createVariation });
+
+    await fillForm({ name: 'BANDO BELT', category: 'CVT', cost: '130', price: '300' });
+    await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
+    await userEvent.click(await screen.findByRole('button', { name: /make it a variation/i }));
+
+    await waitFor(() => expect(createVariation).toHaveBeenCalledTimes(1));
+    expect(createVariation.mock.calls[0][1]).toMatchObject({ cost: 130, price: 300 });
+  });
+
+  it('saves a separate product when the operator says they are different', async () => {
+    const findByNameKey = vi.fn(async () => product({ name: 'BELT BANDO', category: 'CVT' }));
+    const create = vi.fn(async () => product({}));
+    harness({ findByNameKey, create });
+
+    await fillForm({ name: 'BANDO BELT', category: 'CVT', cost: '130', price: '300' });
+    await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
+    await userEvent.click(await screen.findByRole('button', { name: /separate product/i }));
+
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+  });
+
+  it('writes nothing when the operator cancels', async () => {
+    const findByNameKey = vi.fn(async () => product({ name: 'BELT BANDO', category: 'CVT' }));
+    const create = vi.fn();
+    const createVariation = vi.fn();
+    harness({ findByNameKey, create, createVariation });
+
+    await fillForm({ name: 'BANDO BELT', category: 'CVT', cost: '130', price: '300' });
+    await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
+    await userEvent.click(await screen.findByRole('button', { name: /cancel/i }));
+
+    expect(create).not.toHaveBeenCalled();
+    expect(createVariation).not.toHaveBeenCalled();
+  });
+
+  it('saves straight through when no duplicate exists', async () => {
+    const findByNameKey = vi.fn(async () => null);
+    const create = vi.fn(async () => product({}));
+    harness({ findByNameKey, create });
+
+    await fillForm({ name: 'BRAND NEW PART', category: 'CVT', cost: '130', price: '300' });
+    await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
+
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(/already exists/i)).not.toBeInTheDocument();
   });
 });
