@@ -2,6 +2,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/data/models/product_model.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
+/// Builds a [ProductModel] with benign defaults for every field except
+/// [name] and [category], for tests that only care about those two.
+ProductModel productModel({required String name, String? category}) {
+  return ProductModel(
+    id: 'p1',
+    sku: '00010001',
+    name: name,
+    costCode: 'AA',
+    cost: 1,
+    price: 2,
+    quantity: 0,
+    reorderLevel: 10,
+    unit: 'pcs',
+    isActive: true,
+    createdAt: DateTime.now(),
+    category: category,
+  );
+}
+
 void main() {
   group('ProductModel', () {
     late ProductModel testProduct;
@@ -224,6 +243,24 @@ void main() {
 
       final productWithoutCode = product.copyWith(costCode: '');
       expect(productWithoutCode.getEncodedCost(costCodeMapping), 'NSC'); // 100
+    });
+  });
+
+  group('nameKey', () {
+    test('toMap writes a word-order-insensitive key with the category', () {
+      final model = productModel(name: 'GLOBAL CHAIN 428-120L', category: 'CHAINS');
+      expect(model.toMap()['nameKey'], '428-120l chain global|chains');
+    });
+
+    test('two word-order variants of one name produce the same key', () {
+      final a = productModel(name: 'CHAIN GLOBAL 428-120L', category: 'CHAINS');
+      final b = productModel(name: 'GLOBAL CHAIN 428-120L', category: 'CHAINS');
+      expect(a.toMap()['nameKey'], b.toMap()['nameKey']);
+    });
+
+    test('toUpdateMap carries the key so a rename keeps it correct', () {
+      final model = productModel(name: 'GLOBAL CHAIN 428-120L', category: 'CHAINS');
+      expect(model.toUpdateMap('u1')['nameKey'], '428-120l chain global|chains');
     });
   });
 }

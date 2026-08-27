@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maki_mobile_pos/core/extensions/extensions.dart';
+import 'package:maki_mobile_pos/core/utils/product_name_key.dart';
 import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
@@ -127,6 +128,8 @@ class ProductModel {
       'supplierName': supplierName,
       'isActive': isActive,
       'searchKeywords': searchKeywords,
+      // Indexed duplicate-detection key — see core/utils/product_name_key.dart.
+      'nameKey': productDuplicateKey(name, category),
       'baseSku': baseSku,
       'variationNumber': variationNumber,
       'barcodes': barcodes,
