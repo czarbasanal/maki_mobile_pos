@@ -40,6 +40,7 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.userAdd, Permission.addUser],
   [RoutePaths.settings, Permission.viewSettings],
   [RoutePaths.costCodeSettings, Permission.editCostCodeMapping],
+  [RoutePaths.timezoneSettings, Permission.viewSettings],
   // Route-level gate is editLists (mobile parity) — deactivate/reactivate and
   // delete are gated in-page by manageCategories.
   [RoutePaths.manageLists, Permission.editLists],

@@ -182,3 +182,21 @@ describe('canAccess — cashier web access map', () => {
     }
   });
 });
+
+describe('/settings/timezone', () => {
+  it('is reachable by an admin', () => {
+    expect(canAccess(RoutePaths.timezoneSettings, admin)).toBe(true);
+  });
+
+  // Gated on viewSettings: everyone who can open Settings can SEE the shop
+  // clock (it explains why their reports roll over when they do). Editing is
+  // admin-only, enforced on the page itself — same split as the mobile screen.
+  it('is readable by a cashier and by staff', () => {
+    expect(canAccess(RoutePaths.timezoneSettings, cashier)).toBe(true);
+    expect(canAccess(RoutePaths.timezoneSettings, staff)).toBe(true);
+  });
+
+  it('is blocked for a deactivated admin', () => {
+    expect(canAccess(RoutePaths.timezoneSettings, { ...admin, isActive: false })).toBe(false);
+  });
+});

@@ -138,6 +138,13 @@ export function SettingsPage() {
 
       <Section title="General">
         <Row
+          to={RoutePaths.timezoneSettings}
+          icon={ClockIcon}
+          tone="green"
+          title="Time & timezone"
+          subtitle="Business day and report dates"
+        />
+        <Row
           to={RoutePaths.about}
           icon={InformationCircleIcon}
           tone="green"

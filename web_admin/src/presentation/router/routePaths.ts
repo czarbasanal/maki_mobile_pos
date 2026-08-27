@@ -52,6 +52,7 @@ export const RoutePaths = {
 
   settings: '/settings',
   costCodeSettings: '/settings/cost-codes',
+  timezoneSettings: '/settings/timezone',
   manageLists: '/settings/lists',
   mechanics: '/settings/mechanics',
   about: '/settings/about',

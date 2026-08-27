@@ -13,6 +13,7 @@ import { DashboardPage } from '@/presentation/features/dashboard/DashboardPage';
 import { SettingsPage } from '@/presentation/features/settings/SettingsPage';
 import { AboutPage } from '@/presentation/features/settings/AboutPage';
 import { CostCodeSettingsPage } from '@/presentation/features/settings/CostCodeSettingsPage';
+import { TimezoneSettingsPage } from '@/presentation/features/settings/TimezoneSettingsPage';
 import { UsersListPage } from '@/presentation/features/users/UsersListPage';
 import { UserFormPage } from '@/presentation/features/users/UserFormPage';
 import { ActivityLogsPage } from '@/presentation/features/logs/ActivityLogsPage';
@@ -129,6 +130,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.userLogs, element: <ActivityLogsPage /> },
         { path: RoutePaths.settings, element: <SettingsPage /> },
         { path: RoutePaths.costCodeSettings, element: <CostCodeSettingsPage /> },
+        { path: RoutePaths.timezoneSettings, element: <TimezoneSettingsPage /> },
         { path: RoutePaths.manageLists, element: <ManageListsPage /> },
         { path: RoutePaths.mechanics, element: <MechanicsPage /> },
         { path: RoutePaths.about, element: <AboutPage /> },
