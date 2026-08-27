@@ -280,6 +280,25 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<ProductEntity?> getProductByNameKey(String nameKey) async {
+    try {
+      final snapshot = await _productsRef
+          .where('nameKey', isEqualTo: nameKey)
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+      if (snapshot.docs.isEmpty) return null;
+      return ProductModel.fromFirestore(snapshot.docs.first).toEntity();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to look up product by name: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<ProductEntity?> getProductByBarcode(String barcode) async {
     try {
       // Primary: array-contains on the new `barcodes` field.
@@ -815,6 +834,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required ProductEntity originalProduct,
     required double newCost,
     required String newCostCode,
+    double? newPrice,
     required String createdBy,
     String? createdByName,
   }) async {
@@ -839,6 +859,7 @@ class ProductRepositoryImpl implements ProductRepository {
           sku: newSku,
           cost: newCost,
           costCode: newCostCode,
+          price: newPrice ?? originalProduct.price,
           quantity: 0,
           baseSku: baseSku,
           variationNumber: variationNum,

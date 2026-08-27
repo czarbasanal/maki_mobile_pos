@@ -48,6 +48,10 @@ abstract class ProductRepository {
   /// Returns null if not found.
   Future<ProductEntity?> getProductBySku(String sku);
 
+  /// The active product sharing this duplicate key, or null. Key comes from
+  /// `productDuplicateKey(name, category)`.
+  Future<ProductEntity?> getProductByNameKey(String nameKey);
+
   /// Retrieves a product by its barcode.
   ///
   /// Returns null if not found.
@@ -206,6 +210,9 @@ abstract class ProductRepository {
     required ProductEntity originalProduct,
     required double newCost,
     required String newCostCode,
+    /// The SRP typed on the form. NULL inherits the base's price — receiving
+    /// passes nothing and must keep inheriting.
+    double? newPrice,
     required String createdBy,
     String? createdByName,
   });
