@@ -40,10 +40,33 @@ service cloud.firestore {
       return isAuthenticated() && getUserData().isActive == true;
     }
 
-    // PH business day (UTC+8, no DST) as a yyyymmdd int for drawer_state math.
+    // Shop timezone offset, in minutes east of UTC, from settings/general.
+    // Falls back to +8h (Asia/Manila) when the doc or the field is absent —
+    // that fallback is what keeps a pre-seed database and older app versions
+    // behaving exactly as before.
+    function shopOffsetMinutes() {
+      return exists(/databases/$(database)/documents/settings/general)
+        ? get(/databases/$(database)/documents/settings/general).data.get('tzOffsetMinutes', 480)
+        : 480;
+    }
+
+    // The shop's business day as a yyyymmdd int, for drawer_state math.
+    // Must match shopDayInt() on mobile and web for the same instant.
     function phDay() {
-      let t = request.time + duration.value(8, 'h');
+      let t = request.time + duration.value(shopOffsetMinutes(), 'm');
       return t.year() * 10000 + t.month() * 100 + t.day();
+    }
+
+    // settings/general is a shared bucket; only the timezone keys are
+    // validated. A bad tzOffsetMinutes would break the business day on every
+    // device, and the rules themselves read this value.
+    function validGeneralSettings() {
+      let d = request.resource.data;
+      return (!d.keys().hasAny(['tzOffsetMinutes']) ||
+              (d.tzOffsetMinutes is int &&
+               d.tzOffsetMinutes >= -720 &&
+               d.tzOffsetMinutes <= 840)) &&
+             (!d.keys().hasAny(['timezoneId']) || d.timezoneId is string);
     }
 
     // True when no past sales-day is awaiting closing: the state doc is
@@ -294,7 +317,8 @@ service cloud.firestore {
       allow read: if isValidUser() && isActiveUser();
 
       // Only admin can modify settings
-      allow write: if isAdmin() && isActiveUser();
+      allow write: if isAdmin() && isActiveUser() &&
+        (settingId != 'general' || validGeneralSettings());
 
       // Exception: sale_counters holds the daily sale-number sequence.
       // Generating a sale number at checkout increments it inside the

@@ -1604,3 +1604,114 @@ describe("/sales create gating (drawerSettled)", () => {
     );
   });
 });
+
+// ===================================================================
+// /settings/general — the shop timezone
+// ===================================================================
+describe("/settings/general (shop timezone)", () => {
+  it("any active user can read it", async () => {
+    await assertSucceeds(as("cashier").collection("settings").doc("general").get());
+  });
+
+  it("an admin can write a valid offset", async () => {
+    await assertSucceeds(
+      as("admin").collection("settings").doc("general")
+        .set({ timezoneId: "Asia/Tokyo", tzOffsetMinutes: 540 }, { merge: true })
+    );
+  });
+
+  it("an admin can write a negative offset", async () => {
+    await assertSucceeds(
+      as("admin").collection("settings").doc("general")
+        .set({ timezoneId: "UTC", tzOffsetMinutes: -300 }, { merge: true })
+    );
+  });
+
+  it("rejects an out-of-range offset", async () => {
+    await assertFails(
+      as("admin").collection("settings").doc("general")
+        .set({ tzOffsetMinutes: 99999 }, { merge: true })
+    );
+  });
+
+  it("rejects a non-integer offset", async () => {
+    await assertFails(
+      as("admin").collection("settings").doc("general")
+        .set({ tzOffsetMinutes: "eight" }, { merge: true })
+    );
+  });
+
+  it("a cashier cannot write it", async () => {
+    await assertFails(
+      as("cashier").collection("settings").doc("general")
+        .set({ tzOffsetMinutes: 0 }, { merge: true })
+    );
+  });
+
+  it("a deactivated admin cannot write it", async () => {
+    await assertFails(
+      as("inactiveAdmin").collection("settings").doc("general")
+        .set({ tzOffsetMinutes: 0 }, { merge: true })
+    );
+  });
+});
+
+// ===================================================================
+// /drawer_state honours the configured offset
+// ===================================================================
+describe("/drawer_state with a configured timezone", () => {
+  // yyyymmdd for `d` at an arbitrary offset — the JS mirror of phDay().
+  const dayAtOffset = (offsetMinutes, d = new Date()) => {
+    const t = new Date(d.getTime() + offsetMinutes * 60000);
+    return t.getUTCFullYear() * 10000 + (t.getUTCMonth() + 1) * 100 + t.getUTCDate();
+  };
+
+  afterEach(async () => {
+    // Leave the DB on the default so later suites see stock behaviour.
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("settings").doc("general").delete()
+    );
+  });
+
+  const setOffset = (tzOffsetMinutes) =>
+    testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("settings").doc("general").set({ tzOffsetMinutes })
+    );
+
+  it("falls back to +8 when settings/general is absent", async () => {
+    await assertSucceeds(
+      as("cashier").collection("drawer_state").doc("state")
+        .set({ lastSaleDay: phDay() }, { merge: true })
+    );
+  });
+
+  it("accepts today's day for the configured offset", async () => {
+    await setOffset(540); // Asia/Tokyo
+    await assertSucceeds(
+      as("cashier").collection("drawer_state").doc("state")
+        .set({ lastSaleDay: dayAtOffset(540) }, { merge: true })
+    );
+  });
+
+  it("rejects a day computed with the OLD offset when they differ", async () => {
+    await setOffset(540);
+    const tokyoDay = dayAtOffset(540);
+    const phDayValue = phDay();
+    // The two offsets only disagree in the hour before PH midnight; when they
+    // agree there is nothing to assert, so pass trivially rather than skip
+    // (an arrow function has no Mocha `this` to call skip() on).
+    if (tokyoDay === phDayValue) return;
+    await assertFails(
+      as("cashier").collection("drawer_state").doc("state")
+        .set({ lastSaleDay: phDayValue }, { merge: true })
+    );
+  });
+
+  it("still rejects a future day", async () => {
+    await setOffset(540);
+    await assertFails(
+      as("cashier").collection("drawer_state").doc("state")
+        .set({ lastSaleDay: dayAtOffset(540) + 1 }, { merge: true })
+    );
+  });
+});
