@@ -11,6 +11,7 @@ export function BulkReceivingPage() {
   const {
     isLoadingRefs, loadError, suppliers, supplierId, setSupplierId, state, parseError,
     summary, result, isReceiving, parseFile, reset, runReceive,
+    duplicateResolutions, setDuplicateResolution,
   } = useBulkReceiving();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -116,7 +117,11 @@ export function BulkReceivingPage() {
                   {isReceiving ? 'Receiving…' : `Receive ${summary.actionable} item${summary.actionable === 1 ? '' : 's'}`}
                 </button>
               </div>
-              <ReceivingPreviewTable rows={state.rows} />
+              <ReceivingPreviewTable
+                rows={state.rows}
+                resolutions={duplicateResolutions}
+                onResolve={setDuplicateResolution}
+              />
             </>
           ) : isLoadingRefs ? (
             <div className="h-24"><LoadingView label="Loading products & suppliers…" /></div>

@@ -1,7 +1,8 @@
+import { productDuplicateKey } from '@/domain/products/nameKey';
 import type { Product } from '../entities';
 import type { ParsedReceivingRow } from './parseReceivingRows';
 
-export type ReceivingRowStatus = 'new' | 'match' | 'mismatch' | 'error';
+export type ReceivingRowStatus = 'new' | 'match' | 'mismatch' | 'error' | 'duplicate-name';
 
 export interface ClassifiedReceivingRow {
   row: ParsedReceivingRow;
@@ -21,7 +22,14 @@ export function classifyReceivingRows(
   categoryCodes: ReadonlyMap<string, string>,
 ): ClassifiedReceivingRow[] {
   const bySku = new Map<string, Product>();
-  for (const p of activeProducts) bySku.set(p.sku.toLowerCase(), p);
+  const byNameKey = new Map<string, Product>();
+  for (const p of activeProducts) {
+    bySku.set(p.sku.toLowerCase(), p);
+    // First writer wins: with duplicates already in the catalog, the report
+    // only needs to name one of them.
+    const key = productDuplicateKey(p.name, p.category);
+    if (!byNameKey.has(key)) byNameKey.set(key, p);
+  }
 
   return rows.map((row): ClassifiedReceivingRow => {
     if (row.errors.length > 0) return { row, status: 'error', existing: null };
@@ -42,6 +50,8 @@ export function classifyReceivingRows(
           existing: null,
         };
       }
+      const nameMatch = byNameKey.get(productDuplicateKey(row.name, row.category)) ?? null;
+      if (nameMatch) return { row, status: 'duplicate-name', existing: nameMatch };
       return { row, status: 'new', existing: null };
     }
     const existing = bySku.get(row.sku.toLowerCase()) ?? null;
@@ -49,4 +59,28 @@ export function classifyReceivingRows(
     const costsEqual = Math.abs(existing.cost - row.cost) <= COST_TOLERANCE;
     return { row, status: costsEqual ? 'match' : 'mismatch', existing };
   });
+}
+
+/** How the operator resolved a `duplicate-name` row: fold it into the
+ *  matched product as a variation (the default), or let it through as a
+ *  genuinely new product. */
+export type DuplicateNameResolution = 'variation' | 'new';
+
+/**
+ * Applies the operator's choice for a `duplicate-name` row. "variation"
+ * re-runs the SAME cost-tolerance check a typed SKU would get against
+ * `classified.existing`, so it lands on `match`/`mismatch` and flows through
+ * the existing cost-mismatch/variation machinery unchanged. "new" clears the
+ * name match and lets the row create a fresh product, exactly as an
+ * un-flagged GENERATE row would. A no-op on any other status.
+ */
+export function resolveDuplicateName(
+  classified: ClassifiedReceivingRow,
+  resolution: DuplicateNameResolution,
+): ClassifiedReceivingRow {
+  if (classified.status !== 'duplicate-name' || !classified.existing) return classified;
+  if (resolution === 'new') return { ...classified, status: 'new', existing: null };
+  const existing = classified.existing;
+  const costsEqual = Math.abs(existing.cost - classified.row.cost) <= COST_TOLERANCE;
+  return { ...classified, status: costsEqual ? 'match' : 'mismatch', existing };
 }

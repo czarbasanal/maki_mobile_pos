@@ -1,7 +1,9 @@
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
+import { displaySku } from '@/domain/products/sku';
 import type {
   ClassifiedReceivingRow,
+  DuplicateNameResolution,
   ReceivingRowStatus,
 } from '@/domain/receiving/classifyReceivingRows';
 
@@ -10,9 +12,18 @@ const BADGE: Record<ReceivingRowStatus, { label: string; cls: string }> = {
   mismatch: { label: 'Variation', cls: 'bg-warning-light text-warning-dark' },
   new: { label: 'New', cls: 'bg-success-light text-success-dark' },
   error: { label: 'Error', cls: 'bg-error-light text-error-dark' },
+  'duplicate-name': { label: 'Duplicate name', cls: 'bg-warning-light text-warning-dark' },
 };
 
-export function ReceivingPreviewTable({ rows }: { rows: ClassifiedReceivingRow[] }) {
+interface ReceivingPreviewTableProps {
+  rows: ClassifiedReceivingRow[];
+  /** Row number → the operator's choice for a `duplicate-name` row. Rows
+   *  without an entry default to "variation". */
+  resolutions: ReadonlyMap<number, DuplicateNameResolution>;
+  onResolve: (rowNumber: number, resolution: DuplicateNameResolution) => void;
+}
+
+export function ReceivingPreviewTable({ rows, resolutions, onResolve }: ReceivingPreviewTableProps) {
   return (
     <div className="overflow-x-auto rounded-lg border border-light-hairline bg-light-card">
       <table className="w-full text-bodySmall">
@@ -41,6 +52,22 @@ export function ReceivingPreviewTable({ rows }: { rows: ClassifiedReceivingRow[]
                   {note ? (
                     <div className={cn('text-[12px]', c.status === 'error' ? 'text-error-dark' : 'text-light-text-hint')}>
                       {note}
+                    </div>
+                  ) : null}
+                  {c.status === 'duplicate-name' && c.existing ? (
+                    <div className="mt-tk-xs space-y-tk-xs">
+                      <div className="text-[12px] text-warning-dark">
+                        Matches existing {c.existing.name} ({displaySku(c.existing.sku)})
+                      </div>
+                      <select
+                        aria-label={`Resolve row ${r.rowNumber}`}
+                        value={resolutions.get(r.rowNumber) ?? 'variation'}
+                        onChange={(e) => onResolve(r.rowNumber, e.target.value as DuplicateNameResolution)}
+                        className="rounded-md border border-light-border bg-light-card px-tk-sm py-[2px] text-[12px] text-light-text"
+                      >
+                        <option value="variation">Make variation</option>
+                        <option value="new">Create as new</option>
+                      </select>
                     </div>
                   ) : null}
                 </td>

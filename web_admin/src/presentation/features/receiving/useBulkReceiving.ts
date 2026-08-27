@@ -13,7 +13,9 @@ import { parseCsv } from '@/core/utils/csv';
 import { parseReceivingRows } from '@/domain/receiving/parseReceivingRows';
 import {
   classifyReceivingRows,
+  resolveDuplicateName,
   type ClassifiedReceivingRow,
+  type DuplicateNameResolution,
 } from '@/domain/receiving/classifyReceivingRows';
 import type { ReceivingResult } from '@/domain/repositories/ReceivingRepository';
 
@@ -49,6 +51,28 @@ export function useBulkReceiving() {
   const [parseError, setParseError] = useState<string | null>(null);
   const [result, setResult] = useState<ReceivingResult | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
+  // Row number -> the operator's choice for a `duplicate-name` row. Unset
+  // rows default to "variation" (see resolvedRows below).
+  const [duplicateResolutions, setDuplicateResolutions] = useState<Map<number, DuplicateNameResolution>>(new Map());
+
+  function setDuplicateResolution(rowNumber: number, resolution: DuplicateNameResolution) {
+    setDuplicateResolutions((m) => new Map(m).set(rowNumber, resolution));
+  }
+
+  // The rows actually used for the summary + receive: a `duplicate-name` row
+  // is folded into `match`/`mismatch` (the default "variation" choice) or
+  // `new`, so it flows through the existing cost-mismatch/variation
+  // machinery unchanged. `state.rows` itself stays untouched so the preview
+  // table can keep showing the duplicate-name badge and its resolver.
+  const resolvedRows = useMemo(
+    () =>
+      (state?.rows ?? []).map((r) =>
+        r.status === 'duplicate-name'
+          ? resolveDuplicateName(r, duplicateResolutions.get(r.row.rowNumber) ?? 'variation')
+          : r,
+      ),
+    [state, duplicateResolutions],
+  );
 
   const ready = !!costCode && !!productsQuery.data && !!suppliersQuery.data && productCats !== undefined;
 
@@ -77,6 +101,7 @@ export function useBulkReceiving() {
       setState({ rows: [], headerError: parsed.headerError });
       return;
     }
+    setDuplicateResolutions(new Map());
     setState({ rows: classifyReceivingRows(parsed.rows, productsQuery.data!, categoryCodes), headerError: null });
   }
 
@@ -84,10 +109,11 @@ export function useBulkReceiving() {
     setState(null);
     setParseError(null);
     setResult(null);
+    setDuplicateResolutions(new Map());
   }
 
   const summary = useMemo(() => {
-    const rows = state?.rows ?? [];
+    const rows = resolvedRows;
     const count = (s: string) => rows.filter((r) => r.status === s).length;
     return {
       total: rows.length,
@@ -97,7 +123,7 @@ export function useBulkReceiving() {
       errors: count('error'),
       actionable: rows.filter((r) => r.status !== 'error').length,
     };
-  }, [state]);
+  }, [resolvedRows]);
 
   async function runReceive() {
     if (!state || !user || !costCode || !productsQuery.data) return;
@@ -106,7 +132,7 @@ export function useBulkReceiving() {
     try {
       setResult(
         await receivingRepo.bulkReceive({
-          rows: state.rows,
+          rows: resolvedRows,
           products: productsQuery.data,
           supplier: supplier ? { id: supplier.id, name: supplier.name } : null,
           cipher: costCode,
@@ -126,6 +152,8 @@ export function useBulkReceiving() {
     supplierId,
     setSupplierId,
     state,
+    duplicateResolutions,
+    setDuplicateResolution,
     parseError,
     summary,
     result,
