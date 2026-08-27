@@ -164,12 +164,21 @@ export class FirestoreProductRepository implements ProductRepository {
     return this.getById(productId);
   }
 
-  /** The active product sharing this duplicate key, or null. Key comes from
-   *  `productDuplicateKey(name, category)`. Two equality filters — served
-   *  from single-field indexes, no composite index needed. */
+  /** The active BASE product sharing this duplicate key, or null. Key comes
+   *  from `productDuplicateKey(name, category)`. A cost variation inherits
+   *  its base's name/category, so it carries the SAME nameKey — the
+   *  `baseSku == null` filter keeps a variation from ever being returned in
+   *  place of its base. Three equality filters — served from single-field
+   *  indexes, no composite index needed. */
   async findByNameKey(key: string): Promise<Product | null> {
     const snap = await getDocs(
-      query(this.col(), where('nameKey', '==', key), where('isActive', '==', true), limit(1)),
+      query(
+        this.col(),
+        where('nameKey', '==', key),
+        where('isActive', '==', true),
+        where('baseSku', '==', null),
+        limit(1),
+      ),
     );
     return snap.empty ? null : snap.docs[0].data();
   }

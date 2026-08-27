@@ -296,6 +296,9 @@ List<ClassifiedRow> classifyRows({
   };
   final byNameKey = <String, ProductEntity>{};
   for (final p in activeProducts) {
+    // A cost variation inherits its base's name/category, so it carries the
+    // SAME nameKey — skip it so a base is always preferred over a variation.
+    if (p.baseSku != null) continue;
     // First writer wins: duplicates already exist, and naming one is enough.
     byNameKey.putIfAbsent(productDuplicateKey(p.name, p.category), () => p);
   }

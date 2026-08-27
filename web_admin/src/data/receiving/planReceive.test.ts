@@ -58,6 +58,9 @@ describe('planReceive', () => {
     expect(plan.creates[0].input.sku).toBe('SP-1');
     expect(plan.creates[0].priceHistory).toMatchObject({ cost: 200, reason: 'receiving' });
     expect(plan.items[0]).toMatchObject({ productId: 'p1', sku: 'SP-1', unitCost: 200, isNewVariation: true, newProductId: 'prod-1' });
+    // INVARIANT: receiving never touches selling price — the variation always
+    // inherits the base product's price (220), never the row's cost (200).
+    expect(plan.creates[0].input.price).toBe(220);
   });
 
   it('mismatch → the variation carries the base product’s image and selling options', () => {

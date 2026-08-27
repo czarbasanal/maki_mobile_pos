@@ -68,6 +68,17 @@ describe('classifiedToReceivable', () => {
   it('returns null for error rows', () => {
     expect(classifiedToReceivable(row('error'), new Map())).toBeNull();
   });
+
+  it('throws on an unresolved duplicate-name row instead of silently treating it as new', () => {
+    // The sole caller always resolves a duplicate-name row (into match,
+    // mismatch or new) before calling this — that's a runtime invariant,
+    // not a type one. Make a violation loud rather than letting it fall
+    // through to kind:'new' unnoticed.
+    const p = product();
+    expect(() => classifiedToReceivable(row('duplicate-name', {}, p), new Map())).toThrow(
+      /duplicate-name|unresolved/i,
+    );
+  });
 });
 
 describe('classifiedToReceivable — auto rows carry the category code', () => {

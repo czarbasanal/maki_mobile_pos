@@ -29,12 +29,29 @@ class ImportPreview extends StatelessWidget {
   final void Function(int rowNumber, DuplicateNameResolution resolution)?
       onResolve;
 
+  /// [classified] with every [DuplicateNameRow] folded into the row its
+  /// current resolution actually produces — so the summary counts (and the
+  /// per-row tiles) agree with what will really be submitted, the same way
+  /// web's `useBulkReceiving` counts `resolvedRows` rather than raw
+  /// classifications.
+  List<ClassifiedRow> get _resolved => [
+        for (final c in classified)
+          if (c is DuplicateNameRow)
+            resolveDuplicateName(
+              c,
+              resolutions[c.row.rowNumber] ?? DuplicateNameResolution.variation,
+            )
+          else
+            c,
+      ];
+
   @override
   Widget build(BuildContext context) {
-    final existing = classified.whereType<ExistingMatchRow>().length;
-    final mismatch = classified.whereType<CostMismatchRow>().length;
-    final newProducts = classified.whereType<NewProductRow>().length;
-    final duplicateNames = classified.whereType<DuplicateNameRow>().length;
+    final resolved = _resolved;
+    final existing = resolved.whereType<ExistingMatchRow>().length;
+    final mismatch = resolved.whereType<CostMismatchRow>().length;
+    final newProducts = resolved.whereType<NewProductRow>().length;
+    final duplicateNames = resolved.whereType<DuplicateNameRow>().length;
     final errors = parseResult.errors;
 
     return Column(

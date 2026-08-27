@@ -8,6 +8,7 @@
 // FirestoreCategoryRepository.test.ts / FirestoreSaleRepository.test.ts).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Firestore } from 'firebase/firestore';
+import { where } from 'firebase/firestore';
 import type { ProductCreateInput } from '@/domain/repositories/ProductRepository';
 
 interface FakeRef {
@@ -86,7 +87,7 @@ vi.mock('firebase/firestore', () => ({
       };
     },
   })),
-  getDocs: vi.fn(async () => ({ docs: [] })),
+  getDocs: vi.fn(async () => ({ docs: [], empty: true })),
   increment: vi.fn((n: number) => ({ __increment: n })),
   limit: vi.fn(),
   onSnapshot: vi.fn(),
@@ -282,5 +283,20 @@ describe('FirestoreProductRepository.create — searchKeywords follow the alloca
     const keywords = productWrite?.data.searchKeywords as string[];
     expect(keywords).toContain('00070002');
     expect(keywords).not.toContain('00070001');
+  });
+});
+
+describe('FirestoreProductRepository.findByNameKey', () => {
+  beforeEach(() => {
+    vi.mocked(where).mockClear();
+  });
+
+  it('filters to baseSku == null so a variation can never be returned as its base', async () => {
+    // A cost variation inherits its base's name/category, so it carries the
+    // SAME nameKey. Without this filter, an unordered limit(1) query could
+    // nondeterministically return the variation instead of the base.
+    const repo = new FirestoreProductRepository({} as unknown as Firestore);
+    await repo.findByNameKey('widget|hardware');
+    expect(vi.mocked(where).mock.calls).toContainEqual(['baseSku', '==', null]);
   });
 });

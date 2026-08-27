@@ -25,8 +25,11 @@ export function classifyReceivingRows(
   const byNameKey = new Map<string, Product>();
   for (const p of activeProducts) {
     bySku.set(p.sku.toLowerCase(), p);
-    // First writer wins: with duplicates already in the catalog, the report
-    // only needs to name one of them.
+    // A cost variation inherits its base's name/category, so it carries the
+    // SAME duplicate key — skip it so a base is always preferred over a
+    // variation. First writer wins among remaining bases: with duplicates
+    // already in the catalog, the report only needs to name one of them.
+    if (p.baseSku != null) continue;
     const key = productDuplicateKey(p.name, p.category);
     if (!byNameKey.has(key)) byNameKey.set(key, p);
   }

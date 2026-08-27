@@ -282,9 +282,13 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<ProductEntity?> getProductByNameKey(String nameKey) async {
     try {
+      // A cost variation inherits its base's name/category, so it carries
+      // the SAME nameKey. Filter to baseSku == null so a variation can never
+      // be returned in place of its base.
       final snapshot = await _productsRef
           .where('nameKey', isEqualTo: nameKey)
           .where('isActive', isEqualTo: true)
+          .where('baseSku', isNull: true)
           .limit(1)
           .get();
       if (snapshot.docs.isEmpty) return null;

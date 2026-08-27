@@ -157,4 +157,19 @@ describe('nameKey', () => {
     const data = buildProductUpdate({ price: 100 }, 'u1');
     expect(data.nameKey).toBeUndefined();
   });
+
+  it('a name-only update on a categorised product does NOT write a half-formed key', () => {
+    // Without the category in the patch we don't know the product's real
+    // category, so writing `productDuplicateKey(name, null)` (e.g.
+    // "foo bar|") would be silently WRONG for a categorised product and the
+    // lookup would then never match it. Better to leave nameKey untouched
+    // than to write a key we know is malformed.
+    const data = buildProductUpdate({ name: 'Renamed' }, 'u1');
+    expect(data.nameKey).toBeUndefined();
+  });
+
+  it('a category-only update does not write nameKey either — the name is unknown here', () => {
+    const data = buildProductUpdate({ category: 'CHAINS' }, 'u1');
+    expect(data.nameKey).toBeUndefined();
+  });
 });

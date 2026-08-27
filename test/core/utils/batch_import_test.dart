@@ -313,6 +313,23 @@ void main() {
       );
       expect(rows.single, isA<NewProductRow>());
     });
+
+    test('prefers the BASE product over a variation sharing the same name+category', () {
+      // A cost variation inherits its base's name/category, so it carries
+      // the same nameKey. Put the variation FIRST so first-writer-wins would
+      // pick it without a baseSku filter, and assert the base wins instead.
+      final variation = _product(
+        sku: '00020152-1', cost: 130, name: 'BELT BANDO SKYDRIVE', category: 'CVT',
+      ).copyWith(baseSku: '00020152');
+      final base = productEntity(
+        sku: '00020152', name: 'BELT BANDO SKYDRIVE', category: 'CVT',
+      );
+      final rows = classifyRows(
+        rows: [parsedRow(autoGenerateSku: true, name: 'BANDO SKYDRIVE BELT', category: 'CVT')],
+        activeProducts: [variation, base],
+      );
+      expect((rows.single as DuplicateNameRow).existing.sku, '00020152');
+    });
   });
 
   group('resolveDuplicateName', () {

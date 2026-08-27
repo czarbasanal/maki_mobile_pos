@@ -38,6 +38,15 @@ export function classifiedToReceivable(
   categoryCodes: ReadonlyMap<string, string>,
 ): ReceivableItem | null {
   if (row.status === 'error') return null;
+  if (row.status === 'duplicate-name') {
+    // The sole caller resolves a duplicate-name row (into match, mismatch or
+    // new) BEFORE it ever reaches here — that's a runtime invariant, not a
+    // type one, so make a violation loud instead of silently falling through
+    // to kind:'new' below.
+    throw new Error(
+      `Row ${row.row.rowNumber}: unresolved duplicate-name row reached classifiedToReceivable — resolve it first.`,
+    );
+  }
   const r = row.row;
   if (row.status === 'match' && row.existing) {
     return { ref: r.rowNumber, kind: 'match', product: row.existing, quantity: r.quantity };

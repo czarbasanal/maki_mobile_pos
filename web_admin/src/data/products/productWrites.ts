@@ -167,7 +167,14 @@ export function buildProductUpdate(
       input.name,
       input.category ?? null,
     ]);
-    data.nameKey = productDuplicateKey(input.name, input.category ?? null);
+  }
+  // nameKey needs BOTH name and category to be correct — a patch missing
+  // either leaves the other half unknown (not necessarily null), so writing
+  // it half-formed (e.g. "foo bar|" from a name-only rename on a categorised
+  // product) would silently break duplicate-name lookups. Only write it when
+  // the patch actually supplies both.
+  if (input.name !== undefined && input.category !== undefined) {
+    data.nameKey = productDuplicateKey(input.name, input.category);
   }
   return data;
 }

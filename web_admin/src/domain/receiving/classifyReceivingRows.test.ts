@@ -126,6 +126,23 @@ describe('duplicate-name rows', () => {
     expect(r.status).toBe('new');
   });
 
+  it('prefers the BASE product over a variation sharing the same name+category', () => {
+    // A cost variation inherits its base's name/category, so it carries the
+    // same duplicate key. Put the variation FIRST so first-writer-wins would
+    // pick it without a baseSku filter, and assert the base wins instead.
+    const variation = product({
+      id: 'v1', sku: '00020152-1', name: 'BELT BANDO SKYDRIVE', category: 'CVT', baseSku: '00020152',
+    });
+    const base = product({ id: 'p1', sku: '00020152', name: 'BELT BANDO SKYDRIVE', category: 'CVT' });
+    const [r] = classifyReceivingRows(
+      [row({ autoGenerateSku: true, name: 'BANDO SKYDRIVE BELT', category: 'CVT' })],
+      [variation, base],
+      new Map([['CVT', '0002']]),
+    );
+    expect(r.status).toBe('duplicate-name');
+    expect(r.existing?.sku).toBe('00020152');
+  });
+
   it('a typed-SKU row is unaffected — SKU matching still wins', () => {
     const existing = product({ name: 'BELT BANDO', category: 'CVT', sku: '00020152', cost: 120 });
     const [r] = classifyReceivingRows(
