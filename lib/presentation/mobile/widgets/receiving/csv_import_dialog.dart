@@ -32,12 +32,38 @@ class CsvImportDialogState extends ConsumerState<CsvImportDialog> {
   ParseResult? _parseResult;
   List<ClassifiedRow>? _classified;
 
+  // Row number -> the operator's choice for a `DuplicateNameRow`. Rows
+  // without an entry default to `DuplicateNameResolution.variation`. Kept
+  // separate from `_classified` so the preview can keep showing the
+  // duplicate-name badge and its resolver even after a choice is made.
+  final Map<int, DuplicateNameResolution> _duplicateResolutions = {};
+
+  /// The rows actually used for the import: a [DuplicateNameRow] is folded
+  /// into `Match`/`Variation` (the default "Make variation" choice) or
+  /// `New`, so it flows through the existing cost-mismatch/variation
+  /// machinery unchanged.
+  List<ClassifiedRow> get _effectiveClassified {
+    final classified = _classified ?? const <ClassifiedRow>[];
+    return [
+      for (final c in classified)
+        if (c is DuplicateNameRow)
+          resolveDuplicateName(
+            c,
+            _duplicateResolutions[c.row.rowNumber] ??
+                DuplicateNameResolution.variation,
+          )
+        else
+          c,
+    ];
+  }
+
   Future<void> _selectFile() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
       _parseResult = null;
       _classified = null;
+      _duplicateResolutions.clear();
     });
     try {
       final picked = await FilePicker.platform.pickFiles(
@@ -103,7 +129,7 @@ class CsvImportDialogState extends ConsumerState<CsvImportDialog> {
       final resolver = ref.read(receivingImportResolverProvider);
       final resolved = await resolver.resolve(
         actor: user,
-        classified: classified,
+        classified: _effectiveClassified,
         costCodeMapping: mapping,
         supplierId: form.supplierId,
         supplierName: form.supplierName,
@@ -162,6 +188,10 @@ class CsvImportDialogState extends ConsumerState<CsvImportDialog> {
                 ImportPreview(
                   parseResult: _parseResult!,
                   classified: classified,
+                  resolutions: _duplicateResolutions,
+                  onResolve: (rowNumber, resolution) => setState(
+                    () => _duplicateResolutions[rowNumber] = resolution,
+                  ),
                 ),
               ],
             ],

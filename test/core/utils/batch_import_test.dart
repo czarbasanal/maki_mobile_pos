@@ -6,11 +6,13 @@ ProductEntity _product({
   required String sku,
   required double cost,
   String name = 'Test',
+  String? category,
 }) =>
     ProductEntity(
       id: 'p-$sku',
       sku: sku,
       name: name,
+      category: category,
       costCode: 'X',
       cost: cost,
       price: cost * 1.5,
@@ -20,6 +22,42 @@ ProductEntity _product({
       isActive: true,
       createdAt: DateTime(2026, 1, 1),
     );
+
+/// Fixture helper for `classifyRows` tests that only care about the
+/// name/category/SKU shape of a row (cost/price/quantity default to
+/// arbitrary valid values).
+ParsedImportRow parsedRow({
+  bool autoGenerateSku = false,
+  String sku = 'ABC',
+  required String name,
+  String? category,
+  String unit = 'pcs',
+  double cost = 10,
+  double price = 15,
+  int quantity = 5,
+  int reorderLevel = 0,
+}) =>
+    ParsedImportRow(
+      rowNumber: 2,
+      sku: autoGenerateSku ? kSkuGenerateLiteral : sku,
+      name: name,
+      category: category,
+      unit: unit,
+      cost: cost,
+      price: price,
+      quantity: quantity,
+      reorderLevel: reorderLevel,
+    );
+
+/// Fixture helper mirroring `_product` but named to match the plan's
+/// `productEntity(...)` convention for the duplicate-name test group.
+ProductEntity productEntity({
+  required String sku,
+  required String name,
+  String? category,
+  double cost = 10,
+}) =>
+    _product(sku: sku, cost: cost, name: name, category: category);
 
 const _header = 'sku,name,category,unit,cost,price,quantity,reorder_level\n';
 
@@ -244,6 +282,67 @@ void main() {
         activeProducts: [_product(sku: 'ABC', cost: 12.50)],
       );
       expect(result.single, isA<ExistingMatchRow>());
+    });
+  });
+
+  group('duplicate-name rows', () {
+    test('a GENERATE row whose name+category exists is flagged', () {
+      final existing = productEntity(
+        sku: '00020152', name: 'BELT BANDO SKYDRIVE', category: 'CVT',
+      );
+      final rows = classifyRows(
+        rows: [parsedRow(autoGenerateSku: true, name: 'BANDO SKYDRIVE BELT', category: 'CVT')],
+        activeProducts: [existing],
+      );
+      expect(rows.single, isA<DuplicateNameRow>());
+      expect((rows.single as DuplicateNameRow).existing.sku, '00020152');
+    });
+
+    test('a genuinely new GENERATE row stays a NewProductRow', () {
+      final rows = classifyRows(
+        rows: [parsedRow(autoGenerateSku: true, name: 'BRAND NEW PART', category: 'CVT')],
+        activeProducts: [productEntity(sku: '1', name: 'BELT BANDO', category: 'CVT')],
+      );
+      expect(rows.single, isA<NewProductRow>());
+    });
+
+    test('does not flag across categories', () {
+      final rows = classifyRows(
+        rows: [parsedRow(autoGenerateSku: true, name: 'GASKET', category: 'ENGINE')],
+        activeProducts: [productEntity(sku: '1', name: 'GASKET', category: 'BRAKES')],
+      );
+      expect(rows.single, isA<NewProductRow>());
+    });
+  });
+
+  group('resolveDuplicateName', () {
+    test('"variation" resolves to ExistingMatchRow when cost matches', () {
+      final row = DuplicateNameRow(
+        row: parsedRow(autoGenerateSku: true, name: 'Spark Plug', category: 'Engine', cost: 60),
+        existing: productEntity(sku: '00020152', name: 'Spark Plug', category: 'Engine', cost: 60),
+      );
+      final resolved = resolveDuplicateName(row, DuplicateNameResolution.variation);
+      expect(resolved, isA<ExistingMatchRow>());
+      expect((resolved as ExistingMatchRow).existing.sku, '00020152');
+    });
+
+    test('"variation" resolves to CostMismatchRow when cost differs', () {
+      final row = DuplicateNameRow(
+        row: parsedRow(autoGenerateSku: true, name: 'Spark Plug', category: 'Engine', cost: 75),
+        existing: productEntity(sku: '00020152', name: 'Spark Plug', category: 'Engine', cost: 60),
+      );
+      final resolved = resolveDuplicateName(row, DuplicateNameResolution.variation);
+      expect(resolved, isA<CostMismatchRow>());
+      expect((resolved as CostMismatchRow).existing.sku, '00020152');
+    });
+
+    test('"newProduct" clears the name match', () {
+      final row = DuplicateNameRow(
+        row: parsedRow(autoGenerateSku: true, name: 'Spark Plug', category: 'Engine', cost: 60),
+        existing: productEntity(sku: '00020152', name: 'Spark Plug', category: 'Engine', cost: 60),
+      );
+      final resolved = resolveDuplicateName(row, DuplicateNameResolution.newProduct);
+      expect(resolved, isA<NewProductRow>());
     });
   });
 }

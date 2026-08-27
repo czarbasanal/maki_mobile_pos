@@ -37,6 +37,31 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
   String? _errorMessage;
   String? _completedRefNumber;
 
+  // Row number -> the operator's choice for a `DuplicateNameRow`. Rows
+  // without an entry default to `DuplicateNameResolution.variation`. Kept
+  // separate from `_classified` so the preview can keep showing the
+  // duplicate-name badge and its resolver even after a choice is made.
+  final Map<int, DuplicateNameResolution> _duplicateResolutions = {};
+
+  /// The rows actually used for the permission check + import: a
+  /// [DuplicateNameRow] is folded into `Match`/`Variation` (the default
+  /// "Make variation" choice) or `New`, so it flows through the existing
+  /// cost-mismatch/variation machinery unchanged.
+  List<ClassifiedRow> get _effectiveClassified {
+    final classified = _classified ?? const <ClassifiedRow>[];
+    return [
+      for (final c in classified)
+        if (c is DuplicateNameRow)
+          resolveDuplicateName(
+            c,
+            _duplicateResolutions[c.row.rowNumber] ??
+                DuplicateNameResolution.variation,
+          )
+        else
+          c,
+    ];
+  }
+
   Future<void> _pickAndParse() async {
     setState(() {
       _phase = _Phase.parsing;
@@ -86,6 +111,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
   Future<void> _commit() async {
     final classified = _classified;
     if (classified == null || classified.isEmpty) return;
+    final effective = _effectiveClassified;
     setState(() {
       _phase = _Phase.importing;
       _errorMessage = null;
@@ -99,7 +125,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
       final useCase = ref.read(batchImportReceivingUseCaseProvider);
       final result = await useCase.execute(
         actor: user,
-        classified: classified,
+        classified: effective,
         costCodeMapping: mapping,
         supplierId: _supplierId,
         supplierName: _supplierName,
@@ -132,6 +158,7 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
       _classified = null;
       _errorMessage = null;
       _completedRefNumber = null;
+      _duplicateResolutions.clear();
     });
   }
 
@@ -199,7 +226,8 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
 
   Widget _buildPreview() {
     final classified = _classified ?? const <ClassifiedRow>[];
-    final newProducts = classified.whereType<NewProductRow>().length;
+    final newProducts =
+        _effectiveClassified.whereType<NewProductRow>().length;
     final hasNewProducts = newProducts > 0;
 
     final user = ref.watch(currentUserProvider).valueOrNull;
@@ -226,6 +254,10 @@ class _BatchImportScreenState extends ConsumerState<BatchImportScreen> {
                 parseResult:
                     _parseResult ?? const ParseResult(rows: [], errors: []),
                 classified: classified,
+                resolutions: _duplicateResolutions,
+                onResolve: (rowNumber, resolution) => setState(
+                  () => _duplicateResolutions[rowNumber] = resolution,
+                ),
               ),
             ],
           ),

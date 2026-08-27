@@ -1,4 +1,5 @@
 import 'package:csv/csv.dart';
+import 'package:maki_mobile_pos/core/utils/product_name_key.dart';
 import 'package:maki_mobile_pos/domain/entities/product_entity.dart';
 
 /// CSV schema for the receiving batch-import flow.
@@ -245,6 +246,45 @@ class NewProductRow extends ClassifiedRow {
   const NewProductRow({required ParsedImportRow row}) : super(row);
 }
 
+/// GENERATE row whose name + category already belongs to an active product.
+/// The operator resolves it per row in the preview: make a variation of
+/// [existing], or create it as a genuinely separate product.
+class DuplicateNameRow extends ClassifiedRow {
+  final ProductEntity existing;
+  const DuplicateNameRow({
+    required ParsedImportRow row,
+    required this.existing,
+  }) : super(row);
+}
+
+/// How the operator resolved a [DuplicateNameRow]: fold it into the matched
+/// product as a variation (the default), or let it through as a genuinely
+/// new, separate product.
+enum DuplicateNameResolution { variation, newProduct }
+
+/// Applies the operator's choice for [row]. `variation` re-runs the same
+/// cost-tolerance check a typed-SKU row would get against [row].existing, so
+/// it resolves to [ExistingMatchRow] or [CostMismatchRow] and flows through
+/// the existing cost-mismatch/variation machinery unchanged. `newProduct`
+/// drops the name match and lets the row create a fresh product, exactly as
+/// an un-flagged GENERATE row would.
+///
+/// MIRRORS `resolveDuplicateName` in
+/// web_admin/src/domain/receiving/classifyReceivingRows.ts.
+ClassifiedRow resolveDuplicateName(
+  DuplicateNameRow row,
+  DuplicateNameResolution resolution,
+) {
+  if (resolution == DuplicateNameResolution.newProduct) {
+    return NewProductRow(row: row.row);
+  }
+  final costsEqual =
+      (row.existing.cost - row.row.cost).abs() <= kCostEqualityTolerance;
+  return costsEqual
+      ? ExistingMatchRow(row: row.row, existing: row.existing)
+      : CostMismatchRow(row: row.row, existing: row.existing);
+}
+
 /// Classifies [rows] against [activeProducts]. SKU lookup is case-
 /// insensitive. Pure — no I/O.
 List<ClassifiedRow> classifyRows({
@@ -254,9 +294,16 @@ List<ClassifiedRow> classifyRows({
   final bySkuLower = <String, ProductEntity>{
     for (final p in activeProducts) p.sku.toLowerCase(): p,
   };
+  final byNameKey = <String, ProductEntity>{};
+  for (final p in activeProducts) {
+    // First writer wins: duplicates already exist, and naming one is enough.
+    byNameKey.putIfAbsent(productDuplicateKey(p.name, p.category), () => p);
+  }
 
   return rows.map<ClassifiedRow>((row) {
     if (row.autoGenerateSku) {
+      final match = byNameKey[productDuplicateKey(row.name, row.category)];
+      if (match != null) return DuplicateNameRow(row: row, existing: match);
       return NewProductRow(row: row);
     }
     final existing = bySkuLower[row.sku.toLowerCase()];

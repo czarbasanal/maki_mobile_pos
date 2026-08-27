@@ -61,6 +61,19 @@ class ReceivingImportResolver {
     String? supplierId,
     String? supplierName,
   }) async {
+    // Defensive normalization: callers (the preview screens) resolve every
+    // `DuplicateNameRow` before calling in — defaulting to "make variation"
+    // when the operator hasn't made an explicit choice — but fold any that
+    // slip through here too, so this use case never has to special-case a
+    // row the operator was still supposed to decide on.
+    classified = [
+      for (final c in classified)
+        if (c is DuplicateNameRow)
+          resolveDuplicateName(c, DuplicateNameResolution.variation)
+        else
+          c,
+    ];
+
     final hasNewProducts = classified.whereType<NewProductRow>().isNotEmpty;
     if (hasNewProducts) {
       assertPermission(actor, Permission.addProduct);
