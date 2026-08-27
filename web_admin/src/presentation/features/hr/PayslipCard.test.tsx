@@ -83,16 +83,17 @@ describe('PayslipCard', () => {
   });
 
   it('renders the 7-cell attendance mini-row (present/day-off)', () => {
-    render(<PayslipCard payslip={payslip()} />);
+    const { container } = render(<PayslipCard payslip={payslip()} />);
 
-    expect(screen.getAllByText('✓')).toHaveLength(6);
-    // Day-off chips use the design's em-dash mark, with MON…SUN labels above.
-    expect(screen.getByText('—')).toBeInTheDocument();
+    // Marks are SVG, not glyphs — see the attendance-marks group below.
+    expect(container.querySelectorAll('svg[data-day-mark="present"]')).toHaveLength(6);
+    // Day-off chips use the design's dash mark, with MON…SUN labels above.
+    expect(container.querySelectorAll('svg[data-day-mark="dayOff"]')).toHaveLength(1);
     expect(screen.getByText('MON')).toBeInTheDocument();
     expect(screen.getByText('SUN')).toBeInTheDocument();
   });
 
-  it('renders an absent day as ✗', () => {
+  it('renders an absent day with the absent mark', () => {
     const withAbsence = payslip({
       days: [
         { date: '2026-07-20', status: 'absent' },
@@ -104,9 +105,9 @@ describe('PayslipCard', () => {
         { date: '2026-07-26', status: 'dayOff' },
       ],
     });
-    render(<PayslipCard payslip={withAbsence} />);
+    const { container } = render(<PayslipCard payslip={withAbsence} />);
 
-    expect(screen.getByText('✗')).toBeInTheDocument();
+    expect(container.querySelectorAll('svg[data-day-mark="absent"]')).toHaveLength(1);
   });
 
   it('renders the earnings table including the Base Pay hours×rate caption', () => {
@@ -195,3 +196,30 @@ describe('PayslipCard — design handoff details', () => {
   });
 });
 
+describe('PayslipCard attendance marks', () => {
+  // html2canvas positions text with fontMetrics.getMetrics(declaredFontStack)
+  // but fills it at the measured rect. The declared stack ('Inter', system-ui)
+  // is never loaded and does not carry U+2713/U+2717, so the glyph came from a
+  // system fallback whose metrics did not match the baseline html2canvas
+  // assumed — the mark landed off-centre in its circle in the export while
+  // looking fine in the preview. SVG marks are drawn at element bounds, so
+  // they cannot drift.
+  it('draws each day mark as an svg, not a text glyph', () => {
+    const { container } = render(<PayslipCard payslip={payslip()} />);
+    const marks = container.querySelectorAll('svg[data-day-mark]');
+    expect(marks).toHaveLength(7);
+  });
+
+  it('renders no fallback-font mark characters', () => {
+    const { container } = render(<PayslipCard payslip={payslip()} />);
+    expect(container.textContent).not.toMatch(/[\u2713\u2717\u2014]/);
+  });
+
+  it('labels each mark with its status for screen readers', () => {
+    const { container } = render(<PayslipCard payslip={payslip()} />);
+    const present = container.querySelectorAll('svg[data-day-mark="present"]');
+    const dayOff = container.querySelectorAll('svg[data-day-mark="dayOff"]');
+    expect(present).toHaveLength(6);
+    expect(dayOff).toHaveLength(1);
+  });
+});

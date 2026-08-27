@@ -115,6 +115,20 @@ describe('PayslipDetailPage', () => {
     expect(filename).toBe('payslip-juan-dela-cruz-2026-07-20.jpg');
   });
 
+  it('captures the card box itself, so the JPG is not padded with white space', async () => {
+    harness();
+
+    await screen.findByText('NET PAY');
+    await userEvent.click(screen.getByRole('button', { name: /download jpg/i }));
+
+    await waitFor(() => expect(downloadElementAsJpg).toHaveBeenCalledTimes(1));
+    const [el] = vi.mocked(downloadElementAsJpg).mock.calls[0];
+    // html2canvas captures the element's own box. A full-width wrapper around a
+    // 380px card exports the card plus a band of white to its right, which is
+    // exactly what "wide one with white space" looked like.
+    expect(el.className).toMatch(/w-fit/);
+  });
+
   it('slugifies the employee name for the filename (non-alphanumerics collapse to a single dash, edges trimmed)', async () => {
     const getById = vi.fn(async (id: string) =>
       payslip({ id, employeeName: '  Ana   O’Brien-Santos!! ' }),

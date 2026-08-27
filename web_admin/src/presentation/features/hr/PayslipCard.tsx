@@ -26,11 +26,49 @@ import makiLogo from '@/assets/maki_logo_yellow.png';
 const INTER = "'Inter', system-ui, sans-serif";
 const MONO = "'JetBrains Mono', monospace";
 
-const DAY_CHIP: Record<DayStatus, { bg: string; fg: string; mark: string }> = {
-  present: { bg: '#e8f0ec', fg: '#2f7d5b', mark: '✓' },
-  dayOff: { bg: '#f0f1f1', fg: '#b0b6b6', mark: '—' },
-  absent: { bg: '#f0f1f1', fg: '#b23b3b', mark: '✗' },
+// The mark is drawn as SVG geometry rather than a text glyph. html2canvas
+// positions text with fontMetrics.getMetrics(<declared font stack>) but fills
+// it at the range-measured rect; the declared stack ('Inter', system-ui) is
+// never actually loaded and carries no U+2713/U+2717, so the glyph came from a
+// system fallback whose metrics disagreed with that baseline — the mark sat
+// off-centre in its circle in the downloaded JPG while looking correct in the
+// preview. An <svg> is rasterised at its element bounds, so it cannot drift.
+const DAY_CHIP: Record<DayStatus, { bg: string; fg: string; path: string }> = {
+  // Paths are drawn in a 24x24 box, stroked and centred on that box's middle.
+  present: { bg: '#e8f0ec', fg: '#2f7d5b', path: 'M7 12.5l3.5 3.5L17 8.5' },
+  dayOff: { bg: '#f0f1f1', fg: '#b0b6b6', path: 'M7.5 12h9' },
+  absent: { bg: '#f0f1f1', fg: '#b23b3b', path: 'M8 8l8 8M16 8l-8 8' },
 };
+
+const DAY_LABEL: Record<DayStatus, string> = {
+  present: 'Present',
+  dayOff: 'Day off',
+  absent: 'Absent',
+};
+
+function DayMark({ status }: { status: DayStatus }) {
+  const chip = DAY_CHIP[status];
+  return (
+    <svg
+      data-day-mark={status}
+      viewBox="0 0 24 24"
+      width="24"
+      height="24"
+      role="img"
+      aria-label={DAY_LABEL[status]}
+      style={{ display: 'block' }}
+    >
+      <path
+        d={chip.path}
+        fill="none"
+        stroke={chip.fg}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 const WEEKDAY_LABEL = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -135,10 +173,10 @@ export function PayslipCard({ payslip }: { payslip: Payslip }) {
                     {WEEKDAY_LABEL[parseIsoLocal(day.date).getDay()]}
                   </div>
                   <div
-                    className="flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold"
-                    style={{ background: chip.bg, color: chip.fg }}
+                    className="h-6 w-6 overflow-hidden rounded-full"
+                    style={{ background: chip.bg }}
                   >
-                    {chip.mark}
+                    <DayMark status={day.status} />
                   </div>
                 </div>
               );

@@ -126,7 +126,10 @@ export function PayslipDetailPage() {
       {del.error ? <p className="text-bodySmall text-error-dark">{del.error.message}</p> : null}
       {jpgError ? <p className="text-bodySmall text-error-dark">{jpgError}</p> : null}
 
-      <div ref={cardRef}>
+      {/* w-fit, not a bare block: html2canvas captures this element's own
+          box, and a full-width wrapper around the 380px card exported the card
+          plus a band of white space to its right. */}
+      <div ref={cardRef} className="w-fit">
         <PayslipCard payslip={payslip} />
       </div>
 
