@@ -1,3 +1,4 @@
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/extensions/extensions.dart';
 import 'package:maki_mobile_pos/core/utils/utils.dart';
@@ -33,17 +34,21 @@ void main() {
   });
 
   group('DateTimeExtensions', () {
-    test('startOfDay returns midnight', () {
-      final date = DateTime(2025, 1, 15, 14, 30, 45);
-      expect(date.startOfDay, DateTime(2025, 1, 15, 0, 0, 0));
+    // Both getters work in SHOP time and return instants, so the fixture is
+    // an instant and the assertions read it back through the shop clock.
+    const ph = kDefaultShopOffsetMinutes;
+    final date = instantOf(shopWall(2025, 1, 15, 14, 30, 45), ph);
+
+    test('startOfDay returns the instant of shop midnight', () {
+      expect(date.startOfDay, instantOf(shopWall(2025, 1, 15), ph));
     });
 
-    test('endOfDay returns end of day', () {
-      final date = DateTime(2025, 1, 15, 14, 30, 45);
-      final endOfDay = date.endOfDay;
+    test('endOfDay returns the last moment of the shop day', () {
+      final endOfDay = date.endOfDay.inShopTime;
       expect(endOfDay.hour, 23);
       expect(endOfDay.minute, 59);
       expect(endOfDay.second, 59);
+      expect(endOfDay.day, 15);
     });
   });
 

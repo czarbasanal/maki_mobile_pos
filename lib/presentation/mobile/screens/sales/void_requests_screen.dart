@@ -13,6 +13,7 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_style.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_summary_cards.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Admin queue of void requests (opened from the dashboard notification bell).
@@ -74,16 +75,16 @@ class VoidRequestsScreen extends ConsumerWidget {
               if (p == DateRangePreset.custom) return;
               ref.read(voidRequestDatePresetProvider.notifier).state = p;
               ref.read(voidRequestDateRangeProvider.notifier).state =
-                  dateRangeForPreset(p, DateTime.now());
+                  dateRangeForPreset(p, ref.read(shopNowProvider)(), ref.read(shopOffsetProvider));
             },
             onCustomRangeSelected: (start, end) {
               ref.read(voidRequestDatePresetProvider.notifier).state =
                   DateRangePreset.custom;
+              final offset = ref.read(shopOffsetProvider);
               ref.read(voidRequestDateRangeProvider.notifier).state =
                   DateTimeRange(
-                      start: start,
-                      end: DateTime(
-                          end.year, end.month, end.day, 23, 59, 59, 999));
+                      start: shopDayStartInstant(start, offset),
+                      end: shopDayEndInstant(end, offset));
             },
           ),
           Expanded(

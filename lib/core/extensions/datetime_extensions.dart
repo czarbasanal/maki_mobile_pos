@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
 /// Extension methods for DateTime.
 ///
@@ -124,96 +125,87 @@ extension DateTimeExtensions on DateTime {
   }
 
   // ==================== DATE CALCULATIONS ====================
+  //
+  // All of these treat `this` as an instant, do their arithmetic in shop
+  // time (ShopTimeConfig — the shop's configured zone, not the device's),
+  // and return an instant. That keeps them correct as Firestore query
+  // bounds regardless of where the device is.
 
-  /// Returns the start of the day (00:00:00.000).
-  DateTime get startOfDay {
-    return DateTime(year, month, day);
-  }
+  DateTime _shopBound(DateTime Function(DateTime wall) f) =>
+      instantOf(f(inShopTime), ShopTimeConfig.offsetMinutes);
 
-  /// Returns the end of the day (23:59:59.999).
-  DateTime get endOfDay {
-    return DateTime(year, month, day, 23, 59, 59, 999);
-  }
+  /// Start of the shop day (00:00:00.000 shop time), as an instant.
+  DateTime get startOfDay => _shopBound((w) => shopWall(w.year, w.month, w.day));
 
-  /// Returns the start of the week (Monday).
-  DateTime get startOfWeek {
-    final daysFromMonday = weekday - 1;
-    return DateTime(year, month, day - daysFromMonday);
-  }
+  /// End of the shop day (23:59:59.999 shop time), as an instant.
+  DateTime get endOfDay =>
+      _shopBound((w) => shopWall(w.year, w.month, w.day, 23, 59, 59, 999));
 
-  /// Returns the end of the week (Sunday).
-  DateTime get endOfWeek {
-    final daysUntilSunday = 7 - weekday;
-    return DateTime(year, month, day + daysUntilSunday, 23, 59, 59, 999);
-  }
+  /// Start of the shop week (Monday).
+  DateTime get startOfWeek =>
+      _shopBound((w) => shopWall(w.year, w.month, w.day - (w.weekday - 1)));
 
-  /// Returns the start of the month.
-  DateTime get startOfMonth {
-    return DateTime(year, month, 1);
-  }
+  /// End of the shop week (Sunday).
+  DateTime get endOfWeek => _shopBound(
+      (w) => shopWall(w.year, w.month, w.day + (7 - w.weekday), 23, 59, 59, 999));
 
-  /// Returns the end of the month.
-  DateTime get endOfMonth {
-    return DateTime(year, month + 1, 0, 23, 59, 59, 999);
-  }
+  /// Start of the shop month.
+  DateTime get startOfMonth => _shopBound((w) => shopWall(w.year, w.month, 1));
 
-  /// Returns the start of the calendar quarter — Jan/Apr/Jul/Oct 1st at 00:00.
-  DateTime get startOfQuarter {
-    final firstMonth = ((month - 1) ~/ 3) * 3 + 1;
-    return DateTime(year, firstMonth, 1);
-  }
+  /// End of the shop month.
+  DateTime get endOfMonth =>
+      _shopBound((w) => shopWall(w.year, w.month + 1, 0, 23, 59, 59, 999));
 
-  /// Returns the end of the calendar quarter — Mar/Jun/Sep/Dec 31st at 23:59:59.999.
-  DateTime get endOfQuarter {
-    final firstMonth = ((month - 1) ~/ 3) * 3 + 1;
-    return DateTime(year, firstMonth + 3, 0, 23, 59, 59, 999);
-  }
+  /// Start of the calendar quarter — Jan/Apr/Jul/Oct 1st at 00:00 shop time.
+  DateTime get startOfQuarter =>
+      _shopBound((w) => shopWall(w.year, ((w.month - 1) ~/ 3) * 3 + 1, 1));
 
-  /// Returns the start of the year.
-  DateTime get startOfYear {
-    return DateTime(year, 1, 1);
-  }
+  /// End of the calendar quarter — Mar/Jun/Sep/Dec 31st at 23:59:59.999.
+  DateTime get endOfQuarter => _shopBound(
+      (w) => shopWall(w.year, ((w.month - 1) ~/ 3) * 3 + 4, 0, 23, 59, 59, 999));
 
-  /// Returns the end of the year.
-  DateTime get endOfYear {
-    return DateTime(year, 12, 31, 23, 59, 59, 999);
-  }
+  /// Start of the shop year.
+  DateTime get startOfYear => _shopBound((w) => shopWall(w.year, 1, 1));
+
+  /// End of the shop year.
+  DateTime get endOfYear =>
+      _shopBound((w) => shopWall(w.year, 12, 31, 23, 59, 59, 999));
 
   // ==================== COMPARISONS ====================
 
-  /// Checks if this date is the same day as another date.
-  bool isSameDay(DateTime other) {
-    return year == other.year && month == other.month && day == other.day;
+  /// True when both instants fall on the same SHOP day.
+  bool isSameShopDay(DateTime other) {
+    final a = inShopTime;
+    final b = other.inShopTime;
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  /// Checks if this date is today.
-  bool get isToday {
-    return isSameDay(DateTime.now());
-  }
+  /// Checks if this date is the same shop day as another date.
+  bool isSameDay(DateTime other) => isSameShopDay(other);
 
-  /// Checks if this date is yesterday.
-  bool get isYesterday {
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    return isSameDay(yesterday);
-  }
+  /// Checks if this date is today in shop time.
+  bool get isToday => isSameShopDay(DateTime.now());
 
-  /// Checks if this date is within the current week.
+  /// Checks if this date is yesterday in shop time.
+  bool get isYesterday =>
+      isSameShopDay(DateTime.now().subtract(const Duration(days: 1)));
+
+  /// Checks if this date is within the current shop week.
   bool get isThisWeek {
     final now = DateTime.now();
     return isAfter(now.startOfWeek.subtract(const Duration(seconds: 1))) &&
         isBefore(now.endOfWeek.add(const Duration(seconds: 1)));
   }
 
-  /// Checks if this date is within the current month.
+  /// Checks if this date is within the current shop month.
   bool get isThisMonth {
-    final now = DateTime.now();
-    return year == now.year && month == now.month;
+    final a = inShopTime;
+    final b = DateTime.now().inShopTime;
+    return a.year == b.year && a.month == b.month;
   }
 
-  /// Checks if this date is within the current year.
-  bool get isThisYear {
-    return year == DateTime.now().year;
-  }
+  /// Checks if this date is within the current shop year.
+  bool get isThisYear => inShopTime.year == DateTime.now().inShopTime.year;
 
   // ==================== UTILITIES ====================
 

@@ -11,8 +11,10 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/report_csv.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/core/utils/report_export.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Sales report dashboard with summary and analytics.
@@ -31,9 +33,10 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _startDate = DateTime(now.year, now.month, now.day);
-    _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final range = dateRangeForPreset(DateRangePreset.today,
+        DateTime.now().inShopTime, ShopTimeConfig.offsetMinutes);
+    _startDate = range.start;
+    _endDate = range.end;
   }
 
   @override
@@ -276,7 +279,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
   void _handlePresetChange(DateRangePreset preset) {
     if (preset == DateRangePreset.custom) return; // dropdown never emits custom
-    final range = dateRangeForPreset(preset, DateTime.now());
+    final range = dateRangeForPreset(preset, ref.read(shopNowProvider)(), ref.read(shopOffsetProvider));
     setState(() {
       _startDate = range.start;
       _endDate = range.end;
@@ -286,8 +289,9 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
   void _handleCustomRange(DateTime start, DateTime end) {
     setState(() {
-      _startDate = start;
-      _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
+      final offset = ref.read(shopOffsetProvider);
+      _startDate = shopDayStartInstant(start, offset);
+      _endDate = shopDayEndInstant(end, offset);
       _selectedPreset = DateRangePreset.custom;
     });
   }

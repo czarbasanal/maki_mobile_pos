@@ -10,8 +10,10 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/report_csv.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/core/utils/report_export.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 enum _JobOrderView { models, mechanics }
@@ -35,7 +37,8 @@ class _JobOrderReportsScreenState extends ConsumerState<JobOrderReportsScreen> {
   @override
   void initState() {
     super.initState();
-    final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+    final r = dateRangeForPreset(DateRangePreset.today,
+        DateTime.now().inShopTime, ShopTimeConfig.offsetMinutes);
     _start = r.start;
     _end = r.end;
   }
@@ -71,18 +74,21 @@ class _JobOrderReportsScreenState extends ConsumerState<JobOrderReportsScreen> {
             selectedPreset: _preset,
             onPresetChanged: (p) {
               if (p == DateRangePreset.custom) return;
-              final r = dateRangeForPreset(p, DateTime.now());
+              final r = dateRangeForPreset(p, ref.read(shopNowProvider)(), ref.read(shopOffsetProvider));
               setState(() {
                 _start = r.start;
                 _end = r.end;
                 _preset = p;
               });
             },
-            onCustomRangeSelected: (s, e) => setState(() {
-              _start = s;
-              _end = DateTime(e.year, e.month, e.day, 23, 59, 59);
-              _preset = DateRangePreset.custom;
-            }),
+            onCustomRangeSelected: (s, e) {
+              final offset = ref.read(shopOffsetProvider);
+              setState(() {
+                _start = shopDayStartInstant(s, offset);
+                _end = shopDayEndInstant(e, offset);
+                _preset = DateRangePreset.custom;
+              });
+            },
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),

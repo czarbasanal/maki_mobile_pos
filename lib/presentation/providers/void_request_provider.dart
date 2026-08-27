@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/data/repositories/void_request_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/void_request_repository.dart';
@@ -97,7 +98,8 @@ final voidRequestDatePresetProvider =
 /// (23:59:59.999) so paging/count queries never drop a request created in
 /// the last second of the day.
 final voidRequestDateRangeProvider = StateProvider.autoDispose<DateTimeRange>(
-    (_) => dateRangeForPreset(DateRangePreset.today, DateTime.now()));
+    (_) => dateRangeForPreset(DateRangePreset.today,
+        DateTime.now().inShopTime, ShopTimeConfig.offsetMinutes));
 
 /// One page of void requests plus whether another page is available.
 class PagedVoidRequests {

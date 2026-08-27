@@ -8,9 +8,11 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/report_csv.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/core/utils/report_export.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -32,7 +34,8 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
   @override
   void initState() {
     super.initState();
-    final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+    final r = dateRangeForPreset(DateRangePreset.today,
+        DateTime.now().inShopTime, ShopTimeConfig.offsetMinutes);
     _startDate = r.start;
     _endDate = r.end;
   }
@@ -80,7 +83,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
               selectedPreset: _selectedPreset,
               onPresetChanged: (preset) {
                 if (preset == DateRangePreset.custom) return;
-                final r = dateRangeForPreset(preset, DateTime.now());
+                final r = dateRangeForPreset(preset, ref.read(shopNowProvider)(), ref.read(shopOffsetProvider));
                 setState(() {
                   _startDate = r.start;
                   _endDate = r.end;
@@ -89,8 +92,9 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
               },
               onCustomRangeSelected: (start, end) {
                 setState(() {
-                  _startDate = start;
-                  _endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
+                  final offset = ref.read(shopOffsetProvider);
+                  _startDate = shopDayStartInstant(start, offset);
+                  _endDate = shopDayEndInstant(end, offset);
                   _selectedPreset = DateRangePreset.custom;
                 });
               },

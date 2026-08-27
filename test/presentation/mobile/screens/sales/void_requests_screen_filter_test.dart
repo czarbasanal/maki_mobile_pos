@@ -1,3 +1,4 @@
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -253,10 +254,12 @@ void main() {
     final container = ProviderScope.containerOf(
         tester.element(find.byType(VoidRequestsScreen)));
 
-    // Assert the date range end is normalized to 23:59:59.999 and start is preserved.
+    // The picked days are SHOP days: start is shop midnight Jul 20, end the
+    // last millisecond of shop Jul 22 — both stored as instants.
+    const ph = kDefaultShopOffsetMinutes;
     final range = container.read(voidRequestDateRangeProvider);
-    expect(range.start, DateTime(2026, 7, 20));
-    expect(range.end, DateTime(2026, 7, 22, 23, 59, 59, 999));
+    expect(range.start, instantOf(shopWall(2026, 7, 20), ph));
+    expect(range.end, instantOf(shopWall(2026, 7, 22, 23, 59, 59, 999), ph));
 
     // Assert the preset is set to custom.
     final preset = container.read(voidRequestDatePresetProvider);

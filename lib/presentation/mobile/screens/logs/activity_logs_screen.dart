@@ -5,12 +5,14 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/activity_log_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/business_day_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/logs/activity_log_filter_card.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/logs/activity_log_row.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -42,7 +44,8 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
     super.initState();
     // Plain local state from a pure helper — no provider is read or written
     // here, which would trip Riverpod's modify-during-build assertion.
-    final range = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+    final range = dateRangeForPreset(DateRangePreset.today,
+        DateTime.now().inShopTime, ShopTimeConfig.offsetMinutes);
     _startDate = range.start;
     _endDate = range.end;
   }
@@ -52,12 +55,21 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
   }
 
   ActivityLogParams _buildParams() {
-    final start = DateTime(_startDate.year, _startDate.month, _startDate.day,
-        _startTime.hour, _startTime.minute);
+    // _startDate/_endDate are instants; the picked time-of-day belongs to the
+    // SHOP clock, so the bounds are assembled on the shop wall and converted
+    // back to instants for the query.
+    final offset = ref.read(shopOffsetProvider);
+    final sw = _startDate.inShopTime;
+    final ew = _endDate.inShopTime;
+    final start = instantOf(
+        shopWall(sw.year, sw.month, sw.day, _startTime.hour, _startTime.minute),
+        offset);
     // Seconds are pushed to the end of the chosen minute so the bound is
     // genuinely inclusive of everything logged in that minute.
-    final end = DateTime(_endDate.year, _endDate.month, _endDate.day,
-        _endTime.hour, _endTime.minute, 59, 999);
+    final end = instantOf(
+        shopWall(ew.year, ew.month, ew.day, _endTime.hour, _endTime.minute, 59,
+            999),
+        offset);
     return ActivityLogParams(
       types: _selectedTypes,
       startDate: start,
@@ -124,17 +136,21 @@ class _ActivityLogsScreenState extends ConsumerState<ActivityLogsScreen> {
             }),
             onPresetChanged: (preset) => setState(() {
               _preset = preset;
-              final range = dateRangeForPreset(preset, DateTime.now());
+              final range = dateRangeForPreset(preset,
+                  ref.read(shopNowProvider)(), ref.read(shopOffsetProvider));
               _startDate = range.start;
               _endDate = range.end;
               _markDirty();
             }),
-            onCustomRangeSelected: (start, end) => setState(() {
-              _preset = DateRangePreset.custom;
-              _startDate = start;
-              _endDate = end;
-              _markDirty();
-            }),
+            onCustomRangeSelected: (start, end) {
+              final offset = ref.read(shopOffsetProvider);
+              setState(() {
+                _preset = DateRangePreset.custom;
+                _startDate = shopDayStartInstant(start, offset);
+                _endDate = shopDayEndInstant(end, offset);
+                _markDirty();
+              });
+            },
             onStartTimeChanged: (t) => setState(() {
               _startTime = t;
               _markDirty();

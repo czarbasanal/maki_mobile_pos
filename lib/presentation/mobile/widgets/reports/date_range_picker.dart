@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Date range presets.
@@ -24,6 +25,9 @@ enum DateRangePreset {
 /// viewport width — a preset dropdown on the left and the active date range
 /// pill on the right (which also opens a custom range picker on tap).
 class DateRangePicker extends StatelessWidget {
+  /// Range bounds as **instants**. Rendered — and handed to the custom
+  /// picker — in shop time, so the pill shows the shop's calendar day even
+  /// on a device set to another timezone.
   final DateTime startDate;
   final DateTime endDate;
   final DateRangePreset selectedPreset;
@@ -121,9 +125,11 @@ class DateRangePicker extends StatelessWidget {
   ) {
     final primary = theme.colorScheme.primary;
     final muted = theme.colorScheme.onSurfaceVariant;
-    final label = _isSameDay(startDate, endDate)
-        ? dateFormat.format(startDate)
-        : '${dateFormat.format(startDate)} – ${dateFormat.format(endDate)}';
+    final startWall = startDate.inShopTime;
+    final endWall = endDate.inShopTime;
+    final label = _isSameDay(startWall, endWall)
+        ? dateFormat.format(startWall)
+        : '${dateFormat.format(startWall)} – ${dateFormat.format(endWall)}';
 
     return AppCard(
       radius: AppRadius.md,
@@ -155,11 +161,20 @@ class DateRangePicker extends StatelessWidget {
   }
 
   Future<void> _showCustomDatePicker(BuildContext context) async {
+    // showDateRangePicker works in plain calendar days, so it is fed local
+    // DateTimes whose *fields* are the shop day — and it returns the same
+    // shape, which callers convert back with shopDayStart/EndInstant.
+    final startWall = startDate.inShopTime;
+    final endWall = endDate.inShopTime;
+    final shopToday = DateTime.now().inShopTime;
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      initialDateRange: DateTimeRange(start: startDate, end: endDate),
+      lastDate: DateTime(shopToday.year, shopToday.month, shopToday.day),
+      initialDateRange: DateTimeRange(
+        start: DateTime(startWall.year, startWall.month, startWall.day),
+        end: DateTime(endWall.year, endWall.month, endWall.day),
+      ),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(

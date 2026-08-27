@@ -1,3 +1,4 @@
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart' show DateTimeRange;
@@ -318,9 +319,13 @@ void main() {
       addTearDown(c.dispose);
 
       final range = c.read(voidRequestDateRangeProvider);
-      final lateToday = DateTime(
-          DateTime.now().year, DateTime.now().month, DateTime.now().day,
-          23, 59, 59, 900);
+      // The last moment of the SHOP day, as an instant — the shop clock is
+      // what defines "today" now, not the device's.
+      final shopToday = DateTime.now().inShopTime;
+      final lateToday = instantOf(
+          shopWall(shopToday.year, shopToday.month, shopToday.day, 23, 59, 59,
+              900),
+          ShopTimeConfig.offsetMinutes);
 
       expect(range.end.isBefore(lateToday), isFalse,
           reason: 'provider default must normalize dateRangeForPreset\'s '

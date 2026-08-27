@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/domain/entities/activity_log_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
@@ -101,8 +102,13 @@ class ActivityLogFilterCard extends StatelessWidget {
     return !s.isAfter(e);
   }
 
-  static DateTime _at(DateTime day, TimeOfDay t) =>
-      DateTime(day.year, day.month, day.day, t.hour, t.minute);
+  /// The chosen day + time as a shop **wall-clock** value. [day] arrives as
+  /// an instant (a `dateRangeForPreset` bound); the summary text and the
+  /// start <= end check both want it read in shop time.
+  static DateTime _at(DateTime day, TimeOfDay t) {
+    final w = day.inShopTime;
+    return shopWall(w.year, w.month, w.day, t.hour, t.minute);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +137,7 @@ class ActivityLogFilterCard extends StatelessWidget {
                 activityFilterSummary(
                   start: _at(startDate, startTime),
                   end: _at(endDate, endTime),
+                  now: DateTime.now().inShopTime,
                   typeCount: selectedTypes.length,
                 ),
                 style: theme.textTheme.bodySmall

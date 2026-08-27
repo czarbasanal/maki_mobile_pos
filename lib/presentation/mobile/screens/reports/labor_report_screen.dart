@@ -10,8 +10,10 @@ import 'package:maki_mobile_pos/core/utils/labor_report.dart';
 import 'package:maki_mobile_pos/core/utils/report_csv.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/core/utils/report_export.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -33,7 +35,8 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
   @override
   void initState() {
     super.initState();
-    final r = dateRangeForPreset(DateRangePreset.today, DateTime.now());
+    final r = dateRangeForPreset(DateRangePreset.today,
+        DateTime.now().inShopTime, ShopTimeConfig.offsetMinutes);
     _startDate = r.start;
     _endDate = r.end;
   }
@@ -50,8 +53,9 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
     if (dailyOnly) {
       // Non-admin roles can only see today; force it regardless of prior
       // state — via the clock so it follows a midnight rollover.
-      final r =
-          dateRangeForPreset(DateRangePreset.today, ref.watch(businessDayProvider));
+      // businessDayProvider is already a shop wall-clock midnight.
+      final r = dateRangeForPreset(DateRangePreset.today,
+          ref.watch(businessDayProvider), ref.watch(shopOffsetProvider));
       _startDate = r.start;
       _endDate = r.end;
       _selectedPreset = DateRangePreset.today;
@@ -90,7 +94,7 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
                 selectedPreset: _selectedPreset,
                 onPresetChanged: (preset) {
                   if (preset == DateRangePreset.custom) return;
-                  final r = dateRangeForPreset(preset, DateTime.now());
+                  final r = dateRangeForPreset(preset, ref.read(shopNowProvider)(), ref.read(shopOffsetProvider));
                   setState(() {
                     _startDate = r.start;
                     _endDate = r.end;
@@ -99,9 +103,9 @@ class _LaborReportScreenState extends ConsumerState<LaborReportScreen> {
                 },
                 onCustomRangeSelected: (start, end) {
                   setState(() {
-                    _startDate = start;
-                    _endDate =
-                        DateTime(end.year, end.month, end.day, 23, 59, 59);
+                    final offset = ref.read(shopOffsetProvider);
+                    _startDate = shopDayStartInstant(start, offset);
+                    _endDate = shopDayEndInstant(end, offset);
                     _selectedPreset = DateRangePreset.custom;
                   });
                 },
