@@ -7,7 +7,7 @@ import {
   type Transaction,
 } from 'firebase/firestore';
 import { FirestoreCollections, Subcollections } from '@/infrastructure/firebase/collections';
-import { buildProductWrites } from '@/data/products/productWrites';
+import { buildProductWrites, withAllocatedSku } from '@/data/products/productWrites';
 import { DuplicateBarcodeError, DuplicateSkuError } from '@/data/errors';
 import { composeAutoSku, isClaimableBarcode, normalizeSku, sequenceOf } from '@/domain/products/sku';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
@@ -36,6 +36,10 @@ const AUTO_SKU_SCAN_CAP = 25;
  *   partially-applied receiving can never be committed.
  * - Barcodes are CLAIMED, not just written onto the product doc — without the
  *   claim docs the product_barcodes uniqueness guard would be bypassed.
+ *
+ * MUTATES `plan.items`: an auto row's item carries the peeked preview, so the
+ * allocated SKU is stamped back onto it here. Callers persisting `plan.items`
+ * must do so AFTER this returns.
  */
 export async function executeReceivePlan(
   tx: Transaction,
@@ -113,10 +117,22 @@ export async function executeReceivePlan(
     barcodeRefs.set(b.create.productId, refs);
   }
 
+  // The receiving doc records a sku per line, and for an auto row that sku is
+  // still the peeked preview — stale the moment the scan above moved past it,
+  // and identical across two rows that peeked the same sequence. Re-stamp the
+  // items with what was actually allocated so the history names the real
+  // product. Keyed on the created product's id (a variation line carries it as
+  // newProductId, with productId pointing at the product it varies).
+  const allocatedByProductId = new Map(built.map((b) => [b.create.productId, b.finalSku]));
+  for (const it of plan.items) {
+    const allocated = allocatedByProductId.get(it.newProductId ?? it.productId ?? '');
+    if (allocated !== undefined) it.sku = allocated;
+  }
+
   // --- writes ---
   for (const b of built) {
     const { create, writes } = b;
-    tx.set(writes.productRef, { ...writes.productData, sku: b.finalSku });
+    tx.set(writes.productRef, withAllocatedSku(writes.productData, create.input, b.finalSku));
     if (b.finalClaimRef != null) {
       tx.set(b.finalClaimRef, {
         sku: b.finalSku,

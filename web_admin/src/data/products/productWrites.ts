@@ -93,6 +93,28 @@ export function buildProductWrites(
   };
 }
 
+/**
+ * Re-stamps a built product doc with the SKU the auto-SKU scan actually
+ * allocated. Both write paths (`FirestoreProductRepository.create` and the
+ * receiving transaction) hand `buildProductWrites` a PEEKED preview, and the
+ * in-transaction scan can land past it — so `searchKeywords`, which are derived
+ * from the SKU, have to move with it or the product becomes unfindable by the
+ * SKU actually printed on it. Caller-supplied `searchKeywords` are deliberately
+ * discarded on a shift: they were built from the same stale preview.
+ */
+export function withAllocatedSku(
+  productData: DocumentData,
+  input: ProductCreateInput,
+  allocatedSku: string,
+): DocumentData {
+  if (allocatedSku === input.sku) return productData;
+  return {
+    ...productData,
+    sku: allocatedSku,
+    searchKeywords: generateSearchKeywords([allocatedSku, input.name, input.category]),
+  };
+}
+
 /** Generates a fresh product doc id (used to allocate ids before a transaction). */
 export function newProductId(db: Firestore): string {
   return doc(collection(db, FirestoreCollections.products)).id;

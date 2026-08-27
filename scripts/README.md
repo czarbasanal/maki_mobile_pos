@@ -65,3 +65,33 @@ in the shared `general` doc untouched, so re-running is safe. Defaults to Asia/M
 the default changes no behaviour, it just makes the value explicit and editable from
 the Time & Timezone settings screen. The offset is validated the same way the rules
 validate it (an integer in -720..840).
+
+## repair-preview-skus.mjs
+
+Repairs the stale PEEKED-preview SKUs left behind before the `withAllocatedSku` fix in
+`web_admin` (`productWrites.ts`, `executeReceivePlan.ts`, `FirestoreProductRepository.ts`).
+A product created with an auto-generated SKU was written with a preview code and the real
+code was only allocated inside the claiming transaction; when the scan moved past the
+preview, two derived copies kept the stale value — `products/{id}.searchKeywords` and
+`receivings/{id}.items[].sku`. The product's own `sku` field was always correct.
+
+Planning is pure (`repair-preview-skus-lib.mjs` + node tests); the runner does the I/O.
+
+- Report only:  `node repair-preview-skus.mjs`
+- Receivings:   `node repair-preview-skus.mjs --execute`  (default scope)
+- Keywords:     `node repair-preview-skus.mjs --scope=keywords --execute`
+- Both:         `node repair-preview-skus.mjs --scope=all --execute`
+- Emulator:     prefix with `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080`
+
+Idempotent — re-running after a successful pass reports zero patches for that scope.
+
+⚠️ **The keyword scope is opt-in for a reason.** As of the 2026-08-27 dry run it matches
+950 of 1,625 products, and those are NOT preview victims: they are `initial-inventory-import`
+products whose `searchKeywords` contain no SKU tokens at all (so they genuinely cannot be
+found by typing their SKU — a separate, real bug) but which also carry a consonant-skeleton
+token family — `pllybllpts` for "PULLEY BALL PITSBIKE" — that NO generator in this repo
+produces (`product_model._generateSearchKeywords`, `searchKeywords.ts` and
+`import-inventory-lib.mjs` all include the SKU and none strip vowels). Their `updatedAt` is
+~42h after the import, so something outside the current codebase rewrote them. Rebuilding
+the keyword set adds the missing SKU tokens but DROPS the skeleton ones. Decide whether
+abbreviation search is still wanted before running this scope.

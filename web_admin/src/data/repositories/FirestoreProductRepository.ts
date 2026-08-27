@@ -37,7 +37,12 @@ import {
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
 import { nextVariationNumberFrom } from '@/domain/products/costVariation';
 import { allocateVariation } from '@/data/products/createVariation';
-import { buildProductUpdate, buildProductWrites, newProductId } from '@/data/products/productWrites';
+import {
+  buildProductUpdate,
+  buildProductWrites,
+  newProductId,
+  withAllocatedSku,
+} from '@/data/products/productWrites';
 import { sellingOptionHistoryEvents } from '@/domain/products/sellingOptions';
 import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
 import type { PriceChangeEntry } from '@/domain/products/priceChangeReport';
@@ -352,7 +357,7 @@ export class FirestoreProductRepository implements ProductRepository {
         const barcodeClaims = await Promise.all(barcodeClaimRefs.map((r) => tx.get(r)));
         if (barcodeClaims.some((c) => c.exists())) throw new DuplicateBarcodeError();
 
-        tx.set(productRef, { ...productData, sku: finalSku });
+        tx.set(productRef, withAllocatedSku(productData, input, finalSku));
         tx.set(finalClaimRef, {
           sku: finalSku,
           productId,

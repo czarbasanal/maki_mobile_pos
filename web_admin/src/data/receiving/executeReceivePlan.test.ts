@@ -7,6 +7,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Firestore, Transaction } from 'firebase/firestore';
 import type { PlannedCreate } from './planReceive';
+import type { ReceivingItem } from '../../domain/entities';
 import { DuplicateBarcodeError, DuplicateSkuError } from '../errors';
 
 interface FakeRef {
@@ -167,5 +168,82 @@ describe('executeReceivePlan — barcode claims', () => {
       ]), actor),
     ).rejects.toThrow(DuplicateBarcodeError);
     expect(state.writes).toHaveLength(0);
+  });
+});
+
+// The receiving DOC records a `sku` per line. For an auto-SKU row that sku is
+// only the peeked preview — the real one is allocated by the scan above — so
+// without a write-back the history shows a SKU that belongs to some other
+// product, and two new rows under one category show the SAME sku.
+describe('executeReceivePlan — allocated SKU reaches the receiving items', () => {
+  function newItem(over: Partial<ReceivingItem> = {}): ReceivingItem {
+    return {
+      id: 'i1', productId: 'p-new-1', sku: 'SQ-1', name: 'Squid', quantity: 3,
+      unit: 'kg', unitCost: 90, costCode: 'A', isNewVariation: false,
+      newProductId: null, notes: null, pendingNewProduct: null, ...over,
+    };
+  }
+
+  it('rewrites a shifted auto SKU onto its receiving item', async () => {
+    state.registry['category_codes/0007'] = { nextSequence: 5 };
+    state.claimedSkuPaths.add('product_skus/00070005');
+    const p = {
+      ...plan([planned({ autoSkuCategoryCode: '0007', input: { sku: '00070005' } })]),
+      items: [newItem({ sku: '00070005' })],
+    };
+
+    await executeReceivePlan(fakeTx(), {} as Firestore, p, actor);
+
+    expect(p.items[0].sku).toBe('00070006');
+  });
+
+  it('gives two auto rows in one receiving distinct item SKUs', async () => {
+    // Both rows peeked the same sequence while the entry form was open.
+    state.registry['category_codes/0007'] = { nextSequence: 5 };
+    const p = {
+      ...plan([
+        planned({ productId: 'p-new-1', autoSkuCategoryCode: '0007', input: { sku: '00070005' } }),
+        planned({ productId: 'p-new-2', autoSkuCategoryCode: '0007', input: { sku: '00070005' } }),
+      ]),
+      items: [
+        newItem({ id: 'i1', productId: 'p-new-1', sku: '00070005' }),
+        newItem({ id: 'i2', productId: 'p-new-2', sku: '00070005' }),
+      ],
+    };
+
+    await executeReceivePlan(fakeTx(), {} as Firestore, p, actor);
+
+    expect(p.items.map((i) => i.sku)).toEqual(['00070005', '00070006']);
+  });
+
+  it('rewrites a variation line by its newProductId', async () => {
+    state.registry['category_codes/0007'] = { nextSequence: 5 };
+    state.claimedSkuPaths.add('product_skus/00070005');
+    const p = {
+      ...plan([planned({ productId: 'p-var', autoSkuCategoryCode: '0007', input: { sku: '00070005' } })]),
+      // A variation line keeps productId on the ORIGINAL product and points at
+      // the created one through newProductId.
+      items: [newItem({ productId: 'p-orig', newProductId: 'p-var', isNewVariation: true, sku: '00070005' })],
+    };
+
+    await executeReceivePlan(fakeTx(), {} as Firestore, p, actor);
+
+    expect(p.items[0].sku).toBe('00070006');
+  });
+
+  it('regenerates searchKeywords from the allocated SKU', async () => {
+    // Keywords are derived from the SKU; leaving the preview's tokens behind
+    // makes the product unfindable by the SKU actually printed on it.
+    state.registry['category_codes/0007'] = { nextSequence: 5 };
+    state.claimedSkuPaths.add('product_skus/00070005');
+
+    await executeReceivePlan(fakeTx(), {} as Firestore, plan([
+      planned({ autoSkuCategoryCode: '0007', input: { sku: '00070005' } }),
+    ]), actor);
+
+    const productWrite = state.writes.find((w) => w.path.startsWith('products/'));
+    const keywords = productWrite?.data.searchKeywords as string[];
+    expect(keywords).toContain('00070006');
+    expect(keywords).not.toContain('00070005');
   });
 });

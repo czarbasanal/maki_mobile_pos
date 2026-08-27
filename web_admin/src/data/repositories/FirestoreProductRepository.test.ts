@@ -239,3 +239,48 @@ describe('FirestoreProductRepository.create — auto-SKU (peek + claim-in-transa
     expect(state.writes.find((w) => w.path === 'category_codes/0007')).toBeUndefined();
   });
 });
+
+describe('FirestoreProductRepository.create — searchKeywords follow the allocated sku', () => {
+  beforeEach(() => {
+    state.writes = [];
+    state.autoIdSeq = 0;
+    state.registry = {};
+    state.claimedSkuPaths = new Set();
+  });
+
+  it('auto path: a shifted sku re-derives the keywords so the product is findable by it', async () => {
+    const repo = new FirestoreProductRepository({} as unknown as Firestore);
+    seedRegistry('0007', 1);
+    state.claimedSkuPaths.add('product_skus/00070001');
+
+    await repo.create(productInput('00070001'), 'user-1', '0007');
+
+    const productWrite = state.writes.find(
+      (w) => w.kind === 'set' && w.path.startsWith('products/'),
+    );
+    const keywords = productWrite?.data.searchKeywords as string[];
+    expect(keywords).toContain('00070002');
+    expect(keywords).not.toContain('00070001');
+  });
+
+  it('auto path: a shifted sku overrides caller-supplied preview keywords', async () => {
+    // applyReceivedItems passes keywords built from the PREVIEW sku; they are
+    // as stale as the preview itself once the scan moves on.
+    const repo = new FirestoreProductRepository({} as unknown as Firestore);
+    seedRegistry('0007', 1);
+    state.claimedSkuPaths.add('product_skus/00070001');
+
+    await repo.create(
+      { ...productInput('00070001'), searchKeywords: ['00070001', 'brake'] },
+      'user-1',
+      '0007',
+    );
+
+    const productWrite = state.writes.find(
+      (w) => w.kind === 'set' && w.path.startsWith('products/'),
+    );
+    const keywords = productWrite?.data.searchKeywords as string[];
+    expect(keywords).toContain('00070002');
+    expect(keywords).not.toContain('00070001');
+  });
+});
