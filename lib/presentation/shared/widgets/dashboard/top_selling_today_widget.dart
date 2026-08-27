@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/rank_row.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/dashboard/dashboard_list_card.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Top Selling Items Today on the mobile admin dashboard.
 ///
@@ -70,7 +71,7 @@ class _TopSellingTodayWidgetState
                   child: RankRow(
                     index: i,
                     name: visible[i].name,
-                    subtitle: visible[i].sku,
+                    subtitle: SkuGenerator.displaySku(visible[i].sku),
                     quantitySold: visible[i].quantitySold,
                     revenue: visible[i].totalRevenue,
                     maxQuantity: ranked.first.quantitySold,

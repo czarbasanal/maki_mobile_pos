@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/batch_import.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Shared preview of a parsed + classified CSV import: summary chips, a
 /// skipped-rows error list, and one tile per classified row. Used by both the
@@ -210,7 +211,7 @@ class _ClassifiedRowTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${row.sku} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
+                  '${SkuGenerator.displaySku(row.sku)} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
                   style: AppTextStyles.code.copyWith(color: muted),
                 ),
               ],

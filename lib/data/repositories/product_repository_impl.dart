@@ -353,7 +353,13 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       if (query.isEmpty) return [];
 
-      final searchTerms = query.toLowerCase().split(' ');
+      // SKUs are shown as 0007-0153, so a typed dash has to be folded back
+      // to the stored 00070153 that searchKeywords was built from.
+      final searchTerms = query
+          .toLowerCase()
+          .split(' ')
+          .map(SkuGenerator.normalizeSkuQuery)
+          .toList();
 
       // Search using searchKeywords array
       final snapshot = await _productsRef

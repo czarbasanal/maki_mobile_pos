@@ -14,6 +14,7 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Screen for bulk stock receiving.
 class BulkReceivingScreen extends ConsumerStatefulWidget {
@@ -329,7 +330,7 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                            '${product.sku} • Stock: ${product.quantity}',
+                            '${SkuGenerator.displaySku(product.sku)} • Stock: ${product.quantity}',
                             style: AppTextStyles.code.copyWith(
                               color: Theme.of(context)
                                   .colorScheme

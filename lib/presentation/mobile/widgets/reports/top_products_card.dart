@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Card displaying top selling products.
 class TopProductsCard extends ConsumerWidget {
@@ -124,7 +125,7 @@ class TopProductsCard extends ConsumerWidget {
             child: RankRow(
               index: i,
               name: products[i].name,
-              subtitle: products[i].sku,
+              subtitle: SkuGenerator.displaySku(products[i].sku),
               quantitySold: products[i].quantitySold,
               revenue: products[i].totalRevenue,
               maxQuantity: maxQuantity,

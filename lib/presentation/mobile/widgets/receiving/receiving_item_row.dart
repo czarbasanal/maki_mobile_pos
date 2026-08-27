@@ -9,6 +9,7 @@ import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Row displaying a receiving line item.
 class ReceivingItemRow extends ConsumerWidget {
@@ -182,7 +183,7 @@ class ReceivingItemRow extends ConsumerWidget {
             children: [
               Flexible(
                 child: Text(
-                  item.sku,
+                  SkuGenerator.displaySku(item.sku),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.code.copyWith(color: muted),

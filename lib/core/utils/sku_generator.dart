@@ -271,4 +271,18 @@ abstract class SkuGenerator {
     }
     return sku;
   }
+
+  /// Turns a typed SKU back into its stored form — the inverse of
+  /// [displaySku] for search inputs.
+  ///
+  /// SKUs are shown as `0007-0153` everywhere, so that is what people type,
+  /// but `searchKeywords` is built from the stored `00070153`. Only the exact
+  /// displayed shape is rewritten: a manual SKU that genuinely owns a dash
+  /// (`MLK-A3B7`) is indexed verbatim and must pass through untouched.
+  static String normalizeSkuQuery(String query) {
+    if (RegExp(r'^\d{4}-\d{4}$').hasMatch(query)) {
+      return query.replaceFirst('-', '');
+    }
+    return query;
+  }
 }

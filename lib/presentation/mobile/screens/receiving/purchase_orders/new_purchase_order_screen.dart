@@ -13,6 +13,7 @@ import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.d
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_card.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/app_waiting_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/state_views.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Which bucket a line belongs to in the status view. Priority order — an
 /// item appears once, in the first bucket it qualifies for.
@@ -465,7 +466,7 @@ class NewPurchaseOrderScreenState
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      p.sku,
+                      SkuGenerator.displaySku(p.sku),
                       style: AppTextStyles.code.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

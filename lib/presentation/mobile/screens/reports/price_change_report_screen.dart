@@ -17,6 +17,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widg
 import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Admin-only report: price/cost changes across all products in a date range.
 class PriceChangeReportScreen extends ConsumerStatefulWidget {
@@ -46,7 +47,8 @@ class _PriceChangeReportScreenState
       DateRangeParams(startDate: _startDate, endDate: _endDate);
 
   Map<String, String> _labels(List<ProductEntity> products) => {
-        for (final p in products) p.id: '${p.name} (${p.sku})',
+        for (final p in products)
+          p.id: '${p.name} (${SkuGenerator.displaySku(p.sku)})',
       };
 
   @override

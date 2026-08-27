@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/domain/usecases/product/deactivate_product_useca
 import 'package:maki_mobile_pos/domain/usecases/product/update_product_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -143,8 +144,13 @@ final localProductSearchProvider =
 
   return productsAsync.when(
     data: (products) {
-      final searchTerms =
-          query.toLowerCase().split(' ').where((s) => s.isNotEmpty).toList();
+      final searchTerms = query
+          .toLowerCase()
+          .split(' ')
+          .where((s) => s.isNotEmpty)
+          // SKUs are shown as 0007-0153; fold that back to the stored form.
+          .map(SkuGenerator.normalizeSkuQuery)
+          .toList();
 
       final results = products.where((product) {
         final searchable = [

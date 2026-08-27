@@ -7,7 +7,7 @@ import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositori
 import { ActivityType, type Product, type SellingOption } from '@/domain/entities';
 import { UserRole } from '@/domain/enums';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
-import { matchesAutoPattern } from '@/domain/products/sku';
+import { matchesAutoPattern, displaySku } from '@/domain/products/sku';
 import { uploadProductImage, deleteProductImage } from '@/infrastructure/firebase/productImageStorage';
 
 export interface UpdateProductInput {
@@ -308,7 +308,7 @@ export function useCreateProduct() {
       logActivity(activityLogRepo, () => ({
         type: ActivityType.inventory,
         action: `Created product: ${created.name}`,
-        details: `SKU ${created.sku} • ₱${created.price.toFixed(2)}`,
+        details: `SKU ${displaySku(created.sku)} • ₱${created.price.toFixed(2)}`,
         entityId: created.id,
         entityType: 'product',
       }));
@@ -362,7 +362,7 @@ export function useCreateVariation() {
       logActivity(activityLogRepo, () => ({
         type: ActivityType.inventory,
         action: `Created cost variation: ${created.name}`,
-        details: `SKU ${created.sku} • from ${existing.sku} • ₱${created.cost.toFixed(2)}`,
+        details: `SKU ${displaySku(created.sku)} • from ${displaySku(existing.sku)} • ₱${created.cost.toFixed(2)}`,
         entityId: created.id,
         entityType: 'product',
       }));

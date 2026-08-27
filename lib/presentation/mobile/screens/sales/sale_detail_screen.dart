@@ -18,6 +18,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/request_void_dia
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/void_sale_dialog.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Screen displaying sale details with void option.
 class SaleDetailScreen extends ConsumerWidget {
@@ -351,7 +352,7 @@ class SaleDetailScreen extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          '${item.sku} • ${item.unitPrice.toCurrency()}',
+                          '${SkuGenerator.displaySku(item.sku)} • ${item.unitPrice.toCurrency()}',
                           style: AppTextStyles.code.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),

@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/cost_code_pill.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Displays a single item in the cart with quantity controls and discount.
 class CartItemTile extends StatelessWidget {
@@ -99,7 +100,7 @@ class CartItemTile extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${item.sku} • ${item.unitPrice.toCurrency()} / ${item.unit}',
+                      '${SkuGenerator.displaySku(item.sku)} • ${item.unitPrice.toCurrency()} / ${item.unit}',
                       style: AppTextStyles.code.copyWith(color: muted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

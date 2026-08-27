@@ -11,6 +11,7 @@ import type { Product } from '@/domain/entities/Product';
 import type { SellingOption } from '@/domain/entities/SellingOption';
 import { sellingOptionPricePerPiece, sellingOptionRateSuffix } from '@/domain/entities/SellingOption';
 import { formatMoney } from '@/core/utils/money';
+import { displaySku } from '@/domain/products/sku';
 
 export function SellingOptionDialog({
   product,
@@ -26,7 +27,7 @@ export function SellingOptionDialog({
       open
       onClose={onClose}
       title={product.name}
-      description={`${product.sku} · ${product.quantity} ${product.unit} on hand`}
+      description={`${displaySku(product.sku)} · ${product.quantity} ${product.unit} on hand`}
     >
       {/* The shared Dialog locks body scroll while open, and this panel has
           no scroll of its own — with enough options (cap is 10) rows past

@@ -13,6 +13,7 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/checkout_success_dialog.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/payment_section.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/receipt_widget.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Checkout confirmation screen.
 ///
@@ -197,7 +198,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          item.sku,
+                          SkuGenerator.displaySku(item.sku),
                           style: AppTextStyles.code.copyWith(color: muted),
                         ),
                         // Sets + total pieces, only once there's more than

@@ -28,6 +28,7 @@ import { formatMoney } from '@/core/utils/money';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { displaySku } from '@/domain/products/sku';
 
 const dtFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -182,7 +183,7 @@ export function SaleDetailPage() {
                       {hasOption ? (
                         <span className="text-light-text-secondary"> · {it.optionLabel}</span>
                       ) : null}
-                      <span className="ml-tk-sm text-light-text-hint">{it.sku}</span>
+                      <span className="ml-tk-sm text-light-text-hint">{displaySku(it.sku)}</span>
                     </div>
                     {caption ? (
                       <div className="text-[11px] text-light-text-hint">{caption}</div>

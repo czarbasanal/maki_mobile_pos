@@ -6,6 +6,7 @@ import { NewProductDialog } from './NewProductDialog';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Product } from '@/domain/entities';
+import { displaySku } from '@/domain/products/sku';
 
 
 export function ReceivingEntryPage() {
@@ -102,7 +103,7 @@ export function ReceivingEntryPage() {
                   <li key={p.id}>
                     <button type="button" onClick={() => pick(p)}
                       className="flex w-full items-center justify-between px-tk-md py-tk-sm text-left text-bodySmall hover:bg-light-subtle">
-                      <span className="text-light-text">{p.name} <span className="text-light-text-hint">{p.sku}</span></span>
+                      <span className="text-light-text">{p.name} <span className="text-light-text-hint">{displaySku(p.sku)}</span></span>
                       <span className="tabular-nums text-light-text-secondary">{formatMoney(p.cost)}</span>
                     </button>
                   </li>
@@ -115,7 +116,7 @@ export function ReceivingEntryPage() {
           <div className="flex flex-wrap items-end gap-tk-sm rounded-md border border-light-hairline bg-light-subtle p-tk-md">
             <div className="text-bodySmall text-light-text">
               <span className="font-medium">{picked.name}</span>{' '}
-              <span className="text-light-text-hint">{picked.sku}</span>
+              <span className="text-light-text-hint">{displaySku(picked.sku)}</span>
             </div>
             <Field label="Qty"><input type="number" className={inputCls} value={qty}
               onChange={(e) => setQty(e.target.value)} /></Field>
@@ -163,7 +164,7 @@ export function ReceivingEntryPage() {
             ) : (
               entry.lines.map((l) => (
                 <tr key={l.id}>
-                  <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">{l.sku}</td>
+                  <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">{displaySku(l.sku)}</td>
                   {/* The "New" badge describes the product, so it stays with
                       the name rather than the code. */}
                   <td className="px-tk-md py-tk-sm">

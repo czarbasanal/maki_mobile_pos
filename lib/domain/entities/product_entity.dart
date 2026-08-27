@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Represents a product in the inventory.
 ///
@@ -176,8 +177,9 @@ class ProductEntity extends Equatable {
   /// Whether the POS must show the option picker for this product.
   bool get hasSellingOptions => sellingOptions.isNotEmpty;
 
-  /// Display SKU (shows variation if applicable).
-  String get displaySku => sku;
+  /// The SKU as it should be shown — an 8-digit auto-SKU reads `0007-0153`.
+  /// Delegates to the one formatter so this can never drift from the tables.
+  String get displaySku => SkuGenerator.displaySku(sku);
 
   // ==================== COST CODE METHODS ====================
 

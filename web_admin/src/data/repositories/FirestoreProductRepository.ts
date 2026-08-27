@@ -33,6 +33,7 @@ import {
   matchesAutoPattern,
   sequenceOf,
   composeAutoSku,
+  normalizeSkuQuery,
 } from '@/domain/products/sku';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
 import { nextVariationNumberFrom } from '@/domain/products/costVariation';
@@ -101,8 +102,11 @@ export class FirestoreProductRepository implements ProductRepository {
 
   async search(queryText: string): Promise<Product[]> {
     if (!queryText.trim()) return this.list();
+    // SKUs are shown as 0007-0153, so that is what gets typed; searchKeywords
+    // holds the stored 00070153.
+    const term = normalizeSkuQuery(queryText.trim().toLowerCase());
     const snap = await getDocs(
-      query(this.col(), where('searchKeywords', 'array-contains', queryText.toLowerCase())),
+      query(this.col(), where('searchKeywords', 'array-contains', term)),
     );
     return snap.docs.map((d) => d.data());
   }

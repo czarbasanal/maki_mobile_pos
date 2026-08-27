@@ -143,7 +143,7 @@ export function ReorderSuggestionsPage() {
                     <tr key={s.product.id}>
                       <td className="px-tk-md py-tk-sm">
                         <span className="font-medium text-light-text">{s.product.name}</span>
-                        <span className="ml-tk-sm text-light-text-hint">{s.product.sku}</span>
+                        <span className="ml-tk-sm text-light-text-hint">{displaySku(s.product.sku)}</span>
                       </td>
                       <td className="px-tk-md py-tk-sm text-right tabular-nums">{s.product.quantity}</td>
                       <td className="px-tk-md py-tk-sm text-right tabular-nums">{s.velocityPerDay.toFixed(2)}</td>

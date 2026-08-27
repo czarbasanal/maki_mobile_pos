@@ -7,6 +7,7 @@ import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { ReceivingStatusBadge } from './ReceivingStatusBadge';
+import { displaySku } from '@/domain/products/sku';
 
 const dtFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -86,7 +87,7 @@ export function ReceivingDetailPage() {
               // (stable, non-reordering) array index so keys stay unique.
               <tr key={it.id || index}>
                 <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">
-                  {it.sku}
+                  {displaySku(it.sku)}
                 </td>
                 {/* The new-variation badge describes the product, so it stays
                     with the name rather than the code. */}

@@ -203,6 +203,31 @@ void main() {
       expect(SkuGenerator.displaySku('12349999'), '1234-9999');
     });
 
+    test('normalizeSkuQuery turns the displayed form back into the stored one', () {
+      // SKUs are shown as 0007-0153, so that is what people type.
+      expect(SkuGenerator.normalizeSkuQuery('0007-0153'), '00070153');
+      expect(SkuGenerator.normalizeSkuQuery('0001-0001'), '00010001');
+    });
+
+    test('normalizeSkuQuery leaves a stored-form sku alone', () {
+      expect(SkuGenerator.normalizeSkuQuery('00070153'), '00070153');
+    });
+
+    test('normalizeSkuQuery does not touch a manual sku that owns its dash', () {
+      // Manual SKUs are indexed verbatim, so rewriting them would break search.
+      expect(SkuGenerator.normalizeSkuQuery('MLK-A3B7'), 'MLK-A3B7');
+      expect(SkuGenerator.normalizeSkuQuery('00070153-1'), '00070153-1');
+      expect(SkuGenerator.normalizeSkuQuery('007-0153'), '007-0153');
+      expect(SkuGenerator.normalizeSkuQuery('brake-pad'), 'brake-pad');
+    });
+
+    test('normalizeSkuQuery round-trips displaySku', () {
+      expect(
+        SkuGenerator.normalizeSkuQuery(SkuGenerator.displaySku('00070153')),
+        '00070153',
+      );
+    });
+
     test('displaySku leaves non-8-digit or non-numeric unchanged', () {
       expect(SkuGenerator.displaySku('MLK-A3B7'), 'MLK-A3B7');
       expect(SkuGenerator.displaySku('0007015'), '0007015');

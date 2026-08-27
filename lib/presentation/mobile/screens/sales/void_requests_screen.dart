@@ -15,6 +15,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_st
 import 'package:maki_mobile_pos/presentation/mobile/widgets/sales/void_status_summary_cards.dart';
 import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Admin queue of void requests (opened from the dashboard notification bell).
 class VoidRequestsScreen extends ConsumerWidget {
@@ -453,7 +454,7 @@ class _Receipt extends StatelessWidget {
         // Selling-option line: label beside the name, e.g.
         // "Pulley Ball · By 3" — neutral, no tint.
         name: item.displayName,
-        sub: '${item.sku} · ${item.unitPrice.toCurrency()}/'
+        sub: '${SkuGenerator.displaySku(item.sku)} · ${item.unitPrice.toCurrency()}/'
             '${sellingOptionRateSuffix(item.unit)}',
         amount: net.toCurrency(),
         mono: true,

@@ -23,6 +23,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/mechanic_picker.
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/motorcycle_model_picker.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/product_search_field.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/pos/selling_option_sheet.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Main POS screen for processing sales.
 class POSScreen extends ConsumerStatefulWidget {
@@ -214,7 +215,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text(
-                '${product.sku} • ${product.price.toCurrency()}',
+                '${SkuGenerator.displaySku(product.sku)} • ${product.price.toCurrency()}',
                 style: AppTextStyles.code.copyWith(color: muted),
               ),
               trailing: Text(

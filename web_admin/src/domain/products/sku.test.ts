@@ -10,6 +10,7 @@ import {
   matchesAutoPattern,
   sequenceOf,
   displaySku,
+  normalizeSkuQuery,
 } from './sku';
 
 // rand() => 0 makes the random suffix all 'A' (alphabet[0]).
@@ -160,5 +161,29 @@ describe('displaySku', () => {
 
   it('passes a variation-suffixed 8-digit-plus sku through unchanged', () => {
     expect(displaySku('00070153-1')).toBe('00070153-1');
+  });
+});
+
+describe('normalizeSkuQuery', () => {
+  it('turns the displayed form back into the stored one', () => {
+    // SKUs are shown as 0007-0153, so that is what people type.
+    expect(normalizeSkuQuery('0007-0153')).toBe('00070153');
+    expect(normalizeSkuQuery('0001-0001')).toBe('00010001');
+  });
+
+  it('leaves a stored-form sku alone', () => {
+    expect(normalizeSkuQuery('00070153')).toBe('00070153');
+  });
+
+  it('does not touch a manual sku that owns its dash', () => {
+    // Manual SKUs are indexed verbatim, so rewriting them would break search.
+    expect(normalizeSkuQuery('MLK-A3B7')).toBe('MLK-A3B7');
+    expect(normalizeSkuQuery('00070153-1')).toBe('00070153-1');
+    expect(normalizeSkuQuery('007-0153')).toBe('007-0153');
+    expect(normalizeSkuQuery('brake-pad')).toBe('brake-pad');
+  });
+
+  it('round-trips displaySku', () => {
+    expect(normalizeSkuQuery(displaySku('00070153'))).toBe('00070153');
   });
 });

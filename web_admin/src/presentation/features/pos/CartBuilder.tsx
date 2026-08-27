@@ -16,6 +16,7 @@ import { formatMoney } from '@/core/utils/money';
 import { LaborSection } from './LaborSection';
 import { CartTotals } from './CartTotals';
 import { SellingOptionDialog } from './SellingOptionDialog';
+import { displaySku } from '@/domain/products/sku';
 
 export function CartBuilder({ store }: { store: CartStore }) {
   const { data: products } = useProducts();
@@ -79,7 +80,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
                     className="flex w-full items-center justify-between gap-tk-md px-tk-md py-tk-sm text-left hover:bg-light-subtle">
                     <span>
                       <span className="block text-bodySmall text-light-text">{p.name}</span>
-                      <span className="block text-[12px] text-light-text-hint">{p.sku} · {p.quantity} on hand</span>
+                      <span className="block text-[12px] text-light-text-hint">{displaySku(p.sku)} · {p.quantity} on hand</span>
                     </span>
                     <span className="text-bodySmall font-medium text-light-text">{formatMoney(p.price)}</span>
                   </button>

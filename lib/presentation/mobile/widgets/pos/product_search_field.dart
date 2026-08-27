@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/pos/barcode_scanner_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/common/product_thumb.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 /// Search field for finding products by name, SKU, or barcode.
 ///
@@ -406,7 +407,7 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField>
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${product.sku} · ${product.quantity} in stock',
+                      '${SkuGenerator.displaySku(product.sku)} · ${product.quantity} in stock',
                       style: AppTextStyles.code.copyWith(color: muted),
                     ),
                   ],
