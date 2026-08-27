@@ -373,6 +373,10 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     required ProductEntity originalProduct,
     required double newCost,
     required String newCostCode,
+    // The SRP typed on the form. NULL inherits the base's price — receiving
+    // calls the repository directly (bypassing this notifier) and must keep
+    // inheriting, so this default must stay null.
+    double? newPrice,
     required String createdBy,
     String? createdByName,
   }) async {
@@ -382,6 +386,7 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
         originalProduct: originalProduct,
         newCost: newCost,
         newCostCode: newCostCode,
+        newPrice: newPrice,
         createdBy: createdBy,
         createdByName: createdByName,
       );

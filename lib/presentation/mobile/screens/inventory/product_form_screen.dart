@@ -10,6 +10,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/formatters.dart';
+import 'package:maki_mobile_pos/core/utils/product_name_key.dart';
 import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -29,6 +30,9 @@ import 'package:maki_mobile_pos/services/product_image_storage_service.dart';
 /// - Staff: Can edit all fields EXCEPT price, cost, and costCode.
 ///          The price/cost fields are visible but disabled.
 /// - Cashier: Should not reach this screen (no edit permission).
+/// Outcome of the duplicate-name dialog (see [_ProductFormScreenState._showDuplicateNameDialog]).
+enum _DuplicateChoice { cancel, separate, variation }
+
 class ProductFormScreen extends ConsumerStatefulWidget {
   final String? productId;
 
@@ -1068,6 +1072,142 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
+  /// A product with the typed name+category already exists — offers a
+  /// choice instead of a silent duplicate. Mirrors the web form's dialog
+  /// (Task 6) so the wording reads identically to staff on either surface.
+  Future<_DuplicateChoice> _showDuplicateNameDialog(
+    ProductEntity existing,
+  ) async {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final body = appDialogBodyColor(dark);
+    final result = await showDialog<_DuplicateChoice>(
+      context: context,
+      barrierColor: AppDialog.scrimColor(dark),
+      builder: (ctx) => AppDialog(
+        title: 'A product with this name already exists',
+        leadingIcon: LucideIcons.copy,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '"${existing.name}" (${SkuGenerator.displaySku(existing.sku)}) '
+              'is already on file in ${existing.category ?? 'no category'}, '
+              'at a cost of ${AppConstants.currencySymbol}'
+              '${existing.cost.toStringAsFixed(2)} and selling at '
+              '${AppConstants.currencySymbol}${existing.price.toStringAsFixed(2)}.',
+              style: TextStyle(fontSize: 14.5, height: 1.55, color: body),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'If this is the same part at a new cost, make it a variation '
+              '— it keeps one item on the shelf and one stock history. If '
+              'it is genuinely a different part, save it separately.',
+              style: TextStyle(fontSize: 14.5, height: 1.55, color: body),
+            ),
+          ],
+        ),
+        actions: [
+          appDialogCancel(ctx, 'Cancel',
+              onTap: () => Navigator.pop(ctx, _DuplicateChoice.cancel)),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx, _DuplicateChoice.separate),
+            style: OutlinedButton.styleFrom(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              textStyle: const TextStyle(
+                  fontSize: 14.5, fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text('Save as a separate product'),
+          ),
+          appDialogPrimary(ctx, 'Make it a variation',
+              onTap: () => Navigator.pop(ctx, _DuplicateChoice.variation)),
+        ],
+      ),
+    );
+    return result ?? _DuplicateChoice.cancel;
+  }
+
+  /// Creates [existing] as a cost/price variation instead of a brand-new
+  /// product — the choice made from [_showDuplicateNameDialog]. Passes both
+  /// the typed cost AND price (unlike receiving, which never sets a price
+  /// and inherits the base one).
+  Future<ProductEntity?> _createVariationFrom(
+    ProductEntity existing, {
+    required double cost,
+    required String costCode,
+    required double price,
+    required UserEntity currentUser,
+  }) {
+    final productOps = ref.read(productOperationsProvider.notifier);
+    return context.runWithWaiting(
+      () => productOps.createVariation(
+        originalProduct: existing,
+        newCost: cost,
+        newCostCode: costCode,
+        newPrice: price,
+        createdBy: currentUser.id,
+        createdByName: currentUser.displayName,
+      ),
+      message: 'Saving…',
+    );
+  }
+
+  /// Duplicate NAME gate — mirrors the web form. Runs BEFORE create, unlike
+  /// the SKU gate which can only fire once Firestore rejects a claim; the
+  /// auto-SKU flow never collides, which is why duplicates accumulated.
+  /// Returns `true` when the normal create should proceed (no duplicate
+  /// found, lookup failed, or the admin chose to save separately); `false`
+  /// when the save is already handled (a variation was created) or was
+  /// cancelled — either way the caller must stop.
+  Future<bool> _passesDuplicateNameGate({
+    required String name,
+    required String? category,
+    required double cost,
+    required String costCode,
+    required double price,
+    required UserEntity currentUser,
+  }) async {
+    final dupKey = productDuplicateKey(name, category);
+    ProductEntity? dupExisting;
+    try {
+      dupExisting = await ref
+          .read(productRepositoryProvider)
+          .getProductByNameKey(dupKey);
+    } catch (_) {
+      // A failed lookup must never block a legitimate save.
+      dupExisting = null;
+    }
+    if (dupExisting == null) return true;
+
+    if (!mounted) return false;
+    final choice = await _showDuplicateNameDialog(dupExisting);
+    if (choice == _DuplicateChoice.cancel) return false;
+    if (choice == _DuplicateChoice.variation) {
+      final created = await _createVariationFrom(
+        dupExisting,
+        cost: cost,
+        costCode: costCode,
+        price: price,
+        currentUser: currentUser,
+      );
+      if (created == null) throw Exception('Failed to create variation');
+      // This is a full, separate write from the normal create path below —
+      // fire the same completion side effects here since the caller stops
+      // once this returns false.
+      if (mounted) {
+        ref.invalidate(productsProvider);
+        context.showSuccessSnackBar('Variation created successfully');
+        context.goBackOr(RoutePaths.inventory);
+      }
+      return false;
+    }
+    // _DuplicateChoice.separate falls through to the normal create.
+    return true;
+  }
+
   Future<void> _confirmDelete() async {
     final product = _existingProduct;
     if (product == null) return;
@@ -1369,6 +1509,20 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         // rejected invalid codes, so decode is non-null in practice.
         final code = _costCodeController.text.trim();
         final decodedCost = ref.read(decodeCostProvider(code)) ?? 0.0;
+
+        final proceed = await _passesDuplicateNameGate(
+          name: _nameController.text.trim(),
+          category: _categoryController.text.trim().isEmpty
+              ? null
+              : _categoryController.text.trim(),
+          cost: decodedCost,
+          costCode: code,
+          price: double.tryParse(_priceController.text) ?? 0.0,
+          currentUser: currentUser,
+        );
+        if (!proceed) return;
+        if (!mounted) return;
+
         final product = ProductEntity(
           id: '',
           sku: _skuController.text.trim(),
@@ -1435,6 +1589,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         // ==================== CREATE LOGIC (ADMIN ONLY) ====================
         final costValue = double.tryParse(_costController.text) ?? 0.0;
         final costCode = ref.read(encodeCostProvider(costValue));
+
+        final proceed = await _passesDuplicateNameGate(
+          name: _nameController.text.trim(),
+          category: _categoryController.text.trim().isEmpty
+              ? null
+              : _categoryController.text.trim(),
+          cost: costValue,
+          costCode: costCode,
+          price: double.tryParse(_priceController.text) ?? 0.0,
+          currentUser: currentUser,
+        );
+        if (!proceed) return;
+        if (!mounted) return;
 
         String? supplierName;
         if (_selectedSupplierId != null) {
