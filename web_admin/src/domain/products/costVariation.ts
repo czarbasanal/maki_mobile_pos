@@ -44,6 +44,9 @@ export function nextVariationNumberFrom(
 export interface VariationOptions {
   cost: number;
   costCode: string;
+  /** The SRP typed on the form. Receiving never routes through here — it
+   *  builds its own product input and keeps inheriting the base price. */
+  price: number;
   variationNumber: number;
   actorId: string;
   actorName: string | null;
@@ -72,7 +75,7 @@ export function buildVariationInput(
     quantity: 0,
     barcodes: [],
     name: existing.name,
-    price: existing.price,
+    price: opts.price,
     reorderLevel: existing.reorderLevel,
     unit: existing.unit,
     supplierId: existing.supplierId,

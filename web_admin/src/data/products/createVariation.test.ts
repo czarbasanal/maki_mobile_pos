@@ -40,7 +40,7 @@ function product(over: Partial<Product> = {}): Product {
   };
 }
 
-const opts = { cost: 185, costCode: 'XYZ', actorId: 'user-1', actorName: 'User One' };
+const opts = { cost: 185, costCode: 'XYZ', price: 250, actorId: 'user-1', actorName: 'User One' };
 
 /** Fake repo whose SKU claims are a Set — `create` rejects an already-claimed
  *  SKU exactly as the real transaction does, so the retry is exercised for

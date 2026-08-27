@@ -84,8 +84,12 @@ export interface ProductRepository {
    *  a concurrent writer claims the number first. */
   createVariation(
     existing: Product,
-    opts: { cost: number; costCode: string; actorId: string; actorName: string | null },
+    opts: { cost: number; costCode: string; price: number; actorId: string; actorName: string | null },
   ): Promise<Product>;
+
+  /** The active product sharing this duplicate key, or null. Key comes from
+   *  `productDuplicateKey(name, category)`. */
+  findByNameKey(key: string): Promise<Product | null>;
   updateProductWithClaims(
     id: string,
     input: ProductUpdateInput,

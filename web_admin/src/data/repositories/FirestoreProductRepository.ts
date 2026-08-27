@@ -164,6 +164,16 @@ export class FirestoreProductRepository implements ProductRepository {
     return this.getById(productId);
   }
 
+  /** The active product sharing this duplicate key, or null. Key comes from
+   *  `productDuplicateKey(name, category)`. Two equality filters — served
+   *  from single-field indexes, no composite index needed. */
+  async findByNameKey(key: string): Promise<Product | null> {
+    const snap = await getDocs(
+      query(this.col(), where('nameKey', '==', key), where('isActive', '==', true), limit(1)),
+    );
+    return snap.empty ? null : snap.docs[0].data();
+  }
+
   /** Next free `<baseSku>-N`. Reads the structured `variationNumber` field —
    *  see nextVariationNumberFrom for why this maxes rather than counts. */
   async nextVariationNumber(baseSku: string): Promise<number> {
@@ -173,7 +183,7 @@ export class FirestoreProductRepository implements ProductRepository {
 
   async createVariation(
     existing: Product,
-    opts: { cost: number; costCode: string; actorId: string; actorName: string | null },
+    opts: { cost: number; costCode: string; price: number; actorId: string; actorName: string | null },
   ): Promise<Product> {
     return allocateVariation(existing, opts, {
       nextNumber: () => this.nextVariationNumber(existing.baseSku ?? existing.sku),

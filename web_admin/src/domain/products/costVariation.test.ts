@@ -73,6 +73,9 @@ describe('buildVariationInput', () => {
   const opts = {
     cost: 185,
     costCode: 'XYZ',
+    // Matches the base product's price here — this suite isn't about price
+    // behavior; see the "variation price" describe block below for that.
+    price: 250,
     variationNumber: 1,
     actorId: 'user-1',
     actorName: 'User One',
@@ -147,5 +150,31 @@ describe('buildVariationInput', () => {
     const input = buildVariationInput(product(), opts);
     expect(input.createdBy).toBe('user-1');
     expect(input.createdByName).toBe('User One');
+  });
+});
+
+describe('variation price', () => {
+  it('uses the typed price rather than inheriting the base', () => {
+    const input = buildVariationInput(product({ price: 250 }), {
+      cost: 120,
+      costCode: 'NBS',
+      price: 300,
+      variationNumber: 1,
+      actorId: 'u1',
+      actorName: 'U',
+    });
+    expect(input.price).toBe(300);
+  });
+
+  it('still inherits everything descriptive', () => {
+    const base = product({ name: 'BELT BANDO', unit: 'pcs', category: 'CVT', price: 250 });
+    const input = buildVariationInput(base, {
+      cost: 120, costCode: 'NBS', price: 300, variationNumber: 1, actorId: 'u1', actorName: 'U',
+    });
+    expect(input.name).toBe('BELT BANDO');
+    expect(input.unit).toBe('pcs');
+    expect(input.category).toBe('CVT');
+    expect(input.quantity).toBe(0);
+    expect(input.barcodes).toEqual([]);
   });
 });
