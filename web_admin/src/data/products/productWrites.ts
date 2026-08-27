@@ -13,6 +13,7 @@ import type {
 } from '@/domain/repositories/ProductRepository';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { generateSearchKeywords } from '@/domain/products/searchKeywords';
+import { productDuplicateKey } from '@/domain/products/nameKey';
 import { isValidSku, normalizeSku } from '@/domain/products/sku';
 
 export interface ProductWrites {
@@ -65,6 +66,8 @@ export function buildProductWrites(
       // Mirror createdByName onto updatedByName at create, like Flutter.
       updatedByName: input.createdByName,
       searchKeywords,
+      // Indexed duplicate-detection key — see domain/products/nameKey.ts.
+      nameKey: productDuplicateKey(input.name, input.category),
       baseSku: input.baseSku,
       variationNumber: input.variationNumber,
       barcodes: input.barcodes,
@@ -164,6 +167,7 @@ export function buildProductUpdate(
       input.name,
       input.category ?? null,
     ]);
+    data.nameKey = productDuplicateKey(input.name, input.category ?? null);
   }
   return data;
 }

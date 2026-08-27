@@ -120,3 +120,41 @@ describe('buildProductUpdate', () => {
     expect(map).not.toHaveProperty('sku');
   });
 });
+
+describe('nameKey', () => {
+  it('is written on create, word-order-insensitive with the category', () => {
+    const { productData } = buildProductWrites(
+      {} as Firestore,
+      createInput({ name: 'GLOBAL CHAIN 428-120L', category: 'CHAINS' }),
+      'u1',
+      'p1',
+    );
+    expect(productData.nameKey).toBe('428-120l chain global|chains');
+  });
+
+  it('two word-order variants of one name produce the same key', () => {
+    const a = buildProductWrites(
+      {} as Firestore,
+      createInput({ name: 'CHAIN GLOBAL 428-120L', category: 'CHAINS' }),
+      'u1',
+      'p1',
+    );
+    const b = buildProductWrites(
+      {} as Firestore,
+      createInput({ name: 'GLOBAL CHAIN 428-120L', category: 'CHAINS' }),
+      'u1',
+      'p2',
+    );
+    expect(a.productData.nameKey).toBe(b.productData.nameKey);
+  });
+
+  it('is rebuilt on a rename', () => {
+    const data = buildProductUpdate({ name: 'GLOBAL CHAIN 428-120L', category: 'CHAINS' }, 'u1');
+    expect(data.nameKey).toBe('428-120l chain global|chains');
+  });
+
+  it('is left alone when the name is not part of the update', () => {
+    const data = buildProductUpdate({ price: 100 }, 'u1');
+    expect(data.nameKey).toBeUndefined();
+  });
+});
