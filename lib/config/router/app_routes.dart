@@ -45,6 +45,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/users/users_screen.d
 import 'package:maki_mobile_pos/presentation/mobile/screens/users/user_form_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/cost_code_settings_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/shop_timezone_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/category_settings_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/hr/hr_hub_screen.dart';
@@ -464,6 +465,11 @@ List<RouteBase> featureRoutes() => [
             path: 'cost-codes',
             name: RouteNames.costCodeSettings,
             builder: (context, state) => const CostCodeSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'timezone',
+            name: RouteNames.shopTimezoneSettings,
+            builder: (context, state) => const ShopTimezoneSettingsScreen(),
           ),
           GoRoute(
             path: 'categories',

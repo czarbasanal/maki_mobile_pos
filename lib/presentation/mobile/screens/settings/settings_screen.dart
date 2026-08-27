@@ -96,6 +96,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Configure cost encoding',
                   onTap: () => context.push(RoutePaths.costCodeSettings),
                 ),
+                SettingsTile(
+                  icon: LucideIcons.clock,
+                  title: 'Time & Timezone',
+                  subtitle: 'Business day and report dates',
+                  onTap: () => context.push(RoutePaths.shopTimezoneSettings),
+                ),
               ],
             ),
           ],

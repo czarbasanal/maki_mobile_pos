@@ -162,6 +162,9 @@ abstract class RouteNames {
   /// Cost code settings route
   static const String costCodeSettings = 'costCodeSettings';
 
+  /// Shop timezone editor — `/settings/timezone`.
+  static const String shopTimezoneSettings = 'shopTimezoneSettings';
+
   /// Category management hub — `/settings/categories`.
   static const String categorySettings = 'categorySettings';
 
@@ -275,6 +278,7 @@ abstract class RoutePaths {
 
   static const String settings = '/settings';
   static const String costCodeSettings = '/settings/cost-codes';
+  static const String shopTimezoneSettings = '/settings/timezone';
   static const String categorySettings = '/settings/categories';
   static const String categoryEditor = '/settings/categories/:kind';
   static const String mechanics = '/settings/mechanics';

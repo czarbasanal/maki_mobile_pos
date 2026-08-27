@@ -64,6 +64,7 @@ abstract class RouteGuards {
     // Settings
     '/settings': Permission.viewSettings,
     '/settings/cost-codes': Permission.editCostCodeMapping,
+    '/settings/timezone': Permission.viewSettings,
     '/settings/categories': Permission.editLists,
     '/settings/mechanics': Permission.editLists,
     '/hr': Permission.manageHr,
