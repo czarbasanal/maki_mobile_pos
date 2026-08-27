@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { shopDayInt } from '@/domain/time/shopTime';
 import { phDayInt } from './businessDay';
 
 describe('phDayInt', () => {
@@ -20,5 +21,20 @@ describe('phDayInt', () => {
     const before = phDayInt();
     expect(before).toBeGreaterThan(0);
     expect(Number.isInteger(before)).toBe(true);
+  });
+});
+
+describe('phDayInt with a configured offset', () => {
+  it('defaults to +8 when no offset is passed', () => {
+    expect(phDayInt(new Date(Date.UTC(2026, 7, 25, 16, 0)))).toBe(20260826);
+  });
+
+  it('follows an explicit offset', () => {
+    expect(phDayInt(new Date(Date.UTC(2026, 7, 25, 16, 0)), -300)).toBe(20260825);
+  });
+
+  it('agrees with shopDayInt', () => {
+    const i = new Date(Date.UTC(2026, 7, 25, 16, 0));
+    expect(phDayInt(i, 540)).toBe(shopDayInt(i, 540));
   });
 });

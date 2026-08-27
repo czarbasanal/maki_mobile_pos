@@ -1,5 +1,10 @@
-/** PH (UTC+8) business day as yyyymmdd — must match mobile/rules math. */
-export function phDayInt(now: Date = new Date()): number {
-  const t = new Date(now.getTime() + 8 * 3600 * 1000);
-  return t.getUTCFullYear() * 10000 + (t.getUTCMonth() + 1) * 100 + t.getUTCDate();
+import { shopDayInt, shopOffsetMinutes } from '@/domain/time/shopTime';
+
+/**
+ * Shop business day as yyyymmdd — must match mobile's businessDayInt and the
+ * rules' phDay(). Defaults to the configured shop offset (Asia/Manila +8
+ * until an admin changes it in settings).
+ */
+export function phDayInt(now: Date = new Date(), offsetMinutes = shopOffsetMinutes()): number {
+  return shopDayInt(now, offsetMinutes);
 }

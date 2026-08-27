@@ -2,7 +2,7 @@
 // hooks consume contracts, not concrete Firestore code. Tests can override by
 // passing a different container value to <DiProvider>.
 
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { auth } from '@/infrastructure/firebase/auth';
 import { db } from '@/infrastructure/firebase/firestore';
 import { FirebaseAuthRepository } from '@/data/repositories/FirebaseAuthRepository';
@@ -21,6 +21,7 @@ import { FirestorePayslipRepository } from '@/data/repositories/FirestorePayslip
 import { FirestoreHrSettingsRepository } from '@/data/repositories/FirestoreHrSettingsRepository';
 import { FirestoreExpenseRepository } from '@/data/repositories/FirestoreExpenseRepository';
 import { FirestoreVoidRequestRepository } from '@/data/repositories/FirestoreVoidRequestRepository';
+import { FirestoreShopTimezoneRepository } from '@/data/repositories/FirestoreShopTimezoneRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -37,6 +38,8 @@ import type { PayslipRepository } from '@/domain/repositories/PayslipRepository'
 import type { HrSettingsRepository } from '@/domain/repositories/HrSettingsRepository';
 import type { ExpenseRepository } from '@/domain/repositories/ExpenseRepository';
 import type { VoidRequestRepository } from '@/domain/repositories/VoidRequestRepository';
+import type { ShopTimezoneRepository } from '@/domain/repositories/ShopTimezoneRepository';
+import { setAmbientShopTimezone } from '@/domain/time/shopTime';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -55,6 +58,7 @@ export interface Container {
   hrSettingsRepo: HrSettingsRepository;
   expenseRepo: ExpenseRepository;
   voidRequestRepo: VoidRequestRepository;
+  shopTimezoneRepo: ShopTimezoneRepository;
 }
 
 function buildDefaultContainer(): Container {
@@ -75,6 +79,7 @@ function buildDefaultContainer(): Container {
     hrSettingsRepo: new FirestoreHrSettingsRepository(db),
     expenseRepo: new FirestoreExpenseRepository(db),
     voidRequestRepo: new FirestoreVoidRequestRepository(db),
+    shopTimezoneRepo: new FirestoreShopTimezoneRepository(db),
   };
 }
 
@@ -91,6 +96,14 @@ export function DiProvider({
     () => ({ ...buildDefaultContainer(), ...(override ?? {}) }),
     [override],
   );
+
+  // Keep the ambient shop timezone in sync for the whole app. Helpers like
+  // counterKey and resolvePreset read it without a React context, so this has
+  // to run once at the container level rather than per page.
+  useEffect(() => {
+    return value.shopTimezoneRepo.watch(setAmbientShopTimezone);
+  }, [value]);
+
   return <DiContext.Provider value={value}>{children}</DiContext.Provider>;
 }
 
@@ -162,4 +175,8 @@ export function useExpenseRepo(): ExpenseRepository {
 
 export function useVoidRequestRepo(): VoidRequestRepository {
   return useContainer().voidRequestRepo;
+}
+
+export function useShopTimezoneRepo(): ShopTimezoneRepository {
+  return useContainer().shopTimezoneRepo;
 }
