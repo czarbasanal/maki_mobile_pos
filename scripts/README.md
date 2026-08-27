@@ -100,3 +100,26 @@ Idempotent — re-running after a successful pass reports zero patches for that 
 Pre-write snapshots of both collections were taken; ask before assuming they still exist, as they
 were written to a session scratchpad rather than committed.
 
+## backfill-product-name-keys.mjs
+
+Backfills the `nameKey` duplicate-detection field (`productDuplicateKey(name, category)`) onto
+every product, and reports the products that already share a name+category — the field consumed
+by the duplicate-name-warning feature added to both surfaces. `nameKey` is additive and unread
+until that feature ships, so this is safe to run before or after that deploy.
+
+Planning is pure (`backfill-product-name-keys-lib.mjs` + node tests, sharing the same vector table
+as `test/core/utils/product_name_key_test.dart` and `web_admin/src/domain/products/nameKey.test.ts`
+so all three implementations stay in lock-step); the runner does the I/O.
+
+- Dry run:  `node backfill-product-name-keys.mjs`
+- Execute:  `node backfill-product-name-keys.mjs --execute`
+- Emulator: `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node backfill-product-name-keys.mjs --execute`
+
+Idempotent — a product whose stored `nameKey` already matches its current name and category is
+skipped, so re-running after a successful pass reports zero patches. Renaming or re-categorising a
+product later makes its `nameKey` stale again and it will be picked up by the next backfill run.
+
+The duplicate-group listing (products that already share a name+category) is a **report only** —
+this script never merges, deletes, or edits duplicate products; that is a separate, human-decided
+job.
+
