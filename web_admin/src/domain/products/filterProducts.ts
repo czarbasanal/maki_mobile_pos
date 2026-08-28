@@ -7,10 +7,12 @@ export interface ProductFilter {
   search: string; // '' disables search
   stock: StockStatus | 'all';
   category: string | 'all';
+  /** Archived products are hidden unless asked for. 'all' shows both. */
+  status: 'active' | 'inactive' | 'all';
 }
 
-/** Filters by name/SKU substring (case-insensitive), stock status, and
- *  category. 'all' / '' disable that axis; axes are ANDed. */
+/** Filters by name/SKU substring (case-insensitive), stock status, category,
+ *  and active status. 'all' / '' disable that axis; axes are ANDed. */
 export function filterProducts(products: Product[], f: ProductFilter): Product[] {
   const q = f.search.trim().toLowerCase();
   return products.filter((p) => {
@@ -19,6 +21,8 @@ export function filterProducts(products: Product[], f: ProductFilter): Product[]
     }
     if (f.stock !== 'all' && getStockStatus(p) !== f.stock) return false;
     if (f.category !== 'all' && (p.category ?? '') !== f.category) return false;
+    if (f.status === 'active' && !p.isActive) return false;
+    if (f.status === 'inactive' && p.isActive) return false;
     return true;
   });
 }

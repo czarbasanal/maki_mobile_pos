@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
-import { EyeIcon, EyeSlashIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { getStockStatus, StockStatus } from '@/domain/entities';
@@ -41,13 +41,13 @@ export function InventoryListPage() {
   const [search, setSearch] = useState('');
   const [stock, setStock] = useState<ProductFilter['stock']>('all');
   const [category, setCategory] = useState<ProductFilter['category']>('all');
-  const [showInactive, setShowInactive] = useState(false);
+  const [status, setStatus] = useState<ProductFilter['status']>('active');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('inventory');
 
   const active = useMemo(
-    () => (showInactive ? (products ?? []) : (products ?? []).filter((p) => p.isActive)),
-    [products, showInactive],
+    () => products ?? [],
+    [products],
   );
 
   const counts = useMemo(() => {
@@ -70,8 +70,8 @@ export function InventoryListPage() {
   }, [active]);
 
   const filtered = useMemo(
-    () => filterProducts(active, { search, stock, category }),
-    [active, search, stock, category],
+    () => filterProducts(active, { search, stock, category, status }),
+    [active, search, stock, category, status],
   );
   usePageClamp(page, setPage, filtered.length, pageSize);
 
@@ -79,7 +79,7 @@ export function InventoryListPage() {
   // point past the end (or simply be stale), so snap back to page 1.
   useEffect(() => {
     setPage(1);
-  }, [search, stock, category, showInactive]);
+  }, [search, stock, category, status]);
 
   const paged = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
@@ -146,6 +146,7 @@ export function InventoryListPage() {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
+          aria-label="Category"
           className="rounded-md border border-light-border bg-light-card px-tk-sm py-tk-sm text-bodySmall text-light-text"
         >
           <option value="all">All categories</option>
@@ -155,14 +156,16 @@ export function InventoryListPage() {
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          onClick={() => setShowInactive((v) => !v)}
-          className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as ProductFilter['status'])}
+          aria-label="Status"
+          className="rounded-md border border-light-border bg-light-card px-tk-sm py-tk-sm text-bodySmall text-light-text"
         >
-          {showInactive ? <EyeSlashIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
-          {showInactive ? 'Hide inactive' : 'Show inactive'}
-        </button>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="all">All statuses</option>
+        </select>
       </div>
 
       {isAdmin ? (

@@ -93,7 +93,7 @@ describe('InventoryListPage totals strip', () => {
   it('recomputes totals for the filtered subset when a category is applied', async () => {
     signIn(UserRole.admin);
     harness();
-    await userEvent.selectOptions(screen.getByRole('combobox'), 'Widgets');
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Widgets');
     expect(screen.getByText(formatMoney(330))).toBeInTheDocument(); // cost: 110 * 3
     expect(screen.getByText(formatMoney(690))).toBeInTheDocument(); // retail: 230 * 3
     expect(screen.getByText(formatMoney(360))).toBeInTheDocument(); // profit: 690 - 330
@@ -199,5 +199,32 @@ describe('InventoryListPage — Add product gating (cashier web access)', () => 
       screen.queryByRole('button', { name: /add product/i }) ??
         screen.queryByRole('link', { name: /add product/i }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('InventoryListPage status filter', () => {
+  it('hides archived products by default and has no show-inactive toggle', () => {
+    signIn(UserRole.admin);
+    harness([
+      widget({ id: 'a', sku: 'LIVE-1', name: 'Live Part', isActive: true }),
+      widget({ id: 'b', sku: 'DEAD-1', name: 'Retired Part', isActive: false }),
+    ]);
+    // Assert on the SKU cell — the name cell carries an "(inactive)" badge
+    // that splits its text node.
+    expect(screen.getByText('LIVE-1')).toBeInTheDocument();
+    expect(screen.queryByText('DEAD-1')).not.toBeInTheDocument();
+    // The toggle was replaced by a Status filter.
+    expect(screen.queryByRole('button', { name: /inactive/i })).not.toBeInTheDocument();
+  });
+
+  it('shows only archived products when Status is set to Inactive', async () => {
+    signIn(UserRole.admin);
+    harness([
+      widget({ id: 'a', sku: 'LIVE-1', name: 'Live Part', isActive: true }),
+      widget({ id: 'b', sku: 'DEAD-1', name: 'Retired Part', isActive: false }),
+    ]);
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Status' }), 'inactive');
+    expect(screen.getByText('DEAD-1')).toBeInTheDocument();
+    expect(screen.queryByText('LIVE-1')).not.toBeInTheDocument();
   });
 });

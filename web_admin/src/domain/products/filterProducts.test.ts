@@ -13,7 +13,7 @@ function p(over: Partial<Product>): Product {
   };
 }
 
-const ALL: ProductFilter = { search: '', stock: 'all', category: 'all' };
+const ALL: ProductFilter = { search: '', stock: 'all', category: 'all', status: 'all' };
 
 const products: Product[] = [
   p({ id: 'a', name: 'Coca Cola', sku: 'COKE-1', quantity: 50, reorderLevel: 10, category: 'Drinks' }), // inStock
@@ -41,5 +41,33 @@ describe('filterProducts', () => {
     expect(
       filterProducts(products, { ...ALL, search: 'p', stock: StockStatus.lowStock, category: 'Drinks' }).map((x) => x.id),
     ).toEqual(['b']);
+  });
+});
+
+describe('status axis', () => {
+  const live = p({ id: 'a', name: 'Live Part', isActive: true });
+  const dead = p({ id: 'b', name: 'Retired Part', isActive: false });
+
+  it("defaults of 'active' hide archived products", () => {
+    const out = filterProducts([live, dead], { search: '', stock: 'all', category: 'all', status: 'active' });
+    expect(out.map((p) => p.id)).toEqual(['a']);
+  });
+
+  it("'inactive' shows only archived products", () => {
+    const out = filterProducts([live, dead], { search: '', stock: 'all', category: 'all', status: 'inactive' });
+    expect(out.map((p) => p.id)).toEqual(['b']);
+  });
+
+  it("'all' shows both", () => {
+    const out = filterProducts([live, dead], { search: '', stock: 'all', category: 'all', status: 'all' });
+    expect(out.map((p) => p.id)).toEqual(['a', 'b']);
+  });
+
+  it('ANDs with the other axes rather than replacing them', () => {
+    const deadOther = p({ id: 'c', name: 'Other Retired', isActive: false });
+    const out = filterProducts([live, dead, deadOther], {
+      search: 'retired part', stock: 'all', category: 'all', status: 'inactive',
+    });
+    expect(out.map((p) => p.id)).toEqual(['b']);
   });
 });
