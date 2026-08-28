@@ -9,7 +9,13 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 final _date = DateTime(2026, 7, 20);
 
-DailyClosingEntity _closing() => DailyClosingEntity(
+DailyClosingEntity _closing({
+  double plateNoDp = 0,
+  double plateNoDelivery = 0,
+}) =>
+    DailyClosingEntity(
+      plateNoDp: plateNoDp,
+      plateNoDelivery: plateNoDelivery,
       id: '2026-07-20',
       businessDate: _date,
       grossSales: 1000,
@@ -50,10 +56,11 @@ SalesSummary _summary({int salesCount = 2, double cash = 1450, double labor = 45
       laborProfit: labor,
     );
 
-Widget _harness({SalesSummary? liveSummary}) => ProviderScope(
+Widget _harness({SalesSummary? liveSummary, DailyClosingEntity? closing}) =>
+    ProviderScope(
       overrides: [
         dailyClosingHistoryProvider
-            .overrideWith((ref) => Stream.value([_closing()])),
+            .overrideWith((ref) => Stream.value([closing ?? _closing()])),
         dailyClosingDataProvider.overrideWith((ref, date) async =>
             DailyClosingData(
               businessDate: date,
@@ -101,5 +108,33 @@ void main() {
     expect(find.text('Updated for management'), findsOneWidget);
     expect(find.text('For mechanics (whole day)'), findsOneWidget);
     expect(find.text('₱750.00'), findsOneWidget);
+  });
+
+  testWidgets('history lists Plate No DP and Delivery so expected cash reconciles',
+      (tester) async {
+    // Expected cash = float + cashSales − cashExpenses + plateDp − plateDelivery.
+    // Every other term already had a row; without these two the figure could
+    // not be checked against what was on screen.
+    await tester.pumpWidget(
+      _harness(closing: _closing(plateNoDp: 250, plateNoDelivery: 100)),
+    );
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    expect(find.text('Plate No DP'), findsOneWidget);
+    expect(find.text('₱250.00'), findsOneWidget);
+    expect(find.text('Plate No Delivery'), findsOneWidget);
+    expect(find.text('₱100.00'), findsOneWidget);
+  });
+
+  testWidgets('no plate rows on a day that had none', (tester) async {
+    await tester.pumpWidget(_harness());
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    expect(find.text('Plate No DP'), findsNothing);
+    expect(find.text('Plate No Delivery'), findsNothing);
   });
 }

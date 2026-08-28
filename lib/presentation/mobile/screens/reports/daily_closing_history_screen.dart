@@ -196,6 +196,17 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
               label: 'Cash expenses',
               value: _peso(c.cashExpenses),
               dense: true),
+          // Expected cash is float + cash sales − cash expenses + DP − delivery.
+          // Every other term has a row above; without these two the figure
+          // could not be reconciled against what is on screen.
+          if (c.plateNoDp > 0)
+            ClosingKvRow(
+                label: 'Plate No DP', value: _peso(c.plateNoDp), dense: true),
+          if (c.plateNoDelivery > 0)
+            ClosingKvRow(
+                label: 'Plate No Delivery',
+                value: _peso(c.plateNoDelivery),
+                dense: true),
           ClosingKvRow(
               label: 'Opening float',
               value: _peso(c.openingFloat),
