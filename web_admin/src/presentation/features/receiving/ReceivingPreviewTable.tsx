@@ -1,6 +1,7 @@
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { displaySku } from '@/domain/products/sku';
+import { skuCellText } from '@/domain/receiving/skuPreview';
 import type {
   ClassifiedReceivingRow,
   DuplicateNameResolution,
@@ -46,7 +47,7 @@ export function ReceivingPreviewTable({ rows, resolutions, onResolve }: Receivin
             return (
               <tr key={r.rowNumber} className={cn(c.status === 'error' && 'bg-error-light/30')}>
                 <td className="px-tk-md py-tk-sm tabular-nums text-light-text-hint">{r.rowNumber}</td>
-                <td className="px-tk-md py-tk-sm tabular-nums">{r.autoGenerateSku ? '— (auto)' : r.sku}</td>
+                <td className="px-tk-md py-tk-sm tabular-nums">{skuCellText(r.sku, r.autoGenerateSku)}</td>
                 <td className="px-tk-md py-tk-sm">
                   <div className="font-medium text-light-text">{r.name || '—'}</div>
                   {note ? (

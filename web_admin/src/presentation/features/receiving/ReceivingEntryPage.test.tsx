@@ -106,3 +106,39 @@ describe('ReceivingEntryPage item table columns', () => {
     }
   });
 });
+
+describe('ReceivingEntryPage pending-SKU display', () => {
+  const pendingLine = (id: string, name: string) => ({
+    id, productId: '', sku: '00220001', name, quantity: 1, unit: 'pcs',
+    unitCost: 10, costCode: '', isNewVariation: false, newProductId: null, notes: null,
+    pendingNewProduct: {
+      category: 'Wheels', price: 20, reorderLevel: 0,
+      autoGenerateSku: true, autoSkuCategoryCode: '0022',
+      barcodes: [], notes: null, sellingOptions: [],
+    },
+  });
+
+  it('shows no code for new products awaiting allocation, and not one repeated code', () => {
+    // The reported bug: every new product added before saving displayed the
+    // same SKU, because each one carried the same registry-floor seed.
+    const original = entry.lines;
+    // The shared fixture's lines all carry `pendingNewProduct: null`, so its
+    // inferred element type cannot hold a pending spec — widen for this case.
+    entry.lines = [
+      pendingLine('n1', 'New Tyre A'),
+      pendingLine('n2', 'New Tyre B'),
+    ] as unknown as typeof entry.lines;
+    try {
+      renderPage();
+      expect(screen.getAllByText('Assigned when saved')).toHaveLength(2);
+      expect(screen.queryByText('00220001')).not.toBeInTheDocument();
+    } finally {
+      entry.lines = original;
+    }
+  });
+
+  it('still shows a real SKU for an existing product line', () => {
+    renderPage();
+    expect(screen.getByText('SKU-1')).toBeInTheDocument();
+  });
+});

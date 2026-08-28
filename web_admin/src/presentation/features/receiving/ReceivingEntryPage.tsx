@@ -7,6 +7,7 @@ import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Product } from '@/domain/entities';
 import { displaySku } from '@/domain/products/sku';
+import { skuCellText } from '@/domain/receiving/skuPreview';
 
 
 export function ReceivingEntryPage() {
@@ -164,7 +165,9 @@ export function ReceivingEntryPage() {
             ) : (
               entry.lines.map((l) => (
                 <tr key={l.id}>
-                  <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">{displaySku(l.sku)}</td>
+                  <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">
+                    {skuCellText(l.sku, l.pendingNewProduct?.autoSkuCategoryCode != null)}
+                  </td>
                   {/* The "New" badge describes the product, so it stays with
                       the name rather than the code. */}
                   <td className="px-tk-md py-tk-sm">

@@ -52,13 +52,20 @@ function harness(onAdd = vi.fn()) {
 }
 
 describe('NewProductDialog auto-SKU', () => {
-  it('picking a coded category peeks and fills the SKU preview', async () => {
+  it('shows no code for an auto-SKU row — the SKU is assigned on save', async () => {
     signIn();
     harness();
 
     await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
 
-    await waitFor(() => expect(screen.getByLabelText('SKU')).toHaveValue('00070005'));
+    // Peeking the registry produced a number that looked authoritative and was
+    // identical for every row added before saving, so three new products in a
+    // category displayed one code. The field now states when it is assigned.
+    await waitFor(() =>
+      expect(screen.getByLabelText('SKU')).toHaveValue('Assigned when saved'),
+    );
+    expect(screen.getByLabelText('SKU')).not.toHaveValue(expect.stringMatching(/\d/));
+    expect(screen.getByText(/assigned when the receiving is saved/i)).toBeInTheDocument();
   });
 
   it('an uncoded category leaves the SKU empty and says why — never name-based', async () => {
@@ -78,7 +85,9 @@ describe('NewProductDialog auto-SKU', () => {
     const onAdd = harness();
 
     await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
-    await waitFor(() => expect(screen.getByLabelText('SKU')).toHaveValue('00070005'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('SKU')).toHaveValue('Assigned when saved'),
+    );
     await userEvent.type(screen.getByLabelText('Name'), 'Brake shoe');
     await userEvent.type(screen.getByLabelText('Cost'), '90');
     await userEvent.type(screen.getByLabelText('Price'), '130');
@@ -87,7 +96,10 @@ describe('NewProductDialog auto-SKU', () => {
 
     expect(onAdd).toHaveBeenCalledTimes(1);
     const spec = onAdd.mock.calls[0][0];
-    expect(spec.sku).toBe('00070005');
+    // The seed is sequence 1, and it is only a FLOOR: the receive transaction
+    // scans from max(seed, registry.nextSequence). What matters is that it
+    // still matches the category's pattern so the code reaches the allocator.
+    expect(spec.sku).toBe('00070001');
     expect(spec.autoGenerateSku).toBe(true);
     expect(spec.autoSkuCategoryCode).toBe('0007');
   });

@@ -10,16 +10,16 @@
 // under the category code) — the retired name-based generator is not used.
 // Nothing is created here: the dialog only queues a pendingNewProduct line;
 // the product exists once the receiving is completed.
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { SellingOptionsEditor } from '@/presentation/features/inventory/SellingOptionsEditor';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
-import { useCategoryRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { UserRole } from '@/domain/enums';
 import { composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
+import { PENDING_SKU_LABEL } from '@/domain/receiving/skuPreview';
 import { validateSellingOptions } from '@/domain/products/sellingOptions';
 import type { Category, SellingOption } from '@/domain/entities';
 import type { NewProductSpec } from './useReceivingEntry';
@@ -37,7 +37,6 @@ interface NewProductDialogProps {
 export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps) {
   const { data: productCats } = useActiveCategories(CategoryKind.product);
   const { data: units } = useActiveCategories(CategoryKind.unit);
-  const categoryRepo = useCategoryRepo();
   const isAdmin = useAuthStore((s) => s.user?.role === UserRole.admin);
 
   const [name, setName] = useState('');
@@ -55,17 +54,20 @@ export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps
   const [notes, setNotes] = useState('');
   const [sellingOptions, setSellingOptions] = useState<SellingOption[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const skuPeekToken = useRef(0);
 
   const categoryEntityForName = (n: string): Category | undefined =>
     (productCats ?? []).find((c) => c.name === n);
 
-  /** Category-driven SKU preview, mirroring the New Product page: a coded
-   *  category peeks the next sequence; anything else leaves the field EMPTY
-   *  with a hint — never the old name-based format. */
+  /** Seeds the SKU for a coded category; anything else leaves the field EMPTY
+   *  with a hint — never the old name-based format.
+   *
+   *  The seed is sequence 1 and is NOT shown. The receive transaction scans
+   *  from max(seed, registry.nextSequence), so the seed is only a floor — it
+   *  was never the SKU. Peeking the registry here produced a number that
+   *  looked authoritative and was the same for every row added before saving,
+   *  which is exactly how three new products came to display one code. */
   const applyCategoryForSku = (cat: Category | undefined, autoOn: boolean) => {
     if (!autoOn) return;
-    const token = ++skuPeekToken.current;
     const code = cat?.code;
     if (code === undefined) {
       setSku('');
@@ -76,19 +78,8 @@ export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps
       );
       return;
     }
-    setSkuHint('Generating…');
-    categoryRepo
-      .peekNextSequence(code)
-      .then((seq) => {
-        if (token !== skuPeekToken.current) return;
-        setSku(composeAutoSku(code, seq));
-        setSkuHint(null);
-      })
-      .catch(() => {
-        if (token !== skuPeekToken.current) return;
-        setSku('');
-        setSkuHint('Could not reach the SKU registry — try again, or type a SKU manually.');
-      });
+    setSku(composeAutoSku(code, 1));
+    setSkuHint('The SKU is assigned when the receiving is saved.');
   };
 
   const sellingOptionsError = useMemo(
@@ -194,7 +185,9 @@ export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps
             <input
               className={inputCls}
               aria-label="SKU"
-              value={sku}
+              /* An auto row has no SKU yet — showing the seed would be showing
+                 a code that is not the one the product ends up with. */
+              value={autoSku && sku ? PENDING_SKU_LABEL : sku}
               disabled={autoSku}
               onChange={(e) => setSku(e.target.value)}
             />
