@@ -366,4 +366,49 @@ void main() {
     expect(result.errorCode, 'already-closed');
     expect(result.errorMessage, 'This day has already been closed.');
   });
+
+  group('closing diagnostics', () {
+    // A cashier reported entering plate-no amounts that did not appear on the
+    // closed day. Every link in the chain checked out and the saved doc held
+    // zeros, so there was no way to tell whether the values ever reached the
+    // use case. The log now answers that: these are what the APP SENT.
+    Future<Map<String, dynamic>> loggedMetadata({
+      List<double> dp = const [],
+      List<double> delivery = const [],
+    }) async {
+      final logs = <ActivityLogEntity>[];
+      when(() => logRepo.logActivity(any())).thenAnswer((inv) async {
+        final l = inv.positionalArguments.first as ActivityLogEntity;
+        logs.add(l);
+        return l;
+      });
+      await useCase.execute(
+        actor: _user(UserRole.cashier),
+        date: DateTime(2026, 5, 28),
+        openingFloat: 2000,
+        countedCash: 2590,
+        plateNoDpAmounts: dp,
+        plateNoDeliveryAmounts: delivery,
+        notes: null,
+      );
+      return logs.single.metadata ?? const {};
+    }
+
+    test('records the plate amounts the app actually sent', () async {
+      final meta = await loggedMetadata(dp: const [250, 100], delivery: const [250]);
+      expect(meta['plateNoDp'], 350);
+      expect(meta['plateNoDelivery'], 250);
+      expect(meta['plateNoDpAmounts'], [250, 100]);
+      expect(meta['plateNoDeliveryAmounts'], [250]);
+    });
+
+    test('records zeros when nothing was entered, rather than omitting them',
+        () async {
+      final meta = await loggedMetadata();
+      expect(meta['plateNoDp'], 0);
+      expect(meta['plateNoDelivery'], 0);
+      expect(meta['plateNoDpAmounts'], isEmpty);
+      expect(meta['plateNoDeliveryAmounts'], isEmpty);
+    });
+  });
 }

@@ -150,8 +150,23 @@ class DailyClosingDraft extends Equatable {
       openingFloat + cashSales - cashExpenses + plateNoDp - plateNoDelivery;
 
   /// Variance given an [openingFloat] and a physical [countedCash].
-  double varianceFor(double openingFloat, double countedCash) =>
-      countedCash - expectedCashFor(openingFloat);
+  ///
+  /// The plate-number amounts must be passed through: this used to call
+  /// [expectedCashFor] without them, so they defaulted to zero and the
+  /// variance silently ignored money that had gone into or out of the drawer.
+  /// It had no callers, which is the only reason it never showed up.
+  double varianceFor(
+    double openingFloat,
+    double countedCash, {
+    double plateNoDp = 0,
+    double plateNoDelivery = 0,
+  }) =>
+      countedCash -
+      expectedCashFor(
+        openingFloat,
+        plateNoDp: plateNoDp,
+        plateNoDelivery: plateNoDelivery,
+      );
 
   @override
   List<Object?> get props => [

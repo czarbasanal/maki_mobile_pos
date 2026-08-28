@@ -157,6 +157,15 @@ class CloseDayUseCase {
           'countedCash': countedCash,
           'variance': variance,
           'openingFloat': openingFloat,
+          // Recorded so a "I entered plate amounts and they vanished" report
+          // is answerable: these are what the APP SENT. If they are zero here
+          // the values never reached the use case (state lost before submit);
+          // if they are non-zero but the saved doc is zero, the write is at
+          // fault. Without them the two are indistinguishable after the fact.
+          'plateNoDp': plateNoDp,
+          'plateNoDelivery': plateNoDelivery,
+          'plateNoDpAmounts': List.of(plateNoDpAmounts),
+          'plateNoDeliveryAmounts': List.of(plateNoDeliveryAmounts),
         },
       );
 
