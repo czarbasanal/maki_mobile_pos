@@ -379,7 +379,8 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                     if (counted != null && variance != null) ...[
                       const SizedBox(height: 12),
                       VariancePanel(variance: variance),
-                      ClosingHandoffRows(
+                      ClosingHandoverPanel(
+                        countedCash: counted,
                         laborFees: draft.laborRevenue,
                         forManagement: counted - draft.laborRevenue,
                       ),
@@ -718,7 +719,8 @@ class _ClosedView extends ConsumerWidget {
                   label: 'Counted cash', value: _peso(closing.countedCash)),
               const SizedBox(height: 6),
               VariancePanel(variance: closing.variance),
-              ClosingHandoffRows(
+              ClosingHandoverPanel(
+                countedCash: closing.countedCash,
                 laborFees: closing.forMechanics,
                 forManagement: closing.forManagement,
               ),

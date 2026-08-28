@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/payment_method.dart';
+import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
@@ -31,7 +32,7 @@ DailyClosingEntity _closing({
       laborRevenue: 450,
       openingFloat: 0,
       expectedCash: 1450,
-      // 2000 (not 1450) so 'Sale items → management' = ₱1,550.00 collides
+      // 2000 (not 1450) so 'To management' = ₱1,550.00 collides
       // with no other detail row (gross renders ₱1,000.00).
       countedCash: 2000,
       variance: 550,
@@ -56,9 +57,28 @@ SalesSummary _summary({int salesCount = 2, double cash = 1450, double labor = 45
       laborProfit: labor,
     );
 
-Widget _harness({SalesSummary? liveSummary, DailyClosingEntity? closing}) =>
+MechanicPerformanceStat _stat(String name, double labor) =>
+    MechanicPerformanceStat(
+      mechanicId: name,
+      mechanicName: name,
+      jobCount: 1,
+      totalRevenue: labor,
+      laborTotal: labor,
+    );
+
+Widget _harness({
+  SalesSummary? liveSummary,
+  DailyClosingEntity? closing,
+  List<MechanicPerformanceStat>? mechanics,
+}) =>
     ProviderScope(
       overrides: [
+        mechanicPerformanceReportProvider.overrideWith((ref, params) async =>
+            MechanicPerformanceReportData(
+              totalRevenue: 0,
+              jobCount: 0,
+              byMechanic: mechanics ?? const [],
+            )),
         dailyClosingHistoryProvider
             .overrideWith((ref) => Stream.value([closing ?? _closing()])),
         dailyClosingDataProvider.overrideWith((ref, date) async =>
@@ -84,15 +104,32 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Labor fees → mechanics'), findsNothing);
+    expect(find.text('To mechanics'), findsNothing);
     await _expandFirstTile(tester);
 
-    expect(find.text('Labor fees → mechanics'), findsOneWidget);
+    expect(find.text('To mechanics'), findsOneWidget);
     // Unique here: the history detail has no labor-revenue row of its own.
     expect(find.text('₱450.00'), findsOneWidget);
-    expect(find.text('Sale items → management'), findsOneWidget);
+    expect(find.text('To management'), findsOneWidget);
     expect(find.text('₱1,550.00'), findsOneWidget); // 2000 − 450
     expect(find.text('After close'), findsNothing);
+  });
+
+  testWidgets('names each mechanic under the mechanics line',
+      (tester) async {
+    await tester.pumpWidget(_harness(
+      mechanics: [_stat('Jun', 300), _stat('Rico', 150)],
+    ));
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    expect(find.text('Jun'), findsOneWidget);
+    expect(find.text('₱300.00'), findsOneWidget);
+    expect(find.text('Rico'), findsOneWidget);
+    expect(find.text('₱150.00'), findsOneWidget);
+    // 300 + 150 matches the frozen ₱450 total, so no mismatch note.
+    expect(find.textContaining('Named shares total'), findsNothing);
   });
 
   testWidgets('expanded day that drifted shows the After close block',
