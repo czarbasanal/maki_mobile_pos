@@ -177,9 +177,11 @@ class PaymentSection extends StatelessWidget {
 
   List<Widget> _buildMixedInputs(BuildContext context) {
     final theme = Theme.of(context);
-    final digital = cart.secondaryMethod == PaymentMethod.maya
-        ? PaymentMethod.maya
-        : PaymentMethod.gcash;
+    // Nothing is preselected. Seeding GCash here once let a cashier who had
+    // picked Maya type into a GCash-labelled field and bank the money as
+    // GCash without choosing it.
+    final digital = cart.secondaryMethod;
+    final chosen = digital == PaymentMethod.gcash || digital == PaymentMethod.maya;
     final cashPortion = cart.grandTotal - cart.splitAmount;
     return [
       SegmentedButton<PaymentMethod>(
@@ -187,15 +189,29 @@ class PaymentSection extends StatelessWidget {
           ButtonSegment(value: PaymentMethod.gcash, label: Text('GCash')),
           ButtonSegment(value: PaymentMethod.maya, label: Text('Maya')),
         ],
-        selected: {digital},
-        onSelectionChanged: (s) => onSecondaryMethodChanged(s.first),
+        emptySelectionAllowed: true,
+        selected: chosen ? {digital!} : const <PaymentMethod>{},
+        onSelectionChanged: (s) {
+          if (s.isNotEmpty) onSecondaryMethodChanged(s.first);
+        },
       ),
       const SizedBox(height: AppSpacing.md),
       TextField(
         style: AppTextStyles.fieldInput,
         controller: splitController,
+        enabled: chosen,
         decoration: InputDecoration(
-          labelText: '${digital.displayName} amount',
+          // The provider is the thing that gets mis-read, so it carries the
+          // label's whole weight rather than trailing the word "amount".
+          labelText: chosen
+              ? '${digital!.displayName} amount'
+              : 'Choose GCash or Maya first',
+          labelStyle: chosen
+              ? theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)
+              : null,
+          floatingLabelStyle: chosen
+              ? theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)
+              : null,
           prefixText: '${AppConstants.currencySymbol} ',
         ),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -205,8 +221,13 @@ class PaymentSection extends StatelessWidget {
         onChanged: onSplitAmountChanged,
       ),
       const SizedBox(height: AppSpacing.sm),
+      // Readback of the split as it will be recorded, naming both providers.
+      // A cashier who mis-taps sees the wrong name here before confirming.
       Text(
-        'Cash portion: ${cashPortion.toCurrency()}',
+        chosen
+            ? '${digital!.displayName} ${cart.splitAmount.toCurrency()}'
+                '  +  Cash ${cashPortion.toCurrency()}'
+            : 'Cash portion: ${cashPortion.toCurrency()}',
         style: theme.textTheme.titleMedium,
       ),
     ];

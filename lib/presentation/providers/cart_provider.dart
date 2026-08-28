@@ -183,10 +183,15 @@ class CartState extends Equatable {
   Map<PaymentMethod, double> get tenders {
     switch (paymentMethod) {
       case PaymentMethod.mixed:
-        final digital = secondaryMethod ?? PaymentMethod.gcash;
+        // No provider chosen yet: report only what is known rather than
+        // guessing one. isPaymentValid blocks the sale in this state, so the
+        // partial map is never persisted.
+        if (secondaryMethod == null) {
+          return {PaymentMethod.cash: grandTotal - splitAmount};
+        }
         return {
           PaymentMethod.cash: grandTotal - splitAmount,
-          digital: splitAmount,
+          secondaryMethod!: splitAmount,
         };
       case PaymentMethod.salmon:
         final dp = secondaryMethod ?? PaymentMethod.cash;
@@ -644,13 +649,16 @@ class CartNotifier extends StateNotifier<CartState> {
 
   /// Sets the payment method, resetting the split inputs.
   void setPaymentMethod(PaymentMethod method) {
-    // Seed the split-tender methods with the same default the PaymentSection
-    // renders pre-selected (Mixed → GCash digital portion, Salmon → Cash
-    // downpayment). Without this the segment *looks* selected but state's
-    // secondaryMethod stays null, so isPaymentValid is false and the
-    // Confirm Payment button never enables until the user re-taps the segment.
+    // Salmon seeds Cash for its downpayment, matching what PaymentSection
+    // renders pre-selected.
+    //
+    // Mixed deliberately seeds NOTHING. It used to seed GCash, so a cashier
+    // who had picked Maya and then switched to Mixed was handed a
+    // GCash-labelled amount field and GCash-attributed money without ever
+    // choosing it — SALE-20260828-020 recorded ₱285 as GCash exactly that way.
+    // Nothing may pick a payment provider on the operator's behalf;
+    // isPaymentValid keeps Confirm disabled until they do.
     final PaymentMethod? secondary = switch (method) {
-      PaymentMethod.mixed => PaymentMethod.gcash,
       PaymentMethod.salmon => PaymentMethod.cash,
       _ => null,
     };
