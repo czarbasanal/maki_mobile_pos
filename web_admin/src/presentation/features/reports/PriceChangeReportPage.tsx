@@ -8,7 +8,7 @@ import type { PriceChangeRow } from '@/domain/products/priceChangeReport';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { formatMoney } from '@/core/utils/money';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
-import { displaySku } from '@/domain/products/sku';
+import { csvSku } from '@/domain/products/sku';
 import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -26,7 +26,7 @@ export function priceChangeCsvRow(
   return [
     r.entry.changedAt.toISOString(),
     product?.name ?? r.entry.productId,
-    displaySku(product?.sku ?? ''),
+    csvSku(product?.sku ?? ''),
     r.entry.optionLabel ?? '',
     r.entry.price.toFixed(2),
     r.hasPrior ? csvSigned(r.priceDelta) : '',

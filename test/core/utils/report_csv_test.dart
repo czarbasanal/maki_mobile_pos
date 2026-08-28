@@ -142,7 +142,8 @@ void main() {
       final lines = csv.trim().split('\n');
       // Sorted by profit desc: Manual (200 profit) first, Auto (10 profit) second
       expect(lines[1], contains('MLK-A3B7')); // Manual SKU passed through
-      expect(lines[2], contains('0007-0153')); // 8-digit formatted
+      // Force-quoted as a text formula so a spreadsheet keeps the zeros.
+      expect(lines[2], contains('=""00070153""'));
     });
   });
 
@@ -223,7 +224,7 @@ void main() {
           {'p1': 'Brake Shoe (00070153)', 'p2': 'Coupling (MLK-A3B7)'});
       final lines = csv.trim().split('\n');
       // SKU column should contain formatted 8-digit codes and pass-through SKUs
-      expect(lines[1], contains('0007-0153')); // 8-digit formatted
+      expect(lines[1], contains('=""00070153""'));
       expect(lines[2], contains('MLK-A3B7')); // Manual SKU passed through
     });
 

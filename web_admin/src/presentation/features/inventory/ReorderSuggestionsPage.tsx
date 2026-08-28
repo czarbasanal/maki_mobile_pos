@@ -6,7 +6,7 @@ import { REORDER_SALES_CAP, useReorderSuggestions } from '@/presentation/hooks/u
 import { CappedNotice } from '@/presentation/components/common/CappedNotice';
 import type { ReorderParams, ReorderSuggestion } from '@/domain/reorder/computeReorderSuggestions';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
-import { displaySku } from '@/domain/products/sku';
+import { csvSku, displaySku } from '@/domain/products/sku';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
@@ -18,7 +18,7 @@ const WINDOWS = [7, 14, 30, 90];
 export function reorderCsvRow(s: ReorderSuggestion, qty: number): (string | number)[] {
   return [
     s.supplierName ?? 'No supplier',
-    displaySku(s.product.sku),
+    csvSku(s.product.sku),
     s.product.name,
     s.product.quantity,
     s.velocityPerDay.toFixed(2),

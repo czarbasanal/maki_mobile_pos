@@ -15,7 +15,7 @@ String buildPurchaseOrderCsv(PurchaseOrderEntity po) {
     [],
     ['SKU', 'Name', 'Qty', 'Unit'],
     for (final item in po.items)
-      [SkuGenerator.displaySku(item.sku), item.name, item.quantity, item.unit],
+      [SkuGenerator.csvSku(item.sku), item.name, item.quantity, item.unit],
   ];
   return '${_converter.convert(rows)}\n';
 }

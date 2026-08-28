@@ -79,7 +79,7 @@ String buildProfitReportCsv(List<ProductSalesData> products) {
     profit += p.totalProfit;
     rows.add([
       p.name,
-      SkuGenerator.displaySku(p.sku),
+      SkuGenerator.csvSku(p.sku),
       p.quantitySold,
       p.totalRevenue.toStringAsFixed(2),
       p.totalCost.toStringAsFixed(2),
@@ -180,7 +180,7 @@ String buildPriceChangeReportCsv(
     final e = r.entry;
     final label = productLabelById[e.productId] ?? e.productId;
     final extractedSku = _extractSkuFromLabel(label);
-    final displayedSku = SkuGenerator.displaySku(extractedSku);
+    final displayedSku = SkuGenerator.csvSku(extractedSku);
     out.add([
       fmt.format(e.changedAt),
       label,

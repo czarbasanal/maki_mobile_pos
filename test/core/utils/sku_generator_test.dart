@@ -197,10 +197,25 @@ void main() {
       expect(SkuGenerator.sequenceOf('12349999'), 9999);
     });
 
-    test('displaySku formats 8-digit numeric as 0007-0153', () {
-      expect(SkuGenerator.displaySku('00070153'), '0007-0153');
-      expect(SkuGenerator.displaySku('00010001'), '0001-0001');
-      expect(SkuGenerator.displaySku('12349999'), '1234-9999');
+    test('displaySku shows the SKU exactly as stored', () {
+      // The 4-4 dash split was retired once variation SKUs (<base>-N) became
+      // real: "0002-0194" next to "00020194-1" read as two unrelated codes.
+      expect(SkuGenerator.displaySku('00070153'), '00070153');
+      expect(SkuGenerator.displaySku('00010001'), '00010001');
+      expect(SkuGenerator.displaySku('12349999'), '12349999');
+    });
+
+    test('csvSku forces a digit-leading SKU to text so Excel keeps the zeros', () {
+      expect(SkuGenerator.csvSku('00070153'), '="00070153"');
+      expect(SkuGenerator.csvSku('00020194-1'), '="00020194-1"');
+    });
+
+    test('csvSku leaves a letter-leading SKU alone', () {
+      expect(SkuGenerator.csvSku('MLK-A3B7'), 'MLK-A3B7');
+    });
+
+    test('displaySku leaves a variation suffix intact', () {
+      expect(SkuGenerator.displaySku('00020194-1'), '00020194-1');
     });
 
     test('normalizeSkuQuery turns the displayed form back into the stored one', () {
@@ -228,8 +243,9 @@ void main() {
       );
     });
 
-    test('displaySku leaves non-8-digit or non-numeric unchanged', () {
+    test('displaySku leaves manual and non-numeric SKUs unchanged', () {
       expect(SkuGenerator.displaySku('MLK-A3B7'), 'MLK-A3B7');
+      expect(SkuGenerator.displaySku('17210-KZR'), '17210-KZR');
       expect(SkuGenerator.displaySku('0007015'), '0007015');
       expect(SkuGenerator.displaySku('000701530'), '000701530');
       expect(SkuGenerator.displaySku('SKU-ABCD1234'), 'SKU-ABCD1234');

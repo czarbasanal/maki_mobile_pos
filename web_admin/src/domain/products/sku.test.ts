@@ -9,6 +9,7 @@ import {
   composeAutoSku,
   matchesAutoPattern,
   sequenceOf,
+  csvSku,
   displaySku,
   normalizeSkuQuery,
 } from './sku';
@@ -147,9 +148,11 @@ describe('sequenceOf', () => {
 
 describe('displaySku', () => {
   it('formats an 8-digit numeric sku as XXXX-XXXX', () => {
-    expect(displaySku('00070153')).toBe('0007-0153');
-    expect(displaySku('00010001')).toBe('0001-0001');
-    expect(displaySku('12349999')).toBe('1234-9999');
+    // The 4-4 dash split was retired once variation SKUs (<base>-N) became
+    // real: "0002-0194" next to "00020194-1" read as two unrelated codes.
+    expect(displaySku('00070153')).toBe('00070153');
+    expect(displaySku('00010001')).toBe('00010001');
+    expect(displaySku('12349999')).toBe('12349999');
   });
 
   it('leaves non-8-digit or non-numeric skus unchanged', () => {
@@ -161,6 +164,8 @@ describe('displaySku', () => {
 
   it('passes a variation-suffixed 8-digit-plus sku through unchanged', () => {
     expect(displaySku('00070153-1')).toBe('00070153-1');
+    expect(displaySku('00020194-1')).toBe('00020194-1');
+    expect(displaySku('17210-KZR')).toBe('17210-KZR');
   });
 });
 
@@ -185,5 +190,16 @@ describe('normalizeSkuQuery', () => {
 
   it('round-trips displaySku', () => {
     expect(normalizeSkuQuery(displaySku('00070153'))).toBe('00070153');
+  });
+});
+
+describe('csvSku', () => {
+  it('forces a digit-leading SKU to text so a spreadsheet keeps the zeros', () => {
+    expect(csvSku('00070153')).toBe('="00070153"');
+    expect(csvSku('00020194-1')).toBe('="00020194-1"');
+  });
+
+  it('leaves a letter-leading SKU alone', () => {
+    expect(csvSku('MLK-A3B7')).toBe('MLK-A3B7');
   });
 });

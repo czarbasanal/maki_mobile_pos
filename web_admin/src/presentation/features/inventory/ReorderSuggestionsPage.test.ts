@@ -1,5 +1,5 @@
 // Pinning test for the reorder CSV export's leading-zero-safe SKU display
-// (an 8-digit auto-SKU must render as 'XXXX-XXXX' so Excel/Sheets doesn't
+// (an 8-digit auto-SKU is force-quoted as a text formula so Excel/Sheets doesn't
 // eat the leading zeros — see displaySku).
 import { describe, expect, it } from 'vitest';
 import type { Product } from '@/domain/entities';
@@ -50,9 +50,9 @@ function suggestion(overrides: Partial<ReorderSuggestion> = {}): ReorderSuggesti
 }
 
 describe('reorderCsvRow', () => {
-  it('formats an 8-digit auto-SKU as XXXX-XXXX', () => {
+  it('force-quotes an 8-digit auto-SKU so a spreadsheet keeps the zeros', () => {
     const row = reorderCsvRow(suggestion(), 17);
-    expect(row[1]).toBe('0007-0153');
+    expect(row[1]).toBe('="00070153"');
   });
 
   it('leaves a non-auto SKU unchanged', () => {

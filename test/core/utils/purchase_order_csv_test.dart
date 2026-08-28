@@ -44,7 +44,9 @@ void main() {
       ],
     );
     final lines = buildPurchaseOrderCsv(autoPo).trim().split('\n');
-    expect(lines[5], '0007-0153,Oil Filter,2,pcs');
+    // The SKU is force-quoted as a text formula so a spreadsheet keeps the
+    // leading zeros; screens show it verbatim.
+    expect(lines[5], '"=""00070153""",Oil Filter,2,pcs');
   });
 
   test('builds header block and item rows without costs', () {

@@ -106,7 +106,7 @@ void main() {
     expect(find.byType(PopupMenuButton<String>), findsOneWidget);
   });
 
-  testWidgets('formats 8-digit numeric SKU as XXXX-XXXX in product row',
+  testWidgets('shows the SKU verbatim in the product row',
       (tester) async {
     tester.view.physicalSize = const Size(1200, 2600);
     tester.view.devicePixelRatio = 1.0;
@@ -145,7 +145,8 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     // Verify formatted SKU is displayed
-    expect(find.text('0007-0153'), findsOneWidget);
-    expect(find.text('00070153'), findsNothing); // raw SKU should not be shown
+    // Shown exactly as stored — the 4-4 dash split was retired when variation
+    // SKUs (<base>-N) became real stock.
+    expect(find.text('00070153'), findsOneWidget);
   });
 }

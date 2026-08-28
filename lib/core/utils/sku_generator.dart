@@ -260,17 +260,23 @@ abstract class SkuGenerator {
     return int.parse(sku.substring(4));
   }
 
-  /// Formats a SKU for display.
+  /// The SKU as it should be shown — verbatim.
   ///
-  /// If the SKU is exactly 8 numeric digits, formats it as 'XXXX-XXXX'.
-  /// Otherwise, returns the SKU unchanged.
-  /// Example: displaySku('00070153') returns '0007-0153'
-  static String displaySku(String sku) {
-    if (sku.length == 8 && RegExp(r'^\d{8}$').hasMatch(sku)) {
-      return '${sku.substring(0, 4)}-${sku.substring(4)}';
-    }
-    return sku;
-  }
+  /// This used to split an 8-digit auto-SKU as 'XXXX-XXXX'. That was retired
+  /// once variation SKUs (`<base>-N`) became real stock: '0002-0194' sitting
+  /// next to '00020194-1' read as two unrelated codes rather than a part and
+  /// its variation. Every surface calls this rather than printing `sku`
+  /// directly, so the one seam survives for whatever the shop wants next.
+  static String displaySku(String sku) => sku;
+
+  /// The SKU as it should appear in an exported CSV.
+  ///
+  /// Screens show the SKU verbatim, but a spreadsheet will read `00070153` as
+  /// the number 70153 and eat the leading zeros. Wrapping a digit-leading SKU
+  /// as an Excel/Sheets text formula keeps every character without
+  /// reintroducing a separator into the code itself.
+  static String csvSku(String sku) =>
+      RegExp(r'^\d').hasMatch(sku) ? '="$sku"' : sku;
 
   /// Turns a typed SKU back into its stored form — the inverse of
   /// [displaySku] for search inputs.

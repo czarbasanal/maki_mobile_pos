@@ -129,10 +129,10 @@ describe('InventoryListPage pagination', () => {
 });
 
 describe('InventoryListPage SKU cell', () => {
-  it('displays a coded 8-digit auto-SKU as XXXX-XXXX in a mono cell', () => {
+  it('displays the SKU verbatim in a mono cell', () => {
     signIn(UserRole.admin);
     harness([widget({ sku: '00070153' })]);
-    const cell = screen.getByText('0007-0153');
+    const cell = screen.getByText('00070153');
     expect(cell).toBeInTheDocument();
     expect(cell).toHaveClass('font-mono');
   });

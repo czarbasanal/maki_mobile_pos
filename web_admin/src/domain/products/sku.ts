@@ -117,14 +117,15 @@ export function sequenceOf(sku: string): number {
 }
 
 /**
- * Formats a SKU for display: an 8-digit auto-SKU becomes 'XXXX-XXXX';
- * anything else (manual SKUs, variation suffixes) passes through unchanged.
- * Example: displaySku('00070153') => '0007-0153'.
+ * The SKU as it should be shown — verbatim.
+ *
+ * This used to split an 8-digit auto-SKU as 'XXXX-XXXX'. That was retired once
+ * variation SKUs (`<base>-N`) became real stock: '0002-0194' sitting next to
+ * '00020194-1' read as two unrelated codes rather than a part and its
+ * variation. Every surface calls this rather than printing `sku` directly, so
+ * the one seam survives for whatever the shop wants next.
  */
 export function displaySku(sku: string): string {
-  if (sku.length === 8 && /^\d{8}$/.test(sku)) {
-    return `${sku.slice(0, 4)}-${sku.slice(4)}`;
-  }
   return sku;
 }
 
@@ -139,4 +140,16 @@ export function displaySku(sku: string): string {
  */
 export function normalizeSkuQuery(query: string): string {
   return /^\d{4}-\d{4}$/.test(query) ? query.replace('-', '') : query;
+}
+
+/**
+ * The SKU as it should appear in an exported CSV.
+ *
+ * Screens show the SKU verbatim, but a spreadsheet reads `00070153` as the
+ * number 70153 and eats the leading zeros. Wrapping a digit-leading SKU as an
+ * Excel/Sheets text formula keeps every character without reintroducing a
+ * separator into the code itself.
+ */
+export function csvSku(sku: string): string {
+  return /^\d/.test(sku) ? `="${sku}"` : sku;
 }
