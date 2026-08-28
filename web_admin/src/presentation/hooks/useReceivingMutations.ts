@@ -20,10 +20,14 @@ export function useCreateReceiving() {
 export function useUpdateReceiving() {
   const repo = useReceivingRepo();
   const actor = useAuthStore((s) => s.user);
-  return useMutation<void, Error, { id: string; input: ReceivingInput }>({
-    mutationFn: ({ id, input }) => {
+  return useMutation<
+    void,
+    Error,
+    { id: string; input: ReceivingInput; expectedVersion: number }
+  >({
+    mutationFn: ({ id, input, expectedVersion }) => {
       if (!actor) throw new Error('Not signed in');
-      return repo.update(id, input, actor.id);
+      return repo.update(id, input, actor.id, expectedVersion);
     },
   });
 }

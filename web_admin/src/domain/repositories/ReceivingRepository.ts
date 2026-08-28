@@ -22,8 +22,13 @@ export interface ReceivingResult {
   failed: { row: number; message: string }[];
 }
 
-/** Editable fields of a receiving (manual entry / drafts). */
-export type ReceivingInput = Omit<Receiving, 'id' | 'createdAt' | 'completedAt' | 'completedBy'>;
+/** Editable fields of a receiving (manual entry / drafts). `version` is not
+ *  among them — the server owns it, and update() takes the expected value
+ *  separately so a stale client is refused rather than silently obeyed. */
+export type ReceivingInput = Omit<
+  Receiving,
+  'id' | 'createdAt' | 'completedAt' | 'completedBy' | 'version'
+>;
 
 export interface ReceivingRepository {
   getById(id: string): Promise<Receiving | null>;
@@ -41,8 +46,16 @@ export interface ReceivingRepository {
   /** Write a new receiving. A 'completed' status applies stock immediately;
    *  a 'draft' just persists. Generates the reference number when blank. */
   create(input: ReceivingInput, actorId: string): Promise<Receiving>;
-  /** Replace a draft's editable fields. Throws if already completed. */
-  update(id: string, input: ReceivingInput, actorId: string): Promise<void>;
+  /** Replace a draft's editable fields. Throws if already completed, or if the
+   *  doc moved on since the caller read it (RECEIVING_CONFLICT_MESSAGE) —
+   *  passing the version the caller loaded is what makes concurrent edits fail
+   *  loudly instead of clobbering each other. */
+  update(
+    id: string,
+    input: ReceivingInput,
+    actorId: string,
+    expectedVersion: number,
+  ): Promise<void>;
   /** Transition a draft to completed — applies stock/variations/price history.
    *  Idempotent: a no-op if already completed. `cipher` encodes variation cost
    *  codes for new/mismatch lines. */
