@@ -39,6 +39,7 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       feeLines: sale.feeLines,
       mechanicId: sale.mechanicId,
       mechanicName: sale.mechanicName,
+      motorcycleModel: sale.motorcycleModel,
       tenders: sale.tenders,
     };
   },
@@ -52,6 +53,7 @@ export const saleConverter: FirestoreDataConverter<Sale> = {
       feeLines: parseFeeLines(d.feeLines),
       mechanicId: d.mechanicId ?? null,
       mechanicName: d.mechanicName ?? null,
+      motorcycleModel: d.motorcycleModel ?? null,
       tenders: parseTenders(d.tenders),
       discountType: discountTypeFromString(d.discountType),
       paymentMethod: paymentMethodFromString(d.paymentMethod),

@@ -41,6 +41,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
     feeLines: [],
     mechanicId: 'm1',
     mechanicName: 'Juan Dela Cruz',
+    motorcycleModel: 'Yamaha Mio i 125',
     discountType: DiscountType.amount,
     paymentMethod: PaymentMethod.cash,
     tenders: {},
@@ -139,6 +140,18 @@ function harness(saleRepo: Partial<Container['saleRepo']>, opts: HarnessOptions 
 }
 
 describe('SaleDetailPage', () => {
+  it('names the motorcycle beside the mechanic when the sale came from a job order', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale()) });
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());
+    expect(screen.getByText(/Yamaha Mio i 125/)).toBeInTheDocument();
+  });
+
+  it('omits the motorcycle line for a walk-in sale', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale({ motorcycleModel: null })) });
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());
+    expect(screen.queryByText(/Motorcycle:/)).not.toBeInTheDocument();
+  });
+
   it('does not show a Shop fees row when the sale has no fee lines', async () => {
     harness({ getById: vi.fn().mockResolvedValue(sale()) });
     await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());

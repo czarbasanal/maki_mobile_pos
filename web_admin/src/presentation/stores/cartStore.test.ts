@@ -91,6 +91,7 @@ describe('cartStore', () => {
       feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
       mechanicId: 'm1',
       mechanicName: 'Juan',
+      motorcycleModel: 'Honda Click 125i',
       discountType: DiscountType.percentage,
       createdBy: 'u1',
       createdByName: 'Cashier',
@@ -114,6 +115,9 @@ describe('cartStore', () => {
     expect(s.feeLines).toEqual(jobOrder.feeLines);
     expect(s.mechanicId).toBe('m1');
     expect(s.mechanicName).toBe('Juan');
+    // The bike is what the job was about — it must survive into the sale, or
+    // billing out on web silently loses what mobile recorded.
+    expect(s.motorcycleModel).toBe('Honda Click 125i');
     expect(s.jobOrderId).toBe('d1');
     expect(s.jobOrderName).toBe('Mr Cruz bike');
 
@@ -121,6 +125,7 @@ describe('cartStore', () => {
     s = useCartStore.getState();
     expect(s.jobOrderId).toBeNull();
     expect(s.jobOrderName).toBeNull();
+    expect(s.motorcycleModel).toBeNull();
     expect(s.lines).toHaveLength(0);
     expect(s.feeLines).toHaveLength(0);
     expect(s.notes).toBeNull();
@@ -141,6 +146,7 @@ describe('cartStore', () => {
       feeLines: [],
       mechanicId: null,
       mechanicName: null,
+      motorcycleModel: null,
       discountType: DiscountType.amount,
       createdBy: 'u1',
       createdByName: 'Cashier',
@@ -280,6 +286,7 @@ describe('cartStore selling options', () => {
       feeLines: [],
       mechanicId: null,
       mechanicName: null,
+      motorcycleModel: null,
       discountType: DiscountType.amount,
       createdBy: 'u1',
       createdByName: 'Cashier',

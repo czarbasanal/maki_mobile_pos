@@ -169,6 +169,7 @@ export class FirestoreSaleRepository implements SaleRepository {
         feeLines: input.feeLines,
         mechanicId: input.mechanicId,
         mechanicName: input.mechanicName,
+        motorcycleModel: input.motorcycleModel ?? null,
         jobOrderId: input.jobOrderId,
         notes: input.notes,
         voidedBy: null,

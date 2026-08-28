@@ -26,6 +26,7 @@ describe('saleConverter.fromFirestore', () => {
         feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
         mechanicId: 'mech-1',
         mechanicName: 'Juan',
+        motorcycleModel: 'Yamaha Mio i 125',
         tenders: { cash: 400, gcash: 250 },
       }),
       opts,
@@ -45,6 +46,7 @@ describe('saleConverter.fromFirestore', () => {
     });
     expect(sale.mechanicId).toBe('mech-1');
     expect(sale.mechanicName).toBe('Juan');
+    expect(sale.motorcycleModel).toBe('Yamaha Mio i 125');
     expect(sale.paymentMethod).toBe('mixed');
     expect(sale.tenders).toEqual({ cash: 400, gcash: 250 });
   });
@@ -76,6 +78,7 @@ describe('saleConverter.fromFirestore', () => {
     expect(sale.feeLines).toEqual([]);
     expect(sale.mechanicId).toBeNull();
     expect(sale.mechanicName).toBeNull();
+    expect(sale.motorcycleModel).toBeNull();
     expect(sale.tenders).toEqual({});
   });
 
@@ -91,6 +94,7 @@ describe('saleConverter.toFirestore', () => {
       feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
       mechanicId: null,
       mechanicName: null,
+      motorcycleModel: null,
       tenders: {},
       discountType: DiscountType.amount,
       paymentMethod: PaymentMethod.cash,

@@ -75,6 +75,7 @@ describe('CheckoutPage', () => {
       feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
       mechanicId: null,
       mechanicName: null,
+      motorcycleModel: null,
       discountType: DiscountType.amount,
       createdBy: 'u1',
       createdByName: 'Cashier',

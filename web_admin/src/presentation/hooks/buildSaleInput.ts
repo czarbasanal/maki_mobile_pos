@@ -20,6 +20,8 @@ export interface CheckoutInput {
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  /** Carried from the job order this checkout bills out; null for a walk-in. */
+  motorcycleModel: string | null;
   jobOrderId: string | null;
   // Cart notes (typed at JO save or restored on resume) ride onto the sale —
   // mobile's toSale() does the same.
@@ -40,6 +42,7 @@ export function buildSaleInput(
     feeLines: input.feeLines,
     mechanicId: input.mechanicId,
     mechanicName: input.mechanicName,
+    motorcycleModel: input.motorcycleModel,
     tenders: input.tenders,
     discountType: input.discountType,
     paymentMethod: input.paymentMethod,

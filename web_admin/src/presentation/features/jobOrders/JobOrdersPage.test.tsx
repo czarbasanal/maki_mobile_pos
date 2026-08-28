@@ -19,6 +19,7 @@ const jobOrder = (o: Partial<JobOrder> = {}): JobOrder => ({
   feeLines: [],
   mechanicId: null,
   mechanicName: null,
+  motorcycleModel: null,
   discountType: DiscountType.amount,
   createdBy: 'u1',
   createdByName: 'C',
@@ -74,6 +75,7 @@ describe('JobOrdersPage', () => {
       id: 'd1',
       name: 'JO-072326-001',
       mechanicName: 'Kuya Bert',
+      motorcycleModel: 'Honda Click 125i',
       isConverted: false,
     });
     harness([open]);
@@ -81,6 +83,9 @@ describe('JobOrdersPage', () => {
     const joCell = screen.getByText('JO-072326-001');
     expect(joCell).toHaveClass('font-mono');
     expect(screen.getByText('Kuya Bert')).toBeInTheDocument();
+    // The bike is how staff recognise a ticket at a glance — same as mobile's
+    // list tile, which shows it as a chip.
+    expect(screen.getByText('Honda Click 125i')).toBeInTheDocument();
     expect(screen.getByText(formatMoney(cartGrandTotal(open.items, open.laborLines, open.discountType, open.feeLines)))).toBeInTheDocument();
     expect(screen.getByText('Open')).toBeInTheDocument();
   });

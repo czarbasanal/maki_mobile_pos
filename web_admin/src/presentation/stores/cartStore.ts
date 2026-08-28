@@ -17,6 +17,8 @@ interface CartState {
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  /** Carried from a resumed job order so billing out keeps the bike on the sale. */
+  motorcycleModel: string | null;
   jobOrderId: string | null;
   jobOrderName: string | null;
   // Optional sale/JO notes — restored on job order resume, carried onto the sale
@@ -47,6 +49,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     feeLines: [],
     mechanicId: null,
     mechanicName: null,
+    motorcycleModel: null,
     jobOrderId: null,
     jobOrderName: null,
     notes: null,
@@ -168,6 +171,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         feeLines: jobOrder.feeLines,
         mechanicId: jobOrder.mechanicId,
         mechanicName: jobOrder.mechanicName,
+        motorcycleModel: jobOrder.motorcycleModel,
         jobOrderId: jobOrder.id,
         jobOrderName: jobOrder.name,
         notes: jobOrder.notes,
@@ -180,6 +184,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         feeLines: [],
         mechanicId: null,
         mechanicName: null,
+        motorcycleModel: null,
         jobOrderId: null,
         jobOrderName: null,
         notes: null,

@@ -20,6 +20,7 @@ describe('jobOrderConverter.fromFirestore', () => {
         feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
         mechanicId: 'm1',
         mechanicName: 'Juan',
+        motorcycleModel: 'Honda Click 125i',
         discountType: 'percentage',
         createdBy: 'u1',
         createdByName: 'Cashier',
@@ -37,6 +38,7 @@ describe('jobOrderConverter.fromFirestore', () => {
     expect(d.feeLines).toEqual([{ id: 'f1', name: 'Convenience fee', amount: 50 }]);
     expect(d.mechanicId).toBe('m1');
     expect(d.mechanicName).toBe('Juan');
+    expect(d.motorcycleModel).toBe('Honda Click 125i');
     expect(d.discountType).toBe(DiscountType.percentage);
     expect(d.isConverted).toBe(false);
     expect(d.createdAt).toEqual(createdTs.toDate());

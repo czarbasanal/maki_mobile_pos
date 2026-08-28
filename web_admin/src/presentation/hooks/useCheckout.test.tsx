@@ -35,6 +35,7 @@ const checkoutInput: CheckoutInput = {
   feeLines: [],
   mechanicId: null,
   mechanicName: null,
+  motorcycleModel: null,
   jobOrderId: null,
   notes: null,
 };
@@ -48,6 +49,7 @@ function makeSale(overrides: Partial<Sale> = {}): Sale {
     feeLines: [],
     mechanicId: null,
     mechanicName: null,
+    motorcycleModel: null,
     tenders: { cash: 200 },
     discountType: DiscountType.amount,
     paymentMethod: PaymentMethod.cash,

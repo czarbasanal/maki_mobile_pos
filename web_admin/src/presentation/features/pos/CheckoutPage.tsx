@@ -17,6 +17,7 @@ export function CheckoutPage() {
   const feeLines = useCartStore((s) => s.feeLines);
   const mechanicId = useCartStore((s) => s.mechanicId);
   const mechanicName = useCartStore((s) => s.mechanicName);
+  const motorcycleModel = useCartStore((s) => s.motorcycleModel);
   const jobOrderId = useCartStore((s) => s.jobOrderId);
   const notes = useCartStore((s) => s.notes);
   const clear = useCartStore((s) => s.clear);
@@ -46,6 +47,7 @@ export function CheckoutPage() {
         feeLines,
         mechanicId,
         mechanicName,
+        motorcycleModel,
         jobOrderId,
         notes,
       });

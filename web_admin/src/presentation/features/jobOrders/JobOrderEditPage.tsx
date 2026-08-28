@@ -100,6 +100,16 @@ export function JobOrderEditPage() {
           className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm font-mono text-bodySmall text-light-text outline-none focus:border-light-text" />
       </label>
 
+      {/* Read-only: the model comes from the shared motorcycle_models list,
+          which only the mobile app can pick from today. Shown even when unset
+          so an admin can tell an empty field from a missing one. */}
+      <div className="max-w-sm space-y-tk-xs">
+        <span className="block text-bodySmall text-light-text-secondary">Motorcycle</span>
+        <p className={cn('text-bodySmall', jobOrder.motorcycleModel ? 'text-light-text' : 'text-light-text-hint')}>
+          {jobOrder.motorcycleModel ?? 'Not set — pick it on the mobile app'}
+        </p>
+      </div>
+
       <label className="block max-w-sm space-y-tk-xs">
         <span className="text-bodySmall text-light-text-secondary">Notes</span>
         <textarea rows={3} value={notes ?? ''} onChange={(e) => setNotes(e.target.value)}

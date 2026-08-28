@@ -18,6 +18,7 @@ export function PosPage() {
   const feeLines = useCartStore((s) => s.feeLines);
   const mechanicId = useCartStore((s) => s.mechanicId);
   const mechanicName = useCartStore((s) => s.mechanicName);
+  const motorcycleModel = useCartStore((s) => s.motorcycleModel);
   const jobOrderId = useCartStore((s) => s.jobOrderId);
   const jobOrderName = useCartStore((s) => s.jobOrderName);
   const notes = useCartStore((s) => s.notes);
@@ -96,6 +97,7 @@ export function PosPage() {
         feeLines,
         mechanicId,
         mechanicName,
+        motorcycleModel,
         notes: trimmedNotes,
       });
       setSaveOpen(false);

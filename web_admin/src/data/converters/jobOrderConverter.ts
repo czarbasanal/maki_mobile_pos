@@ -69,6 +69,7 @@ export const jobOrderConverter: FirestoreDataConverter<JobOrder> = {
       feeLines: parseFeeLines(d.feeLines),
       mechanicId: d.mechanicId ?? null,
       mechanicName: d.mechanicName ?? null,
+      motorcycleModel: d.motorcycleModel ?? null,
       discountType: discountTypeFromString(d.discountType),
       createdBy: d.createdBy ?? '',
       createdByName: d.createdByName ?? '',

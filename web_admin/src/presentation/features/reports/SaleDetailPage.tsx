@@ -106,6 +106,7 @@ export function SaleDetailPage() {
         <p className="text-bodySmall text-light-text-secondary">
           {dtFmt.format(sale.createdAt)} · {sale.cashierName}
           {sale.mechanicName ? ` · Mechanic: ${sale.mechanicName}` : ''}
+          {sale.motorcycleModel ? ` · Motorcycle: ${sale.motorcycleModel}` : ''}
         </p>
       </header>
 

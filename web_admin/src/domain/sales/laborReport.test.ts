@@ -12,6 +12,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
     feeLines: [],
     mechanicId: null,
     mechanicName: null,
+    motorcycleModel: null,
     discountType: DiscountType.amount,
     paymentMethod: PaymentMethod.cash,
     tenders: {},
@@ -61,6 +62,7 @@ describe('summarizeLabor', () => {
       sale({
         mechanicId: 'm1',
         mechanicName: 'Juan',
+        motorcycleModel: null,
         laborLines: [labor('b', 999)],
         status: SaleStatus.voided,
       }),

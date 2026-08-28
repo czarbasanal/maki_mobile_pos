@@ -15,6 +15,9 @@ export interface SaveJobOrderInput {
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  /** Optional: only the surfaces that know the bike pass it. `undefined` leaves
+   *  an existing job order's model untouched (update patches named keys only). */
+  motorcycleModel?: string | null;
   notes: string | null;
 }
 
@@ -44,6 +47,7 @@ export function useSaveJobOrder() {
             feeLines: input.feeLines,
             mechanicId: input.mechanicId,
             mechanicName: input.mechanicName,
+            motorcycleModel: input.motorcycleModel,
             notes: input.notes,
           },
           actor.id,
@@ -65,6 +69,7 @@ export function useSaveJobOrder() {
         feeLines: input.feeLines,
         mechanicId: input.mechanicId,
         mechanicName: input.mechanicName,
+        motorcycleModel: input.motorcycleModel ?? null,
         createdBy: actor.id,
         createdByName: cashierName,
         updatedBy: null,

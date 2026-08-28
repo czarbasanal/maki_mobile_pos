@@ -92,7 +92,9 @@ vi.mock('firebase/firestore', () => ({
         if (ref.path === 'settings/sale_counters') {
           return { exists: () => state.counterExists, data: () => state.counterData };
         }
-        if (state.jobOrderDoc && ref.path.startsWith('jobOrders/')) {
+        // 'job_orders' — the post-rename collection (FirestoreCollections
+        // .jobOrders). This branch was unreachable while it read 'jobOrders/'.
+        if (state.jobOrderDoc && ref.path.startsWith('job_orders/')) {
           const d = state.jobOrderDoc;
           return {
             exists: () => d.exists,
@@ -141,6 +143,7 @@ function baseInput(): Omit<Sale, 'id' | 'createdAt' | 'updatedAt'> {
     feeLines: [],
     mechanicId: null,
     mechanicName: null,
+    motorcycleModel: null,
     tenders: { cash: 100 },
     discountType: DiscountType.amount,
     paymentMethod: PaymentMethod.cash,
@@ -192,6 +195,44 @@ describe('FirestoreSaleRepository.create — drawer_state stamping', () => {
 
     const drawerWrite = state.writes.find((w) => w.path === 'drawer_state/state');
     expect(drawerWrite?.data).toEqual({ lastSaleDay: 20260726 });
+  });
+});
+
+// The sale doc is written the same hand-picked way as the item docs below, so
+// it drifts from the entity just as easily. Billing out a job order on web
+// dropped `motorcycleModel` this way: mobile records the bike on the job
+// order and carries it into the sale, web wrote a sale without it.
+describe('FirestoreSaleRepository.create — job order carry-over', () => {
+  beforeEach(() => {
+    state.writes = [];
+    state.autoIdSeq = 0;
+    state.counterExists = false;
+    state.counterData = {};
+    state.jobOrderDoc = null;
+    vi.useRealTimers();
+  });
+
+  it('persists motorcycleModel on the sale doc', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+
+    state.jobOrderDoc = { exists: true, isConverted: false };
+
+    await repo.create(
+      { ...baseInput(), jobOrderId: 'jo-1', motorcycleModel: 'Honda Click 125i' },
+      'actor-1',
+    );
+
+    const saleWrite = state.writes.find((w) => w.kind === 'set' && w.path.startsWith('sales/'));
+    expect((saleWrite?.data as Record<string, unknown>).motorcycleModel).toBe('Honda Click 125i');
+  });
+
+  it('persists motorcycleModel as null (not omitted) for a walk-in sale', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+
+    await repo.create(baseInput(), 'actor-1');
+
+    const saleWrite = state.writes.find((w) => w.kind === 'set' && w.path.startsWith('sales/'));
+    expect(saleWrite?.data as Record<string, unknown>).toHaveProperty('motorcycleModel', null);
   });
 });
 

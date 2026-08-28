@@ -12,6 +12,9 @@ export interface JobOrder {
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  /** Motorcycle model serviced (canonical name snapshot); null until set.
+   *  Set on mobile — the web admin displays it but has no picker yet. */
+  motorcycleModel: string | null;
   discountType: DiscountType;
   createdBy: string;
   createdByName: string;

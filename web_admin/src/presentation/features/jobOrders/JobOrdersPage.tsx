@@ -83,6 +83,7 @@ export function JobOrdersPage() {
                 <Th>JO #</Th>
                 <Th>Status</Th>
                 <Th>Mechanic</Th>
+                <Th>Motorcycle</Th>
                 <Th className="text-right">Total</Th>
                 <Th>Date</Th>
                 <Th className="text-right">&nbsp;</Th>
@@ -115,6 +116,9 @@ export function JobOrdersPage() {
                     </Td>
                     <Td className={billed ? 'text-light-text-hint' : 'text-light-text-secondary'}>
                       {jo.mechanicName ?? '—'}
+                    </Td>
+                    <Td className={billed ? 'text-light-text-hint' : 'text-light-text-secondary'}>
+                      {jo.motorcycleModel ?? '—'}
                     </Td>
                     <Td
                       className={cn(

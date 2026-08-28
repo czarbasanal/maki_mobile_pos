@@ -37,6 +37,7 @@ function fakeSale(o: Partial<Sale> = {}): Sale {
     notes: null,
     mechanicId: null,
     mechanicName: null,
+    motorcycleModel: null,
     voidedAt: null,
     voidedBy: null,
     voidedByName: null,

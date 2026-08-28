@@ -12,6 +12,7 @@ function sale(overrides: Partial<Sale> = {}): Sale {
     feeLines: [],
     mechanicId: null,
     mechanicName: null,
+    motorcycleModel: null,
     discountType: DiscountType.amount,
     paymentMethod: PaymentMethod.cash,
     tenders: {},

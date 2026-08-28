@@ -47,6 +47,7 @@ export class FirestoreJobOrderRepository implements JobOrderRepository {
       feeLines: feeLinesToMaps(jobOrder.feeLines),
       mechanicId: jobOrder.mechanicId ?? null,
       mechanicName: jobOrder.mechanicName ?? null,
+      motorcycleModel: jobOrder.motorcycleModel ?? null,
       discountType: jobOrder.discountType,
       createdBy: jobOrder.createdBy,
       createdByName: jobOrder.createdByName,
@@ -78,6 +79,7 @@ export class FirestoreJobOrderRepository implements JobOrderRepository {
     if (patch.feeLines !== undefined) data.feeLines = feeLinesToMaps(patch.feeLines);
     if (patch.mechanicId !== undefined) data.mechanicId = patch.mechanicId;
     if (patch.mechanicName !== undefined) data.mechanicName = patch.mechanicName;
+    if (patch.motorcycleModel !== undefined) data.motorcycleModel = patch.motorcycleModel;
     if (patch.discountType !== undefined) data.discountType = patch.discountType;
     if (patch.notes !== undefined) data.notes = patch.notes;
     await updateDoc(doc(this.db, FirestoreCollections.jobOrders, id), data);

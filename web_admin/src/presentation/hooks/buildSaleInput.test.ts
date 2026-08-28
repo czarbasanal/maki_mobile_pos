@@ -35,6 +35,7 @@ const input = (over: Partial<CheckoutInput> = {}): CheckoutInput => ({
   feeLines: [],
   mechanicId: null,
   mechanicName: null,
+  motorcycleModel: null,
   jobOrderId: null,
   notes: null,
   ...over,

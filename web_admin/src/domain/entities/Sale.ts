@@ -20,6 +20,8 @@ export interface Sale {
   feeLines: FeeLine[];
   mechanicId: string | null;
   mechanicName: string | null;
+  /** Motorcycle serviced, carried over from the job order this sale billed out. */
+  motorcycleModel: string | null;
   tenders: Partial<Record<PaymentMethod, number>>;
   discountType: DiscountType;
   paymentMethod: PaymentMethod;

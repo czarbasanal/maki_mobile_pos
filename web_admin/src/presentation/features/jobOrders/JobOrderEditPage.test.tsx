@@ -13,7 +13,7 @@ import type { JobOrder, Product, Mechanic } from '@/domain/entities';
 import type { ReactNode } from 'react';
 
 const jobOrder = (o: Partial<JobOrder> = {}): JobOrder => ({
-  id: 'd1', name: 'Mr Cruz — Mio', items: [], laborLines: [], feeLines: [], mechanicId: null, mechanicName: null,
+  id: 'd1', name: 'Mr Cruz — Mio', items: [], laborLines: [], feeLines: [], mechanicId: null, mechanicName: null, motorcycleModel: null,
   discountType: DiscountType.amount, createdBy: 'u1', createdByName: 'C', createdAt: new Date(),
   updatedAt: null, updatedBy: null, isConverted: false, convertedToSaleId: null, convertedAt: null, notes: null, ...o,
 });
@@ -60,6 +60,18 @@ describe('JobOrderEditPage', () => {
   it('shows the editor with the job order name once loaded', async () => {
     harness({ getById: vi.fn().mockResolvedValue(jobOrder()) });
     await waitFor(() => expect(screen.getByDisplayValue('Mr Cruz — Mio')).toBeInTheDocument());
+  });
+
+  it('names the motorcycle being worked on', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(jobOrder({ motorcycleModel: 'Honda Click 125i' })) });
+    await waitFor(() => expect(screen.getByText('Honda Click 125i')).toBeInTheDocument());
+  });
+
+  it('says the motorcycle is unset rather than hiding the field', async () => {
+    // The web admin has no model picker yet, so an admin who sees nothing at
+    // all cannot tell "no bike recorded" from "this page does not show it".
+    harness({ getById: vi.fn().mockResolvedValue(jobOrder({ motorcycleModel: null })) });
+    await waitFor(() => expect(screen.getByText(/Not set/i)).toBeInTheDocument());
   });
 
   it('blocks editing a converted (billed) job order', async () => {
