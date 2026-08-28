@@ -115,6 +115,20 @@ void main() {
     expect(find.text('After close'), findsNothing);
   });
 
+  testWidgets('always lines out Plate No DP and Delivery, even at zero',
+      (tester) async {
+    // A hidden row and an unimplemented feature look identical to a cashier
+    // who was told to record a DP. ₱0.00 says "nothing was recorded"; nothing
+    // at all says "this screen does not show it".
+    await tester.pumpWidget(_harness());
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    expect(find.text('Plate No DP'), findsOneWidget);
+    expect(find.text('Plate No Delivery'), findsOneWidget);
+  });
+
   testWidgets('names each mechanic under the mechanics line',
       (tester) async {
     await tester.pumpWidget(_harness(
@@ -165,13 +179,4 @@ void main() {
     expect(find.text('₱100.00'), findsOneWidget);
   });
 
-  testWidgets('no plate rows on a day that had none', (tester) async {
-    await tester.pumpWidget(_harness());
-    await tester.pump();
-    await tester.pump();
-    await _expandFirstTile(tester);
-
-    expect(find.text('Plate No DP'), findsNothing);
-    expect(find.text('Plate No Delivery'), findsNothing);
-  });
 }

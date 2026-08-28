@@ -215,14 +215,15 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
           // Expected cash is float + cash sales − cash expenses + DP − delivery.
           // Every other term has a row above; without these two the figure
           // could not be reconciled against what is on screen.
-          if (c.plateNoDp > 0)
-            ClosingKvRow(
-                label: 'Plate No DP', value: _peso(c.plateNoDp), dense: true),
-          if (c.plateNoDelivery > 0)
-            ClosingKvRow(
-                label: 'Plate No Delivery',
-                value: _peso(c.plateNoDelivery),
-                dense: true),
+          // Shown even at zero. Hiding an empty row makes "no DP was recorded"
+          // indistinguishable from "this summary does not show DP", which is
+          // exactly how the cashier read it when the rows were missing.
+          ClosingKvRow(
+              label: 'Plate No DP', value: _peso(c.plateNoDp), dense: true),
+          ClosingKvRow(
+              label: 'Plate No Delivery',
+              value: _peso(c.plateNoDelivery),
+              dense: true),
           ClosingKvRow(
               label: 'Opening float',
               value: _peso(c.openingFloat),

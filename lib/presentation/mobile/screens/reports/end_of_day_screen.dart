@@ -693,7 +693,9 @@ class _ClosedView extends ConsumerWidget {
                   label: 'Cash expenses', value: _peso(closing.cashExpenses)),
             ],
           ),
-          if (closing.plateNoDp > 0 || closing.plateNoDelivery > 0) ...[
+          // Always rendered, at zero too — see the note in the closing-history
+          // summary: an absent row reads as a missing feature, not an empty one.
+          ...[
             const SizedBox(height: 12),
             ClosingSectionCard(
               icon: LucideIcons.clipboardList,
