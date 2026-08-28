@@ -7,6 +7,7 @@ import { ReceivingEntryPage } from './ReceivingEntryPage';
 
 // 3 lines, 12 pieces — totalQuantity is a piece sum, never a line count.
 const entry = {
+  products: [],
   isResuming: false,
   referenceNumber: 'RCV-20260805',
   isLoadingRefs: false,
@@ -74,7 +75,7 @@ describe('ReceivingEntryPage item table columns', () => {
 
     // Trailing blank header is the remove-button column.
     const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['SKU', 'Item', 'Qty', 'Unit cost', 'Line total', '']);
+    expect(headers).toEqual(['SKU', 'Item name', 'Qty', 'Cost', 'Price', 'Line total', '']);
   });
 
   it('puts each line’s SKU in the first cell, not trailing the name', () => {
@@ -140,5 +141,50 @@ describe('ReceivingEntryPage pending-SKU display', () => {
   it('still shows a real SKU for an existing product line', () => {
     renderPage();
     expect(screen.getByText('SKU-1')).toBeInTheDocument();
+  });
+});
+
+describe('ReceivingEntryPage selling price column', () => {
+  it('resolves an existing line’s price from the product catalogue', () => {
+    const originalP = entry.products;
+    entry.products = [
+      { id: 'p1', price: 180 },
+    ] as unknown as typeof entry.products;
+    try {
+      renderPage();
+      const row = screen.getByText('Brake Pad').closest('tr')!;
+      // SKU | Item name | Qty | Cost | Price | Line total | remove
+      const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
+      expect(cells[4]).toContain('180');
+    } finally {
+      entry.products = originalP;
+    }
+  });
+
+  it('uses the typed price for a new product that does not exist yet', () => {
+    const originalL = entry.lines;
+    entry.lines = [{
+      id: 'n1', productId: '', sku: '00220001', name: 'New Tyre', quantity: 1, unit: 'pcs',
+      unitCost: 720, costCode: '', isNewVariation: false, newProductId: null, notes: null,
+      pendingNewProduct: {
+        category: 'Wheels', price: 900, reorderLevel: 0, autoGenerateSku: true,
+        autoSkuCategoryCode: '0022', barcodes: [], notes: null, sellingOptions: [],
+      },
+    }] as unknown as typeof entry.lines;
+    try {
+      renderPage();
+      const row = screen.getByText('New Tyre').closest('tr')!;
+      const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
+      expect(cells[4]).toContain('900');
+    } finally {
+      entry.lines = originalL;
+    }
+  });
+
+  it('shows a dash when the product is gone rather than a wrong number', () => {
+    renderPage(); // fixture has no products loaded
+    const row = screen.getByText('Brake Pad').closest('tr')!;
+    const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
+    expect(cells[4]).toBe('—');
   });
 });

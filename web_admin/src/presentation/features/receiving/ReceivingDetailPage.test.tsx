@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DiProvider, type Container } from '@/infrastructure/di/container';
+import type { Product } from '@/domain/entities';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ReceivingDetailPage } from './ReceivingDetailPage';
 
@@ -34,16 +36,22 @@ vi.mock('@/presentation/hooks/useReceiving', () => ({
   }),
 }));
 
-function renderPage() {
+function renderPage(products: Product[] = []) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // The page resolves each line's selling price from the product catalogue.
+  const productRepo: Partial<Container['productRepo']> = {
+    watchAll: (cb: (p: Product[]) => void) => { cb(products); return () => {}; },
+  };
   return render(
-    <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={['/receiving/rcv-1']}>
-        <Routes>
-          <Route path="/receiving/:id" element={<ReceivingDetailPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <DiProvider override={{ productRepo: productRepo as Container['productRepo'] }}>
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/receiving/rcv-1']}>
+          <Routes>
+            <Route path="/receiving/:id" element={<ReceivingDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    </DiProvider>,
   );
 }
 
@@ -60,7 +68,7 @@ describe('ReceivingDetailPage item table columns', () => {
     renderPage();
 
     const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['SKU', 'Item', 'Qty', 'Unit cost', 'Line total']);
+    expect(headers).toEqual(['SKU', 'Item name', 'Qty', 'Cost', 'Price', 'Line total']);
   });
 
   it('puts each row’s SKU in the first cell, not trailing the name', () => {
@@ -80,6 +88,6 @@ describe('ReceivingDetailPage item table columns', () => {
 
     const row = screen.getByText('Brake Pad').closest('tr')!;
     const cells = Array.from(row.querySelectorAll('td'));
-    expect(cells).toHaveLength(5);
+    expect(cells).toHaveLength(6);
   });
 });

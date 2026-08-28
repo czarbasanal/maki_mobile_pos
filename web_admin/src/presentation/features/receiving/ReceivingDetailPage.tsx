@@ -8,6 +8,7 @@ import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { ReceivingStatusBadge } from './ReceivingStatusBadge';
 import { displaySku } from '@/domain/products/sku';
+import { useProducts } from '@/presentation/hooks/useProducts';
 
 const dtFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -18,6 +19,10 @@ export function ReceivingDetailPage() {
   useEffect(() => {
     document.title = 'Receiving detail · MAKI POS Admin';
   }, []);
+
+  // Receiving items denormalize cost but not the selling price, so it is
+  // resolved from the product. Hooks cannot sit behind the guards below.
+  const { data: allProducts } = useProducts();
 
   if (isLoading) {
     return (
@@ -49,6 +54,14 @@ export function ReceivingDetailPage() {
     );
   }
 
+  // This is the product's CURRENT price, not the price at the time of
+  // receipt; a product deleted since the receiving was written shows none.
+  const priceByProductId = new Map((allProducts ?? []).map((p) => [p.id, p.price]));
+  const sellingPriceText = (it: (typeof receiving.items)[number]): string => {
+    const price = priceByProductId.get(it.newProductId ?? it.productId ?? '');
+    return price == null ? '—' : formatMoney(price);
+  };
+
   return (
     <div className="space-y-tk-lg px-tk-xl py-tk-lg">
       <header className="space-y-tk-xs">
@@ -75,9 +88,10 @@ export function ReceivingDetailPage() {
           <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
             <tr>
               <th className="px-tk-md py-tk-sm text-left font-medium">SKU</th>
-              <th className="px-tk-md py-tk-sm text-left font-medium">Item</th>
+              <th className="px-tk-md py-tk-sm text-left font-medium">Item name</th>
               <th className="px-tk-md py-tk-sm text-right font-medium">Qty</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Unit cost</th>
+              <th className="px-tk-md py-tk-sm text-right font-medium">Cost</th>
+              <th className="px-tk-md py-tk-sm text-right font-medium">Price</th>
               <th className="px-tk-md py-tk-sm text-right font-medium">Line total</th>
             </tr>
           </thead>
@@ -102,6 +116,9 @@ export function ReceivingDetailPage() {
                 <td className="px-tk-md py-tk-sm text-right tabular-nums">{it.quantity}</td>
                 <td className="px-tk-md py-tk-sm text-right tabular-nums">
                   {formatMoney(it.unitCost)}
+                </td>
+                <td className="px-tk-md py-tk-sm text-right tabular-nums">
+                  {sellingPriceText(it)}
                 </td>
                 <td className="px-tk-md py-tk-sm text-right tabular-nums">
                   {formatMoney(it.unitCost * it.quantity)}

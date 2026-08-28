@@ -208,6 +208,9 @@ export function useReceivingEntry() {
   }
 
   return {
+    /** For resolving a line's selling price — the receiving line denormalizes
+     *  cost but not price, so the table looks it up. */
+    products: products ?? [],
     isResuming: !!id,
     referenceNumber,
     isLoadingRefs: productsLoading || (!!id && existing.isLoading),

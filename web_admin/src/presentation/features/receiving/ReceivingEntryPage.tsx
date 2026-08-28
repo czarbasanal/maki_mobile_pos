@@ -38,6 +38,15 @@ export function ReceivingEntryPage() {
   }
 
 
+  // The receiving line denormalizes cost but not the selling price, so a line
+  // for an existing product resolves it from the product. A product deleted
+  // since the receiving was written has none to show.
+  const priceByProductId = new Map(entry.products.map((p) => [p.id, p.price]));
+  const sellingPriceText = (l: (typeof entry.lines)[number]): string => {
+    const price = l.pendingNewProduct?.price ?? priceByProductId.get(l.productId ?? '');
+    return price == null ? '—' : formatMoney(price);
+  };
+
   return (
     <div className="space-y-tk-lg px-tk-xl py-tk-lg">
       <header className="space-y-tk-xs">
@@ -152,16 +161,17 @@ export function ReceivingEntryPage() {
           <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
             <tr>
               <th className="px-tk-md py-tk-sm text-left font-medium">SKU</th>
-              <th className="px-tk-md py-tk-sm text-left font-medium">Item</th>
+              <th className="px-tk-md py-tk-sm text-left font-medium">Item name</th>
               <th className="px-tk-md py-tk-sm text-right font-medium">Qty</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Unit cost</th>
+              <th className="px-tk-md py-tk-sm text-right font-medium">Cost</th>
+              <th className="px-tk-md py-tk-sm text-right font-medium">Price</th>
               <th className="px-tk-md py-tk-sm text-right font-medium">Line total</th>
               <th className="px-tk-md py-tk-sm" />
             </tr>
           </thead>
           <tbody className="divide-y divide-light-hairline">
             {entry.lines.length === 0 ? (
-              <tr><td colSpan={6} className="px-tk-md py-tk-lg text-center text-light-text-hint">No items yet.</td></tr>
+              <tr><td colSpan={7} className="px-tk-md py-tk-lg text-center text-light-text-hint">No items yet.</td></tr>
             ) : (
               entry.lines.map((l) => (
                 <tr key={l.id}>
@@ -178,6 +188,7 @@ export function ReceivingEntryPage() {
                   </td>
                   <td className="px-tk-md py-tk-sm text-right tabular-nums">{l.quantity}</td>
                   <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(l.unitCost)}</td>
+                  <td className="px-tk-md py-tk-sm text-right tabular-nums">{sellingPriceText(l)}</td>
                   <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(l.unitCost * l.quantity)}</td>
                   <td className="px-tk-md py-tk-sm text-right">
                     <button type="button" onClick={() => entry.removeLine(l.id)}

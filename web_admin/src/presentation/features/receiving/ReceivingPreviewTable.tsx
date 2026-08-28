@@ -32,10 +32,10 @@ export function ReceivingPreviewTable({ rows, resolutions, onResolve }: Receivin
           <tr>
             <th className="px-tk-md py-tk-sm text-left font-medium">#</th>
             <th className="px-tk-md py-tk-sm text-left font-medium">SKU</th>
-            <th className="px-tk-md py-tk-sm text-left font-medium">Name</th>
+            <th className="px-tk-md py-tk-sm text-left font-medium">Item name</th>
+            <th className="px-tk-md py-tk-sm text-right font-medium">Qty</th>
             <th className="px-tk-md py-tk-sm text-right font-medium">Cost</th>
             <th className="px-tk-md py-tk-sm text-right font-medium">Price</th>
-            <th className="px-tk-md py-tk-sm text-right font-medium">Qty</th>
             <th className="px-tk-md py-tk-sm text-left font-medium">Status</th>
           </tr>
         </thead>
@@ -72,9 +72,9 @@ export function ReceivingPreviewTable({ rows, resolutions, onResolve }: Receivin
                     </div>
                   ) : null}
                 </td>
+                <td className="px-tk-md py-tk-sm text-right tabular-nums">{r.quantity}</td>
                 <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(r.cost)}</td>
                 <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(r.price)}</td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">{r.quantity}</td>
                 <td className="px-tk-md py-tk-sm">
                   <span className={cn('rounded-full px-tk-sm py-[1px] text-[11px] font-semibold', badge.cls)}>
                     {badge.label}
