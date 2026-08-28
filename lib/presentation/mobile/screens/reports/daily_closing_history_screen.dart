@@ -155,6 +155,22 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
     final activity = liveDraft == null
         ? null
         : PostCloseActivity.between(closing: c, current: liveDraft);
+    // Who earned the labor, for the hand-over panel. The closing stores only
+    // the total, so the names come from the day's sales — which means they can
+    // drift from the frozen figure once a sale is voided after close. The
+    // panel says so when they disagree; it never silently replaces the total.
+    final shares = ref
+        .watch(mechanicPerformanceReportProvider(DateRangeParams(
+          startDate: c.businessDate,
+          endDate: c.businessDate
+              .add(const Duration(days: 1))
+              .subtract(const Duration(milliseconds: 1)),
+        )))
+        .valueOrNull
+        ?.byMechanic
+        .where((m) => m.laborTotal > 0)
+        .map((m) => HandoverShare(name: m.mechanicName, amount: m.laborTotal))
+        .toList();
     return Container(
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.hairline(isDark))),
@@ -208,9 +224,11 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
               label: 'Counted cash',
               value: _peso(c.countedCash),
               dense: true),
-          ClosingHandoffRows(
+          ClosingHandoverPanel(
+            countedCash: c.countedCash,
             laborFees: c.forMechanics,
             forManagement: c.forManagement,
+            shares: shares,
             dense: true,
           ),
           if (activity != null && activity.hasChanged)

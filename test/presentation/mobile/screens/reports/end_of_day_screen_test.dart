@@ -124,7 +124,7 @@ void main() {
     // watched — needs one more pump than before that fix.
     await tester.pump();
 
-    expect(find.text('Labor fees → mechanics'), findsNothing);
+    expect(find.text('To mechanics'), findsNothing);
 
     await tester.ensureVisible(find.byKey(const ValueKey('counted-cash')));
     await tester.enterText(
@@ -136,11 +136,11 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Labor fees → mechanics'), findsOneWidget);
+    expect(find.text('To mechanics'), findsOneWidget);
     // ₱450.00 appears twice: 'Labor revenue (service)' in the Sales card
-    // plus the new handoff row.
+    // plus the mechanics line of the hand-over panel.
     expect(find.text('₱450.00'), findsNWidgets(2));
-    expect(find.text('Sale items → management'), findsOneWidget);
+    expect(find.text('To management'), findsOneWidget);
     expect(find.text('₱2,550.00'), findsOneWidget); // 3000 − 450
   });
 
@@ -151,8 +151,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Labor fees → mechanics'), findsOneWidget);
-    expect(find.text('Sale items → management'), findsOneWidget);
+    expect(find.text('To mechanics'), findsOneWidget);
+    expect(find.text('To management'), findsOneWidget);
     expect(find.text('₱1,550.00'), findsOneWidget); // 2000 − 450
     expect(find.text('After close'), findsNothing);
   });
