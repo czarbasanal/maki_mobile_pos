@@ -1,4 +1,4 @@
-// Mirror of mobile's VoidRequestRepositoryImpl (create side only). The
+// Mirror of mobile's VoidRequestRepositoryImpl. The
 // transaction pre-allocates the request doc, then claims
 // void_request_pending/{saleId} — the hard duplicate lock — and writes both
 // atomically. Rules require requestedBy == auth.uid and status == 'pending'.
@@ -6,17 +6,24 @@ import {
   collection,
   doc,
   getDocs,
-  limit,
+  limit as fsLimit,
+  onSnapshot,
+  orderBy,
   query,
   runTransaction,
   serverTimestamp,
   where,
+  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type {
   VoidRequestCreateInput,
   VoidRequestRepository,
+  VoidRequestResolveInput,
 } from '@/domain/repositories/VoidRequestRepository';
+import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
+import type { VoidRequest } from '@/domain/entities';
+import { voidRequestConverter } from '@/data/converters/voidRequestConverter';
 
 const REQUESTS = 'void_requests';
 const PENDING = 'void_request_pending';
@@ -59,9 +66,64 @@ export class FirestoreVoidRequestRepository implements VoidRequestRepository {
         collection(this.db, REQUESTS),
         where('saleId', '==', saleId),
         where('status', '==', 'pending'),
-        limit(1),
+        fsLimit(1),
       ),
     );
     return !snap.empty;
+  }
+
+  watchRequests(
+    callback: (requests: VoidRequest[]) => void,
+    onError?: (e: Error) => void,
+    limit = 50,
+  ): Unsubscribe {
+    const q = query(
+      collection(this.db, REQUESTS).withConverter(voidRequestConverter),
+      orderBy('createdAt', 'desc'),
+      fsLimit(limit),
+    );
+    return onSnapshot(
+      q,
+      (snap) => callback(snap.docs.map((d) => d.data())),
+      (e) => onError?.(e as Error),
+    );
+  }
+
+  async resolve(input: VoidRequestResolveInput): Promise<void> {
+    // One batch, mirroring mobile: the status write and the release of the
+    // per-sale claim must not be able to land separately, or the sale is left
+    // permanently un-requestable with no pending request to show for it.
+    const batch = writeBatch(this.db);
+    batch.update(doc(this.db, REQUESTS, input.requestId), {
+      status: input.status,
+      read: true,
+      resolvedBy: input.resolvedBy,
+      resolvedByName: input.resolvedByName,
+      resolvedAt: serverTimestamp(),
+      ...(input.rejectionReason != null
+        ? { rejectionReason: input.rejectionReason }
+        : {}),
+    });
+    // Idempotent: requests predating the claim collection have none, and
+    // deleting a missing doc is a no-op.
+    batch.delete(doc(this.db, PENDING, input.saleId));
+    await batch.commit();
+  }
+
+  async markAllRead(): Promise<void> {
+    // Capped at the 500-write batch limit. Marking read is a badge nicety, so
+    // a partial pass is fine — the next open clears the rest — but exceeding
+    // the limit would fail the whole batch and leave the badge stuck.
+    const snap = await getDocs(
+      query(
+        collection(this.db, REQUESTS),
+        where('read', '==', false),
+        fsLimit(500),
+      ),
+    );
+    if (snap.empty) return;
+    const batch = writeBatch(this.db);
+    snap.docs.forEach((d) => batch.update(d.ref, { read: true }));
+    await batch.commit();
   }
 }
