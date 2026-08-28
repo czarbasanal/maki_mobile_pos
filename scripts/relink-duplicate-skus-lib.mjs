@@ -3,8 +3,11 @@
  *
  * Takes products that share a name+category but are not linked, and plans a
  * rewrite that turns each group into one base plus `<base>-N` variations.
- * The LOWEST SKU in a group is kept as the base — deterministic, and in an
- * auto-SKU catalog the lowest sequence is the first one entered.
+ *
+ * The member holding the MOST STOCK keeps its SKU as the base, ties broken by
+ * the lowest SKU so the result is deterministic. Whichever product keeps its
+ * code keeps its existing labels valid, so basing on stock relabels the fewest
+ * physical units — on the live catalog that was 99 units instead of 235.
  *
  * Does no I/O. The runner owns the Firestore writes and the SKU-claim moves.
  */
@@ -46,8 +49,14 @@ export function unlinkedDuplicateGroups(products) {
  * the runner treats that as a skip rather than guessing.
  */
 export function planGroupRewrite(group, skuIsTaken = () => false) {
-  const sorted = [...group].sort((a, b) => String(a.sku).localeCompare(String(b.sku)));
-  const base = sorted[0];
+  // Base = most stock, ties by lowest SKU. The rest are numbered in SKU order
+  // so the suffixes are stable across runs.
+  const base = [...group].sort(
+    (a, b) => Number(b.quantity ?? 0) - Number(a.quantity ?? 0) ||
+              String(a.sku).localeCompare(String(b.sku)),
+  )[0];
+  const sorted = [base, ...group.filter((p) => p.sku !== base.sku)
+    .sort((a, b) => String(a.sku).localeCompare(String(b.sku)))];
   const out = [];
   let n = 0;
   for (const p of sorted.slice(1)) {

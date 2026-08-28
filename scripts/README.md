@@ -125,10 +125,19 @@ job.
 
 ## relink-duplicate-skus.mjs
 
-Turns accidental duplicate products into proper cost variations. For each group
-sharing a name + category that is not already linked, the LOWEST SKU stays as the
-base and the others are rewritten to `<base>-N`, gaining `baseSku` and
-`variationNumber`.
+Turns accidental duplicate products into proper cost variations. For each group of
+ACTIVE products sharing a name + category that is not already linked, the member
+holding the MOST STOCK keeps its SKU as the base (ties broken by lowest SKU) and
+the others are rewritten to `<base>-N`, gaining `baseSku` and `variationNumber`.
+
+Two deliberate choices, both measured against the live catalogue:
+- **Base = most stock.** Whichever product keeps its code keeps any printed label
+  valid, so this relabels the fewest physical units — 51 units rather than the 235
+  a lowest-SKU rule would have moved.
+- **Active only.** An archived product is invisible to the app's own duplicate
+  lookup (`findByNameKey` filters `isActive`), and mixing the two produced
+  nonsense: three groups would have made a LIVE product a variation of an
+  ARCHIVED one purely because the archived SKU sorted first.
 
 - Dry run:  `node relink-duplicate-skus.mjs`
 - Execute:  `node relink-duplicate-skus.mjs --execute`
@@ -149,6 +158,6 @@ that is what an audit trail is. Those lines keep the old code and still resolve 
 affected.
 
 ⚠️ **Anything physically printed with the old SKU stops matching.** The rewrite
-changes the code on 24 products; a shelf label or Code128 barcode carrying the old
-value will no longer scan to that product. Reprint before running, or accept the
-gap.
+changes the code on 20 products carrying 51 units; a shelf label or Code128 barcode
+holding the old value would no longer scan to that product. The shop confirmed on
+2026-08-28 that no such labels exist.

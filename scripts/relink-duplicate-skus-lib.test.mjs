@@ -9,18 +9,29 @@ import {
 
 const p = (sku, over = {}) => ({ id: sku, sku, name: 'BELT BANDO', category: 'CVT', baseSku: null, variationNumber: null, cost: 1, price: 2, quantity: 0, ...over });
 
-test('keeps the lowest sku as the base and numbers the rest from 1', () => {
-  const plan = planGroupRewrite([p('00020051'), p('00020048'), p('00020052')]);
-  assert.deepEqual(plan.map(r => [r.fromSku, r.toSku]), [
-    ['00020051', '00020048-1'],
-    ['00020052', '00020048-2'],
+test('the member holding the most stock keeps its sku as the base', () => {
+  // Whichever product keeps its code keeps its printed labels valid, so the
+  // busiest shelf item must be the one that does not move.
+  const plan = planGroupRewrite([
+    p('00020051', { quantity: 3 }),
+    p('00020048', { quantity: 1 }),
+    p('00020052', { quantity: 84 }),
   ]);
+  assert.equal(plan[0].baseSku, '00020052');
+  assert.deepEqual(plan.map(r => [r.fromSku, r.toSku]), [
+    ['00020048', '00020052-1'],
+    ['00020051', '00020052-2'],
+  ]);
+});
+
+test('a stock tie falls back to the lowest sku so runs are deterministic', () => {
+  const plan = planGroupRewrite([p('00020051', { quantity: 5 }), p('00020048', { quantity: 5 })]);
   assert.equal(plan[0].baseSku, '00020048');
-  assert.deepEqual(plan.map(r => r.variationNumber), [1, 2]);
+  assert.deepEqual(plan.map(r => r.variationNumber), [1]);
 });
 
 test('skips a candidate suffix that is already taken elsewhere', () => {
-  const plan = planGroupRewrite([p('00020048'), p('00020051')], s => s === '00020048-1');
+  const plan = planGroupRewrite([p('00020048', { quantity: 9 }), p('00020051')], s => s === '00020048-1');
   assert.equal(plan[0].toSku, '00020048-2');
 });
 

@@ -1,8 +1,9 @@
 // Relinks accidental duplicate products as cost variations of one base.
 //
-// For every group of products sharing a name + category that are NOT already
-// linked, the LOWEST SKU stays as the base and the others are rewritten to
-// `<base>-N`, gaining baseSku + variationNumber. Stock is NOT merged — each
+// For every group of ACTIVE products sharing a name + category that are NOT
+// already linked, the member holding the MOST STOCK keeps its SKU as the base
+// and the others are rewritten to `<base>-N`, gaining baseSku +
+// variationNumber. Basing on stock relabels the fewest physical units. Stock is NOT merged — each
 // variation keeps its own quantity and cost, which is the point: they are the
 // same part bought at different prices.
 //
@@ -55,8 +56,15 @@ const keywordsFor = (p) => {
 };
 
 const snap = await db.collection('products').get();
-const products = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-console.log(`\nfound ${products.length} products`);
+const everything = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+// ACTIVE only. An archived product is hidden from the app's own duplicate
+// lookup (findByNameKey filters isActive), and grouping across the line
+// produces nonsense: on the live catalog three groups would have made a LIVE
+// product a variation of an ARCHIVED one, purely because the archived SKU
+// sorted first.
+const products = everything.filter((p) => p.isActive !== false);
+console.log(`\nfound ${everything.length} products — ${products.length} active, ` +
+            `${everything.length - products.length} archived and skipped`);
 
 const plan = planRelink(products);
 const byBase = new Map();
