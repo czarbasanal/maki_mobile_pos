@@ -96,8 +96,13 @@ final mechanicPerformanceReportProvider = FutureProvider.autoDispose
 });
 
 /// Provides a single sale by ID.
+///
+/// autoDispose so opening a sale re-reads it. Without it the first result was
+/// kept for the life of the ProviderContainer, so a sale corrected elsewhere —
+/// another device, or a back-office fix — kept showing its old payment method
+/// until the app was restarted. Matches the other read-model providers here.
 final saleByIdProvider =
-    FutureProvider.family<SaleEntity?, String>((ref, saleId) async {
+    FutureProvider.autoDispose.family<SaleEntity?, String>((ref, saleId) async {
   final repository = ref.watch(saleRepositoryProvider);
   return repository.getSaleById(saleId);
 });

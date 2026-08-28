@@ -50,13 +50,25 @@ void main() {
     expect(canCheckout(), isTrue);
   });
 
-  test('mixed: entering the digital split is enough (UI shows GCash preselected)',
-      () {
+  test('mixed: the split alone is NOT enough — a provider must be picked', () {
+    // Mixed used to seed GCash, so a cashier who had just chosen Maya and then
+    // switched to Mixed got a GCash-labelled field and GCash-attributed money
+    // without ever choosing it. A real sale (SALE-20260828-020) recorded
+    // ₱285 as GCash that way. Mixed now starts with neither provider picked.
     cart.setPaymentMethod(PaymentMethod.mixed);
-    // User types the digital portion but never taps the GCash segment, since
-    // the UI already shows it selected.
     cart.setSplitAmount(40);
+    expect(canCheckout(), isFalse);
+
+    cart.setSecondaryMethod(PaymentMethod.maya);
     expect(canCheckout(), isTrue);
+  });
+
+  test('mixed: choosing a provider never silently becomes another one', () {
+    cart.setPaymentMethod(PaymentMethod.mixed);
+    cart.setSecondaryMethod(PaymentMethod.maya);
+    cart.setSplitAmount(40);
+    expect(cart.state.secondaryMethod, PaymentMethod.maya);
+    expect(cart.state.tenders.containsKey(PaymentMethod.gcash), isFalse);
   });
 
   test('salmon: entering the downpayment is enough (UI shows Cash preselected)',

@@ -80,4 +80,28 @@ void main() {
         {PaymentMethod.cash: 900, PaymentMethod.gcash: 600});
     expect(cart.state.isPaymentValid, true);
   });
+
+  test('mixed with no provider chosen does not invent one', () {
+    // The old fallback was `secondaryMethod ?? gcash`, which quietly attributed
+    // the digital portion to GCash. Nothing may guess a provider on the
+    // operator's behalf — isPaymentValid blocks the sale until one is picked.
+    cart.setPaymentMethod(PaymentMethod.mixed);
+    cart.setSplitAmount(400);
+
+    expect(cart.state.secondaryMethod, isNull);
+    expect(cart.state.tenders.containsKey(PaymentMethod.gcash), isFalse);
+    expect(cart.state.tenders.containsKey(PaymentMethod.maya), isFalse);
+    expect(cart.state.isPaymentValid, isFalse);
+  });
+
+  test('mixed attributes the digital portion to the chosen provider', () {
+    cart.setPaymentMethod(PaymentMethod.mixed);
+    cart.setSecondaryMethod(PaymentMethod.maya);
+    cart.setSplitAmount(400);
+
+    expect(cart.state.tenders, {
+      PaymentMethod.cash: 600,
+      PaymentMethod.maya: 400,
+    });
+  });
 }
