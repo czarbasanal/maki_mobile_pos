@@ -119,8 +119,26 @@ VoidRequestEntity _req({
       createdAt: at,
     );
 
+
+// The screen filters by SHOP business day (shopNowProvider → nowProvider),
+// while these fixtures used the machine's local clock. On a machine whose
+// zone is not the shop's, the two calendars straddle midnight for part of
+// every day, and "5 minutes ago" landed in yesterday's business day — the
+// tests passed or failed depending on the hour they were run. Pin the clock
+// instead, and anchor every fixture to the same instant.
+final _fixedNow = DateTime.utc(2026, 8, 20, 4, 0); // 12:00 shop time (UTC+8)
+
 Widget _harness(List<VoidRequestEntity> list) => ProviderScope(
       overrides: [
+        nowProvider.overrideWithValue(() => _fixedNow),
+        // Pin the visible range too: the default is computed from the wall
+        // clock inside voidRequestDateRangeProvider, so without this the
+        // fixtures below only fall inside "today" depending on the hour the
+        // suite runs.
+        voidRequestDateRangeProvider.overrideWith((ref) => DateTimeRange(
+              start: _fixedNow.subtract(const Duration(hours: 12)),
+              end: _fixedNow.add(const Duration(hours: 12)),
+            )),
         currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
         voidRequestRepositoryProvider
             .overrideWithValue(_FakeVoidRequestRepository(list)),
@@ -131,7 +149,7 @@ Widget _harness(List<VoidRequestEntity> list) => ProviderScope(
 void main() {
   testWidgets('renders AppCard rows with status pills for today\'s requests',
       (tester) async {
-    final now = DateTime.now();
+    final now = _fixedNow;
     await tester.pumpWidget(_harness([
       _req(
           id: '1',
@@ -207,6 +225,11 @@ void main() {
     Widget harnessWithSale(VoidRequestEntity request, SaleEntity sale) =>
         ProviderScope(
           overrides: [
+            nowProvider.overrideWithValue(() => _fixedNow),
+            voidRequestDateRangeProvider.overrideWith((ref) => DateTimeRange(
+                  start: _fixedNow.subtract(const Duration(hours: 12)),
+                  end: _fixedNow.add(const Duration(hours: 12)),
+                )),
             currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
             voidRequestRepositoryProvider
                 .overrideWithValue(_FakeVoidRequestRepository([request])),
@@ -225,7 +248,7 @@ void main() {
         reason: 'Wrong item scanned',
         status: VoidRequestStatus.pending,
         read: false,
-        at: DateTime.now(),
+        at: _fixedNow,
       );
       final sale = saleWith(const SaleItemEntity(
         id: 'item-1',
@@ -260,7 +283,7 @@ void main() {
         reason: 'Wrong item scanned',
         status: VoidRequestStatus.pending,
         read: false,
-        at: DateTime.now(),
+        at: _fixedNow,
       );
       final sale = saleWith(const SaleItemEntity(
         id: 'item-1',
@@ -294,7 +317,7 @@ void main() {
         reason: 'Wrong item scanned',
         status: VoidRequestStatus.pending,
         read: false,
-        at: DateTime.now(),
+        at: _fixedNow,
       );
       final sale = saleWith(const SaleItemEntity(
         id: 'item-1',
@@ -324,7 +347,7 @@ void main() {
         reason: 'Wrong item scanned',
         status: VoidRequestStatus.pending,
         read: false,
-        at: DateTime.now(),
+        at: _fixedNow,
       );
       final sale = saleWith(const SaleItemEntity(
         id: 'item-1',
@@ -358,7 +381,7 @@ void main() {
         reason: 'Wrong item scanned',
         status: VoidRequestStatus.pending,
         read: false,
-        at: DateTime.now(),
+        at: _fixedNow,
       );
       final sale = saleWith(const SaleItemEntity(
         id: 'item-1',

@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/repositories/void_request_repository.dart
 import 'package:maki_mobile_pos/presentation/mobile/screens/sales/void_requests_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/date_range_picker.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/void_request_provider.dart';
 
 /// Hand-written fake over an in-memory list, mirroring the pattern in
@@ -112,11 +113,29 @@ VoidRequestEntity _req(
       requestedByRole: 'cashier',
       reason: 'wrong item',
       status: status,
-      createdAt: createdAt ?? DateTime.now(),
+      createdAt: createdAt ?? _fixedNow,
     );
+
+
+// The screen filters by SHOP business day (shopNowProvider → nowProvider),
+// while these fixtures used the machine's local clock. On a machine whose
+// zone is not the shop's, the two calendars straddle midnight for part of
+// every day, and "5 minutes ago" landed in yesterday's business day — the
+// tests passed or failed depending on the hour they were run. Pin the clock
+// instead, and anchor every fixture to the same instant.
+final _fixedNow = DateTime.utc(2026, 8, 20, 4, 0); // 12:00 shop time (UTC+8)
 
 Widget _harness(List<VoidRequestEntity> seed) => ProviderScope(
       overrides: [
+        nowProvider.overrideWithValue(() => _fixedNow),
+        // Pin the visible range too: the default is computed from the wall
+        // clock inside voidRequestDateRangeProvider, so without this the
+        // fixtures below only fall inside "today" depending on the hour the
+        // suite runs.
+        voidRequestDateRangeProvider.overrideWith((ref) => DateTimeRange(
+              start: _fixedNow.subtract(const Duration(hours: 12)),
+              end: _fixedNow.add(const Duration(hours: 12)),
+            )),
         currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
         voidRequestRepositoryProvider
             .overrideWithValue(_FakeVoidRequestRepository(seed)),
@@ -127,7 +146,7 @@ Widget _harness(List<VoidRequestEntity> seed) => ProviderScope(
 void main() {
   testWidgets('shows the date filter (Today) and status cards with counts',
       (tester) async {
-    final now = DateTime.now();
+    final now = _fixedNow;
     final seed = [
       _req('p1', createdAt: now.subtract(const Duration(minutes: 1))),
       _req('p2', createdAt: now.subtract(const Duration(minutes: 2))),
@@ -155,7 +174,7 @@ void main() {
 
   testWidgets('tapping the Pending card narrows the list to pending only',
       (tester) async {
-    final now = DateTime.now();
+    final now = _fixedNow;
     final seed = [
       _req('p1', createdAt: now.subtract(const Duration(minutes: 1))),
       _req('a1',
@@ -187,7 +206,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final now = DateTime.now();
+    final now = _fixedNow;
     final seed = List.generate(
       21,
       (i) => _req('r$i', createdAt: now.subtract(Duration(minutes: i))),
@@ -208,13 +227,18 @@ void main() {
   testWidgets(
       'the old full stream no longer drives the list body',
       (tester) async {
-    final now = DateTime.now();
+    final now = _fixedNow;
     final seed = [
       _req('p1', createdAt: now.subtract(const Duration(minutes: 1))),
     ];
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          nowProvider.overrideWithValue(() => _fixedNow),
+          voidRequestDateRangeProvider.overrideWith((ref) => DateTimeRange(
+                start: _fixedNow.subtract(const Duration(hours: 12)),
+                end: _fixedNow.add(const Duration(hours: 12)),
+              )),
           currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
           voidRequestRepositoryProvider
               .overrideWithValue(_FakeVoidRequestRepository(seed)),
@@ -236,7 +260,7 @@ void main() {
   testWidgets(
       'custom date range handler normalizes end to end-of-day and sets preset',
       (tester) async {
-    final now = DateTime.now();
+    final now = _fixedNow;
     final seed = [
       _req('p1', createdAt: now.subtract(const Duration(minutes: 1))),
     ];
