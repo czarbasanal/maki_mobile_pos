@@ -35,6 +35,7 @@ import { canAccess } from '@/presentation/router/routeGuards';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { useSignOut } from '@/presentation/hooks/useSignOut';
+import { VoidRequestsBell } from './VoidRequestsBell';
 import { cn } from '@/core/utils/cn';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -155,6 +156,8 @@ export function Sidebar() {
             MAKI POS
           </span>
         )}
+        <div className="flex items-center gap-tk-xs">
+        <VoidRequestsBell collapsed={collapsed} />
         <button
           type="button"
           onClick={() => setManualCollapsed(!collapsed)}
@@ -168,6 +171,7 @@ export function Sidebar() {
             <ChevronDoubleLeftIcon className="h-4 w-4" />
           )}
         </button>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-tk-sm py-tk-sm">
