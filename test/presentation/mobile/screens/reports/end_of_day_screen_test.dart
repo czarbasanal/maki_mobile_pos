@@ -175,8 +175,11 @@ void main() {
     expect(find.text('After close'), findsOneWidget);
     expect(find.text('Sale items'), findsOneWidget);
     expect(find.text('Labor fees'), findsOneWidget);
-    expect(find.text('Updated for management'), findsOneWidget);
-    expect(find.text('For mechanics (whole day)'), findsOneWidget);
+    // The split moved to the hand-over panel, which now supersedes its sealed
+    // figures: the ₱750 whole-day labor is what to hand over, stated once.
+    expect(find.text('Updated for management'), findsNothing);
+    expect(find.text('For mechanics (whole day)'), findsNothing);
+    expect(find.text('To mechanics'), findsOneWidget);
     expect(find.text('₱750.00'), findsOneWidget);
   });
 

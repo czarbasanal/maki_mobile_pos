@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
+import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 
 /// One mechanic's share of the day's labor fees.
 class HandoverShare {
@@ -17,7 +18,13 @@ class HandoverShare {
 /// Presented as its own block rather than more key-value rows: these two
 /// figures decide who physically receives which cash, so they are the
 /// conclusion of the summary rather than another line item. It leads with the
-/// counted cash so a reader can see the two parts add up to it.
+/// drawer total so a reader can see the two parts add up to it.
+///
+/// Closing the drawer before the last customer leaves is routine here, so
+/// [activity] lets the panel supersede itself: once sales land after close,
+/// the sealed figures are no longer what anyone should hand over, and the
+/// panel switches to the whole-day ones rather than presenting a stale
+/// instruction. The sealed figures stay visible in the summary rows above.
 class ClosingHandoverPanel extends StatelessWidget {
   const ClosingHandoverPanel({
     super.key,
@@ -25,6 +32,7 @@ class ClosingHandoverPanel extends StatelessWidget {
     required this.laborFees,
     required this.forManagement,
     this.shares,
+    this.activity,
     this.dense = false,
   });
 
@@ -45,6 +53,10 @@ class ClosingHandoverPanel extends StatelessWidget {
   /// figures that silently fail to add up.
   final List<HandoverShare>? shares;
 
+  /// Post-close drift, when the caller can compute it. With drift, the panel
+  /// hands over the whole-day figures instead of the sealed ones.
+  final PostCloseActivity? activity;
+
   final bool dense;
 
   @override
@@ -56,9 +68,18 @@ class ClosingHandoverPanel extends StatelessWidget {
     String peso(double v) =>
         '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
 
+    // Superseded once anything lands after close — see the class comment.
+    final drift = activity?.hasChanged == true ? activity : null;
+    final drawerTotal = drift?.updatedCashOnHand ?? countedCash;
+    final owedToMechanics = drift?.currentLaborRevenue ?? laborFees;
+    final owedToManagement = drift?.updatedForManagement ?? forManagement;
+
     final list = shares ?? const <HandoverShare>[];
     final sharesTotal = list.fold<double>(0, (a, s) => a + s.amount);
-    final mismatch = list.isNotEmpty && (sharesTotal - laborFees).abs() > 0.01;
+    // Shares are read from live sales. They reconcile against the whole-day
+    // total, so the note only has something to say against a sealed one.
+    final mismatch =
+        list.isNotEmpty && (sharesTotal - owedToMechanics).abs() > 0.01;
 
     return Container(
       margin: EdgeInsets.only(top: dense ? 10 : 14),
@@ -80,12 +101,24 @@ class ClosingHandoverPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _line(context, 'Counted', peso(countedCash), emphasis: false),
+          _line(context, drift == null ? 'Counted' : 'Cash on hand now',
+              peso(drawerTotal),
+              emphasis: false),
+          if (drift != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                'Includes ${peso(drift.cashSalesDelta)} taken after close. '
+                'The sealed count was ${peso(countedCash)}.',
+                style: TextStyle(fontSize: 11, height: 1.35, color: muted),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 7),
             child: Divider(height: 1, color: hairline),
           ),
-          _line(context, 'To mechanics', peso(laborFees), emphasis: true),
+          _line(context, 'To mechanics', peso(owedToMechanics),
+              emphasis: true),
           for (final s in list)
             Padding(
               padding: const EdgeInsets.only(left: 14, top: 4),
@@ -96,13 +129,14 @@ class ClosingHandoverPanel extends StatelessWidget {
               padding: const EdgeInsets.only(left: 14, top: 5),
               child: Text(
                 'Named shares total ${peso(sharesTotal)} — they read current '
-                'sales, while the ${peso(laborFees)} above is what was frozen '
-                'at closing.',
+                'sales, while the ${peso(owedToMechanics)} above is what was '
+                'frozen at closing.',
                 style: TextStyle(fontSize: 11, height: 1.35, color: muted),
               ),
             ),
           const SizedBox(height: 6),
-          _line(context, 'To management', peso(forManagement), emphasis: true),
+          _line(context, 'To management', peso(owedToManagement),
+              emphasis: true),
         ],
       ),
     );

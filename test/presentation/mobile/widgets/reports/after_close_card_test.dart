@@ -36,10 +36,10 @@ void main() {
     expect(find.text('+₱300.00'), findsOneWidget);
     expect(find.text('Updated cash on hand'), findsOneWidget);
     expect(find.text('₱1,950.00'), findsOneWidget);
-    expect(find.text('Updated for management'), findsOneWidget);
-    expect(find.text('₱1,200.00'), findsOneWidget); // 1950 − 750
-    expect(find.text('For mechanics (whole day)'), findsOneWidget);
-    expect(find.text('₱750.00'), findsOneWidget);
+    // The management/mechanics split lives in the hand-over panel now. Having
+    // it here too gave the screen two answers to what the mechanics get.
+    expect(find.text('Updated for management'), findsNothing);
+    expect(find.text('For mechanics (whole day)'), findsNothing);
   });
 
   testWidgets('hides the split sub-lines when no labor drifted',
@@ -57,8 +57,8 @@ void main() {
 
     expect(find.text('Sale items'), findsNothing);
     expect(find.text('Labor fees'), findsNothing);
-    // Bottom handoff rows still shown.
-    expect(find.text('Updated for management'), findsOneWidget);
-    expect(find.text('₱2,290.00'), findsOneWidget); // 2740 − 450
+    // The card still reports what changed, and the drawer total it implies.
+    expect(find.text('Updated cash on hand'), findsOneWidget);
+    expect(find.text('₱2,740.00'), findsOneWidget);
   });
 }

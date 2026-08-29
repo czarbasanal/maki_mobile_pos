@@ -252,6 +252,7 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
             laborFees: c.forMechanics,
             forManagement: c.forManagement,
             shares: shares,
+            activity: activity,
             dense: true,
           ),
           if (activity != null && activity.hasChanged)

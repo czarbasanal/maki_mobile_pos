@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/closing_handover_panel.dart';
 
 Widget _host(Widget child) =>
@@ -84,5 +85,99 @@ void main() {
     )));
 
     expect(find.textContaining('frozen'), findsNothing);
+  });
+
+  group('after a day is closed early and trading continues', () {
+    // The shop closes the drawer, then last-minute customers arrive. That is
+    // routine here, so the panel must lead with what to hand over NOW, not
+    // what was true when the drawer was sealed.
+    PostCloseActivity activity({
+      double cashDelta = 2950,
+      double snapshotLabor = 400,
+      double currentLabor = 550,
+      double counted = 2140,
+    }) =>
+        PostCloseActivity(
+          extraSales: 3,
+          grossDelta: 2800,
+          cashSalesDelta: cashDelta,
+          cashExpensesDelta: 0,
+          updatedCashOnHand: counted + cashDelta,
+          laborDelta: currentLabor - snapshotLabor,
+          currentLaborRevenue: currentLabor,
+        );
+
+    testWidgets('hands over the whole-day labor, not the sealed figure',
+        (tester) async {
+      await tester.pumpWidget(_host(ClosingHandoverPanel(
+        countedCash: 2140,
+        laborFees: 400,
+        forManagement: 1740,
+        activity: activity(),
+      )));
+
+      // 550 owed, from 5,090 now in the drawer, leaving 4,540.
+      expect(find.text('₱550.00'), findsOneWidget);
+      expect(find.text('₱5,090.00'), findsOneWidget);
+      expect(find.text('₱4,540.00'), findsOneWidget);
+      // The sealed figures must not read as the instruction.
+      expect(find.text('₱400.00'), findsNothing);
+      expect(find.text('₱1,740.00'), findsNothing);
+    });
+
+    testWidgets('says the figures moved after the drawer was closed',
+        (tester) async {
+      await tester.pumpWidget(_host(ClosingHandoverPanel(
+        countedCash: 2140,
+        laborFees: 400,
+        forManagement: 1740,
+        activity: activity(),
+      )));
+
+      expect(find.textContaining('after close'), findsOneWidget);
+    });
+
+    testWidgets('per-mechanic shares reconcile against the updated total',
+        (tester) async {
+      // Shares are read from live sales, so once the panel also shows the
+      // live total the mismatch note has nothing left to report.
+      await tester.pumpWidget(_host(ClosingHandoverPanel(
+        countedCash: 2140,
+        laborFees: 400,
+        forManagement: 1740,
+        activity: activity(),
+        shares: const [
+          HandoverShare(name: 'Jun', amount: 400),
+          HandoverShare(name: 'Rico', amount: 150),
+        ],
+      )));
+
+      expect(find.text('Jun'), findsOneWidget);
+      expect(find.text('Rico'), findsOneWidget);
+      expect(find.textContaining('Named shares total'), findsNothing);
+    });
+
+    testWidgets('an unchanged day still shows the sealed figures',
+        (tester) async {
+      await tester.pumpWidget(_host(ClosingHandoverPanel(
+        countedCash: 2140,
+        laborFees: 400,
+        forManagement: 1740,
+        activity: const PostCloseActivity(
+          extraSales: 0,
+          grossDelta: 0,
+          cashSalesDelta: 0,
+          cashExpensesDelta: 0,
+          updatedCashOnHand: 2140,
+          laborDelta: 0,
+          currentLaborRevenue: 400,
+        ),
+      )));
+
+      expect(find.text('₱2,140.00'), findsOneWidget);
+      expect(find.text('₱400.00'), findsOneWidget);
+      expect(find.text('₱1,740.00'), findsOneWidget);
+      expect(find.textContaining('after close'), findsNothing);
+    });
   });
 }

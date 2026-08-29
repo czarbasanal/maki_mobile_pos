@@ -78,15 +78,11 @@ class AfterCloseCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        ClosingKvRow(
-          label: 'Updated for management',
-          value: peso(activity.updatedForManagement),
-        ),
-        ClosingKvRow(
-          label: 'For mechanics (whole day)',
-          value: peso(activity.currentLaborRevenue),
-        ),
+        // The management/mechanics split is NOT repeated here. This card
+        // reports what CHANGED; the hand-over panel above states what to hand
+        // over, and once drift exists it already shows these same whole-day
+        // figures. Printing them twice gave the screen two answers to "how
+        // much do the mechanics get" — the reported confusion.
       ],
     );
   }

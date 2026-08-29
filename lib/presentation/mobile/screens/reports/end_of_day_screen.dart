@@ -728,6 +728,7 @@ class _ClosedView extends ConsumerWidget {
                 countedCash: closing.countedCash,
                 laborFees: closing.forMechanics,
                 forManagement: closing.forManagement,
+                activity: showActivity ? activity : null,
               ),
             ],
           ),
