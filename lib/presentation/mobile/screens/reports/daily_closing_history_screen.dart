@@ -179,8 +179,19 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Gross is PARTS money only — labor and fees are separate tracks that
+          // were never in it. Saying so, and showing labor arriving right
+          // underneath, is what makes the hand-over below reconcile: without
+          // it the labor appears only as a subtraction and reads as a second
+          // deduction of something already taken out.
           ClosingKvRow(
-              label: 'Gross sales', value: _peso(c.grossSales), dense: true),
+              label: 'Gross sales (parts)',
+              value: _peso(c.grossSales),
+              dense: true),
+          ClosingKvRow(
+              label: 'Labor (service)',
+              value: _peso(c.laborRevenue),
+              dense: true),
           ClosingKvRow(
               label: 'Cash sales', value: _peso(c.cashSales), dense: true),
           ClosingKvRow(

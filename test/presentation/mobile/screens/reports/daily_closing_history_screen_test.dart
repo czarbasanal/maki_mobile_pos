@@ -13,6 +13,7 @@ final _date = DateTime(2026, 7, 20);
 DailyClosingEntity _closing({
   double plateNoDp = 0,
   double plateNoDelivery = 0,
+  double laborRevenue = 450,
 }) =>
     DailyClosingEntity(
       plateNoDp: plateNoDp,
@@ -29,7 +30,7 @@ DailyClosingEntity _closing({
       totalExpenses: 0,
       cashExpenses: 0,
       salmonReceivable: 0,
-      laborRevenue: 450,
+      laborRevenue: laborRevenue,
       openingFloat: 0,
       expectedCash: 1450,
       // 2000 (not 1450) so 'To management' = ₱1,550.00 collides
@@ -108,11 +109,34 @@ void main() {
     await _expandFirstTile(tester);
 
     expect(find.text('To mechanics'), findsOneWidget);
-    // Unique here: the history detail has no labor-revenue row of its own.
-    expect(find.text('₱450.00'), findsOneWidget);
+    // Twice now: the Labor (service) row above shows the same ₱450 arriving
+    // that the hand-over shows leaving.
+    expect(find.text('₱450.00'), findsNWidgets(2));
     expect(find.text('To management'), findsOneWidget);
     expect(find.text('₱1,550.00'), findsOneWidget); // 2000 − 450
     expect(find.text('After close'), findsNothing);
+  });
+
+  testWidgets('shows labor arriving, not only leaving', (tester) async {
+    // Gross sales is parts-only, so without its own row the labor money never
+    // appears on the way IN — it shows up only as "To mechanics" on the way
+    // out, which reads as a second deduction of something already taken.
+    await tester.pumpWidget(_harness());
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    expect(find.text('Gross sales (parts)'), findsOneWidget);
+    expect(find.text('Labor (service)'), findsOneWidget);
+  });
+
+  testWidgets('keeps the labor row at zero on a parts-only day', (tester) async {
+    await tester.pumpWidget(_harness(closing: _closing(laborRevenue: 0)));
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    expect(find.text('Labor (service)'), findsOneWidget);
   });
 
   testWidgets('always lines out Plate No DP and Delivery, even at zero',

@@ -222,7 +222,11 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                   title: 'Sales',
                   children: [
                     ClosingKvRow(
-                        label: 'Gross sales', value: _peso(draft.grossSales)),
+                        label: 'Gross sales (parts)',
+                        value: _peso(draft.grossSales)),
+                    ClosingKvRow(
+                        label: 'Labor (service)',
+                        value: _peso(draft.laborRevenue)),
                     ClosingKvRow(
                         label: 'Cash sales', value: _peso(draft.cashSales)),
                     ClosingKvRow(
@@ -240,10 +244,6 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
                           indented: true),
                     ClosingKvRow(
                         label: 'Discounts', value: _peso(draft.totalDiscounts)),
-                    if (draft.laborRevenue > 0)
-                      ClosingKvRow(
-                          label: 'Labor revenue (service)',
-                          value: _peso(draft.laborRevenue)),
                     if (draft.feesRevenue > 0)
                       ClosingKvRow(
                           label: 'Shop fees', value: _peso(draft.feesRevenue)),
@@ -652,7 +652,14 @@ class _ClosedView extends ConsumerWidget {
             title: 'Sales',
             children: [
               ClosingKvRow(
-                  label: 'Gross sales', value: _peso(closing.grossSales)),
+                  label: 'Gross sales (parts)',
+                  value: _peso(closing.grossSales)),
+              // Directly under gross, and shown at zero: labor is a separate
+              // money track that gross never included, so if it appears only
+              // as a hand-over subtraction it reads as being taken twice.
+              ClosingKvRow(
+                  label: 'Labor (service)',
+                  value: _peso(closing.laborRevenue)),
               ClosingKvRow(
                   label: 'Cash sales', value: _peso(closing.cashSales)),
               ClosingKvRow(
@@ -669,10 +676,6 @@ class _ClosedView extends ConsumerWidget {
                     indented: true),
               ClosingKvRow(
                   label: 'Discounts', value: _peso(closing.totalDiscounts)),
-              if (closing.laborRevenue > 0)
-                ClosingKvRow(
-                    label: 'Labor revenue (service)',
-                    value: _peso(closing.laborRevenue)),
               if (closing.feesRevenue > 0)
                 ClosingKvRow(
                     label: 'Shop fees', value: _peso(closing.feesRevenue)),
