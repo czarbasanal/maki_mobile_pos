@@ -52,4 +52,6 @@ export interface Receiving {
   createdBy: string;
   createdByName: string;
   completedBy: string | null;
+  /** Optimistic-concurrency counter; 0 on docs written before versioning. */
+  version: number;
 }

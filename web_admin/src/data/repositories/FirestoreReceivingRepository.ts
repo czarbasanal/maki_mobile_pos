@@ -11,7 +11,6 @@ import {
   serverTimestamp,
   setDoc,
   Timestamp,
-  updateDoc,
   where,
   writeBatch,
   type Firestore,
@@ -25,6 +24,12 @@ import type {
 } from '@/domain/repositories/ReceivingRepository';
 import type { CostCode, Receiving, ReceivingItem } from '@/domain/entities';
 import type { Unsubscribe } from '@/domain/repositories/AuthRepository';
+import {
+  isReceivingConflict,
+  nextReceivingVersion,
+  receivingVersion,
+  RECEIVING_CONFLICT_MESSAGE,
+} from '@/domain/receiving/draftConcurrency';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { applyReceivedItems } from '@/data/receiving/applyReceivedItems';
 import { classifiedToReceivable } from '@/domain/receiving/receivableItem';
@@ -208,27 +213,44 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
       completedBy: null,
       createdAt: serverTimestamp(),
       completedAt: null,
+      version: 0,
     });
     const snap = await getDoc(ref.withConverter(receivingConverter));
     return snap.data()!;
   }
 
-  async update(id: string, input: ReceivingInput, actorId: string): Promise<void> {
+  async update(
+    id: string,
+    input: ReceivingInput,
+    actorId: string,
+    expectedVersion: number,
+  ): Promise<void> {
     const ref = doc(this.db, FirestoreCollections.receivings, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Receiving not found');
-    if (snap.data().status === 'completed') {
-      throw new Error('Cannot edit a completed receiving');
-    }
     const items = normalizeItems(input.items);
-    await updateDoc(ref, {
-      supplierId: input.supplierId,
-      supplierName: input.supplierName,
-      items,
-      totalCost: input.totalCost,
-      totalQuantity: input.totalQuantity,
-      notes: input.notes,
-      updatedBy: actorId,
+    // Read and write in one transaction. `items` is a whole-array write from
+    // this client's in-memory list, so without the version check a second
+    // client's rows are silently overwritten — the reported vanishing drafts.
+    await runTransaction(this.db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error('Receiving not found');
+      const data = snap.data();
+      if (data.status === 'completed') {
+        throw new Error('Cannot edit a completed receiving');
+      }
+      const current = receivingVersion(data.version);
+      if (isReceivingConflict(expectedVersion, current)) {
+        throw new Error(RECEIVING_CONFLICT_MESSAGE);
+      }
+      tx.update(ref, {
+        supplierId: input.supplierId,
+        supplierName: input.supplierName,
+        items,
+        totalCost: input.totalCost,
+        totalQuantity: input.totalQuantity,
+        notes: input.notes,
+        updatedBy: actorId,
+        version: nextReceivingVersion(current),
+      });
     });
   }
 
@@ -280,9 +302,19 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
     await runTransaction(this.db, async (tx) => {
       const fresh = await tx.get(ref);
       if (fresh.exists() && fresh.data().status === 'completed') return;
+      // The plan was built from a read taken OUTSIDE this transaction. If the
+      // draft changed in between, applying it would receive the stale item set
+      // and overwrite the newer one — "only some get successfully received".
+      if (
+        fresh.exists() &&
+        isReceivingConflict(receiving.version, receivingVersion(fresh.data().version))
+      ) {
+        throw new Error(RECEIVING_CONFLICT_MESSAGE);
+      }
       await executeReceivePlan(tx, this.db, plan, actor);
       tx.update(ref, {
         items: plan.items,
+        version: nextReceivingVersion(receiving.version),
         totalQuantity,
         totalCost,
         status: 'completed',

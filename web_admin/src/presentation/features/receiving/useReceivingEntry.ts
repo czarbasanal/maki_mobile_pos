@@ -52,6 +52,9 @@ export function useReceivingEntry() {
   const [search, setSearch] = useState('');
   const [savedId, setSavedId] = useState<string | null>(id ?? null);
   const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
+  // The version this page last agreed with the server on. A save that does not
+  // match the server's is refused rather than overwriting another device.
+  const [version, setVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const hydrated = useRef(false);
 
@@ -75,6 +78,7 @@ export function useReceivingEntry() {
     setLines(existing.data.items);
     setSavedId(existing.data.id);
     setReferenceNumber(existing.data.referenceNumber);
+    setVersion(existing.data.version);
   }, [id, existing.data]);
 
   const matches = useMemo(
@@ -167,11 +171,19 @@ export function useReceivingEntry() {
   /** Persists the current lines as a draft, returning its id (creates on first save). */
   async function persistDraft(): Promise<string> {
     if (savedId) {
-      await update.mutateAsync({ id: savedId, input: buildInput() });
+      await update.mutateAsync({
+        id: savedId,
+        input: buildInput(),
+        expectedVersion: version,
+      });
+      // Our own write moved the doc forward; stay in step so a second save in
+      // the same session is not mistaken for a conflict.
+      setVersion((v) => v + 1);
       return savedId;
     }
     const created = await create.mutateAsync(buildInput());
     setSavedId(created.id);
+    setVersion(created.version);
     return created.id;
   }
 

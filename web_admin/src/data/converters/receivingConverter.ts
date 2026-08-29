@@ -7,6 +7,7 @@ import type {
 } from 'firebase/firestore';
 import type { Receiving, ReceivingItem, ReceivingStatus } from '@/domain/entities';
 import { requireDate, toDate } from './timestamps';
+import { receivingVersion } from '@/domain/receiving/draftConcurrency';
 
 const VALID_STATUS: ReceivingStatus[] = ['draft', 'completed', 'cancelled'];
 
@@ -79,6 +80,7 @@ export const receivingConverter: FirestoreDataConverter<Receiving> = {
       totalCost: r.totalCost,
       totalQuantity: r.totalQuantity,
       status: r.status,
+      version: r.version,
       notes: r.notes,
       createdBy: r.createdBy,
       createdByName: r.createdByName,
@@ -96,6 +98,7 @@ export const receivingConverter: FirestoreDataConverter<Receiving> = {
       totalCost: Number(d.totalCost ?? 0),
       totalQuantity: Number(d.totalQuantity ?? 0),
       status: parseStatus(d.status),
+      version: receivingVersion(d.version),
       notes: d.notes ?? null,
       // Tolerate a malformed doc missing createdAt by falling back to
       // completedAt; only throw if the doc has no timestamp at all.

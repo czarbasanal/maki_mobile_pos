@@ -90,6 +90,10 @@ class ReceivingModel {
 
     if (forCreate) {
       map['createdAt'] = FieldValue.serverTimestamp();
+      // Starts the optimistic-concurrency counter the web admin guards on
+      // (web_admin/src/domain/receiving/draftConcurrency.ts). Mobile does not
+      // yet check it — this only lets a web client notice a phone's edit.
+      map['version'] = 0;
     }
 
     if (forUpdate) {
@@ -104,6 +108,10 @@ class ReceivingModel {
       } else if (status == ReceivingStatus.completed) {
         map['completedAt'] = FieldValue.serverTimestamp();
       }
+      // Every write moves the counter, so a web client editing the same draft
+      // is refused rather than silently overwriting this one. Increment (not
+      // an absolute value) because mobile never reads the field.
+      map['version'] = FieldValue.increment(1);
     }
 
     if (!forCreate && !forUpdate) {
