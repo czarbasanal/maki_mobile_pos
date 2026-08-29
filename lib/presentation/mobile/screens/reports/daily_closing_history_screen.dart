@@ -179,11 +179,16 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Thirteen flat rows gave no clue which figures were parts of which.
+          // Three headings for the three tracks, and anything that breaks down
+          // the row above it is indented.
+          //
           // Gross is PARTS money only — labor and fees are separate tracks that
           // were never in it. Saying so, and showing labor arriving right
           // underneath, is what makes the hand-over below reconcile: without
           // it the labor appears only as a subtraction and reads as a second
           // deduction of something already taken out.
+          _SummaryHeading(label: 'SALES', muted: muted),
           ClosingKvRow(
               label: 'Gross sales (parts)',
               value: _peso(c.grossSales),
@@ -210,11 +215,15 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
                 value: _peso(c.mayaSales),
                 dense: true,
                 indented: true),
+          // Salmon is a non-cash tender like the two above it, not a total of
+          // its own — it was the one breakdown row left sitting flush left.
           if (c.salmonReceivable > 0)
             ClosingKvRow(
                 label: 'Salmon receivable',
                 value: _peso(c.salmonReceivable),
-                dense: true),
+                dense: true,
+                indented: true),
+          _SummaryHeading(label: 'EXPENSES', muted: muted),
           ClosingKvRow(
               label: 'Total expenses',
               value: _peso(c.totalExpenses),
@@ -222,22 +231,24 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
           ClosingKvRow(
               label: 'Cash expenses',
               value: _peso(c.cashExpenses),
-              dense: true),
+              dense: true,
+              indented: true),
+          _SummaryHeading(label: 'CASH RECONCILIATION', muted: muted),
           // Expected cash is float + cash sales − cash expenses + DP − delivery.
-          // Every other term has a row above; without these two the figure
-          // could not be reconciled against what is on screen.
-          // Shown even at zero. Hiding an empty row makes "no DP was recorded"
-          // indistinguishable from "this summary does not show DP", which is
-          // exactly how the cashier read it when the rows were missing.
+          // Every term has a row here; without them the figure could not be
+          // reconciled against what is on screen. Shown even at zero: hiding an
+          // empty row makes "no DP was recorded" indistinguishable from "this
+          // summary does not show DP", which is exactly how it was read when
+          // the rows were missing.
+          ClosingKvRow(
+              label: 'Opening float',
+              value: _peso(c.openingFloat),
+              dense: true),
           ClosingKvRow(
               label: 'Plate No DP', value: _peso(c.plateNoDp), dense: true),
           ClosingKvRow(
               label: 'Plate No Delivery',
               value: _peso(c.plateNoDelivery),
-              dense: true),
-          ClosingKvRow(
-              label: 'Opening float',
-              value: _peso(c.openingFloat),
               dense: true),
           ClosingKvRow(
               label: 'Expected cash',
@@ -291,4 +302,30 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
 
   String _peso(double v) =>
       '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
+}
+
+/// Small-caps divider label inside the dense closing detail. A full
+/// ClosingSectionCard would be too heavy here — this is an inline block inside
+/// an already-bordered tile, so the grouping is carried by type, not by chrome.
+class _SummaryHeading extends StatelessWidget {
+  const _SummaryHeading({required this.label, required this.muted});
+
+  final String label;
+  final Color muted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 2),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.7,
+          color: muted,
+        ),
+      ),
+    );
+  }
 }

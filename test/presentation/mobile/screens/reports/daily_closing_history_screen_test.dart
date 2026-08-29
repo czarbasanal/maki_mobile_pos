@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 final _date = DateTime(2026, 7, 20);
@@ -14,6 +15,9 @@ DailyClosingEntity _closing({
   double plateNoDp = 0,
   double plateNoDelivery = 0,
   double laborRevenue = 450,
+  double gcashSales = 0,
+  double mayaSales = 0,
+  double salmonReceivable = 0,
 }) =>
     DailyClosingEntity(
       plateNoDp: plateNoDp,
@@ -25,11 +29,11 @@ DailyClosingEntity _closing({
       totalDiscounts: 0,
       cashSales: 1450,
       nonCashSales: 0,
-      gcashSales: 0,
-      mayaSales: 0,
+      gcashSales: gcashSales,
+      mayaSales: mayaSales,
       totalExpenses: 0,
       cashExpenses: 0,
-      salmonReceivable: 0,
+      salmonReceivable: salmonReceivable,
       laborRevenue: laborRevenue,
       openingFloat: 0,
       expectedCash: 1450,
@@ -115,6 +119,56 @@ void main() {
     expect(find.text('To management'), findsOneWidget);
     expect(find.text('₱1,550.00'), findsOneWidget); // 2000 − 450
     expect(find.text('After close'), findsNothing);
+  });
+
+  // A flat list of thirteen rows gave no clue which figures were parts of
+  // which. Anything that breaks down the row above it is indented.
+  bool indentedOf(WidgetTester tester, String label) => tester
+      .widget<ClosingKvRow>(find.byWidgetPredicate(
+          (w) => w is ClosingKvRow && w.label == label))
+      .indented;
+
+  testWidgets('indents the rows that break down the row above them',
+      (tester) async {
+    await tester.pumpWidget(_harness(
+      closing: _closing(
+        plateNoDp: 250,
+        plateNoDelivery: 100,
+        gcashSales: 300,
+        mayaSales: 120,
+        salmonReceivable: 80,
+      ),
+    ));
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    // Tenders break down Non-cash sales.
+    expect(indentedOf(tester, 'GCash'), isTrue);
+    expect(indentedOf(tester, 'Maya'), isTrue);
+    expect(indentedOf(tester, 'Salmon receivable'), isTrue);
+    // Cash expenses are the cash part of Total expenses.
+    expect(indentedOf(tester, 'Cash expenses'), isTrue);
+
+    // Totals in their own right are not.
+    expect(indentedOf(tester, 'Gross sales (parts)'), isFalse);
+    expect(indentedOf(tester, 'Labor (service)'), isFalse);
+    expect(indentedOf(tester, 'Non-cash sales'), isFalse);
+    expect(indentedOf(tester, 'Total expenses'), isFalse);
+    expect(indentedOf(tester, 'Expected cash'), isFalse);
+    expect(indentedOf(tester, 'Counted cash'), isFalse);
+  });
+
+  testWidgets('groups the rows under headings so the three tracks separate',
+      (tester) async {
+    await tester.pumpWidget(_harness());
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    expect(find.text('SALES'), findsOneWidget);
+    expect(find.text('EXPENSES'), findsOneWidget);
+    expect(find.text('CASH RECONCILIATION'), findsOneWidget);
   });
 
   testWidgets('shows labor arriving, not only leaving', (tester) async {
