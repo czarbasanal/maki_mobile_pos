@@ -49,9 +49,14 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
       // Watch the clock (not a raw DateTime.now() snapshot) so the forced
       // range follows a midnight rollover instead of pinning a role that's
       // restricted to "today" onto whatever day the screen was opened.
+      // businessDayProvider is a shop WALL midnight, so both bounds must go
+      // back through the offset. Using it raw as the start while building the
+      // end with the device-local DateTime(...) constructor mixed the two and
+      // skewed the forced range by the device's offset from shop time.
       final today = ref.watch(businessDayProvider);
-      _startDate = today;
-      _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+      final offset = ref.watch(shopOffsetProvider);
+      _startDate = shopDayStartInstant(today, offset);
+      _endDate = shopDayEndInstant(today, offset);
       _selectedPreset = DateRangePreset.today;
     }
 
