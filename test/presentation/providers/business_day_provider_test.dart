@@ -1,3 +1,4 @@
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/utils/shop_time.dart';
@@ -100,5 +101,67 @@ void main() {
       makeContainer(offset: -300).read(businessDayProvider),
       shopWall(2026, 7, 24),
     );
+  });
+
+  group('safety heartbeat', () {
+    // The midnight Timer is the fast path, and the app-resume hook catches a
+    // device that slept through it. Neither is guaranteed: Android freezes
+    // timers in Doze, and a phone left on the app with the screen off may
+    // never deliver a `resumed` event. When both are missed the app keeps
+    // serving YESTERDAY as today — which is how a cashier saw ₱1,320 (the
+    // previous day's labor) on both the dashboard and the reports screen,
+    // since a cashier's report range is forced from this provider.
+    test('corrects a missed rollover without any resume event', () {
+      fakeAsync((async) {
+        final container = ProviderContainer(overrides: [
+          nowProvider.overrideWithValue(clock.call),
+          shopOffsetProvider.overrideWithValue(kDefaultShopOffsetMinutes),
+        ]);
+        addTearDown(container.dispose);
+        expect(container.read(businessDayProvider), shopWall(2026, 7, 24));
+
+        // The clock crosses midnight while the process is frozen: no timer
+        // fires, and nothing calls recheck().
+        clock.now = atShop(2026, 7, 25, 0, 30);
+        expect(container.read(businessDayProvider), shopWall(2026, 7, 24));
+
+        async.elapse(BusinessDayNotifier.heartbeatInterval);
+        expect(container.read(businessDayProvider), shopWall(2026, 7, 25));
+      });
+    });
+
+    test('leaves the day alone while it has not changed', () {
+      fakeAsync((async) {
+        final container = ProviderContainer(overrides: [
+          nowProvider.overrideWithValue(clock.call),
+          shopOffsetProvider.overrideWithValue(kDefaultShopOffsetMinutes),
+        ]);
+        addTearDown(container.dispose);
+
+        var rebuilds = 0;
+        container.listen(businessDayProvider, (_, __) => rebuilds++);
+
+        clock.now = atShop(2026, 7, 24, 16, 0); // same shop day
+        async.elapse(BusinessDayNotifier.heartbeatInterval * 3);
+
+        expect(container.read(businessDayProvider), shopWall(2026, 7, 24));
+        expect(rebuilds, 0);
+      });
+    });
+
+    test('stops when the provider is disposed', () {
+      fakeAsync((async) {
+        final container = ProviderContainer(overrides: [
+          nowProvider.overrideWithValue(clock.call),
+          shopOffsetProvider.overrideWithValue(kDefaultShopOffsetMinutes),
+        ]);
+        container.read(businessDayProvider);
+        container.dispose();
+
+        // A leaked periodic timer would keep the fake clock's queue alive.
+        async.elapse(BusinessDayNotifier.heartbeatInterval * 2);
+        expect(async.pendingTimers, isEmpty);
+      });
+    });
   });
 }

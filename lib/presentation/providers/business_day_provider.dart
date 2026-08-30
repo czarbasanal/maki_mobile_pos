@@ -15,8 +15,21 @@ export 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart'
 /// case where the device was asleep and missed the timer firing exactly at
 /// midnight. Re-arms whenever the shop timezone changes, so switching zones
 /// in settings takes effect without a restart.
+///
+/// Neither of those is guaranteed. Android freezes timers in Doze, and a
+/// handset left on the app with the screen off may never deliver a `resumed`
+/// event to trigger the recheck. When both are missed the app keeps serving
+/// YESTERDAY as today — every "today" figure in the app reads this provider,
+/// and a cashier's report range is forced from it, so a stale day shows the
+/// previous day's totals on the dashboard and the reports screen alike.
+/// [heartbeatInterval] bounds how long that can last.
 class BusinessDayNotifier extends Notifier<DateTime> {
+  /// How often the day is re-checked regardless of timers and lifecycle
+  /// events. Cheap: it reads a clock and compares two dates.
+  static const heartbeatInterval = Duration(minutes: 5);
+
   Timer? _timer;
+  Timer? _heartbeat;
 
   @override
   DateTime build() {
@@ -25,7 +38,12 @@ class BusinessDayNotifier extends Notifier<DateTime> {
     final offset = ref.watch(shopOffsetProvider);
     final now = ref.read(nowProvider)();
     _arm(now, offset);
-    ref.onDispose(() => _timer?.cancel());
+    _heartbeat?.cancel();
+    _heartbeat = Timer.periodic(heartbeatInterval, (_) => _verify());
+    ref.onDispose(() {
+      _timer?.cancel();
+      _heartbeat?.cancel();
+    });
     return businessDateOf(now, offset);
   }
 
@@ -44,6 +62,15 @@ class BusinessDayNotifier extends Notifier<DateTime> {
     final day = businessDateOf(now, offset);
     if (day != state) state = day;
     _arm(now, offset);
+  }
+
+  /// Corrects the day if it has moved on. Unlike [_tick] this does NOT re-arm
+  /// the midnight timer — the heartbeat is a safety net beside that timer, not
+  /// a replacement for it.
+  void _verify() {
+    final day = businessDateOf(
+        ref.read(nowProvider)(), ref.read(shopOffsetProvider));
+    if (day != state) state = day;
   }
 
   /// Called from the app-lifecycle observer on resume.
