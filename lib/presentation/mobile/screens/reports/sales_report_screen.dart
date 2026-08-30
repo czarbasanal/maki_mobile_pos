@@ -165,7 +165,11 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
     return summaryAsync.when(
       data: (summary) {
-        final total = summary.netAmount;
+        // The tender buckets are a breakdown of what was TENDERED, not of
+        // parts revenue: labor and fee cash sit in them but never entered
+        // netAmount. Measured against netAmount the shares summed past 100%
+        // and the card's figures disagreed with the dashboard's Gross Sales.
+        final total = summary.totalTendered;
         if (total == 0) return const SizedBox.shrink();
 
         final theme = Theme.of(context);

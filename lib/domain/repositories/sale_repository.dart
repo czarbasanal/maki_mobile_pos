@@ -282,6 +282,16 @@ class SalesSummary {
   /// Total Salmon receivable (balance Salmon covers the next day). Not cash.
   double get salmonReceivable => byPaymentMethod[PaymentMethod.salmon] ?? 0;
 
+  /// Everything the customers actually tendered — the sum of [byPaymentMethod].
+  ///
+  /// This is the only figure the tender buckets are a breakdown OF. It is
+  /// larger than [netAmount], which is parts money only: labor and shop fees
+  /// are separate tracks that never entered gross or net, but their cash is
+  /// physically in the drawer and so lands in these buckets. Measuring a
+  /// tender share against [netAmount] gives percentages over 100%.
+  double get totalTendered =>
+      byPaymentMethod.values.fold(0.0, (a, b) => a + b);
+
   const SalesSummary({
     required this.totalSalesCount,
     required this.voidedSalesCount,

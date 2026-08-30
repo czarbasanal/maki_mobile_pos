@@ -3,6 +3,7 @@
 // build time, so they recompute their queried range on a midnight flip.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
@@ -72,7 +73,9 @@ void main() {
             endDate: any(named: 'endDate'),
           )).thenAnswer((_) async => SalesSummary.empty());
 
-      final dayNotifier = _FixedBusinessDayNotifier(DateTime(2026, 7, 24));
+      // A shop WALL midnight, which is what businessDayProvider really hands
+      // back — not a device-local one.
+      final dayNotifier = _FixedBusinessDayNotifier(shopWall(2026, 7, 24));
       final container = ProviderContainer(overrides: [
         currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
         saleRepositoryProvider.overrideWithValue(repo),
@@ -87,20 +90,24 @@ void main() {
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime(2026, 7, 24));
-      expect(captured[1], DateTime(2026, 7, 24, 23, 59, 59, 999));
+      // Real instants bounding the shop day, not the wall fields themselves:
+      // shop 2026-07-24 (UTC+8) runs 16:00Z on the 23rd to 15:59:59.999Z on
+      // the 24th. Building the upper bound with DateTime(...) instead mixed a
+      // wall value with a device-local one and started the window 8h late.
+      expect(captured[0], DateTime.utc(2026, 7, 23, 16));
+      expect(captured[1], DateTime.utc(2026, 7, 24, 15, 59, 59, 999));
 
       // Flip the business day — the provider must re-run with tomorrow's
       // range, not stay pinned to the day it first built on.
-      dayNotifier.set(DateTime(2026, 7, 25));
+      dayNotifier.set(shopWall(2026, 7, 25));
       await Future<void>.delayed(Duration.zero);
       await container.read(todaysSalesSummaryProvider.future);
       captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime(2026, 7, 25));
-      expect(captured[1], DateTime(2026, 7, 25, 23, 59, 59, 999));
+      expect(captured[0], DateTime.utc(2026, 7, 24, 16));
+      expect(captured[1], DateTime.utc(2026, 7, 25, 15, 59, 59, 999));
     });
   });
 
