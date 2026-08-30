@@ -11,6 +11,8 @@ import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 
 /// List of past end-of-day closings, newest first. Tap a row to expand its
 /// reconciliation detail.
@@ -159,12 +161,11 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
     // the total, so the names come from the day's sales — which means they can
     // drift from the frozen figure once a sale is voided after close. The
     // panel says so when they disagree; it never silently replaces the total.
+    final offset = ref.watch(shopOffsetProvider);
     final shares = ref
         .watch(mechanicPerformanceReportProvider(DateRangeParams(
-          startDate: c.businessDate,
-          endDate: c.businessDate
-              .add(const Duration(days: 1))
-              .subtract(const Duration(milliseconds: 1)),
+          startDate: shopDayStartInstant(c.businessDate, offset),
+          endDate: shopDayEndInstant(c.businessDate, offset),
         )))
         .valueOrNull
         ?.byMechanic

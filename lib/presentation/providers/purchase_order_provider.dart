@@ -7,6 +7,9 @@ import 'package:maki_mobile_pos/domain/repositories/purchase_order_repository.da
 import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
+import 'package:maki_mobile_pos/core/utils/business_day.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 
 final purchaseOrderRepositoryProvider =
     Provider<PurchaseOrderRepository>((ref) {
@@ -67,12 +70,18 @@ typedef ReorderMovement = ({
 /// midnight goes stale; autoDispose refetches on re-entry).
 final reorderMovementProvider = FutureProvider.autoDispose
     .family<ReorderMovement, int>((ref, windowDays) async {
-  final now = DateTime.now();
-  final todayStart = DateTime(now.year, now.month, now.day);
+  // Explicit instants. This used to pass bare dates and lean on the repository
+  // widening the end to 23:59:59 — it no longer does, and the window is also
+  // now anchored to SHOP days rather than the handset's, which is what the
+  // rest of the reporting layer means by a day.
+  final offset = ref.watch(shopOffsetProvider);
+  final today = businessDateOf(ref.watch(nowProvider)(), offset);
+  final firstDay = today.subtract(Duration(days: windowDays));
+  final lastDay = today.subtract(const Duration(days: 1));
   final sales = await ref.watch(saleRepositoryProvider).getSalesByDateRange(
-        startDate: todayStart.subtract(Duration(days: windowDays)),
-        // The repo normalizes endDate to endOfDay → yesterday 23:59:59.999.
-        endDate: todayStart.subtract(const Duration(days: 1)),
+        startDate: shopDayStartInstant(firstDay, offset),
+        // Ends yesterday: today is still in progress and would skew velocity.
+        endDate: shopDayEndInstant(lastDay, offset),
         status: SaleStatus.completed,
         limit: reorderSalesCap,
       );

@@ -1,3 +1,6 @@
+// getSalesByDateRange uses its bounds AS GIVEN now — it no longer widens a
+// bare date to the whole day. These tests are about the summary arithmetic,
+// so bracket the day generously rather than restate the window here.
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
@@ -44,8 +47,8 @@ void main() {
     await repository.createSale(saleWithFees(today));
 
     final summary = await repository.getSalesSummary(
-      startDate: today,
-      endDate: today,
+      startDate: today.subtract(const Duration(days: 1)),
+      endDate: today.add(const Duration(days: 1)),
     );
 
     // Parts-only top-line: net = partsRevenue (200), NOT grandTotal (250).
@@ -89,8 +92,8 @@ void main() {
     ));
 
     final summary = await repository.getSalesSummary(
-      startDate: today,
-      endDate: today,
+      startDate: today.subtract(const Duration(days: 1)),
+      endDate: today.add(const Duration(days: 1)),
     );
 
     expect(summary.netAmount, 100);

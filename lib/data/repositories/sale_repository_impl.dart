@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 
 /// Firestore implementation of [SaleRepository].
 ///
@@ -194,14 +195,17 @@ class SaleRepositoryImpl implements SaleRepository {
     int limit = 100,
   }) async {
     try {
-      // Normalize dates to start/end of day
-      final start = DateTime(startDate.year, startDate.month, startDate.day);
-      final end =
-          DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
-
+      // The bounds are used AS GIVEN. This method used to rebuild them with
+      // the device-local DateTime(...) constructor from .year/.month/.day,
+      // which silently put the handset's zone in charge of a boundary the
+      // shop-timezone layer exists to own — and made passing a correct
+      // shop-day-start instant (16:00Z the day before, at UTC+8) query a day
+      // early. Callers pass real instants; see shopDayStartInstant /
+      // shopDayEndInstant in report_date_range.dart.
       Query<Map<String, dynamic>> query = _salesRef
-          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(end));
+          .where('createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
 
       if (status != null) {
         query = query.where('status', isEqualTo: status.value);
@@ -228,12 +232,15 @@ class SaleRepositoryImpl implements SaleRepository {
   @override
   Future<List<SaleEntity>> getSalesForDay({
     required DateTime date,
+    required int offsetMinutes,
     SaleStatus? status,
     String? cashierId,
   }) async {
+    // [date] carries the shop calendar day; widen it here rather than leaning
+    // on getSalesByDateRange to do it, which it no longer does.
     return getSalesByDateRange(
-      startDate: date,
-      endDate: date,
+      startDate: shopDayStartInstant(date, offsetMinutes),
+      endDate: shopDayEndInstant(date, offsetMinutes),
       status: status,
       cashierId: cashierId,
     );

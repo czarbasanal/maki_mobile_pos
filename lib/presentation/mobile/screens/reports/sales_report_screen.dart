@@ -49,13 +49,10 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
       // Watch the clock (not a raw DateTime.now() snapshot) so the forced
       // range follows a midnight rollover instead of pinning a role that's
       // restricted to "today" onto whatever day the screen was opened.
-      // Calendar fields, not instants — see the note in
-      // todaysSalesSummaryProvider: getSalesByDateRange rebuilds its own
-      // local day bounds from .year/.month/.day, so an instant start reads as
-      // the previous day and widens the range.
       final today = ref.watch(businessDayProvider);
-      _startDate = today;
-      _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+      final offset = ref.watch(shopOffsetProvider);
+      _startDate = shopDayStartInstant(today, offset);
+      _endDate = shopDayEndInstant(today, offset);
       _selectedPreset = DateRangePreset.today;
     }
 

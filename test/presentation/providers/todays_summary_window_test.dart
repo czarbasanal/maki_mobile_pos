@@ -3,17 +3,13 @@ import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
-/// Shop-day bounds, and the trap underneath them.
+/// The window the reporting layer asks for, in real instants.
 ///
-/// These helpers return correct instants — but `getSalesByDateRange` does NOT
-/// use the instants it is given: it rebuilds its own bounds with the
-/// device-local `DateTime(...)` constructor from `.year/.month/.day`. So a
-/// caller that hands it `shopDayStartInstant(...)` (16:00Z the previous day
-/// for UTC+8) has that read as the PREVIOUS day, and gets two days of sales.
-///
-/// That is exactly what doubled the mobile dashboard against the web admin.
-/// The helpers are right; the repository layering is what needs fixing, and
-/// until it is, callers of that method must pass calendar fields instead.
+/// `getSalesByDateRange` used to discard these and rebuild device-local day
+/// bounds from `.year/.month/.day`, which meant a correct shop-day-start
+/// instant (16:00Z the previous day at UTC+8) read as the PREVIOUS day and
+/// returned two days of sales — ₱8,840 rendering as ₱15,480. It now uses its
+/// bounds as given; these tests pin what those bounds are.
 void main() {
   const phOffset = 480; // UTC+8
 
@@ -61,37 +57,22 @@ void main() {
     });
   });
 
-  group('the repository re-derives local day bounds (the trap)', () {
-    // Mirrors getSalesByDateRange's normalization verbatim.
-    ({DateTime start, DateTime end}) repoWindow(DateTime s, DateTime e) => (
-          start: DateTime(s.year, s.month, s.day),
-          end: DateTime(e.year, e.month, e.day, 23, 59, 59),
-        );
-
-    test('a shop wall midnight lands on the right local day', () {
-      // What the providers pass today: the wall value's fields ARE the shop
-      // calendar day, which is what the repository wants.
-      final w = repoWindow(
-        shopWall(2026, 8, 30),
-        DateTime(2026, 8, 30, 23, 59, 59, 999),
-      );
-      expect(w.start.day, 30);
-      expect(w.end.day, 30);
+  group('the repository no longer re-derives local days', () {
+    test('a shop-day-start instant is not silently moved to another day', () {
+      // The regression: DateTime(start.year, start.month, start.day) read 29
+      // off this value and queried from the 29th. Nothing rebuilds it now, so
+      // the bound the query uses IS this instant.
+      final start = shopDayStartInstant(shopWall(2026, 8, 30), phOffset);
+      expect(start, DateTime.utc(2026, 8, 29, 16));
+      // Its UTC calendar day really is the 29th — which is exactly why
+      // re-deriving a day from these fields was wrong.
+      expect(start.day, 29);
     });
 
-    test('a true shop-day-start instant lands one day EARLY', () {
-      // 2026-08-29T16:00Z is midnight on the 30th in shop time, but its UTC
-      // calendar fields say the 29th — so the repository queries from the
-      // 29th and the range covers two days.
+    test('start and end bracket one shop day, not two', () {
       final start = shopDayStartInstant(shopWall(2026, 8, 30), phOffset);
       final end = shopDayEndInstant(shopWall(2026, 8, 30), phOffset);
-      expect(start.day, 29);
-
-      final w = repoWindow(start, end);
-      expect(w.start.day, 29);
-      expect(w.end.day, 30);
-      // Two calendar days, which is how ₱8,840 rendered as ₱15,480.
-      expect(w.end.difference(w.start).inDays, 1);
+      expect(end.difference(start).inHours, 23);
     });
   });
 }

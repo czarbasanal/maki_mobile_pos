@@ -52,6 +52,9 @@ abstract class SaleRepository {
   /// [limit] - Maximum number of results (default: 100)
   ///
   /// Returns list of sales ordered by createdAt descending.
+  /// Sales between two INSTANTS, inclusive. The bounds are used as given —
+  /// build them with shopDayStartInstant/shopDayEndInstant, never by handing
+  /// over a bare calendar date and expecting the day to be filled in.
   Future<List<SaleEntity>> getSalesByDateRange({
     required DateTime startDate,
     required DateTime endDate,
@@ -67,8 +70,11 @@ abstract class SaleRepository {
   /// [cashierId] - Optional filter by cashier
   ///
   /// Returns list of sales for that day.
+  /// Sales for one SHOP calendar day. [date] carries the day's calendar
+  /// fields; [offsetMinutes] turns them into the instants that bound it.
   Future<List<SaleEntity>> getSalesForDay({
     required DateTime date,
+    required int offsetMinutes,
     SaleStatus? status,
     String? cashierId,
   });

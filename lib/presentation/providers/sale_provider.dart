@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
 import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/core/utils/motorcycle_model_report.dart';
 import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/core/utils/week_range.dart';
@@ -53,7 +54,8 @@ final todaysCompletedSalesProvider = StreamProvider<List<SaleEntity>>((ref) {
 final salesForDateProvider =
     FutureProvider.family<List<SaleEntity>, DateTime>((ref, date) async {
   final repository = ref.watch(saleRepositoryProvider);
-  return repository.getSalesForDay(date: date);
+  return repository.getSalesForDay(
+      date: date, offsetMinutes: ref.watch(shopOffsetProvider));
 });
 
 /// Provides sales for a date range.
@@ -151,20 +153,14 @@ UserEntity _requireActor(Ref ref) {
 /// (not just by the UI date picker).
 final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
-  // Pass the business day's CALENDAR FIELDS, not instants.
-  // getSalesByDateRange re-derives its own bounds with the device-local
-  // DateTime(...) constructor, so it reads .year/.month/.day off whatever it
-  // is given and ignores the rest. Handing it a true shop-day-start instant
-  // (16:00Z the previous day) makes it read day-1 and query two days — that is
-  // what doubled the dashboard against the web admin.
-  //
-  // The layering is wrong and the repository is where to fix it; until then a
-  // caller must speak its language. Watching the provider (not a raw
-  // DateTime.now() snapshot) is what makes a rollover re-run this for the new
-  // day.
-  final dayStart = ref.watch(businessDayProvider);
-  final dayEnd =
-      DateTime(dayStart.year, dayStart.month, dayStart.day, 23, 59, 59, 999);
+  // businessDayProvider is a shop WALL midnight — calendar fields, not an
+  // instant — so both bounds go back through the offset. Watching it (not a
+  // raw DateTime.now() snapshot) is what makes a rollover re-run this query
+  // for the new day.
+  final businessDay = ref.watch(businessDayProvider);
+  final offset = ref.watch(shopOffsetProvider);
+  final dayStart = shopDayStartInstant(businessDay, offset);
+  final dayEnd = shopDayEndInstant(businessDay, offset);
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
