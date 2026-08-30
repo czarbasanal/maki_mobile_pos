@@ -90,12 +90,17 @@ void main() {
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      // Real instants bounding the shop day, not the wall fields themselves:
-      // shop 2026-07-24 (UTC+8) runs 16:00Z on the 23rd to 15:59:59.999Z on
-      // the 24th. Building the upper bound with DateTime(...) instead mixed a
-      // wall value with a device-local one and started the window 8h late.
-      expect(captured[0], DateTime.utc(2026, 7, 23, 16));
-      expect(captured[1], DateTime.utc(2026, 7, 24, 15, 59, 59, 999));
+      // CALENDAR FIELDS, not instants. getSalesByDateRange rebuilds its own
+      // bounds with the device-local DateTime(...) constructor, reading only
+      // .year/.month/.day off what it is handed. Passing a true shop-day-start
+      // instant (16:00Z the day before) makes it read day-1 and query two
+      // days — the regression that doubled the dashboard's total.
+      expect(captured[0].year, 2026);
+      expect(captured[0].month, 7);
+      expect(captured[0].day, 24);
+      expect(captured[1].year, 2026);
+      expect(captured[1].month, 7);
+      expect(captured[1].day, 24);
 
       // Flip the business day — the provider must re-run with tomorrow's
       // range, not stay pinned to the day it first built on.
@@ -106,8 +111,8 @@ void main() {
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime.utc(2026, 7, 24, 16));
-      expect(captured[1], DateTime.utc(2026, 7, 25, 15, 59, 59, 999));
+      expect(captured[0].day, 25);
+      expect(captured[1].day, 25);
     });
   });
 

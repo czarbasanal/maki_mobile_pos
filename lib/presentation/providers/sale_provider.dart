@@ -4,7 +4,6 @@ import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/labor_report.dart';
 import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
-import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/core/utils/motorcycle_model_report.dart';
 import 'package:maki_mobile_pos/core/utils/top_selling.dart';
 import 'package:maki_mobile_pos/core/utils/week_range.dart';
@@ -152,19 +151,20 @@ UserEntity _requireActor(Ref ref) {
 /// (not just by the UI date picker).
 final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
-  // businessDayProvider hands back a shop WALL midnight — a UTC-flagged value
-  // standing for shop-calendar fields, not a real instant. Both bounds have to
-  // go back through the offset to become instants. Building the upper bound
-  // with the plain DateTime(...) constructor mixed that wall value with a
-  // device-local one, so on a UTC+8 device the window ran 08:00-23:59 shop
-  // time and silently dropped anything rung up before 8am.
+  // Pass the business day's CALENDAR FIELDS, not instants.
+  // getSalesByDateRange re-derives its own bounds with the device-local
+  // DateTime(...) constructor, so it reads .year/.month/.day off whatever it
+  // is given and ignores the rest. Handing it a true shop-day-start instant
+  // (16:00Z the previous day) makes it read day-1 and query two days — that is
+  // what doubled the dashboard against the web admin.
   //
-  // Watching the provider (not a raw DateTime.now() snapshot) is what makes a
-  // midnight rollover re-run this query for the new day.
-  final businessDay = ref.watch(businessDayProvider);
-  final offset = ref.watch(shopOffsetProvider);
-  final dayStart = shopDayStartInstant(businessDay, offset);
-  final dayEnd = shopDayEndInstant(businessDay, offset);
+  // The layering is wrong and the repository is where to fix it; until then a
+  // caller must speak its language. Watching the provider (not a raw
+  // DateTime.now() snapshot) is what makes a rollover re-run this for the new
+  // day.
+  final dayStart = ref.watch(businessDayProvider);
+  final dayEnd =
+      DateTime(dayStart.year, dayStart.month, dayStart.day, 23, 59, 59, 999);
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
