@@ -101,18 +101,7 @@ class ClosingHandoverPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _line(context, drift == null ? 'Counted' : 'Cash on hand now',
-              peso(drawerTotal),
-              emphasis: false),
-          if (drift != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Text(
-                'Includes ${peso(drift.cashSalesDelta)} taken after close. '
-                'The sealed count was ${peso(countedCash)}.',
-                style: TextStyle(fontSize: 11, height: 1.35, color: muted),
-              ),
-            ),
+          _line(context, 'Counted', peso(countedCash), emphasis: false),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 7),
             child: Divider(height: 1, color: hairline),
@@ -137,6 +126,34 @@ class ClosingHandoverPanel extends StatelessWidget {
           const SizedBox(height: 6),
           _line(context, 'To management', peso(owedToManagement),
               emphasis: true),
+          // Footer, and only once something landed after close: the two
+          // amounts above add up to THIS, not to the sealed count at the top.
+          // Without drift the sealed count is the total and a footer repeating
+          // it would be noise.
+          if (drift != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7),
+              child: Divider(height: 1, color: hairline),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Updated cash on hand',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600, fontSize: dense ? 13.5 : 15),
+                ),
+                Text(
+                  peso(drawerTotal),
+                  style: TextStyle(
+                    fontSize: dense ? 15.5 : 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

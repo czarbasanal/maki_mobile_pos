@@ -258,6 +258,13 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
               label: 'Counted cash',
               value: _peso(c.countedCash),
               dense: true),
+          // What changed comes first: the hand-over below states figures the
+          // reader would otherwise see move with no explanation yet given.
+          if (activity != null && activity.hasChanged)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: AfterCloseCard(activity: activity),
+            ),
           ClosingHandoverPanel(
             countedCash: c.countedCash,
             laborFees: c.forMechanics,
@@ -266,11 +273,6 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
             activity: activity,
             dense: true,
           ),
-          if (activity != null && activity.hasChanged)
-            Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: AfterCloseCard(activity: activity),
-            ),
           Padding(
             padding: const EdgeInsets.only(top: 10),
             child: Row(

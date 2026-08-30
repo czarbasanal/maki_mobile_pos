@@ -116,17 +116,17 @@ void main() {
         activity: activity(),
       )));
 
-      // 550 owed, from 5,090 now in the drawer, leaving 4,540.
+      // 550 owed, leaving 4,540 — the two add up to the footer, not to the
+      // sealed count still shown at the top.
       expect(find.text('₱550.00'), findsOneWidget);
-      expect(find.text('₱5,090.00'), findsOneWidget);
       expect(find.text('₱4,540.00'), findsOneWidget);
-      // The sealed figures must not read as the instruction.
-      expect(find.text('₱400.00'), findsNothing);
+      expect(find.text('Updated cash on hand'), findsOneWidget);
+      expect(find.text('₱5,090.00'), findsOneWidget);
+      // The sealed split must not read as the instruction.
       expect(find.text('₱1,740.00'), findsNothing);
     });
 
-    testWidgets('says the figures moved after the drawer was closed',
-        (tester) async {
+    testWidgets('keeps the sealed count visible as the anchor', (tester) async {
       await tester.pumpWidget(_host(ClosingHandoverPanel(
         countedCash: 2140,
         laborFees: 400,
@@ -134,7 +134,8 @@ void main() {
         activity: activity(),
       )));
 
-      expect(find.textContaining('after close'), findsOneWidget);
+      expect(find.text('Counted'), findsOneWidget);
+      expect(find.text('₱2,140.00'), findsOneWidget);
     });
 
     testWidgets('per-mechanic shares reconcile against the updated total',
@@ -177,7 +178,8 @@ void main() {
       expect(find.text('₱2,140.00'), findsOneWidget);
       expect(find.text('₱400.00'), findsOneWidget);
       expect(find.text('₱1,740.00'), findsOneWidget);
-      expect(find.textContaining('after close'), findsNothing);
+      // No sales after close, so nothing to update — no footer.
+      expect(find.text('Updated cash on hand'), findsNothing);
     });
   });
 }

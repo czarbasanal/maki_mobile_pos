@@ -711,6 +711,12 @@ class _ClosedView extends ConsumerWidget {
               ],
             ),
           ],
+          // Ahead of Cash reconciliation, because the hand-over panel inside
+          // that card states figures this block is what moved.
+          if (showActivity) ...[
+            const SizedBox(height: 12),
+            AfterCloseCard(activity: activity),
+          ],
           const SizedBox(height: 12),
           ClosingSectionCard(
             icon: LucideIcons.calculator,
@@ -732,10 +738,6 @@ class _ClosedView extends ConsumerWidget {
               ),
             ],
           ),
-          if (showActivity) ...[
-            const SizedBox(height: 12),
-            AfterCloseCard(activity: activity),
-          ],
           if (closing.notes != null) ...[
             const SizedBox(height: 12),
             ClosingSectionCard(

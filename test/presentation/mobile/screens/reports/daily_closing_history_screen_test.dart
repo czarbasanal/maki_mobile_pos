@@ -171,6 +171,21 @@ void main() {
     expect(find.text('CASH RECONCILIATION'), findsOneWidget);
   });
 
+  testWidgets('reports what changed before saying what to hand over',
+      (tester) async {
+    // Read in the other order the hand-over states a figure the reader has
+    // not yet been told moved.
+    await tester.pumpWidget(
+        _harness(liveSummary: _summary(salesCount: 3, cash: 1750, labor: 750)));
+    await tester.pump();
+    await tester.pump();
+    await _expandFirstTile(tester);
+
+    final afterClose = tester.getTopLeft(find.text('After close')).dy;
+    final handover = tester.getTopLeft(find.text('CASH HAND-OVER')).dy;
+    expect(afterClose, lessThan(handover));
+  });
+
   testWidgets('shows labor arriving, not only leaving', (tester) async {
     // Gross sales is parts-only, so without its own row the labor money never
     // appears on the way IN — it shows up only as "To mechanics" on the way

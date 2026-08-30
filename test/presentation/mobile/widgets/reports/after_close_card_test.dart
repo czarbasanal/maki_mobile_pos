@@ -34,10 +34,9 @@ void main() {
     expect(find.text('+₱200.00'), findsOneWidget); // 500 cash − 300 labor
     expect(find.text('Labor fees'), findsOneWidget);
     expect(find.text('+₱300.00'), findsOneWidget);
-    expect(find.text('Updated cash on hand'), findsOneWidget);
-    expect(find.text('₱1,950.00'), findsOneWidget);
-    // The management/mechanics split lives in the hand-over panel now. Having
-    // it here too gave the screen two answers to what the mechanics get.
+    // Both the updated total and the split live in the hand-over panel below
+    // now; this card reports only what changed.
+    expect(find.text('Updated cash on hand'), findsNothing);
     expect(find.text('Updated for management'), findsNothing);
     expect(find.text('For mechanics (whole day)'), findsNothing);
   });
@@ -57,8 +56,6 @@ void main() {
 
     expect(find.text('Sale items'), findsNothing);
     expect(find.text('Labor fees'), findsNothing);
-    // The card still reports what changed, and the drawer total it implies.
-    expect(find.text('Updated cash on hand'), findsOneWidget);
-    expect(find.text('₱2,740.00'), findsOneWidget);
+    expect(find.text('Updated cash on hand'), findsNothing);
   });
 }

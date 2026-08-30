@@ -19,8 +19,6 @@ class AfterCloseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    String peso(double v) =>
-        '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
     String signed(double v) =>
         '${v >= 0 ? '+' : '-'}${AppConstants.currencySymbol}${v.abs().toCurrencyWithoutSymbol()}';
     final showLaborSplit = activity.laborDelta.abs() > 0.005;
@@ -56,33 +54,10 @@ class AfterCloseCard extends StatelessWidget {
             label: 'Cash expenses after close',
             value: signed(-activity.cashExpensesDelta),
           ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          child: Divider(height: 1, color: AppColors.hairline(isDark)),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Updated cash on hand',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
-            ),
-            Text(
-              peso(activity.updatedCashOnHand),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-        // The management/mechanics split is NOT repeated here. This card
-        // reports what CHANGED; the hand-over panel above states what to hand
-        // over, and once drift exists it already shows these same whole-day
-        // figures. Printing them twice gave the screen two answers to "how
-        // much do the mechanics get" — the reported confusion.
+        // Neither the updated total nor the management/mechanics split is
+        // stated here. This card reports what CHANGED; the hand-over panel
+        // below it says what to hand over and carries both. Printing them in
+        // two places gave the screen two answers to the same question.
       ],
     );
   }
