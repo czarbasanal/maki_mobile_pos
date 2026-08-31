@@ -16,6 +16,18 @@ abstract class DailyClosingRepository {
   /// Streams saved closings, newest first.
   Stream<List<DailyClosingEntity>> watchClosings({int limit = 60});
 
+  /// Closings whose business day falls between [fromBusinessDate] and
+  /// [toBusinessDate] inclusive, newest first.
+  ///
+  /// Both bounds are shop WALL dates — the same values `businessDate` is
+  /// written with — not instants. Fetched on demand rather than streamed: a
+  /// closing is immutable and written once a day, so a live subscription over
+  /// the whole history buys nothing and reads everything.
+  Future<List<DailyClosingEntity>> getClosingsInRange({
+    required DateTime fromBusinessDate,
+    required DateTime toBusinessDate,
+  });
+
   /// Reads the raw `drawer_state/state` singleton doc (client-readable
   /// business-day rollover marker, `FirestoreCollections.drawerState`).
   /// Returns [DrawerState.empty] when the doc doesn't exist yet, matching

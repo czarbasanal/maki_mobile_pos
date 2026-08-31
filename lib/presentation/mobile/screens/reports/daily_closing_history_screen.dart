@@ -17,12 +17,30 @@ import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
 /// List of past end-of-day closings, newest first. Tap a row to expand its
 /// reconciliation detail.
-class DailyClosingHistoryScreen extends ConsumerWidget {
+///
+/// Opens on the last [kClosingHistoryDefaultDays] days and fetches further
+/// back only when a range is chosen — a closing is written once a day and
+/// never edited, so streaming the whole collection read everything to show a
+/// handful of rows.
+class DailyClosingHistoryScreen extends ConsumerStatefulWidget {
   const DailyClosingHistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final historyAsync = ref.watch(dailyClosingHistoryProvider);
+  ConsumerState<DailyClosingHistoryScreen> createState() =>
+      _DailyClosingHistoryScreenState();
+}
+
+class _DailyClosingHistoryScreenState
+    extends ConsumerState<DailyClosingHistoryScreen> {
+  ClosingHistoryRange? _range;
+  bool _isCustom = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final offset = ref.watch(shopOffsetProvider);
+    final shopToday = ref.watch(businessDayProvider);
+    final range = _range ?? defaultClosingHistoryRange(shopToday);
+    final historyAsync = ref.watch(closingHistoryInRangeProvider(range));
 
     return Scaffold(
       appBar: AppBar(
@@ -32,11 +50,53 @@ class DailyClosingHistoryScreen extends ConsumerWidget {
         ),
         title: const Text('Closing History'),
       ),
-      body: historyAsync.when(
+      body: Column(
+        children: [
+          _RangeBar(
+            range: range,
+            isCustom: _isCustom,
+            offset: offset,
+            onPickRange: () => _pickRange(context, range, offset),
+            onReset: _isCustom
+                ? () => setState(() {
+                      _range = null;
+                      _isCustom = false;
+                    })
+                : null,
+          ),
+          Expanded(child: _buildBody(historyAsync)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickRange(
+      BuildContext context, ClosingHistoryRange current, int offset) async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2024),
+      lastDate: shopTimeOf(DateTime.now(), offset),
+      initialDateRange:
+          DateTimeRange(start: current.from, end: current.to),
+    );
+    if (picked == null) return;
+    setState(() {
+      _isCustom = true;
+      // Shop WALL dates: the picker hands back the calendar days the operator
+      // meant, and businessDate is stored as exactly those.
+      _range = ClosingHistoryRange(
+        from: shopWall(picked.start.year, picked.start.month, picked.start.day),
+        to: shopWall(picked.end.year, picked.end.month, picked.end.day),
+      );
+    });
+  }
+
+  Widget _buildBody(AsyncValue<List<DailyClosingEntity>> historyAsync) {
+    return historyAsync.when(
         loading: () => const ListSkeleton(),
         error: (e, _) => ErrorStateView(
           message: 'Error: $e',
-          onRetry: () => ref.invalidate(dailyClosingHistoryProvider),
+          onRetry: () => ref.invalidate(closingHistoryInRangeProvider),
         ),
         data: (closings) {
           if (closings.isEmpty) {
@@ -52,6 +112,65 @@ class DailyClosingHistoryScreen extends ConsumerWidget {
             itemBuilder: (context, i) => _ClosingTile(closing: closings[i]),
           );
         },
+      );
+  }
+}
+
+/// Says which days are on screen, and offers a wider span.
+///
+/// The default is deliberately short, so the bar has to state it — otherwise
+/// an operator looking for last month's close would read an empty list as
+/// "there is nothing there" rather than "you are looking at this week".
+class _RangeBar extends StatelessWidget {
+  const _RangeBar({
+    required this.range,
+    required this.isCustom,
+    required this.offset,
+    required this.onPickRange,
+    this.onReset,
+  });
+
+  final ClosingHistoryRange range;
+  final bool isCustom;
+  final int offset;
+  final VoidCallback onPickRange;
+  final VoidCallback? onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final fmt = DateFormat('MMM d');
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.hairline(isDark))),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.calendarDays, size: 15, color: muted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isCustom
+                  ? '${fmt.format(range.from)} – ${fmt.format(range.to)}'
+                  : 'Last $kClosingHistoryDefaultDays days',
+              style: TextStyle(fontSize: 13, color: muted),
+            ),
+          ),
+          if (onReset != null)
+            TextButton(
+              onPressed: onReset,
+              child: const Text('Reset'),
+            ),
+          TextButton.icon(
+            onPressed: onPickRange,
+            icon: const Icon(LucideIcons.search, size: 15),
+            label: const Text('Other dates'),
+          ),
+        ],
       ),
     );
   }

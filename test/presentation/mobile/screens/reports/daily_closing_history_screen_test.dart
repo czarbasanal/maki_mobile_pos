@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 final _date = DateTime(2026, 7, 20);
 
@@ -83,8 +84,9 @@ Widget _harness({
               jobCount: 0,
               byMechanic: mechanics ?? const [],
             )),
-        dailyClosingHistoryProvider
-            .overrideWith((ref) => Stream.value([closing ?? _closing()])),
+        // Fetched on demand for a range now, not streamed wholesale.
+        closingHistoryInRangeProvider
+            .overrideWith((ref, range) async => [closing ?? _closing()]),
         dailyClosingDataProvider.overrideWith((ref, date) async =>
             DailyClosingData(
               businessDate: date,
@@ -96,7 +98,20 @@ Widget _harness({
     );
 
 Future<void> _expandFirstTile(WidgetTester tester) async {
-  await tester.tap(find.byType(InkWell).first);
+  // The list is fetched on demand now (FutureProvider), so it needs settling
+  // rather than a fixed number of pumps.
+  await tester.pumpAndSettle();
+  // Scope to the tile: the range bar above the list has its own buttons, so
+  // `InkWell.first` would tap "Other dates" rather than a closing.
+  // `.first` goes on the descendant finder, not the inner one: applied to
+  // `matching` it picks the first InkWell in the WHOLE tree — the range bar's
+  // button — and then finds none of those inside the card.
+  await tester.tap(find
+      .descendant(
+        of: find.byType(AppCard).first,
+        matching: find.byType(InkWell),
+      )
+      .first);
   await tester.pump();
   await tester.pump();
 }

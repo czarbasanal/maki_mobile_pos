@@ -38,8 +38,8 @@ DailyClosingEntity _closing({
 
 Widget _harness(List<DailyClosingEntity> closings) => ProviderScope(
       overrides: [
-        dailyClosingHistoryProvider
-            .overrideWith((ref) => Stream.value(closings)),
+        closingHistoryInRangeProvider
+            .overrideWith((ref, range) async => closings),
       ],
       child: const MaterialApp(home: DailyClosingHistoryScreen()),
     );

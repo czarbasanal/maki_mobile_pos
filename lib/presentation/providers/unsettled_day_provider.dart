@@ -17,15 +17,12 @@ import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 /// - **skipped** if it has no closing and no sales — nothing to settle.
 ///
 /// Re-runs whenever the business day flips ([businessDayProvider]) or a
-/// closing is saved/invalidated ([dailyClosingHistoryProvider] — the same
-/// invalidation `closeDay` already fires on success).
+/// closing is saved — `closeDay` invalidates this provider directly on
+/// success, rather than this watching a list provider as a proxy for it.
 final unsettledBusinessDayProvider = FutureProvider<DateTime?>((ref) async {
   final today = ref.watch(businessDayProvider);
   final closingRepo = ref.watch(dailyClosingRepositoryProvider);
   final saleRepo = ref.watch(saleRepositoryProvider);
-  // Re-run when a close lands (same invalidation closeDay already fires).
-  ref.watch(dailyClosingHistoryProvider);
-
   final offset = ref.watch(shopOffsetProvider);
   final latest = await closingRepo.latestClosing();
   var start = latest == null

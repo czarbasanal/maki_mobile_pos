@@ -116,6 +116,34 @@ class DailyClosingRepositoryImpl implements DailyClosingRepository {
   }
 
   @override
+  Future<List<DailyClosingEntity>> getClosingsInRange({
+    required DateTime fromBusinessDate,
+    required DateTime toBusinessDate,
+  }) async {
+    try {
+      // businessDate is stored as the shop wall midnight, so the bounds are
+      // those same wall values — not day-start instants, which would sit
+      // hours before the stored value and drop the first day.
+      final snapshot = await _ref
+          .where('businessDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(fromBusinessDate))
+          .where('businessDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(toBusinessDate))
+          .orderBy('businessDate', descending: true)
+          .get();
+      return snapshot.docs
+          .map((doc) => DailyClosingModel.fromFirestore(doc).toEntity())
+          .toList();
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to load closings: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<DrawerState> getDrawerState() async {
     try {
       final doc = await _drawerStateRef.get();

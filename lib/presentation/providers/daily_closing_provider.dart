@@ -12,6 +12,8 @@ import 'package:maki_mobile_pos/presentation/providers/expense_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
+import 'package:maki_mobile_pos/presentation/providers/unsettled_day_provider.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -107,12 +109,47 @@ final dailyClosingForDateProvider =
 });
 
 /// Stream of past closings, newest first.
-final dailyClosingHistoryProvider =
-    StreamProvider<List<DailyClosingEntity>>((ref) {
-  return authGatedStream(ref, (_) {
-    return ref.watch(dailyClosingRepositoryProvider).watchClosings();
-  });
+/// The business days a history query covers, as shop WALL dates — the same
+/// values `businessDate` is written with.
+class ClosingHistoryRange {
+  const ClosingHistoryRange({required this.from, required this.to});
+
+  final DateTime from;
+  final DateTime to;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ClosingHistoryRange && other.from == from && other.to == to;
+
+  @override
+  int get hashCode => Object.hash(from, to);
+}
+
+/// How many days the history shows before the operator asks for more.
+const int kClosingHistoryDefaultDays = 7;
+
+/// Closings for a given span, fetched on demand.
+///
+/// The screen opens on the last [kClosingHistoryDefaultDays] days and only
+/// reaches further back when a range is chosen. It used to stream every
+/// closing on the collection — a live subscription over the whole history,
+/// which grows by a document a day and is never edited once written.
+final closingHistoryInRangeProvider = FutureProvider.autoDispose
+    .family<List<DailyClosingEntity>, ClosingHistoryRange>((ref, range) async {
+  return ref.watch(dailyClosingRepositoryProvider).getClosingsInRange(
+        fromBusinessDate: range.from,
+        toBusinessDate: range.to,
+      );
 });
+
+/// The default span: the last [kClosingHistoryDefaultDays] shop days, today
+/// included — today may already be closed.
+ClosingHistoryRange defaultClosingHistoryRange(DateTime shopToday) =>
+    ClosingHistoryRange(
+      from: shopWall(shopToday.year, shopToday.month,
+          shopToday.day - (kClosingHistoryDefaultDays - 1)),
+      to: shopWall(shopToday.year, shopToday.month, shopToday.day),
+    );
 
 // ==================== OPERATIONS ====================
 
@@ -159,7 +196,11 @@ class DailyClosingOperationsNotifier extends StateNotifier<AsyncValue<void>> {
         _ref.invalidate(dailyClosingForDateProvider);
         _ref.invalidate(dailyClosingDataProvider);
         _ref.invalidate(dailyClosingDraftProvider);
-        _ref.invalidate(dailyClosingHistoryProvider);
+        _ref.invalidate(closingHistoryInRangeProvider);
+        // Explicit: the detector used to watch the history list as a proxy
+        // for "a close landed", which kept a whole-collection subscription
+        // alive just to learn one fact.
+        _ref.invalidate(unsettledBusinessDayProvider);
         _ref.invalidate(todaysSalesSummaryProvider);
         return result.data;
       }
