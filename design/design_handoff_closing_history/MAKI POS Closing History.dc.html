@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#ECEAE6}
+  svg.lucide{display:inline-block;vertical-align:middle}
+  a{color:#283E46}
+  a:hover{color:#16201F}
+</style>
+</helmet>
+
+<section style="min-width:100%;width:max-content;box-sizing:border-box;padding:48px 56px 80px;background:#ECEAE6;font-family:'Figtree',system-ui,sans-serif">
+
+  <div style="max-width:1780px;margin:0 auto 30px">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#283E46;background:#fff;padding:6px 12px;border-radius:999px;box-shadow:0 1px 3px rgba(17,28,29,.08);margin-bottom:16px"><span style="width:8px;height:8px;border-radius:999px;background:#E8B84C"></span>Closing History · expanded day</div>
+    <h1 style="font-size:30px;font-weight:700;letter-spacing:-.6px;color:#16201F;margin:0 0 8px">Two layouts for the expanded closing-day summary</h1>
+    <p style="margin:0;color:#5A6468;font-size:15px;line-height:1.6;max-width:104ch;text-wrap:pretty">Same rows, same order, same figures — every row from the capture is still present, still rendered at zero, still in the sealed order (sales → expenses → reconciliation → after close → hand-over). What changes is <b>hierarchy</b>: the ~18 rows that all weigh the same today split into a quiet <b>reference tier</b> and a heavier <b>result tier</b>, so the numbers a person acts on are the ones that read first. <a href="#1a">1a</a> does it typographically on one flat surface; <a href="#1b">1b</a> does it with recessed zones. Each option shows an ordinary day in light and a drifted day in dark.</p>
+  </div>
+
+  <div style="max-width:1780px;margin:0 auto;display:flex;flex-wrap:wrap;gap:44px">
+
+    <!-- ============================== OPTION 1a ============================== -->
+    <div id="1a" style="width:844px;flex:none">
+      <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 6px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:24px;padding:0 9px;border-radius:8px;background:#283E46;color:#fff;font-size:12px;font-weight:700;letter-spacing:.5px">1a</span>
+        <span style="font-size:17px;font-weight:700;color:#16201F;letter-spacing:-.2px">Tiered ledger</span>
+      </div>
+      <p style="margin:0 0 18px;font-size:13.5px;line-height:1.55;color:#5A6468;max-width:78ch">One flat surface, three weights. Reference rows drop to 12.5px muted; the two numbers the day turns on — <b>Expected</b> and <b>Counted</b> — sit together in a tinted reconciliation strip that carries the variance chip, so the read is "expected, counted, difference" in one glance instead of two rows nine lines apart. Group headings gain a hairline rule and a glyph. The hand-over keeps its bordered box and gets the only large type in the block.</p>
+
+      <div style="display:flex;gap:32px;flex-wrap:wrap">
+
+        <!-- 1a LIGHT · ordinary -->
+        <div style="width:390px;flex:none" data-screen-label="1a Light · ordinary day">
+          <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 10px 4px">Light — ordinary day</div>
+          <div style="width:390px;background:#FFFFFF;border-radius:30px;overflow:hidden;border:1px solid #E2E0DB;box-shadow:0 30px 70px -32px rgba(17,28,29,.5)">
+            <div style="display:flex;align-items:center;gap:10px;padding:16px 14px 12px;font-weight:600;font-size:16px;color:#16201F"><i data-lucide="chevron-left" style="width:20px;height:20px;stroke-width:1.75"></i>Closing History</div>
+            <div style="padding:8px 16px 20px">
+              <div style="background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06),0 1px 1px rgba(17,28,29,.05);overflow:hidden">
+
+                <div style="display:flex;align-items:center;padding:14px 16px;gap:12px">
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-.1px;color:#16201F">Thu, Aug 28, 2026</div><div style="font-size:12px;color:#49454F;line-height:1.5;margin-top:3px">Cash on hand <b style="color:#16201F;font-weight:600">₱5,491.00</b><br />Closed Aug 28, 9:24 PM</div></div>
+                  <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;background:#E8F5E9;color:#2E7D32"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2.4"></i>+₱0.00</span>
+                  <i data-lucide="chevron-up" style="width:17px;height:17px;color:#49454F;stroke-width:2"></i>
+                </div>
+
+                <div style="border-top:1px solid #ECECEC;padding:6px 16px 14px">
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px"><i data-lucide="arrow-down-left" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">SALES</span><span style="flex:1;height:1px;background:#F0F0F0"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Gross sales (parts)</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱7,960.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Labor (service)</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱800.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Cash sales</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">+₱8,335.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Non-cash sales</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱685.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#9AA2A4">GCash</span><span style="font-size:12.5px;font-weight:500;color:#5A6468;font-variant-numeric:tabular-nums">₱400.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#9AA2A4">Maya</span><span style="font-size:12.5px;font-weight:500;color:#5A6468;font-variant-numeric:tabular-nums">₱285.00</span></div>
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:14px 0 6px"><i data-lucide="receipt" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">SHOP FEES</span><span style="flex:1;height:1px;background:#F0F0F0"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Shop fees</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱260.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#9AA2A4">Shop supplies</span><span style="font-size:12.5px;font-weight:500;color:#5A6468;font-variant-numeric:tabular-nums">₱150.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#9AA2A4">Disposal fee</span><span style="font-size:12.5px;font-weight:500;color:#5A6468;font-variant-numeric:tabular-nums">₱110.00</span></div>
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:14px 0 6px"><i data-lucide="arrow-up-right" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">EXPENSES</span><span style="flex:1;height:1px;background:#F0F0F0"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Total expenses</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱2,844.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#9AA2A4">Cash expenses</span><span style="font-size:12.5px;font-weight:500;color:#5A6468;font-variant-numeric:tabular-nums">−₱2,844.00</span></div>
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:14px 0 6px"><i data-lucide="scale" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">CASH RECONCILIATION</span><span style="flex:1;height:1px;background:#F0F0F0"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Opening float</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Plate No DP</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#6E787B">Plate No Delivery</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">−₱0.00</span></div>
+                  <div style="margin-top:9px;background:#FAFAFA;border-radius:12px;padding:10px 12px">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 0"><span style="font-size:13px;font-weight:600;color:#16201F">Expected cash</span><span style="font-size:14px;font-weight:600;color:#16201F;font-variant-numeric:tabular-nums">₱5,491.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 0"><span style="font-size:13px;font-weight:600;color:#16201F">Counted cash</span><span style="font-size:14px;font-weight:600;color:#16201F;font-variant-numeric:tabular-nums">₱5,491.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #ECECEC;margin-top:8px;padding-top:8px"><span style="font-size:12.5px;color:#6E787B">Variance</span><span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;background:#E8F5E9;color:#2E7D32"><i data-lucide="check" style="width:12px;height:12px;stroke-width:2.4"></i>Balanced · +₱0.00</span></div>
+                  </div>
+
+                  <div style="border:1px solid #ECECEC;border-radius:14px;padding:11px 12px;margin-top:12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px"><i data-lucide="banknote-arrow-up" style="width:13px;height:13px;color:#8A9296;stroke-width:2"></i><span style="font-size:10.5px;font-weight:700;letter-spacing:1.1px;color:#8A9296">CASH HAND-OVER</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:1px 0"><span style="color:#6E787B">Counted</span><span style="font-family:'Roboto Mono',monospace;font-weight:600;color:#3C4749">₱5,491.00</span></div>
+                    <div style="height:1px;background:#ECECEC;margin:9px 0"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:1px 0"><span style="font-size:14px;font-weight:600;color:#16201F">To mechanics</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#16201F">₱800.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#9AA2A4">Jeric</span><span style="font-family:'Roboto Mono',monospace;color:#5A6468;font-weight:500">₱500.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#9AA2A4">Rico</span><span style="font-family:'Roboto Mono',monospace;color:#5A6468;font-weight:500">₱300.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0 1px"><span style="font-size:14px;font-weight:600;color:#16201F">To management</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#16201F">₱4,691.00</span></div>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:11px;font-size:11.5px;color:#8A9296"><i data-lucide="user" style="width:13px;height:13px;stroke-width:1.85"></i>Closed by Belle · Aug 28, 2026 · 9:24 PM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1a DARK · drifted -->
+        <div style="width:390px;flex:none" data-screen-label="1a Dark · drifted day">
+          <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 10px 4px">Dark — day closed early, then more sales came in</div>
+          <div style="width:390px;background:#0C1415;border-radius:30px;overflow:hidden;border:1px solid #243234;box-shadow:0 30px 70px -32px rgba(0,0,0,.7)">
+            <div style="display:flex;align-items:center;gap:10px;padding:16px 14px 12px;font-weight:600;font-size:16px;color:#ECEFEF"><i data-lucide="chevron-left" style="width:20px;height:20px;stroke-width:1.75"></i>Closing History</div>
+            <div style="padding:8px 16px 20px">
+              <div style="background:#18262A;border:1px solid #243234;border-radius:16px;overflow:hidden">
+
+                <div style="display:flex;align-items:center;padding:14px 16px;gap:12px">
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-.1px;color:#ECEFEF">Thu, Aug 27, 2026</div><div style="font-size:12px;color:#93A0A3;line-height:1.5;margin-top:3px">Cash on hand <b style="color:#ECEFEF;font-weight:600">₱2,260.00</b><br />Closed Aug 27, 5:05 PM</div></div>
+                  <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;background:rgba(76,175,80,.16);color:#8FE39A"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2.4"></i>+₱0.00</span>
+                  <i data-lucide="chevron-up" style="width:17px;height:17px;color:#93A0A3;stroke-width:2"></i>
+                </div>
+
+                <div style="border-top:1px solid #243234;padding:6px 16px 14px">
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px"><i data-lucide="arrow-down-left" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">SALES</span><span style="flex:1;height:1px;background:#223032"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Gross sales (parts)</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱1,740.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Labor (service)</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱400.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Cash sales</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">+₱2,260.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Non-cash sales</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱0.00</span></div>
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:14px 0 6px"><i data-lucide="receipt" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">SHOP FEES</span><span style="flex:1;height:1px;background:#223032"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Shop fees</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱120.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#6C797C">Shop supplies</span><span style="font-size:12.5px;font-weight:500;color:#AEC0C6;font-variant-numeric:tabular-nums">₱70.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#6C797C">Disposal fee</span><span style="font-size:12.5px;font-weight:500;color:#AEC0C6;font-variant-numeric:tabular-nums">₱50.00</span></div>
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:14px 0 6px"><i data-lucide="arrow-up-right" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">EXPENSES</span><span style="flex:1;height:1px;background:#223032"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Total expenses</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱0.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0 3px 14px"><span style="font-size:12.5px;color:#6C797C">Cash expenses</span><span style="font-size:12.5px;font-weight:500;color:#AEC0C6;font-variant-numeric:tabular-nums">−₱0.00</span></div>
+
+                  <div style="display:flex;align-items:center;gap:8px;padding:14px 0 6px"><i data-lucide="scale" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">CASH RECONCILIATION</span><span style="flex:1;height:1px;background:#223032"></span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Opening float</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Plate No DP</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3.5px 0"><span style="font-size:12.5px;color:#93A0A3">Plate No Delivery</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">−₱0.00</span></div>
+                  <div style="margin-top:9px;background:#152125;border-radius:12px;padding:10px 12px">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Expected cash</span><span style="font-size:14px;font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">₱2,260.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Counted cash</span><span style="font-size:14px;font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">₱2,260.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #243234;margin-top:8px;padding-top:8px"><span style="font-size:12.5px;color:#93A0A3">Variance</span><span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;background:rgba(76,175,80,.16);color:#8FE39A"><i data-lucide="check" style="width:12px;height:12px;stroke-width:2.4"></i>Balanced · +₱0.00</span></div>
+                  </div>
+
+                  <div style="margin-top:12px;background:#18262A;border:1px solid rgba(245,181,71,.34);border-radius:14px;padding:12px">
+                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px"><i data-lucide="clock-alert" style="width:17px;height:17px;color:#F5B547;stroke-width:1.9"></i><span style="font-size:14.5px;font-weight:700;color:#ECEFEF">After close</span></div>
+                    <div style="font-size:11.5px;color:#6C797C;line-height:1.45;margin:-2px 0 9px">Only the frozen lines that moved after closing are listed. Expenses did not change.</div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:3.5px 0;font-size:13px"><span style="color:#93A0A3">Total sales at closing</span><span style="font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱1,740.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:3.5px 0;font-size:13px"><span style="color:#93A0A3">Labor fees at closing</span><span style="font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱400.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:3.5px 0;font-size:13px"><span style="color:#93A0A3">Shop fees at closing</span><span style="font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱120.00</span></div>
+                    <div style="height:1px;background:#243234;margin:9px 0"></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:3.5px 0;font-size:13px"><span style="color:#93A0A3">Sales after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+3 · +₱2,800.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:3.5px 0;font-size:13px"><span style="color:#93A0A3">Labor fees after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+₱150.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:3.5px 0;font-size:13px"><span style="color:#93A0A3">Shop fees after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+₱60.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:3.5px 0;font-size:13px"><span style="color:#93A0A3">Cash collected after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+₱3,010.00</span></div>
+                    <div style="height:1px;background:#243234;margin:9px 0"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Updated sales</span><span style="font-size:14px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱4,540.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Updated labor fees</span><span style="font-size:14px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱550.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Updated shop fees</span><span style="font-size:14px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱180.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #243234;margin-top:8px;padding-top:9px"><span style="font-size:13.5px;font-weight:600;color:#ECEFEF">Updated cash on hand</span><span style="font-family:'Roboto Mono',monospace;font-size:15.5px;font-weight:700;color:#E8B84C">₱5,270.00</span></div>
+                  </div>
+
+                  <div style="border:1px solid #243234;border-radius:14px;padding:11px 12px;margin-top:10px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px"><i data-lucide="banknote-arrow-up" style="width:13px;height:13px;color:#93A0A3;stroke-width:2"></i><span style="font-size:10.5px;font-weight:700;letter-spacing:1.1px;color:#93A0A3">CASH HAND-OVER</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:1px 0"><span style="color:#93A0A3">Counted</span><span style="font-family:'Roboto Mono',monospace;font-weight:600;color:#D6DDDE">₱2,260.00</span></div>
+                    <div style="height:1px;background:#243234;margin:9px 0"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:1px 0"><span style="font-size:14px;font-weight:600;color:#ECEFEF">To mechanics</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#ECEFEF">₱550.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#6C797C">Jeric</span><span style="font-family:'Roboto Mono',monospace;color:#AEC0C6;font-weight:500">₱400.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#6C797C">Rico</span><span style="font-family:'Roboto Mono',monospace;color:#AEC0C6;font-weight:500">₱150.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0 1px"><span style="font-size:14px;font-weight:600;color:#ECEFEF">To management</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#ECEFEF">₱4,720.00</span></div>
+                    <div style="height:1px;background:#243234;margin:9px 0"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-size:13.5px;font-weight:600;color:#ECEFEF">Updated cash on hand</span><span style="font-family:'Roboto Mono',monospace;font-size:15.5px;font-weight:700;color:#E8B84C">₱5,270.00</span></div>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:11px;font-size:11.5px;color:#93A0A3"><i data-lucide="user" style="width:13px;height:13px;stroke-width:1.85"></i>Closed by Bern · Aug 27, 2026 · 5:05 PM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== OPTION 1b ============================== -->
+    <div id="1b" style="width:844px;flex:none">
+      <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 6px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:24px;padding:0 9px;border-radius:8px;background:#283E46;color:#fff;font-size:12px;font-weight:700;letter-spacing:.5px">1b</span>
+        <span style="font-size:17px;font-weight:700;color:#16201F;letter-spacing:-.2px">Zoned summary</span>
+      </div>
+      <p style="margin:0 0 18px;font-size:13.5px;line-height:1.55;color:#5A6468;max-width:78ch">Each group becomes a recessed zone with its heading inside it, and every zone ends with the one line it resolves to — <b>Cash sales</b>, <b>Cash expenses</b>, <b>Counted cash</b> — set above the hairline as the zone's result. Scanning the block vertically gives four numbers before any detail is read. The hand-over rises out of the recess onto card surface as the block's conclusion; the duplicate "Counted" becomes a stated carry-forward (<span style="font-family:'Roboto Mono',monospace;font-size:12.5px">from counted cash</span>) rather than a repeated row.</p>
+
+      <div style="display:flex;gap:32px;flex-wrap:wrap">
+
+        <!-- 1b LIGHT · ordinary -->
+        <div style="width:390px;flex:none" data-screen-label="1b Light · ordinary day">
+          <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 10px 4px">Light — ordinary day</div>
+          <div style="width:390px;background:#FFFFFF;border-radius:30px;overflow:hidden;border:1px solid #E2E0DB;box-shadow:0 30px 70px -32px rgba(17,28,29,.5)">
+            <div style="display:flex;align-items:center;gap:10px;padding:16px 14px 12px;font-weight:600;font-size:16px;color:#16201F"><i data-lucide="chevron-left" style="width:20px;height:20px;stroke-width:1.75"></i>Closing History</div>
+            <div style="padding:8px 16px 20px">
+              <div style="background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(17,28,29,.06),0 1px 1px rgba(17,28,29,.05);overflow:hidden">
+
+                <div style="display:flex;align-items:center;padding:14px 16px;gap:12px">
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-.1px;color:#16201F">Thu, Aug 28, 2026</div><div style="font-size:12px;color:#49454F;line-height:1.5;margin-top:3px">Cash on hand <b style="color:#16201F;font-weight:600">₱5,491.00</b><br />Closed Aug 28, 9:24 PM</div></div>
+                  <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;background:#E8F5E9;color:#2E7D32"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2.4"></i>+₱0.00</span>
+                  <i data-lucide="chevron-up" style="width:17px;height:17px;color:#49454F;stroke-width:2"></i>
+                </div>
+
+                <div style="border-top:1px solid #ECECEC;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px">
+
+                  <div style="background:#FAFAFA;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="arrow-down-left" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">SALES</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Gross sales (parts)</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱7,960.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Labor (service)</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱800.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Non-cash sales</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱685.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2.5px 0 2.5px 14px"><span style="font-size:12.5px;color:#9AA2A4">GCash</span><span style="font-size:12.5px;font-weight:500;color:#5A6468;font-variant-numeric:tabular-nums">₱400.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2.5px 0 2.5px 14px"><span style="font-size:12.5px;color:#9AA2A4">Maya</span><span style="font-size:12.5px;font-weight:500;color:#5A6468;font-variant-numeric:tabular-nums">₱285.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid #EDEDED;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#16201F">Cash sales</span><span style="font-size:14.5px;font-weight:700;color:#16201F;font-variant-numeric:tabular-nums">+₱8,335.00</span></div>
+                  </div>
+
+                  <div style="background:#FAFAFA;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="receipt" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">SHOP FEES</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Shop supplies</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱150.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Disposal fee</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱110.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid #EDEDED;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#16201F">Shop fees</span><span style="font-size:14.5px;font-weight:700;color:#16201F;font-variant-numeric:tabular-nums">₱260.00</span></div>
+                  </div>
+
+                  <div style="background:#FAFAFA;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="arrow-up-right" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">EXPENSES</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Total expenses</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱2,844.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid #EDEDED;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#16201F">Cash expenses</span><span style="font-size:14.5px;font-weight:700;color:#16201F;font-variant-numeric:tabular-nums">−₱2,844.00</span></div>
+                  </div>
+
+                  <div style="background:#FAFAFA;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="scale" style="width:13px;height:13px;color:#8A9296;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#8A9296">CASH RECONCILIATION</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Opening float</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Plate No DP</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Plate No Delivery</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">−₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#6E787B">Expected cash</span><span style="font-size:13px;font-weight:500;color:#3C4749;font-variant-numeric:tabular-nums">₱5,491.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #EDEDED;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#16201F">Counted cash</span><span style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 8px;font-size:11.5px;font-weight:700;background:#E8F5E9;color:#2E7D32"><i data-lucide="check" style="width:11px;height:11px;stroke-width:2.6"></i>Balanced</span><span style="font-size:14.5px;font-weight:700;color:#16201F;font-variant-numeric:tabular-nums">₱5,491.00</span></span></div>
+                  </div>
+
+                  <div style="background:#fff;border:1px solid #E4E4E4;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(17,28,29,.05)">
+                    <div style="display:flex;align-items:center;gap:7px"><i data-lucide="banknote-arrow-up" style="width:13px;height:13px;color:#8A9296;stroke-width:2"></i><span style="font-size:10.5px;font-weight:700;letter-spacing:1.1px;color:#8A9296">CASH HAND-OVER</span></div>
+                    <div style="font-size:12px;color:#9AA2A4;margin:5px 0 10px">Dividing <span style="font-family:'Roboto Mono',monospace;color:#5A6468">₱5,491.00</span> from counted cash</div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:1px 0"><span style="font-size:14px;font-weight:600;color:#16201F">To mechanics</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#16201F">₱800.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#9AA2A4">Jeric</span><span style="font-family:'Roboto Mono',monospace;color:#5A6468;font-weight:500">₱500.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#9AA2A4">Rico</span><span style="font-family:'Roboto Mono',monospace;color:#5A6468;font-weight:500">₱300.00</span></div>
+                    <div style="height:1px;background:#EDEDED;margin:10px 0"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:1px 0"><span style="font-size:14px;font-weight:600;color:#16201F">To management</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#16201F">₱4,691.00</span></div>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:3px;font-size:11.5px;color:#8A9296"><i data-lucide="user" style="width:13px;height:13px;stroke-width:1.85"></i>Closed by Belle · Aug 28, 2026 · 9:24 PM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1b DARK · drifted -->
+        <div style="width:390px;flex:none" data-screen-label="1b Dark · drifted day">
+          <div style="font-size:12px;font-weight:600;color:#7A7268;margin:0 0 10px 4px">Dark — day closed early, then more sales came in</div>
+          <div style="width:390px;background:#0C1415;border-radius:30px;overflow:hidden;border:1px solid #243234;box-shadow:0 30px 70px -32px rgba(0,0,0,.7)">
+            <div style="display:flex;align-items:center;gap:10px;padding:16px 14px 12px;font-weight:600;font-size:16px;color:#ECEFEF"><i data-lucide="chevron-left" style="width:20px;height:20px;stroke-width:1.75"></i>Closing History</div>
+            <div style="padding:8px 16px 20px">
+              <div style="background:#18262A;border:1px solid #243234;border-radius:16px;overflow:hidden">
+
+                <div style="display:flex;align-items:center;padding:14px 16px;gap:12px">
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-.1px;color:#ECEFEF">Thu, Aug 27, 2026</div><div style="font-size:12px;color:#93A0A3;line-height:1.5;margin-top:3px">Cash on hand <b style="color:#ECEFEF;font-weight:600">₱2,260.00</b><br />Closed Aug 27, 5:05 PM</div></div>
+                  <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;background:rgba(76,175,80,.16);color:#8FE39A"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2.4"></i>+₱0.00</span>
+                  <i data-lucide="chevron-up" style="width:17px;height:17px;color:#93A0A3;stroke-width:2"></i>
+                </div>
+
+                <div style="border-top:1px solid #243234;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px">
+
+                  <div style="background:#152125;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="arrow-down-left" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">SALES</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Gross sales (parts)</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱1,740.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Labor (service)</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱400.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Non-cash sales</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid #223032;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Cash sales</span><span style="font-size:14.5px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">+₱2,260.00</span></div>
+                  </div>
+
+                  <div style="background:#152125;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="receipt" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">SHOP FEES</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Shop supplies</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱70.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Disposal fee</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱50.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid #223032;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Shop fees</span><span style="font-size:14.5px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱120.00</span></div>
+                  </div>
+
+                  <div style="background:#152125;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="arrow-up-right" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">EXPENSES</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Total expenses</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid #223032;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Cash expenses</span><span style="font-size:14.5px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">−₱0.00</span></div>
+                  </div>
+
+                  <div style="background:#152125;border-radius:14px;padding:11px 12px">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><i data-lucide="scale" style="width:13px;height:13px;color:#93A0A3;stroke-width:2.2"></i><span style="font-size:10px;font-weight:700;letter-spacing:.7px;color:#93A0A3">CASH RECONCILIATION</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Opening float</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Plate No DP</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">+₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Plate No Delivery</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">−₱0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:12.5px;color:#93A0A3">Expected cash</span><span style="font-size:13px;font-weight:500;color:#D6DDDE;font-variant-numeric:tabular-nums">₱2,260.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #223032;margin-top:8px;padding-top:8px"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Counted cash</span><span style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 8px;font-size:11.5px;font-weight:700;background:rgba(76,175,80,.16);color:#8FE39A"><i data-lucide="check" style="width:11px;height:11px;stroke-width:2.6"></i>Balanced</span><span style="font-size:14.5px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱2,260.00</span></span></div>
+                  </div>
+
+                  <div style="background:#18262A;border:1px solid rgba(245,181,71,.34);border-radius:14px;padding:12px">
+                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px"><i data-lucide="clock-alert" style="width:17px;height:17px;color:#F5B547;stroke-width:1.9"></i><span style="font-size:14.5px;font-weight:700;color:#ECEFEF">After close</span></div>
+                    <div style="font-size:11.5px;color:#6C797C;line-height:1.45;margin:-2px 0 9px">Only the frozen lines that moved after closing are listed. Expenses did not change.</div>
+                    <div style="background:#152125;border-radius:11px;padding:8px 10px;margin-bottom:8px">
+                      <div style="display:flex;justify-content:space-between;gap:12px;padding:2.5px 0;font-size:12.5px"><span style="color:#93A0A3">Total sales at closing</span><span style="font-weight:500;color:#AEC0C6;font-variant-numeric:tabular-nums">₱1,740.00</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:12px;padding:2.5px 0;font-size:12.5px"><span style="color:#93A0A3">Labor fees at closing</span><span style="font-weight:500;color:#AEC0C6;font-variant-numeric:tabular-nums">₱400.00</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:12px;padding:2.5px 0;font-size:12.5px"><span style="color:#93A0A3">Shop fees at closing</span><span style="font-weight:500;color:#AEC0C6;font-variant-numeric:tabular-nums">₱120.00</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:12px;padding:2.5px 0;font-size:12.5px"><span style="color:#93A0A3">Sales after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+3 · +₱2,800.00</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:12px;padding:2.5px 0;font-size:12.5px"><span style="color:#93A0A3">Labor fees after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+₱150.00</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:12px;padding:2.5px 0;font-size:12.5px"><span style="color:#93A0A3">Shop fees after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+₱60.00</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:12px;padding:2.5px 0;font-size:12.5px"><span style="color:#93A0A3">Cash collected after closing</span><span style="font-weight:600;color:#ECEFEF;font-variant-numeric:tabular-nums">+₱3,010.00</span></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Updated sales</span><span style="font-size:14.5px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱4,540.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Updated labor fees</span><span style="font-size:14.5px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱550.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0"><span style="font-size:13px;font-weight:600;color:#ECEFEF">Updated shop fees</span><span style="font-size:14.5px;font-weight:700;color:#ECEFEF;font-variant-numeric:tabular-nums">₱180.00</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #243234;margin-top:8px;padding-top:9px"><span style="font-size:13.5px;font-weight:600;color:#ECEFEF">Updated cash on hand</span><span style="font-family:'Roboto Mono',monospace;font-size:16px;font-weight:700;color:#E8B84C">₱5,270.00</span></div>
+                  </div>
+
+                  <div style="background:#1B2C31;border:1px solid #2C3C3E;border-radius:14px;padding:12px">
+                    <div style="display:flex;align-items:center;gap:7px"><i data-lucide="banknote-arrow-up" style="width:13px;height:13px;color:#93A0A3;stroke-width:2"></i><span style="font-size:10.5px;font-weight:700;letter-spacing:1.1px;color:#93A0A3">CASH HAND-OVER</span></div>
+                    <div style="font-size:12px;color:#6C797C;margin:5px 0 10px">Superseding the sealed count of <span style="font-family:'Roboto Mono',monospace;color:#AEC0C6">₱2,260.00</span> — see After close</div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:1px 0"><span style="font-size:14px;font-weight:600;color:#ECEFEF">To mechanics</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#ECEFEF">₱550.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#6C797C">Jeric</span><span style="font-family:'Roboto Mono',monospace;color:#AEC0C6;font-weight:500">₱400.00</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:2px 0 0 14px"><span style="color:#6C797C">Rico</span><span style="font-family:'Roboto Mono',monospace;color:#AEC0C6;font-weight:500">₱150.00</span></div>
+                    <div style="height:1px;background:#2C3C3E;margin:10px 0"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:1px 0"><span style="font-size:14px;font-weight:600;color:#ECEFEF">To management</span><span style="font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:#ECEFEF">₱4,720.00</span></div>
+                    <div style="height:1px;background:#2C3C3E;margin:10px 0"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-size:13.5px;font-weight:600;color:#ECEFEF">Updated cash on hand</span><span style="font-family:'Roboto Mono',monospace;font-size:16px;font-weight:700;color:#E8B84C">₱5,270.00</span></div>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:3px;font-size:11.5px;color:#93A0A3"><i data-lucide="user" style="width:13px;height:13px;stroke-width:1.85"></i>Closed by Bern · Aug 27, 2026 · 5:05 PM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1780px;margin:34px auto 0;background:#fff;border-radius:16px;padding:18px 20px;box-shadow:0 2px 8px rgba(17,28,29,.07)">
+    <div style="font-size:13px;font-weight:700;letter-spacing:.6px;color:#8A9296;text-transform:uppercase;margin-bottom:10px">What is held constant in both</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px 28px;font-size:13.5px;color:#5A6468;line-height:1.55">
+      <span>· Every row present, none hidden at zero (<b>Plate No DP</b>, <b>Plate No Delivery</b>, <b>Labor (service)</b> still render at ₱0.00)</span>
+      <span>· Sealed order kept: sales → expenses → reconciliation → after close → hand-over</span>
+      <span>· <b>Labor (service)</b> stays directly under gross parts</span>
+      <span>· Variance semantics and both palettes unchanged</span>
+      <span>· Mono money in the hand-over only</span>
+      <span>· Expansion stays in place, no detail route</span>
+      <span>· No figure or formula altered</span>
+      <span>· Every line that moves cash on hand carries its sign: <b>+</b> adds, <b>−</b> deducts (opening float, cash sales, plate DP add; cash expenses, plate delivery deduct)</span>
+      <span>· <b>After close</b> spans every frozen line — sales, labor fees, shop fees, expenses — but lists only the ones that moved after closing: at-closing figure → after-closing figure → updated figure, ending in <b>updated cash on hand</b>. Unchanged lines are omitted here (the sealed summary above still shows them all, including at ₱0.00)</span>
+      <span>· <b>SHOP FEES</b> is its own section after <b>SALES</b>, broken down by fee type, and hands over to management with the rest of the counted cash — figures across all four frames were re-balanced so the arithmetic still closes</span>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.drawIcons(); }
+  componentDidUpdate() { this.drawIcons(); }
+  drawIcons() {
+    let tries = 0;
+    const go = () => {
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      else if (tries++ < 60) setTimeout(go, 50);
+    };
+    go();
+  }
+}
+</script>
+</body>
+</html>
