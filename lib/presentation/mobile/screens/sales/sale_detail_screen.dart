@@ -134,7 +134,11 @@ class SaleDetailScreen extends ConsumerWidget {
 
     // Void affordance pinned to the bottom (footer over the scroll). Voided
     // sales — and users without a void permission — get no action bar.
-    final footer = isVoided ? null : _buildVoidFooter(context, ref, sale);
+    // A voided sale keeps a footer, disabled: an absent button reads as "you
+    // may not void this" rather than "this is already voided".
+    final footer = isVoided
+        ? _buildVoidedFooter(context)
+        : _buildVoidFooter(context, ref, sale);
     return Column(
       children: [
         Expanded(child: scroll),
@@ -224,6 +228,10 @@ class SaleDetailScreen extends ConsumerWidget {
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontFamily: AppTextStyles.monoFontFamily,
+                // Struck alongside the total below: the number is what someone
+                // scans for, and a badge under it is easy to read past.
+                color: voided ? theme.colorScheme.onSurfaceVariant : null,
+                decoration: voided ? TextDecoration.lineThrough : null,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -565,7 +573,8 @@ class SaleDetailScreen extends ConsumerWidget {
           const Divider(height: 24),
           // Single hero: the header total is the glance target, so Total here is
           // a strong recap row (16/700, default ink) — not the 26px hero variant.
-          _buildTotalRecap(theme, '$cur${sale.grandTotal.toStringAsFixed(2)}'),
+          _buildTotalRecap(theme, '$cur${sale.grandTotal.toStringAsFixed(2)}',
+              voided: sale.status == SaleStatus.voided),
           const Divider(height: 24),
           SummaryRow(
             label: 'Received',
@@ -593,11 +602,18 @@ class SaleDetailScreen extends ConsumerWidget {
   }
 
   /// Payment "Total" recap — strong but not the hero (the header total is).
-  Widget _buildTotalRecap(ThemeData theme, String value) {
+  Widget _buildTotalRecap(ThemeData theme, String value,
+      {bool voided = false}) {
+    // Struck when voided, matching the hero total it recaps. The rows above it
+    // (subtotal, discount, labor) are left alone: they are how the total was
+    // arrived at, not the amount that no longer stands.
     final style = TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w700,
-      color: theme.colorScheme.onSurface,
+      color: voided
+          ? theme.colorScheme.onSurfaceVariant
+          : theme.colorScheme.onSurface,
+      decoration: voided ? TextDecoration.lineThrough : null,
     );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -886,6 +902,36 @@ class SaleDetailScreen extends ConsumerWidget {
 
   /// Pinned bottom action bar holding the void affordance — null when there's
   /// nothing to show (voided sale or no permission), so no empty bar renders.
+  /// The disabled counterpart of [_buildVoidFooter], shown once a sale is
+  /// voided. Same chrome, so the page does not reflow when it changes.
+  Widget _buildVoidedFooter(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: AppShadows.pinnedFooter(dark: isDark),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: null,
+              icon: const Icon(LucideIcons.ban),
+              label: const Text('Voided'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget? _buildVoidFooter(
       BuildContext context, WidgetRef ref, SaleEntity sale) {
     final action = _buildVoidAction(context, ref, sale);
