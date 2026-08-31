@@ -101,10 +101,18 @@ class ClosingHandoverPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _line(context, 'Counted', peso(countedCash), emphasis: false),
+          // A caption, not a row. The reconciliation zone directly above ends
+          // in Counted cash, so repeating it here stated one figure twice —
+          // the panel only needs to name what it is dividing.
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 7),
-            child: Divider(height: 1, color: hairline),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              drift == null
+                  ? 'Dividing ${peso(countedCash)} from counted cash'
+                  : 'Superseding the sealed count of ${peso(countedCash)} — '
+                      'see After close',
+              style: TextStyle(fontSize: 12, height: 1.35, color: muted),
+            ),
           ),
           _line(context, 'To mechanics', peso(owedToMechanics),
               emphasis: true),

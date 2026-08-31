@@ -173,14 +173,19 @@ void main() {
     await tester.pump();
 
     expect(find.text('After close'), findsOneWidget);
-    expect(find.text('Sale items'), findsOneWidget);
-    expect(find.text('Labor fees'), findsOneWidget);
+    // The card now reports each moved line as at closing → after closing →
+    // updated, rather than splitting the cash into two sub-rows.
+    expect(find.text('Labor fees after closing'), findsOneWidget);
+    expect(find.text('Updated labor fees'), findsOneWidget);
     // The split moved to the hand-over panel, which now supersedes its sealed
     // figures: the ₱750 whole-day labor is what to hand over, stated once.
     expect(find.text('Updated for management'), findsNothing);
     expect(find.text('For mechanics (whole day)'), findsNothing);
     expect(find.text('To mechanics'), findsOneWidget);
-    expect(find.text('₱750.00'), findsOneWidget);
+    // Twice: "Updated labor fees" on the After close card and "To mechanics"
+    // on the hand-over below it — the same whole-day figure, once as the
+    // result of the drift and once as the amount to hand over.
+    expect(find.text('₱750.00'), findsNWidgets(2));
   });
 
   group('target-day resolution (Task 5b)', () {

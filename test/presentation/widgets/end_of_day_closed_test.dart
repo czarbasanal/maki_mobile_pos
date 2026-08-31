@@ -107,7 +107,10 @@ void main() {
     expect(find.textContaining('Closed by Maria Santos'), findsOneWidget);
     expect(find.byIcon(LucideIcons.alertTriangle), findsOneWidget);
     expect(find.text('After close'), findsOneWidget);
-    expect(find.text('Updated cash on hand'), findsOneWidget);
+    // Stated twice by design: once as the result of the drift math on the
+    // After close card, once as the sum of the two hand-over destinations.
+    // They read the same value from the same source.
+    expect(find.text('Updated cash on hand'), findsNWidgets(2));
     expect(find.text('Close Day'), findsNothing);
   });
 }

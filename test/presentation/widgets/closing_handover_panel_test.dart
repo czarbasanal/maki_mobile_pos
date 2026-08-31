@@ -16,9 +16,9 @@ void main() {
     )));
 
     expect(find.text('CASH HAND-OVER'), findsOneWidget);
-    // The counted total is the anchor: the two parts must visibly add up to it.
-    expect(find.text('Counted'), findsOneWidget);
-    expect(find.text('₱5,241.00'), findsOneWidget);
+    // What is being divided is named in the caption, not repeated as a row —
+    // the reconciliation zone above already ends in Counted cash.
+    expect(find.textContaining('Dividing ₱5,241.00'), findsOneWidget);
     expect(find.text('To mechanics'), findsOneWidget);
     expect(find.text('₱1,000.00'), findsOneWidget);
     expect(find.text('To management'), findsOneWidget);
@@ -126,7 +126,7 @@ void main() {
       expect(find.text('₱1,740.00'), findsNothing);
     });
 
-    testWidgets('keeps the sealed count visible as the anchor', (tester) async {
+    testWidgets('says it is superseding the sealed count', (tester) async {
       await tester.pumpWidget(_host(ClosingHandoverPanel(
         countedCash: 2140,
         laborFees: 400,
@@ -134,8 +134,8 @@ void main() {
         activity: activity(),
       )));
 
-      expect(find.text('Counted'), findsOneWidget);
-      expect(find.text('₱2,140.00'), findsOneWidget);
+      expect(find.textContaining('Superseding the sealed count of ₱2,140.00'),
+          findsOneWidget);
     });
 
     testWidgets('per-mechanic shares reconcile against the updated total',
@@ -175,7 +175,7 @@ void main() {
         ),
       )));
 
-      expect(find.text('₱2,140.00'), findsOneWidget);
+      expect(find.textContaining('Dividing ₱2,140.00'), findsOneWidget);
       expect(find.text('₱400.00'), findsOneWidget);
       expect(find.text('₱1,740.00'), findsOneWidget);
       // No sales after close, so nothing to update — no footer.

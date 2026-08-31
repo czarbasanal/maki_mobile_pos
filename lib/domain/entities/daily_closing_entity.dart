@@ -357,6 +357,12 @@ class PostCloseActivity extends Equatable {
   /// Shop-fee revenue recorded after close (current minus snapshot).
   final double feesDelta;
 
+  /// The frozen figures, so the After close card can show each moved line as
+  /// at closing → after closing → updated without re-deriving them.
+  final double closingGrossSales;
+  final double closingLaborRevenue;
+  final double closingFeesRevenue;
+
   /// Whole-day shop-fee revenue including post-close sales. Fee cash stays in
   /// the drawer and reaches management with the rest — it has no hand-over
   /// line of its own.
@@ -372,6 +378,9 @@ class PostCloseActivity extends Equatable {
     this.currentLaborRevenue = 0,
     this.feesDelta = 0,
     this.currentFeesRevenue = 0,
+    this.closingGrossSales = 0,
+    this.closingLaborRevenue = 0,
+    this.closingFeesRevenue = 0,
   });
 
   factory PostCloseActivity.between({
@@ -391,6 +400,9 @@ class PostCloseActivity extends Equatable {
       currentLaborRevenue: current.laborRevenue,
       feesDelta: current.feesRevenue - closing.feesRevenue,
       currentFeesRevenue: current.feesRevenue,
+      closingGrossSales: closing.grossSales,
+      closingLaborRevenue: closing.laborRevenue,
+      closingFeesRevenue: closing.feesRevenue,
     );
   }
 

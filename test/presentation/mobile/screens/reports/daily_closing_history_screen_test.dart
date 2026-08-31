@@ -242,7 +242,10 @@ void main() {
     expect(find.text('Updated for management'), findsNothing);
     expect(find.text('For mechanics (whole day)'), findsNothing);
     expect(find.text('To mechanics'), findsOneWidget);
-    expect(find.text('₱750.00'), findsOneWidget);
+    // Twice: "Updated labor fees" on the After close card and "To mechanics"
+    // on the hand-over below it — the same whole-day figure, once as the
+    // result of the drift and once as the amount to hand over.
+    expect(find.text('₱750.00'), findsNWidgets(2));
   });
 
   testWidgets('history lists Plate No DP and Delivery so expected cash reconciles',
