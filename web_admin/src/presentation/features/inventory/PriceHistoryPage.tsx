@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Product } from '@/domain/entities';
 import { PriceHistoryView } from './PriceHistoryView';
 import { displaySku } from '@/domain/products/sku';
+import { BackLink } from '@/presentation/components/common/BackLink';
 
 export function PriceHistoryPage() {
   useEffect(() => {
@@ -40,12 +41,7 @@ export function PriceHistoryPage() {
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
       <header className="space-y-tk-xs">
-        <Link
-          to={RoutePaths.inventory}
-          className="text-bodySmall text-light-text-secondary hover:underline"
-        >
-          ← Back to inventory
-        </Link>
+        <BackLink fallback={RoutePaths.inventory} />
         <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
           Price History
         </h1>

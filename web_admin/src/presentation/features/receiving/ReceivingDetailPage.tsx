@@ -9,6 +9,7 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 import { ReceivingStatusBadge } from './ReceivingStatusBadge';
 import { displaySku } from '@/domain/products/sku';
 import { useProducts } from '@/presentation/hooks/useProducts';
+import { BackLink } from '@/presentation/components/common/BackLink';
 
 const dtFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -65,12 +66,7 @@ export function ReceivingDetailPage() {
   return (
     <div className="space-y-tk-lg px-tk-xl py-tk-lg">
       <header className="space-y-tk-xs">
-        <Link
-          to={RoutePaths.receiving}
-          className="text-bodySmall text-light-text-secondary hover:underline"
-        >
-          ← Back to receiving
-        </Link>
+        <BackLink fallback={RoutePaths.receiving} />
         <div className="flex items-center gap-tk-md">
           <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
             {receiving.referenceNumber}

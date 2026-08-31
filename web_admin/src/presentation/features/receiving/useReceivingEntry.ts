@@ -213,7 +213,9 @@ export function useReceivingEntry() {
         totalCost: totals.cost,
         supplierName: supplier?.name ?? null,
       });
-      navigate(`/receiving/${targetId}`);
+      // replace: the draft form is finished and refuses to reopen once
+      // completed, so leaving it in history makes Back a dead end.
+      navigate(`/receiving/${targetId}`, { replace: true });
     } catch (e) {
       setError((e as Error).message);
     }

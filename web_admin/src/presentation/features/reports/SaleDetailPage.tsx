@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSaleRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -9,6 +9,8 @@ import { usePendingVoidRequest, useRequestVoid } from '@/presentation/hooks/useV
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { canVoidSale } from '@/domain/sales/voiding';
+import { BackLink } from '@/presentation/components/common/BackLink';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { saleIsVoided } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
 import { Dialog } from '@/presentation/components/common/Dialog';
@@ -76,7 +78,7 @@ export function SaleDetailPage() {
           title="Sale not found"
           description="It may have been removed."
           action={
-            <BackLink className="text-light-text underline" />
+            <BackLink fallback={RoutePaths.salesReport} className="text-light-text underline" />
           }
         />
       </div>
@@ -91,7 +93,7 @@ export function SaleDetailPage() {
     <>
     <div className="space-y-tk-lg px-tk-xl py-tk-lg print:hidden">
       <header className="space-y-tk-xs">
-        <BackLink />
+        <BackLink fallback={RoutePaths.salesReport} />
         <div className="flex items-center gap-tk-md">
           <h1
             className={cn(
@@ -449,28 +451,5 @@ function Row({
         {value}
       </span>
     </div>
-  );
-}
-
-/// Returns to the previous page rather than a fixed one. A sale is reached
-/// from the dashboard, the day-sales list, a report and the void queue, so a
-/// hardcoded destination sends most visitors somewhere they have never been.
-/// React Router marks the first entry of a session 'default'; on a deep link
-/// or a refresh there is nothing to go back to, so fall back to the report.
-function BackLink({ className }: { className?: string }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const canGoBack = location.key !== 'default';
-
-  return (
-    <button
-      type="button"
-      onClick={() => (canGoBack ? navigate(-1) : navigate('/reports/sales'))}
-      className={
-        className ?? 'text-bodySmall text-light-text-secondary hover:underline'
-      }
-    >
-      ← Back
-    </button>
   );
 }
