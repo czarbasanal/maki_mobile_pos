@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAKI POS — Current UI: Closing History (mobile)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --canvas:#FFFFFF; --card:#FFFFFF; --ink:#16201F; --muted:#49454F; --outline:#79747E;
+    --sub:#5A6468; --hairline:#ECECEC; --slate:#283E46; --gold:#E8B84C;
+    --success:#4CAF50; --success-bg:#E8F5E9; --error:#F44336; --warning-dark:#F57C00;
+    --warn-icon:#F57C00; --tile-fill:#FAFAFA;
+    --r-md:14px; --r-field:16px; --r-pill:999px;
+    --shadow-card:0 2px 8px rgba(17,28,29,.06), 0 1px 1px rgba(17,28,29,.05);
+  }
+  .dark{
+    --canvas:#0C1415; --card:#18262A; --ink:#ECEFEF; --muted:#93A0A3; --outline:#7B8A8D;
+    --sub:#AEC0C6; --hairline:#243234; --tile-fill:#152125;
+    --success:#8FE39A; --error:#FF6B5E; --warning-dark:#F5B547; --warn-icon:#F5B547;
+    --shadow-card:0 2px 10px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E7E3;color:#16201F;font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1180px;margin:0 auto;padding:28px 20px 64px;}
+  h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin:0 0 6px;}
+  .lede{margin:0 0 22px;color:#5A6468;font-size:14px;max-width:900px;line-height:1.55;}
+  h2.sec{font-size:15px;font-weight:700;margin:34px 0 4px;letter-spacing:-.2px;}
+  p.note{margin:0 0 14px;color:#5A6468;font-size:13px;line-height:1.5;max-width:900px;}
+  code{font-family:'Roboto Mono',monospace;font-size:.88em;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;}
+  .frames{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start;}
+  .frame{width:390px;}
+  .frame > .cap{font-size:12px;font-weight:600;color:#5A6468;margin-bottom:8px;}
+  .phone{background:var(--canvas);border-radius:26px;padding:0 0 18px;box-shadow:0 18px 44px -18px rgba(18,28,29,.5);overflow:hidden;color:var(--ink);}
+  .appbar{display:flex;align-items:center;gap:10px;padding:16px 14px 12px;font-weight:600;font-size:16px;}
+  .appbar .chev{font-size:19px;color:var(--ink);}
+  .body{padding:14px 16px 0;}
+
+  /* ---- list row (AppCard, radius = AppRadius.field 16) ---- */
+  .tile{background:var(--card);border-radius:var(--r-field);box-shadow:var(--shadow-card);margin-bottom:10px;overflow:hidden;}
+  .tilehead{display:flex;align-items:center;padding:14px 16px;gap:12px;}
+  .tilehead .grow{flex:1;min-width:0;}
+  .dateline{font-size:14px;font-weight:700;letter-spacing:-.1px;}
+  .subline{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px;}
+  .subline b{color:var(--ink);font-weight:600;}
+  .pill{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-pill);padding:4px 10px;font-size:12px;font-weight:700;}
+  .chev{color:var(--muted);font-size:16px;}
+
+  /* ---- expanded detail ---- */
+  .detail{border-top:1px solid var(--hairline);padding:12px 16px 14px;}
+  .heading{font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--muted);padding:10px 0 2px;}
+  .kv{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0;font-size:13px;}
+  .kv .k{color:var(--muted);}
+  .kv .v{font-weight:500;color:var(--ink);}
+  .kv.ind{padding-left:14px;}
+  .kv.ind .k{color:var(--outline);font-size:13px;}
+  .kv.ind .v{color:var(--sub);}
+
+  /* ---- After close card (ClosingSectionCard) ---- */
+  .seccard{background:var(--card);border-radius:var(--r-md);box-shadow:var(--shadow-card);padding:14px;margin-top:10px;}
+  .seccard .hd{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+  .seccard .hd .t{font-size:15px;font-weight:700;}
+  .ic{width:19px;height:19px;display:inline-block;}
+  .kv2{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:14px;}
+  .kv2 .k{color:var(--muted);} .kv2 .v{font-weight:600;}
+  .kv2.ind{padding-left:16px;font-size:13px;} .kv2.ind .k{color:var(--outline);} .kv2.ind .v{color:var(--sub);font-weight:500;}
+
+  /* ---- Cash hand-over panel ---- */
+  .handover{border:1px solid var(--hairline);border-radius:var(--r-md);padding:10px 12px;margin-top:10px;}
+  .handover .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.1px;color:var(--muted);margin-bottom:8px;}
+  .hrow{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:1px 0;}
+  .hrow .k{color:var(--muted);} .hrow .v{font-weight:600;font-family:'Roboto Mono',monospace;}
+  .hrow.em .k{color:var(--ink);font-weight:600;} .hrow.em .v{font-weight:700;}
+  .hrow.sub{font-size:12.5px;padding-left:14px;margin-top:4px;}
+  .hrow.sub .k{color:var(--outline);} .hrow.sub .v{color:var(--sub);font-weight:500;}
+  .hdiv{height:1px;background:var(--hairline);margin:7px 0;}
+  .footrow{display:flex;justify-content:space-between;align-items:center;}
+  .footrow .k{font-size:13.5px;font-weight:600;}
+  .footrow .v{font-size:15.5px;font-weight:700;color:var(--slate);font-family:'Roboto Mono',monospace;}
+  .dark .footrow .v{color:var(--gold);}
+
+  .byline{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11.5px;color:var(--muted);}
+  .callout{margin:18px 0 0;border-left:3px solid var(--gold);background:rgba(232,184,76,.10);padding:10px 14px;font-size:13px;line-height:1.55;border-radius:0 8px 8px 0;}
+  .anno{font-size:12px;color:#5A6468;line-height:1.55;margin:10px 0 0;}
+  .anno b{color:#16201F;}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Closing History — current mobile UI</h1>
+  <p class="lede">
+    Reference capture of <code>lib/presentation/mobile/screens/reports/daily_closing_history_screen.dart</code>
+    as it stands on <code>main</code> (2026-08-31, shipped in APK +31). This is <b>what exists today</b>, not a
+    proposal. Two views: the list of closed days, and a day expanded in place. Light and dark are both shown
+    because the app ships both. Every figure below is illustrative but internally consistent — the arithmetic
+    relationships are real and must survive any redesign.
+  </p>
+
+  <h2 class="sec">1 · List of closed days</h2>
+  <p class="note">
+    Route <code>Closing History</code>, opened from End-of-Day. Newest first, one <code>AppCard</code> per closed
+    day. Tapping the row toggles it open in place — there is no detail route.
+  </p>
+
+  <div class="frames">
+    <div class="frame">
+      <div class="cap">Light</div>
+      <div class="phone">
+        <div class="appbar"><span class="chev">‹</span><span>Closing History</span></div>
+        <div class="body">
+          <div class="tile"><div class="tilehead">
+            <div class="grow">
+              <div class="dateline">Sat, Aug 30, 2026</div>
+              <div class="subline">Cash on hand <b>₱5,241.00</b><br>Closed Aug 30, 9:24 PM</div>
+            </div>
+            <span class="pill" style="background:var(--success-bg);color:#2E7D32;">✓ +₱0.00</span>
+            <span class="chev">⌄</span>
+          </div></div>
+
+          <div class="tile"><div class="tilehead">
+            <div class="grow">
+              <div class="dateline">Fri, Aug 29, 2026</div>
+              <div class="subline">Cash on hand <b>₱4,910.00</b><br>Closed Aug 29, 9:53 PM</div>
+            </div>
+            <span class="pill" style="background:rgba(244,67,54,.10);color:#F44336;">↘ -₱120.00</span>
+            <span class="chev">⌄</span>
+          </div></div>
+
+          <div class="tile"><div class="tilehead">
+            <div class="grow">
+              <div class="dateline">Thu, Aug 28, 2026</div>
+              <div class="subline">Cash on hand <b>₱1,655.00</b><br>Closed Aug 28, 6:00 PM</div>
+            </div>
+            <span class="pill" style="background:rgba(245,124,0,.12);color:#F57C00;">↗ +₱300.00</span>
+            <span class="chev">⌄</span>
+          </div></div>
+        </div>
+      </div>
+      <p class="anno">
+        <b>Row anatomy.</b> Date <code>EEE, MMM d, y</code> 14/700 · two-line sub in muted 12px where only the
+        amount is inked and semibold · variance pill · chevron. The pill is the only colour on the screen.
+      </p>
+    </div>
+
+    <div class="frame">
+      <div class="cap">Dark</div>
+      <div class="phone dark">
+        <div class="appbar"><span class="chev">‹</span><span>Closing History</span></div>
+        <div class="body">
+          <div class="tile"><div class="tilehead">
+            <div class="grow">
+              <div class="dateline">Sat, Aug 30, 2026</div>
+              <div class="subline">Cash on hand <b>₱5,241.00</b><br>Closed Aug 30, 9:24 PM</div>
+            </div>
+            <span class="pill" style="background:rgba(76,175,80,.16);color:#8FE39A;">✓ +₱0.00</span>
+            <span class="chev">⌄</span>
+          </div></div>
+          <div class="tile"><div class="tilehead">
+            <div class="grow">
+              <div class="dateline">Fri, Aug 29, 2026</div>
+              <div class="subline">Cash on hand <b>₱4,910.00</b><br>Closed Aug 29, 9:53 PM</div>
+            </div>
+            <span class="pill" style="background:rgba(255,107,94,.14);color:#FF6B5E;">↘ -₱120.00</span>
+            <span class="chev">⌄</span>
+          </div></div>
+          <div class="tile"><div class="tilehead">
+            <div class="grow">
+              <div class="dateline">Thu, Aug 28, 2026</div>
+              <div class="subline">Cash on hand <b>₱1,655.00</b><br>Closed Aug 28, 6:00 PM</div>
+            </div>
+            <span class="pill" style="background:rgba(245,181,71,.14);color:#F5B547;">↗ +₱300.00</span>
+            <span class="chev">⌄</span>
+          </div></div>
+        </div>
+      </div>
+      <p class="anno">
+        <b>Empty state.</b> <code>EmptyStateView</code>, history icon, “No closings yet” / “Closed days will show up
+        here.” <b>Loading</b> is <code>ListSkeleton</code>; <b>error</b> is <code>ErrorStateView</code> with Retry.
+      </p>
+    </div>
+  </div>
+
+  <h2 class="sec">2 · A day expanded</h2>
+  <p class="note">
+    The detail is an inline block under the row, separated by a top hairline — not a card inside a card. Row order
+    below is exact. Three small-caps headings group what used to be a flat list.
+  </p>
+
+  <div class="frames">
+    <div class="frame">
+      <div class="cap">Light — an ordinary day (no post-close activity)</div>
+      <div class="phone">
+        <div class="body" style="padding-top:14px">
+          <div class="tile">
+            <div class="tilehead">
+              <div class="grow">
+                <div class="dateline">Thu, Aug 28, 2026</div>
+                <div class="subline">Cash on hand <b>₱5,241.00</b><br>Closed Aug 28, 9:24 PM</div>
+              </div>
+              <span class="pill" style="background:var(--success-bg);color:#2E7D32;">✓ +₱0.00</span>
+              <span class="chev">⌃</span>
+            </div>
+            <div class="detail">
+              <div class="heading">SALES</div>
+              <div class="kv"><span class="k">Gross sales (parts)</span><span class="v">₱7,960.00</span></div>
+              <div class="kv"><span class="k">Labor (service)</span><span class="v">₱800.00</span></div>
+              <div class="kv"><span class="k">Cash sales</span><span class="v">₱8,085.00</span></div>
+              <div class="kv"><span class="k">Non-cash sales</span><span class="v">₱685.00</span></div>
+              <div class="kv ind"><span class="k">GCash</span><span class="v">₱400.00</span></div>
+              <div class="kv ind"><span class="k">Maya</span><span class="v">₱285.00</span></div>
+
+              <div class="heading">EXPENSES</div>
+              <div class="kv"><span class="k">Total expenses</span><span class="v">₱2,844.00</span></div>
+              <div class="kv ind"><span class="k">Cash expenses</span><span class="v">₱2,844.00</span></div>
+
+              <div class="heading">CASH RECONCILIATION</div>
+              <div class="kv"><span class="k">Opening float</span><span class="v">₱0.00</span></div>
+              <div class="kv"><span class="k">Plate No DP</span><span class="v">₱0.00</span></div>
+              <div class="kv"><span class="k">Plate No Delivery</span><span class="v">₱0.00</span></div>
+              <div class="kv"><span class="k">Expected cash</span><span class="v">₱5,241.00</span></div>
+              <div class="kv"><span class="k">Counted cash</span><span class="v">₱5,241.00</span></div>
+
+              <div class="handover">
+                <div class="eyebrow">CASH HAND-OVER</div>
+                <div class="hrow"><span class="k">Counted</span><span class="v">₱5,241.00</span></div>
+                <div class="hdiv"></div>
+                <div class="hrow em"><span class="k">To mechanics</span><span class="v">₱800.00</span></div>
+                <div class="hrow sub"><span class="k">Jeric</span><span class="v">₱500.00</span></div>
+                <div class="hrow sub"><span class="k">Rico</span><span class="v">₱300.00</span></div>
+                <div style="height:6px"></div>
+                <div class="hrow em"><span class="k">To management</span><span class="v">₱4,441.00</span></div>
+              </div>
+
+              <div class="byline">◍ Closed by Belle · Aug 28, 2026 · 9:24 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="anno">
+        <b>Reads top to bottom as one argument:</b> money in (parts and service kept apart) → money out →
+        what the drawer should hold → who physically receives it.
+      </p>
+    </div>
+
+    <div class="frame">
+      <div class="cap">Dark — a day closed early, then more sales came in</div>
+      <div class="phone dark">
+        <div class="body" style="padding-top:14px">
+          <div class="tile">
+            <div class="tilehead">
+              <div class="grow">
+                <div class="dateline">Thu, Aug 27, 2026</div>
+                <div class="subline">Cash on hand <b>₱2,140.00</b><br>Closed Aug 27, 5:05 PM</div>
+              </div>
+              <span class="pill" style="background:rgba(76,175,80,.16);color:#8FE39A;">✓ +₱0.00</span>
+              <span class="chev">⌃</span>
+            </div>
+            <div class="detail">
+              <div class="heading">SALES</div>
+              <div class="kv"><span class="k">Gross sales (parts)</span><span class="v">₱1,740.00</span></div>
+              <div class="kv"><span class="k">Labor (service)</span><span class="v">₱400.00</span></div>
+              <div class="kv"><span class="k">Cash sales</span><span class="v">₱2,140.00</span></div>
+              <div class="kv"><span class="k">Non-cash sales</span><span class="v">₱0.00</span></div>
+
+              <div class="heading">EXPENSES</div>
+              <div class="kv"><span class="k">Total expenses</span><span class="v">₱0.00</span></div>
+              <div class="kv ind"><span class="k">Cash expenses</span><span class="v">₱0.00</span></div>
+
+              <div class="heading">CASH RECONCILIATION</div>
+              <div class="kv"><span class="k">Opening float</span><span class="v">₱0.00</span></div>
+              <div class="kv"><span class="k">Plate No DP</span><span class="v">₱0.00</span></div>
+              <div class="kv"><span class="k">Plate No Delivery</span><span class="v">₱0.00</span></div>
+              <div class="kv"><span class="k">Expected cash</span><span class="v">₱2,140.00</span></div>
+              <div class="kv"><span class="k">Counted cash</span><span class="v">₱2,140.00</span></div>
+
+              <div class="seccard">
+                <div class="hd"><span class="ic" style="color:var(--warn-icon)">◔</span><span class="t">After close</span></div>
+                <div class="kv2"><span class="k">Sales after close</span><span class="v">+3 · +₱2,800.00</span></div>
+                <div class="kv2"><span class="k">Cash collected after close</span><span class="v">+₱2,950.00</span></div>
+                <div class="kv2 ind"><span class="k">Sale items</span><span class="v">+₱2,800.00</span></div>
+                <div class="kv2 ind"><span class="k">Labor fees</span><span class="v">+₱150.00</span></div>
+              </div>
+
+              <div class="handover">
+                <div class="eyebrow">CASH HAND-OVER</div>
+                <div class="hrow"><span class="k">Counted</span><span class="v">₱2,140.00</span></div>
+                <div class="hdiv"></div>
+                <div class="hrow em"><span class="k">To mechanics</span><span class="v">₱550.00</span></div>
+                <div class="hrow sub"><span class="k">Jeric</span><span class="v">₱400.00</span></div>
+                <div class="hrow sub"><span class="k">Rico</span><span class="v">₱150.00</span></div>
+                <div style="height:6px"></div>
+                <div class="hrow em"><span class="k">To management</span><span class="v">₱4,540.00</span></div>
+                <div class="hdiv"></div>
+                <div class="footrow"><span class="k">Updated cash on hand</span><span class="v">₱5,090.00</span></div>
+              </div>
+
+              <div class="byline">◍ Closed by Bern · Aug 27, 2026 · 5:05 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="anno">
+        <b>The drifted case.</b> The drawer was closed at 5:05 PM and trading continued. <code>After close</code>
+        reports what moved; the hand-over then supersedes its own sealed figures and ends with
+        <code>Updated cash on hand</code>. <b>550 + 4,540 = 5,090</b> — the parts add to the footer, not to the
+        “Counted” row at the top.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Do not change any figure or formula.</b> Every amount here is computed elsewhere and frozen into an
+    immutable closing document. A redesign may move, group, restyle or rename rows — it must not alter what a
+    number means, drop a row, or hide a row at zero. Several rows exist <i>because</i> hiding them at zero was
+    read as “this screen doesn’t show that”.
+  </div>
+</div>
+</body>
+</html>
