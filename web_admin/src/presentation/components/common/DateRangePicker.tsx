@@ -60,6 +60,7 @@ export function DateRangePicker({
   return (
     <div className="flex flex-wrap items-center gap-tk-sm">
       <select
+        aria-label="Date range"
         className={inputCls}
         value={preset}
         onChange={(e) => selectPreset(e.target.value as RangePreset)}
@@ -75,6 +76,7 @@ export function DateRangePicker({
         <>
           <input
             type="date"
+            aria-label="Start date"
             className={inputCls}
             value={customStart}
             max={customEnd || shopIsoDate(new Date())}
@@ -83,6 +85,7 @@ export function DateRangePicker({
           <span className="text-light-text-hint">–</span>
           <input
             type="date"
+            aria-label="End date"
             className={inputCls}
             value={customEnd}
             min={customStart}

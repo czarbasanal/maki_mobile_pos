@@ -218,7 +218,7 @@ describe('JobOrdersPage — date range', () => {
     expect(screen.queryByText('JO-OLD')).not.toBeInTheDocument();
   });
 
-  it('counts open tickets left outside the range instead of losing them', async () => {
+  it('counts open tickets left outside the range instead of losing them', () => {
     // A bike left overnight is still an open ticket; a date filter would hide
     // it, so the page says how many are out there.
     harness([
@@ -226,9 +226,38 @@ describe('JobOrdersPage — date range', () => {
       jobOrder({ id: 'd2', name: 'JO-OLD', createdAt: yesterday, isConverted: false }),
     ]);
 
-    expect(screen.getByText(/1 open job order outside this range/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/1 open job order outside this range/i),
+    ).toBeInTheDocument();
+  });
 
-    await userEvent.click(screen.getAllByRole('button', { name: /show all dates/i })[0]);
+  it('offers the presets the shop actually asks for, plus a custom calendar', async () => {
+    harness([jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today })]);
+
+    const picker = screen.getByRole('combobox') as HTMLSelectElement;
+    const labels = Array.from(picker.options).map((o) => o.textContent);
+    expect(labels).toEqual([
+      'Today',
+      'Yesterday',
+      'Last 7 days',
+      'Last 30 days',
+      'This month',
+      'Custom range',
+    ]);
+
+    // Custom reveals two date inputs — the browser's own calendar.
+    await userEvent.selectOptions(picker, 'custom');
+    expect(screen.getAllByLabelText(/start|end/i).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('widening to yesterday brings the older ticket back', async () => {
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today }),
+      jobOrder({ id: 'd2', name: 'JO-OLD', createdAt: yesterday }),
+    ]);
+    expect(screen.queryByText('JO-OLD')).not.toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'last7');
     expect(screen.getByText('JO-OLD')).toBeInTheDocument();
   });
 
