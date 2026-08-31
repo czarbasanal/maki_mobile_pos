@@ -9,6 +9,8 @@ import { usePendingVoidRequest, useRequestVoid } from '@/presentation/hooks/useV
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { CategoryKind } from '@/domain/categories/categoryKind';
 import { canVoidSale } from '@/domain/sales/voiding';
+import { saleIsVoided } from '@/domain/entities';
+import { cn } from '@/core/utils/cn';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Receipt } from './Receipt';
 import {
@@ -84,6 +86,7 @@ export function SaleDetailPage() {
   }
 
   const isPct = saleIsPercentageDiscount(sale);
+  const voided = saleIsVoided(sale);
   const tenders = saleEffectiveTenders(sale);
 
   return (
@@ -94,7 +97,14 @@ export function SaleDetailPage() {
           ← Back to sales
         </Link>
         <div className="flex items-center gap-tk-md">
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
+          <h1
+            className={cn(
+              'text-headingMedium font-semibold tracking-tight',
+              // Struck through, not just badged: the number and the money are
+              // what someone scans for, and a pill above them is easy to miss.
+              voided ? 'text-light-text-hint line-through' : 'text-light-text',
+            )}
+          >
             {sale.saleNumber}
           </h1>
           {sale.voidedAt ? (
@@ -103,6 +113,11 @@ export function SaleDetailPage() {
             </span>
           ) : null}
         </div>
+        {voided && sale.voidReason ? (
+          <p className="text-bodySmall text-error-dark">
+            {`Voided: ${sale.voidReason}${sale.voidedByName ? ` — ${sale.voidedByName}` : ''}`}
+          </p>
+        ) : null}
         <p className="text-bodySmall text-light-text-secondary">
           {dtFmt.format(sale.createdAt)} · {sale.cashierName}
           {sale.mechanicName ? ` · Mechanic: ${sale.mechanicName}` : ''}
@@ -118,12 +133,21 @@ export function SaleDetailPage() {
         >
           Print receipt
         </button>
+        {voided ? (
+          <button
+            type="button"
+            disabled
+            className="cursor-not-allowed rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-medium text-light-text-hint"
+          >
+            Voided
+          </button>
+        ) : null}
         {canVoidSale(sale) && voidPending ? (
           <div className="rounded-md border border-warning-light bg-warning-light/30 px-tk-md py-tk-sm">
             <p className="text-bodySmall font-medium text-light-text">Void pending approval</p>
             <p className="text-[12px] text-light-text-secondary">
               {canVoidDirect
-                ? 'Approve or reject from the mobile app.'
+                ? 'Approve or reject it from Void Requests.'
                 : 'An admin will approve or reject it.'}
             </p>
           </div>
@@ -219,14 +243,20 @@ export function SaleDetailPage() {
       </section>
 
       <section className="ml-auto w-full max-w-sm space-y-tk-xs rounded-lg border border-light-hairline bg-light-card p-tk-lg text-bodySmall">
-        <Row label="Gross Sales" value={formatMoney(salePartsSubtotal(sale))} />
-        <Row label="Discount" value={`-${formatMoney(saleTotalDiscount(sale))}`} />
-        <Row label="Labor" value={formatMoney(saleLaborSubtotal(sale))} />
+        <Row label="Gross Sales" value={formatMoney(salePartsSubtotal(sale))} struck={voided} />
+        <Row label="Discount" value={`-${formatMoney(saleTotalDiscount(sale))}`} struck={voided} />
+        <Row label="Labor" value={formatMoney(saleLaborSubtotal(sale))} struck={voided} />
         {sale.feeLines.length > 0 ? (
-          <Row label="Shop fees" value={formatMoney(saleFeesTotal(sale))} />
+          <Row label="Shop fees" value={formatMoney(saleFeesTotal(sale))} struck={voided} />
         ) : null}
         <div className="border-t border-light-hairline pt-tk-xs">
-          <Row label="Total" value={formatMoney(saleGrandTotal(sale))} bold />
+          <Row
+            label="Total"
+            value={formatMoney(saleGrandTotal(sale))}
+            bold
+            struck={voided}
+            testId="sale-total"
+          />
         </div>
         <div className="mt-tk-sm border-t border-light-hairline pt-tk-sm">
           {realTenderMethods
@@ -396,18 +426,30 @@ function Row({
   value,
   bold,
   muted,
+  struck,
+  testId,
 }: {
   label: string;
   value: string;
   bold?: boolean;
   muted?: boolean;
+  /** Voided sale: the amount no longer stands. */
+  struck?: boolean;
+  testId?: string;
 }) {
   return (
     <div className="flex justify-between">
       <span className={muted ? 'capitalize text-light-text-hint' : 'capitalize text-light-text-secondary'}>
         {label}
       </span>
-      <span className={`tabular-nums ${bold ? 'font-semibold text-light-text' : 'text-light-text'}`}>
+      <span
+        data-testid={testId}
+        className={cn(
+          'tabular-nums',
+          bold ? 'font-semibold' : '',
+          struck ? 'text-light-text-hint line-through' : 'text-light-text',
+        )}
+      >
         {value}
       </span>
     </div>

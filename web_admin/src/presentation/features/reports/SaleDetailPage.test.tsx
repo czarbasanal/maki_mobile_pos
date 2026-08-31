@@ -256,10 +256,10 @@ describe('SaleDetailPage — void gating by role (cashier web access)', () => {
     expect(screen.queryByRole('button', { name: 'Void sale' })).not.toBeInTheDocument();
   });
 
-  it('a pending request tells the admin to resolve it on the phone', async () => {
+  it('a pending request points the admin at the Void Requests queue', async () => {
     harness({ getById: vi.fn().mockResolvedValue(sale()) }, { pending: true });
     await screen.findByText('Void pending approval');
-    expect(screen.getByText(/approve or reject from the mobile app/i)).toBeInTheDocument();
+    expect(screen.getByText(/approve or reject it from Void Requests/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Void sale' })).not.toBeInTheDocument();
   });
 
@@ -275,6 +275,49 @@ describe('SaleDetailPage — void gating by role (cashier web access)', () => {
     await screen.findByRole('heading', { name: 'OR-0001' });
     expect(screen.queryByRole('button', { name: 'Request void' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Void sale' })).not.toBeInTheDocument();
+  });
+
+  describe('a voided sale reads as voided', () => {
+    const voided = () =>
+      sale({
+        status: SaleStatus.voided,
+        voidedAt: new Date('2026-05-14'),
+        voidReason: 'Wrong item scanned',
+      });
+
+    it('replaces the action with a disabled Voided button', async () => {
+      // Previously the button simply vanished, which reads the same as "you
+      // are not allowed to void" — say what happened instead.
+      harness({ getById: vi.fn().mockResolvedValue(voided()) });
+      await screen.findByRole('heading', { name: 'OR-0001' });
+
+      const btn = screen.getByRole('button', { name: 'Voided' });
+      expect(btn).toBeDisabled();
+    });
+
+    it('strikes through the sale number and the total', async () => {
+      harness({ getById: vi.fn().mockResolvedValue(voided()) });
+      const heading = await screen.findByRole('heading', { name: 'OR-0001' });
+      expect(heading).toHaveClass('line-through');
+
+      const total = screen.getByTestId('sale-total');
+      expect(total).toHaveClass('line-through');
+    });
+
+    it('names why it was voided', async () => {
+      harness({ getById: vi.fn().mockResolvedValue(voided()) });
+      await screen.findByRole('heading', { name: 'OR-0001' });
+      // Specific: 'Wrong item scanned' is also one of the void-reason options
+      // sitting in the (unopened) dialog markup.
+      expect(screen.getByText(/^Voided: Wrong item scanned/)).toBeInTheDocument();
+    });
+
+    it('leaves a completed sale untouched', async () => {
+      harness({ getById: vi.fn().mockResolvedValue(sale()) });
+      const heading = await screen.findByRole('heading', { name: 'OR-0001' });
+      expect(heading).not.toHaveClass('line-through');
+      expect(screen.queryByRole('button', { name: 'Voided' })).not.toBeInTheDocument();
+    });
   });
 
   it('the request writes the mobile-shaped doc and logs the mobile string', async () => {

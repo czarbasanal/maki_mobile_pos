@@ -14,6 +14,7 @@ import {
 import type { Sale } from '@/domain/entities';
 import { paymentMethodDisplayName, realTenderMethods } from '@/domain/enums';
 import { formatMoney } from '@/core/utils/money';
+import { cn } from '@/core/utils/cn';
 
 const RECEIPT_STORE_NAME = 'MAKI Mobile POS';
 const dtFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
@@ -24,10 +25,19 @@ export function Receipt({ sale }: { sale: Sale }) {
   const voided = saleIsVoided(sale);
 
   return (
-    <div className="mx-auto max-w-[320px] p-tk-md font-mono text-[12px] text-light-text">
+    <div
+      className={cn(
+        'mx-auto max-w-[320px] p-tk-md font-mono text-[12px] text-light-text',
+        // Every amount below is struck on a voided receipt — a printed copy
+        // has no badge to lean on, so the figures have to say it themselves.
+        voided && '[&_.tabular-nums]:text-light-text-hint [&_.tabular-nums]:line-through',
+      )}
+    >
       <div className="text-center">
         <div className="text-[14px] font-bold">{RECEIPT_STORE_NAME}</div>
-        <div>{sale.saleNumber}</div>
+        <div className={voided ? 'text-light-text-hint line-through' : undefined}>
+          {sale.saleNumber}
+        </div>
         <div>{dtFmt.format(sale.createdAt)}</div>
         <div>Cashier: {sale.cashierName}</div>
         {sale.mechanicName ? <div>Mechanic: {sale.mechanicName}</div> : null}

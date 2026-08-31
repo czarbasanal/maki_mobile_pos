@@ -105,3 +105,28 @@ describe('Receipt', () => {
     });
   });
 });
+
+describe('Receipt — voided sale', () => {
+  const voided = () =>
+    sale({
+      status: SaleStatus.voided,
+      voidedAt: new Date('2026-05-14'),
+      voidReason: 'Wrong item scanned',
+    });
+
+  it('strikes the sale number so a printed copy cannot be mistaken for a live one', () => {
+    render(<Receipt sale={voided()} />);
+    expect(screen.getByText('OR-0001')).toHaveClass('line-through');
+  });
+
+  it('keeps the VOIDED banner and names the reason', () => {
+    render(<Receipt sale={voided()} />);
+    expect(screen.getByText(/\*\*\* VOIDED \*\*\*/)).toBeInTheDocument();
+    expect(screen.getByText(/Wrong item scanned/)).toBeInTheDocument();
+  });
+
+  it('leaves a completed receipt unstruck', () => {
+    render(<Receipt sale={sale()} />);
+    expect(screen.getByText('OR-0001')).not.toHaveClass('line-through');
+  });
+});
