@@ -8,6 +8,7 @@ import 'package:maki_mobile_pos/domain/entities/receiving_entity.dart';
 import 'package:maki_mobile_pos/domain/entities/user_entity.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/receiving/receiving_summary_cards_row.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
 UserEntity _adminUser() => UserEntity(
       id: 'admin-1',
@@ -37,6 +38,17 @@ ReceivingEntity _completed({
   );
 }
 
+/// 12:00 shop time on the 15th — mid-month and far from midnight, so neither
+/// the month boundary nor the day boundary depends on when the suite runs.
+final _fixedNow = DateTime.utc(2026, 8, 15, 4, 0);
+
+/// A day inside the same SHOP month as [_fixedNow], as a real instant.
+DateTime _shopMonthDay(int day) {
+  final shopNow = shopTimeOf(_fixedNow, kDefaultShopOffsetMinutes);
+  return instantOf(
+      shopWall(shopNow.year, shopNow.month, day, 12), kDefaultShopOffsetMinutes);
+}
+
 Future<void> _pump(
   WidgetTester tester, {
   required AsyncValue<Map<ReceivingStatus, int>> counts,
@@ -55,6 +67,11 @@ Future<void> _pump(
         // The "Received" card is admin-only — give the test an
         // admin user so all three cards render.
         currentUserProvider.overrideWith((ref) => Stream.value(_adminUser())),
+        // The month-to-date window follows businessDayProvider — the SHOP
+        // month, not the machine's. Left unpinned, a fixture dated from
+        // DateTime.now() falls outside the window for the hours when the two
+        // calendars disagree, which is six hours of every day here.
+        nowProvider.overrideWithValue(() => _fixedNow),
       ],
       child: const MaterialApp(
         home: Scaffold(body: ReceivingSummaryCardsRow()),
@@ -123,8 +140,7 @@ void main() {
       // Two completed receivings this month — these drive only the peso
       // total. The Drafts and Completed cards take their values from the
       // counts map (all-time totals), not from the recent list.
-      final now = DateTime.now();
-      final monthStart = DateTime(now.year, now.month, 2);
+      final monthStart = _shopMonthDay(2);
       final recent = [
         _completed(id: 'a', completedAt: monthStart, totalCost: 200),
         _completed(id: 'b', completedAt: monthStart, totalCost: 300),
@@ -150,8 +166,7 @@ void main() {
     });
 
     testWidgets('peso compact formatter — thousands suffix', (tester) async {
-      final now = DateTime.now();
-      final monthStart = DateTime(now.year, now.month, 1);
+      final monthStart = _shopMonthDay(1);
       final recent = [
         _completed(id: 'a', completedAt: monthStart, totalCost: 1500),
       ];

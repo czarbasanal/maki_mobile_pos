@@ -274,6 +274,12 @@ class SalesSummary {
   /// gross/net/profit.
   final double feesRevenue;
 
+  /// Shop-fee revenue split by fee type, e.g. `{'Electric charge': 250}`.
+  /// Empty on a day with no fees — never a zero-valued entry. Adds up to
+  /// [feesRevenue]; the closing seals it so the breakdown and its total can
+  /// never disagree.
+  final Map<String, double> feesByType;
+
   /// Breakdown by payment method
   final Map<PaymentMethod, double> byPaymentMethod;
 
@@ -310,6 +316,7 @@ class SalesSummary {
     this.laborRevenue = 0,
     this.laborProfit = 0,
     this.feesRevenue = 0,
+    this.feesByType = const {},
   });
 
   /// Creates an empty summary.

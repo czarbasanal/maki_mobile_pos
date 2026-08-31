@@ -17,6 +17,7 @@ class DailyClosingModel {
   final double salmonReceivable;
   final double laborRevenue;
   final double feesRevenue;
+  final Map<String, double> feesByType;
   final double plateNoDp;
   final double plateNoDelivery;
   final List<double> plateNoDpAmounts;
@@ -48,6 +49,7 @@ class DailyClosingModel {
     required this.salmonReceivable,
     this.laborRevenue = 0,
     this.feesRevenue = 0,
+    this.feesByType = const {},
     this.plateNoDp = 0,
     this.plateNoDelivery = 0,
     this.plateNoDpAmounts = const [],
@@ -92,6 +94,12 @@ class DailyClosingModel {
       salmonReceivable: d('salmonReceivable'),
       laborRevenue: d('laborRevenue'),
       feesRevenue: d('feesRevenue'),
+      // Absent on every closing sealed before the breakdown existed, and they
+      // can never gain it — the document is immutable.
+      feesByType: (map['feesByType'] as Map?)?.map(
+            (k, v) => MapEntry(k as String, (v as num).toDouble()),
+          ) ??
+          const {},
       plateNoDp: d('plateNoDp'),
       plateNoDelivery: d('plateNoDelivery'),
       plateNoDpAmounts: dl('plateNoDpAmounts'),
@@ -127,6 +135,7 @@ class DailyClosingModel {
       salmonReceivable: e.salmonReceivable,
       laborRevenue: e.laborRevenue,
       feesRevenue: e.feesRevenue,
+      feesByType: e.feesByType,
       plateNoDp: e.plateNoDp,
       plateNoDelivery: e.plateNoDelivery,
       plateNoDpAmounts: e.plateNoDpAmounts,
@@ -160,6 +169,7 @@ class DailyClosingModel {
       'salmonReceivable': salmonReceivable,
       'laborRevenue': laborRevenue,
       'feesRevenue': feesRevenue,
+      'feesByType': feesByType,
       'plateNoDp': plateNoDp,
       'plateNoDelivery': plateNoDelivery,
       'plateNoDpAmounts': plateNoDpAmounts,
@@ -201,6 +211,7 @@ class DailyClosingModel {
       salmonReceivable: salmonReceivable,
       laborRevenue: laborRevenue,
       feesRevenue: feesRevenue,
+      feesByType: feesByType,
       plateNoDp: plateNoDp,
       plateNoDelivery: plateNoDelivery,
       plateNoDpAmounts: plateNoDpAmounts,

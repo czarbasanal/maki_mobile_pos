@@ -67,6 +67,10 @@ class DailyClosingDraft extends Equatable {
   /// holds it), so this field is a reporting line, not a reconciliation input.
   final double feesRevenue;
 
+  /// [feesRevenue] split by fee type. Empty on days closed before this was
+  /// sealed — the closing document is immutable, so history can never gain it.
+  final Map<String, double> feesByType;
+
   final int salesCount;
   final int voidedCount;
 
@@ -84,6 +88,7 @@ class DailyClosingDraft extends Equatable {
     required this.salmonReceivable,
     this.laborRevenue = 0,
     this.feesRevenue = 0,
+    this.feesByType = const {},
     required this.salesCount,
     required this.voidedCount,
   });
@@ -132,6 +137,7 @@ class DailyClosingDraft extends Equatable {
       salmonReceivable: salmonReceivable,
       laborRevenue: summary.laborRevenue,
       feesRevenue: summary.feesRevenue,
+      feesByType: summary.feesByType,
       salesCount: summary.totalSalesCount,
       voidedCount: summary.voidedSalesCount,
     );
@@ -183,6 +189,7 @@ class DailyClosingDraft extends Equatable {
         salmonReceivable,
         laborRevenue,
         feesRevenue,
+        feesByType,
         salesCount,
         voidedCount,
       ];
@@ -210,6 +217,10 @@ class DailyClosingEntity extends Equatable {
   /// Shop-fee revenue persisted with this closing — see the doc on
   /// [DailyClosingDraft.feesRevenue] (same reporting-only semantics).
   final double feesRevenue;
+
+  /// [feesRevenue] split by fee type; empty on closings sealed before this
+  /// existed. Immutable like the rest of the document.
+  final Map<String, double> feesByType;
   final double plateNoDp;
   final double plateNoDelivery;
 
@@ -251,6 +262,7 @@ class DailyClosingEntity extends Equatable {
     required this.salmonReceivable,
     this.laborRevenue = 0,
     this.feesRevenue = 0,
+    this.feesByType = const {},
     this.plateNoDp = 0,
     this.plateNoDelivery = 0,
     this.plateNoDpAmounts = const [],
@@ -293,6 +305,7 @@ class DailyClosingEntity extends Equatable {
         salmonReceivable,
         laborRevenue,
         feesRevenue,
+        feesByType,
         plateNoDp,
         plateNoDelivery,
         plateNoDpAmounts,

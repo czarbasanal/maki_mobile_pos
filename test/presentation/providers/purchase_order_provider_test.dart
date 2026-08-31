@@ -9,8 +9,16 @@ import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/purchase_order_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/sale_provider.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
+import 'package:maki_mobile_pos/core/utils/business_day.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 
 class _MockSaleRepository extends Mock implements SaleRepository {}
+
+/// Pinned instant: 12:00 shop time, far from any midnight so the window's
+/// arithmetic never depends on when the suite is run.
+final _fixedNow = DateTime.utc(2026, 8, 20, 4, 0);
 
 void main() {
   ProductEntity makeProduct(String id,
@@ -93,6 +101,7 @@ void main() {
       productsProvider.overrideWith((ref) => Stream.value([product])),
       saleRepositoryProvider.overrideWithValue(saleRepo),
       firestoreProvider.overrideWithValue(FakeFirebaseFirestore()),
+      nowProvider.overrideWithValue(() => _fixedNow),
     ]);
     addTearDown(container.dispose);
 
@@ -123,6 +132,7 @@ void main() {
       productsProvider.overrideWith((ref) => Stream.value([product])),
       saleRepositoryProvider.overrideWithValue(saleRepo),
       firestoreProvider.overrideWithValue(FakeFirebaseFirestore()),
+      nowProvider.overrideWithValue(() => _fixedNow),
     ]);
     addTearDown(container.dispose);
 
@@ -137,14 +147,19 @@ void main() {
     final startDate = captured[0] as DateTime;
     final endDate = captured[1] as DateTime;
 
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    expect(endDate.isBefore(todayStart), isTrue,
+    // Asserted in SHOP days, not the machine's. The window moved to shop days
+    // when the repository stopped re-deriving local ones, so comparing against
+    // DateTime.now() made this pass or fail depending on the hour — the two
+    // calendars disagree for six hours of every day on a non-PH machine.
+    final shopToday = businessDateOf(_fixedNow, kDefaultShopOffsetMinutes);
+    final shopTodayStart =
+        shopDayStartInstant(shopToday, kDefaultShopOffsetMinutes);
+
+    expect(endDate.isBefore(shopTodayStart), isTrue,
         reason: "today's partial day must not leak into velocity");
-    expect(todayStart.difference(startDate).inDays, 60,
+    expect(shopTodayStart.difference(startDate).inDays, 60,
         reason: '60 FULL days ending yesterday');
-    // The repo normalizes endDate to endOfDay, so any instant within
-    // yesterday is a correct end anchor.
+    // endDate is the last instant of yesterday, so the span is 59 whole days.
     expect(endDate.difference(startDate).inDays, 59);
   });
 
@@ -193,6 +208,7 @@ void main() {
       productsProvider.overrideWith((ref) => Stream.value(products)),
       saleRepositoryProvider.overrideWithValue(saleRepo),
       firestoreProvider.overrideWithValue(FakeFirebaseFirestore()),
+      nowProvider.overrideWithValue(() => _fixedNow),
     ]);
     addTearDown(container.dispose);
 
