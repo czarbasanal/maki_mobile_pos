@@ -34,6 +34,11 @@ class DateRangePicker extends StatelessWidget {
   final ValueChanged<DateRangePreset> onPresetChanged;
   final void Function(DateTime start, DateTime end) onCustomRangeSelected;
 
+  /// Which presets the menu offers. Defaults to all of them; a screen that
+  /// only makes sense over a few spans passes its own subset rather than
+  /// listing options that are noise there.
+  final List<DateRangePreset>? presets;
+
   const DateRangePicker({
     super.key,
     required this.startDate,
@@ -41,6 +46,7 @@ class DateRangePicker extends StatelessWidget {
     required this.selectedPreset,
     required this.onPresetChanged,
     required this.onCustomRangeSelected,
+    this.presets,
   });
 
   static const double _controlHeight = 46;
@@ -84,7 +90,7 @@ class DateRangePicker extends StatelessWidget {
             onPresetChanged(preset);
           }
         },
-        itemBuilder: (context) => DateRangePreset.values
+        itemBuilder: (context) => (presets ?? DateRangePreset.values)
             .map((p) => PopupMenuItem<DateRangePreset>(
                   value: p,
                   child: Text(p.label),

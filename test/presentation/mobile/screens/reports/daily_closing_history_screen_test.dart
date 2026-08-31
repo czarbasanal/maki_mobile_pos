@@ -7,7 +7,6 @@ import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 final _date = DateTime(2026, 7, 20);
 
@@ -106,9 +105,11 @@ Future<void> _expandFirstTile(WidgetTester tester) async {
   // `.first` goes on the descendant finder, not the inner one: applied to
   // `matching` it picks the first InkWell in the WHOLE tree — the range bar's
   // button — and then finds none of those inside the card.
+  // Scope to the LIST: the range picker above it is built from AppCards and
+  // buttons of its own, so an unscoped finder taps the wrong thing.
   await tester.tap(find
       .descendant(
-        of: find.byType(AppCard).first,
+        of: find.byType(ListView),
         matching: find.byType(InkWell),
       )
       .first);
