@@ -175,9 +175,10 @@ final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   return result.data!;
 });
 
-/// Sales summary over the last 7 *completed* days (rolling window ending at
-/// yesterday 23:59). Today is deliberately excluded: it is still in progress,
-/// and dividing a partial day's takings by a whole-day count inflates the
+/// Sales summary over the last [kAvgDailyWindowDays] *completed* days — a
+/// rolling window ending at yesterday 23:59. Today is deliberately excluded:
+/// it is still in progress, and dividing a partial day's takings by a
+/// whole-day count inflates the
 /// Avg Daily figure. Rolling, not calendar-month scoped — the 1st reaches
 /// back into the previous month instead of resetting to —.
 /// How many completed days the Avg Daily card averages over. Thirty rather

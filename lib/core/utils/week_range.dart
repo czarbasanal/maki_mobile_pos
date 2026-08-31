@@ -73,7 +73,7 @@ double avgDailyFromGross(double gross, int daysElapsed) {
   return gross / daysElapsed;
 }
 
-/// The last 7 *completed* days: midnight seven days before [now] through the
+/// The last N *completed* days: shop midnight N days before [today] through the
 /// end of yesterday (23:59:59.999). A rolling window, so unlike [MonthToDate]
 /// it never resets on the 1st.
 ///

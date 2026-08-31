@@ -291,15 +291,15 @@ void main() {
 
       expect(
         find.text(
-          'Your average sales per day over the last 7 days, counting only '
+          'Your average sales per day over the last 30 days, counting only '
           'days that have finished.',
         ),
         findsOneWidget,
       );
       expect(
         find.text(
-          "It adds up the last 7 finished days — yesterday back one week — "
-          "and divides by 7. Today isn't counted yet because it's still "
+          "It adds up the last 30 finished days — yesterday back one month "
+          "— and divides by 30. Today isn't counted yet because it's still "
           "going. A closed or quiet day counts as ₱0.",
         ),
         findsOneWidget,
@@ -360,7 +360,7 @@ void main() {
 
       expect(
         find.text(
-          'Your average sales per day over the last 7 days, counting only '
+          'Your average sales per day over the last 30 days, counting only '
           'days that have finished.',
         ),
         findsOneWidget,
