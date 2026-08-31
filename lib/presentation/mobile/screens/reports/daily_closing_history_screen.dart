@@ -13,6 +13,7 @@ import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widg
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
 /// List of past end-of-day closings, newest first. Tap a row to expand its
 /// reconciliation detail.
@@ -73,8 +74,13 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final c = widget.closing;
+    // businessDate is already a shop WALL value, so it formats as-is.
+    // closedAt is a real instant — formatting it directly would render the
+    // handset's clock, which is right only on a phone sitting in the shop's
+    // timezone. That is exactly the assumption the shop-time layer removes.
     final dateLabel = DateFormat('EEE, MMM d, y').format(c.businessDate);
-    final closedAtLabel = DateFormat('MMM d, h:mm a').format(c.closedAt);
+    final closedAtLabel = DateFormat('MMM d, h:mm a')
+        .format(shopTimeOf(c.closedAt, ref.read(shopOffsetProvider)));
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -285,7 +291,7 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
                 Flexible(
                   child: Text(
                     'Closed by ${c.closedByName} · '
-                    '${DateFormat('MMM d, y · h:mm a').format(c.closedAt)}',
+                    '${DateFormat('MMM d, y · h:mm a').format(shopTimeOf(c.closedAt, offset))}',
                     style: TextStyle(fontSize: 11.5, color: muted),
                   ),
                 ),

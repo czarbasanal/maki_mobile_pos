@@ -17,6 +17,8 @@ import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/closing_expense_list.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
+import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 
 /// End-of-day review + close flow for a single business day.
 ///
@@ -639,12 +641,15 @@ class _ClosedView extends ConsumerWidget {
         children: [
           if (showActivity) ...[
             PostCloseWarningBanner(
-                message: _postCloseMessage(context, activity)),
+                message: _postCloseMessage(
+                    context, activity, ref.read(shopOffsetProvider))),
             const SizedBox(height: 12),
           ],
           ClosedByBanner(
+            // closedAt is an instant; shown in SHOP time so the banner does not
+            // report the handset's clock.
             text: 'Closed by ${closing.closedByName} at '
-                '${TimeOfDay.fromDateTime(closing.closedAt).format(context)}',
+                '${TimeOfDay.fromDateTime(shopTimeOf(closing.closedAt, ref.read(shopOffsetProvider))).format(context)}',
           ),
           const SizedBox(height: 12),
           ClosingSectionCard(
@@ -756,8 +761,11 @@ class _ClosedView extends ConsumerWidget {
     );
   }
 
-  String _postCloseMessage(BuildContext context, PostCloseActivity activity) {
-    final closedTime = TimeOfDay.fromDateTime(closing.closedAt).format(context);
+  String _postCloseMessage(
+      BuildContext context, PostCloseActivity activity, int shopOffset) {
+    final closedTime =
+        TimeOfDay.fromDateTime(shopTimeOf(closing.closedAt, shopOffset))
+            .format(context);
     final amount =
         '${AppConstants.currencySymbol}${activity.grossDelta.abs().toCurrencyWithoutSymbol()}';
     return activity.isAdditional
