@@ -167,6 +167,11 @@ export const router = createBrowserRouter(
       path: '/inventory/reorder',
       element: <Navigate to={RoutePaths.purchaseOrderNew} replace />,
     },
+    // Price History moved out from under /inventory; keep old links working.
+    {
+      path: '/inventory/price-history',
+      element: <Navigate to={RoutePaths.priceHistory} replace />,
+    },
     { path: '/drafts/:id', element: <JobOrderDetailRedirect /> },
     { path: '*', element: <Navigate to={RoutePaths.dashboard} replace /> },
   ],

@@ -117,7 +117,7 @@ describe('ProductDrawer', () => {
 
     expect(screen.getByRole('link', { name: /Price history/ })).toHaveAttribute(
       'href',
-      '/inventory/price-history?product=p9',
+      '/price-history?product=p9',
     );
   });
 

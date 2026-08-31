@@ -69,6 +69,18 @@ describe('Sidebar — Inventory is a flat item', () => {
     expect(screen.getByRole('link', { name: /purchase orders/i })).toBeInTheDocument();
   });
 
+  it('does not mark Inventory active while Price History is the page', () => {
+    // The sidebar marks a parent active for any path beneath it, so while
+    // Price History lived at /inventory/price-history both items lit up and
+    // the highlight said you were somewhere you were not.
+    harness('/price-history');
+
+    expect(screen.getByRole('link', { name: /price history/i }).className)
+        .toContain('font-semibold');
+    expect(screen.getByRole('link', { name: /^inventory$/i }).className)
+        .not.toContain('font-semibold');
+  });
+
   it('keeps them reachable from inside the inventory subtree too', () => {
     harness('/inventory');
     expect(screen.getByRole('link', { name: /price history/i })).toBeInTheDocument();

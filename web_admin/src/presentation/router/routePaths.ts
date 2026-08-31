@@ -22,7 +22,10 @@ export const RoutePaths = {
   productAdd: '/inventory/add',
   // Editing lives inside the product drawer; /inventory/edit/:id redirects here.
   productEdit: '/inventory/:id/edit',
-  priceHistory: '/inventory/price-history',
+  // Top level, not under /inventory: the sidebar marks a parent active for
+  // any path beneath it, so a nested URL lit Inventory up while Price History
+  // was the page you were on.
+  priceHistory: '/price-history',
   productDetail: '/inventory/:id',
 
   receiving: '/receiving',
