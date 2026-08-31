@@ -16,9 +16,11 @@ void main() {
     )));
 
     expect(find.text('CASH HAND-OVER'), findsOneWidget);
-    // What is being divided is named in the caption, not repeated as a row —
-    // the reconciliation zone above already ends in Counted cash.
-    expect(find.textContaining('Dividing ₱5,241.00'), findsOneWidget);
+    // Counted cash is neither a row nor a caption here: the reconciliation
+    // zone directly above ends in it, and the two destinations below divide
+    // it. Restating it would be the third time in one card.
+    expect(find.text('Counted'), findsNothing);
+    expect(find.textContaining('Dividing'), findsNothing);
     expect(find.text('To mechanics'), findsOneWidget);
     expect(find.text('₱1,000.00'), findsOneWidget);
     expect(find.text('To management'), findsOneWidget);
@@ -175,7 +177,7 @@ void main() {
         ),
       )));
 
-      expect(find.textContaining('Dividing ₱2,140.00'), findsOneWidget);
+      expect(find.textContaining('Superseding'), findsNothing);
       expect(find.text('₱400.00'), findsOneWidget);
       expect(find.text('₱1,740.00'), findsOneWidget);
       // No sales after close, so nothing to update — no footer.

@@ -30,8 +30,9 @@ void main() {
       )));
 
       expect(find.text('Counted'), findsNothing);
-      expect(find.textContaining('Dividing ₱5,491.00'), findsOneWidget);
-      // The figure itself appears once, in the caption.
+      // Nor a caption restating it — the zone above ends in Counted cash and
+      // the destinations below divide it. Nothing left to say.
+      expect(find.textContaining('Dividing'), findsNothing);
       expect(find.text('₱5,491.00'), findsNothing);
     });
 
