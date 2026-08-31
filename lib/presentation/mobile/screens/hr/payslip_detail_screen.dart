@@ -8,7 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
-import 'package:maki_mobile_pos/core/utils/payslip_png.dart';
+import 'package:maki_mobile_pos/core/utils/boundary_png.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/hr_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/hr/payslip_receipt.dart';
@@ -117,10 +117,11 @@ class _PayslipDetailScreenState extends ConsumerState<PayslipDetailScreen> {
     final slug = name
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
-    final ok = await savePayslipPng(
+    final ok = await saveBoundaryPng(
       context,
       _receiptKey,
       'payslip-$slug-${payslip.periodStart}.png',
+      dialogTitle: 'Save payslip',
     );
     if (!mounted) return;
     setState(() => _isSavingPng = false);

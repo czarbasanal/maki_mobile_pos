@@ -138,4 +138,81 @@ void main() {
     await tester.scrollUntilVisible(find.textContaining('Load more'), 300);
     expect(find.text('Load more (13 left)'), findsOneWidget);
   });
+
+  testWidgets('the CSV export is disabled when the range holds nothing',
+      (tester) async {
+    await tester.pumpWidget(_harness([]));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<IconButton>(
+              find.widgetWithIcon(IconButton, LucideIcons.download))
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('the CSV export is offered once the range has closings',
+      (tester) async {
+    await tester.pumpWidget(_harness([
+      _closing(id: 'a', date: DateTime(2026, 8, 30), variance: 0),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<IconButton>(
+              find.widgetWithIcon(IconButton, LucideIcons.download))
+          .onPressed,
+      isNotNull,
+    );
+  });
+
+  testWidgets('the image export is reachable only from an open day',
+      (tester) async {
+    // Per day by construction: the action lives inside the expanded detail,
+    // so there is no way to ask for a range as one image.
+    await tester.pumpWidget(_harness([
+      _closing(id: 'a', date: DateTime(2026, 8, 30), variance: 0),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.text('Save as image'), findsNothing);
+
+    await tester.tap(find
+        .descendant(
+          of: find.byType(ListView),
+          matching: find.byIcon(LucideIcons.chevronDown),
+        )
+        .first);
+    await tester.pumpAndSettle();
+    expect(find.text('Save as image'), findsOneWidget);
+  });
+
+  testWidgets('the save button is not inside the captured boundary',
+      (tester) async {
+    // A saved receipt must not have a Save button printed on it.
+    await tester.pumpWidget(_harness([
+      _closing(id: 'a', date: DateTime(2026, 8, 30), variance: 0),
+    ]));
+    await tester.pumpAndSettle();
+    await tester.tap(find
+        .descendant(
+          of: find.byType(ListView),
+          matching: find.byIcon(LucideIcons.chevronDown),
+        )
+        .first);
+    await tester.pumpAndSettle();
+
+    // Scoped to the captured subtree — Flutter's tree is full of unrelated
+    // RepaintBoundaries, so asserting against the type would always pass.
+    expect(find.byKey(const ValueKey('closing-detail')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('closing-detail')),
+        matching: find.text('Save as image'),
+      ),
+      findsNothing,
+    );
+  });
 }

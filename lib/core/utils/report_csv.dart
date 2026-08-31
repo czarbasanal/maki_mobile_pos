@@ -7,6 +7,7 @@ import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
 const _converter = ListToCsvConverter(eol: '\n');
 final _dateFmt = DateFormat('yyyy-MM-dd HH:mm');
@@ -195,4 +196,80 @@ String buildPriceChangeReportCsv(
     ]);
   }
   return _converter.convert(out);
+}
+
+/// One row per closed day, carrying what the expanded view shows.
+///
+/// [offsetMinutes] renders the close time in SHOP time: closedAt is a real
+/// instant, and an exported record must not say a different thing depending on
+/// which handset produced it.
+///
+/// The per-mechanic split is deliberately absent. It is derived from live
+/// sales rather than sealed into the closing, and the names differ day to day,
+/// so it does not fit a fixed column set — the To Mechanics total is the
+/// figure that was frozen.
+String buildClosingHistoryCsv(
+  List<DailyClosingEntity> closings,
+  int offsetMinutes,
+) {
+  final date = DateFormat('yyyy-MM-dd');
+  final time = DateFormat('yyyy-MM-dd HH:mm');
+  final rows = <List<dynamic>>[
+    [
+      'Business Date',
+      'Gross Sales (Parts)',
+      'Labor (Service)',
+      'Shop Fees',
+      'Cash Sales',
+      'Non-Cash Sales',
+      'GCash',
+      'Maya',
+      'Salmon Receivable',
+      'Total Expenses',
+      'Cash Expenses',
+      'Opening Float',
+      'Plate No DP',
+      'Plate No Delivery',
+      'Expected Cash',
+      'Counted Cash',
+      'Variance',
+      'To Mechanics',
+      'To Management',
+      'Sales Count',
+      'Voided Count',
+      'Closed By',
+      'Closed At',
+      'Notes',
+    ],
+  ];
+  String m(double v) => v.toStringAsFixed(2);
+  for (final c in closings) {
+    rows.add([
+      date.format(c.businessDate),
+      m(c.grossSales),
+      m(c.laborRevenue),
+      m(c.feesRevenue),
+      m(c.cashSales),
+      m(c.nonCashSales),
+      m(c.gcashSales),
+      m(c.mayaSales),
+      m(c.salmonReceivable),
+      m(c.totalExpenses),
+      m(c.cashExpenses),
+      m(c.openingFloat),
+      m(c.plateNoDp),
+      m(c.plateNoDelivery),
+      m(c.expectedCash),
+      m(c.countedCash),
+      m(c.variance),
+      m(c.forMechanics),
+      m(c.forManagement),
+      c.salesCount,
+      c.voidedCount,
+      c.closedByName,
+      time.format(shopTimeOf(c.closedAt, offsetMinutes)),
+      c.notes ?? '',
+    ]);
+  }
+  return _converter.convert(rows);
 }

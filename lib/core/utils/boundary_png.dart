@@ -13,11 +13,17 @@ import 'package:maki_mobile_pos/core/utils/report_export.dart';
 /// to read on a phone screenshot viewer) and saves it as [fileName].
 /// Returns false when the boundary isn't ready or encoding fails —
 /// saveBytesFile surfaces its own success/cancel/failure snackbars after that.
-Future<bool> savePayslipPng(
+///
+/// PNG rather than JPEG: these captures are receipts — small text, hairlines
+/// and figures — and JPEG blurs exactly that. Flutter also encodes PNG
+/// natively, so no extra dependency is carried for it.
+Future<bool> saveBoundaryPng(
   BuildContext context,
   GlobalKey boundaryKey,
-  String fileName,
-) async {
+  String fileName, {
+  String dialogTitle = 'Save image',
+  String successPrefix = 'Saved',
+}) async {
   final render =
       boundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
   if (render == null) return false;
@@ -32,9 +38,9 @@ Future<bool> savePayslipPng(
     context,
     bytes.buffer.asUint8List(),
     fileName,
-    dialogTitle: 'Save payslip',
+    dialogTitle: dialogTitle,
     allowedExtensions: const ['png'],
-    successMessage: 'Saved $fileName',
+    successMessage: '$successPrefix $fileName',
     cancelledMessage: 'Save cancelled',
     failedPrefix: 'Save failed',
   );

@@ -14,6 +14,9 @@ import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widget
 import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
 import 'package:maki_mobile_pos/presentation/providers/shop_time_provider.dart';
 import 'package:maki_mobile_pos/core/utils/shop_time.dart';
+import 'package:maki_mobile_pos/core/utils/boundary_png.dart';
+import 'package:maki_mobile_pos/core/utils/report_csv.dart';
+import 'package:maki_mobile_pos/core/utils/report_export.dart';
 
 /// List of past end-of-day closings, newest first. Tap a row to expand its
 /// reconciliation detail.
@@ -66,6 +69,20 @@ class _DailyClosingHistoryScreenState
     );
   }
 
+  Future<void> _exportCsv(
+    List<DailyClosingEntity> closings,
+    ClosingHistoryRange range,
+    int offset,
+  ) async {
+    final name = DateFormat('yyyy-MM-dd');
+    await saveReportCsv(
+      context,
+      buildClosingHistoryCsv(closings, offset),
+      'closing-history-${name.format(range.from)}'
+          '_${name.format(range.to)}.csv',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final offset = ref.watch(shopOffsetProvider);
@@ -80,6 +97,16 @@ class _DailyClosingHistoryScreenState
           onPressed: () => context.goBackOr(RoutePaths.endOfDay),
         ),
         title: const Text('Closing History'),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.download),
+            tooltip: 'Export CSV',
+            onPressed: historyAsync.valueOrNull == null ||
+                    historyAsync.valueOrNull!.isEmpty
+                ? null
+                : () => _exportCsv(historyAsync.valueOrNull!, range, offset),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -165,6 +192,26 @@ class _ClosingTile extends ConsumerStatefulWidget {
 class _ClosingTileState extends ConsumerState<_ClosingTile> {
   bool _expanded = false;
 
+  /// Wraps the expanded detail so it can be captured. Per day by construction:
+  /// the action lives inside an open day, so there is no way to ask for a
+  /// range as an image.
+  final _detailKey = GlobalKey();
+  bool _saving = false;
+
+  Future<void> _saveImage() async {
+    setState(() => _saving = true);
+    final day = DateFormat('yyyy-MM-dd').format(widget.closing.businessDate);
+    final ok = await saveBoundaryPng(
+      context,
+      _detailKey,
+      'closing-$day.png',
+      dialogTitle: 'Save closing',
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (!ok) context.showErrorSnackBar('Could not render the closing image');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -239,12 +286,31 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
                 ),
               ),
             ),
-            if (_expanded) _buildDetail(context, c),
+            if (_expanded) ...[
+              RepaintBoundary(key: _detailKey, child: _buildDetail(context, c)),
+              // Outside the boundary on purpose — a saved receipt should not
+              // have a Save button printed on it.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _saving ? null : _saveImage,
+                    icon: const Icon(LucideIcons.image, size: 15),
+                    label: Text(_saving ? 'Saving…' : 'Save as image'),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
+
+  /// The captured subtree. Keyed so a test can assert what is — and is not —
+  /// inside the image that gets saved.
+  static const detailKey = ValueKey('closing-detail');
 
   Widget _buildDetail(BuildContext context, DailyClosingEntity c) {
     final theme = Theme.of(context);
@@ -275,6 +341,7 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
         .map((m) => HandoverShare(name: m.mechanicName, amount: m.laborTotal))
         .toList();
     return Container(
+      key: detailKey,
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.hairline(isDark))),
       ),
