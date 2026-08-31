@@ -6,6 +6,8 @@ import 'package:maki_mobile_pos/core/utils/business_day.dart';
 import 'package:maki_mobile_pos/data/models/daily_closing_model.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/daily_closing_repository.dart';
+import 'package:maki_mobile_pos/core/utils/report_date_range.dart';
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
 
 /// Firestore implementation of [DailyClosingRepository].
 ///
@@ -121,14 +123,18 @@ class DailyClosingRepositoryImpl implements DailyClosingRepository {
     required DateTime toBusinessDate,
   }) async {
     try {
-      // businessDate is stored as the shop wall midnight, so the bounds are
-      // those same wall values — not day-start instants, which would sit
-      // hours before the stored value and drop the first day.
+      // businessDate is stored as the shop-day START INSTANT — 16:00Z the
+      // previous day at UTC+8 — not as a wall midnight. Comparing against
+      // wall midnights is a day off at the lower bound: it drops the first
+      // day of every range, and a single-day range matches nothing at all.
+      final offset = ShopTimeConfig.offsetMinutes;
       final snapshot = await _ref
           .where('businessDate',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(fromBusinessDate))
+              isGreaterThanOrEqualTo: Timestamp.fromDate(
+                  shopDayStartInstant(fromBusinessDate, offset)))
           .where('businessDate',
-              isLessThanOrEqualTo: Timestamp.fromDate(toBusinessDate))
+              isLessThanOrEqualTo: Timestamp.fromDate(
+                  shopDayEndInstant(toBusinessDate, offset)))
           .orderBy('businessDate', descending: true)
           .get();
       return snapshot.docs

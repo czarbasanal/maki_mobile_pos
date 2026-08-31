@@ -19,8 +19,10 @@ abstract class DailyClosingRepository {
   /// Closings whose business day falls between [fromBusinessDate] and
   /// [toBusinessDate] inclusive, newest first.
   ///
-  /// Both bounds are shop WALL dates — the same values `businessDate` is
-  /// written with — not instants. Fetched on demand rather than streamed: a
+  /// Both bounds are shop WALL dates (calendar days); the implementation
+  /// converts them to the instants that bound those shop days, because
+  /// `businessDate` is stored as a day-start instant rather than a wall
+  /// value. Fetched on demand rather than streamed: a
   /// closing is immutable and written once a day, so a live subscription over
   /// the whole history buys nothing and reads everything.
   Future<List<DailyClosingEntity>> getClosingsInRange({
