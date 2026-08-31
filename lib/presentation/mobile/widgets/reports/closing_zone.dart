@@ -155,7 +155,11 @@ class ClosingZone extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Flexible(
+        // Expanded, not Flexible: the label takes the slack so every amount
+        // lands on the same right edge. A column of figures is only scannable
+        // if it lines up, and these labels vary from "GCash" to
+        // "Gross sales (parts)".
+        Expanded(
           child: Text(
             row.label,
             style: TextStyle(

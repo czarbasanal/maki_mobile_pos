@@ -90,4 +90,51 @@ void main() {
     expect(find.text('Balanced'), findsOneWidget);
     expect(find.text('₱5,491.00'), findsOneWidget);
   });
+
+  testWidgets('amounts share a right edge, whatever the label length',
+      (tester) async {
+    // A column of figures is only scannable if it lines up. Labels vary a lot
+    // in length here — "GCash" against "Gross sales (parts)".
+    await tester.pumpWidget(_host(const SizedBox(
+      width: 340,
+      child: ClosingZone(
+        icon: LucideIcons.arrowDownLeft,
+        heading: 'SALES',
+        rows: [
+          ZoneRow(label: 'Gross sales (parts)', value: 7960),
+          ZoneRow(label: 'GCash', value: 400, indented: true),
+        ],
+        result: ZoneRow(label: 'Cash sales', value: 8335, sign: ZoneSign.plus),
+      ),
+    )));
+
+    final gross = tester.getRect(find.text('₱7,960.00')).right;
+    final gcash = tester.getRect(find.text('₱400.00')).right;
+    final result = tester.getRect(find.text('+₱8,335.00')).right;
+
+    expect(gcash, moreOrLessEquals(gross, epsilon: 0.5));
+    expect(result, moreOrLessEquals(gross, epsilon: 0.5));
+  });
+
+  testWidgets('the variance chip stays beside its amount, not adrift',
+      (tester) async {
+    await tester.pumpWidget(_host(const SizedBox(
+      width: 340,
+      child: ClosingZone(
+        icon: LucideIcons.scale,
+        heading: 'CASH RECONCILIATION',
+        rows: [ZoneRow(label: 'Expected cash', value: 5491)],
+        result: ZoneRow(label: 'Counted cash', value: 5491),
+        resultLeading: Text('Balanced'),
+      ),
+    )));
+
+    final chip = tester.getRect(find.text('Balanced'));
+    final amounts = tester.widgetList(find.text('₱5,491.00'));
+    expect(amounts.length, 2);
+    // The chip sits immediately left of the result amount, not spread away
+    // from it by the row's spacing.
+    final resultAmount = tester.getRect(find.text('₱5,491.00').last);
+    expect(resultAmount.left - chip.right, lessThan(12));
+  });
 }
