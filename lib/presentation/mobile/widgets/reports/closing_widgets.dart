@@ -201,6 +201,42 @@ class _VarianceChip extends StatelessWidget {
   }
 }
 
+/// Word-only variance chip, for the Counted cash result line inside the
+/// reconciliation zone. The signed amount is already on the collapsed row's
+/// pill, so repeating it here would state the same figure twice in one card.
+class VarianceChip extends StatelessWidget {
+  const VarianceChip({super.key, required this.variance});
+  final double variance;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final s = VarianceStyle.of(variance, dark: dark);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: s.pillTint,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(s.icon, size: 11, color: s.text),
+          const SizedBox(width: 4),
+          Text(
+            s.word,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: s.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Variance shown as a tinted pill (Closing-History row trailing).
 class VariancePill extends StatelessWidget {
   const VariancePill({super.key, required this.variance});

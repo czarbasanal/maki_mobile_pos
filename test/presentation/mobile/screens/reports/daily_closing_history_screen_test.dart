@@ -6,7 +6,6 @@ import 'package:maki_mobile_pos/core/utils/mechanic_performance_report.dart';
 import 'package:maki_mobile_pos/domain/entities/daily_closing_entity.dart';
 import 'package:maki_mobile_pos/domain/repositories/sale_repository.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/reports/daily_closing_history_screen.dart';
-import 'package:maki_mobile_pos/presentation/mobile/widgets/reports/reports_widgets.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 
 final _date = DateTime(2026, 7, 20);
@@ -121,14 +120,7 @@ void main() {
     expect(find.text('After close'), findsNothing);
   });
 
-  // A flat list of thirteen rows gave no clue which figures were parts of
-  // which. Anything that breaks down the row above it is indented.
-  bool indentedOf(WidgetTester tester, String label) => tester
-      .widget<ClosingKvRow>(find.byWidgetPredicate(
-          (w) => w is ClosingKvRow && w.label == label))
-      .indented;
-
-  testWidgets('indents the rows that break down the row above them',
+  testWidgets('breaks the summary into zones that each end in a result',
       (tester) async {
     await tester.pumpWidget(_harness(
       closing: _closing(
@@ -143,23 +135,18 @@ void main() {
     await tester.pump();
     await _expandFirstTile(tester);
 
-    // Tenders break down Non-cash sales.
-    expect(indentedOf(tester, 'GCash'), isTrue);
-    expect(indentedOf(tester, 'Maya'), isTrue);
-    expect(indentedOf(tester, 'Salmon receivable'), isTrue);
-    // Cash expenses are the cash part of Total expenses.
-    expect(indentedOf(tester, 'Cash expenses'), isTrue);
-
-    // Totals in their own right are not.
-    expect(indentedOf(tester, 'Gross sales (parts)'), isFalse);
-    expect(indentedOf(tester, 'Labor (service)'), isFalse);
-    expect(indentedOf(tester, 'Non-cash sales'), isFalse);
-    expect(indentedOf(tester, 'Total expenses'), isFalse);
-    expect(indentedOf(tester, 'Expected cash'), isFalse);
-    expect(indentedOf(tester, 'Counted cash'), isFalse);
+    // Each zone's result — the four numbers a reader should get by scanning.
+    expect(find.text('Cash sales'), findsOneWidget);
+    expect(find.text('Shop fees'), findsOneWidget);
+    expect(find.text('Cash expenses'), findsOneWidget);
+    expect(find.text('Counted cash'), findsOneWidget);
+    // Tenders still break down non-cash sales.
+    expect(find.text('GCash'), findsOneWidget);
+    expect(find.text('Maya'), findsOneWidget);
+    expect(find.text('Salmon receivable'), findsOneWidget);
   });
 
-  testWidgets('groups the rows under headings so the three tracks separate',
+  testWidgets('names every zone, including the fees track',
       (tester) async {
     await tester.pumpWidget(_harness());
     await tester.pump();
@@ -167,6 +154,7 @@ void main() {
     await _expandFirstTile(tester);
 
     expect(find.text('SALES'), findsOneWidget);
+    expect(find.text('SHOP FEES'), findsOneWidget);
     expect(find.text('EXPENSES'), findsOneWidget);
     expect(find.text('CASH RECONCILIATION'), findsOneWidget);
   });
@@ -270,9 +258,11 @@ void main() {
     await _expandFirstTile(tester);
 
     expect(find.text('Plate No DP'), findsOneWidget);
-    expect(find.text('₱250.00'), findsOneWidget);
     expect(find.text('Plate No Delivery'), findsOneWidget);
-    expect(find.text('₱100.00'), findsOneWidget);
+    // Signed, because both move cash on hand — and in opposite directions.
+    // The minus is U+2212, not a hyphen.
+    expect(find.text('+₱250.00'), findsOneWidget);
+    expect(find.text('−₱100.00'), findsOneWidget);
   });
 
 }

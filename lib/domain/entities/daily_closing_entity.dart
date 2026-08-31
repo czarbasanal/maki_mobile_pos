@@ -354,6 +354,14 @@ class PostCloseActivity extends Equatable {
   /// mechanics are owed out of the drawer.
   final double currentLaborRevenue;
 
+  /// Shop-fee revenue recorded after close (current minus snapshot).
+  final double feesDelta;
+
+  /// Whole-day shop-fee revenue including post-close sales. Fee cash stays in
+  /// the drawer and reaches management with the rest — it has no hand-over
+  /// line of its own.
+  final double currentFeesRevenue;
+
   const PostCloseActivity({
     required this.extraSales,
     required this.grossDelta,
@@ -362,6 +370,8 @@ class PostCloseActivity extends Equatable {
     required this.updatedCashOnHand,
     this.laborDelta = 0,
     this.currentLaborRevenue = 0,
+    this.feesDelta = 0,
+    this.currentFeesRevenue = 0,
   });
 
   factory PostCloseActivity.between({
@@ -379,6 +389,8 @@ class PostCloseActivity extends Equatable {
           closing.countedCash + cashSalesDelta - cashExpensesDelta,
       laborDelta: current.laborRevenue - closing.laborRevenue,
       currentLaborRevenue: current.laborRevenue,
+      feesDelta: current.feesRevenue - closing.feesRevenue,
+      currentFeesRevenue: current.feesRevenue,
     );
   }
 
@@ -392,7 +404,10 @@ class PostCloseActivity extends Equatable {
       grossDelta.abs() > 0.005 ||
       cashSalesDelta.abs() > 0.005 ||
       cashExpensesDelta.abs() > 0.005 ||
-      laborDelta.abs() > 0.005;
+      laborDelta.abs() > 0.005 ||
+      // Fees can move on their own — without this the money would shift with
+      // nothing on screen to explain it.
+      feesDelta.abs() > 0.005;
 
   /// True when the drift is additional sales (vs a void/refund reducing totals).
   bool get isAdditional => extraSales > 0 || grossDelta > 0.005;

@@ -180,85 +180,87 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thirteen flat rows gave no clue which figures were parts of which.
-          // Three headings for the three tracks, and anything that breaks down
-          // the row above it is indented.
+          // Four recessed zones, each ending with the single line it
+          // resolves to. Scanning vertically gives cash sales, shop fees, cash
+          // expenses and counted cash before any detail is read — thirteen
+          // flat rows gave no such affordance.
           //
-          // Gross is PARTS money only — labor and fees are separate tracks that
-          // were never in it. Saying so, and showing labor arriving right
-          // underneath, is what makes the hand-over below reconcile: without
-          // it the labor appears only as a subtraction and reads as a second
-          // deduction of something already taken out.
-          _SummaryHeading(label: 'SALES', muted: muted),
-          ClosingKvRow(
-              label: 'Gross sales (parts)',
-              value: _peso(c.grossSales),
-              dense: true),
-          ClosingKvRow(
-              label: 'Labor (service)',
-              value: _peso(c.laborRevenue),
-              dense: true),
-          ClosingKvRow(
-              label: 'Cash sales', value: _peso(c.cashSales), dense: true),
-          ClosingKvRow(
-              label: 'Non-cash sales',
-              value: _peso(c.nonCashSales),
-              dense: true),
-          if (c.gcashSales > 0)
-            ClosingKvRow(
-                label: 'GCash',
-                value: _peso(c.gcashSales),
-                dense: true,
-                indented: true),
-          if (c.mayaSales > 0)
-            ClosingKvRow(
-                label: 'Maya',
-                value: _peso(c.mayaSales),
-                dense: true,
-                indented: true),
-          // Salmon is a non-cash tender like the two above it, not a total of
-          // its own — it was the one breakdown row left sitting flush left.
-          if (c.salmonReceivable > 0)
-            ClosingKvRow(
-                label: 'Salmon receivable',
-                value: _peso(c.salmonReceivable),
-                dense: true,
-                indented: true),
-          _SummaryHeading(label: 'EXPENSES', muted: muted),
-          ClosingKvRow(
-              label: 'Total expenses',
-              value: _peso(c.totalExpenses),
-              dense: true),
-          ClosingKvRow(
-              label: 'Cash expenses',
-              value: _peso(c.cashExpenses),
-              dense: true,
-              indented: true),
-          _SummaryHeading(label: 'CASH RECONCILIATION', muted: muted),
-          // Expected cash is float + cash sales − cash expenses + DP − delivery.
-          // Every term has a row here; without them the figure could not be
-          // reconciled against what is on screen. Shown even at zero: hiding an
-          // empty row makes "no DP was recorded" indistinguishable from "this
-          // summary does not show DP", which is exactly how it was read when
-          // the rows were missing.
-          ClosingKvRow(
-              label: 'Opening float',
-              value: _peso(c.openingFloat),
-              dense: true),
-          ClosingKvRow(
-              label: 'Plate No DP', value: _peso(c.plateNoDp), dense: true),
-          ClosingKvRow(
-              label: 'Plate No Delivery',
-              value: _peso(c.plateNoDelivery),
-              dense: true),
-          ClosingKvRow(
-              label: 'Expected cash',
-              value: _peso(c.expectedCash),
-              dense: true),
-          ClosingKvRow(
-              label: 'Counted cash',
-              value: _peso(c.countedCash),
-              dense: true),
+          // Signs mark cash-on-hand terms only. Gross is PARTS money; labor
+          // and fees are separate tracks that were never inside it, and labor
+          // sits directly under gross because the hand-over below subtracts it.
+          ClosingZone(
+            icon: LucideIcons.arrowDownLeft,
+            heading: 'SALES',
+            rows: [
+              ZoneRow(label: 'Gross sales (parts)', value: c.grossSales),
+              ZoneRow(label: 'Labor (service)', value: c.laborRevenue),
+              ZoneRow(label: 'Non-cash sales', value: c.nonCashSales),
+              if (c.gcashSales > 0)
+                ZoneRow(label: 'GCash', value: c.gcashSales, indented: true),
+              if (c.mayaSales > 0)
+                ZoneRow(label: 'Maya', value: c.mayaSales, indented: true),
+              if (c.salmonReceivable > 0)
+                ZoneRow(
+                    label: 'Salmon receivable',
+                    value: c.salmonReceivable,
+                    indented: true),
+            ],
+            result: ZoneRow(
+                label: 'Cash sales',
+                value: c.cashSales,
+                sign: ZoneSign.plus),
+          ),
+          const SizedBox(height: 8),
+          // Fee cash stays in the drawer and reaches management with the rest,
+          // so there is no hand-over line for it. The per-type rows exist only
+          // on closings sealed after the breakdown shipped; the document is
+          // immutable, so older days show the total alone — permanently.
+          ClosingZone(
+            icon: LucideIcons.receipt,
+            heading: 'SHOP FEES',
+            rows: [
+              for (final entry in c.feesByType.entries)
+                ZoneRow(label: entry.key, value: entry.value),
+            ],
+            result: ZoneRow(label: 'Shop fees', value: c.feesRevenue),
+          ),
+          const SizedBox(height: 8),
+          ClosingZone(
+            icon: LucideIcons.arrowUpRight,
+            heading: 'EXPENSES',
+            rows: [ZoneRow(label: 'Total expenses', value: c.totalExpenses)],
+            result: ZoneRow(
+                label: 'Cash expenses',
+                value: c.cashExpenses,
+                sign: ZoneSign.minus),
+          ),
+          const SizedBox(height: 8),
+          // Expected cash stays reconcilable on screen:
+          // float + cash sales − cash expenses + DP − delivery. Every term has
+          // a row, and the plate rows render at zero — hiding an empty row was
+          // read as "this summary does not show DP".
+          ClosingZone(
+            icon: LucideIcons.scale,
+            heading: 'CASH RECONCILIATION',
+            rows: [
+              ZoneRow(
+                  label: 'Opening float',
+                  value: c.openingFloat,
+                  sign: ZoneSign.plus),
+              ZoneRow(
+                  label: 'Plate No DP',
+                  value: c.plateNoDp,
+                  sign: ZoneSign.plus),
+              ZoneRow(
+                  label: 'Plate No Delivery',
+                  value: c.plateNoDelivery,
+                  sign: ZoneSign.minus),
+              ZoneRow(label: 'Expected cash', value: c.expectedCash),
+            ],
+            result: ZoneRow(label: 'Counted cash', value: c.countedCash),
+            resultLeading: VarianceChip(variance: c.variance),
+          ),
+          const SizedBox(height: 8),
           // What changed comes first: the hand-over below states figures the
           // reader would otherwise see move with no explanation yet given.
           if (activity != null && activity.hasChanged)
@@ -303,32 +305,4 @@ class _ClosingTileState extends ConsumerState<_ClosingTile> {
     );
   }
 
-  String _peso(double v) =>
-      '${AppConstants.currencySymbol}${v.toCurrencyWithoutSymbol()}';
-}
-
-/// Small-caps divider label inside the dense closing detail. A full
-/// ClosingSectionCard would be too heavy here — this is an inline block inside
-/// an already-bordered tile, so the grouping is carried by type, not by chrome.
-class _SummaryHeading extends StatelessWidget {
-  const _SummaryHeading({required this.label, required this.muted});
-
-  final String label;
-  final Color muted;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: 2),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.7,
-          color: muted,
-        ),
-      ),
-    );
-  }
 }
