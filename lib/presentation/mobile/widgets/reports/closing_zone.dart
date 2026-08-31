@@ -18,10 +18,24 @@ class ZoneRow {
     required this.value,
     this.sign = ZoneSign.none,
     this.indented = false,
+    this.display,
   });
+
+  /// A row whose value is not money — a count, say. Rendered verbatim, so it
+  /// never picks up a peso symbol or a sign.
+  const ZoneRow.text({
+    required this.label,
+    required String text,
+    this.indented = false,
+  })  : value = 0,
+        sign = ZoneSign.none,
+        display = text;
 
   final String label;
   final double value;
+
+  /// Overrides the money formatting when set.
+  final String? display;
   final ZoneSign sign;
 
   /// Breaks down the row above it — GCash under Non-cash sales, Cash expenses
@@ -29,6 +43,7 @@ class ZoneRow {
   final bool indented;
 
   String get formatted {
+    if (display != null) return display!;
     final amount =
         '${AppConstants.currencySymbol}${value.toCurrencyWithoutSymbol()}';
     switch (sign) {

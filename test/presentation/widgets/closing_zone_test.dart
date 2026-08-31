@@ -137,4 +137,16 @@ void main() {
     final resultAmount = tester.getRect(find.text('₱5,491.00').last);
     expect(resultAmount.left - chip.right, lessThan(12));
   });
+
+  testWidgets('a count is rendered verbatim, never as money', (tester) async {
+    await tester.pumpWidget(_host(const ClosingZone(
+      icon: LucideIcons.arrowDownLeft,
+      heading: 'SALES',
+      rows: [ZoneRow.text(label: 'Sales count', text: '21')],
+      result: ZoneRow(label: 'Cash sales', value: 8335, sign: ZoneSign.plus),
+    )));
+
+    expect(find.text('21'), findsOneWidget);
+    expect(find.text('₱21.00'), findsNothing);
+  });
 }

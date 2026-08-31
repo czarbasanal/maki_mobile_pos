@@ -219,43 +219,44 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ClosingSectionCard(
-                  icon: LucideIcons.receipt,
-                  title: 'Sales',
-                  children: [
-                    ClosingKvRow(
-                        label: 'Gross sales (parts)',
-                        value: _peso(draft.grossSales)),
-                    ClosingKvRow(
-                        label: 'Labor (service)',
-                        value: _peso(draft.laborRevenue)),
-                    ClosingKvRow(
-                        label: 'Cash sales', value: _peso(draft.cashSales)),
-                    ClosingKvRow(
-                        label: 'Non-cash sales',
-                        value: _peso(draft.nonCashSales)),
+                // Zoned, matching the closed-day summary: every reference
+                // figure above, and the one line the group resolves to —
+                // cash sales — set apart below a hairline with its sign.
+                ClosingZone(
+                  icon: LucideIcons.arrowDownLeft,
+                  heading: 'SALES',
+                  rows: [
+                    ZoneRow(
+                        label: 'Gross sales (parts)', value: draft.grossSales),
+                    ZoneRow(
+                        label: 'Labor (service)', value: draft.laborRevenue),
+                    ZoneRow(label: 'Discounts', value: draft.totalDiscounts),
+                    if (draft.feesRevenue > 0)
+                      ZoneRow(label: 'Shop fees', value: draft.feesRevenue),
+                    ZoneRow(
+                        label: 'Non-cash sales', value: draft.nonCashSales),
                     if (draft.gcashSales > 0)
-                      ClosingKvRow(
+                      ZoneRow(
                           label: 'GCash',
-                          value: _peso(draft.gcashSales),
+                          value: draft.gcashSales,
                           indented: true),
                     if (draft.mayaSales > 0)
-                      ClosingKvRow(
+                      ZoneRow(
                           label: 'Maya',
-                          value: _peso(draft.mayaSales),
+                          value: draft.mayaSales,
                           indented: true),
-                    ClosingKvRow(
-                        label: 'Discounts', value: _peso(draft.totalDiscounts)),
-                    if (draft.feesRevenue > 0)
-                      ClosingKvRow(
-                          label: 'Shop fees', value: _peso(draft.feesRevenue)),
-                    ClosingKvRow(
-                        label: 'Sales count', value: '${draft.salesCount}'),
                     if (draft.salmonReceivable > 0)
-                      ClosingKvRow(
+                      ZoneRow(
                           label: 'Salmon receivable (next day)',
-                          value: _peso(draft.salmonReceivable)),
+                          value: draft.salmonReceivable,
+                          indented: true),
+                    ZoneRow.text(
+                        label: 'Sales count', text: '${draft.salesCount}'),
                   ],
+                  result: ZoneRow(
+                      label: 'Cash sales',
+                      value: draft.cashSales,
+                      sign: ZoneSign.plus),
                 ),
                 const SizedBox(height: 12),
                 ClosingSectionCard(
@@ -652,43 +653,36 @@ class _ClosedView extends ConsumerWidget {
                 '${TimeOfDay.fromDateTime(shopTimeOf(closing.closedAt, ref.read(shopOffsetProvider))).format(context)}',
           ),
           const SizedBox(height: 12),
-          ClosingSectionCard(
-            icon: LucideIcons.receipt,
-            title: 'Sales',
-            children: [
-              ClosingKvRow(
-                  label: 'Gross sales (parts)',
-                  value: _peso(closing.grossSales)),
+          ClosingZone(
+            icon: LucideIcons.arrowDownLeft,
+            heading: 'SALES',
+            rows: [
+              ZoneRow(
+                  label: 'Gross sales (parts)', value: closing.grossSales),
               // Directly under gross, and shown at zero: labor is a separate
               // money track that gross never included, so if it appears only
               // as a hand-over subtraction it reads as being taken twice.
-              ClosingKvRow(
-                  label: 'Labor (service)',
-                  value: _peso(closing.laborRevenue)),
-              ClosingKvRow(
-                  label: 'Cash sales', value: _peso(closing.cashSales)),
-              ClosingKvRow(
-                  label: 'Non-cash sales', value: _peso(closing.nonCashSales)),
-              if (closing.gcashSales > 0)
-                ClosingKvRow(
-                    label: 'GCash',
-                    value: _peso(closing.gcashSales),
-                    indented: true),
-              if (closing.mayaSales > 0)
-                ClosingKvRow(
-                    label: 'Maya',
-                    value: _peso(closing.mayaSales),
-                    indented: true),
-              ClosingKvRow(
-                  label: 'Discounts', value: _peso(closing.totalDiscounts)),
+              ZoneRow(label: 'Labor (service)', value: closing.laborRevenue),
+              ZoneRow(label: 'Discounts', value: closing.totalDiscounts),
               if (closing.feesRevenue > 0)
-                ClosingKvRow(
-                    label: 'Shop fees', value: _peso(closing.feesRevenue)),
+                ZoneRow(label: 'Shop fees', value: closing.feesRevenue),
+              ZoneRow(label: 'Non-cash sales', value: closing.nonCashSales),
+              if (closing.gcashSales > 0)
+                ZoneRow(
+                    label: 'GCash', value: closing.gcashSales, indented: true),
+              if (closing.mayaSales > 0)
+                ZoneRow(
+                    label: 'Maya', value: closing.mayaSales, indented: true),
               if (closing.salmonReceivable > 0)
-                ClosingKvRow(
+                ZoneRow(
                     label: 'Salmon receivable',
-                    value: _peso(closing.salmonReceivable)),
+                    value: closing.salmonReceivable,
+                    indented: true),
             ],
+            result: ZoneRow(
+                label: 'Cash sales',
+                value: closing.cashSales,
+                sign: ZoneSign.plus),
           ),
           const SizedBox(height: 12),
           ClosingSectionCard(

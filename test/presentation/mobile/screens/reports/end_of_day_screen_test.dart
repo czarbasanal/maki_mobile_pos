@@ -114,6 +114,28 @@ Widget _harness({
     );
 
 void main() {
+  testWidgets('the open day\'s Sales section is zoned, like the closed summary',
+      (tester) async {
+    // Same pattern on both screens: reference figures above, and the one line
+    // the group resolves to — cash sales — set apart with its sign.
+    await tester.pumpWidget(_harness(closing: null));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SALES'), findsOneWidget);
+    expect(find.text('Gross sales (parts)'), findsOneWidget);
+    expect(find.text('Cash sales'), findsOneWidget);
+    // Signed, because cash sales adds to what should be in the drawer.
+    expect(find.textContaining('+₱'), findsWidgets);
+  });
+
+  testWidgets('a sales COUNT is not rendered as money', (tester) async {
+    await tester.pumpWidget(_harness(closing: null));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sales count'), findsOneWidget);
+    expect(find.text('₱2.00'), findsNothing);
+  });
+
   testWidgets('review: handoff rows appear only once counted cash is entered',
       (tester) async {
     await tester.pumpWidget(_harness(closing: null));
