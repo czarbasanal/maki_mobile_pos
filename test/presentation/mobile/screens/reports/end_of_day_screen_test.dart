@@ -121,7 +121,10 @@ void main() {
     await tester.pumpWidget(_harness(closing: null));
     await tester.pumpAndSettle();
 
-    expect(find.text('SALES'), findsOneWidget);
+    // The screen's own section heading is kept — icon and title, like every
+    // other section here — with the zone's rows inside it.
+    expect(find.text('Sales'), findsOneWidget);
+    expect(find.text('SALES'), findsNothing);
     expect(find.text('Gross sales (parts)'), findsOneWidget);
     expect(find.text('Cash sales'), findsOneWidget);
     // Signed, because cash sales adds to what should be in the drawer.

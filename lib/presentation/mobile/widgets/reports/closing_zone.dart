@@ -73,6 +73,7 @@ class ClosingZone extends StatelessWidget {
     required this.rows,
     required this.result,
     this.resultLeading,
+    this.bare = false,
   });
 
   final IconData icon;
@@ -86,6 +87,13 @@ class ClosingZone extends StatelessWidget {
   /// on Counted cash.
   final Widget? resultLeading;
 
+  /// Drops the recessed surface and the small-caps heading, leaving the rows
+  /// and the result line. For a screen that already has its own section chrome
+  /// — the End-of-Day form, where every group is a ClosingSectionCard with an
+  /// icon and a title — so the row pattern can be adopted without a second
+  /// heading inside the first, or a panel inside a panel.
+  final bool bare;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -97,15 +105,10 @@ class ClosingZone extends StatelessWidget {
     final zoneHairline =
         isDark ? const Color(0xFF223032) : const Color(0xFFEDEDED);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF152125) : const Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!bare)
           Row(
             children: [
               Icon(icon, size: 13, color: muted),
@@ -121,10 +124,10 @@ class ClosingZone extends StatelessWidget {
               ),
             ],
           ),
-          for (final row in rows)
-            Padding(
-              padding: EdgeInsets.only(
-                  top: 3, bottom: 3, left: row.indented ? 14 : 0),
+        for (final row in rows)
+          Padding(
+            padding: EdgeInsets.only(
+                top: 3, bottom: 3, left: row.indented ? 14 : 0),
               child: _line(
                 row,
                 labelColor: row.indented ? subLabel : muted,
@@ -151,8 +154,17 @@ class ClosingZone extends StatelessWidget {
               leading: resultLeading,
             ),
           ),
-        ],
+      ],
+    );
+
+    if (bare) return body;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF152125) : const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
+      child: body,
     );
   }
 

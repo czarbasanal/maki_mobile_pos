@@ -120,8 +120,7 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
   List<double> _plateDeliveryAmounts = const [];
 
   double get _plateDp => _plateDpAmounts.fold(0.0, (a, b) => a + b);
-  double get _plateDelivery =>
-      _plateDeliveryAmounts.fold(0.0, (a, b) => a + b);
+  double get _plateDelivery => _plateDeliveryAmounts.fold(0.0, (a, b) => a + b);
 
   @override
   void dispose() {
@@ -219,44 +218,57 @@ class _EndOfDayScreenState extends ConsumerState<EndOfDayScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Zoned, matching the closed-day summary: every reference
-                // figure above, and the one line the group resolves to —
-                // cash sales — set apart below a hairline with its sign.
-                ClosingZone(
-                  icon: LucideIcons.arrowDownLeft,
-                  heading: 'SALES',
-                  rows: [
-                    ZoneRow(
-                        label: 'Gross sales (parts)', value: draft.grossSales),
-                    ZoneRow(
-                        label: 'Labor (service)', value: draft.laborRevenue),
-                    ZoneRow(label: 'Discounts', value: draft.totalDiscounts),
-                    if (draft.feesRevenue > 0)
-                      ZoneRow(label: 'Shop fees', value: draft.feesRevenue),
-                    ZoneRow(
-                        label: 'Non-cash sales', value: draft.nonCashSales),
-                    if (draft.gcashSales > 0)
-                      ZoneRow(
-                          label: 'GCash',
-                          value: draft.gcashSales,
-                          indented: true),
-                    if (draft.mayaSales > 0)
-                      ZoneRow(
-                          label: 'Maya',
-                          value: draft.mayaSales,
-                          indented: true),
-                    if (draft.salmonReceivable > 0)
-                      ZoneRow(
-                          label: 'Salmon receivable (next day)',
-                          value: draft.salmonReceivable,
-                          indented: true),
-                    ZoneRow.text(
-                        label: 'Sales count', text: '${draft.salesCount}'),
+                // The zone's ROW pattern inside this screen's own section
+                // chrome: reference figures above, cash sales set apart below
+                // a hairline with its sign. Bare, so the card's icon and title
+                // stay the heading — a second heading inside the first, or a
+                // recessed panel inside a card, would read as a nested thing
+                // rather than as the same section restyled.
+                ClosingSectionCard(
+                  icon: LucideIcons.receipt,
+                  title: 'Sales',
+                  children: [
+                    ClosingZone(
+                      bare: true,
+                      icon: LucideIcons.arrowDownLeft,
+                      heading: 'SALES',
+                      rows: [
+                        ZoneRow(
+                            label: 'Gross sales (parts)',
+                            value: draft.grossSales),
+                        ZoneRow(
+                            label: 'Labor (service)',
+                            value: draft.laborRevenue),
+                        ZoneRow(
+                            label: 'Discounts', value: draft.totalDiscounts),
+                        if (draft.feesRevenue > 0)
+                          ZoneRow(label: 'Shop fees', value: draft.feesRevenue),
+                        ZoneRow(
+                            label: 'Non-cash sales', value: draft.nonCashSales),
+                        if (draft.gcashSales > 0)
+                          ZoneRow(
+                              label: 'GCash',
+                              value: draft.gcashSales,
+                              indented: true),
+                        if (draft.mayaSales > 0)
+                          ZoneRow(
+                              label: 'Maya',
+                              value: draft.mayaSales,
+                              indented: true),
+                        if (draft.salmonReceivable > 0)
+                          ZoneRow(
+                              label: 'Salmon receivable (next day)',
+                              value: draft.salmonReceivable,
+                              indented: true),
+                        ZoneRow.text(
+                            label: 'Sales count', text: '${draft.salesCount}'),
+                      ],
+                      result: ZoneRow(
+                          label: 'Cash sales',
+                          value: draft.cashSales,
+                          sign: ZoneSign.plus),
+                    ),
                   ],
-                  result: ZoneRow(
-                      label: 'Cash sales',
-                      value: draft.cashSales,
-                      sign: ZoneSign.plus),
                 ),
                 const SizedBox(height: 12),
                 ClosingSectionCard(
@@ -653,36 +665,48 @@ class _ClosedView extends ConsumerWidget {
                 '${TimeOfDay.fromDateTime(shopTimeOf(closing.closedAt, ref.read(shopOffsetProvider))).format(context)}',
           ),
           const SizedBox(height: 12),
-          ClosingZone(
-            icon: LucideIcons.arrowDownLeft,
-            heading: 'SALES',
-            rows: [
-              ZoneRow(
-                  label: 'Gross sales (parts)', value: closing.grossSales),
-              // Directly under gross, and shown at zero: labor is a separate
-              // money track that gross never included, so if it appears only
-              // as a hand-over subtraction it reads as being taken twice.
-              ZoneRow(label: 'Labor (service)', value: closing.laborRevenue),
-              ZoneRow(label: 'Discounts', value: closing.totalDiscounts),
-              if (closing.feesRevenue > 0)
-                ZoneRow(label: 'Shop fees', value: closing.feesRevenue),
-              ZoneRow(label: 'Non-cash sales', value: closing.nonCashSales),
-              if (closing.gcashSales > 0)
-                ZoneRow(
-                    label: 'GCash', value: closing.gcashSales, indented: true),
-              if (closing.mayaSales > 0)
-                ZoneRow(
-                    label: 'Maya', value: closing.mayaSales, indented: true),
-              if (closing.salmonReceivable > 0)
-                ZoneRow(
-                    label: 'Salmon receivable',
-                    value: closing.salmonReceivable,
-                    indented: true),
+          ClosingSectionCard(
+            icon: LucideIcons.receipt,
+            title: 'Sales',
+            children: [
+              ClosingZone(
+                bare: true,
+                icon: LucideIcons.arrowDownLeft,
+                heading: 'SALES',
+                rows: [
+                  ZoneRow(
+                      label: 'Gross sales (parts)', value: closing.grossSales),
+                  // Directly under gross, and shown at zero: labor is a separate
+                  // money track that gross never included, so if it appears only
+                  // as a hand-over subtraction it reads as being taken twice.
+                  ZoneRow(
+                      label: 'Labor (service)', value: closing.laborRevenue),
+                  ZoneRow(label: 'Discounts', value: closing.totalDiscounts),
+                  if (closing.feesRevenue > 0)
+                    ZoneRow(label: 'Shop fees', value: closing.feesRevenue),
+                  ZoneRow(label: 'Non-cash sales', value: closing.nonCashSales),
+                  if (closing.gcashSales > 0)
+                    ZoneRow(
+                        label: 'GCash',
+                        value: closing.gcashSales,
+                        indented: true),
+                  if (closing.mayaSales > 0)
+                    ZoneRow(
+                        label: 'Maya',
+                        value: closing.mayaSales,
+                        indented: true),
+                  if (closing.salmonReceivable > 0)
+                    ZoneRow(
+                        label: 'Salmon receivable',
+                        value: closing.salmonReceivable,
+                        indented: true),
+                ],
+                result: ZoneRow(
+                    label: 'Cash sales',
+                    value: closing.cashSales,
+                    sign: ZoneSign.plus),
+              ),
             ],
-            result: ZoneRow(
-                label: 'Cash sales',
-                value: closing.cashSales,
-                sign: ZoneSign.plus),
           ),
           const SizedBox(height: 12),
           ClosingSectionCard(
@@ -703,8 +727,8 @@ class _ClosedView extends ConsumerWidget {
               icon: LucideIcons.clipboardList,
               title: 'Plate No Orders',
               children: [
-                ..._plateRows('Plate No DP', closing.plateNoDp,
-                    closing.plateNoDpAmounts),
+                ..._plateRows(
+                    'Plate No DP', closing.plateNoDp, closing.plateNoDpAmounts),
                 ..._plateRows('Plate No Delivery', closing.plateNoDelivery,
                     closing.plateNoDeliveryAmounts),
               ],
