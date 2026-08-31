@@ -15,6 +15,8 @@ import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { cn } from '@/core/utils/cn';
 import type { JobOrder } from '@/domain/entities';
+import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
+import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
 
 const dateFmt = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric' });
 
@@ -36,12 +38,35 @@ export function JobOrdersPage() {
   const deleteJobOrder = useDeleteJobOrder();
   const navigate = useNavigate();
 
+  // Today by default: the list is opened to work the day's tickets, and it
+  // used to render every job order ever created, newest first.
+  const [range, setRange] = useState<DateRange | null>(() => resolvePreset('today'));
+
+  const inRange = useMemo(() => {
+    const all = jobOrders ?? [];
+    if (!range) return all;
+    return all.filter(
+      (jo) => jo.createdAt >= range.start && jo.createdAt <= range.end,
+    );
+  }, [jobOrders, range]);
+
+  // A bike left overnight is still an open ticket. Filtering by date would
+  // hide it, so say how many are out there rather than losing them quietly.
+  const openOutsideRange = useMemo(() => {
+    if (!range) return 0;
+    return (jobOrders ?? []).filter(
+      (jo) =>
+        !jo.isConverted &&
+        (jo.createdAt < range.start || jo.createdAt > range.end),
+    ).length;
+  }, [jobOrders, range]);
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('jobOrders');
-  usePageClamp(page, setPage, jobOrders?.length ?? 0, pageSize);
+  usePageClamp(page, setPage, inRange.length, pageSize);
   const paged = useMemo(
-    () => (jobOrders ?? []).slice((page - 1) * pageSize, page * pageSize),
-    [jobOrders, page, pageSize],
+    () => inRange.slice((page - 1) * pageSize, page * pageSize),
+    [inRange, page, pageSize],
   );
 
   const onResume = (jobOrder: JobOrder) => {
@@ -56,8 +81,41 @@ export function JobOrdersPage() {
 
   return (
     <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
+      <header className="space-y-tk-sm">
         <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Job Orders</h1>
+        <div className="flex flex-wrap items-center gap-tk-sm">
+          <DateRangePicker onChange={setRange} defaultPreset="today" />
+          {range ? (
+            <button
+              type="button"
+              onClick={() => setRange(null)}
+              className="rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Show all dates
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setRange(resolvePreset('today'))}
+              className="rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
+            >
+              Back to today
+            </button>
+          )}
+        </div>
+        {openOutsideRange > 0 ? (
+          <p className="text-bodySmall text-light-text-secondary">
+            {openOutsideRange} open job order{openOutsideRange === 1 ? '' : 's'}{' '}
+            outside this range.{' '}
+            <button
+              type="button"
+              onClick={() => setRange(null)}
+              className="underline hover:text-light-text"
+            >
+              Show all dates
+            </button>
+          </p>
+        ) : null}
         <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
           Service tickets — resume an open one into the POS, or open a billed one to view its sale.
         </p>

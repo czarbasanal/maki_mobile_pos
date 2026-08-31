@@ -23,7 +23,9 @@ const jobOrder = (o: Partial<JobOrder> = {}): JobOrder => ({
   discountType: DiscountType.amount,
   createdBy: 'u1',
   createdByName: 'C',
-  createdAt: new Date(2026, 6, 23),
+  // Today by default: the page now filters to the current day, and these
+  // tests are about how a row renders, not about which day it falls on.
+  createdAt: new Date(),
   updatedAt: null,
   updatedBy: null,
   isConverted: false,
@@ -199,5 +201,43 @@ describe('JobOrdersPage — pagination', () => {
     act(() => emit(many.slice(0, 25)));
     expect(screen.getByText('JO-072326-001')).toBeInTheDocument();
     expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
+  });
+});
+
+describe('JobOrdersPage — date range', () => {
+  const today = new Date();
+  const yesterday = new Date(today.getTime() - 26 * 60 * 60 * 1000);
+
+  it('shows today by default and hides other days', () => {
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today }),
+      jobOrder({ id: 'd2', name: 'JO-OLD', createdAt: yesterday }),
+    ]);
+
+    expect(screen.getByText('JO-TODAY')).toBeInTheDocument();
+    expect(screen.queryByText('JO-OLD')).not.toBeInTheDocument();
+  });
+
+  it('counts open tickets left outside the range instead of losing them', async () => {
+    // A bike left overnight is still an open ticket; a date filter would hide
+    // it, so the page says how many are out there.
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today }),
+      jobOrder({ id: 'd2', name: 'JO-OLD', createdAt: yesterday, isConverted: false }),
+    ]);
+
+    expect(screen.getByText(/1 open job order outside this range/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByRole('button', { name: /show all dates/i })[0]);
+    expect(screen.getByText('JO-OLD')).toBeInTheDocument();
+  });
+
+  it('does not count an already billed-out job order as left behind', () => {
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today }),
+      jobOrder({ id: 'd2', name: 'JO-OLD', createdAt: yesterday, isConverted: true }),
+    ]);
+
+    expect(screen.queryByText(/outside this range/i)).not.toBeInTheDocument();
   });
 });
