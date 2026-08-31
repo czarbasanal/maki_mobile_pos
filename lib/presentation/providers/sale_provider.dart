@@ -180,13 +180,20 @@ final todaysSalesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
 /// and dividing a partial day's takings by a whole-day count inflates the
 /// Avg Daily figure. Rolling, not calendar-month scoped — the 1st reaches
 /// back into the previous month instead of resetting to —.
-final rolling7DaysSummaryProvider =
+/// How many completed days the Avg Daily card averages over. Thirty rather
+/// than seven: a week is short enough that one unusually busy or dead day
+/// visibly swings the figure, which made it read as noise rather than a
+/// baseline.
+const int kAvgDailyWindowDays = 30;
+
+final rollingWindowSummaryProvider =
     FutureProvider<SalesSummary>((ref) async {
   final actor = _requireActor(ref);
   // Watch the clock (not a raw DateTime.now() snapshot) so a midnight
   // rollover slides the window forward a day.
   final today = ref.watch(businessDayProvider);
-  final window = rolling7Days(today);
+  final window =
+      rollingDays(today, kAvgDailyWindowDays, ref.watch(shopOffsetProvider));
 
   final result = await ref.watch(getSalesReportUseCaseProvider).execute(
         actor: actor,
@@ -201,17 +208,20 @@ final rolling7DaysSummaryProvider =
   return result.data!;
 });
 
-/// Average daily gross sales across the last 7 completed days.
+/// Average daily gross sales across the last [kAvgDailyWindowDays] completed
+/// days.
 ///
-/// Total from [rolling7DaysSummaryProvider] divided by a constant 7 — a quiet
-/// or closed day is a real ₱0 day and stays in the average. Numerator and
+/// Total from [rollingWindowSummaryProvider] divided by that same constant — a
+/// quiet or closed day is a real ₱0 day and stays in the average. Numerator and
 /// denominator cover the same span, and there is no month reset: the 1st
-/// averages last week like any other day. Stays `double?` so the card's
-/// null-renders-— handling is untouched (loading/error still show —).
+/// averages the previous thirty days like any other date. Stays `double?` so
+/// the card's null-renders-— handling is untouched (loading/error still show —).
 final avgDailySalesProvider = Provider<AsyncValue<double?>>((ref) {
-  final summaryAsync = ref.watch(rolling7DaysSummaryProvider);
+  final summaryAsync = ref.watch(rollingWindowSummaryProvider);
   final today = ref.watch(businessDayProvider);
-  final days = rolling7Days(today).days;
+  final days =
+      rollingDays(today, kAvgDailyWindowDays, ref.watch(shopOffsetProvider))
+          .days;
   return summaryAsync.whenData<double?>(
     (summary) => avgDailyFromGross(summary.grossAmount, days),
   );

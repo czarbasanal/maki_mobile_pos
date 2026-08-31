@@ -6,6 +6,8 @@
 /// without a clock abstraction.
 library;
 
+import 'package:maki_mobile_pos/core/utils/shop_time.dart';
+
 /// A Monday-start week range with the count of days elapsed within it.
 ///
 /// [start] is midnight of the current week's Monday. [end] is the
@@ -72,26 +74,43 @@ double avgDailyFromGross(double gross, int daysElapsed) {
 }
 
 /// The last 7 *completed* days: midnight seven days before [now] through the
-/// end of yesterday (23:59:59.999). Always exactly [days] = 7 — the divisor
-/// for the Avg Daily card. A rolling window, so unlike [MonthToDate] it never
-/// resets on the 1st; the y/m/d constructor rolls negative days correctly
-/// across month and year boundaries.
-class Rolling7Days {
+/// end of yesterday (23:59:59.999). A rolling window, so unlike [MonthToDate]
+/// it never resets on the 1st.
+///
+/// [days] is both the span and the divisor for the Avg Daily card: a quiet or
+/// closed day inside the window is a real ₱0 day and stays in the average.
+class RollingWindow {
   final DateTime start;
   final DateTime end;
   final int days;
 
-  const Rolling7Days({
+  const RollingWindow({
     required this.start,
     required this.end,
     required this.days,
   });
 }
 
-/// Computes the rolling last-7-completed-days range for [now].
-Rolling7Days rolling7Days(DateTime now) {
-  final start = DateTime(now.year, now.month, now.day - 7);
-  final end = DateTime(now.year, now.month, now.day)
-      .subtract(const Duration(milliseconds: 1));
-  return Rolling7Days(start: start, end: end, days: 7);
+/// The rolling last-[days]-completed-days range ending yesterday, as real
+/// instants in the shop's timezone.
+///
+/// [today] is a shop WALL midnight (what `businessDayProvider` returns) — its
+/// calendar fields are the shop day. Both bounds go back through
+/// [offsetMinutes], because `getSalesByDateRange` uses the bounds it is given:
+/// building them with the device-local `DateTime(...)` constructor would slide
+/// the whole window by the handset's distance from shop time.
+///
+/// The y/m/d constructor rolls negative days correctly across month and year
+/// boundaries.
+RollingWindow rollingDays(DateTime today, int days, int offsetMinutes) {
+  final firstDay = shopWall(today.year, today.month, today.day - days);
+  final lastDay = shopWall(today.year, today.month, today.day - 1);
+  return RollingWindow(
+    start: instantOf(firstDay, offsetMinutes),
+    end: instantOf(
+        shopWall(lastDay.year, lastDay.month, lastDay.day, 23, 59, 59, 999),
+        offsetMinutes),
+    days: days,
+  );
 }
+

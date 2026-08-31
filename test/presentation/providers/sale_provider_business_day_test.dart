@@ -110,15 +110,15 @@ void main() {
     });
   });
 
-  group('rolling7DaysSummaryProvider', () {
-    test('queries the last 7 completed days and follows the flip', () async {
+  group('rollingWindowSummaryProvider', () {
+    test('queries the last 30 completed days and follows the flip', () async {
       final repo = _MockSaleRepository();
       when(() => repo.getSalesSummary(
             startDate: any(named: 'startDate'),
             endDate: any(named: 'endDate'),
           )).thenAnswer((_) async => SalesSummary.empty());
 
-      final dayNotifier = _FixedBusinessDayNotifier(DateTime(2026, 7, 24));
+      final dayNotifier = _FixedBusinessDayNotifier(shopWall(2026, 7, 24));
       final container = ProviderContainer(overrides: [
         currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
         saleRepositoryProvider.overrideWithValue(repo),
@@ -126,27 +126,34 @@ void main() {
       ]);
       addTearDown(container.dispose);
       final sub =
-          container.listen(rolling7DaysSummaryProvider, (_, __) {});
+          container.listen(rollingWindowSummaryProvider, (_, __) {});
       addTearDown(sub.close);
 
-      await container.read(rolling7DaysSummaryProvider.future);
+      await container.read(rollingWindowSummaryProvider.future);
       var captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      // On the 24th: the 17th 00:00 → end of the 23rd. Today NOT included.
-      expect(captured[0], DateTime(2026, 7, 17));
-      expect(captured[1], DateTime(2026, 7, 23, 23, 59, 59, 999));
+      // On the 24th: June 24 → end of July 23, in shop instants. Today is
+      // NOT included — it is still being earned.
+      expect(captured[0], instantOf(shopWall(2026, 6, 24), kDefaultShopOffsetMinutes));
+      expect(
+          captured[1],
+          instantOf(shopWall(2026, 7, 23, 23, 59, 59, 999),
+              kDefaultShopOffsetMinutes));
 
-      dayNotifier.set(DateTime(2026, 7, 25));
+      dayNotifier.set(shopWall(2026, 7, 25));
       await Future<void>.delayed(Duration.zero);
-      await container.read(rolling7DaysSummaryProvider.future);
+      await container.read(rollingWindowSummaryProvider.future);
       captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime(2026, 7, 18));
-      expect(captured[1], DateTime(2026, 7, 24, 23, 59, 59, 999));
+      expect(captured[0], instantOf(shopWall(2026, 6, 25), kDefaultShopOffsetMinutes));
+      expect(
+          captured[1],
+          instantOf(shopWall(2026, 7, 24, 23, 59, 59, 999),
+              kDefaultShopOffsetMinutes));
     });
 
     test('the 1st of a month reaches back into the previous month — no reset',
@@ -163,25 +170,29 @@ void main() {
         currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
         saleRepositoryProvider.overrideWithValue(repo),
         businessDayProvider
-            .overrideWith(() => _FixedBusinessDayNotifier(DateTime(2026, 8, 1))),
+            .overrideWith(() => _FixedBusinessDayNotifier(shopWall(2026, 8, 1))),
       ]);
       addTearDown(container.dispose);
       final sub =
-          container.listen(rolling7DaysSummaryProvider, (_, __) {});
+          container.listen(rollingWindowSummaryProvider, (_, __) {});
       addTearDown(sub.close);
 
-      await container.read(rolling7DaysSummaryProvider.future);
+      await container.read(rollingWindowSummaryProvider.future);
 
       final captured = verify(() => repo.getSalesSummary(
             startDate: captureAny(named: 'startDate'),
             endDate: captureAny(named: 'endDate'),
           )).captured;
-      expect(captured[0], DateTime(2026, 7, 25));
-      expect(captured[1], DateTime(2026, 7, 31, 23, 59, 59, 999));
+      // Reaches back a full 30 days into the previous month.
+      expect(captured[0], instantOf(shopWall(2026, 7, 2), kDefaultShopOffsetMinutes));
+      expect(
+          captured[1],
+          instantOf(shopWall(2026, 7, 31, 23, 59, 59, 999),
+              kDefaultShopOffsetMinutes));
     });
   });
 
-  group('avgDailySalesProvider — rolling 7-day average', () {
+  group('avgDailySalesProvider — rolling 30-day average', () {
     Future<AsyncValue<double?>> readAvg(DateTime day, double gross) async {
       final repo = _MockSaleRepository();
       when(() => repo.getSalesSummary(
@@ -206,20 +217,21 @@ void main() {
       ]);
       addTearDown(container.dispose);
       final sub =
-          container.listen(rolling7DaysSummaryProvider, (_, __) {});
+          container.listen(rollingWindowSummaryProvider, (_, __) {});
       addTearDown(sub.close);
-      await container.read(rolling7DaysSummaryProvider.future);
+      await container.read(rollingWindowSummaryProvider.future);
       return container.read(avgDailySalesProvider);
     }
 
-    test('always divides by 7 — a quiet day is a real ₱0 day', () async {
-      final avg = await readAvg(DateTime(2026, 7, 25), 2800);
+    test('always divides by the whole window — a quiet day is a real ₱0 day',
+        () async {
+      final avg = await readAvg(shopWall(2026, 7, 25), 12000);
       expect(avg.valueOrNull, 400);
     });
 
-    test('the 1st averages last week like any other day — no more — reset',
+    test('the 1st averages the previous thirty days like any other date — no more — reset',
         () async {
-      final avg = await readAvg(DateTime(2026, 8, 1), 700);
+      final avg = await readAvg(shopWall(2026, 8, 1), 3000);
       expect(avg.valueOrNull, 100);
     });
 
@@ -229,17 +241,17 @@ void main() {
     // when the upstream summary provider is held fixed.
     test('daysElapsed follows businessDayProvider and recomputes on flip',
         () async {
-      final dayNotifier = _FixedBusinessDayNotifier(DateTime(2026, 7, 15));
+      final dayNotifier = _FixedBusinessDayNotifier(shopWall(2026, 7, 15));
       final container = ProviderContainer(overrides: [
-        rolling7DaysSummaryProvider.overrideWith(
+        rollingWindowSummaryProvider.overrideWith(
           (ref) async => const SalesSummary(
             totalSalesCount: 1,
             voidedSalesCount: 0,
-            grossAmount: 1400,
+            grossAmount: 6000,
             totalDiscounts: 0,
-            netAmount: 1400,
+            netAmount: 6000,
             totalCost: 0,
-            totalProfit: 1400,
+            totalProfit: 6000,
             byPaymentMethod: {},
           ),
         ),
@@ -248,14 +260,14 @@ void main() {
       addTearDown(container.dispose);
 
       // The divisor is a constant 7 now, so a clock flip must NOT change the
-      // average while the summary is held fixed — 1400 / 7 = 200 either day.
+      // average while the summary is held fixed — 6000 / 30 = 200 either day.
       // (The flip re-querying the WINDOW is covered in the summary group.)
       final sub = container.listen(avgDailySalesProvider, (_, __) {});
       addTearDown(sub.close);
-      await container.read(rolling7DaysSummaryProvider.future);
+      await container.read(rollingWindowSummaryProvider.future);
       expect(container.read(avgDailySalesProvider).valueOrNull, 200);
 
-      dayNotifier.set(DateTime(2026, 7, 8));
+      dayNotifier.set(shopWall(2026, 7, 8));
       expect(container.read(avgDailySalesProvider).valueOrNull, 200);
     });
   });
