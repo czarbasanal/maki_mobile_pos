@@ -168,7 +168,9 @@ describe('canAccess — cashier web access map', () => {
       '/reports/price-changes',
       '/inventory/add',
       '/inventory/price-history',
-      '/inventory/reorder',
+      // Reorder became the buying list; both views show cost.
+      '/purchase-orders',
+      '/purchase-orders/new',
       '/users',
       '/logs',
       '/hr',

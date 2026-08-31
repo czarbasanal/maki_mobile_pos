@@ -40,6 +40,8 @@ import type { ExpenseRepository } from '@/domain/repositories/ExpenseRepository'
 import type { VoidRequestRepository } from '@/domain/repositories/VoidRequestRepository';
 import type { ShopTimezoneRepository } from '@/domain/repositories/ShopTimezoneRepository';
 import { setAmbientShopTimezone } from '@/domain/time/shopTime';
+import type { PurchaseOrderRepository } from '@/domain/repositories/PurchaseOrderRepository';
+import { FirestorePurchaseOrderRepository } from '@/data/repositories/FirestorePurchaseOrderRepository';
 
 export interface Container {
   authRepo: AuthRepository;
@@ -58,6 +60,7 @@ export interface Container {
   hrSettingsRepo: HrSettingsRepository;
   expenseRepo: ExpenseRepository;
   voidRequestRepo: VoidRequestRepository;
+  purchaseOrderRepo: PurchaseOrderRepository;
   shopTimezoneRepo: ShopTimezoneRepository;
 }
 
@@ -79,6 +82,7 @@ function buildDefaultContainer(): Container {
     hrSettingsRepo: new FirestoreHrSettingsRepository(db),
     expenseRepo: new FirestoreExpenseRepository(db),
     voidRequestRepo: new FirestoreVoidRequestRepository(db),
+    purchaseOrderRepo: new FirestorePurchaseOrderRepository(db),
     shopTimezoneRepo: new FirestoreShopTimezoneRepository(db),
   };
 }
@@ -175,6 +179,10 @@ export function useExpenseRepo(): ExpenseRepository {
 
 export function useVoidRequestRepo(): VoidRequestRepository {
   return useContainer().voidRequestRepo;
+}
+
+export function usePurchaseOrderRepo() {
+  return useContainer().purchaseOrderRepo;
 }
 
 export function useShopTimezoneRepo(): ShopTimezoneRepository {

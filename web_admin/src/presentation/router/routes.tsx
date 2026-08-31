@@ -30,7 +30,6 @@ import { ReceivingHistoryPage } from '@/presentation/features/receiving/Receivin
 import { ReceivingDetailPage } from '@/presentation/features/receiving/ReceivingDetailPage';
 import { ReceivingEntryPage } from '@/presentation/features/receiving/ReceivingEntryPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
-import { ReorderSuggestionsPage } from '@/presentation/features/inventory/ReorderSuggestionsPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
 import { ProductDrawer } from '@/presentation/features/inventory/ProductDrawer';
 import { ProductEditDrawer } from '@/presentation/features/inventory/ProductEditDrawer';
@@ -43,6 +42,9 @@ import { PosPage } from '@/presentation/features/pos/PosPage';
 import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
 import { JobOrdersPage } from '@/presentation/features/jobOrders/JobOrdersPage';
 import { VoidRequestsPage } from '@/presentation/features/voidRequests/VoidRequestsPage';
+import { PurchaseOrdersPage } from '@/presentation/features/purchaseOrders/PurchaseOrdersPage';
+import { PurchaseOrderBuilderPage } from '@/presentation/features/purchaseOrders/PurchaseOrderBuilderPage';
+import { PurchaseOrderDetailPage } from '@/presentation/features/purchaseOrders/PurchaseOrderDetailPage';
 import { JobOrderEditPage } from '@/presentation/features/jobOrders/JobOrderEditPage';
 import { EmployeesPage } from '@/presentation/features/hr/EmployeesPage';
 import { PayrollPage } from '@/presentation/features/hr/PayrollPage';
@@ -106,7 +108,10 @@ export const router = createBrowserRouter(
         },
         { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
         { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
-        { path: RoutePaths.reorder, element: <ReorderSuggestionsPage /> },
+        { path: RoutePaths.purchaseOrders, element: <PurchaseOrdersPage /> },
+        // Static sibling outranks ':id'.
+        { path: RoutePaths.purchaseOrderNew, element: <PurchaseOrderBuilderPage /> },
+        { path: RoutePaths.purchaseOrderDetail, element: <PurchaseOrderDetailPage /> },
         { path: RoutePaths.receiving, element: <ReceivingDashboardPage /> },
         { path: RoutePaths.receivingNew, element: <ReceivingEntryPage /> },
         { path: RoutePaths.receivingNewDraft, element: <ReceivingEntryPage /> },
@@ -155,6 +160,13 @@ export const router = createBrowserRouter(
     { path: '/inventory/edit/:id', element: <ProductEditRedirect /> },
     // Old /drafts bookmarks — Drafts renamed to Job Orders.
     { path: '/drafts', element: <Navigate to={RoutePaths.jobOrders} replace /> },
+    // Reorder moved inside the buying list. Without this the old path would
+    // fall through to /inventory/:id and open a product drawer for a product
+    // called "reorder".
+    {
+      path: '/inventory/reorder',
+      element: <Navigate to={RoutePaths.purchaseOrderNew} replace />,
+    },
     { path: '/drafts/:id', element: <JobOrderDetailRedirect /> },
     { path: '*', element: <Navigate to={RoutePaths.dashboard} replace /> },
   ],

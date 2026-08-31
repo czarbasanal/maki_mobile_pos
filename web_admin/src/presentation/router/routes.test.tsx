@@ -91,12 +91,13 @@ describe('router — product view is a drawer over the inventory list', () => {
     expect(paths()).not.toContain(':id');
   });
 
-  it('does not mistake /inventory/reorder for a product id', async () => {
+  it('sends the retired /inventory/reorder to the buying list', async () => {
     render(<RouterProvider router={router} />);
     await act(async () => {
       await router.navigate('/inventory/reorder');
     });
-    await waitFor(() => expect(paths()).toContain('/inventory/reorder'));
+    // Redirected, not treated as a product called "reorder".
+    await waitFor(() => expect(paths()).toContain('/purchase-orders/new'));
     expect(paths()).not.toContain(':id');
   });
 });

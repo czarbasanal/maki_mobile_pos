@@ -13,6 +13,9 @@ export const RoutePaths = {
 
   jobOrders: '/job-orders',
   voidRequests: '/void-requests',
+  purchaseOrders: '/purchase-orders',
+  purchaseOrderNew: '/purchase-orders/new',
+  purchaseOrderDetail: '/purchase-orders/:id',
   jobOrderEdit: '/job-orders/:id',
 
   inventory: '/inventory',
@@ -20,7 +23,6 @@ export const RoutePaths = {
   // Editing lives inside the product drawer; /inventory/edit/:id redirects here.
   productEdit: '/inventory/:id/edit',
   priceHistory: '/inventory/price-history',
-  reorder: '/inventory/reorder',
   productDetail: '/inventory/:id',
 
   receiving: '/receiving',

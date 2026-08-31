@@ -53,41 +53,25 @@ function harness(
   );
 }
 
-describe('Sidebar — Inventory dropdown', () => {
-  it('hides Reorder and Price History while outside the inventory subtree', () => {
+describe('Sidebar — Inventory is a flat item', () => {
+  it('reaches Inventory in one click, with no sub-items to expand', () => {
+    // Reorder moved inside the buying list and Price History stands on its
+    // own, so the group had one child and then none — a dropdown that only
+    // ever hid its parent.
     harness('/pos');
-    expect(screen.getByRole('link', { name: /inventory/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^inventory$/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /price history/i })).not.toBeInTheDocument();
   });
 
-  it('shows the sub-items automatically anywhere in the inventory subtree', () => {
-    harness('/inventory/reorder');
-    expect(screen.getByRole('link', { name: /reorder/i })).toHaveAttribute(
-      'href',
-      '/inventory/reorder',
-    );
-    expect(screen.getByRole('link', { name: /price history/i })).toHaveAttribute(
-      'href',
-      '/inventory/price-history',
-    );
-  });
-
-  it('chevron expands and collapses the group without navigating', async () => {
+  it('lists Price History and Purchase Orders as their own items', () => {
     harness('/pos');
-    await userEvent.click(screen.getByRole('button', { name: /expand inventory/i }));
-    expect(screen.getByRole('link', { name: /reorder/i })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /collapse inventory/i }));
-    expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /price history/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /purchase orders/i })).toBeInTheDocument();
   });
 
-  it('can collapse the group even while a sub-item is active', async () => {
-    harness('/inventory/reorder');
-    expect(screen.getByRole('link', { name: /reorder/i })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /collapse inventory/i }));
-    expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /expand inventory/i }));
-    expect(screen.getByRole('link', { name: /reorder/i })).toBeInTheDocument();
+  it('keeps them reachable from inside the inventory subtree too', () => {
+    harness('/inventory');
+    expect(screen.getByRole('link', { name: /price history/i })).toBeInTheDocument();
   });
 });
 

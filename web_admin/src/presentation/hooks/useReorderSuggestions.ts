@@ -5,6 +5,7 @@ import { useSaleRepo } from '@/infrastructure/di/container';
 import { SaleStatus } from '@/domain/enums';
 import { reorderWindow } from '@/domain/reorder/reorderWindow';
 import { unitsSoldByProduct } from '@/domain/reorder/unitsSoldByProduct';
+import { buildBuyingListRows, type BuyingListRow } from '@/domain/reorder/buyingListRows';
 import {
   computeReorderSuggestions,
   type ReorderParams,
@@ -39,8 +40,17 @@ export function useReorderSuggestions(params: ReorderParams, now: Date) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, salesQ.data, params.windowDays, params.coverDays]);
 
+  // Everything worth buying: the velocity suggestions PLUS anything out of
+  // stock, which the velocity engine alone cannot see.
+  const rows = useMemo<BuyingListRow[]>(() => {
+    if (!products || !salesQ.data) return [];
+    return buildBuyingListRows(products, unitsSoldByProduct(salesQ.data), params);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, salesQ.data, params.windowDays, params.coverDays]);
+
   return {
     suggestions,
+    rows,
     isLoading: lp || salesQ.isLoading,
     error: (salesQ.error as Error) ?? null,
     capped: (salesQ.data?.length ?? 0) >= REORDER_SALES_CAP,

@@ -21,7 +21,11 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   // Price history exposes cost → admin-only. Exact match wins over the generic
   // /^\/inventory\/[^/]+$/ dynamic rule below (which would grant viewInventory).
   [RoutePaths.priceHistory, Permission.viewProductCost],
-  [RoutePaths.reorder, Permission.viewProductCost],
+  // Buying. Gated on cost, not on receiving access: every view here shows
+  // what parts cost, and a cashier who may receive stock still may not see
+  // that. Creating one additionally means committing to spend.
+  [RoutePaths.purchaseOrders, Permission.viewProductCost],
+  [RoutePaths.purchaseOrderNew, Permission.receiveStock],
   [RoutePaths.receiving, Permission.accessReceiving],
   [RoutePaths.receivingNew, Permission.receiveStock],
   [RoutePaths.receivingHistory, Permission.viewReceivingHistory],

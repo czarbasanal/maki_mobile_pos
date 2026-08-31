@@ -69,14 +69,17 @@ const sections: NavSection[] = [
         label: 'Inventory',
         path: RoutePaths.inventory,
         icon: CubeIcon,
-        children: [
-          { label: 'Reorder', path: RoutePaths.reorder, icon: ClipboardDocumentListIcon },
-          { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
-        ],
       },
+      // Price History reads across the whole catalogue rather than drilling
+      // into one product, so it stands on its own rather than nesting under
+      // Inventory.
+      { label: 'Price History', path: RoutePaths.priceHistory, icon: ClockIcon },
       // Receiving is the dashboard at /receiving; New Receiving and Import CSV
       // (bulk) are actions inside it, so they have no standalone nav entries.
       { label: 'Receiving', path: RoutePaths.receiving, icon: TruckIcon },
+      // Reorder suggestions live inside a purchase order now — the question
+      // "what should I buy" is answered by starting the buying list.
+      { label: 'Purchase Orders', path: RoutePaths.purchaseOrders, icon: ClipboardDocumentListIcon },
       { label: 'Suppliers', path: RoutePaths.suppliers, icon: BuildingStorefrontIcon },
     ],
   },

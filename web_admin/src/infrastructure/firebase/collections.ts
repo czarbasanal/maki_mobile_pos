@@ -14,6 +14,7 @@ export const FirestoreCollections = {
   payslips: 'payslips',
   sales: 'sales',
   jobOrders: 'job_orders',
+  purchaseOrders: 'purchase_orders',
   receivings: 'receivings',
   expenses: 'expenses',
   userLogs: 'user_logs',
