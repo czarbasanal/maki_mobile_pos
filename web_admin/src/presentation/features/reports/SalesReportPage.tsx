@@ -28,7 +28,10 @@ export function SalesReportPage() {
   const user = useAuthStore((st) => st.user);
   const dailyOnly = !!user && hasPermission(user.role, Permission.viewDailySalesOnly);
   const canSeeCost = !!user && hasPermission(user.role, Permission.viewProductCost);
-  const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
+  // Today, not a week: this page is opened to answer "how are we doing today",
+  // and a 7-day default silently answered a different question. The picker's
+  // own default must match, or the chip and the figures disagree.
+  const [range, setRange] = useState<DateRange>(() => resolvePreset('today'));
   // Daily-only roles are clamped to today regardless of picker state —
   // derived, not forced into state (the query is keyed by timestamps).
   const effectiveRange = useMemo(
@@ -77,7 +80,7 @@ export function SalesReportPage() {
             {"Showing today's sales only. Contact an admin for historical reports."}
           </DailyLockNotice>
         ) : (
-          <DateRangePicker onChange={setRange} />
+          <DateRangePicker onChange={setRange} defaultPreset="today" />
         )}
       </header>
 

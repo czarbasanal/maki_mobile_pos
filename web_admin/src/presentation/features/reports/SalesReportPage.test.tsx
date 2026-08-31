@@ -162,3 +162,24 @@ describe('SalesReportPage — cashier daily lock + cost gating', () => {
     expect(screen.getByText('Profit')).toBeInTheDocument();
   });
 });
+
+describe('SalesReportPage — default range', () => {
+  it('opens on Today, not the last 7 days', async () => {
+    // The page is opened to answer "how are we doing today"; a 7-day default
+    // answered a different question without saying so. The picker's own
+    // default has to match, or the dropdown and the figures disagree.
+    harness([]);
+    const picker = await screen.findByRole('combobox');
+    expect((picker as HTMLSelectElement).value).toBe('today');
+  });
+
+  it('queries only today', async () => {
+    const { saleRepo } = harness([]);
+    await screen.findByRole('combobox');
+
+    await waitFor(() => expect(saleRepo.list).toHaveBeenCalled());
+    const { start, end } = (saleRepo.list as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    // One shop day, not seven.
+    expect(end.getTime() - start.getTime()).toBeLessThan(24 * 60 * 60 * 1000);
+  });
+});

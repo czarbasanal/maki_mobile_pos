@@ -84,6 +84,8 @@ interface HarnessOptions {
   pending?: boolean;
   voidReasons?: string[];
   voidRequestRepo?: Partial<Container['voidRequestRepo']>;
+  /** Router history, last entry being the page under test. */
+  entries?: string[];
   activityLogRepo?: Partial<Container['activityLogRepo']>;
 }
 
@@ -128,9 +130,13 @@ function harness(saleRepo: Partial<Container['saleRepo']>, opts: HarnessOptions 
       }}
     >
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/reports/sales/s1']}>
+        <MemoryRouter
+          initialEntries={opts.entries ?? ['/reports/sales/s1']}
+          initialIndex={(opts.entries?.length ?? 1) - 1}
+        >
           <Routes>
             <Route path="/reports/sales/:id" element={<SaleDetailPage />} />
+            <Route path="/sales/day" element={<div>day sales page</div>} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>
@@ -385,5 +391,20 @@ describe('SaleDetailPage — void gating by role (cashier web access)', () => {
         expect.objectContaining({ reason: 'oops wrong price charged' }),
       ),
     );
+  });
+});
+
+describe('SaleDetailPage — going back', () => {
+  it('returns to where you came from, not to a fixed page', async () => {
+    // Dashboard → View all → a sale. "Back to sales" was hardcoded to the
+    // sales REPORT, so it dumped you somewhere you had never been.
+    harness(
+      { getById: vi.fn().mockResolvedValue(sale()) },
+      { entries: ['/sales/day', '/reports/sales/s1'] },
+    );
+    await screen.findByRole('heading', { name: 'OR-0001' });
+
+    await userEvent.click(screen.getByRole('button', { name: /back/i }));
+    expect(await screen.findByText('day sales page')).toBeInTheDocument();
   });
 });

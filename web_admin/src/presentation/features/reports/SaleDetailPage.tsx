@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSaleRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -76,9 +76,7 @@ export function SaleDetailPage() {
           title="Sale not found"
           description="It may have been removed."
           action={
-            <Link to="/reports/sales" className="text-light-text underline">
-              Back to sales
-            </Link>
+            <BackLink className="text-light-text underline" />
           }
         />
       </div>
@@ -93,9 +91,7 @@ export function SaleDetailPage() {
     <>
     <div className="space-y-tk-lg px-tk-xl py-tk-lg print:hidden">
       <header className="space-y-tk-xs">
-        <Link to="/reports/sales" className="text-bodySmall text-light-text-secondary hover:underline">
-          ← Back to sales
-        </Link>
+        <BackLink />
         <div className="flex items-center gap-tk-md">
           <h1
             className={cn(
@@ -453,5 +449,28 @@ function Row({
         {value}
       </span>
     </div>
+  );
+}
+
+/// Returns to the previous page rather than a fixed one. A sale is reached
+/// from the dashboard, the day-sales list, a report and the void queue, so a
+/// hardcoded destination sends most visitors somewhere they have never been.
+/// React Router marks the first entry of a session 'default'; on a deep link
+/// or a refresh there is nothing to go back to, so fall back to the report.
+function BackLink({ className }: { className?: string }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const canGoBack = location.key !== 'default';
+
+  return (
+    <button
+      type="button"
+      onClick={() => (canGoBack ? navigate(-1) : navigate('/reports/sales'))}
+      className={
+        className ?? 'text-bodySmall text-light-text-secondary hover:underline'
+      }
+    >
+      ← Back
+    </button>
   );
 }
