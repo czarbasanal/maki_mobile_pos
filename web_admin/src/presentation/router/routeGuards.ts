@@ -36,6 +36,9 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.profitReport, Permission.viewProfitReports],
   [RoutePaths.laborReport, Permission.viewSalesReports],
   [RoutePaths.priceChangeReport, Permission.viewProductCost],
+  // Approving a request voids the sale, so the queue is gated on the same
+  // permission as the void itself rather than on a weaker "view" right.
+  [RoutePaths.voidRequests, Permission.voidSale],
   [RoutePaths.users, Permission.viewUsers],
   [RoutePaths.userAdd, Permission.addUser],
   [RoutePaths.settings, Permission.viewSettings],

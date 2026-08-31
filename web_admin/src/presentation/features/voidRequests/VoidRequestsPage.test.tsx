@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { VoidRequestsBell } from './VoidRequestsBell';
+import { VoidRequestsPage } from './VoidRequestsPage';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import type { VoidRequest, User } from '@/domain/entities';
 
@@ -28,17 +28,15 @@ const request = (o: Partial<VoidRequest> = {}): VoidRequest => ({
   ...o,
 });
 
-const user = (role: string): User =>
-  ({ id: 'u1', email: 'a@b.c', displayName: 'Czar', role, isActive: true }) as User;
-
 function harness(requests: VoidRequest[], overrides: Partial<Container> = {}) {
+  useAuthStore.setState({
+    user: {
+      id: 'u1', email: 'a@b.c', displayName: 'Czar', role: 'admin', isActive: true,
+    } as User,
+  });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const voidRequestRepo = {
-    watchRequests: (cb: (r: VoidRequest[]) => void) => {
-      cb(requests);
-      return () => {};
-    },
-    markAllRead: vi.fn(async () => {}),
+    watchRequests: (cb: (r: VoidRequest[]) => void) => { cb(requests); return () => {}; },
     resolve: vi.fn(async () => {}),
     ...(overrides.voidRequestRepo ?? {}),
   } as unknown as Container['voidRequestRepo'];
@@ -53,56 +51,35 @@ function harness(requests: VoidRequest[], overrides: Partial<Container> = {}) {
           ...overrides,
         } as Container}
       >
-        <MemoryRouter>
-          <VoidRequestsBell />
-        </MemoryRouter>
+        <MemoryRouter><VoidRequestsPage /></MemoryRouter>
       </DiProvider>
     </QueryClientProvider>,
   );
   return { voidRequestRepo };
 }
 
-describe('VoidRequestsBell', () => {
-  beforeEach(() => {
-    useAuthStore.setState({ user: user('admin') });
-  });
+describe('VoidRequestsPage', () => {
+  beforeEach(() => vi.clearAllMocks());
 
-  it('shows the unread count on the bell', async () => {
-    harness([request({ id: 'r1' }), request({ id: 'r2' })]);
-    await waitFor(() => expect(screen.getByText('2')).toBeInTheDocument());
-  });
-
-  it('shows no badge when nothing is waiting', async () => {
-    harness([request({ status: 'approved', read: true })]);
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: /void requests/i })).toBeInTheDocument(),
-    );
-    expect(screen.queryByText('1')).not.toBeInTheDocument();
-  });
-
-  it('opens a panel naming the sale, who asked, and why', async () => {
+  it('names the sale, who asked, why, and what was on it', async () => {
     harness([request()]);
-    await userEvent.click(await screen.findByRole('button', { name: /void requests/i }));
-
-    expect(screen.getByText('SALE-20260828-020')).toBeInTheDocument();
+    expect(await screen.findByText('SALE-20260828-020')).toBeInTheDocument();
     expect(screen.getByText(/Belle/)).toBeInTheDocument();
     expect(screen.getByText(/Payment issue/)).toBeInTheDocument();
     expect(screen.getByText(/Ilis carbon brass/)).toBeInTheDocument();
   });
 
-  it('clears the badge when the panel is opened', async () => {
-    const { voidRequestRepo } = harness([request()]);
-    await userEvent.click(await screen.findByRole('button', { name: /void requests/i }));
-    await waitFor(() => expect(voidRequestRepo.markAllRead).toHaveBeenCalled());
+  it('says so plainly when nothing is waiting', async () => {
+    harness([]);
+    expect(await screen.findByText(/Nothing waiting/i)).toBeInTheDocument();
   });
 
-  it('approving voids the sale and resolves the request', async () => {
+  it('approving voids the sale, then resolves the request', async () => {
     const voidSale = vi.fn(async () => {});
     const { voidRequestRepo } = harness([request()], {
       saleRepo: { voidSale } as unknown as Container['saleRepo'],
     });
-    await userEvent.click(await screen.findByRole('button', { name: /void requests/i }));
-    await userEvent.click(screen.getByRole('button', { name: /approve/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /approve/i }));
 
     await waitFor(() => expect(voidSale).toHaveBeenCalled());
     expect(voidRequestRepo.resolve).toHaveBeenCalledWith(
@@ -110,13 +87,13 @@ describe('VoidRequestsBell', () => {
     );
   });
 
-  it('rejecting asks for a reason before resolving', async () => {
+  it('rejecting will not commit without a reason', async () => {
     const { voidRequestRepo } = harness([request()]);
-    await userEvent.click(await screen.findByRole('button', { name: /void requests/i }));
-    await userEvent.click(screen.getByRole('button', { name: /reject/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /^reject$/i }));
 
-    // Nothing written yet — the cashier is owed an explanation.
+    // The cashier is owed an explanation, so the commit stays disabled.
     expect(voidRequestRepo.resolve).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /confirm reject/i })).toBeDisabled();
 
     await userEvent.type(screen.getByPlaceholderText(/why/i), 'Sale is correct');
     await userEvent.click(screen.getByRole('button', { name: /confirm reject/i }));
@@ -128,9 +105,23 @@ describe('VoidRequestsBell', () => {
     );
   });
 
-  it('renders nothing for a role that cannot void', async () => {
-    useAuthStore.setState({ user: user('cashier') });
-    harness([request()]);
-    expect(screen.queryByRole('button', { name: /void requests/i })).not.toBeInTheDocument();
+  it('lists resolved requests separately, with who resolved them', async () => {
+    harness([
+      request({ id: 'r1' }),
+      request({
+        id: 'r2',
+        saleNumber: 'SALE-20260827-004',
+        status: 'rejected',
+        resolvedByName: 'Czar',
+        rejectionReason: 'Sale is correct',
+      }),
+    ]);
+
+    expect(await screen.findByText('Resolved')).toBeInTheDocument();
+    expect(screen.getByText('SALE-20260827-004')).toBeInTheDocument();
+    expect(screen.getByText('Rejected')).toBeInTheDocument();
+    expect(screen.getByText('Czar')).toBeInTheDocument();
+    // A resolved one is history — it must not offer Approve again.
+    expect(screen.getAllByRole('button', { name: /approve/i })).toHaveLength(1);
   });
 });

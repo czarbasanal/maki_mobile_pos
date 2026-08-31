@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type ComponentType, type SVGProps } from '
 import {
   ArrowRightStartOnRectangleIcon,
   BanknotesIcon,
+  BellAlertIcon,
   BriefcaseIcon,
   BuildingStorefrontIcon,
   CalendarDaysIcon,
@@ -35,7 +36,7 @@ import { canAccess } from '@/presentation/router/routeGuards';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { useSignOut } from '@/presentation/hooks/useSignOut';
-import { VoidRequestsBell } from './VoidRequestsBell';
+import { useVoidRequests } from '@/presentation/hooks/useVoidRequests';
 import { cn } from '@/core/utils/cn';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -89,6 +90,7 @@ const sections: NavSection[] = [
   {
     label: 'Admin',
     items: [
+      { label: 'Void Requests', path: RoutePaths.voidRequests, icon: BellAlertIcon },
       { label: 'Users', path: RoutePaths.users, icon: UsersIcon },
       { label: 'Activity Logs', path: RoutePaths.userLogs, icon: ClockIcon },
       {
@@ -137,6 +139,11 @@ export function Sidebar() {
   const isTablet = useTabletViewport();
   const [manualCollapsed, setManualCollapsed] = useState<boolean | null>(null);
   const collapsed = manualCollapsed ?? isTablet;
+  // Only admins can reach the queue, and canAccess already filters the item
+  // out for everyone else — but the subscription would still run, so gate it.
+  const canSeeVoids = !!user && canAccess(RoutePaths.voidRequests, user);
+  const { pending } = useVoidRequests();
+  const pendingVoids = canSeeVoids ? pending.length : 0;
 
   return (
     <aside
@@ -156,8 +163,6 @@ export function Sidebar() {
             MAKI POS
           </span>
         )}
-        <div className="flex items-center gap-tk-xs">
-        <VoidRequestsBell collapsed={collapsed} />
         <button
           type="button"
           onClick={() => setManualCollapsed(!collapsed)}
@@ -171,7 +176,6 @@ export function Sidebar() {
             <ChevronDoubleLeftIcon className="h-4 w-4" />
           )}
         </button>
-        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-tk-sm py-tk-sm">
@@ -217,6 +221,9 @@ export function Sidebar() {
                     icon={item.icon}
                     active={isActive(location.pathname, item.path)}
                     collapsed={collapsed}
+                    badge={
+                      item.path === RoutePaths.voidRequests ? pendingVoids : 0
+                    }
                   />
                 );
               })}
@@ -294,12 +301,15 @@ function SidebarLink({
   icon: Icon,
   active,
   collapsed = false,
+  badge = 0,
 }: {
   label: string;
   path: string;
   icon: IconComponent;
   active: boolean;
   collapsed?: boolean;
+  /** Count shown as a pill; 0 renders nothing. */
+  badge?: number;
 }) {
   return (
     <NavLink
@@ -308,7 +318,7 @@ function SidebarLink({
       aria-label={label}
       title={collapsed ? label : undefined}
       className={cn(
-        'flex items-center rounded-md text-bodySmall transition-colors',
+        'relative flex items-center rounded-md text-bodySmall transition-colors',
         collapsed ? 'justify-center py-[8px]' : 'gap-tk-sm px-tk-sm py-[6px]',
         active
           ? 'bg-light-subtle font-semibold text-light-text'
@@ -317,6 +327,18 @@ function SidebarLink({
     >
       <Icon className="h-4 w-4 shrink-0" />
       {collapsed ? null : <span className="truncate">{label}</span>}
+      {badge > 0 ? (
+        <span
+          className={cn(
+            'flex h-4 min-w-[16px] items-center justify-center rounded-full bg-error px-[4px] text-[10px] font-semibold leading-none text-white',
+            // Collapsed: the label is gone, so pin the count to the icon
+            // rather than letting it push the row wider than the rail.
+            collapsed ? 'absolute right-1 top-1' : 'ml-auto',
+          )}
+        >
+          {badge}
+        </span>
+      ) : null}
     </NavLink>
   );
 }

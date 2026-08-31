@@ -42,6 +42,7 @@ import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierForm
 import { PosPage } from '@/presentation/features/pos/PosPage';
 import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
 import { JobOrdersPage } from '@/presentation/features/jobOrders/JobOrdersPage';
+import { VoidRequestsPage } from '@/presentation/features/voidRequests/VoidRequestsPage';
 import { JobOrderEditPage } from '@/presentation/features/jobOrders/JobOrderEditPage';
 import { EmployeesPage } from '@/presentation/features/hr/EmployeesPage';
 import { PayrollPage } from '@/presentation/features/hr/PayrollPage';
@@ -91,6 +92,7 @@ export const router = createBrowserRouter(
         { path: RoutePaths.checkout, element: <CheckoutPage /> },
         { path: RoutePaths.jobOrders, element: <JobOrdersPage /> },
         { path: RoutePaths.jobOrderEdit, element: <JobOrderEditPage /> },
+        { path: RoutePaths.voidRequests, element: <VoidRequestsPage /> },
         // The product view is a drawer rendered OVER the list, so it is a
         // child route: the list stays mounted and keeps its scroll, filters
         // and page. Static siblings like /inventory/add outrank ':id'.

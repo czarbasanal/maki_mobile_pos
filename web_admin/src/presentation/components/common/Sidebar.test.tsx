@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { UserRole } from '@/domain/enums';
 import type { User } from '@/domain/entities/User';
+import type { VoidRequest } from '@/domain/entities';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { Sidebar } from './Sidebar';
 
@@ -24,15 +25,25 @@ const admin: User = {
   lastLoginAt: null,
 };
 
-function harness(initialPath: string, user: User = admin) {
+function harness(
+  initialPath: string,
+  user: User = admin,
+  pendingVoids: VoidRequest[] = [],
+) {
   useAuthStore.setState({ user });
+  const voidRequestRepo = {
+    watchRequests: (cb: (r: VoidRequest[]) => void) => {
+      cb(pendingVoids);
+      return () => {};
+    },
+  } as unknown as Container['voidRequestRepo'];
   const authRepo = { signOut: vi.fn() } as unknown as Container['authRepo'];
   const activityLogRepo = {
     log: vi.fn().mockResolvedValue(undefined),
   } as unknown as Container['activityLogRepo'];
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return render(
-    <DiProvider override={{ authRepo, activityLogRepo }}>
+    <DiProvider override={{ authRepo, activityLogRepo, voidRequestRepo }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={[initialPath]}>
           <Sidebar />
@@ -160,5 +171,51 @@ describe('Sidebar — cashier filtering (characterization)', () => {
     harness('/inventory', cashier);
     expect(screen.queryByRole('link', { name: /reorder/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /price history/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('Sidebar — Void Requests', () => {
+  const request = (id: string, o: Partial<VoidRequest> = {}): VoidRequest => ({
+    id,
+    saleId: `s-${id}`,
+    saleNumber: 'SALE-0001',
+    saleGrandTotal: 285,
+    requestedBy: 'u-belle',
+    requestedByName: 'Belle',
+    requestedByRole: 'cashier',
+    reason: 'Payment issue',
+    status: 'pending',
+    read: false,
+    createdAt: new Date('2026-08-30T13:00:00Z'),
+    resolvedBy: null,
+    resolvedByName: null,
+    resolvedAt: null,
+    rejectionReason: null,
+    itemsSummary: null,
+    ...o,
+  });
+
+  it('is a nav item, not a bell in the header', async () => {
+    harness('/dashboard');
+    expect(await screen.findByRole('link', { name: 'Void Requests' })).toBeInTheDocument();
+    // The bell it replaced was a button in the header, opening a dropdown.
+    expect(screen.queryByRole('button', { name: /void requests/i })).not.toBeInTheDocument();
+  });
+
+  it('badges the item with the number waiting', async () => {
+    harness('/dashboard', admin, [request('r1'), request('r2')]);
+    await screen.findByRole('link', { name: 'Void Requests' });
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('shows no badge when nothing is pending', async () => {
+    harness('/dashboard', admin, [request('r1', { status: 'approved', read: true })]);
+    await screen.findByRole('link', { name: 'Void Requests' });
+    expect(screen.queryByText('1')).not.toBeInTheDocument();
+  });
+
+  it('is hidden from a cashier, who files requests rather than approving them', () => {
+    harness('/dashboard', { ...admin, role: UserRole.cashier });
+    expect(screen.queryByRole('link', { name: 'Void Requests' })).not.toBeInTheDocument();
   });
 });

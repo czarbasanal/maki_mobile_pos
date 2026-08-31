@@ -12,6 +12,7 @@ export const RoutePaths = {
   checkout: '/pos/checkout',
 
   jobOrders: '/job-orders',
+  voidRequests: '/void-requests',
   jobOrderEdit: '/job-orders/:id',
 
   inventory: '/inventory',

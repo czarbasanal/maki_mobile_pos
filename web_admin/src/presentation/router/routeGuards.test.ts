@@ -200,3 +200,16 @@ describe('/settings/timezone', () => {
     expect(canAccess(RoutePaths.timezoneSettings, { ...admin, isActive: false })).toBe(false);
   });
 });
+
+describe('canAccess — void requests queue', () => {
+  it('admins reach it', () => {
+    expect(canAccess(RoutePaths.voidRequests, admin)).toBe(true);
+  });
+
+  it('cashiers do not — they file requests, they do not approve them', () => {
+    // Approving voids the sale and restores stock, so the queue is gated on
+    // voidSale rather than on a weaker view right.
+    expect(canAccess(RoutePaths.voidRequests, cashier)).toBe(false);
+    expect(canAccess(RoutePaths.voidRequests, staff)).toBe(false);
+  });
+});
