@@ -218,3 +218,27 @@ describe('CartBuilder — wedge-scanner Enter (B4)', () => {
     expect(box).toHaveValue('999888');
   });
 });
+
+describe('CartBuilder — register behaviors (reskin)', () => {
+  it('refuses adding an out-of-stock part with an error toast', async () => {
+    const { store } = harness([plainProduct({ id: 'p0', name: 'Dead Stock', quantity: 0 })]);
+    await search('dead');
+    await userEvent.click(await screen.findByText('Dead Stock'));
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent('Out of stock');
+    expect(store.getState().lines).toHaveLength(0);
+  });
+
+  it('ArrowDown then Enter adds the highlighted (second) result', async () => {
+    const { store } = harness([
+      plainProduct({ id: 'pa', name: 'Plug Alpha', sku: 'S1' }),
+      plainProduct({ id: 'pb', name: 'Plug Beta', sku: 'S2' }),
+    ]);
+    const box = screen.getByPlaceholderText(/search part name/i);
+    await userEvent.type(box, 'plug');
+    await screen.findByText('Plug Beta');
+    await userEvent.keyboard('{ArrowDown}{Enter}');
+    expect(store.getState().lines).toHaveLength(1);
+    expect(store.getState().lines[0].productId).toBe('pb');
+  });
+});

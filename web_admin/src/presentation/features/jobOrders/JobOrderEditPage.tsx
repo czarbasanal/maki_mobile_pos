@@ -108,7 +108,7 @@ export function JobOrderEditPage() {
           className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text" />
       </label>
 
-      <CartBuilder store={useJobOrderEditStore} />
+      <CartBuilder store={useJobOrderEditStore} allowReset={false} />
 
       <div className="flex justify-end gap-tk-sm">
         <Link to={RoutePaths.jobOrders} className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">Cancel</Link>

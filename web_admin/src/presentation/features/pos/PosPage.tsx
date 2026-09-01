@@ -110,19 +110,23 @@ export function PosPage() {
   };
 
   // Register keyboard map (POS guide §5): F2 = Checkout, F4 = Save as JO.
+  // Both no-op while ANY dialog is open — a function key must never navigate
+  // away from a mid-pick option dialog or stack a second modal.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'F2' && e.key !== 'F4') return;
+      if (document.querySelector('[role="dialog"]')) return;
+      e.preventDefault();
       if (e.key === 'F2') {
-        e.preventDefault();
         if (!checkoutBlocked) navigate(RoutePaths.checkout);
-      } else if (e.key === 'F4') {
-        e.preventDefault();
-        if (canSaveJobOrder && !saveOpen) openSave();
+      } else if (canSaveJobOrder) {
+        openSave();
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkoutBlocked, canSaveJobOrder, notes, navigate]);
 
   const onSaveJobOrder = async () => {
     const name = jobOrderNumber;

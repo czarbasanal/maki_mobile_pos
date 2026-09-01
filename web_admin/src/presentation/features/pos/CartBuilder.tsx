@@ -56,11 +56,15 @@ export function CartBuilder({
   store,
   actions,
   searchDebounce = 250,
+  allowReset = true,
 }: {
   store: CartStore;
   actions?: ReactNode;
   /** Test hook — production keeps the guide's 250ms. */
   searchDebounce?: number;
+  /** The POS reset-sale control; Job Order editing hides it (Cancel/Save
+   *  are that screen's own verbs). */
+  allowReset?: boolean;
 }) {
   const { data: products } = useProducts();
   const lines = store((s) => s.lines);
@@ -141,9 +145,9 @@ export function CartBuilder({
   };
 
   return (
-    <div className="grid items-start gap-4 min-[1000px]:grid-cols-[minmax(480px,1fr)_minmax(360px,420px)]">
+    <div className="grid items-start gap-4 overflow-x-auto min-[1000px]:grid-cols-[minmax(480px,1fr)_minmax(360px,420px)]">
       {/* ---- Catalog column ---- */}
-      <section className="min-w-0 space-y-tk-xs">
+      <section className="order-2 min-w-0 space-y-tk-xs min-[1000px]:order-1">
         <SearchInput
           value={search}
           onChange={setSearch}
@@ -228,7 +232,7 @@ export function CartBuilder({
       </section>
 
       {/* ---- Cart column ---- */}
-      <section className="min-w-0 space-y-tk-sm">
+      <section className="order-1 min-w-0 space-y-tk-sm min-[1000px]:order-2">
         <div className="rounded-card border border-line bg-surface shadow-card">
           <div className="flex items-center justify-between border-b border-line-2 px-[18px] py-3">
             <span className="text-card-title text-ink">Cart</span>
@@ -238,7 +242,7 @@ export function CartBuilder({
                   {lines.length}
                 </span>
               ) : null}
-              {(lines.length > 0 || laborLines.length > 0 || feeLines.length > 0) && (
+              {allowReset && (lines.length > 0 || laborLines.length > 0 || feeLines.length > 0) && (
                 <IconButton title="Reset sale" tone="danger" onClick={() => setConfirmReset(true)}>
                   <TrashIcon className="h-3.5 w-3.5" />
                 </IconButton>
