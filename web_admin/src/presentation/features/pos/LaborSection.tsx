@@ -70,8 +70,9 @@ export function LaborSection({ store }: { store: CartStore }) {
       ))}
 
       <div className="space-y-tk-xs">
-        <span className="block text-micro-caps uppercase text-ink-3">Mechanic</span>
-        <div className="flex flex-wrap items-center gap-tk-xs" aria-label="Mechanic">
+        <div className="flex flex-wrap items-center gap-tk-sm">
+          <span className="text-micro-caps uppercase text-ink-3">Mechanic</span>
+          <div className="flex flex-wrap items-center gap-tk-xs" aria-label="Mechanic">
           <Chip active={mechanicId === null} onClick={() => setMechanic(null, null)}>
             None
           </Chip>
@@ -89,9 +90,10 @@ export function LaborSection({ store }: { store: CartStore }) {
               {m.name}
             </Chip>
           ))}
-          <Chip active={addingMechanic} onClick={() => setAddingMechanic(true)}>
-            ＋ Add
-          </Chip>
+            <Chip active={addingMechanic} onClick={() => setAddingMechanic(true)}>
+              ＋ Add
+            </Chip>
+          </div>
         </div>
         {addingMechanic ? (
           <div className="flex items-center gap-tk-sm">

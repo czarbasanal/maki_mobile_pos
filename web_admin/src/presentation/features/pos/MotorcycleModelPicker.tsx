@@ -39,9 +39,9 @@ export function MotorcycleModelPicker({ store }: { store: CartStore }) {
   };
 
   return (
-    <div className="space-y-tk-xs">
-      <label className="flex items-center gap-tk-sm text-ctl-sm text-ink-2">
-        Motorcycle
+    <div className="space-y-tk-xs pt-tk-sm">
+      <label className="flex items-center gap-tk-sm">
+        <span className="text-micro-caps uppercase text-ink-3">Motorcycle</span>
         <select
           value={adding ? ADD_SENTINEL : motorcycleModel ?? ''}
           onChange={(e) => {
