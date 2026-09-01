@@ -177,6 +177,8 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
           completedBy,
           completedByName: completedByName,
           receivingId: receiving.id,
+          supplierId: receiving.supplierId,
+          supplierName: receiving.supplierName,
         );
         processedItems.add(processedItem);
       }
@@ -275,6 +277,10 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
     String updatedBy, {
     required String receivingId,
     String? completedByName,
+    /// The receiving's supplier: stamped onto a spawned variation, and filled
+    /// onto a matched product that has none (fill-when-empty).
+    String? supplierId,
+    String? supplierName,
   }) async {
     if (item.productId == null) {
       // New product - would need to create it first
@@ -299,6 +305,10 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
           originalProduct: product,
           newCost: item.unitCost,
           newCostCode: item.costCode,
+          // Entered on the receiving line; null inherits the base's price.
+          newPrice: item.unitPrice,
+          supplierId: supplierId,
+          supplierName: supplierName,
           createdBy: updatedBy,
           createdByName: completedByName,
         );
@@ -347,6 +357,18 @@ class ReceivingRepositoryImpl implements ReceivingRepository {
         updatedBy: updatedBy,
         updatedByName: completedByName,
       );
+
+      // Fill-when-empty: a matched product with no supplier takes the
+      // receiving's; one that already names a supplier is left alone.
+      if (product.supplierId == null && supplierId != null) {
+        await _firestore
+            .collection(FirestoreCollections.products)
+            .doc(product.id)
+            .update({
+          'supplierId': supplierId,
+          'supplierName': supplierName,
+        });
+      }
 
       return item;
     }

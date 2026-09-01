@@ -210,9 +210,14 @@ abstract class ProductRepository {
     required ProductEntity originalProduct,
     required double newCost,
     required String newCostCode,
-    /// The SRP typed on the form. NULL inherits the base's price — receiving
-    /// passes nothing and must keep inheriting.
+    /// The SRP typed on the form (or carried on a receiving line's
+    /// unitPrice). NULL inherits the base's price.
     double? newPrice,
+    /// Supplier override — the receiving that spawns a variation passes ITS
+    /// supplier (the stock physically came from them). NULL inherits the
+    /// base's supplier.
+    String? supplierId,
+    String? supplierName,
     required String createdBy,
     String? createdByName,
   });
