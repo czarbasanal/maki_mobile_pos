@@ -92,7 +92,9 @@ function planned(over: Omit<Partial<PlannedCreate>, 'input'> & { input?: Partial
 }
 
 const plan = (creates: PlannedCreate[]) => ({
-  creates, increments: new Map<string, number>(), items: [], newProducts: creates.length,
+  creates, increments: new Map<string, number>(),
+  supplierFills: new Map<string, { supplierId: string; supplierName: string }>(),
+  items: [], newProducts: creates.length,
   variations: 0, received: creates.length,
 });
 
@@ -245,5 +247,32 @@ describe('executeReceivePlan — allocated SKU reaches the receiving items', () 
     const keywords = productWrite?.data.searchKeywords as string[];
     expect(keywords).toContain('00070006');
     expect(keywords).not.toContain('00070005');
+  });
+});
+
+describe('executeReceivePlan — supplier fill-when-empty on matched increments', () => {
+  it('folds the fill into the same update as the stock increment', async () => {
+    const p = {
+      ...plan([]),
+      increments: new Map([['p-match', 5]]),
+      supplierFills: new Map([['p-match', { supplierId: 's1', supplierName: 'Boss Atan Argao' }]]),
+    };
+
+    await executeReceivePlan(fakeTx(), {} as Firestore, p, actor);
+
+    const update = state.writes.find((w) => w.path === 'products/p-match');
+    expect(update?.kind).toBe('update');
+    expect(update?.data.supplierId).toBe('s1');
+    expect(update?.data.supplierName).toBe('Boss Atan Argao');
+  });
+
+  it('an increment without a fill never writes supplier fields', async () => {
+    const p = { ...plan([]), increments: new Map([['p-match', 5]]) };
+
+    await executeReceivePlan(fakeTx(), {} as Firestore, p, actor);
+
+    const update = state.writes.find((w) => w.path === 'products/p-match');
+    expect(update).toBeDefined();
+    expect('supplierId' in (update?.data ?? {})).toBe(false);
   });
 });

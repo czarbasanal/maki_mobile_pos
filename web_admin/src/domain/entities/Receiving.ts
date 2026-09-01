@@ -19,6 +19,10 @@ export interface ReceivingItem {
   costCode: string;
   isNewVariation: boolean;
   newProductId: string | null;
+  /** Selling price entered for this line — used when the line spawns a
+   *  variation (a null inherits the base product's price). Optional: items
+   *  persisted before the field existed don't carry it. */
+  unitPrice?: number | null;
   notes: string | null;
   /** Draft-only: a not-yet-created product's spec, created at complete time.
    *  Absent/null on completed-doc items. */

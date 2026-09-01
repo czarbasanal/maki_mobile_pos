@@ -53,13 +53,13 @@ describe('planReceive', () => {
 
   it('mismatch → a <base>-1 variation create, price-history "receiving", variation line item', () => {
     const p = product({ id: 'p1', sku: 'SP', baseSku: null, cost: 180 });
-    const plan = planReceive([{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }], ctx({ knownSkus: ['SP'] }), counter());
+    const plan = planReceive([{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }], ctx({ knownSkus: ['SP'] }), counter());
     expect(plan.variations).toBe(1);
     expect(plan.creates[0].input.sku).toBe('SP-1');
     expect(plan.creates[0].priceHistory).toMatchObject({ cost: 200, reason: 'receiving' });
     expect(plan.items[0]).toMatchObject({ productId: 'p1', sku: 'SP-1', unitCost: 200, isNewVariation: true, newProductId: 'prod-1' });
-    // INVARIANT: receiving never touches selling price — the variation always
-    // inherits the base product's price (220), never the row's cost (200).
+    // With no price entered (null) the variation inherits the base product's
+    // price (220) — never the row's cost (200).
     expect(plan.creates[0].input.price).toBe(220);
   });
 
@@ -73,7 +73,7 @@ describe('planReceive', () => {
       sellingOptions: [{ id: 'o1', label: 'Half set', pieces: 2, price: 130 }],
     });
     const plan = planReceive(
-      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }],
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }],
       ctx({ knownSkus: ['SP'] }), counter(),
     );
     expect(plan.creates[0].input.imageUrl).toBe('https://example.test/sp.jpg');
@@ -96,8 +96,8 @@ describe('planReceive', () => {
     const p = product({ id: 'p1', sku: 'SP', cost: 180 });
     const plan = planReceive(
       [
-        { ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 },
-        { ref: 2, kind: 'mismatch', product: p, quantity: 2, cost: 210 },
+        { ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null },
+        { ref: 2, kind: 'mismatch', product: p, quantity: 2, cost: 210, price: null },
       ],
       ctx({ knownSkus: ['SP'] }), counter(),
     );
@@ -139,3 +139,67 @@ describe('planReceive — new products from the receiving modal', () => {
   });
 });
 
+
+describe('planReceive — supplier mapping (fill-when-empty + variation stamping)', () => {
+  const supplier = { id: 's1', name: 'Boss Atan Argao' };
+
+  it('a variation takes the RECEIVING’s supplier, not the base’s', () => {
+    const p = product({ id: 'p1', sku: 'SP', cost: 180, supplierId: null, supplierName: null });
+    const plan = planReceive(
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }],
+      ctx({ supplier, knownSkus: ['SP'] }), counter(),
+    );
+    expect(plan.creates[0].input.supplierId).toBe('s1');
+    expect(plan.creates[0].input.supplierName).toBe('Boss Atan Argao');
+  });
+
+  it('a variation falls back to the base’s supplier when the receiving has none', () => {
+    const p = product({ id: 'p1', sku: 'SP', cost: 180, supplierId: 's9', supplierName: 'Old Supplier' });
+    const plan = planReceive(
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }],
+      ctx({ supplier: null, knownSkus: ['SP'] }), counter(),
+    );
+    expect(plan.creates[0].input.supplierId).toBe('s9');
+    expect(plan.creates[0].input.supplierName).toBe('Old Supplier');
+  });
+
+  it('a matched product with NO supplier gets a fill from the receiving', () => {
+    const p = product({ id: 'p1', cost: 180, supplierId: null, supplierName: null });
+    const plan = planReceive(
+      [{ ref: 1, kind: 'match', product: p, quantity: 10 }],
+      ctx({ supplier }), counter(),
+    );
+    expect(plan.supplierFills.get('p1')).toEqual({ supplierId: 's1', supplierName: 'Boss Atan Argao' });
+  });
+
+  it('a matched product that already names a supplier is left alone', () => {
+    const p = product({ id: 'p1', cost: 180, supplierId: 's9', supplierName: 'Old Supplier' });
+    const plan = planReceive(
+      [{ ref: 1, kind: 'match', product: p, quantity: 10 }],
+      ctx({ supplier }), counter(),
+    );
+    expect(plan.supplierFills.size).toBe(0);
+  });
+
+  it('no supplier on the receiving → no fills at all', () => {
+    const p = product({ id: 'p1', cost: 180, supplierId: null, supplierName: null });
+    const plan = planReceive(
+      [{ ref: 1, kind: 'match', product: p, quantity: 10 }],
+      ctx({ supplier: null }), counter(),
+    );
+    expect(plan.supplierFills.size).toBe(0);
+  });
+});
+
+describe('planReceive — variation price from the line', () => {
+  it('an entered price becomes the variation’s price and its history entry', () => {
+    const p = product({ id: 'p1', sku: 'SP', cost: 180, price: 220 });
+    const plan = planReceive(
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: 260 }],
+      ctx({ knownSkus: ['SP'] }), counter(),
+    );
+    expect(plan.creates[0].input.price).toBe(260);
+    expect(plan.creates[0].priceHistory).toMatchObject({ price: 260, cost: 200 });
+    expect(plan.items[0].unitPrice).toBe(260);
+  });
+});

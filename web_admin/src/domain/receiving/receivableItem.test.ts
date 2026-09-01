@@ -38,10 +38,10 @@ describe('classifiedToReceivable', () => {
     });
   });
 
-  it('maps a mismatch to {kind:mismatch, product, quantity, cost}', () => {
+  it('maps a mismatch to {kind:mismatch, product, quantity, cost, price} — the CSV price applies to the variation', () => {
     const p = product();
-    expect(classifiedToReceivable(row('mismatch', { quantity: 4, cost: 200 }, p), new Map())).toEqual({
-      ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200,
+    expect(classifiedToReceivable(row('mismatch', { quantity: 4, cost: 200, price: 260 }, p), new Map())).toEqual({
+      ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: 260,
     });
   });
 

@@ -31,6 +31,7 @@ function parseItems(value: unknown): ReceivingItem[] {
       quantity: Number(it.quantity ?? 0),
       unit: (it.unit as string) ?? 'pcs',
       unitCost: Number(it.unitCost ?? 0),
+      unitPrice: it.unitPrice != null ? Number(it.unitPrice) : null,
       costCode: (it.costCode as string) ?? '',
       isNewVariation: Boolean(it.isNewVariation ?? false),
       newProductId: (it.newProductId as string | null) ?? null,

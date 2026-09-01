@@ -9,7 +9,14 @@ import { composeAutoSku } from '../products/sku';
  *  reporting (the CSV row number, or a 0-based index for manual entry). */
 export type ReceivableItem = { ref: string | number } & (
   | { kind: 'match'; product: Product; quantity: number }
-  | { kind: 'mismatch'; product: Product; quantity: number; cost: number }
+  | {
+      kind: 'mismatch';
+      product: Product;
+      quantity: number;
+      cost: number;
+      /** Selling price for the spawned variation; null inherits the base's. */
+      price: number | null;
+    }
   | {
       kind: 'new';
       sku: string;
@@ -55,6 +62,8 @@ export function classifiedToReceivable(
     return {
       ref: r.rowNumber, kind: 'mismatch', product: row.existing,
       quantity: r.quantity, cost: r.cost,
+      // The CSV's price column applies to the variation this row spawns.
+      price: r.price,
     };
   }
   const code = r.autoGenerateSku && r.category != null
