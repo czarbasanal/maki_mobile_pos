@@ -8,5 +8,6 @@ export function useDraftReceivings() {
   return useFirestoreSubscription<Receiving[]>(
     (onData, onError) => repo.watchDrafts(onData, onError),
     [repo],
+    'receivings:drafts',
   );
 }

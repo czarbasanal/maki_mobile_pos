@@ -7,6 +7,7 @@ export function useUsers(includeInactive = false) {
   return useFirestoreSubscription<User[]>(
     (onData) => repo.watchAll(onData, { includeInactive }),
     [repo, includeInactive],
+    `users:${includeInactive ? 'all' : 'active'}`,
   );
 }
 
@@ -21,5 +22,6 @@ export function useUser(id: string | undefined) {
       return repo.watchOne(id, onData);
     },
     [repo, id],
+    id ? `user:${id}` : undefined,
   );
 }

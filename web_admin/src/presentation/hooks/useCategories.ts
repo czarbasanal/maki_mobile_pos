@@ -10,6 +10,7 @@ export function useCategories(kind: CategoryKind, opts?: { includeInactive?: boo
   return useFirestoreSubscription<Category[]>(
     (onData) => repo.watchAll(kind, onData, { includeInactive }),
     [repo, kind, includeInactive],
+    `categories:${kind}:${includeInactive ? 'all' : 'active'}`,
   );
 }
 

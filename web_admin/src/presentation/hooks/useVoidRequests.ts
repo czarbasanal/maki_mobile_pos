@@ -30,6 +30,7 @@ export function useVoidRequests(): VoidRequestQueue {
   const { data, error, isLoading } = useFirestoreSubscription<VoidRequest[]>(
     (onData, onError) => repo.watchRequests(onData, onError),
     [repo],
+    'voidRequests',
   );
   const requests = useMemo(() => data ?? [], [data]);
   return useMemo(

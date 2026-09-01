@@ -7,6 +7,7 @@ export function useRegisterStatus(): { open: boolean; businessDayInt: number; is
   const { data, isLoading } = useFirestoreSubscription<DrawerState>(
     (onData, onError) => repo.watch(onData, onError),
     [repo],
+    'drawerState',
   );
   return {
     open: data ? isRegisterOpen(data) : false,

@@ -4,6 +4,7 @@
 
 import { create } from 'zustand';
 import type { User } from '@/domain/entities';
+import { clearSubscriptionCache } from '@/presentation/hooks/useFirestoreSubscription';
 
 export type AuthStatus = 'loading' | 'signedIn' | 'signedOut';
 
@@ -19,10 +20,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   status: 'loading',
   user: null,
   setUser: (user) =>
-    set({
-      user,
-      status: user ? 'signedIn' : 'signedOut',
+    set((prev) => {
+      // Sign-out or a user switch must not replay the previous user's
+      // cached snapshots on the next screens.
+      if (prev.user && prev.user.id !== user?.id) clearSubscriptionCache();
+      return { user, status: user ? 'signedIn' : 'signedOut' };
     }),
   setLoading: () => set({ status: 'loading' }),
-  reset: () => set({ status: 'signedOut', user: null }),
+  reset: () => {
+    clearSubscriptionCache();
+    return set({ status: 'signedOut', user: null });
+  },
 }));

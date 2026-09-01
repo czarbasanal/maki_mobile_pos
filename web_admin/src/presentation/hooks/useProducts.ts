@@ -7,5 +7,6 @@ export function useProducts() {
   return useFirestoreSubscription<Product[]>(
     (onData) => repo.watchAll(onData),
     [repo],
+    'products',
   );
 }

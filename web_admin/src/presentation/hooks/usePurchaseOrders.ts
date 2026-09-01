@@ -14,6 +14,7 @@ export function usePurchaseOrders() {
   return useFirestoreSubscription<PurchaseOrder[]>(
     (onData, onError) => repo.watchAll(onData, onError),
     [repo],
+    'purchaseOrders',
   );
 }
 

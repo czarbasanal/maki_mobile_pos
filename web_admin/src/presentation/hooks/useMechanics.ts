@@ -9,6 +9,7 @@ export function useMechanics(opts?: { includeInactive?: boolean }) {
   return useFirestoreSubscription<Mechanic[]>(
     (onData) => repo.watchAll(onData, { includeInactive }),
     [repo, includeInactive],
+    `mechanics:${includeInactive ? 'all' : 'active'}`,
   );
 }
 

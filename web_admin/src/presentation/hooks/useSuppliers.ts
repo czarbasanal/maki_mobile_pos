@@ -8,6 +8,7 @@ export function useSuppliers() {
   return useFirestoreSubscription<Supplier[]>(
     (onData) => repo.watchAll(onData),
     [repo],
+    'suppliers',
   );
 }
 

@@ -7,5 +7,6 @@ export function useCostCode() {
   return useFirestoreSubscription<CostCode>(
     (onData) => repo.watch(onData),
     [repo],
+    'costCode',
   );
 }

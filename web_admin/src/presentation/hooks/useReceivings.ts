@@ -9,5 +9,6 @@ export function useReceivings(range: DateRange) {
   return useFirestoreSubscription<Receiving[]>(
     (onData, onError) => repo.watchAll(range, onData, onError),
     [repo, range.start.getTime(), range.end.getTime()],
+    `receivings:${range.start.getTime()}-${range.end.getTime()}`,
   );
 }
