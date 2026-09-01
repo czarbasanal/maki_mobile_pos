@@ -12,7 +12,10 @@ export function SearchInput({ value, onChange, placeholder = 'Search', debounce 
   const [text, setText] = useState(value);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => setText(value), [value]);
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+    setText(value);
+  }, [value]);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   function handleInput(next: string) {

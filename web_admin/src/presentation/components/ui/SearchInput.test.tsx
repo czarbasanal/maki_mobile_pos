@@ -21,4 +21,14 @@ describe('SearchInput', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
     expect(onChange).toHaveBeenCalledWith('');
   });
+
+  it('cancels pending debounce when value prop changes externally', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<SearchInput value="" onChange={onChange} />);
+    fireEvent.change(screen.getByPlaceholderText('Search'), { target: { value: 'STALE' } });
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(<SearchInput value="EXTERNAL" onChange={onChange} />);
+    act(() => vi.advanceTimersByTime(250));
+    expect(onChange).not.toHaveBeenCalledWith('STALE');
+  });
 });
