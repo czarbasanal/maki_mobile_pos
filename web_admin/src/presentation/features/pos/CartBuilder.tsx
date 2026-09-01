@@ -273,7 +273,7 @@ export function CartBuilder({
                       <div className="min-w-0">
                         <p className="text-amount font-medium text-ink">{saleItemDisplayName(l)}</p>
                         <p className="flex items-center gap-1.5 font-mono text-micro text-ink-3">
-                          {displaySku(l.sku)} · {formatMoney(l.unitPrice)} ea
+                          {displaySku(l.sku)} · {formatMoney(l.unitPrice)} / {l.unit}
                           {costCode ? (
                             /* Encoded cost (mobile cost_code_pill parity) —
                                readable by staff without exposing the number. */
