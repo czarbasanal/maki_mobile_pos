@@ -39,4 +39,39 @@ describe('DataTable', () => {
     expect(screen.queryByText('Nothing here yet')).not.toBeInTheDocument();
     expect(container.querySelectorAll('tbody tr').length).toBe(8);
   });
+
+  it('fires onRowClick on keyboard Enter', async () => {
+    const onRowClick = vi.fn();
+    render(<DataTable columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={onRowClick} />);
+    const row = screen.getByText('Brake shoe').closest('tr') as HTMLElement;
+    row.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onRowClick).toHaveBeenCalledWith(rows[0]);
+  });
+
+  it('fires onRowClick on keyboard Space', async () => {
+    const onRowClick = vi.fn();
+    render(<DataTable columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={onRowClick} />);
+    const row = screen.getByText('Bulb').closest('tr') as HTMLElement;
+    row.focus();
+    await userEvent.keyboard(' ');
+    expect(onRowClick).toHaveBeenCalledWith(rows[1]);
+  });
+
+  it('does not add tabIndex to rows when onRowClick is absent', () => {
+    const { container } = render(<DataTable columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    const rows_in_tbody = container.querySelectorAll('tbody tr');
+    rows_in_tbody.forEach((row) => {
+      expect(row).not.toHaveAttribute('tabIndex');
+    });
+  });
+
+  it('adds tabIndex={0} to rows when onRowClick is present', () => {
+    const onRowClick = vi.fn();
+    const { container } = render(<DataTable columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={onRowClick} />);
+    const rows_in_tbody = container.querySelectorAll('tbody tr');
+    rows_in_tbody.forEach((row) => {
+      expect(row).toHaveAttribute('tabIndex', '0');
+    });
+  });
 });
