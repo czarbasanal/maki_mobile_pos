@@ -229,3 +229,21 @@ describe('CheckoutPage — completion stock warnings (B6)', () => {
     expect(screen.getByText(/Plug — sold 12, only 9 on hand/)).toBeInTheDocument();
   });
 });
+
+describe('CheckoutPage — cash quick buttons (group C)', () => {
+  it('Exact fills the total and enables completion; peso chips add up', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product()); // ₱100
+    useAuthStore.setState({ user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never });
+    harness({ create: vi.fn().mockResolvedValue({ id: 's1', saleNumber: 'S-1' }) });
+
+    // cash is the default mode; incomplete until an amount covers the total
+    expect(screen.getByRole('button', { name: /complete sale/i })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: /^exact$/i }));
+    expect(screen.getByLabelText(/cash received/i)).toHaveValue(100);
+    expect(screen.getByRole('button', { name: /complete sale/i })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: /^\+500$/ }));
+    expect(screen.getByLabelText(/cash received/i)).toHaveValue(600);
+  });
+});

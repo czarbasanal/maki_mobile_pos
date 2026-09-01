@@ -16,6 +16,8 @@ import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { cn } from '@/core/utils/cn';
 import type { JobOrder } from '@/domain/entities';
 import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
+import { NewJobOrderDialog } from './NewJobOrderDialog';
+import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
 
 const dateFmt = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric' });
@@ -41,6 +43,11 @@ export function JobOrdersPage() {
   // Today by default: the list is opened to work the day's tickets, and it
   // used to render every job order ever created, newest first.
   const [range, setRange] = useState<DateRange>(() => resolvePreset('today'));
+  const [newOpen, setNewOpen] = useState(false);
+  // Same collision-safe numbering as the POS save dialog: null while the
+  // live list is loading so a stale/empty name set can't mint a duplicate.
+  const newJobOrderNumber =
+    isLoading || !jobOrders ? null : nextJobOrderNumber(new Date(), jobOrders.map((d) => d.name));
 
   const inRange = useMemo(
     () =>
@@ -83,7 +90,16 @@ export function JobOrdersPage() {
   return (
     <div className="space-y-tk-xl">
       <header className="space-y-tk-sm">
-        <DateRangePicker onChange={setRange} defaultPreset="today" />
+        <div className="flex flex-wrap items-center justify-between gap-tk-sm">
+          <DateRangePicker onChange={setRange} defaultPreset="today" />
+          <button
+            type="button"
+            onClick={() => setNewOpen(true)}
+            className="rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-md font-semibold text-accent-ink hover:brightness-95"
+          >
+            New Job Order
+          </button>
+        </div>
         {openOutsideRange > 0 ? (
           <p className="text-bodySmall text-light-text-secondary">
             {openOutsideRange} open job order
@@ -215,6 +231,11 @@ export function JobOrdersPage() {
             onPageSize={(n) => { setPageSize(n); setPage(1); }} />
         </div>
       )}
+      <NewJobOrderDialog
+        open={newOpen}
+        jobOrderNumber={newJobOrderNumber}
+        onClose={() => setNewOpen(false)}
+      />
     </div>
   );
 }

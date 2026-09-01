@@ -29,6 +29,7 @@ import { IconButton } from '@/presentation/components/ui/IconButton';
 import { Stepper } from '@/presentation/components/ui/Stepper';
 import { toast } from '@/presentation/components/ui/toast';
 import { Dialog } from '@/presentation/components/common/Dialog';
+import { ProductImage } from '@/presentation/components/common/ProductImage';
 import { LaborSection } from './LaborSection';
 import { FeeSection } from './FeeSection';
 import { DiscountDialog } from './DiscountDialog';
@@ -202,6 +203,7 @@ export function CartBuilder({
                       i === highlight ? 'bg-surface-2' : 'hover:bg-surface-2',
                     )}
                   >
+                    <ProductImage src={p.imageUrl} alt={p.name} size="sm" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-nav text-ink">{p.name}</p>
                       <span

@@ -38,6 +38,27 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
       {pay.mode === 'cash' ? (
         <>
           <AmountInput label="Cash received" value={pay.cashText} onChange={pay.setCashText} />
+          {/* Mobile parity: Exact fills the total; the peso chips ADD to
+              whatever is typed (two ₱500 bills = tap +500 twice). */}
+          <div className="flex flex-wrap gap-tk-xs">
+            <button
+              type="button"
+              onClick={() => pay.setCashText(grandTotal.toFixed(2))}
+              className="rounded-ctl border border-line px-tk-sm py-[4px] text-ctl-sm text-ink-2 hover:bg-surface-2"
+            >
+              Exact
+            </button>
+            {[100, 200, 500, 1000].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => pay.setCashText(String((parseFloat(pay.cashText) || 0) + n))}
+                className="rounded-ctl border border-line px-tk-sm py-[4px] font-mono text-ctl-sm text-ink-2 hover:bg-surface-2"
+              >
+                +{n}
+              </button>
+            ))}
+          </div>
           <Row label="Change" value={formatMoney(pay.changeGiven)} />
         </>
       ) : null}
