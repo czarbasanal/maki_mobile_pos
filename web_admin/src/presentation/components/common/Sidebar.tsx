@@ -37,6 +37,7 @@ import { RoutePaths } from '@/presentation/router/routePaths';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { useSignOut } from '@/presentation/hooks/useSignOut';
 import { useVoidRequests } from '@/presentation/hooks/useVoidRequests';
+import { useJobOrders } from '@/presentation/hooks/useJobOrders';
 import { cn } from '@/core/utils/cn';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -148,11 +149,18 @@ export function Sidebar() {
   const { pending } = useVoidRequests();
   const pendingVoids = canSeeVoids ? pending.length : 0;
 
+  // Same gate, mirrored for the Job Orders open-count badge.
+  const canSeeJobOrders = !!user && canAccess(RoutePaths.jobOrders, user);
+  const { data: jobOrders } = useJobOrders();
+  const openJobOrders = canSeeJobOrders
+    ? (jobOrders ?? []).filter((jo) => !jo.isConverted).length
+    : 0;
+
   return (
     <aside
       className={cn(
-        'flex h-full shrink-0 flex-col border-r border-light-hairline bg-light-background transition-all duration-200',
-        collapsed ? 'w-14' : 'w-60',
+        'flex h-full shrink-0 flex-col border-r border-line bg-surface transition-[width] duration-200',
+        collapsed ? 'w-14' : 'w-sidebar',
       )}
     >
       <div
@@ -162,7 +170,7 @@ export function Sidebar() {
         )}
       >
         {collapsed ? null : (
-          <span className="text-bodyMedium font-semibold tracking-tight text-light-text">
+          <span className="text-brand tracking-tight text-ink">
             MAKI POS
           </span>
         )}
@@ -171,7 +179,7 @@ export function Sidebar() {
           onClick={() => setManualCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
+          className="rounded-ctl p-tk-xs text-ink-2 hover:bg-surface-2 hover:text-ink"
         >
           {collapsed ? (
             <ChevronDoubleRightIcon className="h-4 w-4" />
@@ -196,9 +204,9 @@ export function Sidebar() {
           return (
             <div key={section.label} className={collapsed ? 'mt-tk-sm' : 'mt-tk-lg'}>
               {collapsed ? (
-                <div className="mx-tk-xs mb-tk-sm border-t border-light-hairline" />
+                <div className="mx-tk-xs mb-tk-sm border-t border-line" />
               ) : (
-                <div className="px-tk-sm pb-tk-xs text-[11px] font-medium uppercase tracking-wider text-light-text-hint">
+                <div className="px-tk-sm pb-tk-xs text-group-caps uppercase text-ink-3">
                   {section.label}
                 </div>
               )}
@@ -216,6 +224,15 @@ export function Sidebar() {
                     />
                   );
                 }
+                let badge = 0;
+                let badgeTone: 'attention' | 'info' = 'attention';
+                if (item.path === RoutePaths.voidRequests) {
+                  badge = pendingVoids;
+                  badgeTone = 'attention';
+                } else if (item.path === RoutePaths.jobOrders) {
+                  badge = openJobOrders;
+                  badgeTone = 'info';
+                }
                 return (
                   <SidebarLink
                     key={item.path}
@@ -224,9 +241,8 @@ export function Sidebar() {
                     icon={item.icon}
                     active={isActive(location.pathname, item.path)}
                     collapsed={collapsed}
-                    badge={
-                      item.path === RoutePaths.voidRequests ? pendingVoids : 0
-                    }
+                    badge={badge}
+                    badgeTone={badgeTone}
                   />
                 );
               })}
@@ -274,7 +290,7 @@ function SidebarGroup({
           type="button"
           onClick={() => setManualOpen(!open)}
           aria-label={`${open ? 'Collapse' : 'Expand'} ${item.label}`}
-          className="rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle hover:text-light-text"
+          className="rounded-ctl p-tk-xs text-ink-2 hover:bg-surface-2 hover:text-ink"
         >
           <ChevronDownIcon
             className={cn('h-3.5 w-3.5 transition-transform', open ? 'rotate-180' : '')}
@@ -282,7 +298,7 @@ function SidebarGroup({
         </button>
       </div>
       {open ? (
-        <div className="ml-[15px] border-l border-light-hairline pl-tk-xs">
+        <div className="ml-[15px] border-l border-line pl-tk-xs">
           {childItems.map((child) => (
             <SidebarLink
               key={child.path}
@@ -305,6 +321,7 @@ function SidebarLink({
   active,
   collapsed = false,
   badge = 0,
+  badgeTone = 'attention',
 }: {
   label: string;
   path: string;
@@ -313,6 +330,8 @@ function SidebarLink({
   collapsed?: boolean;
   /** Count shown as a pill; 0 renders nothing. */
   badge?: number;
+  /** 'attention' = red, needs action (void requests); 'info' = neutral count. */
+  badgeTone?: 'attention' | 'info';
 }) {
   return (
     <NavLink
@@ -321,11 +340,11 @@ function SidebarLink({
       aria-label={label}
       title={collapsed ? label : undefined}
       className={cn(
-        'relative flex items-center rounded-md text-bodySmall transition-colors',
+        'relative flex items-center rounded-ctl text-nav',
         collapsed ? 'justify-center py-[8px]' : 'gap-tk-sm px-tk-sm py-[6px]',
         active
-          ? 'bg-light-subtle font-semibold text-light-text'
-          : 'text-light-text-secondary hover:bg-light-subtle hover:text-light-text',
+          ? 'bg-surface-3 font-semibold text-ink'
+          : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -333,7 +352,10 @@ function SidebarLink({
       {badge > 0 ? (
         <span
           className={cn(
-            'flex h-4 min-w-[16px] items-center justify-center rounded-full bg-error px-[4px] text-[10px] font-semibold leading-none text-white',
+            'flex h-4 min-w-[16px] items-center justify-center rounded-full px-[4px] text-[10px] font-semibold leading-none',
+            badgeTone === 'attention'
+              ? 'bg-neg text-surface'
+              : 'bg-surface-3 text-ink-2 font-mono',
             // Collapsed: the label is gone, so pin the count to the icon
             // rather than letting it push the row wider than the rail.
             collapsed ? 'absolute right-1 top-1' : 'ml-auto',
@@ -376,24 +398,24 @@ function SidebarAccount({
   };
 
   return (
-    <div ref={ref} className="relative border-t border-light-hairline p-tk-sm">
+    <div ref={ref} className="relative border-t border-line p-tk-sm">
       {open ? (
         <div
           className={cn(
-            'absolute bottom-full left-tk-sm z-20 mb-tk-xs overflow-hidden rounded-md border border-light-hairline bg-light-card shadow-lg',
+            'absolute bottom-full left-tk-sm z-20 mb-tk-xs overflow-hidden rounded-ctl border border-line bg-surface shadow-card',
             collapsed ? 'w-56' : 'right-tk-sm',
           )}
         >
-          <div className="border-b border-light-hairline px-tk-md py-tk-sm">
-            <div className="truncate text-bodySmall text-light-text">{email}</div>
-            <div className="mt-[2px] text-[11px] uppercase tracking-wider text-light-text-hint">
+          <div className="border-b border-line px-tk-md py-tk-sm">
+            <div className="truncate text-cell text-ink">{email}</div>
+            <div className="mt-[2px] text-micro-caps uppercase text-ink-3">
               {role}
             </div>
           </div>
           <button
             type="button"
             onClick={onSignOut}
-            className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-cell text-ink hover:bg-surface-2"
           >
             <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
             Sign out
@@ -406,24 +428,24 @@ function SidebarAccount({
         aria-label="Account menu"
         title={collapsed ? email : undefined}
         className={cn(
-          'flex w-full items-center rounded-md text-left transition-colors hover:bg-light-subtle',
+          'flex w-full items-center rounded-ctl text-left hover:bg-surface-2',
           collapsed ? 'justify-center py-tk-sm' : 'gap-tk-sm px-tk-sm py-tk-sm',
         )}
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-dark text-[12px] font-medium text-white">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent text-[12px] font-medium text-accent-ink">
           {email[0]?.toUpperCase() ?? '?'}
         </span>
         {collapsed ? null : (
           <>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-bodySmall text-light-text">{email}</span>
-              <span className="block text-[11px] uppercase tracking-wider text-light-text-hint">
+              <span className="block truncate text-cell text-ink">{email}</span>
+              <span className="block text-micro-caps uppercase text-ink-3">
                 {role}
               </span>
             </span>
             <ChevronUpIcon
               className={cn(
-                'h-4 w-4 shrink-0 text-light-text-secondary transition-transform',
+                'h-4 w-4 shrink-0 text-ink-2 transition-transform',
                 open ? 'rotate-180' : '',
               )}
             />

@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { UserRole } from '@/domain/enums';
+import { UserRole, DiscountType } from '@/domain/enums';
 import type { User } from '@/domain/entities/User';
-import type { VoidRequest } from '@/domain/entities';
+import type { VoidRequest, JobOrder } from '@/domain/entities';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { Sidebar } from './Sidebar';
 
@@ -29,6 +29,7 @@ function harness(
   initialPath: string,
   user: User = admin,
   pendingVoids: VoidRequest[] = [],
+  jobOrders: JobOrder[] = [],
 ) {
   useAuthStore.setState({ user });
   const voidRequestRepo = {
@@ -37,13 +38,19 @@ function harness(
       return () => {};
     },
   } as unknown as Container['voidRequestRepo'];
+  const jobOrderRepo = {
+    watchAll: (cb: (jo: JobOrder[]) => void) => {
+      cb(jobOrders);
+      return () => {};
+    },
+  } as unknown as Container['jobOrderRepo'];
   const authRepo = { signOut: vi.fn() } as unknown as Container['authRepo'];
   const activityLogRepo = {
     log: vi.fn().mockResolvedValue(undefined),
   } as unknown as Container['activityLogRepo'];
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return render(
-    <DiProvider override={{ authRepo, activityLogRepo, voidRequestRepo }}>
+    <DiProvider override={{ authRepo, activityLogRepo, voidRequestRepo, jobOrderRepo }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={[initialPath]}>
           <Sidebar />
@@ -51,6 +58,30 @@ function harness(
       </QueryClientProvider>
     </DiProvider>,
   );
+}
+
+function jobOrder(id: string, o: Partial<JobOrder> = {}): JobOrder {
+  return {
+    id,
+    name: `JO-${id}`,
+    items: [],
+    laborLines: [],
+    feeLines: [],
+    mechanicId: null,
+    mechanicName: null,
+    motorcycleModel: null,
+    discountType: DiscountType.amount,
+    createdBy: 'u1',
+    createdByName: 'Admin',
+    createdAt: new Date('2026-08-30T13:00:00Z'),
+    updatedAt: null,
+    updatedBy: null,
+    isConverted: false,
+    convertedToSaleId: null,
+    convertedAt: null,
+    notes: null,
+    ...o,
+  };
 }
 
 describe('Sidebar — Inventory is a flat item', () => {
@@ -213,5 +244,24 @@ describe('Sidebar — Void Requests', () => {
   it('is hidden from a cashier, who files requests rather than approving them', () => {
     harness('/dashboard', { ...admin, role: UserRole.cashier });
     expect(screen.queryByRole('link', { name: 'Void Requests' })).not.toBeInTheDocument();
+  });
+});
+
+describe('Sidebar — Job Orders badge', () => {
+  it('badges Job Orders with the open (unconverted) count', async () => {
+    harness('/dashboard', admin, [], [
+      jobOrder('jo1'),
+      jobOrder('jo2'),
+      jobOrder('jo3', { isConverted: true }),
+    ]);
+    await screen.findByRole('link', { name: /job orders/i });
+    const badge = await screen.findByText('2');
+    expect(badge).toBeInTheDocument();
+  });
+
+  it('shows no badge when every job order is converted', async () => {
+    harness('/dashboard', admin, [], [jobOrder('jo1', { isConverted: true })]);
+    await screen.findByRole('link', { name: /job orders/i });
+    expect(screen.queryByText('1')).not.toBeInTheDocument();
   });
 });
