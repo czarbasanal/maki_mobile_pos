@@ -23,9 +23,9 @@ function formatValue(value: number, format: StatFormat): string {
 }
 
 function deltaChip(delta: number): { label: string; tone: Tone } {
-  const pct = (delta * 100).toFixed(1);
-  if (delta > 0) return { label: `+${pct}%`, tone: 'positive' };
-  if (delta < 0) return { label: `${pct}%`, tone: 'negative' };
+  const rounded = Math.round(delta * 1000) / 10; // one-decimal percent
+  if (rounded > 0) return { label: `+${rounded.toFixed(1)}%`, tone: 'positive' };
+  if (rounded < 0) return { label: `${rounded.toFixed(1)}%`, tone: 'negative' };
   return { label: '0.0%', tone: 'neutral' };
 }
 

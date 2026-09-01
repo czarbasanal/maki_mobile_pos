@@ -37,4 +37,15 @@ describe('StatCard', () => {
     render(<StatCard label="Sales today" value={27} format="number" delta={null} />);
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
+
+  it('rounds very small negative delta to 0.0% neutral', () => {
+    render(<StatCard label="Metric" value={100} format="number" delta={-0.0001} />);
+    expect(screen.getByText('0.0%')).toBeInTheDocument();
+    expect(screen.queryByText('-0.0%')).not.toBeInTheDocument();
+  });
+
+  it('renders zero delta as 0.0% neutral', () => {
+    render(<StatCard label="Metric" value={100} format="number" delta={0} />);
+    expect(screen.getByText('0.0%')).toBeInTheDocument();
+  });
 });
