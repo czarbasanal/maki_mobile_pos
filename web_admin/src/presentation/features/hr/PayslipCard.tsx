@@ -231,7 +231,12 @@ export function PayslipCard({ payslip }: { payslip: Payslip }) {
             label next to a 23px figure renders vertically off-center in the
             exported image unless the line boxes match. */}
         <div className="flex items-center justify-between rounded-[10px] bg-[#121c1d] px-[18px] py-[16px]">
-          <span className="text-[12px] font-bold uppercase leading-[23px] tracking-[.14em] text-[#f5b921]">
+          {/* data-export-shift-y: harness-calibrated 1px clone-only lift so
+              the JPG matches the preview (see downloadJpg.ts). */}
+          <span
+            data-export-shift-y="-1"
+            className="text-[12px] font-bold uppercase leading-[23px] tracking-[.14em] text-[#f5b921]"
+          >
             NET PAY
           </span>
           <span className="text-[23px] font-extrabold leading-[23px] tabular-nums text-white">

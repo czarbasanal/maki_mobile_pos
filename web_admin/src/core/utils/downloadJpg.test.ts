@@ -29,7 +29,11 @@ describe('downloadElementAsJpg', () => {
 
     await downloadElementAsJpg(el, 'payslip-juan-dela-cruz-2026-07-20.jpg');
 
-    expect(html2canvasMock).toHaveBeenCalledWith(el, { backgroundColor: '#ffffff', scale: 2 });
+    expect(html2canvasMock).toHaveBeenCalledWith(el, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      onclone: expect.any(Function),
+    });
   });
 
   it('encodes the canvas as a JPEG at 0.92 quality', async () => {
@@ -60,5 +64,26 @@ describe('downloadElementAsJpg', () => {
     await downloadElementAsJpg(el, 'payslip-juan-dela-cruz-2026-07-20.jpg');
 
     expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('export-only shift correction', () => {
+  it('the onclone hook lifts marked elements in the clone only', async () => {
+    const host = document.createElement('div');
+    host.innerHTML = '<span data-export-shift-y="-1">NET PAY</span>';
+    document.body.appendChild(host);
+
+    await downloadElementAsJpg(host, 'x.jpg');
+    const options = html2canvasMock.mock.calls.at(-1)?.[1] as {
+      onclone: (doc: Document) => void;
+    };
+    expect(options.onclone).toBeTypeOf('function');
+
+    // Run the hook against the live document as a stand-in for the clone.
+    options.onclone(document);
+    const span = host.querySelector('span') as HTMLElement;
+    expect(span.style.position).toBe('relative');
+    expect(span.style.top).toBe('-1px');
+    host.remove();
   });
 });
