@@ -150,7 +150,7 @@ describe('PosPage', () => {
     // in-flow panel pushed the Checkout/Save-job order card down).
     expect(screen.queryByText(/type to search/i)).not.toBeInTheDocument();
 
-    const input = screen.getByPlaceholderText(/search products/i);
+    const input = screen.getByPlaceholderText(/search or scan/i);
     await userEvent.type(input, 'plug');
     const result = await screen.findByRole('button', { name: /plug/i });
     // The panel overlays (absolute positioning) instead of occupying flow.

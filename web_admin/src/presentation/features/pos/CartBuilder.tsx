@@ -21,6 +21,7 @@ import { DiscountDialog } from './DiscountDialog';
 import { CartTotals } from './CartTotals';
 import { SellingOptionDialog } from './SellingOptionDialog';
 import { displaySku } from '@/domain/products/sku';
+import { findByScannedCode, matchesPosQuery } from '@/domain/products/posSearch';
 
 export function CartBuilder({ store }: { store: CartStore }) {
   const { data: products } = useProducts();
@@ -36,6 +37,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
   const feeLines = store((s) => s.feeLines);
 
   const [search, setSearch] = useState('');
+  const [scanMiss, setScanMiss] = useState<string | null>(null);
   // Product with selling options awaiting the picker's decision. Every path
   // that puts a product on this ticket must route through this gate — the
   // base price is not directly sellable once a product carries options.
@@ -54,10 +56,25 @@ export function CartBuilder({ store }: { store: CartStore }) {
 
   const active = useMemo(() => (products ?? []).filter((p) => p.isActive), [products]);
   const results = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return [];
-    return active.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 50);
+    if (!search.trim()) return [];
+    return active.filter((p) => matchesPosQuery(p, search)).slice(0, 50);
   }, [active, search]);
+
+  // A USB wedge scanner types the code then sends Enter — resolve the raw
+  // text as a scan (barcode first, exact SKU fallback). Mobile parity:
+  // an unknown code warns; a hit routes through the selling-option gate.
+  const submitAsScan = () => {
+    const code = search.trim();
+    if (!code) return;
+    const hit = findByScannedCode(active, code);
+    if (!hit) {
+      setScanMiss(code);
+      return;
+    }
+    setScanMiss(null);
+    setSearch('');
+    handlePick(hit);
+  };
   const lowStock = useMemo(() => lowStockLines(lines, active), [lines, active]);
 
   return (
@@ -70,8 +87,17 @@ export function CartBuilder({ store }: { store: CartStore }) {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products by name or SKU"
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setScanMiss(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                submitAsScan();
+              }
+            }}
+            placeholder="Search or scan — name, SKU, barcode, category"
             className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none focus:border-light-text"
           />
           {search.trim() ? (
@@ -95,6 +121,9 @@ export function CartBuilder({ store }: { store: CartStore }) {
             </div>
           ) : null}
         </div>
+        {scanMiss ? (
+          <p className="mt-tk-xs text-[12px] text-warning-dark">Product not found: {scanMiss}</p>
+        ) : null}
       </section>
 
       <section className="space-y-tk-md">

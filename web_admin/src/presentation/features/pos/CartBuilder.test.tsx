@@ -12,12 +12,12 @@ const by6: SellingOption = { id: 'o1', label: 'By 6', pieces: 6, price: 600 };
 const by3: SellingOption = { id: 'o2', label: 'By 3', pieces: 3, price: 330 };
 
 const plainProduct = (o: Partial<Product> = {}): Product =>
-  ({ id: 'p1', sku: 'PLUG-1', name: 'Spark Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, sellingOptions: [], ...o } as Product);
+  ({ id: 'p1', sku: 'PLUG-1', name: 'Spark Plug', price: 100, cost: 60, unit: 'pcs', quantity: 9, isActive: true, sellingOptions: [], barcodes: [], category: null, ...o } as Product);
 
 const optionProduct = (o: Partial<Product> = {}): Product =>
   ({
     id: 'p2', sku: 'ABC-1', name: 'Pulley Ball', price: 120, cost: 60, unit: 'pcs',
-    quantity: 12, isActive: true, sellingOptions: [by6, by3], ...o,
+    quantity: 12, isActive: true, sellingOptions: [by6, by3], barcodes: [], category: null, ...o,
   } as Product);
 
 function harness(products: Product[]) {
@@ -58,7 +58,7 @@ function harness(products: Product[]) {
 }
 
 async function search(text: string) {
-  const input = screen.getByPlaceholderText(/search products/i);
+  const input = screen.getByPlaceholderText(/search or scan/i);
   await userEvent.type(input, text);
 }
 
@@ -123,7 +123,7 @@ describe('CartBuilder — cart row shows the selling-option label (10th render s
     await userEvent.click(screen.getByText('By 3'));
     // Clear the search box so the results panel — which independently shows
     // the bare product name — doesn't make the cart row's text ambiguous.
-    await userEvent.clear(screen.getByPlaceholderText(/search products/i));
+    await userEvent.clear(screen.getByPlaceholderText(/search or scan/i));
 
     expect(store.getState().lines).toHaveLength(1);
     // A wrong implementation (bare l.name) would show "Pulley Ball" with no
@@ -136,7 +136,7 @@ describe('CartBuilder — cart row shows the selling-option label (10th render s
     await search('pulley');
     await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
     await userEvent.click(screen.getByText('By 3'));
-    await userEvent.clear(screen.getByPlaceholderText(/search products/i));
+    await userEvent.clear(screen.getByPlaceholderText(/search or scan/i));
     // Second set: bumps the line to 2 sets (6 pieces) — the caption should
     // then read "By 3 × 2 (6 pcs)", same rule as OrderSummary/Receipt.
     // A direct store mutation (not routed through userEvent) needs its own
@@ -153,7 +153,7 @@ describe('CartBuilder — cart row shows the selling-option label (10th render s
     harness([plainProduct()]);
     await search('plug');
     await userEvent.click(await screen.findByRole('button', { name: /spark plug/i }));
-    await userEvent.clear(screen.getByPlaceholderText(/search products/i));
+    await userEvent.clear(screen.getByPlaceholderText(/search or scan/i));
 
     expect(screen.getByText('Spark Plug')).toBeInTheDocument();
   });
@@ -181,5 +181,35 @@ describe('CartBuilder — qty box label disambiguates sets from pieces', () => {
 
     expect(screen.getByText('Sets')).toBeInTheDocument();
     expect(screen.queryByText('Qty')).not.toBeInTheDocument();
+  });
+});
+
+describe('CartBuilder — wedge-scanner Enter (B4)', () => {
+  it('Enter with a known barcode adds the product and clears the box', async () => {
+    const { store } = harness([
+      plainProduct({ id: 'p9', name: 'Chain Lube', sku: '00070200', barcodes: ['4801234567890'] }),
+    ]);
+    const box = screen.getByPlaceholderText(/search or scan/i);
+    await userEvent.type(box, '4801234567890{Enter}');
+    expect(store.getState().lines).toHaveLength(1);
+    expect(store.getState().lines[0].productId).toBe('p9');
+    expect(box).toHaveValue('');
+  });
+
+  it('Enter with the display-SKU form resolves the product', async () => {
+    const { store } = harness([
+      plainProduct({ id: 'p9', name: 'Chain Lube', sku: '00070200', barcodes: [] }),
+    ]);
+    await userEvent.type(screen.getByPlaceholderText(/search or scan/i), '0007-0200{Enter}');
+    expect(store.getState().lines[0]?.productId).toBe('p9');
+  });
+
+  it('Enter with an unknown code warns and keeps the text', async () => {
+    const { store } = harness([plainProduct({ id: 'p9', barcodes: [] })]);
+    const box = screen.getByPlaceholderText(/search or scan/i);
+    await userEvent.type(box, '999888{Enter}');
+    expect(screen.getByText(/product not found: 999888/i)).toBeInTheDocument();
+    expect(store.getState().lines).toHaveLength(0);
+    expect(box).toHaveValue('999888');
   });
 });
