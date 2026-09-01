@@ -2,7 +2,8 @@
 // <PagePlaceholder> so the shell is fully navigable from day one.
 
 import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
-import { AdminShell } from '@/presentation/layouts/AdminShell';
+import { AppShell } from '@/presentation/layouts/AppShell';
+import type { PageChrome } from '@/presentation/layouts/HeaderBar';
 import { AuthLayout } from '@/presentation/layouts/AuthLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RoutePaths } from './routePaths';
@@ -85,11 +86,19 @@ export const router = createBrowserRouter(
     {
       element: (
         <ProtectedRoute>
-          <AdminShell />
+          <AppShell />
         </ProtectedRoute>
       ),
       children: [
-        { path: RoutePaths.dashboard, element: <DashboardPage /> },
+        {
+          path: RoutePaths.dashboard,
+          element: <DashboardPage />,
+          handle: {
+            title: 'Dashboard',
+            subtitle: 'Store performance at a glance',
+            primaryAction: { label: 'New sale', to: RoutePaths.pos },
+          } satisfies PageChrome,
+        },
         { path: RoutePaths.pos, element: <PosPage /> },
         { path: RoutePaths.checkout, element: <CheckoutPage /> },
         { path: RoutePaths.jobOrders, element: <JobOrdersPage /> },

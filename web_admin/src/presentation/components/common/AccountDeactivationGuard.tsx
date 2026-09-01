@@ -1,5 +1,5 @@
 // Watches the signed-in user's OWN users/{uid} doc for the whole signed-in
-// session (this component lives in AdminShell, which is only mounted while
+// session (this component lives in AppShell, which is only mounted while
 // signed in). Mid-session deactivation → blocking modal + 10s countdown →
 // sign-out. Doc deleted (exists == false) or the stream erroring with
 // permission-denied → same modal, immediate sign-out. Normal sign-out

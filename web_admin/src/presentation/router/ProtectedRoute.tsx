@@ -1,4 +1,4 @@
-// Wraps the AdminShell and enforces auth + per-route permission checks.
+// Wraps the AppShell and enforces auth + per-route permission checks.
 // Mirrors the redirect logic in lib/config/router/web_router.dart: unauth →
 // /login, non-admin → /access-denied, no permission → /access-denied.
 
