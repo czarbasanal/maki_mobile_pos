@@ -87,3 +87,26 @@ describe('export-only shift correction', () => {
     host.remove();
   });
 });
+
+describe('font-metrics probe fix', () => {
+  it('installs the probe-img style ONLY for the duration of the render', async () => {
+    let cssDuringRender = '';
+    html2canvasMock.mockImplementationOnce(async () => {
+      cssDuringRender = document.head.innerHTML;
+      return { toDataURL } as unknown as HTMLCanvasElement;
+    });
+    await downloadElementAsJpg(document.createElement('div'), 'x.jpg');
+    expect(cssDuringRender).toContain('img[width="1"][height="1"]');
+    expect(document.head.innerHTML).not.toContain('img[width="1"][height="1"]');
+  });
+
+  it('removes the probe-img style even when rendering throws', async () => {
+    html2canvasMock.mockImplementationOnce(async () => {
+      throw new Error('render failed');
+    });
+    await expect(downloadElementAsJpg(document.createElement('div'), 'x.jpg')).rejects.toThrow(
+      'render failed',
+    );
+    expect(document.head.innerHTML).not.toContain('img[width="1"][height="1"]');
+  });
+});
