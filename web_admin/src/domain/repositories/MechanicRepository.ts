@@ -18,6 +18,9 @@ export interface MechanicUpdateInput {
 export interface MechanicRepository {
   watchAll(cb: (mechanics: Mechanic[]) => void, opts?: { includeInactive?: boolean }): Unsubscribe;
   create(input: MechanicCreateInput, actorId: string): Promise<Mechanic>;
+  /** Exact-name existence check (any active state) — the inline-add picker
+   *  uses it to refuse resurrecting an archived mechanic's name. */
+  nameExists(name: string): Promise<boolean>;
   update(id: string, input: MechanicUpdateInput, actorId: string): Promise<void>;
   /** Hard-deletes the mechanic doc. Past sales keep the name they recorded. */
   delete(id: string): Promise<void>;

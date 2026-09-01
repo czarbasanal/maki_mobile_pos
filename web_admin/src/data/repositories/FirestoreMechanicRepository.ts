@@ -4,7 +4,11 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
+  limit,
   onSnapshot,
+  query,
+  where,
   serverTimestamp,
   updateDoc,
   type Firestore,
@@ -37,6 +41,13 @@ export class FirestoreMechanicRepository implements MechanicRepository {
     return onSnapshot(this.col(), (snap) => {
       cb(this.shape(snap.docs.map((d) => d.data()), opts?.includeInactive ?? false));
     });
+  }
+
+  async nameExists(name: string): Promise<boolean> {
+    const snap = await getDocs(
+      query(collection(this.db, FirestoreCollections.mechanics), where('name', '==', name), limit(1)),
+    );
+    return !snap.empty;
   }
 
   async create(input: MechanicCreateInput, actorId: string): Promise<Mechanic> {
