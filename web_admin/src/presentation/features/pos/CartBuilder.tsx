@@ -298,7 +298,7 @@ export function CartBuilder({
                         type="button"
                         onClick={() => setDiscountLineId(l.id)}
                         className={cn(
-                          'rounded-field border border-line px-2.5 py-1 text-ctl-sm transition-[color] hover:bg-surface-2',
+                          'rounded-field border border-line px-3 py-1.5 text-ctl-md transition-[color] hover:bg-surface-2',
                           l.discountValue > 0 ? 'font-medium text-pos' : 'text-ink-2',
                         )}
                       >
