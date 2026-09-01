@@ -66,7 +66,7 @@ export function DiscountDialog({
   };
 
   const chipCls =
-    'rounded-ctl border border-line px-3 py-1.5 font-mono text-ctl-md text-ink-2 hover:bg-surface-2';
+    'rounded-ctl border border-line px-tk-sm py-[4px] font-mono text-ctl-sm text-ink-2 hover:bg-surface-2';
 
   return (
     <Dialog open={open} onClose={onClose} title={`Discount — ${itemName}`}>
