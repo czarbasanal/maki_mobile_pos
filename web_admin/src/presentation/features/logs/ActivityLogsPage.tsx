@@ -216,11 +216,12 @@ export function ActivityLogsPage() {
         existing.logs.push(log);
       } else {
         groups.set(key, {
-          date: new Date(
-            log.createdAt.getFullYear(),
-            log.createdAt.getMonth(),
-            log.createdAt.getDate(),
-          ),
+          // Group-header date carries the SHOP (PHT) calendar day, not the
+          // viewer's — same day boundaries as every report.
+          date: (() => {
+            const wall = shopTimeOf(log.createdAt);
+            return new Date(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate());
+          })(),
           logs: [log],
         });
       }

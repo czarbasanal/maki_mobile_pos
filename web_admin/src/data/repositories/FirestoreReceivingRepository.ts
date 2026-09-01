@@ -30,6 +30,7 @@ import {
   receivingVersion,
   RECEIVING_CONFLICT_MESSAGE,
 } from '@/domain/receiving/draftConcurrency';
+import { shopDateKey, shopStartOfDay } from '@/domain/time/shopTime';
 import { FirestoreCollections } from '@/infrastructure/firebase/collections';
 import { applyReceivedItems } from '@/data/receiving/applyReceivedItems';
 import { classifiedToReceivable } from '@/domain/receiving/receivableItem';
@@ -331,7 +332,8 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
 
   private async generateReferenceNumber(): Promise<string> {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // SHOP-day window + date stamp (PHT), never the device's calendar.
+    const start = shopStartOfDay(now);
     const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
     const snap = await getDocs(
       query(
@@ -341,9 +343,7 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
       ),
     );
     const seq = snap.size + 1;
-    const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(
-      now.getDate(),
-    ).padStart(2, '0')}`;
+    const date = shopDateKey(now);
     return `RCV-${date}-${String(seq).padStart(3, '0')}`;
   }
 }

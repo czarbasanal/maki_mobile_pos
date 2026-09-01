@@ -1,3 +1,4 @@
+import { shopTimeOf } from '@/domain/time/shopTime';
 // Port of lib/core/utils/job_order_number.dart. Daily-sequential Job Order
 // numbers: `JO-MMDDYY-NNN`. The date is embedded in the prefix, so "today's
 // sequence" is derived purely from names carrying today's prefix — legacy
@@ -17,9 +18,12 @@
 
 /** `JO-MMDDYY-` for `now`'s date, e.g. `JO-072326-` on 2026-07-23. */
 export function jobOrderPrefixFor(now: Date): string {
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const yy = String(now.getFullYear() % 100).padStart(2, '0');
+  // SHOP (PHT) calendar date — a foreign-timezone device must mint the
+  // same day prefix as the register.
+  const wall = shopTimeOf(now);
+  const mm = String(wall.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(wall.getUTCDate()).padStart(2, '0');
+  const yy = String(wall.getUTCFullYear() % 100).padStart(2, '0');
   return `JO-${mm}${dd}${yy}-`;
 }
 

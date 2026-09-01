@@ -30,14 +30,9 @@ import { counterKey, formatSaleNumber } from '@/domain/sales/saleNumber';
 import { SaleStatus } from '@/domain/enums/SaleStatus';
 import { jobOrderConversionOutcome } from '@/domain/sales/jobOrderConversion';
 import { phDayInt } from '@/core/utils/businessDay';
+import { shopEndOfDay, shopStartOfDay } from '@/domain/time/shopTime';
 
-function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-}
 
-function endOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-}
 
 export class FirestoreSaleRepository implements SaleRepository {
   constructor(private readonly db: Firestore) {}
@@ -85,8 +80,10 @@ export class FirestoreSaleRepository implements SaleRepository {
     const today = new Date();
     const q = query(
       this.salesCol(),
-      where('createdAt', '>=', Timestamp.fromDate(startOfDay(today))),
-      where('createdAt', '<=', Timestamp.fromDate(endOfDay(today))),
+      // SHOP-day bounds (PHT), never the device's midnight — a clerk on a
+      // foreign-timezone machine must see the same "today" as the register.
+      where('createdAt', '>=', Timestamp.fromDate(shopStartOfDay(today))),
+      where('createdAt', '<=', Timestamp.fromDate(shopEndOfDay(today))),
       orderBy('createdAt', 'desc'),
     );
     return onSnapshot(

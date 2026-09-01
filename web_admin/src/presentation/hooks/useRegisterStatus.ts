@@ -6,6 +6,7 @@ import {
 } from '@/domain/entities';
 import { useDrawerStateRepo } from '@/infrastructure/di/container';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
+import { useShopDay } from './useShopDay';
 
 export function useRegisterStatus(): {
   open: boolean;
@@ -17,6 +18,9 @@ export function useRegisterStatus(): {
   isLoading: boolean;
 } {
   const repo = useDrawerStateRepo();
+  // Re-render at PHT midnight so the header's business date and gates
+  // recompute in an idle tab (mobile business_day_provider parity).
+  useShopDay();
   const { data, isLoading } = useFirestoreSubscription<DrawerState>(
     (onData, onError) => repo.watch(onData, onError),
     [repo],

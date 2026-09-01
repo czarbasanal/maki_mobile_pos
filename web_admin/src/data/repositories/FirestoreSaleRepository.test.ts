@@ -451,3 +451,22 @@ describe('FirestoreSaleRepository.create — labor-only / fee-only sales', () =>
     expect(state.writes).toHaveLength(0);
   });
 });
+
+describe('FirestoreSaleRepository.watchToday — SHOP-day window', () => {
+  it('queries the PHT day bounds, not the device-local midnight', async () => {
+    const fb = await import('firebase/firestore');
+    (fb.where as ReturnType<typeof vi.fn>).mockClear();
+    const { shopStartOfDay, shopEndOfDay } = await import('@/domain/time/shopTime');
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    repo.watchToday(() => {});
+    const calls = (fb.where as ReturnType<typeof vi.fn>).mock.calls.filter(
+      (c: unknown[]) => c[0] === 'createdAt',
+    );
+    expect(calls).toHaveLength(2);
+    const now = new Date();
+    const [geCall, leCall] = calls;
+    // Timestamp.fromDate is mocked as identity, so the bound Dates come through.
+    expect((geCall[2] as Date).getTime()).toBe(shopStartOfDay(now).getTime());
+    expect((leCall[2] as Date).getTime()).toBe(shopEndOfDay(now).getTime());
+  });
+});

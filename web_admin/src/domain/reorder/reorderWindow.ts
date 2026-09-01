@@ -1,4 +1,5 @@
-import { endOfDay, startOfDay, subDays } from 'date-fns';
+import { subDays } from 'date-fns';
+import { shopEndOfDay, shopStartOfDay } from '@/domain/time/shopTime';
 
 /**
  * Sales window for reorder velocity: `windowDays` complete days ending
@@ -10,7 +11,7 @@ export function reorderWindow(
   windowDays: number,
 ): { start: Date; end: Date } {
   return {
-    start: startOfDay(subDays(now, windowDays)),
-    end: endOfDay(subDays(now, 1)),
+    start: shopStartOfDay(subDays(now, windowDays)),
+    end: shopEndOfDay(subDays(now, 1)),
   };
 }
