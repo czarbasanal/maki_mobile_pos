@@ -20,3 +20,16 @@ export function feeLineDisplayLabel(line: FeeLine): string {
   const d = line.description?.trim();
   return d ? `${line.name} — ${d}` : line.name;
 }
+
+/** Write filter for inline fee entry (mirrors labor's describedLaborLines):
+ *  a row only counts once a fee is picked, the amount is above zero, and a
+ *  Charge Item carries its description. Unfinished rows never reach a sale
+ *  or job order. */
+export function chargeableFeeLines(lines: FeeLine[]): FeeLine[] {
+  return lines.filter(
+    (l) =>
+      l.name.trim() !== '' &&
+      l.amount > 0 &&
+      (l.name !== CHARGE_ITEM_FEE_NAME || (l.description ?? '').trim() !== ''),
+  );
+}

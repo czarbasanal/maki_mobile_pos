@@ -7,6 +7,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { describedLaborLines, laborValidationError } from '@/domain/sales/labor';
 import { cartGrandTotal, cartHasBillableContent } from '@/domain/sales/cart';
+import { chargeableFeeLines } from '@/domain/entities';
 import { useRegisterStatus } from '@/presentation/hooks/useRegisterStatus';
 import { useSaveJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { useJobOrders } from '@/presentation/hooks/useJobOrders';
@@ -139,7 +140,7 @@ export function PosPage() {
         items: lines,
         discountType,
         laborLines: describedLaborLines(laborLines),
-        feeLines,
+        feeLines: chargeableFeeLines(feeLines),
         mechanicId,
         mechanicName,
         motorcycleModel,

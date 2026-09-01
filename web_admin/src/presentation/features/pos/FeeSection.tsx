@@ -1,204 +1,138 @@
-// Shop-fee entry on the cart (mobile fee_section.dart parity): pick a fee
-// from the admin-managed catalog, confirm/edit the amount (prefilled from
-// defaultAmount), and — for "Charge Item" only — describe what's charged.
-// Fees are full price, never discounted, zero cost.
+// Shop-fee entry on the cart — inline rows mirroring LaborSection: pick a
+// fee from the catalog dropdown, the amount field sits right beside it
+// (prefilled from the fee's defaultAmount), "Charge Item" grows an inline
+// description. Unfinished rows never reach a sale (chargeableFeeLines).
 import { useState } from 'react';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { useShopFees } from '@/presentation/hooks/useShopFees';
-import { Dialog } from '@/presentation/components/common/Dialog';
-import { CHARGE_ITEM_FEE_NAME, feeLineDisplayLabel, type FeeLine, type ShopFee } from '@/domain/entities';
-import { formatMoney } from '@/core/utils/money';
+import { CHARGE_ITEM_FEE_NAME, type FeeLine, type ShopFee } from '@/domain/entities';
+import { IconButton } from '@/presentation/components/ui/IconButton';
+import { Button } from '@/presentation/components/ui/Button';
 
 export function FeeSection({ store }: { store: CartStore }) {
   const feeLines = store((s) => s.feeLines);
   const addFeeLine = store((s) => s.addFeeLine);
-  const setFeeAmount = store((s) => s.setFeeAmount);
+  const setFeeLine = store((s) => s.setFeeLine);
   const removeFeeLine = store((s) => s.removeFeeLine);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const { data: fees } = useShopFees();
+  const catalog = fees ?? [];
 
   return (
     <div className="space-y-tk-sm border-t border-line-2 px-[18px] py-3">
       <div className="flex items-center justify-between">
         <span className="text-cell font-semibold text-ink">Shop fees</span>
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="inline-flex items-center gap-tk-xs rounded-ctl border border-line px-tk-sm py-[4px] text-ctl-sm text-ink-2 transition-[color] hover:text-ink"
-        >
-          <PlusIcon className="h-3.5 w-3.5" /> Add fee
-        </button>
+        <Button size="sm" icon={<PlusIcon className="h-3.5 w-3.5" />} onClick={addFeeLine}>
+          Add fee
+        </Button>
       </div>
 
       {feeLines.map((line) => (
-        <FeeRow key={line.id} line={line} onAmount={setFeeAmount} onRemove={removeFeeLine} />
+        <FeeRow
+          key={line.id}
+          line={line}
+          catalog={catalog}
+          onChange={setFeeLine}
+          onRemove={removeFeeLine}
+        />
       ))}
-
-      <AddFeeDialog
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onAdd={(line) => {
-          addFeeLine(line);
-          setPickerOpen(false);
-        }}
-      />
+      {feeLines.length > 0 && catalog.length === 0 ? (
+        <p className="text-micro text-ink-3">
+          No shop fees configured. Add one in Settings on the register phone first.
+        </p>
+      ) : null}
     </div>
   );
 }
 
 function FeeRow({
   line,
-  onAmount,
+  catalog,
+  onChange,
   onRemove,
 }: {
   line: FeeLine;
-  onAmount: (id: string, amount: number) => void;
+  catalog: ShopFee[];
+  onChange: (id: string, patch: Partial<Pick<FeeLine, 'name' | 'amount' | 'description'>>) => void;
   onRemove: (id: string) => void;
 }) {
+  // Amount is string-backed locally so decimals type cleanly; the store
+  // keeps the parsed number for the totals (same pattern as LaborRow).
   const [amountText, setAmountText] = useState(line.amount ? String(line.amount) : '');
+
+  const isChargeItem = line.name === CHARGE_ITEM_FEE_NAME;
+  // A carried fee (resumed mobile JO, archived catalog entry) stays pickable.
+  const names = catalog.map((f) => f.name);
+  const options = line.name && !names.includes(line.name) ? [line.name, ...names] : names;
+
+  const pick = (name: string) => {
+    const fee = catalog.find((f) => f.name === name);
+    const patch: Partial<Pick<FeeLine, 'name' | 'amount' | 'description'>> = {
+      name,
+      description: null,
+    };
+    // Prefill the default amount only while the row hasn't been priced yet.
+    if (line.amount <= 0 && fee?.defaultAmount && fee.defaultAmount > 0) {
+      patch.amount = fee.defaultAmount;
+      setAmountText(fee.defaultAmount.toFixed(2));
+    }
+    onChange(line.id, patch);
+  };
+
+  const needsAmount = line.name.trim() !== '' && line.amount <= 0;
+  const needsDescription = isChargeItem && (line.description ?? '').trim() === '';
+
   return (
-    <div className="flex items-center gap-tk-sm">
-      <span className="min-w-0 flex-1 truncate text-ctl-sm text-ink">
-        {feeLineDisplayLabel(line)}
-      </span>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={amountText}
-        onChange={(e) => {
-          setAmountText(e.target.value);
-          onAmount(line.id, parseFloat(e.target.value) || 0);
-        }}
-        className="w-24 rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-right font-mono text-ctl-sm text-ink outline-none"
-      />
-      <button
-        type="button"
-        aria-label="Remove fee"
-        onClick={() => onRemove(line.id)}
-        className="rounded-chip p-tk-xs text-ink-3 transition-[color] hover:bg-neg-soft hover:text-neg"
-      >
-        <TrashIcon className="h-4 w-4" />
-      </button>
+    <div className="space-y-tk-xs">
+      <div className="flex items-center gap-tk-sm">
+        <select
+          aria-label="Shop fee"
+          value={line.name || ''}
+          onChange={(e) => pick(e.target.value)}
+          className="min-w-0 flex-1 rounded-field border border-line bg-surface-2 px-2.5 py-1.5 text-ctl-sm text-ink outline-none"
+        >
+          <option value="" disabled>
+            Select fee…
+          </option>
+          {options.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={amountText}
+          disabled={line.name.trim() === ''}
+          onChange={(e) => {
+            setAmountText(e.target.value);
+            onChange(line.id, { amount: parseFloat(e.target.value) || 0 });
+          }}
+          placeholder="₱"
+          className="w-[64px] rounded-field border border-line bg-surface-2 px-2 py-1.5 text-right font-mono text-ctl-sm text-ink outline-none placeholder:text-ink-3 disabled:opacity-50"
+        />
+        <IconButton title="Remove fee" tone="danger" onClick={() => onRemove(line.id)}>
+          <XMarkIcon className="h-3.5 w-3.5" />
+        </IconButton>
+      </div>
+      {isChargeItem ? (
+        <input
+          type="text"
+          value={line.description ?? ''}
+          onChange={(e) => onChange(line.id, { description: e.target.value })}
+          placeholder="What's being charged?"
+          className="w-full rounded-field border border-line bg-surface-2 px-2.5 py-1.5 text-ctl-sm text-ink outline-none placeholder:text-ink-3"
+        />
+      ) : null}
+      {needsAmount ? (
+        <p className="text-micro text-accent-text">Enter an amount to include this fee.</p>
+      ) : null}
+      {needsDescription && !needsAmount ? (
+        <p className="text-micro text-accent-text">
+          Describe what's being charged to include this fee.
+        </p>
+      ) : null}
     </div>
-  );
-}
-
-function AddFeeDialog({
-  open,
-  onClose,
-  onAdd,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onAdd: (line: FeeLine) => void;
-}) {
-  const { data: fees } = useShopFees();
-  const [selected, setSelected] = useState<ShopFee | null>(null);
-  const [amountText, setAmountText] = useState('');
-  const [description, setDescription] = useState('');
-
-  const requiresDescription = selected?.name === CHARGE_ITEM_FEE_NAME;
-  const amount = parseFloat(amountText);
-  const valid = amount > 0 && (!requiresDescription || description.trim() !== '');
-
-  const reset = () => {
-    setSelected(null);
-    setAmountText('');
-    setDescription('');
-  };
-
-  const pick = (fee: ShopFee) => {
-    setSelected(fee);
-    setAmountText(fee.defaultAmount && fee.defaultAmount > 0 ? fee.defaultAmount.toFixed(2) : '');
-    setDescription('');
-  };
-
-  const submit = () => {
-    if (!selected || !valid) return;
-    onAdd({
-      id: crypto.randomUUID(),
-      name: selected.name,
-      amount,
-      description: requiresDescription ? description.trim() : null,
-    });
-    reset();
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onClose={() => {
-        reset();
-        onClose();
-      }}
-      title={selected ? selected.name : 'Add shop fee'}
-    >
-      {selected === null ? (
-        (fees ?? []).length === 0 ? (
-          <p className="text-cell text-ink-2">
-            No shop fees configured. Add one in Settings on the register phone first.
-          </p>
-        ) : (
-          <div className="space-y-tk-xs">
-            {(fees ?? []).map((fee) => (
-              <button
-                key={fee.id}
-                type="button"
-                onClick={() => pick(fee)}
-                className="flex w-full items-center justify-between rounded-ctl border border-line px-tk-md py-tk-sm text-left text-cell text-ink hover:bg-surface-2"
-              >
-                <span>{fee.name}</span>
-                {fee.defaultAmount ? (
-                  <span className="font-mono text-ink-2">{formatMoney(fee.defaultAmount)}</span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-        )
-      ) : (
-        <div className="space-y-tk-sm">
-          <label className="block text-ctl-sm text-ink-2">
-            Amount
-            <input
-              type="text"
-              inputMode="decimal"
-              value={amountText}
-              onChange={(e) => setAmountText(e.target.value)}
-              autoFocus
-              className="mt-tk-xs w-full rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-ctl-sm text-ink outline-none"
-            />
-          </label>
-          {requiresDescription ? (
-            <label className="block text-ctl-sm text-ink-2">
-              Description
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What's being charged?"
-                className="mt-tk-xs w-full rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-ctl-sm text-ink outline-none"
-              />
-            </label>
-          ) : null}
-          <div className="flex justify-end gap-tk-sm">
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              disabled={!valid}
-              onClick={submit}
-              className="rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-md font-semibold text-accent-ink hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      )}
-    </Dialog>
   );
 }

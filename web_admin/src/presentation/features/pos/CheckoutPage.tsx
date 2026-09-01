@@ -5,6 +5,7 @@ import { useCheckout } from '@/presentation/hooks/useCheckout';
 import { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
 import { cartGrandTotal, cartHasBillableContent } from '@/domain/sales/cart';
 import { describedLaborLines, laborValidationError } from '@/domain/sales/labor';
+import { chargeableFeeLines } from '@/domain/entities';
 import { useRegisterStatus } from '@/presentation/hooks/useRegisterStatus';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { stockShortfalls, type StockShortfall } from '@/domain/sales/cart';
@@ -73,7 +74,7 @@ export function CheckoutPage() {
         amountReceived: pay.amountReceived,
         changeGiven: pay.changeGiven,
         laborLines: describedLaborLines(laborLines),
-        feeLines,
+        feeLines: chargeableFeeLines(feeLines),
         mechanicId,
         mechanicName,
         motorcycleModel,

@@ -4,6 +4,7 @@ import { useJobOrder } from '@/presentation/hooks/useJobOrder';
 import { useJobOrderEditStore } from '@/presentation/stores/jobOrderEditStore';
 import { useSaveJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { describedLaborLines } from '@/domain/sales/labor';
+import { chargeableFeeLines } from '@/domain/entities';
 import { CartBuilder } from '@/presentation/features/pos/CartBuilder';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -73,7 +74,7 @@ export function JobOrderEditPage() {
         items: lines,
         discountType,
         laborLines: describedLaborLines(laborLines),
-        feeLines,
+        feeLines: chargeableFeeLines(feeLines),
         mechanicId,
         mechanicName,
         motorcycleModel,

@@ -39,8 +39,8 @@ interface CartState {
   setLineDiscount: (lineId: string, discountValue: number) => void;
   removeLine: (lineId: string) => void;
   setDiscountType: (discountType: DiscountType) => void;
-  addFeeLine: (line: FeeLine) => void;
-  setFeeAmount: (id: string, amount: number) => void;
+  addFeeLine: () => void;
+  setFeeLine: (id: string, patch: Partial<Pick<FeeLine, 'name' | 'amount' | 'description'>>) => void;
   removeFeeLine: (id: string) => void;
   addLaborLine: () => void;
   setLaborLine: (id: string, patch: Partial<Pick<LaborLine, 'description' | 'fee'>>) => void;
@@ -172,12 +172,21 @@ export function createCartStore(persistKey?: string): UseBoundStore<StoreApi<Car
       set((s) => ({ lines: s.lines.filter((l) => l.id !== lineId) })),
     setDiscountType: (discountType) =>
       set((s) => ({ discountType, lines: s.lines.map((l) => ({ ...l, discountValue: 0 })) })),
-    addFeeLine: (line) => set((s) => ({ feeLines: [...s.feeLines, line] })),
-    setFeeAmount: (id, amount) =>
+    addFeeLine: () =>
       set((s) => ({
-        feeLines: s.feeLines.map((f) =>
-          f.id === id ? { ...f, amount: Math.max(0, amount || 0) } : f,
-        ),
+        feeLines: [
+          ...s.feeLines,
+          { id: crypto.randomUUID(), name: '', amount: 0, description: null },
+        ],
+      })),
+    setFeeLine: (id, patch) =>
+      set((s) => ({
+        feeLines: s.feeLines.map((f) => {
+          if (f.id !== id) return f;
+          const next = { ...f, ...patch };
+          if (patch.amount !== undefined) next.amount = Math.max(0, patch.amount || 0);
+          return next;
+        }),
       })),
     removeFeeLine: (id) =>
       set((s) => ({ feeLines: s.feeLines.filter((f) => f.id !== id) })),
