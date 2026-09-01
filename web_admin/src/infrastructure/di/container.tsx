@@ -87,7 +87,7 @@ function buildDefaultContainer(): Container {
     voidRequestRepo: new FirestoreVoidRequestRepository(db),
     purchaseOrderRepo: new FirestorePurchaseOrderRepository(db),
     shopTimezoneRepo: new FirestoreShopTimezoneRepository(db),
-    drawerStateRepo: new FirestoreDrawerStateRepository(),
+    drawerStateRepo: new FirestoreDrawerStateRepository(db),
   };
 }
 
