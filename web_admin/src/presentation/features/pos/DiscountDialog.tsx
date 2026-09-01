@@ -103,7 +103,7 @@ export function DiscountDialog({
             onChange={(e) => setValueText(e.target.value)}
             placeholder={isPercentage ? 'Enter percentage (0–100)' : `Max: ${formatMoney(maxAmount)}`}
             autoFocus
-            className="mt-tk-xs w-full rounded-field border border-line bg-surface px-tk-sm py-[6px] text-ctl-sm text-ink"
+            className="mt-tk-xs w-full rounded-field border border-line bg-surface-2 px-3 py-2.5 font-mono text-ctl-lg tabular-nums text-ink outline-none placeholder:text-ink-3 focus:border-ink"
           />
         </label>
         {error ? <p className="text-ctl-sm text-neg">{error}</p> : null}
