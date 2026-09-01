@@ -12,7 +12,7 @@ const line: CartLine = {
   optionId: null, optionLabel: null, optionPieces: null, optionPrice: null,
 };
 const labor: LaborLine = { id: 'l1', description: 'Change oil', fee: 150 };
-const fee: FeeLine = { id: 'f1', name: 'Convenience fee', amount: 50 };
+const fee: FeeLine = { id: 'f1', name: 'Convenience fee', amount: 50, description: null };
 
 // Two option lines of the SAME product (p1), different optionId/optionPrice —
 // exactly the shape the cart store can now hold (By 6 + By 3 of one product).

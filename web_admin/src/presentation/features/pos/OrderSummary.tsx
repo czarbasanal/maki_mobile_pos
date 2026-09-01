@@ -1,4 +1,5 @@
 import type { CartLine } from '@/domain/sales/cart';
+import { feeLineDisplayLabel } from '@/domain/entities';
 import { describedLaborLines } from '@/domain/sales/labor';
 import { saleItemDisplayName, saleItemNet, saleItemOptionSetsCaption } from '@/domain/entities/SaleItem';
 import { DiscountType } from '@/domain/enums/DiscountType';
@@ -52,7 +53,7 @@ export function OrderSummary({
         ))}
         {feeLines.map((l) => (
           <li key={l.id} className="flex items-center justify-between gap-tk-md bg-light-subtle px-tk-md py-tk-sm text-bodySmall">
-            <span className="text-light-text">{l.name || 'Shop fee'}</span>
+            <span className="text-light-text">{feeLineDisplayLabel(l) || 'Shop fee'}</span>
             <span className="font-medium text-light-text tabular-nums">{formatMoney(l.amount)}</span>
           </li>
         ))}

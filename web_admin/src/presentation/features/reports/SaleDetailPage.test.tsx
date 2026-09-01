@@ -166,7 +166,7 @@ describe('SaleDetailPage', () => {
 
   it('shows fee rows in the item table and a Shop fees total when fees are present', async () => {
     const withFees = sale({
-      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
+      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }],
     });
     harness({ getById: vi.fn().mockResolvedValue(withFees) });
     await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());
@@ -219,7 +219,7 @@ describe('SaleDetailPage', () => {
 
   it('reconciles: rendered Total equals parts − discount + labor + fees for a composite sale', async () => {
     const composite = sale({
-      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
+      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }],
     });
     harness({ getById: vi.fn().mockResolvedValue(composite) });
     await waitFor(() => expect(screen.getByRole('heading', { name: 'OR-0001' })).toBeInTheDocument());

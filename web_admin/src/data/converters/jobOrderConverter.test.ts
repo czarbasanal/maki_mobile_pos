@@ -35,7 +35,7 @@ describe('jobOrderConverter.fromFirestore', () => {
     expect(d.items).toHaveLength(1);
     expect(d.items[0]).toMatchObject({ id: 'i1', productId: 'p1', quantity: 2 });
     expect(d.laborLines).toEqual([{ id: 'l1', description: 'Tune-up', fee: 500 }]);
-    expect(d.feeLines).toEqual([{ id: 'f1', name: 'Convenience fee', amount: 50 }]);
+    expect(d.feeLines).toEqual([{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }]);
     expect(d.mechanicId).toBe('m1');
     expect(d.mechanicName).toBe('Juan');
     expect(d.motorcycleModel).toBe('Honda Click 125i');

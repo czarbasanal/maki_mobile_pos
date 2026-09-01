@@ -88,7 +88,7 @@ describe('cartStore', () => {
         { id: 'i1', productId: 'p1', sku: 'A', name: 'Plug', unitPrice: 100, unitCost: 60, quantity: 2, discountValue: 0, unit: 'pcs', optionId: null, optionLabel: null, optionPieces: null, optionPrice: null },
       ],
       laborLines: [{ id: 'l1', description: 'Tune-up', fee: 500 }],
-      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
+      feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }],
       mechanicId: 'm1',
       mechanicName: 'Juan',
       motorcycleModel: 'Honda Click 125i',
@@ -336,5 +336,28 @@ describe('checkoutId (idempotent sale writes)', () => {
     } as unknown as JobOrder);
     expect(store.getState().checkoutId).toBeNull();
     expect(store.getState().ensureCheckoutId()).not.toBe(first);
+  });
+});
+
+describe('fee lines (web entry)', () => {
+  it('adds, edits amount, and removes a fee line', () => {
+    const store = createCartStore();
+    store.getState().addFeeLine({ id: 'f1', name: 'Tire changer', amount: 50, description: null });
+    expect(store.getState().feeLines).toHaveLength(1);
+
+    store.getState().setFeeAmount('f1', 80);
+    expect(store.getState().feeLines[0].amount).toBe(80);
+
+    store.getState().setFeeAmount('f1', -5);
+    expect(store.getState().feeLines[0].amount).toBe(0);
+
+    store.getState().removeFeeLine('f1');
+    expect(store.getState().feeLines).toHaveLength(0);
+  });
+
+  it('keeps Charge Item description on the line', () => {
+    const store = createCartStore();
+    store.getState().addFeeLine({ id: 'f2', name: 'Charge Item', amount: 120, description: 'Outside part' });
+    expect(store.getState().feeLines[0].description).toBe('Outside part');
   });
 });

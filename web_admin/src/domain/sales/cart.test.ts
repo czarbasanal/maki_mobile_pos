@@ -42,7 +42,7 @@ describe('cartGrandTotal', () => {
         [line({ quantity: 2 })],
         [{ id: 'l1', description: 'Tune-up', fee: 300 }],
         DiscountType.amount,
-        [{ id: 'f1', name: 'Convenience fee', amount: 50 }],
+        [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }],
       ),
     ).toBe(200 + 300 + 50);
   });
@@ -55,8 +55,8 @@ describe('cartFeesTotal', () => {
   it('sums fee line amounts', () => {
     expect(
       cartFeesTotal([
-        { id: 'f1', name: 'Convenience fee', amount: 50 },
-        { id: 'f2', name: 'Disposal fee', amount: 25 },
+        { id: 'f1', name: 'Convenience fee', amount: 50, description: null },
+        { id: 'f2', name: 'Disposal fee', amount: 25, description: null },
       ]),
     ).toBe(75);
   });
@@ -117,6 +117,6 @@ describe('cartHasBillableContent (labor/fee-only sales allowed)', () => {
     expect(cartHasBillableContent([], [{ id: 'l', description: ' ', fee: 150 }], [])).toBe(false);
   });
   it('true with only a carried shop fee', () => {
-    expect(cartHasBillableContent([], [], [{ id: 'f', name: 'Disposal', amount: 50 }])).toBe(true);
+    expect(cartHasBillableContent([], [], [{ id: 'f', name: 'Disposal', amount: 50, description: null }])).toBe(true);
   });
 });

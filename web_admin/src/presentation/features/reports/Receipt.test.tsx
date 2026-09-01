@@ -60,7 +60,7 @@ describe('Receipt', () => {
   it('shows each fee line and a Shop fees total when fees are present', () => {
     render(
       <Receipt
-        sale={sale({ feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }] })}
+        sale={sale({ feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }] })}
       />,
     );
     expect(screen.getByText(/Convenience fee/)).toBeInTheDocument();

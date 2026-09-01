@@ -34,6 +34,9 @@ export const FirestoreCollections = {
   // core/utils/businessDay.ts), merge-written by sale creation / day
   // closing. Mirrors lib/core/constants/firestore_collections.dart.
   drawerState: 'drawer_state',
+  // Admin-managed shop-fee catalog (edited in mobile Settings; web reads it
+  // for the POS fee picker). Mirrors lib/core/constants/firestore_collections.dart.
+  shopFees: 'shop_fees',
 } as const;
 
 export const SettingsDocs = {

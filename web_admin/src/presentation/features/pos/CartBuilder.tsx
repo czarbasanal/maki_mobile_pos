@@ -14,6 +14,7 @@ import { DiscountType } from '@/domain/enums/DiscountType';
 import { productHasSellingOptions, type Product } from '@/domain/entities/Product';
 import { formatMoney } from '@/core/utils/money';
 import { LaborSection } from './LaborSection';
+import { FeeSection } from './FeeSection';
 import { CartTotals } from './CartTotals';
 import { SellingOptionDialog } from './SellingOptionDialog';
 import { displaySku } from '@/domain/products/sku';
@@ -153,6 +154,7 @@ export function CartBuilder({ store }: { store: CartStore }) {
             </ul>
           )}
           <LaborSection store={store} />
+          <FeeSection store={store} />
           <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
         </div>
       </section>

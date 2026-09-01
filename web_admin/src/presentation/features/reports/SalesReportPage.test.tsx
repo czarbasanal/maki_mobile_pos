@@ -97,8 +97,8 @@ function harness(sales: Sale[], role: UserRole = UserRole.admin) {
 describe('SalesReportPage', () => {
   it('shows a Shop fees line beside Service / Labor, summing fees across sales', async () => {
     harness([
-      sale({ id: 's1', feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }] }),
-      sale({ id: 's2', feeLines: [{ id: 'f2', name: 'Convenience fee', amount: 25 }] }),
+      sale({ id: 's1', feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }] }),
+      sale({ id: 's2', feeLines: [{ id: 'f2', name: 'Convenience fee', amount: 25, description: null }] }),
     ]);
 
     await waitFor(() => expect(screen.getByText('Service / Labor')).toBeInTheDocument());

@@ -9,11 +9,17 @@ export function parseFeeLines(value: unknown): FeeLine[] {
       id: typeof m.id === 'string' ? m.id : `fee-${i}`,
       name: typeof m.name === 'string' ? m.name : '',
       amount: Number(m.amount ?? 0),
+      description: typeof m.description === 'string' ? m.description : null,
     };
   });
 }
 
 /** Serialize FeeLine[] to inline Firestore maps (id included). */
 export function feeLinesToMaps(lines: FeeLine[]): object[] {
-  return lines.map((l) => ({ id: l.id, name: l.name, amount: l.amount }));
+  return lines.map((l) => ({
+    id: l.id,
+    name: l.name,
+    amount: l.amount,
+    description: l.description ?? null,
+  }));
 }

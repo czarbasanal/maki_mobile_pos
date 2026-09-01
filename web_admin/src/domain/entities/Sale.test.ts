@@ -124,7 +124,7 @@ describe('Sale money math (labor-aware)', () => {
         },
       ],
       laborLines: [{ id: 'l1', description: 'Tune-up', fee: 300 }],
-      feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
+      feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150, description: null }],
     });
     expect(saleFeesTotal(s)).toBe(150);
     expect(saleGrandTotal(s)).toBe(1350); // 900 parts + 300 labor + 150 fees

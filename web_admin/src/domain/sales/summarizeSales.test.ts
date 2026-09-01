@@ -81,7 +81,7 @@ describe('summarizeSales', () => {
 
   it('fee sale: parts-only top-line + fees track; fees roll up separately from labor', () => {
     const s = summarizeSales([
-      sale({ feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }] }),
+      sale({ feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150, description: null }] }),
     ]);
     // Parts-only top-line (NOT 350).
     expect(s.grossAmount).toBe(200);
@@ -112,10 +112,10 @@ describe('summarizeSales', () => {
 
   it('excludes voided sales fees from the feesRevenue track', () => {
     const s = summarizeSales([
-      sale({ feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }] }),
+      sale({ feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150, description: null }] }),
       sale({
         status: SaleStatus.voided,
-        feeLines: [{ id: 'f2', name: 'Cleanup', amount: 999 }],
+        feeLines: [{ id: 'f2', name: 'Cleanup', amount: 999, description: null }],
       }),
     ]);
     expect(s.feesRevenue).toBe(150);

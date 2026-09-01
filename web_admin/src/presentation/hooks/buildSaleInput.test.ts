@@ -82,7 +82,7 @@ describe('buildSaleInput', () => {
     expect(s.jobOrderId).toBe('d1');
   });
   it('carries fee lines through verbatim (mirrors labor)', () => {
-    const fees: FeeLine[] = [{ id: 'f1', name: 'Convenience fee', amount: 50 }];
+    const fees: FeeLine[] = [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }];
     const s = buildSaleInput(input({ feeLines: fees }), actor());
     expect(s.feeLines).toEqual(fees);
   });
@@ -94,7 +94,7 @@ describe('buildSaleInput', () => {
     // Simulates the resumed-job order → checkout path: CheckoutPage sources
     // feeLines from the cart store (hydrated by loadJobOrder(job order)), not a
     // hardcoded []. This is the carried money-correctness finding.
-    const jobOrderFeeLines: FeeLine[] = [{ id: 'f1', name: 'Shop fee', amount: 75 }];
+    const jobOrderFeeLines: FeeLine[] = [{ id: 'f1', name: 'Shop fee', amount: 75, description: null }];
     const s = buildSaleInput(
       input({ jobOrderId: 'd1', feeLines: jobOrderFeeLines }),
       actor(),

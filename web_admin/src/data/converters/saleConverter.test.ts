@@ -23,7 +23,7 @@ describe('saleConverter.fromFirestore', () => {
         cashierName: 'Cashier',
         createdAt: new Date('2026-05-30T10:00:00Z'),
         laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
-        feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
+        feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150, description: null }],
         mechanicId: 'mech-1',
         mechanicName: 'Juan',
         motorcycleModel: 'Yamaha Mio i 125',
@@ -43,6 +43,7 @@ describe('saleConverter.fromFirestore', () => {
       id: 'f1',
       name: 'Electric charge',
       amount: 150,
+      description: null,
     });
     expect(sale.mechanicId).toBe('mech-1');
     expect(sale.mechanicName).toBe('Juan');
@@ -91,7 +92,7 @@ describe('saleConverter.toFirestore', () => {
       saleNumber: 'S-1',
       items: [],
       laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
-      feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150 }],
+      feeLines: [{ id: 'f1', name: 'Electric charge', amount: 150, description: null }],
       mechanicId: null,
       mechanicName: null,
       motorcycleModel: null,
@@ -114,7 +115,7 @@ describe('saleConverter.toFirestore', () => {
     };
 
     const data = saleConverter.toFirestore(sale);
-    expect(data.feeLines).toEqual([{ id: 'f1', name: 'Electric charge', amount: 150 }]);
+    expect(data.feeLines).toEqual([{ id: 'f1', name: 'Electric charge', amount: 150, description: null }]);
     expect(data.laborLines).toEqual([{ id: 'l1', description: 'Tune-up', fee: 450 }]);
   });
 });

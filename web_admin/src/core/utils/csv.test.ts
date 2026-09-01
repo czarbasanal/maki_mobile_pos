@@ -71,7 +71,7 @@ describe('salesToCsv', () => {
   });
 
   it('includes the fees column and folds fees into the total', () => {
-    const withFees = sale({ feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50 }] });
+    const withFees = sale({ feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }] });
     const row = salesToCsv([withFees]).trim().split('\n')[1];
     const cells = row.split(',');
     // header: saleNumber,date,items,paymentMethod,grossSales,discount,labor,fees,total,cashier,mechanic

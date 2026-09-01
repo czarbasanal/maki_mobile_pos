@@ -11,7 +11,7 @@ import { CategoryKind } from '@/domain/categories/categoryKind';
 import { canVoidSale } from '@/domain/sales/voiding';
 import { BackLink } from '@/presentation/components/common/BackLink';
 import { RoutePaths } from '@/presentation/router/routePaths';
-import { saleIsVoided } from '@/domain/entities';
+import { saleIsVoided , feeLineDisplayLabel } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Receipt } from './Receipt';
@@ -225,7 +225,7 @@ export function SaleDetailPage() {
             {sale.feeLines.map((f) => (
               <tr key={f.id} className="bg-light-subtle">
                 <td className="px-tk-md py-tk-sm" colSpan={3}>
-                  <span className="text-light-text">🔧 {f.name || 'Shop fee'}</span>
+                  <span className="text-light-text">🔧 {feeLineDisplayLabel(f) || 'Shop fee'}</span>
                 </td>
                 <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(f.amount)}</td>
               </tr>

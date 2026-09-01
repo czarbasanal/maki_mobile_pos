@@ -10,6 +10,7 @@ import {
   saleLaborSubtotal,
   salePartsSubtotal,
   saleTotalDiscount,
+  feeLineDisplayLabel,
 } from '@/domain/entities';
 import type { Sale } from '@/domain/entities';
 import { paymentMethodDisplayName, realTenderMethods } from '@/domain/enums';
@@ -76,7 +77,7 @@ export function Receipt({ sale }: { sale: Sale }) {
       ))}
       {sale.feeLines.map((f) => (
         <div key={f.id} className="flex justify-between gap-tk-sm">
-          <span className="min-w-0 truncate">🔧 {f.name || 'Shop fee'}</span>
+          <span className="min-w-0 truncate">🔧 {feeLineDisplayLabel(f) || 'Shop fee'}</span>
           <span className="tabular-nums">{formatMoney(f.amount)}</span>
         </div>
       ))}

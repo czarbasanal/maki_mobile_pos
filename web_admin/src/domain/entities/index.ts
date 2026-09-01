@@ -4,6 +4,7 @@ export * from './SaleItem';
 export * from './Sale';
 export * from './LaborLine';
 export * from './FeeLine';
+export * from './ShopFee';
 export * from './JobOrder';
 export * from './Supplier';
 export * from './Expense';

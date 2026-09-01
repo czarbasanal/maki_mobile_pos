@@ -208,7 +208,7 @@ describe('JobOrderEditPage', () => {
       user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never,
     });
     const update = vi.fn().mockResolvedValue(undefined);
-    const feeLines = [{ id: 'f1', name: 'Convenience fee', amount: 50 }];
+    const feeLines = [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }];
 
     harness({
       getById: vi.fn().mockResolvedValue(jobOrder({ id: 'd1', name: 'JobOrder One', feeLines })),
