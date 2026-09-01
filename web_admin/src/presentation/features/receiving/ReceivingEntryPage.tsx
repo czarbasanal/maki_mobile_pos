@@ -76,6 +76,9 @@ export function ReceivingEntryPage() {
         sellingOptions: np.sellingOptions ?? [],
       });
       setEditingLineId(l.id);
+      // Close the inline box if another line was mid-edit — leaving it open
+      // would silently degrade its Update back into an appending Add.
+      setPicked(null);
       setShowNew(true);
       return;
     }

@@ -53,7 +53,7 @@ function buildProductInput(p: NewProductFields, actor: ReceiveContext['actor']):
 }
 
 function buildItem(over: Omit<ReceivingItem, 'id' | 'notes'>): ReceivingItem {
-  return { ...over, id: crypto.randomUUID(), notes: null };
+  return { unitPrice: null, ...over, id: crypto.randomUUID(), notes: null };
 }
 
 export async function applyReceivedItems(

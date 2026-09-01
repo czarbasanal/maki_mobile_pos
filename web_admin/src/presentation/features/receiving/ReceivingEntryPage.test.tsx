@@ -271,3 +271,33 @@ describe('ReceivingEntryPage — row editing', () => {
     entry.lines[2] = saved;
   });
 });
+
+describe('ReceivingEntryPage — no stale inline box behind the dialog', () => {
+  it('pencil-editing a new-product line closes an inline edit that was in progress', async () => {
+    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
+    const saved = entry.lines[2];
+    entry.products = [productP1] as never;
+    entry.lines[2] = {
+      ...saved, productId: '', name: 'Squid', sku: 'SQ-9',
+      pendingNewProduct: {
+        category: null, price: 130, reorderLevel: 1, autoGenerateSku: false,
+        autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
+      },
+    } as never;
+    renderPage();
+
+    // Open the inline box in Update mode on the existing line…
+    const rowA = screen.getByText('Brake Pad', { selector: 'td span' }).closest('tr')!;
+    await userEvent.click(within(rowA).getByRole('button', { name: 'Edit' }));
+    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+
+    // …then pencil the new-product line: the inline box must close, or its
+    // confirm would silently append instead of update after the dialog closes.
+    const rowB = screen.getByText('Squid').closest('tr')!;
+    await userEvent.click(within(rowB).getByRole('button', { name: 'Edit' }));
+    expect(screen.queryByRole('button', { name: 'Update' })).not.toBeInTheDocument();
+
+    entry.products = [] as never;
+    entry.lines[2] = saved;
+  });
+});

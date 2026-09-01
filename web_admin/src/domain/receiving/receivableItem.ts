@@ -63,7 +63,10 @@ export function classifiedToReceivable(
       ref: r.rowNumber, kind: 'mismatch', product: row.existing,
       quantity: r.quantity, cost: r.cost,
       // The CSV's price column applies to the variation this row spawns.
-      price: r.price,
+      // 0 means "inherit the base's price" — the column is mandatory, and
+      // old templates filled it with 0 on mismatch rows (it used to be
+      // ignored here); a ₱0 selling price is never what was meant.
+      price: r.price > 0 ? r.price : null,
     };
   }
   const code = r.autoGenerateSku && r.category != null
