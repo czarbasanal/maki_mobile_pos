@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import type { ButtonHTMLAttributes } from 'react';
 
 export interface IconButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'style' | 'title'> {
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'style' | 'title' | 'aria-label'> {
   /** Required — becomes both tooltip and accessible name. */
   title: string;
   size?: 22 | 28;
