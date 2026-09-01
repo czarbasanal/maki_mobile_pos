@@ -196,11 +196,11 @@ describe('CartBuilder — wedge-scanner Enter (B4)', () => {
     expect(box).toHaveValue('');
   });
 
-  it('Enter with the display-SKU form resolves the product', async () => {
+  it('Enter with a variation SKU (base-N, the only dashed shape) resolves the product', async () => {
     const { store } = harness([
-      plainProduct({ id: 'p9', name: 'Chain Lube', sku: '00070200', barcodes: [] }),
+      plainProduct({ id: 'p9', name: 'Chain Lube v2', sku: '00070200-2', barcodes: [] }),
     ]);
-    await userEvent.type(screen.getByPlaceholderText(/search or scan/i), '0007-0200{Enter}');
+    await userEvent.type(screen.getByPlaceholderText(/search or scan/i), '00070200-2{Enter}');
     expect(store.getState().lines[0]?.productId).toBe('p9');
   });
 
