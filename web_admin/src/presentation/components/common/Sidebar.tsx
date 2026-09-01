@@ -15,9 +15,9 @@ import {
   BuildingStorefrontIcon,
   CalendarDaysIcon,
   ChartBarIcon,
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ChevronUpIcon,
   ClipboardDocumentListIcon,
   ClockIcon,
@@ -38,7 +38,9 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { useSignOut } from '@/presentation/hooks/useSignOut';
 import { useVoidRequests } from '@/presentation/hooks/useVoidRequests';
 import { useJobOrders } from '@/presentation/hooks/useJobOrders';
+import { IconButton } from '@/presentation/components/ui/IconButton';
 import { cn } from '@/core/utils/cn';
+import makiLogo from '@/assets/maki_logo_yellow.png';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -165,28 +167,38 @@ export function Sidebar() {
     >
       <div
         className={cn(
-          'flex h-14 items-center',
-          collapsed ? 'justify-center' : 'justify-between px-tk-lg',
+          'flex items-center',
+          collapsed
+            ? 'flex-col gap-tk-xs py-tk-sm'
+            : 'h-14 justify-between px-tk-md',
         )}
       >
-        {collapsed ? null : (
-          <span className="text-brand tracking-tight text-ink">
-            MAKI POS
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={() => setManualCollapsed(!collapsed)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        <div className={cn('flex min-w-0 items-center', collapsed ? '' : 'gap-tk-sm')}>
+          <img
+            src={makiLogo}
+            alt={collapsed ? 'MAKI Motor Parts' : ''}
+            className="h-7 w-7 shrink-0"
+          />
+          {collapsed ? null : (
+            <div className="min-w-0 leading-tight">
+              <span className="block truncate text-brand text-ink">MAKI</span>
+              <span className="block truncate text-group-caps uppercase text-ink-3">
+                Motor Parts
+              </span>
+            </div>
+          )}
+        </div>
+        <IconButton
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="rounded-ctl p-tk-xs text-ink-2 hover:bg-surface-2 hover:text-ink"
+          size={28}
+          onClick={() => setManualCollapsed(!collapsed)}
         >
           {collapsed ? (
-            <ChevronDoubleRightIcon className="h-4 w-4" />
+            <ChevronRightIcon className="h-4 w-4" />
           ) : (
-            <ChevronDoubleLeftIcon className="h-4 w-4" />
+            <ChevronLeftIcon className="h-4 w-4" />
           )}
-        </button>
+        </IconButton>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-tk-sm py-tk-sm">
