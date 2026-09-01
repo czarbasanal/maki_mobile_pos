@@ -42,22 +42,22 @@ export function SellingOptionDialog({
               key={option.id}
               type="button"
               onClick={() => onPick(option)}
-              className="flex w-full items-center justify-between gap-tk-md rounded-md border border-light-hairline bg-light-subtle px-tk-md py-tk-sm text-left hover:bg-light-card"
+              className="flex w-full items-center justify-between gap-tk-md rounded-ctl border border-line-2 bg-surface-2 px-tk-md py-tk-sm text-left hover:bg-surface"
             >
               <span>
-                <span className="block text-bodySmall font-semibold text-light-text">{option.label}</span>
-                <span className="mt-tk-xs flex items-center gap-tk-xs text-[12px] text-light-text-hint">
+                <span className="block text-cell font-semibold text-ink">{option.label}</span>
+                <span className="mt-tk-xs flex items-center gap-tk-xs text-ctl-sm text-ink-3">
                   <span>
                     {option.pieces} {product.unit}
                   </span>
-                  {shortOnStock ? <span className="text-warning-dark">⚠ Low stock</span> : null}
+                  {shortOnStock ? <span className="text-accent-text">⚠ Low stock</span> : null}
                 </span>
               </span>
               <span className="text-right">
-                <span className="block text-bodySmall font-semibold text-light-text">
+                <span className="block font-mono text-cell font-semibold tabular-nums text-ink">
                   {formatMoney(option.price)}
                 </span>
-                <span className="block text-[12px] text-light-text-hint">
+                <span className="block font-mono text-ctl-sm tabular-nums text-ink-3">
                   {formatMoney(sellingOptionPricePerPiece(option))}/{sellingOptionRateSuffix(product.unit)}
                 </span>
               </span>
@@ -70,7 +70,7 @@ export function SellingOptionDialog({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+          className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink hover:bg-surface-2"
         >
           Cancel
         </button>

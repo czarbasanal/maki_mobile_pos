@@ -66,7 +66,7 @@ export function DiscountDialog({
   };
 
   const chipCls =
-    'rounded-md border border-light-border px-tk-sm py-[4px] text-[12px] text-light-text-secondary hover:bg-light-subtle';
+    'rounded-ctl border border-line px-tk-sm py-[4px] text-ctl-sm text-ink-2 hover:bg-surface-2';
 
   return (
     <Dialog open={open} onClose={onClose} title={`Discount — ${itemName}`}>
@@ -83,10 +83,10 @@ export function DiscountDialog({
               type="button"
               onClick={() => switchType(type)}
               className={cn(
-                'rounded-md border px-tk-md py-[6px] text-[12px]',
+                'rounded-ctl border px-tk-md py-[6px] text-ctl-sm font-medium',
                 type === discountType
-                  ? 'border-light-text bg-light-text font-semibold text-light-background'
-                  : 'border-light-border text-light-text-secondary hover:bg-light-subtle',
+                  ? 'border-accent-text bg-accent-soft text-accent-text'
+                  : 'border-line text-ink-2 hover:bg-surface-2',
               )}
             >
               {label}
@@ -94,7 +94,7 @@ export function DiscountDialog({
           ))}
         </div>
 
-        <label className="block text-[12px] text-light-text-secondary">
+        <label className="block text-ctl-sm text-ink-2">
           Discount
           <input
             type="text"
@@ -103,10 +103,10 @@ export function DiscountDialog({
             onChange={(e) => setValueText(e.target.value)}
             placeholder={isPercentage ? 'Enter percentage (0–100)' : `Max: ${formatMoney(maxAmount)}`}
             autoFocus
-            className="mt-tk-xs w-full rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px] text-light-text"
+            className="mt-tk-xs w-full rounded-field border border-line bg-surface px-tk-sm py-[6px] text-ctl-sm text-ink"
           />
         </label>
-        {error ? <p className="text-[12px] text-error-dark">{error}</p> : null}
+        {error ? <p className="text-ctl-sm text-neg">{error}</p> : null}
 
         <div className="flex flex-wrap gap-tk-xs">
           {isPercentage
@@ -126,7 +126,7 @@ export function DiscountDialog({
           <button
             type="button"
             onClick={() => apply(0)}
-            className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-error-dark hover:bg-error-light/40"
+            className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-neg hover:bg-neg-soft"
           >
             Remove
           </button>
@@ -134,7 +134,7 @@ export function DiscountDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text-secondary hover:bg-light-subtle"
+              className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
             >
               Cancel
             </button>
@@ -142,7 +142,7 @@ export function DiscountDialog({
               type="button"
               disabled={!canApply}
               onClick={() => apply(value)}
-              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-md font-semibold text-accent-ink hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Apply
             </button>

@@ -109,45 +109,45 @@ export function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-tk-md">
-      <Link to={RoutePaths.pos} className="text-bodySmall text-light-text-secondary hover:text-light-text">
+      <Link to={RoutePaths.pos} className="text-cell text-ink-2 hover:text-ink">
         ← Back to cart
       </Link>
 
       {previousDayUnsettled ? (
-        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+        <p className="rounded-ctl border border-accent-text/40 bg-accent-soft px-tk-md py-tk-sm text-cell text-accent-text">
           Yesterday's sales haven't been closed yet. Close the day on the register phone before
           completing new sales.
         </p>
       ) : null}
 
       {laborError ? (
-        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+        <p className="rounded-ctl border border-accent-text/40 bg-accent-soft px-tk-md py-tk-sm text-cell text-accent-text">
           {laborError}
         </p>
       ) : null}
 
       {billOutNeedsModel ? (
-        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+        <p className="rounded-ctl border border-accent-text/40 bg-accent-soft px-tk-md py-tk-sm text-cell text-accent-text">
           Set the motorcycle model before billing out this Job Order.
         </p>
       ) : null}
 
       {checkout.error ? (
-        <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+        <p className="rounded-ctl border border-neg/40 bg-neg-soft px-tk-md py-tk-sm text-cell text-neg">
           {checkout.error.message}
         </p>
       ) : null}
 
       <OrderSummary lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
 
-      <div className="space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-md">
+      <div className="space-y-tk-sm rounded-card border border-line bg-surface p-tk-md shadow-card">
         <PaymentSection pay={pay} grandTotal={grandTotal} />
         <button
           type="button"
           disabled={!canComplete}
           onClick={onComplete}
           className={cn(
-            'w-full rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark',
+            'w-full rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-md font-semibold text-accent-ink hover:brightness-95',
             !canComplete && 'cursor-not-allowed opacity-60',
           )}
         >

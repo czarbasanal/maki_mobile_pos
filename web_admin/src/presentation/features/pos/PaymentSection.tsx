@@ -24,10 +24,10 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
             type="button"
             onClick={() => pay.setMode(mode)}
             className={cn(
-              'rounded-full border px-tk-md py-[6px] text-[12px]',
+              'rounded-full border px-tk-md py-[6px] text-ctl-sm',
               pay.mode === mode
-                ? 'border-light-text bg-light-text text-light-background'
-                : 'border-light-border bg-light-card text-light-text-secondary hover:bg-light-subtle',
+                ? 'border-accent-line bg-accent text-accent-ink'
+                : 'border-line bg-surface text-ink-2 hover:bg-surface-2',
             )}
           >
             {label}
@@ -43,7 +43,7 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
       ) : null}
 
       {pay.mode === 'gcash' || pay.mode === 'maya' ? (
-        <p className="text-bodySmall text-light-text-secondary">
+        <p className="text-cell text-ink-2">
           Paid in full via {pay.mode === 'gcash' ? 'GCash' : 'Maya'} — {formatMoney(grandTotal)}
         </p>
       ) : null}
@@ -87,7 +87,7 @@ export function PaymentSection({ pay, grandTotal }: { pay: Pay; grandTotal: numb
         </div>
       ) : null}
 
-      {pay.error ? <p className="text-[12px] text-error-dark">{pay.error}</p> : null}
+      {pay.error ? <p className="text-ctl-sm text-neg">{pay.error}</p> : null}
     </div>
   );
 }
@@ -103,7 +103,7 @@ function AmountInput({
 }) {
   return (
     <label className="block space-y-tk-xs">
-      <span className="text-bodySmall font-medium text-light-text">{label}</span>
+      <span className="text-cell font-medium text-ink">{label}</span>
       <input
         type="number"
         min={0}
@@ -111,7 +111,7 @@ function AmountInput({
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall"
+        className="w-full rounded-field border border-line bg-surface px-tk-md py-[10px] text-cell"
       />
     </label>
   );
@@ -129,7 +129,7 @@ function SubSelector({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
+    <div className="flex items-center gap-tk-sm text-ctl-sm text-ink-2">
       <span>{label}</span>
       <div className="flex gap-tk-xs">
         {options.map((o) => (
@@ -138,10 +138,10 @@ function SubSelector({
             type="button"
             onClick={() => onChange(o.value)}
             className={cn(
-              'rounded-md border px-tk-sm py-[4px]',
+              'rounded-ctl border px-tk-sm py-[4px]',
               value === o.value
-                ? 'border-light-text bg-light-subtle text-light-text'
-                : 'border-light-border bg-light-card hover:bg-light-subtle',
+                ? 'border-accent-text bg-accent-soft text-accent-text'
+                : 'border-line bg-surface hover:bg-surface-2',
             )}
           >
             {o.label}
@@ -154,9 +154,9 @@ function SubSelector({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between text-bodySmall">
-      <span className="text-light-text-hint">{label}</span>
-      <span className="text-light-text">{value}</span>
+    <div className="flex justify-between text-cell">
+      <span className="text-ink-3">{label}</span>
+      <span className="font-mono tabular-nums text-ink">{value}</span>
     </div>
   );
 }
