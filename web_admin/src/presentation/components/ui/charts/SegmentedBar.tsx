@@ -16,9 +16,9 @@ export function SegmentedBar({ segments }: { segments: Segment[] }) {
   if (visible.length === 0) return <div className="h-2.5 rounded bg-surface-3" />;
   return (
     <div className="flex h-2.5 gap-[2px]">
-      {visible.map((segment) => (
+      {visible.map((segment, index) => (
         <div
-          key={segment.label}
+          key={index}
           data-segment
           title={segment.label}
           className={`min-w-[6px] rounded ${colorCls[segment.color]}`}

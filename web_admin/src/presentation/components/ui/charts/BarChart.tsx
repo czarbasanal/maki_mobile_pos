@@ -20,7 +20,7 @@ export function BarChart({ data, highlight, height = 110, empty = null }: BarCha
   return (
     <div className="flex items-end gap-1.5">
       {data.map((datum, index) => (
-        <div key={datum.label} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+        <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
           <span className="font-mono text-axis text-ink-3">{datum.value > 0 ? datum.value : ' '}</span>
           <div className="flex w-full items-end" style={{ height }}>
             <div
