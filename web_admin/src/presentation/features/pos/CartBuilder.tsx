@@ -3,7 +3,7 @@
 // Shared by the POS screen and the Job Order editor via the `store` prop;
 // the POS screen passes its Checkout/Save actions through `actions`.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { lowStockLines } from '@/domain/sales/cart';
@@ -232,7 +232,7 @@ export function CartBuilder({
       </section>
 
       {/* ---- Cart column ---- */}
-      <section className="order-1 min-w-0 space-y-tk-sm min-[1000px]:order-2">
+      <section className="order-1 min-w-0 min-[1000px]:order-2">
         <div className="rounded-card border border-line bg-surface shadow-card">
           <div className="flex items-center justify-between border-b border-line-2 px-[18px] py-3">
             <span className="text-card-title text-ink">Cart</span>
@@ -243,9 +243,14 @@ export function CartBuilder({
                 </span>
               ) : null}
               {allowReset && (lines.length > 0 || laborLines.length > 0 || feeLines.length > 0) && (
-                <IconButton title="Reset sale" tone="danger" onClick={() => setConfirmReset(true)}>
-                  <TrashIcon className="h-3.5 w-3.5" />
-                </IconButton>
+                <button
+                  type="button"
+                  onClick={() => setConfirmReset(true)}
+                  className="inline-flex items-center gap-1 rounded-field border border-line px-2 py-1 text-ctl-sm text-ink-2 transition-[color] hover:bg-neg-soft hover:text-neg"
+                >
+                  <ArrowPathIcon className="h-3.5 w-3.5" />
+                  Reset cart
+                </button>
               )}
             </span>
           </div>
@@ -311,7 +316,7 @@ export function CartBuilder({
           <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
         </div>
 
-        {actions}
+        {actions ? <div className="mt-tk-md">{actions}</div> : null}
       </section>
 
       {pending ? (
@@ -341,7 +346,7 @@ export function CartBuilder({
         />
       ) : null}
 
-      <Dialog open={confirmReset} onClose={() => setConfirmReset(false)} title="Reset sale?">
+      <Dialog open={confirmReset} onClose={() => setConfirmReset(false)} title="Reset cart?">
         <p className="text-cell text-ink-2">
           This clears items, labor &amp; fees, mechanic, and the motorcycle model.
         </p>

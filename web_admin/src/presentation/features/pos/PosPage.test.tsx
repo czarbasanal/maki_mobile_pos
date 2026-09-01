@@ -122,8 +122,8 @@ describe('PosPage', () => {
     useCartStore.getState().setMechanic('m1', 'Juan');
     harness();
 
-    await userEvent.click(screen.getByLabelText('Reset sale'));
-    expect(screen.getByText('Reset sale?')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /reset cart/i }));
+    expect(screen.getByText('Reset cart?')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^reset$/i }));
 
     expect(useCartStore.getState().lines).toHaveLength(0);
@@ -136,7 +136,7 @@ describe('PosPage', () => {
     useCartStore.getState().addLine(product());
     harness();
 
-    await userEvent.click(screen.getByLabelText('Reset sale'));
+    await userEvent.click(screen.getByRole('button', { name: /reset cart/i }));
     await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
 
     expect(useCartStore.getState().lines).toHaveLength(1);
