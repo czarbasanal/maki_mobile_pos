@@ -97,7 +97,7 @@ export function useReceivingEntry() {
     [lines],
   );
 
-  function addExisting(p: Product, quantity: number, unitCost: number) {
+  function addExisting(p: Product, quantity: number, unitCost: number, unitPrice: number | null = null) {
     setLines((ls) => [
       ...ls,
       {
@@ -108,6 +108,9 @@ export function useReceivingEntry() {
         quantity,
         unit: p.unit,
         unitCost,
+        // Meaningful only when the cost differs (a variation is spawned);
+        // null inherits the base product's price.
+        unitPrice,
         costCode: p.costCode,
         isNewVariation: false,
         newProductId: null,
@@ -118,34 +121,49 @@ export function useReceivingEntry() {
     setSearch('');
   }
 
+  /** Rewrites an existing-product line's editable fields in place. */
+  function updateExisting(
+    lineId: string,
+    patch: { quantity: number; unitCost: number; unitPrice: number | null },
+  ) {
+    setLines((ls) => ls.map((l) => (l.id === lineId ? { ...l, ...patch } : l)));
+  }
+
+  /** Rebuilds a new-product line from an edited spec, keeping the line id. */
+  function updateNew(lineId: string, spec: NewProductSpec) {
+    setLines((ls) => ls.map((l) => (l.id === lineId ? { ...newLine(spec), id: lineId } : l)));
+  }
+
   function addNew(spec: NewProductSpec) {
-    setLines((ls) => [
-      ...ls,
-      {
-        id: crypto.randomUUID(),
-        productId: '',
-        sku: spec.sku,
-        name: spec.name,
-        quantity: spec.quantity,
-        unit: spec.unit,
-        unitCost: spec.cost,
-        costCode: '', // computed from cost at complete time
-        isNewVariation: false,
-        newProductId: null,
-        notes: null,
-        pendingNewProduct: {
-          category: spec.category,
-          price: spec.price,
-          reorderLevel: spec.reorderLevel,
-          autoGenerateSku: spec.autoGenerateSku,
-          autoSkuCategoryCode: spec.autoSkuCategoryCode,
-          barcodes: spec.barcodes,
-          notes: spec.notes,
-          sellingOptions: spec.sellingOptions,
-        },
-      },
-    ]);
+    setLines((ls) => [...ls, newLine(spec)]);
     setSearch('');
+  }
+
+  function newLine(spec: NewProductSpec): ReceivingItem {
+    return {
+      id: crypto.randomUUID(),
+      productId: '',
+      sku: spec.sku,
+      name: spec.name,
+      quantity: spec.quantity,
+      unit: spec.unit,
+      unitCost: spec.cost,
+      unitPrice: null,
+      costCode: '', // computed from cost at complete time
+      isNewVariation: false,
+      newProductId: null,
+      notes: null,
+      pendingNewProduct: {
+        category: spec.category,
+        price: spec.price,
+        reorderLevel: spec.reorderLevel,
+        autoGenerateSku: spec.autoGenerateSku,
+        autoSkuCategoryCode: spec.autoSkuCategoryCode,
+        barcodes: spec.barcodes,
+        notes: spec.notes,
+        sellingOptions: spec.sellingOptions,
+      },
+    };
   }
 
   function removeLine(lineId: string) {
@@ -237,6 +255,8 @@ export function useReceivingEntry() {
     lines,
     addExisting,
     addNew,
+    updateExisting,
+    updateNew,
     removeLine,
     totals,
     error,
