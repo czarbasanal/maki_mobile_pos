@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { useCheckout } from '@/presentation/hooks/useCheckout';
@@ -6,6 +6,9 @@ import { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
 import { cartGrandTotal, cartHasBillableContent } from '@/domain/sales/cart';
 import { describedLaborLines, laborValidationError } from '@/domain/sales/labor';
 import { useRegisterStatus } from '@/presentation/hooks/useRegisterStatus';
+import { useProducts } from '@/presentation/hooks/useProducts';
+import { stockShortfalls, type StockShortfall } from '@/domain/sales/cart';
+import { CheckoutSuccessDialog } from './CheckoutSuccessDialog';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { PaymentSection } from './PaymentSection';
 import { OrderSummary } from './OrderSummary';
@@ -26,6 +29,15 @@ export function CheckoutPage() {
   const checkout = useCheckout();
   const navigate = useNavigate();
   const { previousDayUnsettled } = useRegisterStatus();
+  const { data: liveProducts } = useProducts();
+  const [completed, setCompleted] = useState<{
+    saleId: string;
+    saleNumber: string;
+    grandTotal: number;
+    amountReceived: number;
+    changeGiven: number;
+    warnings: StockShortfall[];
+  } | null>(null);
 
   const grandTotal = cartGrandTotal(lines, laborLines, discountType, feeLines);
   const pay = usePaymentDraft(grandTotal);
@@ -35,8 +47,9 @@ export function CheckoutPage() {
   }, []);
 
   // Labor-only and fee-only tickets are legitimate sales (mobile parity) —
-  // only a cart with nothing billable bounces back.
-  if (!cartHasBillableContent(lines, laborLines, feeLines)) {
+  // only a cart with nothing billable bounces back. Never while the success
+  // dialog is deciding where to go.
+  if (!completed && !cartHasBillableContent(lines, laborLines, feeLines)) {
     return <Navigate to={RoutePaths.pos} replace />;
   }
 
@@ -67,11 +80,30 @@ export function CheckoutPage() {
         jobOrderId,
         notes,
       });
-      pay.reset();
-      clear();
-      navigate(RoutePaths.pos, { replace: true, state: { completedSaleNumber: sale.saleNumber } });
+      // The cart stays intact until Done — the idempotent checkoutId makes an
+      // interrupted session's retry return this same recorded sale.
+      setCompleted({
+        saleId: sale.id,
+        saleNumber: sale.saleNumber,
+        grandTotal,
+        amountReceived: pay.amountReceived,
+        changeGiven: pay.changeGiven,
+        warnings: stockShortfalls(lines, liveProducts ?? []),
+      });
     } catch {
       // surfaced via checkout.error
+    }
+  };
+
+  const finishAnd = (destination: 'pos' | 'receipt') => {
+    if (!completed) return;
+    const { saleId, saleNumber } = completed;
+    pay.reset();
+    clear();
+    if (destination === 'receipt') {
+      navigate(`/reports/sale/${saleId}`);
+    } else {
+      navigate(RoutePaths.pos, { replace: true, state: { completedSaleNumber: saleNumber } });
     }
   };
 
@@ -122,6 +154,18 @@ export function CheckoutPage() {
           {checkout.isPending ? 'Completing…' : 'Complete sale'}
         </button>
       </div>
+
+      {completed ? (
+        <CheckoutSuccessDialog
+          saleNumber={completed.saleNumber}
+          grandTotal={completed.grandTotal}
+          amountReceived={completed.amountReceived}
+          changeGiven={completed.changeGiven}
+          warnings={completed.warnings}
+          onViewReceipt={() => finishAnd('receipt')}
+          onDone={() => finishAnd('pos')}
+        />
+      ) : null}
     </div>
   );
 }

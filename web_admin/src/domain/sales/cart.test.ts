@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cartFeesTotal, cartGrandTotal, cartHasBillableContent, cartLineId, lowStockLines } from './cart';
+import { cartFeesTotal, cartGrandTotal, cartHasBillableContent, cartLineId, lowStockLines, stockShortfalls } from './cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { Product } from '@/domain/entities';
 import type { CartLine } from './cart';
@@ -118,5 +118,24 @@ describe('cartHasBillableContent (labor/fee-only sales allowed)', () => {
   });
   it('true with only a carried shop fee', () => {
     expect(cartHasBillableContent([], [], [{ id: 'f', name: 'Disposal', amount: 50, description: null }])).toBe(true);
+  });
+});
+
+describe('stockShortfalls (completion warnings)', () => {
+  const p = (id: string, name: string, quantity: number): Product =>
+    ({ id, name, quantity, isActive: true }) as Product;
+  const line = (productId: string, quantity: number): CartLine =>
+    ({ id: productId, productId, name: 'x', quantity }) as CartLine;
+
+  it('reports products whose total cart quantity exceeds on-hand', () => {
+    const out = stockShortfalls(
+      [line('a', 6), { ...line('a', 3), id: 'a::opt' }, line('b', 1)],
+      [p('a', 'A', 5), p('b', 'B', 10)],
+    );
+    expect(out).toEqual([{ productId: 'a', name: 'x', requested: 9, onHand: 5 }]);
+  });
+
+  it('empty when everything is covered', () => {
+    expect(stockShortfalls([line('b', 1)], [p('b', 'B', 10)])).toEqual([]);
   });
 });

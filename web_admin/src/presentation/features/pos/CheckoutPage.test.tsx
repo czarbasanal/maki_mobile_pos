@@ -23,8 +23,14 @@ function harness(saleRepo: Partial<Container['saleRepo']>, extra: Partial<Contai
   const activityLogRepo = {
     log: vi.fn().mockResolvedValue(undefined),
   } as unknown as Container['activityLogRepo'];
+  const productRepo = {
+    watchAll: (cb: (v: never[]) => void) => {
+      cb([]);
+      return () => {};
+    },
+  } as unknown as Container['productRepo'];
   return render(
-    <DiProvider override={{ saleRepo: saleRepo as Container['saleRepo'], activityLogRepo, ...extra }}>
+    <DiProvider override={{ saleRepo: saleRepo as Container['saleRepo'], activityLogRepo, productRepo, ...extra }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/pos/checkout']}>
           <Routes>
@@ -57,6 +63,11 @@ describe('CheckoutPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
     await userEvent.click(screen.getByRole('button', { name: /complete sale/i }));
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+    // Success dialog first: sale number + change due hero, then Done → POS.
+    expect(await screen.findByText('Sale completed')).toBeInTheDocument();
+    expect(screen.getByText('S-00100')).toBeInTheDocument();
+    expect(screen.getByText(/change due/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^done$/i }));
     await waitFor(() => expect(screen.getByText(/POS PAGE S-00100/)).toBeInTheDocument());
     expect(useCartStore.getState().lines).toHaveLength(0);
   });
@@ -195,5 +206,26 @@ describe('CheckoutPage — bill-out model gate', () => {
     await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
     expect(screen.queryByText(/set the motorcycle model/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /complete sale/i })).toBeEnabled();
+  });
+});
+
+describe('CheckoutPage — completion stock warnings (B6)', () => {
+  it('surfaces oversold products on the success dialog', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product({ id: 'p1', name: 'Plug', quantity: 9 }));
+    useCartStore.getState().setQty('p1', 12); // sell 12 of 9 on hand
+    useAuthStore.setState({ user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never });
+    const create = vi.fn().mockResolvedValue({ id: 's1', saleNumber: 'S-00300' });
+    const productRepo = {
+      watchAll: (cb: (v: unknown[]) => void) => {
+        cb([product({ id: 'p1', name: 'Plug', quantity: 9 })]);
+        return () => {};
+      },
+    } as unknown as Container['productRepo'];
+    harness({ create }, { productRepo });
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /complete sale/i }));
+    expect(await screen.findByText(/stock warnings/i)).toBeInTheDocument();
+    expect(screen.getByText(/Plug — sold 12, only 9 on hand/)).toBeInTheDocument();
   });
 });

@@ -71,3 +71,29 @@ export function cartHasBillableContent(
 ): boolean {
   return lines.length > 0 || cartLaborSubtotal(laborLines) > 0 || cartFeesTotal(feeLines) > 0;
 }
+
+export interface StockShortfall {
+  productId: string;
+  name: string;
+  requested: number;
+  onHand: number;
+}
+
+/** Completion-time stock warnings (mobile _checkInventoryAvailability
+ *  parity): per-product totals across option lines vs on-hand. Warn-only —
+ *  overselling is allowed and stock may go negative by design. */
+export function stockShortfalls(lines: CartLine[], products: Product[]): StockShortfall[] {
+  const onHand = new Map(products.map((p) => [p.id, p.quantity]));
+  const wanted = new Map<string, { name: string; requested: number }>();
+  for (const l of lines) {
+    const entry = wanted.get(l.productId) ?? { name: l.name, requested: 0 };
+    entry.requested += l.quantity;
+    wanted.set(l.productId, entry);
+  }
+  const out: StockShortfall[] = [];
+  for (const [productId, { name, requested }] of wanted) {
+    const available = onHand.get(productId) ?? 0;
+    if (requested > available) out.push({ productId, name, requested, onHand: available });
+  }
+  return out;
+}
