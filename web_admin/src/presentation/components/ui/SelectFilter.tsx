@@ -92,7 +92,7 @@ export function SelectFilter({
         <div
           role="listbox"
           aria-label={label}
-          className="absolute left-0 top-[calc(100%+6px)] z-40 min-w-full rounded-card border border-line bg-surface p-[5px] shadow-card"
+          className="absolute left-0 top-[calc(100%+6px)] z-40 max-h-64 min-w-full overflow-y-auto rounded-card border border-line bg-surface p-[5px] shadow-card"
         >
           <Option
             label={allLabel}

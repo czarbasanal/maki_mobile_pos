@@ -314,3 +314,36 @@ describe('JobOrdersPage — saved views + filters (reskin)', () => {
     expect(screen.getAllByRole('button', { name: /new job order/i }).length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('JobOrdersPage — open tickets beyond the preset cap stay reachable', () => {
+  it('the outside-range notice reveals old open tickets, and Hide puts them back', async () => {
+    const today = new Date();
+    const monthsAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today }),
+      jobOrder({ id: 'd2', name: 'JO-ANCIENT', createdAt: monthsAgo, isConverted: false }),
+    ]);
+    expect(screen.queryByText('JO-ANCIENT')).not.toBeInTheDocument();
+
+    // The 30-day preset is the widest offered; without this affordance an
+    // open ticket older than that could never be listed again.
+    await userEvent.click(screen.getByRole('button', { name: /show it/i }));
+    expect(screen.getByText('JO-ANCIENT')).toBeInTheDocument();
+    expect(screen.getByText('JO-TODAY')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Hide' }));
+    expect(screen.queryByText('JO-ANCIENT')).not.toBeInTheDocument();
+  });
+
+  it('changing the date preset resets the reveal', async () => {
+    const today = new Date();
+    const monthsAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+    harness([jobOrder({ id: 'd2', name: 'JO-ANCIENT', createdAt: monthsAgo, isConverted: false })]);
+
+    await userEvent.click(screen.getByRole('button', { name: /show it/i }));
+    expect(screen.getByText('JO-ANCIENT')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: '7 days' }));
+    expect(screen.queryByText('JO-ANCIENT')).not.toBeInTheDocument();
+  });
+});

@@ -66,6 +66,10 @@ export function JobOrdersPage() {
   const [view, setView] = useState<StatusView>('all');
   const [search, setSearch] = useState('');
   const [mechanicId, setMechanicId] = useState('');
+  // Escape hatch past the 30-day preset cap: a bike can sit for months, and
+  // an open ticket the date range hides would otherwise be unreachable from
+  // this list (the guide's custom range picker isn't built yet).
+  const [showOutsideOpen, setShowOutsideOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
 
   // Same collision-safe numbering as the POS save dialog: null while the
@@ -78,7 +82,8 @@ export function JobOrdersPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (jobOrders ?? []).filter((jo) => {
-      if (jo.createdAt < range.start || jo.createdAt > range.end) return false;
+      const outsideRange = jo.createdAt < range.start || jo.createdAt > range.end;
+      if (outsideRange && !(showOutsideOpen && !jo.isConverted)) return false;
       if (mechanicId && jo.mechanicId !== mechanicId) return false;
       if (!q) return true;
       return (
@@ -87,7 +92,7 @@ export function JobOrdersPage() {
         (jo.mechanicName ?? '').toLowerCase().includes(q)
       );
     });
-  }, [jobOrders, range, search, mechanicId]);
+  }, [jobOrders, range, search, mechanicId, showOutsideOpen]);
 
   const counts = useMemo(
     () => ({
@@ -305,6 +310,7 @@ export function JobOrdersPage() {
             value={preset}
             onChange={(p) => {
               setPreset(p);
+              setShowOutsideOpen(false);
               setPage(1);
             }}
           />
@@ -350,10 +356,29 @@ export function JobOrdersPage() {
         </span>
       </div>
 
-      {openOutsideRange > 0 ? (
+      {openOutsideRange > 0 && !showOutsideOpen ? (
         <p className="text-ctl-sm text-ink-2">
-          {openOutsideRange} open job order{openOutsideRange === 1 ? '' : 's'} outside this range —
-          widen the dates above to see {openOutsideRange === 1 ? 'it' : 'them'}.
+          {openOutsideRange} open job order{openOutsideRange === 1 ? '' : 's'} outside this range —{' '}
+          <button
+            type="button"
+            onClick={() => setShowOutsideOpen(true)}
+            className="font-medium text-accent-text hover:underline"
+          >
+            show {openOutsideRange === 1 ? 'it' : 'them'}
+          </button>
+          .
+        </p>
+      ) : null}
+      {showOutsideOpen ? (
+        <p className="text-ctl-sm text-ink-2">
+          Also showing open job orders from outside this date range.{' '}
+          <button
+            type="button"
+            onClick={() => setShowOutsideOpen(false)}
+            className="font-medium text-accent-text hover:underline"
+          >
+            Hide
+          </button>
         </p>
       ) : null}
 
@@ -388,7 +413,11 @@ export function JobOrdersPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 py-11 text-center">
-                <p className="text-cell text-ink-3">No job orders match these filters</p>
+                <p className="text-cell text-ink-3">
+                  {isFiltered
+                    ? 'No job orders match these filters'
+                    : 'No job orders in this date range'}
+                </p>
                 {isFiltered ? (
                   <button
                     type="button"
