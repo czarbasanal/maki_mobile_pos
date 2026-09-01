@@ -15,3 +15,4 @@ export * from './Mechanic';
 export * from './SellingOption';
 export * from './VoidRequest';
 export * from './PurchaseOrder';
+export * from './DrawerState';

@@ -22,6 +22,7 @@ import { FirestoreHrSettingsRepository } from '@/data/repositories/FirestoreHrSe
 import { FirestoreExpenseRepository } from '@/data/repositories/FirestoreExpenseRepository';
 import { FirestoreVoidRequestRepository } from '@/data/repositories/FirestoreVoidRequestRepository';
 import { FirestoreShopTimezoneRepository } from '@/data/repositories/FirestoreShopTimezoneRepository';
+import { FirestoreDrawerStateRepository } from '@/data/repositories/FirestoreDrawerStateRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -39,6 +40,7 @@ import type { HrSettingsRepository } from '@/domain/repositories/HrSettingsRepos
 import type { ExpenseRepository } from '@/domain/repositories/ExpenseRepository';
 import type { VoidRequestRepository } from '@/domain/repositories/VoidRequestRepository';
 import type { ShopTimezoneRepository } from '@/domain/repositories/ShopTimezoneRepository';
+import type { DrawerStateRepository } from '@/domain/repositories/DrawerStateRepository';
 import { setAmbientShopTimezone } from '@/domain/time/shopTime';
 import type { PurchaseOrderRepository } from '@/domain/repositories/PurchaseOrderRepository';
 import { FirestorePurchaseOrderRepository } from '@/data/repositories/FirestorePurchaseOrderRepository';
@@ -62,6 +64,7 @@ export interface Container {
   voidRequestRepo: VoidRequestRepository;
   purchaseOrderRepo: PurchaseOrderRepository;
   shopTimezoneRepo: ShopTimezoneRepository;
+  drawerStateRepo: DrawerStateRepository;
 }
 
 function buildDefaultContainer(): Container {
@@ -84,6 +87,7 @@ function buildDefaultContainer(): Container {
     voidRequestRepo: new FirestoreVoidRequestRepository(db),
     purchaseOrderRepo: new FirestorePurchaseOrderRepository(db),
     shopTimezoneRepo: new FirestoreShopTimezoneRepository(db),
+    drawerStateRepo: new FirestoreDrawerStateRepository(),
   };
 }
 
@@ -187,4 +191,8 @@ export function usePurchaseOrderRepo() {
 
 export function useShopTimezoneRepo(): ShopTimezoneRepository {
   return useContainer().shopTimezoneRepo;
+}
+
+export function useDrawerStateRepo(): DrawerStateRepository {
+  return useContainer().drawerStateRepo;
 }
