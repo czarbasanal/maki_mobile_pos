@@ -42,7 +42,11 @@ export function PosPage() {
   // must be complete and attributed before it can leave the register.
   const hasBillable = cartHasBillableContent(lines, laborLines, feeLines);
   const laborError = laborValidationError(laborLines, mechanicId);
-  const checkoutBlocked = !hasBillable || laborError !== null || previousDayUnsettled;
+  // Mobile's bill-out rule: a job order can't convert to a sale without its
+  // motorcycle model (job_order_bill_out.dart). Walk-ins are unaffected.
+  const billOutNeedsModel = jobOrderId !== null && !motorcycleModel;
+  const checkoutBlocked =
+    !hasBillable || laborError !== null || previousDayUnsettled || billOutNeedsModel;
 
   // Updating an existing Job Order keeps its current name (no renumber).
   // A brand-new one gets the next number for today, computed from the live
@@ -154,6 +158,11 @@ export function PosPage() {
       <div className="ml-auto max-w-sm space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-md">
         {laborError ? (
           <p className="text-bodySmall text-warning-dark">{laborError}</p>
+        ) : null}
+        {billOutNeedsModel ? (
+          <p className="text-bodySmall text-warning-dark">
+            Set the motorcycle model before billing out this Job Order.
+          </p>
         ) : null}
         <Link
           to={RoutePaths.checkout}

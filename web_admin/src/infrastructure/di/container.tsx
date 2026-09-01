@@ -24,6 +24,7 @@ import { FirestoreVoidRequestRepository } from '@/data/repositories/FirestoreVoi
 import { FirestoreShopTimezoneRepository } from '@/data/repositories/FirestoreShopTimezoneRepository';
 import { FirestoreDrawerStateRepository } from '@/data/repositories/FirestoreDrawerStateRepository';
 import { FirestoreShopFeeRepository } from '@/data/repositories/FirestoreShopFeeRepository';
+import { FirestoreMotorcycleModelRepository } from '@/data/repositories/FirestoreMotorcycleModelRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -43,6 +44,7 @@ import type { VoidRequestRepository } from '@/domain/repositories/VoidRequestRep
 import type { ShopTimezoneRepository } from '@/domain/repositories/ShopTimezoneRepository';
 import type { DrawerStateRepository } from '@/domain/repositories/DrawerStateRepository';
 import type { ShopFeeRepository } from '@/domain/repositories/ShopFeeRepository';
+import type { MotorcycleModelRepository } from '@/domain/repositories/MotorcycleModelRepository';
 import { setAmbientShopTimezone } from '@/domain/time/shopTime';
 import type { PurchaseOrderRepository } from '@/domain/repositories/PurchaseOrderRepository';
 import { FirestorePurchaseOrderRepository } from '@/data/repositories/FirestorePurchaseOrderRepository';
@@ -68,6 +70,7 @@ export interface Container {
   shopTimezoneRepo: ShopTimezoneRepository;
   drawerStateRepo: DrawerStateRepository;
   shopFeeRepo: ShopFeeRepository;
+  motorcycleModelRepo: MotorcycleModelRepository;
 }
 
 function buildDefaultContainer(): Container {
@@ -92,6 +95,7 @@ function buildDefaultContainer(): Container {
     shopTimezoneRepo: new FirestoreShopTimezoneRepository(db),
     drawerStateRepo: new FirestoreDrawerStateRepository(db),
     shopFeeRepo: new FirestoreShopFeeRepository(db),
+    motorcycleModelRepo: new FirestoreMotorcycleModelRepository(db),
   };
 }
 
@@ -203,4 +207,8 @@ export function useDrawerStateRepo(): DrawerStateRepository {
 
 export function useShopFeeRepo(): ShopFeeRepository {
   return useContainer().shopFeeRepo;
+}
+
+export function useMotorcycleModelRepo(): MotorcycleModelRepository {
+  return useContainer().motorcycleModelRepo;
 }

@@ -361,3 +361,13 @@ describe('fee lines (web entry)', () => {
     expect(store.getState().feeLines[0].description).toBe('Outside part');
   });
 });
+
+describe('setMotorcycleModel', () => {
+  it('sets and clears the model on the ticket', () => {
+    const store = createCartStore();
+    store.getState().setMotorcycleModel('Nmax 155');
+    expect(store.getState().motorcycleModel).toBe('Nmax 155');
+    store.getState().setMotorcycleModel(null);
+    expect(store.getState().motorcycleModel).toBeNull();
+  });
+});

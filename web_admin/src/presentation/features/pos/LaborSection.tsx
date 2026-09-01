@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { useActiveMechanics } from '@/presentation/hooks/useMechanics';
+import { MotorcycleModelPicker } from './MotorcycleModelPicker';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 
 export function LaborSection({ store }: { store: CartStore }) {
@@ -62,6 +63,8 @@ export function LaborSection({ store }: { store: CartStore }) {
           ))}
         </select>
       </label>
+
+      <MotorcycleModelPicker store={store} />
     </div>
   );
 }

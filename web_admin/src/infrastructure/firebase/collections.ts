@@ -37,6 +37,8 @@ export const FirestoreCollections = {
   // Admin-managed shop-fee catalog (edited in mobile Settings; web reads it
   // for the POS fee picker). Mirrors lib/core/constants/firestore_collections.dart.
   shopFees: 'shop_fees',
+  // Admin-managed + cashier-addable model list for the Job Order picker.
+  motorcycleModels: 'motorcycle_models',
 } as const;
 
 export const SettingsDocs = {

@@ -41,8 +41,14 @@ export function CheckoutPage() {
   }
 
   const laborError = laborValidationError(laborLines, mechanicId);
+  // Mobile's bill-out rule: no model, no conversion (walk-ins unaffected).
+  const billOutNeedsModel = jobOrderId !== null && !motorcycleModel;
   const canComplete =
-    pay.isValid && !checkout.isPending && laborError === null && !previousDayUnsettled;
+    pay.isValid &&
+    !checkout.isPending &&
+    laborError === null &&
+    !previousDayUnsettled &&
+    !billOutNeedsModel;
   const onComplete = async () => {
     try {
       const sale = await checkout.mutateAsync({
@@ -85,6 +91,12 @@ export function CheckoutPage() {
       {laborError ? (
         <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
           {laborError}
+        </p>
+      ) : null}
+
+      {billOutNeedsModel ? (
+        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+          Set the motorcycle model before billing out this Job Order.
         </p>
       ) : null}
 

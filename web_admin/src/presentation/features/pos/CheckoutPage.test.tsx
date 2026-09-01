@@ -75,7 +75,7 @@ describe('CheckoutPage', () => {
       feeLines: [{ id: 'f1', name: 'Convenience fee', amount: 50, description: null }],
       mechanicId: null,
       mechanicName: null,
-      motorcycleModel: null,
+      motorcycleModel: 'Nmax 155', // bill-out now requires a model (mobile parity)
       discountType: DiscountType.amount,
       createdBy: 'u1',
       createdByName: 'Cashier',
@@ -174,5 +174,26 @@ describe('CheckoutPage — money-safety gates', () => {
         screen.getByText("Sale blocked: the previous day's drawer must be closed first."),
       ).toBeInTheDocument(),
     );
+  });
+});
+
+describe('CheckoutPage — bill-out model gate', () => {
+  it('blocks completing a job-order bill-out with no motorcycle model', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    useCartStore.setState({ jobOrderId: 'jo1', jobOrderName: 'JO-090126-001', motorcycleModel: null });
+    harness({ create: vi.fn() });
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    expect(screen.getByText(/set the motorcycle model/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /complete sale/i })).toBeDisabled();
+  });
+
+  it('a walk-in sale needs no model', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    harness({ create: vi.fn() });
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    expect(screen.queryByText(/set the motorcycle model/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /complete sale/i })).toBeEnabled();
   });
 });

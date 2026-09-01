@@ -45,6 +45,7 @@ interface CartState {
   setLaborLine: (id: string, patch: Partial<Pick<LaborLine, 'description' | 'fee'>>) => void;
   removeLaborLine: (id: string) => void;
   setMechanic: (id: string | null, name: string | null) => void;
+  setMotorcycleModel: (model: string | null) => void;
   setNotes: (notes: string | null) => void;
   loadJobOrder: (jobOrder: JobOrder) => void;
   clear: () => void;
@@ -188,6 +189,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     removeLaborLine: (id) =>
       set((s) => ({ laborLines: s.laborLines.filter((l) => l.id !== id) })),
     setMechanic: (id, name) => set({ mechanicId: id, mechanicName: name }),
+    setMotorcycleModel: (model) => set({ motorcycleModel: model }),
     setNotes: (notes) => set({ notes }),
     loadJobOrder: (jobOrder) =>
       set({

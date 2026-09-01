@@ -67,11 +67,11 @@ describe('JobOrderEditPage', () => {
     await waitFor(() => expect(screen.getByText('Honda Click 125i')).toBeInTheDocument());
   });
 
-  it('says the motorcycle is unset rather than hiding the field', async () => {
-    // The web admin has no model picker yet, so an admin who sees nothing at
-    // all cannot tell "no bike recorded" from "this page does not show it".
+  it('offers the motorcycle model picker (web can set it now)', async () => {
     harness({ getById: vi.fn().mockResolvedValue(jobOrder({ motorcycleModel: null })) });
-    await waitFor(() => expect(screen.getByText(/Not set/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: /motorcycle/i })).toBeInTheDocument(),
+    );
   });
 
   it('blocks editing a converted (billed) job order', async () => {

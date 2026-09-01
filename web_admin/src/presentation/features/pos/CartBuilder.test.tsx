@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { CartBuilder } from './CartBuilder';
@@ -32,15 +33,25 @@ function harness(products: Product[]) {
       return () => {};
     },
   };
+  const motorcycleModelRepo: Partial<Container['motorcycleModelRepo']> = {
+    watchActive: (cb: (models: never[]) => void) => {
+      cb([]);
+      return () => {};
+    },
+  };
   const store = createCartStore();
+  const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const utils = render(
     <DiProvider
       override={{
         productRepo: productRepo as Container['productRepo'],
         mechanicRepo: mechanicRepo as Container['mechanicRepo'],
+        motorcycleModelRepo: motorcycleModelRepo as Container['motorcycleModelRepo'],
       }}
     >
-      <CartBuilder store={store} />
+      <QueryClientProvider client={qc}>
+        <CartBuilder store={store} />
+      </QueryClientProvider>
     </DiProvider>,
   );
   return { ...utils, store };
