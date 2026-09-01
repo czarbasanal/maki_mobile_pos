@@ -414,6 +414,12 @@ from JS.
 
 ## 8. Still to design
 
+**2026-09-01 — Phase 1 shipped.** Landed: the design tokens (§2, light + dark, CSS
+variables), the shared component library minus FilterBar / TableViews / Drawer / LineChart /
+MiniBar (§7 — those land with the first screen that needs them), the AppShell layout shell
+(§5.8 sidebar, §5.9 header), and the Dashboard screen (§5.1–§5.6, §5.10) rebuilt on the new
+primitives. Rollout order below is unchanged. Icons are Heroicons 24/outline, per user
+decision — not lucide, despite what earlier drafts of this repo's tooling notes implied.
 
 Not yet built, listed so the wiring can anticipate them: sale-detail drawer, POS register
 screen, inventory table with stock bars, reports (revenue over time, category mix),

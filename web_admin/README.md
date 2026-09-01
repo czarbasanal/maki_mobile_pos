@@ -56,6 +56,8 @@ src/
 - TanStack Query v5 + Zustand
 - Firebase JS SDK v11 (Auth + Firestore + Storage)
 - React Hook Form + Zod (forms)
-- TanStack Table (data tables)
-- lucide-react (icons)
+- Hand-rolled shared `DataTable` (`src/presentation/components/ui/DataTable.tsx`) for data tables — not TanStack Table
+- @heroicons/react (24/outline) for icons — not lucide-react
+- IBM Plex Sans / IBM Plex Mono, self-hosted via `@fontsource/*`
+- CSS-variable design tokens (`src/core/theme/theme.css`) with light/dark switching via `data-theme`, mapped into Tailwind semantically
 - Vitest + React Testing Library (tests)
