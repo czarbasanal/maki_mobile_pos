@@ -116,7 +116,11 @@ export class FirestoreSaleRepository implements SaleRepository {
     actorId: string,
     saleId?: string,
   ): Promise<Sale> {
-    if (input.items.length === 0) {
+    // Mobile parity (_validateSale): a labor-only or fee-only ticket is a
+    // legitimate sale — only a cart with NOTHING billable is refused.
+    const hasBillableExtras =
+      input.laborLines.some((l) => l.fee > 0) || input.feeLines.some((f) => f.amount > 0);
+    if (input.items.length === 0 && !hasBillableExtras) {
       throw new Error('Cannot complete a sale with an empty cart');
     }
     if (input.items.length > 200) {

@@ -416,3 +416,38 @@ describe('FirestoreSaleRepository.create — idempotent sale id (duplicate-submi
     expect(state.writes.some((w) => w.path.startsWith('sales/auto'))).toBe(true);
   });
 });
+
+describe('FirestoreSaleRepository.create — labor-only / fee-only sales', () => {
+  beforeEach(() => {
+    state.writes = [];
+    state.autoIdSeq = 0;
+    state.counterExists = false;
+    state.counterData = {};
+    state.jobOrderDoc = null;
+    state.existingSaleIds = [];
+  });
+
+  it('writes a labor-only sale (no product lines) instead of throwing', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = {
+      ...baseInput(),
+      items: [] as SaleItem[],
+      laborLines: [{ id: 'l1', description: 'Change oil', fee: 150 }],
+      mechanicId: 'm1',
+      mechanicName: 'Berto',
+    };
+    await repo.create(input, 'c1', 'ticket-labor-1');
+    const saleWrite = state.writes.find((w) => w.path === 'sales/ticket-labor-1');
+    expect(saleWrite).toBeDefined();
+    // No item docs and no stock decrements for a partless ticket.
+    expect(state.writes.some((w) => w.path.includes('/items/'))).toBe(false);
+    expect(state.writes.some((w) => w.path.startsWith('products/'))).toBe(false);
+  });
+
+  it('still refuses a cart with nothing billable at all', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const input = { ...baseInput(), items: [] as SaleItem[] };
+    await expect(repo.create(input, 'c1')).rejects.toThrow('empty cart');
+    expect(state.writes).toHaveLength(0);
+  });
+});

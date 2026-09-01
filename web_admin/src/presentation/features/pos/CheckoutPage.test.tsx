@@ -140,14 +140,39 @@ describe('CheckoutPage — money-safety gates', () => {
     expect(screen.getByRole('button', { name: /complete sale/i })).toBeDisabled();
   });
 
-  it('allows a labor-only sale (no product lines) instead of bouncing to /pos', () => {
+  it('completes a labor-only sale (no product lines) end to end', async () => {
     useCartStore.getState().clear();
     useCartStore.getState().addLaborLine();
     const laborId = useCartStore.getState().laborLines[0].id;
     useCartStore.getState().setLaborLine(laborId, { description: 'Change oil', fee: 150 });
     useCartStore.getState().setMechanic('m1', 'Berto');
-    harness({ create: vi.fn() });
+    useAuthStore.setState({ user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never });
+    const create = vi.fn().mockResolvedValue({ id: 's1', saleNumber: 'S-00200' });
+    harness({ create });
     expect(screen.queryByText(/POS PAGE/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /complete sale/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /complete sale/i }));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+    const [written] = create.mock.calls[0];
+    expect(written.items).toHaveLength(0);
+    expect(written.laborLines).toEqual([{ id: laborId, description: 'Change oil', fee: 150 }]);
+  });
+
+  it('remaps a server permission-denied to the drawer message', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    useAuthStore.setState({ user: { id: 'u1', email: 'a@b.co', displayName: 'Cashier', role: 'admin', isActive: true } as never });
+    const denied = Object.assign(new Error('Missing or insufficient permissions.'), {
+      code: 'permission-denied',
+    });
+    const create = vi.fn().mockRejectedValue(denied);
+    harness({ create });
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /complete sale/i }));
+    await waitFor(() =>
+      expect(
+        screen.getByText("Sale blocked: the previous day's drawer must be closed first."),
+      ).toBeInTheDocument(),
+    );
   });
 });
