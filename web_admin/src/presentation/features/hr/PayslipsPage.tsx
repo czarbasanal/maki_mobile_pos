@@ -56,11 +56,8 @@ export function PayslipsPage() {
   );
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <PageHeader
-        title="Payslips"
-        description="Generated payslips, most recent pay period first."
-      />
+    <div className="space-y-tk-xl">
+      <PageHeader />
 
       {error ? (
         <ErrorView title="Could not load payslips" message={error.message} />

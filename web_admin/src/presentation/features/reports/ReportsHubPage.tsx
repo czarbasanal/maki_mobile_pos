@@ -47,13 +47,7 @@ export function ReportsHubPage() {
   }, []);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Reports</h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Sales and profit over any date range.
-        </p>
-      </header>
+    <div className="space-y-tk-xl">
       <div className="grid grid-cols-1 gap-tk-lg sm:grid-cols-2">
         {visible.map((c) => (
           <Link

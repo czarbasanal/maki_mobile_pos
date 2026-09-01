@@ -230,19 +230,14 @@ export function ExpenseFormPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="flex items-start justify-between gap-tk-md">
-        <div className="space-y-tk-sm">
-          <Link
-            to={RoutePaths.expenses}
-            className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-          >
-            <ArrowLeftIcon className="h-3.5 w-3.5" /> Expenses
-          </Link>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            {isEditing ? 'Edit expense' : 'New expense'}
-          </h1>
-        </div>
+        <Link
+          to={RoutePaths.expenses}
+          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
+        >
+          <ArrowLeftIcon className="h-3.5 w-3.5" /> Expenses
+        </Link>
         {canDelete ? (
           <button
             type="button"

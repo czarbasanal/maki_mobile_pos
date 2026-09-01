@@ -119,12 +119,9 @@ export function CostCodeSettingsPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <div className="flex flex-wrap items-end justify-between gap-tk-md">
-        <PageHeader
-          title="Cost codes"
-          description="Encode product costs as letters so they're hidden from non-admins."
-        />
+        <PageHeader />
         <div className="flex gap-tk-sm">
           {editing ? (
             <>

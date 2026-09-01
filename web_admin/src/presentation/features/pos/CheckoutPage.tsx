@@ -60,11 +60,10 @@ export function CheckoutPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl space-y-tk-md px-tk-xl py-tk-lg">
+    <div className="mx-auto max-w-xl space-y-tk-md">
       <Link to={RoutePaths.pos} className="text-bodySmall text-light-text-secondary hover:text-light-text">
         ← Back to cart
       </Link>
-      <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Checkout</h1>
 
       {checkout.error ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">

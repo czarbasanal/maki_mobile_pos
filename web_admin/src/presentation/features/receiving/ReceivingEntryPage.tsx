@@ -48,7 +48,7 @@ export function ReceivingEntryPage() {
   };
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <div className="space-y-tk-lg">
       <header className="space-y-tk-xs">
         <Link
           to={RoutePaths.receiving}
@@ -56,14 +56,9 @@ export function ReceivingEntryPage() {
         >
           ← Back to receiving
         </Link>
-        <div className="flex flex-wrap items-baseline gap-tk-sm">
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            {entry.isResuming ? 'Resume receiving' : 'New receiving'}
-          </h1>
-          <span className="font-mono text-bodySmall text-light-text-secondary">
-            {entry.referenceNumber ?? '…'}
-          </span>
-        </div>
+        <span className="block font-mono text-bodySmall text-light-text-secondary">
+          {entry.referenceNumber ?? '…'}
+        </span>
       </header>
 
       {entry.error ? (

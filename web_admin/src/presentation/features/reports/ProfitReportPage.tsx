@@ -25,22 +25,14 @@ export function ProfitReportPage() {
   }, []);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <Link
-            to={RoutePaths.reports}
-            className="mb-tk-xs inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-          >
-            <ArrowLeftIcon className="h-3.5 w-3.5" /> Reports
-          </Link>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            Profit report
-          </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Cost of goods, gross profit, and margin for the selected range.
-          </p>
-        </div>
+        <Link
+          to={RoutePaths.reports}
+          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
+        >
+          <ArrowLeftIcon className="h-3.5 w-3.5" /> Reports
+        </Link>
         <DateRangePicker onChange={setRange} />
       </header>
 

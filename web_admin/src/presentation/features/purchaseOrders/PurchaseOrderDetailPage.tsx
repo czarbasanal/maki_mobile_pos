@@ -31,11 +31,7 @@ export function PurchaseOrderDetailPage() {
   if (error) return <ErrorView title="Could not load the purchase order" message={error.message} />;
   if (isLoading) return <LoadingView label="Loading purchase order…" />;
   if (!po) {
-    return (
-      <div className="px-tk-xl py-tk-lg">
-        <EmptyState title="Purchase order not found" description="It may have been deleted." />
-      </div>
-    );
+    return <EmptyState title="Purchase order not found" description="It may have been deleted." />;
   }
 
   const editable = isPendingPurchaseOrder(po);
@@ -56,13 +52,13 @@ export function PurchaseOrderDetailPage() {
   }
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <div className="space-y-tk-lg">
       <header className="space-y-tk-xs">
         <BackLink fallback={RoutePaths.purchaseOrders} />
         <div className="flex flex-wrap items-baseline justify-between gap-tk-md">
-          <h1 className="font-mono text-headingMedium font-semibold tracking-tight text-light-text">
+          <h2 className="font-mono text-headingMedium font-semibold tracking-tight text-light-text">
             {po.referenceNumber}
-          </h1>
+          </h2>
           <span className="text-bodySmall text-light-text-secondary">
             {po.items.length} parts · {po.totalQuantity} units ·{' '}
             <span className="font-semibold text-light-text">{formatMoney(po.totalCost)}</span>

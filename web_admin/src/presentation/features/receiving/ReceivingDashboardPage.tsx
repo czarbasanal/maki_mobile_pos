@@ -20,30 +20,22 @@ export function ReceivingDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Receiving</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Record incoming stock from suppliers, and track what you've received.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-tk-sm">
-          <Link
-            to={RoutePaths.receivingNew}
-            className="rounded-md bg-primary-dark px-tk-md py-[8px] text-bodySmall font-medium text-white hover:opacity-90"
-          >
-            + New Receiving
-          </Link>
-          <Link
-            to={RoutePaths.bulkReceiving}
-            className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
-          >
-            <ArrowUpTrayIcon className="h-4 w-4" />
-            Import CSV
-          </Link>
-        </div>
-      </header>
+    <div className="space-y-tk-xl">
+      <div className="flex flex-wrap items-center justify-end gap-tk-sm">
+        <Link
+          to={RoutePaths.receivingNew}
+          className="rounded-md bg-primary-dark px-tk-md py-[8px] text-bodySmall font-medium text-white hover:opacity-90"
+        >
+          + New Receiving
+        </Link>
+        <Link
+          to={RoutePaths.bulkReceiving}
+          className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text hover:bg-light-subtle"
+        >
+          <ArrowUpTrayIcon className="h-4 w-4" />
+          Import CSV
+        </Link>
+      </div>
 
       {summary.isLoading ? (
         <div className="h-32"><LoadingView label="Loading receiving…" /></div>

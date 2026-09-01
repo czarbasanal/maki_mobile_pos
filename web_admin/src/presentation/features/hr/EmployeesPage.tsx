@@ -178,9 +178,9 @@ export function EmployeesPage() {
   const listError = !dialogOpen ? update.error : null;
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <div className="flex flex-wrap items-end justify-between gap-tk-md">
-        <PageHeader title="Employees" description="Employees registered for payroll." />
+        <PageHeader />
         <button
           type="button"
           onClick={openAdd}

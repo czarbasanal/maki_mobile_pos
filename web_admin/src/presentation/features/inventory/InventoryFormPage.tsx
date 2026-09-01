@@ -598,24 +598,17 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   };
 
   return (
-    <div className={embedded ? 'space-y-tk-lg' : 'space-y-tk-xl px-tk-xl py-tk-lg'}>
-      <header className="space-y-tk-sm">
-        {/* The drawer already shows the product name and a close button, so
-            embedding these would say the same thing twice. */}
-        {!embedded ? (
-          <Link
-            to={RoutePaths.inventory}
-            className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-          >
-            <ArrowLeftIcon className="h-3.5 w-3.5" /> Inventory
-          </Link>
-        ) : null}
-        {!embedded ? (
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            {isEditing ? 'Edit product' : 'New product'}
-          </h1>
-        ) : null}
-      </header>
+    <div className={embedded ? 'space-y-tk-lg' : 'space-y-tk-xl'}>
+      {/* The drawer already shows the product name and a close button, so
+          embedding this would say the same thing twice. */}
+      {!embedded ? (
+        <Link
+          to={RoutePaths.inventory}
+          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
+        >
+          <ArrowLeftIcon className="h-3.5 w-3.5" /> Inventory
+        </Link>
+      ) : null}
 
       {mutationError && !errors.sku ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">

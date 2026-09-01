@@ -21,7 +21,7 @@ export function BulkReceivingPage() {
   }, []);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="space-y-tk-xs">
         <Link
           to={RoutePaths.receiving}
@@ -29,11 +29,6 @@ export function BulkReceivingPage() {
         >
           ← Back to receiving
         </Link>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Bulk receiving</h1>
-        <p className="text-bodySmall text-light-text-secondary">
-          Upload a CSV (sku, name, category, unit, cost, price, quantity, reorder_level). Existing SKUs
-          get stock added; a different cost spawns a variation; new SKUs (or "GENERATE") are created.
-        </p>
       </header>
 
       {loadError ? (

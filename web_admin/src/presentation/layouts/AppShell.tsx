@@ -1,9 +1,9 @@
 // Vercel-style admin shell. Sidebar on the left (brand + nav + account
-// block), content area takes the rest. Replaces AdminShell: adds a sticky
-// per-page HeaderBar (business date, register status, theme toggle, primary
-// action) for routes that opt in via a `handle` — legacy pages without one
-// render no shell header and no shell padding, and keep owning their own
-// headers untouched.
+// block), content area takes the rest. The sticky HeaderBar (business date,
+// register status, theme toggle, and — when the active route has a `handle`
+// — the page title/subtitle/primary action) renders on every view, sitting
+// outside the scroll container so it stays fixed. A route can mark its
+// handle `fullBleed` to own its own scroll/padding instead of the shell's.
 
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@/presentation/components/common/Sidebar';
@@ -19,9 +19,9 @@ export function AppShell() {
       <Sidebar />
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <OfflineBanner />
-        {chrome && <HeaderBar chrome={chrome} />}
+        <HeaderBar chrome={chrome} />
         <div className="flex-1 overflow-y-auto">
-          <div className={chrome ? 'px-7 pb-10 pt-[22px]' : undefined}>
+          <div className={chrome?.fullBleed ? undefined : 'px-7 pb-10 pt-[22px]'}>
             <Outlet />
           </div>
         </div>

@@ -95,12 +95,9 @@ export function ManageListsPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <div className="flex flex-wrap items-end justify-between gap-tk-md">
-        <PageHeader
-          title="Manage Lists"
-          description="Admin-managed dropdown values used across the app."
-        />
+        <PageHeader />
         <button
           type="button"
           onClick={openAdd}

@@ -90,12 +90,9 @@ export function MechanicsPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <div className="flex flex-wrap items-end justify-between gap-tk-md">
-        <PageHeader
-          title="Mechanics"
-          description="Mechanics available for the labor picker on service sales."
-        />
+        <PageHeader />
         <button
           type="button"
           onClick={openAdd}

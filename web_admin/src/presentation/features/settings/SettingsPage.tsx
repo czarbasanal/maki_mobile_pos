@@ -40,16 +40,7 @@ export function SettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          Settings
-        </h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Account, administration, and app information.
-        </p>
-      </header>
-
+    <div className="space-y-tk-xl">
       {pwSuccess || nameSuccess ? (
         <div className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
           {pwSuccess ? 'Password updated.' : 'Display name updated.'}

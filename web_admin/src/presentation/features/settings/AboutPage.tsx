@@ -19,8 +19,8 @@ export function AboutPage() {
   }, []);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <PageHeader title="About" description="Version and technical information." />
+    <div className="space-y-tk-xl">
+      <PageHeader />
 
       <section className="flex flex-col items-center gap-tk-md rounded-lg border border-light-hairline bg-light-card p-tk-xl text-center">
         <span className="grid h-16 w-16 place-items-center rounded-md border border-light-border text-[26px] font-semibold leading-none text-light-text">

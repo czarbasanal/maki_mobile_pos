@@ -75,19 +75,11 @@ export function DaySalesPage() {
   }
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          {/* Reached from the dashboard's Recent sales "View all", and by URL.
-              Back one entry, falling back to the dashboard on a deep link. */}
-          <BackLink fallback={RoutePaths.dashboard} />
-          <h1 className="mt-tk-xs text-headingMedium font-semibold tracking-tight text-light-text">
-            Day sales
-          </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            All sales for the selected day.
-          </p>
-        </div>
+        {/* Reached from the dashboard's Recent sales "View all", and by URL.
+            Back one entry, falling back to the dashboard on a deep link. */}
+        <BackLink fallback={RoutePaths.dashboard} />
         <div className="flex items-center gap-tk-sm">
           {dailyOnly ? null : (
             <button

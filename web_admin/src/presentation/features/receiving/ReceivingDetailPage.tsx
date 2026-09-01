@@ -26,32 +26,22 @@ export function ReceivingDetailPage() {
   const { data: allProducts } = useProducts();
 
   if (isLoading) {
-    return (
-      <div className="p-tk-xl">
-        <LoadingView label="Loading receiving…" />
-      </div>
-    );
+    return <LoadingView label="Loading receiving…" />;
   }
   if (error) {
-    return (
-      <div className="p-tk-xl">
-        <ErrorView title="Could not load receiving" message={(error as Error).message} />
-      </div>
-    );
+    return <ErrorView title="Could not load receiving" message={(error as Error).message} />;
   }
   if (!receiving) {
     return (
-      <div className="p-tk-xl">
-        <EmptyState
-          title="Receiving not found"
-          description="It may have been removed."
-          action={
-            <Link to={RoutePaths.receiving} className="text-light-text underline">
-              Back to receiving
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        title="Receiving not found"
+        description="It may have been removed."
+        action={
+          <Link to={RoutePaths.receiving} className="text-light-text underline">
+            Back to receiving
+          </Link>
+        }
+      />
     );
   }
 
@@ -64,13 +54,13 @@ export function ReceivingDetailPage() {
   };
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <div className="space-y-tk-lg">
       <header className="space-y-tk-xs">
         <BackLink fallback={RoutePaths.receiving} />
         <div className="flex items-center gap-tk-md">
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
+          <h2 className="text-headingMedium font-semibold tracking-tight text-light-text">
             {receiving.referenceNumber}
-          </h1>
+          </h2>
           <ReceivingStatusBadge status={receiving.status} />
         </div>
         <p className="text-bodySmall text-light-text-secondary">

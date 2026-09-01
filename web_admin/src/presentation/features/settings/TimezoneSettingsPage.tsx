@@ -73,12 +73,9 @@ export function TimezoneSettingsPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <div className="flex flex-wrap items-end justify-between gap-tk-md">
-        <PageHeader
-          title="Time & timezone"
-          description="The clock the shop runs on — business day rollover, sale numbers and report dates all follow it."
-        />
+        <PageHeader />
         {isAdmin ? (
         <button
           type="button"

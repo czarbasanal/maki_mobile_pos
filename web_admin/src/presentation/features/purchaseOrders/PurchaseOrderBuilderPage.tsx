@@ -92,13 +92,10 @@ export function PurchaseOrderBuilderPage() {
   if (isLoading) return <LoadingView label="Working out what to buy…" />;
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <div className="space-y-tk-lg">
       <header className="space-y-tk-xs">
         <BackLink fallback={RoutePaths.purchaseOrders} />
-        <div className="flex flex-wrap items-end justify-between gap-tk-md">
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            New purchase order
-          </h1>
+        <div className="flex flex-wrap items-end justify-end gap-tk-md">
           <div className="flex items-center gap-tk-sm text-bodySmall text-light-text-secondary">
             <label className="flex items-center gap-tk-xs">
               Movement window

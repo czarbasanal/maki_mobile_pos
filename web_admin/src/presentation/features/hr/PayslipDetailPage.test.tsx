@@ -182,8 +182,8 @@ describe('PayslipDetailPage', () => {
     const header = backLink.closest('header');
 
     expect(header).toBeInTheDocument();
-    const h1 = header?.querySelector('h1');
-    expect(h1).toHaveTextContent('Juan Dela Cruz');
+    const h2 = header?.querySelector('h2');
+    expect(h2).toHaveTextContent('Juan Dela Cruz');
     expect(backLink).toHaveAttribute('href', RoutePaths.hrPayslips);
   });
 });

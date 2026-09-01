@@ -22,22 +22,14 @@ export function ReceivingHistoryPage() {
   }, []);
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <div className="space-y-tk-lg">
       <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div className="space-y-tk-xs">
-          <Link
-            to={RoutePaths.receiving}
-            className="text-bodySmall text-light-text-secondary hover:underline"
-          >
-            ← Back to receiving
-          </Link>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            Receiving history
-          </h1>
-          <p className="text-bodySmall text-light-text-secondary">
-            Stock received from suppliers in the selected range.
-          </p>
-        </div>
+        <Link
+          to={RoutePaths.receiving}
+          className="text-bodySmall text-light-text-secondary hover:underline"
+        >
+          ← Back to receiving
+        </Link>
         <DateRangePicker onChange={setRange} />
       </header>
 

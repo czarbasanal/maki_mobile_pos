@@ -47,7 +47,7 @@ export function JobOrderEditPage() {
   if (isLoading) return <LoadingView label="Loading Job Order…" />;
   if (!jobOrder) {
     return (
-      <div className="px-tk-xl py-tk-lg">
+      <div>
         <EmptyState title="Job Order not found" description="It may have been deleted or already billed out." />
         <Link to={RoutePaths.jobOrders} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Job Orders</Link>
       </div>
@@ -55,7 +55,7 @@ export function JobOrderEditPage() {
   }
   if (jobOrder.isConverted) {
     return (
-      <div className="px-tk-xl py-tk-lg">
+      <div>
         <EmptyState title="Can't edit this Job Order" description="This Job Order is already billed out and can't be edited." />
         <Link to={RoutePaths.jobOrders} className="mt-tk-md inline-block text-bodySmall text-light-text-secondary hover:text-light-text">← Job Orders</Link>
       </div>
@@ -84,9 +84,8 @@ export function JobOrderEditPage() {
   };
 
   return (
-    <div className="space-y-tk-md px-tk-xl py-tk-lg">
+    <div className="space-y-tk-md">
       <Link to={RoutePaths.jobOrders} className="text-bodySmall text-light-text-secondary hover:text-light-text">← Job Orders</Link>
-      <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Edit Job Order</h1>
 
       {save.error ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">

@@ -37,16 +37,7 @@ export function PriceHistoryPage() {
           .slice(0, 10);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="space-y-tk-xs">
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          Price History
-        </h1>
-        <p className="text-bodySmall text-light-text-secondary">
-          Search a product to see its cost &amp; selling-price changes over time.
-        </p>
-      </header>
-
+    <div className="space-y-tk-xl">
       <div className="max-w-md">
         <input
           type="search"

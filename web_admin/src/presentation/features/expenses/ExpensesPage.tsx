@@ -83,14 +83,8 @@ export function ExpensesPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Expenses</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Shop expenses and receipts.
-          </p>
-        </div>
+    <div className="space-y-tk-xl">
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => navigate(RoutePaths.expenseAdd)}
@@ -98,7 +92,7 @@ export function ExpensesPage() {
         >
           <PlusIcon className="h-3.5 w-3.5" /> Add expense
         </button>
-      </header>
+      </div>
 
       <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-3">
         <SummaryCard title="Today" value={formatMoney(totals.today)} />

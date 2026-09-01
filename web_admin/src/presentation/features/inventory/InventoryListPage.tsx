@@ -107,15 +107,9 @@ export function InventoryListPage() {
   const toggleStock = (s: StockStatus) => setStock((cur) => (cur === s ? 'all' : s));
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Inventory</h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Products, stock levels, and pricing.
-          </p>
-        </div>
-        {canAddProduct ? (
+    <div className="space-y-tk-xl">
+      {canAddProduct ? (
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={() => navigate(RoutePaths.productAdd)}
@@ -123,8 +117,8 @@ export function InventoryListPage() {
           >
             <PlusIcon className="h-3.5 w-3.5" /> Add product
           </button>
-        ) : null}
-      </header>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-3">
         <CountCard label="In stock" value={counts.inStock} active={stock === StockStatus.inStock} tone="green" onClick={() => toggleStock(StockStatus.inStock)} />

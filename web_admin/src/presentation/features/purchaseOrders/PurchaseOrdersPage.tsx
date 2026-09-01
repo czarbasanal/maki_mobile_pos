@@ -50,24 +50,15 @@ export function PurchaseOrdersPage() {
   const rows = byTab[tab];
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            Purchase Orders
-          </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            One list per buying trip. Where each part is bought is recorded on
-            the line, as you go.
-          </p>
-        </div>
+    <div className="space-y-tk-lg">
+      <div className="flex justify-end">
         <Link
           to={RoutePaths.purchaseOrderNew}
           className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
         >
           New purchase order
         </Link>
-      </header>
+      </div>
 
       <div className="flex gap-tk-lg border-b border-light-hairline">
         {TABS.map((t) => (

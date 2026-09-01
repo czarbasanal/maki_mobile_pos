@@ -71,19 +71,15 @@ export function PayslipDetailPage() {
   if (isLoading) return <LoadingView label="Loading payslip…" />;
   if (!payslip) {
     return (
-      <div className="space-y-tk-lg px-tk-xl py-tk-lg">
-        <PageHeader
-          title="Payslip"
-          backTo={RoutePaths.hrPayslips}
-          backLabel="Back to payslips"
-        />
+      <div className="space-y-tk-lg">
+        <PageHeader backTo={RoutePaths.hrPayslips} backLabel="Back to payslips" />
         <EmptyState title="Payslip not found" description="It may have been deleted." />
       </div>
     );
   }
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
+    <div className="space-y-tk-lg">
       <div className="flex flex-wrap items-end justify-between gap-tk-md">
         <PageHeader
           title={payslip.employeeName}

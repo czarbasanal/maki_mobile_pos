@@ -97,12 +97,9 @@ export function HrSettingsPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <div className="flex flex-wrap items-end justify-between gap-tk-md">
-        <PageHeader
-          title="HR Settings"
-          description="Week start day and holiday pay percentages used when computing payslips."
-        />
+        <PageHeader />
         <button
           type="button"
           onClick={onSave}

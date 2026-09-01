@@ -140,7 +140,7 @@ export function SupplierFormPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="space-y-tk-sm">
         <Link
           to={RoutePaths.suppliers}
@@ -149,9 +149,6 @@ export function SupplierFormPage() {
           <ArrowLeftIcon className="h-3.5 w-3.5" />
           Suppliers
         </Link>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          {isEditing ? 'Edit supplier' : 'New supplier'}
-        </h1>
       </header>
 
       {mutationError && !errors.name ? (

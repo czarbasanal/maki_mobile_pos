@@ -101,10 +101,11 @@ describe('HeaderBar (via AppShell)', () => {
     expect(screen.getByText('Register closed')).toBeInTheDocument();
   });
 
-  it('renders no header at all for a route without a handle', () => {
+  it('renders the header with no title block for a route without a handle', () => {
     const { container } = harness(undefined);
-    expect(container.querySelector('header')).not.toBeInTheDocument();
-    expect(screen.queryByText('Register open')).not.toBeInTheDocument();
+    expect(container.querySelector('header')).toBeInTheDocument();
+    expect(container.querySelector('header h1')).not.toBeInTheDocument();
+    expect(screen.getByText('Register open')).toBeInTheDocument();
   });
 
   describe('theme toggle', () => {

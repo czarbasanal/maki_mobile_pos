@@ -183,7 +183,7 @@ export function UserFormPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="space-y-tk-sm">
         <Link
           to={RoutePaths.users}
@@ -192,9 +192,6 @@ export function UserFormPage() {
           <ArrowLeftIcon className="h-3.5 w-3.5" />
           Users
         </Link>
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          {isEditing ? 'Edit user' : 'New user'}
-        </h1>
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-tk-lg" noValidate>

@@ -81,9 +81,8 @@ export function JobOrdersPage() {
   };
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="space-y-tk-sm">
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">Job Orders</h1>
         <DateRangePicker onChange={setRange} defaultPreset="today" />
         {openOutsideRange > 0 ? (
           <p className="text-bodySmall text-light-text-secondary">
@@ -92,9 +91,6 @@ export function JobOrdersPage() {
             dates above to see {openOutsideRange === 1 ? 'it' : 'them'}.
           </p>
         ) : null}
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-          Service tickets — resume an open one into the POS, or open a billed one to view its sale.
-        </p>
       </header>
 
       {deleteJobOrder.error ? (

@@ -40,17 +40,7 @@ export function VoidRequestsPage() {
   const resolved = requests.filter((r) => r.status !== 'pending');
 
   return (
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg">
-      <header className="space-y-tk-xs">
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-          Void Requests
-        </h1>
-        <p className="text-bodySmall text-light-text-secondary">
-          Approving voids the sale and puts its stock back. Rejecting leaves the
-          sale as it stands and tells the cashier why.
-        </p>
-      </header>
-
+    <div className="space-y-tk-lg">
       <section className="space-y-tk-sm">
         <h2 className="text-bodyMedium font-semibold text-light-text">
           Waiting {pending.length > 0 ? `(${pending.length})` : ''}

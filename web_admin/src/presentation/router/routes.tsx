@@ -99,62 +99,321 @@ export const router = createBrowserRouter(
             primaryAction: { label: 'New sale', to: RoutePaths.pos },
           } satisfies PageChrome,
         },
-        { path: RoutePaths.pos, element: <PosPage /> },
-        { path: RoutePaths.checkout, element: <CheckoutPage /> },
-        { path: RoutePaths.jobOrders, element: <JobOrdersPage /> },
-        { path: RoutePaths.jobOrderEdit, element: <JobOrderEditPage /> },
-        { path: RoutePaths.voidRequests, element: <VoidRequestsPage /> },
+        {
+          path: RoutePaths.pos,
+          element: <PosPage />,
+          handle: { title: 'POS' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.checkout,
+          element: <CheckoutPage />,
+          handle: { title: 'Checkout' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.jobOrders,
+          element: <JobOrdersPage />,
+          handle: {
+            title: 'Job Orders',
+            subtitle:
+              'Service tickets — resume an open one into the POS, or open a billed one to view its sale.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.jobOrderEdit,
+          element: <JobOrderEditPage />,
+          handle: { title: 'Edit Job Order' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.voidRequests,
+          element: <VoidRequestsPage />,
+          handle: {
+            title: 'Void Requests',
+            subtitle:
+              'Approving voids the sale and puts its stock back. Rejecting leaves the sale as it stands and tells the cashier why.',
+          } satisfies PageChrome,
+        },
         // The product view is a drawer rendered OVER the list, so it is a
         // child route: the list stays mounted and keeps its scroll, filters
-        // and page. Static siblings like /inventory/add outrank ':id'.
+        // and page. Static siblings like /inventory/add outrank ':id'. The
+        // drawer children have no handle of their own — usePageChrome
+        // resolves the deepest handle, so the list's shows through.
         {
           path: RoutePaths.inventory,
           element: <InventoryListPage />,
+          handle: {
+            title: 'Inventory',
+            subtitle: 'Products, stock levels, and pricing.',
+          } satisfies PageChrome,
           children: [
             { path: ':id', element: <ProductDrawer /> },
             { path: ':id/edit', element: <ProductEditDrawer /> },
           ],
         },
-        { path: RoutePaths.productAdd, element: <InventoryFormPage /> },
-        { path: RoutePaths.priceHistory, element: <PriceHistoryPage /> },
-        { path: RoutePaths.purchaseOrders, element: <PurchaseOrdersPage /> },
+        {
+          path: RoutePaths.productAdd,
+          element: <InventoryFormPage />,
+          handle: { title: 'New product' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.priceHistory,
+          element: <PriceHistoryPage />,
+          handle: {
+            title: 'Price History',
+            subtitle: "Search a product to see its cost & selling-price changes over time.",
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.purchaseOrders,
+          element: <PurchaseOrdersPage />,
+          handle: {
+            title: 'Purchase Orders',
+            subtitle:
+              'One list per buying trip. Where each part is bought is recorded on the line, as you go.',
+          } satisfies PageChrome,
+        },
         // Static sibling outranks ':id'.
-        { path: RoutePaths.purchaseOrderNew, element: <PurchaseOrderBuilderPage /> },
-        { path: RoutePaths.purchaseOrderDetail, element: <PurchaseOrderDetailPage /> },
-        { path: RoutePaths.receiving, element: <ReceivingDashboardPage /> },
-        { path: RoutePaths.receivingNew, element: <ReceivingEntryPage /> },
-        { path: RoutePaths.receivingNewDraft, element: <ReceivingEntryPage /> },
-        { path: RoutePaths.receivingHistory, element: <ReceivingHistoryPage /> },
-        { path: RoutePaths.bulkReceiving, element: <BulkReceivingPage /> },
-        { path: RoutePaths.receivingDetail, element: <ReceivingDetailPage /> },
-        { path: RoutePaths.suppliers, element: <SuppliersListPage /> },
-        { path: RoutePaths.supplierAdd, element: <SupplierFormPage /> },
-        { path: RoutePaths.supplierEdit, element: <SupplierFormPage /> },
-        { path: RoutePaths.expenses, element: <ExpensesPage /> },
-        { path: RoutePaths.expenseAdd, element: <ExpenseFormPage /> },
-        { path: RoutePaths.expenseEdit, element: <ExpenseFormPage /> },
-        { path: RoutePaths.reports, element: <ReportsHubPage /> },
-        { path: RoutePaths.salesReport, element: <SalesReportPage /> },
-        { path: RoutePaths.daySales, element: <DaySalesPage /> },
-        { path: RoutePaths.profitReport, element: <ProfitReportPage /> },
-        { path: RoutePaths.laborReport, element: <LaborReportPage /> },
-        { path: RoutePaths.priceChangeReport, element: <PriceChangeReportPage /> },
-        { path: RoutePaths.saleDetail, element: <SaleDetailPage /> },
-        { path: RoutePaths.users, element: <UsersListPage /> },
-        { path: RoutePaths.userAdd, element: <UserFormPage /> },
-        { path: RoutePaths.userEdit, element: <UserFormPage /> },
-        { path: RoutePaths.userLogs, element: <ActivityLogsPage /> },
-        { path: RoutePaths.settings, element: <SettingsPage /> },
-        { path: RoutePaths.costCodeSettings, element: <CostCodeSettingsPage /> },
-        { path: RoutePaths.timezoneSettings, element: <TimezoneSettingsPage /> },
-        { path: RoutePaths.manageLists, element: <ManageListsPage /> },
-        { path: RoutePaths.mechanics, element: <MechanicsPage /> },
-        { path: RoutePaths.about, element: <AboutPage /> },
-        { path: RoutePaths.hrEmployees, element: <EmployeesPage /> },
-        { path: RoutePaths.hrPayroll, element: <PayrollPage /> },
-        { path: RoutePaths.hrPayslips, element: <PayslipsPage /> },
-        { path: RoutePaths.hrPayslipDetail, element: <PayslipDetailPage /> },
-        { path: RoutePaths.hrSettings, element: <HrSettingsPage /> },
+        {
+          path: RoutePaths.purchaseOrderNew,
+          element: <PurchaseOrderBuilderPage />,
+          handle: { title: 'New purchase order' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.purchaseOrderDetail,
+          element: <PurchaseOrderDetailPage />,
+          handle: { title: 'Purchase order' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.receiving,
+          element: <ReceivingDashboardPage />,
+          handle: {
+            title: 'Receiving',
+            subtitle: "Record incoming stock from suppliers, and track what you've received.",
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.receivingNew,
+          element: <ReceivingEntryPage />,
+          handle: { title: 'New receiving' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.receivingNewDraft,
+          element: <ReceivingEntryPage />,
+          handle: { title: 'Resume receiving' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.receivingHistory,
+          element: <ReceivingHistoryPage />,
+          handle: {
+            title: 'Receiving history',
+            subtitle: 'Stock received from suppliers in the selected range.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.bulkReceiving,
+          element: <BulkReceivingPage />,
+          handle: {
+            title: 'Bulk receiving',
+            subtitle:
+              'Upload a CSV (sku, name, category, unit, cost, price, quantity, reorder_level). Existing SKUs get stock added; a different cost spawns a variation; new SKUs (or "GENERATE") are created.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.receivingDetail,
+          element: <ReceivingDetailPage />,
+          handle: { title: 'Receiving detail' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.suppliers,
+          element: <SuppliersListPage />,
+          handle: {
+            title: 'Suppliers',
+            subtitle: 'Vendor directory used by inventory and receiving.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.supplierAdd,
+          element: <SupplierFormPage />,
+          handle: { title: 'New supplier' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.supplierEdit,
+          element: <SupplierFormPage />,
+          handle: { title: 'Edit supplier' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.expenses,
+          element: <ExpensesPage />,
+          handle: { title: 'Expenses', subtitle: 'Shop expenses and receipts.' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.expenseAdd,
+          element: <ExpenseFormPage />,
+          handle: { title: 'New expense' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.expenseEdit,
+          element: <ExpenseFormPage />,
+          handle: { title: 'Edit expense' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.reports,
+          element: <ReportsHubPage />,
+          handle: {
+            title: 'Reports',
+            subtitle: 'Sales and profit over any date range.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.salesReport,
+          element: <SalesReportPage />,
+          handle: {
+            title: 'Sales report',
+            subtitle: 'Sales and payment breakdown for the selected range.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.daySales,
+          element: <DaySalesPage />,
+          handle: { title: 'Day sales', subtitle: 'All sales for the selected day.' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.profitReport,
+          element: <ProfitReportPage />,
+          handle: {
+            title: 'Profit report',
+            subtitle: 'Cost of goods, gross profit, and margin for the selected range.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.laborReport,
+          element: <LaborReportPage />,
+          handle: {
+            title: 'Labor report',
+            subtitle: 'Service revenue and per-mechanic breakdown for the selected range.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.priceChangeReport,
+          element: <PriceChangeReportPage />,
+          handle: {
+            title: 'Price changes',
+            subtitle: 'Price/cost changes across products for the selected range.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.saleDetail,
+          element: <SaleDetailPage />,
+          handle: { title: 'Sale detail' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.users,
+          element: <UsersListPage />,
+          handle: {
+            title: 'Users',
+            subtitle: 'Add, edit, and manage admin users and staff accounts.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.userAdd,
+          element: <UserFormPage />,
+          handle: { title: 'New user' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.userEdit,
+          element: <UserFormPage />,
+          handle: { title: 'Edit user' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.userLogs,
+          element: <ActivityLogsPage />,
+          handle: {
+            title: 'Activity logs',
+            subtitle: 'Audit trail of user actions across both web and mobile clients.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.settings,
+          element: <SettingsPage />,
+          handle: {
+            title: 'Settings',
+            subtitle: 'Account, administration, and app information.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.costCodeSettings,
+          element: <CostCodeSettingsPage />,
+          handle: {
+            title: 'Cost codes',
+            subtitle: "Encode product costs as letters so they're hidden from non-admins.",
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.timezoneSettings,
+          element: <TimezoneSettingsPage />,
+          handle: {
+            title: 'Time & timezone',
+            subtitle:
+              'The clock the shop runs on — business day rollover, sale numbers and report dates all follow it.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.manageLists,
+          element: <ManageListsPage />,
+          handle: {
+            title: 'Manage Lists',
+            subtitle: 'Admin-managed dropdown values used across the app.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.mechanics,
+          element: <MechanicsPage />,
+          handle: {
+            title: 'Mechanics',
+            subtitle: 'Mechanics available for the labor picker on service sales.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.about,
+          element: <AboutPage />,
+          handle: { title: 'About', subtitle: 'Version and technical information.' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.hrEmployees,
+          element: <EmployeesPage />,
+          handle: {
+            title: 'Employees',
+            subtitle: 'Employees registered for payroll.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.hrPayroll,
+          element: <PayrollPage />,
+          handle: {
+            title: 'Payroll',
+            subtitle: "Generate a payslip for one employee's pay period.",
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.hrPayslips,
+          element: <PayslipsPage />,
+          handle: {
+            title: 'Payslips',
+            subtitle: 'Generated payslips, most recent pay period first.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.hrPayslipDetail,
+          element: <PayslipDetailPage />,
+          handle: { title: 'Payslip' } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.hrSettings,
+          element: <HrSettingsPage />,
+          handle: {
+            title: 'HR Settings',
+            subtitle: 'Week start day and holiday pay percentages used when computing payslips.',
+          } satisfies PageChrome,
+        },
       ],
     },
     // Bare /hr (the sidebar group's header link) lands on Employees.

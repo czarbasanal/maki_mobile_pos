@@ -187,11 +187,8 @@ function PayrollForm({ employees, settings }: { employees: Employee[]; settings:
   const canSaveDefaults = !!employee && draft.isValid && !saveDefaults.isPending;
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <PageHeader
-        title="Payroll"
-        description="Generate a payslip for one employee's pay period."
-      />
+    <div className="space-y-tk-xl">
+      <PageHeader />
 
       {generate.error ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">

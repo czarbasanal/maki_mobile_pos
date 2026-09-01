@@ -87,16 +87,8 @@ export function UsersListPage() {
   if (error) return <ErrorView title="Could not load users" message={error.message} />;
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            Users
-          </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Add, edit, and manage admin users and staff accounts.
-          </p>
-        </div>
+    <div className="space-y-tk-xl">
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => navigate(RoutePaths.userAdd)}
@@ -105,7 +97,7 @@ export function UsersListPage() {
           <PlusIcon className="h-3.5 w-3.5" />
           Add user
         </button>
-      </header>
+      </div>
 
       <div className="grid grid-cols-2 gap-tk-md sm:grid-cols-4">
         <SummaryTile label="Total active" value={summary.total} active={roleFilter === null} onClick={() => setRoleFilter(null)} />

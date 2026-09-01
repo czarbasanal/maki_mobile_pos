@@ -63,25 +63,19 @@ export function SaleDetailPage() {
     document.title = 'Sale detail · MAKI POS Admin';
   }, []);
 
-  if (isLoading) return <div className="p-tk-xl"><LoadingView label="Loading sale…" /></div>;
+  if (isLoading) return <LoadingView label="Loading sale…" />;
   if (error) {
-    return (
-      <div className="p-tk-xl">
-        <ErrorView title="Could not load sale" message={(error as Error).message} />
-      </div>
-    );
+    return <ErrorView title="Could not load sale" message={(error as Error).message} />;
   }
   if (!sale) {
     return (
-      <div className="p-tk-xl">
-        <EmptyState
-          title="Sale not found"
-          description="It may have been removed."
-          action={
-            <BackLink fallback={RoutePaths.salesReport} className="text-light-text underline" />
-          }
-        />
-      </div>
+      <EmptyState
+        title="Sale not found"
+        description="It may have been removed."
+        action={
+          <BackLink fallback={RoutePaths.salesReport} className="text-light-text underline" />
+        }
+      />
     );
   }
 
@@ -91,11 +85,11 @@ export function SaleDetailPage() {
 
   return (
     <>
-    <div className="space-y-tk-lg px-tk-xl py-tk-lg print:hidden">
+    <div className="space-y-tk-lg print:hidden">
       <header className="space-y-tk-xs">
         <BackLink fallback={RoutePaths.salesReport} />
         <div className="flex items-center gap-tk-md">
-          <h1
+          <h2
             className={cn(
               'text-headingMedium font-semibold tracking-tight',
               // Struck through, not just badged: the number and the money are
@@ -104,7 +98,7 @@ export function SaleDetailPage() {
             )}
           >
             {sale.saleNumber}
-          </h1>
+          </h2>
           {sale.voidedAt ? (
             <span className="rounded-full bg-error-light px-tk-sm py-[2px] text-[11px] font-semibold uppercase tracking-wider text-error-dark">
               Voided

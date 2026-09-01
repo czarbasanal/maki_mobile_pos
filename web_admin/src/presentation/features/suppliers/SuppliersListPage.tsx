@@ -54,16 +54,8 @@ export function SuppliersListPage() {
   if (error) return <ErrorView title="Could not load suppliers" message={error.message} />;
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <div>
-          <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-            Suppliers
-          </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-            Vendor directory used by inventory and receiving.
-          </p>
-        </div>
+    <div className="space-y-tk-xl">
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => navigate(RoutePaths.supplierAdd)}
@@ -72,7 +64,7 @@ export function SuppliersListPage() {
           <PlusIcon className="h-3.5 w-3.5" />
           Add supplier
         </button>
-      </header>
+      </div>
 
       <div className="flex flex-wrap items-center gap-tk-sm">
         <div className="relative flex-1 max-w-md">

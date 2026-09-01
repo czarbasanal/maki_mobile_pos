@@ -108,10 +108,9 @@ export function PosPage() {
   };
 
   return (
-    <div className="space-y-tk-md px-tk-xl py-tk-lg">
-      <div className="flex items-center justify-between">
-        <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">POS</h1>
-        {hasTicket ? (
+    <div className="space-y-tk-md">
+      {hasTicket ? (
+        <div className="flex justify-end">
           <button
             type="button"
             aria-label="Reset sale"
@@ -121,8 +120,8 @@ export function PosPage() {
           >
             <ArrowPathIcon className="h-4 w-4" />
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {done ? (
         <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">

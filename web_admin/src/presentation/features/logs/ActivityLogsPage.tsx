@@ -229,18 +229,10 @@ export function ActivityLogsPage() {
   }, [pagedLogs]);
 
   return (
-    <div className="space-y-tk-xl px-tk-xl py-tk-lg">
+    <div className="space-y-tk-xl">
       <header className="space-y-tk-md">
-        <div className="flex flex-wrap items-end justify-between gap-tk-md">
-          <div>
-            <h1 className="text-headingMedium font-semibold tracking-tight text-light-text">
-              Activity logs
-            </h1>
-            <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-              Audit trail of user actions across both web and mobile clients.
-            </p>
-          </div>
-          {searched && logs ? (
+        {searched && logs ? (
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={onRefresh}
@@ -248,8 +240,8 @@ export function ActivityLogsPage() {
             >
               Refresh
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
         <ActivityLogFilterBar
           types={types}
           onTypes={(next) => {
@@ -297,7 +289,7 @@ export function ActivityLogsPage() {
           </CappedNotice>
           {grouped.map((group) => (
             <section key={dayKey(group.date)} className="space-y-tk-sm">
-              <h2 className="sticky top-0 z-[1] -mx-tk-xl border-b border-light-hairline bg-light-background/80 px-tk-xl py-tk-xs text-[11px] font-semibold uppercase tracking-wider text-light-text-secondary backdrop-blur">
+              <h2 className="sticky top-0 z-[1] -mx-7 border-b border-light-hairline bg-light-background/80 px-7 py-tk-xs text-[11px] font-semibold uppercase tracking-wider text-light-text-secondary backdrop-blur">
                 {dateLabel(group.date)}
               </h2>
               <ul className="overflow-hidden rounded-lg border border-light-hairline bg-light-card divide-y divide-light-hairline">
