@@ -31,6 +31,7 @@ const state = vi.hoisted(() => ({
   counterExists: false,
   counterData: {} as Record<string, number>,
   jobOrderDoc: null as null | { exists: boolean; isConverted?: boolean },
+  existingSaleIds: [] as string[],
 }));
 
 function makeRef(path: string): FakeRef {
@@ -89,6 +90,9 @@ vi.mock('firebase/firestore', () => ({
   runTransaction: vi.fn(async (_db: unknown, cb: (tx: unknown) => Promise<void>) => {
     const tx = {
       get: vi.fn(async (ref: FakeRef) => {
+        if (state.existingSaleIds.some((id) => ref.path === `sales/${id}`)) {
+          return { exists: () => true, data: () => ({}) };
+        }
         if (ref.path === 'settings/sale_counters') {
           return { exists: () => state.counterExists, data: () => state.counterData };
         }
@@ -377,5 +381,38 @@ describe('FirestoreSaleRepository.create — item write shape (selling options)'
       .map((w) => ((w.data as Record<string, unknown>).quantity as { __increment: number }).__increment)
       .sort((a, b) => a - b);
     expect(decrements).toEqual([-6, -3].sort((a, b) => a - b));
+  });
+});
+
+describe('FirestoreSaleRepository.create — idempotent sale id (duplicate-submit guard)', () => {
+  beforeEach(() => {
+    state.writes = [];
+    state.autoIdSeq = 0;
+    state.counterExists = false;
+    state.counterData = {};
+    state.jobOrderDoc = null;
+    state.existingSaleIds = [];
+  });
+
+  it('uses the caller-provided checkout id as the sale doc id', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    await repo.create(baseInput(), 'c1', 'ticket-uuid-1');
+    const saleWrite = state.writes.find((w) => w.path === 'sales/ticket-uuid-1');
+    expect(saleWrite).toBeDefined();
+    expect(state.writes.some((w) => w.path.startsWith('sales/ticket-uuid-1/items/'))).toBe(true);
+  });
+
+  it('a retry against an already-recorded id writes NOTHING and returns the recorded sale', async () => {
+    state.existingSaleIds = ['ticket-uuid-1'];
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    const sale = await repo.create(baseInput(), 'c1', 'ticket-uuid-1');
+    expect(state.writes).toHaveLength(0); // no sale, no items, no counter, no stock decrement
+    expect(sale.saleNumber).toBe('SALE-STUB'); // reloaded, not re-created
+  });
+
+  it('without a checkout id the auto-id path still works', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    await repo.create(baseInput(), 'c1');
+    expect(state.writes.some((w) => w.path.startsWith('sales/auto'))).toBe(true);
   });
 });

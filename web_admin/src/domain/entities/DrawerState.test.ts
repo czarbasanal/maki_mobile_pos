@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { businessDayFor, formatDayInt, isRegisterOpen } from './DrawerState';
+import { businessDayFor, formatDayInt, isPreviousDayUnsettled, isRegisterOpen } from './DrawerState';
 import { instantOf } from '../time/shopTime';
 
 describe('isRegisterOpen', () => {
@@ -27,5 +27,22 @@ describe('businessDayFor', () => {
 describe('formatDayInt', () => {
   it('renders "dddd, MMM D, YYYY"', () => {
     expect(formatDayInt(20260831)).toBe('Monday, Aug 31, 2026');
+  });
+});
+
+describe('isPreviousDayUnsettled (sale gate)', () => {
+  const pastMidnight = instantOf(new Date(Date.UTC(2026, 8, 1, 9, 0))); // Sep 1, 9AM shop wall
+  it('true when an earlier day has sales but no closing', () => {
+    expect(isPreviousDayUnsettled({ lastSaleDay: 20260831, lastClosedDay: 20260830 }, pastMidnight)).toBe(true);
+  });
+  it('false when the earlier day was closed', () => {
+    expect(isPreviousDayUnsettled({ lastSaleDay: 20260831, lastClosedDay: 20260831 }, pastMidnight)).toBe(false);
+  });
+  it("false while today's own drawer is simply open", () => {
+    expect(isPreviousDayUnsettled({ lastSaleDay: 20260901, lastClosedDay: 20260831 }, pastMidnight)).toBe(false);
+  });
+  it('false with no drawer state at all', () => {
+    expect(isPreviousDayUnsettled(null, pastMidnight)).toBe(false);
+    expect(isPreviousDayUnsettled({ lastSaleDay: null, lastClosedDay: null }, pastMidnight)).toBe(false);
   });
 });

@@ -17,7 +17,18 @@ export function useCheckout() {
   return useMutation<Sale, Error, CheckoutInput>({
     mutationFn: async (input) => {
       if (!actor) throw new Error('Not signed in');
-      const sale = await repo.create(buildSaleInput(input, actor), actor.id);
+      let sale: Sale;
+      try {
+        sale = await repo.create(buildSaleInput(input, actor), actor.id, input.checkoutId);
+      } catch (e) {
+        // The server-side drawer rule denies sales while an earlier day is
+        // unclosed; surface it as the operational message, not SDK jargon
+        // (mirrors mobile's ProcessSaleUseCase error mapping).
+        if ((e as { code?: string }).code === 'permission-denied') {
+          throw new Error("Sale blocked: the previous day's drawer must be closed first.");
+        }
+        throw e;
+      }
       logActivity(activityLogRepo, () => ({
         type: ActivityType.sale,
         action: `Completed sale ${sale.saleNumber}`,

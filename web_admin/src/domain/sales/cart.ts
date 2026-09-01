@@ -61,3 +61,13 @@ export function lowStockLines(lines: CartLine[], products: Product[]): Set<strin
   }
   return flagged;
 }
+
+/** Mobile's hasBillableContent: parts OR described labor OR carried fees.
+ *  A labor-only or fee-only ticket is a legitimate sale. */
+export function cartHasBillableContent(
+  lines: CartLine[],
+  laborLines: LaborLine[],
+  feeLines: FeeLine[],
+): boolean {
+  return lines.length > 0 || cartLaborSubtotal(laborLines) > 0 || cartFeesTotal(feeLines) > 0;
+}

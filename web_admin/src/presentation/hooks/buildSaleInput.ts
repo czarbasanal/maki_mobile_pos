@@ -8,6 +8,9 @@ import type { PaymentMethod } from '@/domain/enums/PaymentMethod';
 import { SaleStatus } from '@/domain/enums/SaleStatus';
 
 export interface CheckoutInput {
+  /** Cart-minted idempotency token — becomes the sale doc id so a retry
+   *  can never record the sale twice. */
+  checkoutId: string;
   lines: CartLine[];
   discountType: DiscountType;
   paymentMethod: PaymentMethod;

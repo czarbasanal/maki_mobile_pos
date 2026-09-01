@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cartFeesTotal, cartGrandTotal, cartLineId, lowStockLines } from './cart';
+import { cartFeesTotal, cartGrandTotal, cartHasBillableContent, cartLineId, lowStockLines } from './cart';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { Product } from '@/domain/entities';
 import type { CartLine } from './cart';
@@ -101,5 +101,22 @@ describe('cartLineId', () => {
 
   it('combines product and option ids when there is one', () => {
     expect(cartLineId('p1', 'o2')).toBe('p1::o2');
+  });
+});
+
+describe('cartHasBillableContent (labor/fee-only sales allowed)', () => {
+  it('false for a fully empty cart', () => {
+    expect(cartHasBillableContent([], [], [])).toBe(false);
+  });
+  it('true with only a described labor line', () => {
+    expect(
+      cartHasBillableContent([], [{ id: 'l', description: 'Change oil', fee: 150 }], []),
+    ).toBe(true);
+  });
+  it('false when the only labor line is undescribed', () => {
+    expect(cartHasBillableContent([], [{ id: 'l', description: ' ', fee: 150 }], [])).toBe(false);
+  });
+  it('true with only a carried shop fee', () => {
+    expect(cartHasBillableContent([], [], [{ id: 'f', name: 'Disposal', amount: 50 }])).toBe(true);
   });
 });

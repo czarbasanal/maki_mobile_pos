@@ -5,6 +5,15 @@
 import { create } from 'zustand';
 import type { User } from '@/domain/entities';
 import { clearSubscriptionCache } from '@/presentation/hooks/useFirestoreSubscription';
+import { useCartStore } from './cartStore';
+import { useJobOrderEditStore } from './jobOrderEditStore';
+
+function clearUserScopedState(): void {
+  clearSubscriptionCache();
+  // The next login must never inherit the previous cashier's ticket.
+  useCartStore.getState().clear();
+  useJobOrderEditStore.getState().clear();
+}
 
 export type AuthStatus = 'loading' | 'signedIn' | 'signedOut';
 
@@ -22,13 +31,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) =>
     set((prev) => {
       // Sign-out or a user switch must not replay the previous user's
-      // cached snapshots on the next screens.
-      if (prev.user && prev.user.id !== user?.id) clearSubscriptionCache();
+      // cached snapshots — or their cart — on the next screens.
+      if (prev.user && prev.user.id !== user?.id) clearUserScopedState();
       return { user, status: user ? 'signedIn' : 'signedOut' };
     }),
   setLoading: () => set({ status: 'loading' }),
   reset: () => {
-    clearSubscriptionCache();
+    clearUserScopedState();
     return set({ status: 'signedOut', user: null });
   },
 }));

@@ -34,3 +34,13 @@ export function formatDayInt(dayInt: number): string {
     timeZone: 'UTC',
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
+
+/** An EARLIER business day has completed sales but was never closed — the
+ *  mobile app blocks new sales behind this (and firestore.rules backstops
+ *  it server-side); web mirrors the gate so cashiers get a clear banner
+ *  instead of a raw permission-denied at checkout. Today's own open drawer
+ *  does NOT trip this. */
+export function isPreviousDayUnsettled(state: DrawerState | null, now: Date): boolean {
+  if (!state || state.lastSaleDay == null) return false;
+  return isRegisterOpen(state) && state.lastSaleDay < shopDayInt(now);
+}

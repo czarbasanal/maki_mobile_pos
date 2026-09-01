@@ -114,6 +114,7 @@ export class FirestoreSaleRepository implements SaleRepository {
   async create(
     input: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>,
     actorId: string,
+    saleId?: string,
   ): Promise<Sale> {
     if (input.items.length === 0) {
       throw new Error('Cannot complete a sale with an empty cart');
@@ -125,7 +126,12 @@ export class FirestoreSaleRepository implements SaleRepository {
     }
     const now = new Date();
     const key = counterKey(now);
-    const saleRef = doc(collection(this.db, FirestoreCollections.sales));
+    // A caller-minted checkout id makes the write idempotent: the doc id IS
+    // the dedupe key, so a network retry can never record the sale twice
+    // (mobile's DuplicateSaleException guard, re-expressed).
+    const saleRef = saleId
+      ? doc(this.db, FirestoreCollections.sales, saleId)
+      : doc(collection(this.db, FirestoreCollections.sales));
     const counterRef = doc(this.db, FirestoreCollections.settings, 'sale_counters');
     // Pre-allocate item ids so the tx is pure writes after the single counter read.
     const itemRefs = input.items.map(() =>
@@ -138,6 +144,14 @@ export class FirestoreSaleRepository implements SaleRepository {
 
     await runTransaction(this.db, async (tx) => {
       // Reads first — must precede every write.
+      if (saleId) {
+        const existingSale = await tx.get(saleRef);
+        if (existingSale.exists()) {
+          // Already recorded by a previous attempt — write nothing; the
+          // reload below returns the recorded sale as this call's result.
+          return;
+        }
+      }
       const counterSnap = await tx.get(counterRef);
       const jobOrderSnap = jobOrderRef ? await tx.get(jobOrderRef) : null;
 
@@ -225,8 +239,9 @@ export class FirestoreSaleRepository implements SaleRepository {
       }
     });
 
+    // Covers both the fresh write and the already-recorded retry path.
     const created = await this.getById(saleRef.id);
-    if (!created) throw new Error('Failed to load the created sale');
+    if (!created) throw new Error('Failed to load the recorded sale');
     return created;
   }
   async voidSale(

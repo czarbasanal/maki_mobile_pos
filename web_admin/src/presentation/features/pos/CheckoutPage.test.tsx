@@ -18,13 +18,13 @@ function PosStub() {
   return <div>POS PAGE {state?.completedSaleNumber ?? ''}</div>;
 }
 
-function harness(saleRepo: Partial<Container['saleRepo']>) {
+function harness(saleRepo: Partial<Container['saleRepo']>, extra: Partial<Container> = {}) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const activityLogRepo = {
     log: vi.fn().mockResolvedValue(undefined),
   } as unknown as Container['activityLogRepo'];
   return render(
-    <DiProvider override={{ saleRepo: saleRepo as Container['saleRepo'], activityLogRepo }}>
+    <DiProvider override={{ saleRepo: saleRepo as Container['saleRepo'], activityLogRepo, ...extra }}>
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/pos/checkout']}>
           <Routes>
@@ -99,5 +99,55 @@ describe('CheckoutPage', () => {
     const [saleInput] = create.mock.calls[0] as [{ feeLines: unknown; jobOrderId: string | null }];
     expect(saleInput.jobOrderId).toBe('d1');
     expect(saleInput.feeLines).toEqual(jobOrder.feeLines);
+  });
+});
+
+// --- Money-safety gates (mobile parity) ---
+
+import { shopDayInt } from '@/domain/time/shopTime';
+
+const drawerRepo = (s: { lastSaleDay: number | null; lastClosedDay: number | null }) =>
+  ({
+    watch: (cb: (v: typeof s) => void) => {
+      cb(s);
+      return () => {};
+    },
+  }) as Container['drawerStateRepo'];
+
+describe('CheckoutPage — money-safety gates', () => {
+  it('blocks completion behind an unsettled previous day, with the operational banner', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    const today = shopDayInt(new Date());
+    harness(
+      { create: vi.fn() },
+      { drawerStateRepo: drawerRepo({ lastSaleDay: today - 1, lastClosedDay: today - 2 }) },
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    expect(screen.getByText(/Close the day on the register phone/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /complete sale/i })).toBeDisabled();
+  });
+
+  it('blocks completion when labor is charged without a mechanic', async () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLine(product());
+    useCartStore.getState().addLaborLine();
+    const laborId = useCartStore.getState().laborLines[0].id;
+    useCartStore.getState().setLaborLine(laborId, { description: 'Change oil', fee: 150 });
+    harness({ create: vi.fn() });
+    await userEvent.click(screen.getByRole('button', { name: /^gcash$/i }));
+    expect(screen.getByText('Assign a mechanic before saving labor.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /complete sale/i })).toBeDisabled();
+  });
+
+  it('allows a labor-only sale (no product lines) instead of bouncing to /pos', () => {
+    useCartStore.getState().clear();
+    useCartStore.getState().addLaborLine();
+    const laborId = useCartStore.getState().laborLines[0].id;
+    useCartStore.getState().setLaborLine(laborId, { description: 'Change oil', fee: 150 });
+    useCartStore.getState().setMechanic('m1', 'Berto');
+    harness({ create: vi.fn() });
+    expect(screen.queryByText(/POS PAGE/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /complete sale/i })).toBeInTheDocument();
   });
 });

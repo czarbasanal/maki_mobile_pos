@@ -26,6 +26,12 @@ interface CartState {
   // so '' can transiently appear; every PERSIST site normalizes ''/blank to
   // null before writing.
   notes: string | null;
+  // Idempotency token for the sale write: minted once per ticket and used as
+  // the Firestore sale doc id, so a network retry can never record the same
+  // sale twice (mobile's ensureCheckoutId parity). Reset whenever the ticket
+  // identity changes (clear, job-order load).
+  checkoutId: string | null;
+  ensureCheckoutId: () => string;
   addLine: (product: Product) => void;
   addLineWithOption: (product: Product, option: SellingOption) => void;
   setQty: (lineId: string, quantity: number) => void;
@@ -42,7 +48,7 @@ interface CartState {
 }
 
 export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
-  return create<CartState>((set) => ({
+  return create<CartState>((set, get) => ({
     lines: [],
     discountType: DiscountType.amount,
     laborLines: [],
@@ -53,6 +59,14 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
     jobOrderId: null,
     jobOrderName: null,
     notes: null,
+    checkoutId: null,
+    ensureCheckoutId: () => {
+      const existing = get().checkoutId;
+      if (existing) return existing;
+      const minted = crypto.randomUUID();
+      set({ checkoutId: minted });
+      return minted;
+    },
     addLine: (product) =>
       set((s) => {
         // Match on productId + optionId === null, mirroring mobile's
@@ -175,6 +189,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         jobOrderId: jobOrder.id,
         jobOrderName: jobOrder.name,
         notes: jobOrder.notes,
+        checkoutId: null,
       }),
     clear: () =>
       set({
@@ -188,6 +203,7 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         jobOrderId: null,
         jobOrderName: null,
         notes: null,
+        checkoutId: null,
       }),
   }));
 }

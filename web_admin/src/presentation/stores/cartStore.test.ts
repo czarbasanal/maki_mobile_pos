@@ -307,3 +307,34 @@ describe('cartStore selling options', () => {
     expect(lines[0].quantity).toBe(6); // 3 (resumed) + 3 (by3.pieces)
   });
 });
+
+describe('checkoutId (idempotent sale writes)', () => {
+  it('mints once and returns the same id until cleared', () => {
+    const store = createCartStore();
+    const first = store.getState().ensureCheckoutId();
+    expect(first).toBeTruthy();
+    expect(store.getState().ensureCheckoutId()).toBe(first);
+  });
+
+  it('clear() resets it so the next ticket gets a fresh id', () => {
+    const store = createCartStore();
+    const first = store.getState().ensureCheckoutId();
+    store.getState().clear();
+    expect(store.getState().checkoutId).toBeNull();
+    expect(store.getState().ensureCheckoutId()).not.toBe(first);
+  });
+
+  it('loading a job order resets it — a different ticket is a different sale', () => {
+    const store = createCartStore();
+    const first = store.getState().ensureCheckoutId();
+    store.getState().loadJobOrder({
+      id: 'jo1', name: 'JO-090126-001', items: [], laborLines: [], feeLines: [],
+      mechanicId: null, mechanicName: null, motorcycleModel: null, notes: null,
+      discountType: DiscountType.amount, isConverted: false, convertedToSaleId: null,
+      convertedAt: null, createdAt: new Date(), updatedAt: null, createdBy: 'u1',
+      createdByName: 'U', totalAmount: 0,
+    } as unknown as JobOrder);
+    expect(store.getState().checkoutId).toBeNull();
+    expect(store.getState().ensureCheckoutId()).not.toBe(first);
+  });
+});

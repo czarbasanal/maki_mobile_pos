@@ -3,8 +3,9 @@ import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { useCheckout } from '@/presentation/hooks/useCheckout';
 import { usePaymentDraft } from '@/presentation/hooks/usePaymentDraft';
-import { cartGrandTotal } from '@/domain/sales/cart';
-import { describedLaborLines } from '@/domain/sales/labor';
+import { cartGrandTotal, cartHasBillableContent } from '@/domain/sales/cart';
+import { describedLaborLines, laborValidationError } from '@/domain/sales/labor';
+import { useRegisterStatus } from '@/presentation/hooks/useRegisterStatus';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { PaymentSection } from './PaymentSection';
 import { OrderSummary } from './OrderSummary';
@@ -21,8 +22,10 @@ export function CheckoutPage() {
   const jobOrderId = useCartStore((s) => s.jobOrderId);
   const notes = useCartStore((s) => s.notes);
   const clear = useCartStore((s) => s.clear);
+  const ensureCheckoutId = useCartStore((s) => s.ensureCheckoutId);
   const checkout = useCheckout();
   const navigate = useNavigate();
+  const { previousDayUnsettled } = useRegisterStatus();
 
   const grandTotal = cartGrandTotal(lines, laborLines, discountType, feeLines);
   const pay = usePaymentDraft(grandTotal);
@@ -31,12 +34,19 @@ export function CheckoutPage() {
     document.title = 'Checkout';
   }, []);
 
-  if (lines.length === 0) return <Navigate to={RoutePaths.pos} replace />;
+  // Labor-only and fee-only tickets are legitimate sales (mobile parity) —
+  // only a cart with nothing billable bounces back.
+  if (!cartHasBillableContent(lines, laborLines, feeLines)) {
+    return <Navigate to={RoutePaths.pos} replace />;
+  }
 
-  const canComplete = pay.isValid && !checkout.isPending;
+  const laborError = laborValidationError(laborLines, mechanicId);
+  const canComplete =
+    pay.isValid && !checkout.isPending && laborError === null && !previousDayUnsettled;
   const onComplete = async () => {
     try {
       const sale = await checkout.mutateAsync({
+        checkoutId: ensureCheckoutId(),
         lines,
         discountType,
         paymentMethod: pay.paymentMethod,
@@ -64,6 +74,19 @@ export function CheckoutPage() {
       <Link to={RoutePaths.pos} className="text-bodySmall text-light-text-secondary hover:text-light-text">
         ← Back to cart
       </Link>
+
+      {previousDayUnsettled ? (
+        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+          Yesterday's sales haven't been closed yet. Close the day on the register phone before
+          completing new sales.
+        </p>
+      ) : null}
+
+      {laborError ? (
+        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+          {laborError}
+        </p>
+      ) : null}
 
       {checkout.error ? (
         <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">

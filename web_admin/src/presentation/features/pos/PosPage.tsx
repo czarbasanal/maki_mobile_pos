@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/presentation/stores/cartStore';
-import { describedLaborLines } from '@/domain/sales/labor';
+import { describedLaborLines, laborValidationError } from '@/domain/sales/labor';
+import { cartHasBillableContent } from '@/domain/sales/cart';
+import { useRegisterStatus } from '@/presentation/hooks/useRegisterStatus';
 import { useSaveJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { useJobOrders } from '@/presentation/hooks/useJobOrders';
 import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
@@ -35,6 +37,12 @@ export function PosPage() {
   const [noteDraft, setNoteDraft] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
   const hasTicket = lines.length > 0 || laborLines.length > 0;
+  const { previousDayUnsettled } = useRegisterStatus();
+  // Labor-only / fee-only tickets are billable (mobile parity); labor money
+  // must be complete and attributed before it can leave the register.
+  const hasBillable = cartHasBillableContent(lines, laborLines, feeLines);
+  const laborError = laborValidationError(laborLines, mechanicId);
+  const checkoutBlocked = !hasBillable || laborError !== null || previousDayUnsettled;
 
   // Updating an existing Job Order keeps its current name (no renumber).
   // A brand-new one gets the next number for today, computed from the live
@@ -134,26 +142,37 @@ export function PosPage() {
         </p>
       ) : null}
 
+      {previousDayUnsettled ? (
+        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+          Yesterday's sales haven't been closed yet. Close the day on the register phone before
+          completing new sales.
+        </p>
+      ) : null}
+
       <CartBuilder store={useCartStore} />
 
       <div className="ml-auto max-w-sm space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-md">
+        {laborError ? (
+          <p className="text-bodySmall text-warning-dark">{laborError}</p>
+        ) : null}
         <Link
           to={RoutePaths.checkout}
-          aria-disabled={lines.length === 0}
+          aria-disabled={checkoutBlocked}
           className={cn(
             'block w-full rounded-md bg-light-text px-tk-md py-tk-sm text-center text-bodySmall font-semibold text-light-background hover:bg-primary-dark',
-            lines.length === 0 && 'pointer-events-none cursor-not-allowed opacity-60',
+            checkoutBlocked && 'pointer-events-none cursor-not-allowed opacity-60',
           )}
         >
           Checkout
         </Link>
         <button
           type="button"
-          disabled={lines.length === 0 || saveJobOrder.isPending}
+          disabled={!hasBillable || laborError !== null || saveJobOrder.isPending}
           onClick={openSave}
           className={cn(
             'w-full rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-medium text-light-text hover:bg-light-subtle',
-            (lines.length === 0 || saveJobOrder.isPending) && 'cursor-not-allowed opacity-60',
+            (!hasBillable || laborError !== null || saveJobOrder.isPending) &&
+              'cursor-not-allowed opacity-60',
           )}
         >
           {saveJobOrder.isPending ? 'Saving…' : jobOrderId ? 'Update Job Order' : 'Save as Job Order'}

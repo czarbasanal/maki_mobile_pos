@@ -25,6 +25,7 @@ const actor = (over: Partial<User> = {}): User => ({
 });
 
 const input = (over: Partial<CheckoutInput> = {}): CheckoutInput => ({
+  checkoutId: 'ticket-uuid-1',
   lines: [],
   discountType: DiscountType.amount,
   paymentMethod: PaymentMethod.cash,
