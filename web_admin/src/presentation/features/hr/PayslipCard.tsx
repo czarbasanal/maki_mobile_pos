@@ -225,12 +225,16 @@ export function PayslipCard({ payslip }: { payslip: Payslip }) {
           </div>
         </div>
 
-        {/* Net pay bar */}
+        {/* Net pay bar. Both spans get the SAME fixed 23px line box:
+            html2canvas (the Download JPG path) computes baselines from each
+            span's own line-height, so the browser's items-center of a 12px
+            label next to a 23px figure renders vertically off-center in the
+            exported image unless the line boxes match. */}
         <div className="flex items-center justify-between rounded-[10px] bg-[#121c1d] px-[18px] py-[16px]">
-          <span className="text-[12px] font-bold uppercase tracking-[.14em] text-[#f5b921]">
+          <span className="text-[12px] font-bold uppercase leading-[23px] tracking-[.14em] text-[#f5b921]">
             NET PAY
           </span>
-          <span className="text-[23px] font-extrabold tabular-nums text-white">
+          <span className="text-[23px] font-extrabold leading-[23px] tabular-nums text-white">
             {formatMoney(computed.net)}
           </span>
         </div>
