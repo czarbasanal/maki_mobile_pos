@@ -1781,7 +1781,9 @@ export function percentDelta(current: number, previous: number): number | null {
 - [ ] **Step 4: Run** — PASS + typecheck.
 - [ ] **Step 5: Commit** — `git add -A && git commit -m "feat(web): hourly buckets, inventory summary, delta math (pure domain)"`
 
----### Task 13: Register status — DrawerState read path
+---
+
+### Task 13: Register status — DrawerState read path
 
 **Files:**
 - Create: `src/domain/entities/DrawerState.ts`, `src/domain/repositories/DrawerStateRepository.ts`, `src/data/repositories/FirestoreDrawerStateRepository.ts`, `src/presentation/hooks/useRegisterStatus.ts`
