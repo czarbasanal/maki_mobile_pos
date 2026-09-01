@@ -86,6 +86,28 @@ function fakeProduct(o: Partial<Product> = {}): Product {
   };
 }
 
+function fakeVoidRequest(o: Partial<VoidRequest> = {}): VoidRequest {
+  return {
+    id: 'v1',
+    saleId: 's1',
+    saleNumber: 'SN-001',
+    saleGrandTotal: 100,
+    requestedBy: 'u2',
+    requestedByName: 'Cashier B',
+    requestedByRole: 'cashier',
+    reason: 'Wrong item',
+    status: 'pending',
+    read: false,
+    createdAt: new Date('2026-07-27T10:00:00'),
+    resolvedBy: null,
+    resolvedByName: null,
+    resolvedAt: null,
+    rejectionReason: null,
+    itemsSummary: null,
+    ...o,
+  };
+}
+
 function harness({
   sales = [fakeSale()],
   yesterdaySales = [],
@@ -237,5 +259,33 @@ describe('DashboardPage — needs attention', () => {
     expect(row).not.toBeNull();
     const link = row!.querySelector('a');
     expect(link).toHaveAttribute('href', '/inventory');
+  });
+
+  it('shows the all-clear empty state for an admin with zero voids and zero stock issues', async () => {
+    harness({ products: [fakeProduct({ quantity: 10, reorderLevel: 2 })], pendingVoids: [] });
+
+    const card = await needsAttentionCard();
+    expect(await within(card).findByText('All clear — nothing needs attention')).toBeInTheDocument();
+    expect(within(card).queryByText('Out of stock')).toBeNull();
+    expect(within(card).queryByText('Void requests')).toBeNull();
+  });
+
+  it('shows a void-requests row linking to the approval queue when voids are pending', async () => {
+    harness({ pendingVoids: [fakeVoidRequest({ id: 'v1' }), fakeVoidRequest({ id: 'v2' })] });
+
+    const card = await needsAttentionCard();
+    const label = await within(card).findByText('Void requests');
+    expect(within(card).getByText('2 pending manager approval')).toBeInTheDocument();
+    const row = label.closest('li');
+    expect(row).not.toBeNull();
+    const link = row!.querySelector('a');
+    expect(link).toHaveAttribute('href', '/void-requests');
+  });
+
+  it('hides the void-requests row from a cashier even with voids pending', async () => {
+    harness({ role: UserRole.cashier, pendingVoids: [fakeVoidRequest()] });
+
+    const card = await needsAttentionCard();
+    expect(within(card).queryByText('Void requests')).toBeNull();
   });
 });

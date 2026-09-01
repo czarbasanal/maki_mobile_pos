@@ -18,21 +18,8 @@ function AttentionRow({ label, detail, action, to }: { label: string; detail: st
   );
 }
 
-function VoidRequestsRow() {
-  const { pending } = useVoidRequests();
-  if (pending.length === 0) return null;
-  return (
-    <AttentionRow
-      label="Void requests"
-      detail={`${pending.length} pending manager approval`}
-      action="Approve"
-      to={RoutePaths.voidRequests}
-    />
-  );
-}
-
-export function NeedsAttentionCard({ inventory, canApproveVoids }: { inventory: InventorySummary; canApproveVoids: boolean }) {
-  const allClear = inventory.outOfStock === 0 && inventory.lowStock === 0 && !canApproveVoids;
+function NeedsAttentionBody({ inventory, pendingVoids }: { inventory: InventorySummary; pendingVoids: number }) {
+  const allClear = inventory.outOfStock === 0 && inventory.lowStock === 0 && pendingVoids === 0;
   return (
     <Card title="Needs attention">
       <ul className="divide-y divide-line-2">
@@ -42,9 +29,28 @@ export function NeedsAttentionCard({ inventory, canApproveVoids }: { inventory: 
         {inventory.lowStock > 0 && (
           <AttentionRow label="Low stock" detail={`${inventory.lowStock} SKUs below reorder point`} action="Review" to={RoutePaths.inventory} />
         )}
-        {canApproveVoids && <VoidRequestsRow />}
+        {pendingVoids > 0 && (
+          <AttentionRow
+            label="Void requests"
+            detail={`${pendingVoids} pending manager approval`}
+            action="Approve"
+            to={RoutePaths.voidRequests}
+          />
+        )}
       </ul>
       {allClear && <EmptyState message="All clear — nothing needs attention" />}
     </Card>
   );
+}
+
+// Split out so useVoidRequests only ever mounts for a user who may approve —
+// the hook (and its Firestore subscription) never runs for a cashier.
+function AdminNeedsAttention({ inventory }: { inventory: InventorySummary }) {
+  const { pending } = useVoidRequests();
+  return <NeedsAttentionBody inventory={inventory} pendingVoids={pending.length} />;
+}
+
+export function NeedsAttentionCard({ inventory, canApproveVoids }: { inventory: InventorySummary; canApproveVoids: boolean }) {
+  if (canApproveVoids) return <AdminNeedsAttention inventory={inventory} />;
+  return <NeedsAttentionBody inventory={inventory} pendingVoids={0} />;
 }
