@@ -32,3 +32,19 @@ describe('SearchInput', () => {
     expect(onChange).not.toHaveBeenCalledWith('STALE');
   });
 });
+
+describe('hero variant (POS register)', () => {
+  it('forwards keydown and exposes the input ref for programmatic focus', () => {
+    const onKeyDown = vi.fn();
+    const ref = { current: null as HTMLInputElement | null };
+    render(
+      <SearchInput value="" onChange={vi.fn()} variant="hero" onKeyDown={onKeyDown} inputRef={ref} placeholder="Scan" />,
+    );
+    const input = screen.getByPlaceholderText('Scan');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onKeyDown).toHaveBeenCalled();
+    expect(ref.current).toBe(input);
+    ref.current?.focus();
+    expect(input).toHaveFocus();
+  });
+});

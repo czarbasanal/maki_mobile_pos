@@ -118,6 +118,7 @@ const config: Config = {
         'inv-figure': ['14px', { lineHeight: '18px', fontWeight: '600' }],
         brand: ['14px', { lineHeight: '20px', letterSpacing: '0.3px', fontWeight: '600' }],
         'ctl-sm': ['12px', { lineHeight: '16px' }],
+        'ctl-lg': ['14px', { lineHeight: '20px' }],
         'ctl-md': ['12.5px', { lineHeight: '18px' }],
       },
     },

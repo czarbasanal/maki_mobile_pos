@@ -371,3 +371,28 @@ describe('setMotorcycleModel', () => {
     expect(store.getState().motorcycleModel).toBeNull();
   });
 });
+
+describe('cart draft persistence (POS guide §4)', () => {
+  it('a persisted store restores the ticket — checkoutId included — on reload', () => {
+    localStorage.removeItem('test-cart-draft');
+    const first = createCartStore('test-cart-draft');
+    first.getState().addLine(product());
+    const checkoutId = first.getState().ensureCheckoutId();
+
+    // A "reload": a fresh store instance on the same key.
+    const second = createCartStore('test-cart-draft');
+    expect(second.getState().lines).toHaveLength(1);
+    expect(second.getState().checkoutId).toBe(checkoutId);
+    localStorage.removeItem('test-cart-draft');
+  });
+
+  it('clear() empties the persisted draft too', () => {
+    localStorage.removeItem('test-cart-draft2');
+    const first = createCartStore('test-cart-draft2');
+    first.getState().addLine(product());
+    first.getState().clear();
+    const second = createCartStore('test-cart-draft2');
+    expect(second.getState().lines).toHaveLength(0);
+    localStorage.removeItem('test-cart-draft2');
+  });
+});

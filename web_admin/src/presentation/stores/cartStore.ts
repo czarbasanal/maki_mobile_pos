@@ -1,4 +1,5 @@
-import { create, type StoreApi, type UseBoundStore } from 'zustand';
+import { create, type StateCreator, type StoreApi, type UseBoundStore } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import type { JobOrder, Product } from '@/domain/entities';
 import type { LaborLine } from '@/domain/entities/LaborLine';
 import type { FeeLine } from '@/domain/entities/FeeLine';
@@ -51,8 +52,15 @@ interface CartState {
   clear: () => void;
 }
 
-export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
-  return create<CartState>((set, get) => ({
+/**
+ * `persistKey` writes the ticket to localStorage on every change and restores
+ * it on load (POS guide §4: a refresh mid-sale must not lose the basket).
+ * The idempotent checkoutId persists WITH the draft, so a restored ticket
+ * retries into the same sale id. Only the live POS cart persists — the
+ * job-order edit store stays memory-only.
+ */
+export function createCartStore(persistKey?: string): UseBoundStore<StoreApi<CartState>> {
+  const initializer: StateCreator<CartState> = (set, get) => ({
     lines: [],
     discountType: DiscountType.amount,
     laborLines: [],
@@ -219,8 +227,30 @@ export function createCartStore(): UseBoundStore<StoreApi<CartState>> {
         notes: null,
         checkoutId: null,
       }),
-  }));
+  });
+
+  if (!persistKey) return create<CartState>(initializer);
+  return create<CartState>()(
+    persist(initializer, {
+      name: persistKey,
+      storage: createJSONStorage(() => localStorage),
+      // Data only — actions come from the initializer on rehydrate.
+      partialize: (s) => ({
+        lines: s.lines,
+        discountType: s.discountType,
+        laborLines: s.laborLines,
+        feeLines: s.feeLines,
+        mechanicId: s.mechanicId,
+        mechanicName: s.mechanicName,
+        motorcycleModel: s.motorcycleModel,
+        jobOrderId: s.jobOrderId,
+        jobOrderName: s.jobOrderName,
+        notes: s.notes,
+        checkoutId: s.checkoutId,
+      }),
+    }),
+  );
 }
 
-export const useCartStore = createCartStore();
+export const useCartStore = createCartStore('maki-pos-cart');
 export type CartStore = typeof useCartStore;

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
+import { clsx } from 'clsx';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export interface SearchInputProps {
@@ -6,9 +7,26 @@ export interface SearchInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   debounce?: number;
+  /** 'hero' is the POS register treatment: surface card, 12px radius,
+   *  shadow, 14px input — the primary target on its screen. */
+  variant?: 'field' | 'hero';
+  autoFocus?: boolean;
+  /** Keyboard events from the inner input (register keyboard map). */
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+  /** Escape hatch for programmatic focus (e.g. refocus after a sale). */
+  inputRef?: RefObject<HTMLInputElement>;
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Search', debounce = 250 }: SearchInputProps) {
+export function SearchInput({
+  value,
+  onChange,
+  placeholder = 'Search',
+  debounce = 250,
+  variant = 'field',
+  autoFocus = false,
+  onKeyDown,
+  inputRef,
+}: SearchInputProps) {
   const [text, setText] = useState(value);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -30,18 +48,32 @@ export function SearchInput({ value, onChange, placeholder = 'Search', debounce 
     onChange('');
   }
 
+  const hero = variant === 'hero';
   return (
-    <div className="flex items-center gap-1.5 rounded-field border border-line bg-surface-2 px-2.5 py-1.5">
-      <MagnifyingGlassIcon className="h-3.5 w-3.5 shrink-0 text-ink-3" />
+    <div
+      className={clsx(
+        'flex items-center',
+        hero
+          ? 'gap-2.5 rounded-[12px] border border-line bg-surface px-[15px] py-3 shadow-card'
+          : 'gap-1.5 rounded-field border border-line bg-surface-2 px-2.5 py-1.5',
+      )}
+    >
+      <MagnifyingGlassIcon className={clsx('shrink-0 text-ink-3', hero ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
       <input
+        ref={inputRef}
         value={text}
+        autoFocus={autoFocus}
         onChange={(e) => handleInput(e.target.value)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
-        className="w-40 bg-transparent text-ctl-sm text-ink outline-none placeholder:text-ink-3"
+        className={clsx(
+          'bg-transparent text-ink outline-none placeholder:text-ink-3',
+          hero ? 'w-full text-ctl-lg' : 'w-40 text-ctl-sm',
+        )}
       />
       {text && (
         <button type="button" aria-label="Clear search" onClick={handleClear} className="text-ink-3 hover:text-ink-2">
-          <XMarkIcon className="h-3.5 w-3.5" />
+          <XMarkIcon className={hero ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
         </button>
       )}
     </div>
