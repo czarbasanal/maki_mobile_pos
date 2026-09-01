@@ -1,14 +1,19 @@
+// Labor & mechanic on the cart (POS guide §2): labor rows (description +
+// ₱ amount + remove), then the mechanic as a CHIP row — a handful of names
+// is one tap, not three. Inline "+ Add" keeps mobile mechanic_picker parity:
+// reuse an active case-insensitive twin, refuse an archived exact name.
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { useActiveMechanics } from '@/presentation/hooks/useMechanics';
 import { useMechanicRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { MotorcycleModelPicker } from './MotorcycleModelPicker';
 import type { LaborLine, Mechanic } from '@/domain/entities';
-
-const ADD_MECHANIC_SENTINEL = '__add__';
+import { Chip } from '@/presentation/components/ui/Chip';
+import { IconButton } from '@/presentation/components/ui/IconButton';
+import { Button } from '@/presentation/components/ui/Button';
 
 export function LaborSection({ store }: { store: CartStore }) {
   const laborLines = store((s) => s.laborLines);
@@ -26,8 +31,6 @@ export function LaborSection({ store }: { store: CartStore }) {
   const actor = useAuthStore((s) => s.user);
   const [addingMechanic, setAddingMechanic] = useState(false);
   const [mechanicDraft, setMechanicDraft] = useState('');
-  // Mobile mechanic_picker parity: reuse an active case-insensitive twin,
-  // refuse an archived exact-name duplicate, else create.
   const addMechanic = useMutation<Mechanic, Error, string>({
     mutationFn: async (rawName) => {
       const name = rawName.trim();
@@ -49,94 +52,82 @@ export function LaborSection({ store }: { store: CartStore }) {
     },
   });
 
-  // Keep the currently-selected mechanic visible even if it was deactivated
-  // after selection — otherwise the <select> would silently show "None" while
-  // the store still holds (and would persist) the stale id.
+  // Keep a deactivated-but-assigned mechanic visible so the store's id
+  // isn't silently orphaned behind a "None" chip.
   const selectedMissing = !!mechanicId && !active.some((m) => m.id === mechanicId);
-  const options = selectedMissing
-    ? [{ id: mechanicId, name: `${mechanicName ?? 'Mechanic'} (inactive)` }, ...active]
-    : active;
-
-  const onMechanicChange = (id: string) => {
-    if (!id) return setMechanic(null, null);
-    const m = options.find((x) => x.id === id);
-    setMechanic(id, m?.name ?? mechanicName ?? null);
-  };
 
   return (
-    <div className="space-y-tk-sm border-t border-light-hairline px-tk-md py-tk-sm">
+    <div className="space-y-tk-sm border-t border-line-2 px-[18px] py-3">
       <div className="flex items-center justify-between">
-        <span className="text-bodySmall font-medium text-light-text">Labor</span>
-        <button
-          type="button"
-          onClick={addLaborLine}
-          className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-[4px] text-[12px] text-light-text-secondary hover:bg-light-subtle"
-        >
-          <PlusIcon className="h-3.5 w-3.5" /> Add labor
-        </button>
+        <span className="text-cell font-semibold text-ink">Labor</span>
+        <Button size="sm" icon={<PlusIcon className="h-3.5 w-3.5" />} onClick={addLaborLine}>
+          Add labor
+        </Button>
       </div>
 
       {laborLines.map((l) => (
         <LaborRow key={l.id} line={l} onChange={setLaborLine} onRemove={removeLaborLine} />
       ))}
 
-      <label className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
-        Mechanic
-        <select
-          value={addingMechanic ? ADD_MECHANIC_SENTINEL : mechanicId ?? ''}
-          onChange={(e) => {
-            if (e.target.value === ADD_MECHANIC_SENTINEL) {
-              setAddingMechanic(true);
-              return;
-            }
-            setAddingMechanic(false);
-            onMechanicChange(e.target.value);
-          }}
-          className="rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
-        >
-          <option value="">None</option>
-          {options.map((m) => (
-            <option key={m.id} value={m.id}>
+      <div className="space-y-tk-xs">
+        <span className="block text-micro-caps uppercase text-ink-3">Mechanic</span>
+        <div className="flex flex-wrap items-center gap-tk-xs" aria-label="Mechanic">
+          <Chip active={mechanicId === null} onClick={() => setMechanic(null, null)}>
+            None
+          </Chip>
+          {selectedMissing ? (
+            <Chip active onClick={() => {}}>
+              {mechanicName ?? 'Mechanic'} (inactive)
+            </Chip>
+          ) : null}
+          {active.map((m) => (
+            <Chip
+              key={m.id}
+              active={m.id === mechanicId}
+              onClick={() => setMechanic(m.id, m.name)}
+            >
               {m.name}
-            </option>
+            </Chip>
           ))}
-          <option value={ADD_MECHANIC_SENTINEL}>➕ Add mechanic…</option>
-        </select>
-      </label>
-      {addingMechanic ? (
-        <div className="flex items-center gap-tk-sm">
-          <input
-            type="text"
-            value={mechanicDraft}
-            onChange={(e) => setMechanicDraft(e.target.value)}
-            placeholder="Mechanic name"
-            autoFocus
-            className="min-w-0 flex-1 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
-          />
-          <button
-            type="button"
-            disabled={mechanicDraft.trim().length < 2 || addMechanic.isPending}
-            onClick={() => addMechanic.mutate(mechanicDraft)}
-            className="rounded-md bg-light-text px-tk-md py-[6px] text-[12px] font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
-          >
-            {addMechanic.isPending ? 'Adding…' : 'Add'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setAddingMechanic(false);
-              setMechanicDraft('');
-              addMechanic.reset();
-            }}
-            className="rounded-md border border-light-border px-tk-sm py-[6px] text-[12px] text-light-text-secondary hover:bg-light-subtle"
-          >
-            Cancel
-          </button>
+          <Chip active={addingMechanic} onClick={() => setAddingMechanic(true)}>
+            ＋ Add
+          </Chip>
         </div>
-      ) : null}
-      {addMechanic.error ? (
-        <p className="text-[12px] text-error-dark">{addMechanic.error.message}</p>
-      ) : null}
+        {addingMechanic ? (
+          <div className="flex items-center gap-tk-sm">
+            <input
+              type="text"
+              value={mechanicDraft}
+              onChange={(e) => setMechanicDraft(e.target.value)}
+              placeholder="Mechanic name"
+              autoFocus
+              className="min-w-0 flex-1 rounded-field border border-line bg-surface-2 px-2.5 py-1.5 text-ctl-sm text-ink outline-none placeholder:text-ink-3"
+            />
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={mechanicDraft.trim().length < 2}
+              loading={addMechanic.isPending}
+              onClick={() => addMechanic.mutate(mechanicDraft)}
+            >
+              Add
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setAddingMechanic(false);
+                setMechanicDraft('');
+                addMechanic.reset();
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        ) : null}
+        {addMechanic.error ? (
+          <p className="text-ctl-sm text-neg">{addMechanic.error.message}</p>
+        ) : null}
+      </div>
 
       <MotorcycleModelPicker store={store} />
     </div>
@@ -155,8 +146,6 @@ function LaborRow({
   // Fee is string-backed locally so decimals (e.g. 150.50) type cleanly; the
   // store keeps the parsed number for the totals.
   const [feeText, setFeeText] = useState(line.fee ? String(line.fee) : '');
-  // A row only counts/writes when it has a description — surface that when a
-  // fee was entered without one, so the charge isn't silently dropped.
   const needsDescription = line.fee > 0 && line.description.trim() === '';
 
   return (
@@ -167,33 +156,25 @@ function LaborRow({
           value={line.description}
           onChange={(e) => onChange(line.id, { description: e.target.value })}
           placeholder="Description"
-          className="min-w-0 flex-1 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
+          className="min-w-0 flex-1 rounded-field border border-line bg-surface-2 px-2.5 py-1.5 text-ctl-sm text-ink outline-none placeholder:text-ink-3"
         />
         <input
-          type="number"
-          min={0}
-          step="0.01"
+          type="text"
           inputMode="decimal"
           value={feeText}
           onChange={(e) => {
-            const raw = e.target.value;
-            if (Number(raw) < 0) return; // labor fees are never negative
-            setFeeText(raw);
-            onChange(line.id, { fee: Number(raw) || 0 });
+            setFeeText(e.target.value);
+            onChange(line.id, { fee: parseFloat(e.target.value) || 0 });
           }}
-          placeholder="Fee"
-          className="w-24 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
+          placeholder="₱"
+          className="w-[64px] rounded-field border border-line bg-surface-2 px-2 py-1.5 text-right font-mono text-ctl-sm text-ink outline-none placeholder:text-ink-3"
         />
-        <button
-          type="button"
-          onClick={() => onRemove(line.id)}
-          className="text-light-text-hint hover:text-error"
-        >
-          <TrashIcon className="h-4 w-4" />
-        </button>
+        <IconButton title="Remove labor line" tone="danger" onClick={() => onRemove(line.id)}>
+          <XMarkIcon className="h-3.5 w-3.5" />
+        </IconButton>
       </div>
       {needsDescription ? (
-        <p className="text-[11px] text-warning-dark">Add a description to include this charge.</p>
+        <p className="text-micro text-accent-text">Add a description to include this charge.</p>
       ) : null}
     </div>
   );

@@ -11,8 +11,10 @@ export interface SearchInputProps {
    *  shadow, 14px input — the primary target on its screen. */
   variant?: 'field' | 'hero';
   autoFocus?: boolean;
-  /** Keyboard events from the inner input (register keyboard map). */
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+  /** Keyboard events from the inner input (register keyboard map). The
+   *  second argument is the LIVE text — a wedge scanner sends Enter faster
+   *  than the debounce, so Enter handlers must never read debounced state. */
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>, currentText: string) => void;
   /** Escape hatch for programmatic focus (e.g. refocus after a sale). */
   inputRef?: RefObject<HTMLInputElement>;
 }
@@ -64,7 +66,7 @@ export function SearchInput({
         value={text}
         autoFocus={autoFocus}
         onChange={(e) => handleInput(e.target.value)}
-        onKeyDown={onKeyDown}
+        onKeyDown={onKeyDown ? (e) => onKeyDown(e, text) : undefined}
         placeholder={placeholder}
         className={clsx(
           'bg-transparent text-ink outline-none placeholder:text-ink-3',

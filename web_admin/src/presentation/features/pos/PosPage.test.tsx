@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -123,8 +123,8 @@ describe('PosPage', () => {
     harness();
 
     await userEvent.click(screen.getByLabelText('Reset sale'));
-    expect(screen.getByText('Clear this sale?')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /^clear$/i }));
+    expect(screen.getByText('Reset sale?')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^reset$/i }));
 
     expect(useCartStore.getState().lines).toHaveLength(0);
     expect(useCartStore.getState().laborLines).toHaveLength(0);
@@ -142,22 +142,22 @@ describe('PosPage', () => {
     expect(useCartStore.getState().lines).toHaveLength(1);
   });
 
-  it('search results render as an overlay dropdown, only while searching', async () => {
+  it('search results render only while searching', async () => {
     useCartStore.getState().clear();
     harness(undefined, [product()]);
 
-    // Idle: no results panel in the layout at all (the old always-present
-    // in-flow panel pushed the Checkout/Save-job order card down).
-    expect(screen.queryByText(/type to search/i)).not.toBeInTheDocument();
+    // Idle: no results card at all.
+    expect(screen.queryByText(/no parts match/i)).not.toBeInTheDocument();
 
-    const input = screen.getByPlaceholderText(/search or scan/i);
+    const input = screen.getByPlaceholderText(/search part name/i);
     await userEvent.type(input, 'plug');
-    const result = await screen.findByRole('button', { name: /plug/i });
-    // The panel overlays (absolute positioning) instead of occupying flow.
-    expect(result.closest('div[class*="absolute"]')).not.toBeNull();
+    // The register results card lists the part with its on-hand and Add.
+    await screen.findByRole('button', { name: /^add$/i });
 
     await userEvent.clear(input);
-    expect(screen.queryByRole('button', { name: /plug/i })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /^add$/i })).not.toBeInTheDocument(),
+    );
   });
 });
 

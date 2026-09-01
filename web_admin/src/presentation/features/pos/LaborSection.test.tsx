@@ -45,7 +45,7 @@ function harness(repoOver: Partial<Container['mechanicRepo']> = {}) {
 describe('LaborSection — inline mechanic add', () => {
   it('reuses an active mechanic on a case-insensitive name match', async () => {
     const { store, mechanicRepo } = harness();
-    await userEvent.selectOptions(screen.getByLabelText(/mechanic/i), '__add__');
+    await userEvent.click(screen.getByRole('button', { name: '＋ Add' }));
     await userEvent.type(screen.getByPlaceholderText(/mechanic name/i), '  bErTo ');
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
     expect(mechanicRepo.create).not.toHaveBeenCalled();
@@ -55,7 +55,7 @@ describe('LaborSection — inline mechanic add', () => {
 
   it('refuses an archived-name duplicate with the staff message', async () => {
     const { store, mechanicRepo } = harness({ nameExists: vi.fn(async () => true) });
-    await userEvent.selectOptions(screen.getByLabelText(/mechanic/i), '__add__');
+    await userEvent.click(screen.getByRole('button', { name: '＋ Add' }));
     await userEvent.type(screen.getByPlaceholderText(/mechanic name/i), 'Islaw');
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
     await waitFor(() =>
@@ -67,7 +67,7 @@ describe('LaborSection — inline mechanic add', () => {
 
   it('creates and assigns a brand-new mechanic', async () => {
     const { store, mechanicRepo } = harness();
-    await userEvent.selectOptions(screen.getByLabelText(/mechanic/i), '__add__');
+    await userEvent.click(screen.getByRole('button', { name: '＋ Add' }));
     await userEvent.type(screen.getByPlaceholderText(/mechanic name/i), 'Islaw');
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
     await waitFor(() => expect(store.getState().mechanicId).toBe('new'));
@@ -77,7 +77,7 @@ describe('LaborSection — inline mechanic add', () => {
 
   it('needs at least 2 characters', async () => {
     harness();
-    await userEvent.selectOptions(screen.getByLabelText(/mechanic/i), '__add__');
+    await userEvent.click(screen.getByRole('button', { name: '＋ Add' }));
     await userEvent.type(screen.getByPlaceholderText(/mechanic name/i), 'X');
     expect(screen.getByRole('button', { name: /^add$/i })).toBeDisabled();
   });

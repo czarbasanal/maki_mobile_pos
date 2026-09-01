@@ -1,4 +1,8 @@
-import { useMemo, useState } from 'react';
+// The POS register surface (design/MAKI-POS-Handoff "POS Register"):
+// catalog column (hero search + results card) beside the cart column.
+// Shared by the POS screen and the Job Order editor via the `store` prop;
+// the POS screen passes its Checkout/Save actions through `actions`.
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import type { CartStore } from '@/presentation/stores/cartStore';
@@ -15,15 +19,49 @@ import { DiscountType } from '@/domain/enums/DiscountType';
 import { productHasSellingOptions, type Product } from '@/domain/entities/Product';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
+import { displaySku } from '@/domain/products/sku';
+import { findByScannedCode, matchesPosQuery } from '@/domain/products/posSearch';
+import { SearchInput } from '@/presentation/components/ui/SearchInput';
+import { CopyButton } from '@/presentation/components/ui/CopyButton';
+import { IconButton } from '@/presentation/components/ui/IconButton';
+import { Stepper } from '@/presentation/components/ui/Stepper';
+import { toast } from '@/presentation/components/ui/toast';
+import { Dialog } from '@/presentation/components/common/Dialog';
 import { LaborSection } from './LaborSection';
 import { FeeSection } from './FeeSection';
 import { DiscountDialog } from './DiscountDialog';
 import { CartTotals } from './CartTotals';
 import { SellingOptionDialog } from './SellingOptionDialog';
-import { displaySku } from '@/domain/products/sku';
-import { findByScannedCode, matchesPosQuery } from '@/domain/products/posSearch';
 
-export function CartBuilder({ store }: { store: CartStore }) {
+function OnHandChip({ quantity }: { quantity: number }) {
+  const tone =
+    quantity <= 0
+      ? 'bg-neg-soft text-neg'
+      : quantity <= 5
+        ? 'bg-accent-soft text-accent-text'
+        : 'bg-surface-3 text-ink-2';
+  return (
+    <span
+      className={cn(
+        'shrink-0 rounded-chip px-1.5 py-0.5 font-mono text-kpi-label font-semibold tabular-nums',
+        tone,
+      )}
+    >
+      {quantity <= 0 ? 'none' : quantity}
+    </span>
+  );
+}
+
+export function CartBuilder({
+  store,
+  actions,
+  searchDebounce = 250,
+}: {
+  store: CartStore;
+  actions?: ReactNode;
+  /** Test hook — production keeps the guide's 250ms. */
+  searchDebounce?: number;
+}) {
   const { data: products } = useProducts();
   const lines = store((s) => s.lines);
   const discountType = store((s) => s.discountType);
@@ -35,23 +73,33 @@ export function CartBuilder({ store }: { store: CartStore }) {
   const setDiscountType = store((s) => s.setDiscountType);
   const laborLines = store((s) => s.laborLines);
   const feeLines = store((s) => s.feeLines);
+  const clear = store((s) => s.clear);
 
   const [search, setSearch] = useState('');
-  const [scanMiss, setScanMiss] = useState<string | null>(null);
+  const [highlight, setHighlight] = useState(0);
   // Product with selling options awaiting the picker's decision. Every path
   // that puts a product on this ticket must route through this gate — the
   // base price is not directly sellable once a product carries options.
   const [pending, setPending] = useState<Product | null>(null);
   const [discountLineId, setDiscountLineId] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const isPct = discountType === DiscountType.percentage;
   const discountLine = lines.find((l) => l.id === discountLineId) ?? null;
 
-  const handlePick = (p: Product) => {
-    if (!productHasSellingOptions(p)) {
-      addLine(p);
+  const addToCart = (p: Product) => {
+    // Out of stock refuses with a toast, not a hidden row — the clerk still
+    // needs to see the part exists (POS guide §2).
+    if (p.quantity <= 0) {
+      toast.error('Out of stock', p.name);
       return;
     }
-    setPending(p);
+    if (productHasSellingOptions(p)) {
+      setPending(p);
+      return;
+    }
+    addLine(p);
+    toast.success('Added to cart', p.name);
   };
 
   const active = useMemo(() => (products ?? []).filter((p) => p.isActive), [products]);
@@ -59,123 +107,180 @@ export function CartBuilder({ store }: { store: CartStore }) {
     if (!search.trim()) return [];
     return active.filter((p) => matchesPosQuery(p, search)).slice(0, 50);
   }, [active, search]);
-
-  // A USB wedge scanner types the code then sends Enter — resolve the raw
-  // text as a scan (barcode first, exact SKU fallback). Mobile parity:
-  // an unknown code warns; a hit routes through the selling-option gate.
-  const submitAsScan = () => {
-    const code = search.trim();
-    if (!code) return;
-    const hit = findByScannedCode(active, code);
-    if (!hit) {
-      setScanMiss(code);
-      return;
-    }
-    setScanMiss(null);
-    setSearch('');
-    handlePick(hit);
-  };
   const lowStock = useMemo(() => lowStockLines(lines, active), [lines, active]);
 
+  useEffect(() => setHighlight(0), [search]);
+
+  // Register keyboard map: `/` or Ctrl/Cmd+K focuses search from anywhere.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const inField =
+        e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+      if ((e.key === '/' && !inField) || (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey))) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Enter resolves, in order: exact scan (barcode/SKU — a wedge scanner types
+  // the code and sends Enter), a sole search result, the highlighted row.
+  const submitSearch = (rawText: string) => {
+    const code = rawText.trim();
+    if (!code) return;
+    const scanned = findByScannedCode(active, code);
+    const target = scanned ?? (results.length === 1 ? results[0] : results[highlight] ?? null);
+    if (!target) {
+      toast.error('Product not found', code);
+      return;
+    }
+    setSearch('');
+    addToCart(target);
+  };
+
   return (
-    <div className="grid grid-cols-1 gap-tk-lg lg:grid-cols-2">
-      <section>
-        {/* The results panel overlays the content below (absolute, anchored
-            to the input) — an in-flow panel here grows the column and shoves
-            the Checkout/Save-as-Job-Order card down the page. */}
-        <div className="relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setScanMiss(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                submitAsScan();
-              }
-            }}
-            placeholder="Search or scan — name, SKU, barcode, category"
-            className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none focus:border-light-text"
-          />
-          {search.trim() ? (
-            <div className="absolute left-0 right-0 top-full z-20 mt-tk-xs max-h-[50vh] divide-y divide-light-hairline overflow-y-auto rounded-lg border border-light-hairline bg-light-card shadow-lg">
+    <div className="grid items-start gap-4 min-[1000px]:grid-cols-[minmax(480px,1fr)_minmax(360px,420px)]">
+      {/* ---- Catalog column ---- */}
+      <section className="min-w-0 space-y-tk-xs">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          debounce={searchDebounce}
+          variant="hero"
+          autoFocus
+          inputRef={searchRef}
+          placeholder="Search part name or SKU — scan barcode"
+          onKeyDown={(e, currentText) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              submitSearch(currentText);
+            } else if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setHighlight((h) => Math.min(results.length - 1, h + 1));
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setHighlight((h) => Math.max(0, h - 1));
+            } else if (e.key === 'Escape') {
+              setSearch('');
+            }
+          }}
+        />
+        {search.trim() ? (
+          <p className="px-1 font-mono text-ctl-sm text-ink-3">
+            {results.length} {results.length === 1 ? 'part' : 'parts'}
+          </p>
+        ) : null}
+
+        {search.trim() ? (
+          <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+            <div className="flex items-center justify-between border-b border-line-2 px-[18px] py-2">
+              <span className="text-micro-caps uppercase text-ink-3">Part</span>
+              <span className="text-micro-caps uppercase text-ink-3">On hand · Price</span>
+            </div>
+            <div className="max-h-[calc(100vh-300px)] divide-y divide-line-2 overflow-y-auto">
               {results.length === 0 ? (
-                <p className="px-tk-md py-tk-lg text-center text-bodySmall text-light-text-hint">
-                  No matches.
-                </p>
+                <div className="px-[18px] py-8 text-center">
+                  <p className="text-cell text-ink-2">No parts match &ldquo;{search.trim()}&rdquo;</p>
+                  <p className="mt-1 text-micro text-ink-3">Check the SKU, or search a shorter term.</p>
+                </div>
               ) : (
-                results.map((p) => (
-                  <button key={p.id} type="button" onClick={() => handlePick(p)}
-                    className="flex w-full items-center justify-between gap-tk-md px-tk-md py-tk-sm text-left hover:bg-light-subtle">
-                    <span>
-                      <span className="block text-bodySmall text-light-text">{p.name}</span>
-                      <span className="block text-[12px] text-light-text-hint">{displaySku(p.sku)} · {p.quantity} on hand</span>
+                results.map((p, i) => (
+                  <div
+                    key={p.id}
+                    onClick={() => addToCart(p)}
+                    className={cn(
+                      'flex cursor-pointer items-center gap-3 px-[18px] py-[13px]',
+                      i === highlight ? 'bg-surface-2' : 'hover:bg-surface-2',
+                    )}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-nav text-ink">{p.name}</p>
+                      <span
+                        className="flex items-center gap-[7px] font-mono text-pill text-ink-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {displaySku(p.sku)}
+                        <CopyButton value={p.sku} label="SKU" />
+                      </span>
+                    </div>
+                    <OnHandChip quantity={p.quantity} />
+                    <span className="w-[96px] shrink-0 text-right font-mono text-inv-figure tabular-nums text-ink">
+                      {formatMoney(p.price)}
                     </span>
-                    <span className="text-bodySmall font-medium text-light-text">{formatMoney(p.price)}</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(p);
+                      }}
+                      className="w-[74px] shrink-0 rounded-field bg-accent py-1.5 text-ctl-sm font-semibold text-accent-ink hover:brightness-95"
+                    >
+                      Add
+                    </button>
+                  </div>
                 ))
               )}
             </div>
-          ) : null}
-        </div>
-        {scanMiss ? (
-          <p className="mt-tk-xs text-[12px] text-warning-dark">Product not found: {scanMiss}</p>
+          </div>
         ) : null}
       </section>
 
-      <section className="space-y-tk-md">
-        <div className="rounded-lg border border-light-hairline bg-light-card">
-          <div className="flex items-center justify-between border-b border-light-hairline px-tk-md py-tk-sm">
-            <span className="text-bodyMedium font-semibold text-light-text">Cart</span>
-            {/* The discount-type toggle lives in the per-line DiscountDialog
-                (mobile parity) — a header-level select could silently wipe
-                every line's discount on a stray change. */}
+      {/* ---- Cart column ---- */}
+      <section className="min-w-0 space-y-tk-sm">
+        <div className="rounded-card border border-line bg-surface shadow-card">
+          <div className="flex items-center justify-between border-b border-line-2 px-[18px] py-3">
+            <span className="text-card-title text-ink">Cart</span>
+            <span className="flex items-center gap-2">
+              {lines.length > 0 ? (
+                <span className="rounded-chip bg-surface-3 px-1.5 py-0.5 font-mono text-micro font-semibold text-ink-2">
+                  {lines.length}
+                </span>
+              ) : null}
+              {(lines.length > 0 || laborLines.length > 0 || feeLines.length > 0) && (
+                <IconButton title="Reset sale" tone="danger" onClick={() => setConfirmReset(true)}>
+                  <TrashIcon className="h-3.5 w-3.5" />
+                </IconButton>
+              )}
+            </span>
           </div>
+
           {lines.length === 0 ? (
-            <p className="px-tk-md py-tk-lg text-center text-bodySmall text-light-text-hint">Cart is empty.</p>
+            <div className="px-[18px] py-8 text-center">
+              <p className="text-cell text-ink-2">Cart is empty</p>
+              <p className="mt-1 text-micro text-ink-3">Search a part and press Add to start a sale.</p>
+            </div>
           ) : (
-            <ul className="divide-y divide-light-hairline">
+            <ul className="max-h-[300px] divide-y divide-line-2 overflow-y-auto">
               {lines.map((l) => {
-                // Mirrors OrderSummary's name + caption treatment — this row
-                // is the cart's own render site and must not fall back to
-                // the bare product name (that's what left two option lines
-                // of one product indistinguishable except by the money
-                // column).
                 const caption = saleItemOptionSetsCaption(l);
                 return (
-                  <li key={l.id} className="space-y-tk-xs px-tk-md py-tk-sm">
-                    <div className="flex items-center justify-between gap-tk-sm">
-                      <span className="min-w-0">
-                        <span className="block text-bodySmall text-light-text">{saleItemDisplayName(l)}</span>
-                        {caption ? (
-                          <span className="block text-[12px] text-light-text-hint">{caption}</span>
-                        ) : null}
-                      </span>
-                      <button type="button" onClick={() => removeLine(l.id)} className="text-light-text-hint hover:text-error">
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
+                  <li key={l.id} className="space-y-2 px-[18px] py-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-amount font-medium text-ink">{saleItemDisplayName(l)}</p>
+                        <p className="font-mono text-micro text-ink-3">
+                          {displaySku(l.sku)} · {formatMoney(l.unitPrice)} ea
+                        </p>
+                        {caption ? <p className="text-micro text-ink-3">{caption}</p> : null}
+                      </div>
+                      <IconButton title={`Remove ${l.name}`} tone="danger" onClick={() => removeLine(l.id)}>
+                        <TrashIcon className="h-3.5 w-3.5" />
+                      </IconButton>
                     </div>
-                    <div className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
-                      <label className="flex items-center gap-tk-xs">
-                        {/* An option line's box shows SETS (setQty takes sets); quantity itself is always
-                            pieces. The label must say so — otherwise the cashier can't tell whether they're
-                            typing sets or pieces into a money-entry field. */}
-                        {saleItemHasOption(l) ? 'Sets' : 'Qty'}
-                        <input type="number" min={1} value={saleItemOptionSets(l) ?? l.quantity}
-                          onChange={(e) => setQty(l.id, Number(e.target.value))}
-                          className="w-16 rounded-md border border-light-border px-tk-sm py-[4px]" />
-                      </label>
+                    <div className="flex items-center gap-2">
+                      <Stepper
+                        value={saleItemOptionSets(l) ?? l.quantity}
+                        onChange={(v) => setQty(l.id, v)}
+                        label={`${saleItemHasOption(l) ? 'Sets' : 'Quantity'} of ${l.name}`}
+                      />
                       <button
                         type="button"
                         onClick={() => setDiscountLineId(l.id)}
                         className={cn(
-                          'rounded-md border border-light-border px-tk-sm py-[4px] text-[12px] hover:bg-light-subtle',
-                          l.discountValue > 0
-                            ? 'font-medium text-success-dark'
-                            : 'text-light-text-secondary',
+                          'rounded-field border border-line px-2.5 py-1 text-ctl-sm transition-[color] hover:bg-surface-2',
+                          l.discountValue > 0 ? 'font-medium text-pos' : 'text-ink-2',
                         )}
                       >
                         {l.discountValue > 0
@@ -184,19 +289,38 @@ export function CartBuilder({ store }: { store: CartStore }) {
                             : `${formatMoney(l.discountValue)} off`
                           : 'Discount'}
                       </button>
-                      <span className="ml-auto font-medium text-light-text">{formatMoney(saleItemNet(l, isPct))}</span>
+                      <span className="ml-auto font-mono text-inv-figure tabular-nums text-ink">
+                        {formatMoney(saleItemNet(l, isPct))}
+                      </span>
                     </div>
-                    {lowStock.has(l.productId) ? <p className="text-[11px] text-warning-dark">⚠ exceeds on-hand stock</p> : null}
+                    {lowStock.has(l.productId) ? (
+                      <p className="text-micro text-accent-text">⚠ exceeds on-hand stock</p>
+                    ) : null}
                   </li>
                 );
               })}
             </ul>
           )}
+
           <LaborSection store={store} />
           <FeeSection store={store} />
           <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
         </div>
+
+        {actions}
       </section>
+
+      {pending ? (
+        <SellingOptionDialog
+          product={pending}
+          onPick={(option) => {
+            addLineWithOption(pending, option);
+            toast.success('Added to cart', `${pending.name} · ${option.label}`);
+            setPending(null);
+          }}
+          onClose={() => setPending(null)}
+        />
+      ) : null}
 
       {discountLine ? (
         <DiscountDialog
@@ -213,16 +337,31 @@ export function CartBuilder({ store }: { store: CartStore }) {
         />
       ) : null}
 
-      {pending ? (
-        <SellingOptionDialog
-          product={pending}
-          onPick={(option) => {
-            addLineWithOption(pending, option);
-            setPending(null);
-          }}
-          onClose={() => setPending(null)}
-        />
-      ) : null}
+      <Dialog open={confirmReset} onClose={() => setConfirmReset(false)} title="Reset sale?">
+        <p className="text-cell text-ink-2">
+          This clears items, labor &amp; fees, mechanic, and the motorcycle model.
+        </p>
+        <div className="mt-tk-md flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setConfirmReset(false)}
+            className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              clear();
+              setConfirmReset(false);
+              toast.info('Cart cleared');
+            }}
+            className="rounded-ctl bg-neg-soft px-tk-md py-tk-sm text-ctl-md font-medium text-neg hover:brightness-95"
+          >
+            Reset
+          </button>
+        </div>
+      </Dialog>
     </div>
   );
 }

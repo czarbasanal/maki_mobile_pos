@@ -18,13 +18,13 @@ export function FeeSection({ store }: { store: CartStore }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <div className="space-y-tk-sm border-t border-light-hairline px-tk-md py-tk-sm">
+    <div className="space-y-tk-sm border-t border-line-2 px-[18px] py-3">
       <div className="flex items-center justify-between">
-        <span className="text-bodySmall font-medium text-light-text">Shop fees</span>
+        <span className="text-cell font-semibold text-ink">Shop fees</span>
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-[4px] text-[12px] text-light-text-secondary hover:bg-light-subtle"
+          className="inline-flex items-center gap-tk-xs rounded-ctl border border-line px-tk-sm py-[4px] text-ctl-sm text-ink-2 transition-[color] hover:text-ink"
         >
           <PlusIcon className="h-3.5 w-3.5" /> Add fee
         </button>
@@ -58,7 +58,7 @@ function FeeRow({
   const [amountText, setAmountText] = useState(line.amount ? String(line.amount) : '');
   return (
     <div className="flex items-center gap-tk-sm">
-      <span className="min-w-0 flex-1 truncate text-[12px] text-light-text">
+      <span className="min-w-0 flex-1 truncate text-ctl-sm text-ink">
         {feeLineDisplayLabel(line)}
       </span>
       <input
@@ -69,13 +69,13 @@ function FeeRow({
           setAmountText(e.target.value);
           onAmount(line.id, parseFloat(e.target.value) || 0);
         }}
-        className="w-24 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-right text-[12px]"
+        className="w-24 rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-right font-mono text-ctl-sm text-ink outline-none"
       />
       <button
         type="button"
         aria-label="Remove fee"
         onClick={() => onRemove(line.id)}
-        className="rounded-md p-tk-xs text-light-text-hint hover:bg-light-subtle hover:text-error"
+        className="rounded-chip p-tk-xs text-ink-3 transition-[color] hover:bg-neg-soft hover:text-neg"
       >
         <TrashIcon className="h-4 w-4" />
       </button>
@@ -135,7 +135,7 @@ function AddFeeDialog({
     >
       {selected === null ? (
         (fees ?? []).length === 0 ? (
-          <p className="text-bodySmall text-light-text-secondary">
+          <p className="text-cell text-ink-2">
             No shop fees configured. Add one in Settings on the register phone first.
           </p>
         ) : (
@@ -145,11 +145,11 @@ function AddFeeDialog({
                 key={fee.id}
                 type="button"
                 onClick={() => pick(fee)}
-                className="flex w-full items-center justify-between rounded-md border border-light-border px-tk-md py-tk-sm text-left text-bodySmall hover:bg-light-subtle"
+                className="flex w-full items-center justify-between rounded-ctl border border-line px-tk-md py-tk-sm text-left text-cell text-ink hover:bg-surface-2"
               >
                 <span>{fee.name}</span>
                 {fee.defaultAmount ? (
-                  <span className="text-light-text-secondary">{formatMoney(fee.defaultAmount)}</span>
+                  <span className="font-mono text-ink-2">{formatMoney(fee.defaultAmount)}</span>
                 ) : null}
               </button>
             ))}
@@ -157,7 +157,7 @@ function AddFeeDialog({
         )
       ) : (
         <div className="space-y-tk-sm">
-          <label className="block text-[12px] text-light-text-secondary">
+          <label className="block text-ctl-sm text-ink-2">
             Amount
             <input
               type="text"
@@ -165,18 +165,18 @@ function AddFeeDialog({
               value={amountText}
               onChange={(e) => setAmountText(e.target.value)}
               autoFocus
-              className="mt-tk-xs w-full rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px] text-light-text"
+              className="mt-tk-xs w-full rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-ctl-sm text-ink outline-none"
             />
           </label>
           {requiresDescription ? (
-            <label className="block text-[12px] text-light-text-secondary">
+            <label className="block text-ctl-sm text-ink-2">
               Description
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What's being charged?"
-                className="mt-tk-xs w-full rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px] text-light-text"
+                className="mt-tk-xs w-full rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-ctl-sm text-ink outline-none"
               />
             </label>
           ) : null}
@@ -184,7 +184,7 @@ function AddFeeDialog({
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text-secondary hover:bg-light-subtle"
+              className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
             >
               Back
             </button>
@@ -192,7 +192,7 @@ function AddFeeDialog({
               type="button"
               disabled={!valid}
               onClick={submit}
-              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-md font-semibold text-accent-ink hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Add
             </button>

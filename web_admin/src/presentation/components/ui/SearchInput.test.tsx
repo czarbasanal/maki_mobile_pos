@@ -41,8 +41,9 @@ describe('hero variant (POS register)', () => {
       <SearchInput value="" onChange={vi.fn()} variant="hero" onKeyDown={onKeyDown} inputRef={ref} placeholder="Scan" />,
     );
     const input = screen.getByPlaceholderText('Scan');
+    fireEvent.change(input, { target: { value: '480123' } });
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(onKeyDown).toHaveBeenCalled();
+    expect(onKeyDown).toHaveBeenCalledWith(expect.anything(), '480123');
     expect(ref.current).toBe(input);
     ref.current?.focus();
     expect(input).toHaveFocus();

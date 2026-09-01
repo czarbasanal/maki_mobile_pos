@@ -1,17 +1,30 @@
+// POS screen (design/MAKI-POS-Handoff "POS Register"): the CartBuilder
+// register surface plus the screen-level actions (Checkout · ₱total, Save as
+// Job Order), gate banners, the save-JO dialog and the F2/F4 keyboard map.
+// Reset lives in the cart card's header (CartBuilder).
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { describedLaborLines, laborValidationError } from '@/domain/sales/labor';
-import { cartHasBillableContent } from '@/domain/sales/cart';
+import { cartGrandTotal, cartHasBillableContent } from '@/domain/sales/cart';
 import { useRegisterStatus } from '@/presentation/hooks/useRegisterStatus';
 import { useSaveJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { useJobOrders } from '@/presentation/hooks/useJobOrders';
 import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { Dialog } from '@/presentation/components/common/Dialog';
+import { toast } from '@/presentation/components/ui/toast';
 import { RoutePaths } from '@/presentation/router/routePaths';
+import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { CartBuilder } from './CartBuilder';
+
+function GateBanner({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-ctl border border-accent-text/40 bg-accent-soft px-tk-md py-tk-sm text-cell text-accent-text">
+      {children}
+    </p>
+  );
+}
 
 export function PosPage() {
   const lines = useCartStore((s) => s.lines);
@@ -35,8 +48,6 @@ export function PosPage() {
   );
   const [saveOpen, setSaveOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState('');
-  const [confirmReset, setConfirmReset] = useState(false);
-  const hasTicket = lines.length > 0 || laborLines.length > 0;
   const { previousDayUnsettled } = useRegisterStatus();
   // Labor-only / fee-only tickets are billable (mobile parity); labor money
   // must be complete and attributed before it can leave the register.
@@ -47,6 +58,8 @@ export function PosPage() {
   const billOutNeedsModel = jobOrderId !== null && !motorcycleModel;
   const checkoutBlocked =
     !hasBillable || laborError !== null || previousDayUnsettled || billOutNeedsModel;
+  const canSaveJobOrder = hasBillable && laborError === null && !saveJobOrder.isPending;
+  const grandTotal = cartGrandTotal(lines, laborLines, discountType, feeLines);
 
   // Updating an existing Job Order keeps its current name (no renumber).
   // A brand-new one gets the next number for today, computed from the live
@@ -95,6 +108,22 @@ export function PosPage() {
     setNoteDraft(notes ?? '');
     setSaveOpen(true);
   };
+
+  // Register keyboard map (POS guide §5): F2 = Checkout, F4 = Save as JO.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        if (!checkoutBlocked) navigate(RoutePaths.checkout);
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        if (canSaveJobOrder && !saveOpen) openSave();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  });
+
   const onSaveJobOrder = async () => {
     const name = jobOrderNumber;
     if (!name) return;
@@ -114,79 +143,65 @@ export function PosPage() {
       });
       setSaveOpen(false);
       clear();
+      toast.success('Saved as Job Order', name);
     } catch {
       // surfaced via saveJobOrder.error
     }
   };
 
-  return (
-    <div className="space-y-tk-md">
-      {hasTicket ? (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            aria-label="Reset sale"
-            title="Reset sale"
-            onClick={() => setConfirmReset(true)}
-            className="rounded-md border border-light-hairline p-tk-sm text-light-text-secondary hover:bg-light-card"
-          >
-            <ArrowPathIcon className="h-4 w-4" />
-          </button>
-        </div>
+  const actions = (
+    <div className="space-y-tk-sm">
+      {laborError ? <GateBanner>{laborError}</GateBanner> : null}
+      {billOutNeedsModel ? (
+        <GateBanner>Set the motorcycle model before billing out this Job Order.</GateBanner>
       ) : null}
-
-      {done ? (
-        <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
-          Sale <span className="font-mono">{done}</span> completed.
-        </p>
-      ) : null}
-      {saveJobOrder.isSuccess && lines.length === 0 ? (
-        <p className="rounded-md border border-success-light bg-success-light/40 px-tk-md py-tk-sm text-bodySmall text-success-dark">
-          Saved as Job Order.
-        </p>
-      ) : null}
-
-      {previousDayUnsettled ? (
-        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
-          Yesterday's sales haven't been closed yet. Close the day on the register phone before
-          completing new sales.
-        </p>
-      ) : null}
-
-      <CartBuilder store={useCartStore} />
-
-      <div className="ml-auto max-w-sm space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-md">
-        {laborError ? (
-          <p className="text-bodySmall text-warning-dark">{laborError}</p>
-        ) : null}
-        {billOutNeedsModel ? (
-          <p className="text-bodySmall text-warning-dark">
-            Set the motorcycle model before billing out this Job Order.
-          </p>
-        ) : null}
+      <div className="flex flex-col gap-2">
         <Link
           to={RoutePaths.checkout}
           aria-disabled={checkoutBlocked}
           className={cn(
-            'block w-full rounded-md bg-light-text px-tk-md py-tk-sm text-center text-bodySmall font-semibold text-light-background hover:bg-primary-dark',
+            'block w-full rounded-[12px] bg-accent px-tk-md py-3 text-center text-ctl-lg font-semibold text-accent-ink shadow-[0_6px_18px_-8px_var(--accent-line)] hover:brightness-95',
             checkoutBlocked && 'pointer-events-none cursor-not-allowed opacity-60',
           )}
         >
-          Checkout
+          Checkout · {formatMoney(grandTotal)}
         </Link>
         <button
           type="button"
-          disabled={!hasBillable || laborError !== null || saveJobOrder.isPending}
+          disabled={!canSaveJobOrder}
           onClick={openSave}
           className={cn(
-            'w-full rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall font-medium text-light-text hover:bg-light-subtle',
-            (!hasBillable || laborError !== null || saveJobOrder.isPending) &&
-              'cursor-not-allowed opacity-60',
+            'w-full rounded-[12px] border border-line bg-surface px-tk-md py-2.5 text-nav text-ink-2 transition-[color] hover:text-ink',
+            !canSaveJobOrder && 'cursor-not-allowed opacity-60',
           )}
         >
           {saveJobOrder.isPending ? 'Saving…' : jobOrderId ? 'Update Job Order' : 'Save as Job Order'}
         </button>
       </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-tk-md">
+      {done ? (
+        <p className="rounded-ctl border border-pos/40 bg-pos-soft px-tk-md py-tk-sm text-cell text-pos">
+          Sale <span className="font-mono">{done}</span> completed.
+        </p>
+      ) : null}
+      {saveJobOrder.isSuccess && lines.length === 0 ? (
+        <p className="rounded-ctl border border-pos/40 bg-pos-soft px-tk-md py-tk-sm text-cell text-pos">
+          Saved as Job Order.
+        </p>
+      ) : null}
+
+      {previousDayUnsettled ? (
+        <GateBanner>
+          Yesterday's sales haven't been closed yet. Close the day on the register phone before
+          completing new sales.
+        </GateBanner>
+      ) : null}
+
+      <CartBuilder store={useCartStore} actions={actions} />
 
       <Dialog
         open={saveOpen}
@@ -198,28 +213,31 @@ export function PosPage() {
       >
         <div className="space-y-tk-md">
           <div className="space-y-tk-xs">
-            <span className="text-bodySmall text-light-text-secondary">Job Order #</span>
-            <div className="w-full rounded-md border border-light-border bg-light-subtle px-tk-md py-tk-sm font-mono text-bodySmall text-light-text">
+            <span className="text-cell text-ink-2">Job Order #</span>
+            <div className="w-full rounded-ctl border border-line bg-surface-2 px-tk-md py-tk-sm font-mono text-cell text-ink">
               {jobOrderNumber ?? 'Computing…'}
             </div>
           </div>
           <label className="block space-y-tk-xs">
-            <span className="text-bodySmall text-light-text-secondary">Notes</span>
+            <span className="text-cell text-ink-2">Notes</span>
             <textarea
               rows={3}
               value={noteDraft}
               onChange={(e) => setNoteDraft(e.target.value)}
               placeholder="Optional — e.g. customer requests"
               disabled={saveJobOrder.isPending}
-              className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
+              className="w-full rounded-ctl border border-line bg-surface px-tk-md py-tk-sm text-cell text-ink outline-none placeholder:text-ink-3 focus:border-ink"
             />
           </label>
+          {saveJobOrder.error ? (
+            <p className="text-ctl-sm text-neg">{saveJobOrder.error.message}</p>
+          ) : null}
           <div className="flex justify-end gap-tk-sm">
             <button
               type="button"
               onClick={() => setSaveOpen(false)}
               disabled={saveJobOrder.isPending}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+              className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
             >
               Cancel
             </button>
@@ -227,40 +245,9 @@ export function PosPage() {
               type="button"
               onClick={onSaveJobOrder}
               disabled={saveJobOrder.isPending || !jobOrderNumber}
-              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
+              className="rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-md font-semibold text-accent-ink hover:brightness-95 disabled:opacity-60"
             >
               Save
-            </button>
-          </div>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={confirmReset}
-        onClose={() => setConfirmReset(false)}
-        title="Clear this sale?"
-      >
-        <div className="space-y-tk-md">
-          <p className="text-bodySmall text-light-text-secondary">
-            This clears the whole sale — items, labor & service, and mechanic.
-          </p>
-          <div className="flex justify-end gap-tk-sm">
-            <button
-              type="button"
-              onClick={() => setConfirmReset(false)}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                clear();
-                setConfirmReset(false);
-              }}
-              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
-            >
-              Clear
             </button>
           </div>
         </div>

@@ -40,7 +40,7 @@ export function MotorcycleModelPicker({ store }: { store: CartStore }) {
 
   return (
     <div className="space-y-tk-xs">
-      <label className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
+      <label className="flex items-center gap-tk-sm text-ctl-sm text-ink-2">
         Motorcycle
         <select
           value={adding ? ADD_SENTINEL : motorcycleModel ?? ''}
@@ -53,7 +53,7 @@ export function MotorcycleModelPicker({ store }: { store: CartStore }) {
             setAdding(false);
             setMotorcycleModel(v === '' ? null : v);
           }}
-          className="rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
+          className="rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-ctl-sm text-ink outline-none"
         >
           <option value="">None</option>
           {options.map((name) => (
@@ -72,13 +72,13 @@ export function MotorcycleModelPicker({ store }: { store: CartStore }) {
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Model name"
             autoFocus
-            className="min-w-0 flex-1 rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]"
+            className="min-w-0 flex-1 rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-ctl-sm text-ink outline-none placeholder:text-ink-3"
           />
           <button
             type="button"
             disabled={!draft.trim() || resolve.isPending}
             onClick={submitDraft}
-            className="rounded-md bg-light-text px-tk-md py-[6px] text-[12px] font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
+            className="rounded-ctl bg-accent px-tk-md py-[6px] text-ctl-sm font-semibold text-accent-ink hover:brightness-95 disabled:opacity-60"
           >
             {resolve.isPending ? 'Adding…' : 'Add'}
           </button>
@@ -88,14 +88,14 @@ export function MotorcycleModelPicker({ store }: { store: CartStore }) {
               setAdding(false);
               setDraft('');
             }}
-            className="rounded-md border border-light-border px-tk-sm py-[6px] text-[12px] text-light-text-secondary hover:bg-light-subtle"
+            className="rounded-ctl border border-line px-tk-sm py-[6px] text-ctl-sm text-ink-2 hover:bg-surface-2"
           >
             Cancel
           </button>
         </div>
       ) : null}
       {resolve.error ? (
-        <p className="text-[12px] text-error-dark">{resolve.error.message}</p>
+        <p className="text-ctl-sm text-neg">{resolve.error.message}</p>
       ) : null}
     </div>
   );

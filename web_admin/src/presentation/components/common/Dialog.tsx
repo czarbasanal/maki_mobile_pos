@@ -58,16 +58,16 @@ export function Dialog({
     >
       <div
         className={cn(
-          'w-full max-w-md rounded-lg border border-light-hairline bg-light-card shadow-xl',
+          'w-full max-w-md rounded-card border border-line bg-surface shadow-card',
           className,
         )}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex items-start gap-tk-md border-b border-light-hairline px-tk-lg py-tk-md">
+        <header className="flex items-start gap-tk-md border-b border-line-2 px-tk-lg py-tk-md">
           <div className="min-w-0 flex-1">
-            <h2 className="text-bodyMedium font-semibold text-light-text">{title}</h2>
+            <h2 className="text-card-title text-ink">{title}</h2>
             {description ? (
-              <p className="mt-tk-xs text-bodySmall text-light-text-secondary">{description}</p>
+              <p className="mt-tk-xs text-cell text-ink-2">{description}</p>
             ) : null}
           </div>
           {dismissable ? (
@@ -75,7 +75,7 @@ export function Dialog({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle"
+              className="rounded-chip p-tk-xs text-ink-3 hover:bg-surface-3 hover:text-ink-2"
             >
               <XMarkIcon className="h-4 w-4" />
             </button>

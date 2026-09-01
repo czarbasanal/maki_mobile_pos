@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { CartBuilder } from './CartBuilder';
+import { Toaster } from '@/presentation/components/ui/Toaster';
 import { createCartStore } from '@/presentation/stores/cartStore';
 import type { Product, Mechanic } from '@/domain/entities';
 import type { SellingOption } from '@/domain/entities/SellingOption';
@@ -50,7 +51,8 @@ function harness(products: Product[]) {
       }}
     >
       <QueryClientProvider client={qc}>
-        <CartBuilder store={store} />
+        <CartBuilder store={store} searchDebounce={0} />
+        <Toaster />
       </QueryClientProvider>
     </DiProvider>,
   );
@@ -58,7 +60,7 @@ function harness(products: Product[]) {
 }
 
 async function search(text: string) {
-  const input = screen.getByPlaceholderText(/search or scan/i);
+  const input = screen.getByPlaceholderText(/search part name/i);
   await userEvent.type(input, text);
 }
 
@@ -66,7 +68,7 @@ describe('CartBuilder — routing product picks through the selling-option gate'
   it('adds a plain (no-option) product straight to the cart — no picker shown', async () => {
     const { store } = harness([plainProduct()]);
     await search('plug');
-    await userEvent.click(await screen.findByRole('button', { name: /spark plug/i }));
+    await userEvent.click(await screen.findByText('Spark Plug'));
 
     expect(store.getState().lines).toHaveLength(1);
     expect(store.getState().lines[0].productId).toBe('p1');
@@ -78,7 +80,7 @@ describe('CartBuilder — routing product picks through the selling-option gate'
   it('opens the option picker instead of adding directly when the product has options', async () => {
     const { store } = harness([optionProduct()]);
     await search('pulley');
-    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(await screen.findByText('Pulley Ball'));
 
     // Nothing lands on the cart yet — the picker gates the add.
     expect(store.getState().lines).toHaveLength(0);
@@ -91,7 +93,7 @@ describe('CartBuilder — routing product picks through the selling-option gate'
   it('picking an option adds exactly that option via addLineWithOption, not addLine', async () => {
     const { store } = harness([optionProduct()]);
     await search('pulley');
-    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(await screen.findByText('Pulley Ball'));
     await userEvent.click(screen.getByText('By 3'));
 
     const { lines } = store.getState();
@@ -107,7 +109,7 @@ describe('CartBuilder — routing product picks through the selling-option gate'
   it('cancelling the picker adds nothing to the cart', async () => {
     const { store } = harness([optionProduct()]);
     await search('pulley');
-    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(await screen.findByText('Pulley Ball'));
     await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
 
     expect(store.getState().lines).toHaveLength(0);
@@ -119,24 +121,25 @@ describe('CartBuilder — cart row shows the selling-option label (10th render s
   it("shows the option label on an option line's cart row, not just the checkout screen", async () => {
     const { store } = harness([optionProduct()]);
     await search('pulley');
-    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(await screen.findByText('Pulley Ball'));
     await userEvent.click(screen.getByText('By 3'));
     // Clear the search box so the results panel — which independently shows
     // the bare product name — doesn't make the cart row's text ambiguous.
-    await userEvent.clear(screen.getByPlaceholderText(/search or scan/i));
+    await userEvent.clear(screen.getByPlaceholderText(/search part name/i));
 
     expect(store.getState().lines).toHaveLength(1);
     // A wrong implementation (bare l.name) would show "Pulley Ball" with no
     // way to tell this line apart from a By 6 line of the same product.
-    expect(screen.getByText('Pulley Ball · By 3')).toBeInTheDocument();
+    // Scope to the cart list — the added-to-cart toast echoes the same label.
+    expect(within(screen.getByRole('list')).getByText('Pulley Ball · By 3')).toBeInTheDocument();
   });
 
   it('shows the set-count caption for more than one set, mirroring OrderSummary', async () => {
     const { store } = harness([optionProduct()]);
     await search('pulley');
-    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(await screen.findByText('Pulley Ball'));
     await userEvent.click(screen.getByText('By 3'));
-    await userEvent.clear(screen.getByPlaceholderText(/search or scan/i));
+    await userEvent.clear(screen.getByPlaceholderText(/search part name/i));
     // Second set: bumps the line to 2 sets (6 pieces) — the caption should
     // then read "By 3 × 2 (6 pcs)", same rule as OrderSummary/Receipt.
     // A direct store mutation (not routed through userEvent) needs its own
@@ -152,10 +155,10 @@ describe('CartBuilder — cart row shows the selling-option label (10th render s
   it("a plain line's cart row is unchanged — bare name, no option caption", async () => {
     harness([plainProduct()]);
     await search('plug');
-    await userEvent.click(await screen.findByRole('button', { name: /spark plug/i }));
-    await userEvent.clear(screen.getByPlaceholderText(/search or scan/i));
+    await userEvent.click(await screen.findByText('Spark Plug'));
+    await userEvent.clear(screen.getByPlaceholderText(/search part name/i));
 
-    expect(screen.getByText('Spark Plug')).toBeInTheDocument();
+    expect(within(screen.getByRole('list')).getByText('Spark Plug')).toBeInTheDocument();
   });
 });
 
@@ -167,20 +170,20 @@ describe('CartBuilder — qty box label disambiguates sets from pieces', () => {
   it('labels the box "Qty" for a plain line', async () => {
     harness([plainProduct()]);
     await search('plug');
-    await userEvent.click(await screen.findByRole('button', { name: /spark plug/i }));
+    await userEvent.click(await screen.findByText('Spark Plug'));
 
-    expect(screen.getByText('Qty')).toBeInTheDocument();
-    expect(screen.queryByText('Sets')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Quantity of Spark Plug')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Sets of/)).not.toBeInTheDocument();
   });
 
   it('labels the box "Sets" for an option line', async () => {
     harness([optionProduct()]);
     await search('pulley');
-    await userEvent.click(await screen.findByRole('button', { name: /pulley ball/i }));
+    await userEvent.click(await screen.findByText('Pulley Ball'));
     await userEvent.click(screen.getByText('By 3'));
 
-    expect(screen.getByText('Sets')).toBeInTheDocument();
-    expect(screen.queryByText('Qty')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Sets of Pulley Ball')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Quantity of/)).not.toBeInTheDocument();
   });
 });
 
@@ -189,7 +192,7 @@ describe('CartBuilder — wedge-scanner Enter (B4)', () => {
     const { store } = harness([
       plainProduct({ id: 'p9', name: 'Chain Lube', sku: '00070200', barcodes: ['4801234567890'] }),
     ]);
-    const box = screen.getByPlaceholderText(/search or scan/i);
+    const box = screen.getByPlaceholderText(/search part name/i);
     await userEvent.type(box, '4801234567890{Enter}');
     expect(store.getState().lines).toHaveLength(1);
     expect(store.getState().lines[0].productId).toBe('p9');
@@ -200,15 +203,17 @@ describe('CartBuilder — wedge-scanner Enter (B4)', () => {
     const { store } = harness([
       plainProduct({ id: 'p9', name: 'Chain Lube v2', sku: '00070200-2', barcodes: [] }),
     ]);
-    await userEvent.type(screen.getByPlaceholderText(/search or scan/i), '00070200-2{Enter}');
+    await userEvent.type(screen.getByPlaceholderText(/search part name/i), '00070200-2{Enter}');
     expect(store.getState().lines[0]?.productId).toBe('p9');
   });
 
   it('Enter with an unknown code warns and keeps the text', async () => {
     const { store } = harness([plainProduct({ id: 'p9', barcodes: [] })]);
-    const box = screen.getByPlaceholderText(/search or scan/i);
+    const box = screen.getByPlaceholderText(/search part name/i);
     await userEvent.type(box, '999888{Enter}');
-    expect(screen.getByText(/product not found: 999888/i)).toBeInTheDocument();
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent('Product not found');
+    expect(status).toHaveTextContent('999888');
     expect(store.getState().lines).toHaveLength(0);
     expect(box).toHaveValue('999888');
   });
