@@ -5,6 +5,7 @@ import type { CartStore } from '@/presentation/stores/cartStore';
 import { lowStockLines } from '@/domain/sales/cart';
 import {
   saleItemDisplayName,
+  saleItemGross,
   saleItemHasOption,
   saleItemNet,
   saleItemOptionSets,
@@ -13,8 +14,10 @@ import {
 import { DiscountType } from '@/domain/enums/DiscountType';
 import { productHasSellingOptions, type Product } from '@/domain/entities/Product';
 import { formatMoney } from '@/core/utils/money';
+import { cn } from '@/core/utils/cn';
 import { LaborSection } from './LaborSection';
 import { FeeSection } from './FeeSection';
+import { DiscountDialog } from './DiscountDialog';
 import { CartTotals } from './CartTotals';
 import { SellingOptionDialog } from './SellingOptionDialog';
 import { displaySku } from '@/domain/products/sku';
@@ -37,7 +40,9 @@ export function CartBuilder({ store }: { store: CartStore }) {
   // that puts a product on this ticket must route through this gate — the
   // base price is not directly sellable once a product carries options.
   const [pending, setPending] = useState<Product | null>(null);
+  const [discountLineId, setDiscountLineId] = useState<string | null>(null);
   const isPct = discountType === DiscountType.percentage;
+  const discountLine = lines.find((l) => l.id === discountLineId) ?? null;
 
   const handlePick = (p: Product) => {
     if (!productHasSellingOptions(p)) {
@@ -96,14 +101,9 @@ export function CartBuilder({ store }: { store: CartStore }) {
         <div className="rounded-lg border border-light-hairline bg-light-card">
           <div className="flex items-center justify-between border-b border-light-hairline px-tk-md py-tk-sm">
             <span className="text-bodyMedium font-semibold text-light-text">Cart</span>
-            <label className="flex items-center gap-tk-sm text-[12px] text-light-text-secondary">
-              Discount
-              <select value={discountType} onChange={(e) => setDiscountType(e.target.value as DiscountType)}
-                className="rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-[12px]">
-                <option value={DiscountType.amount}>₱ amount</option>
-                <option value={DiscountType.percentage}>%</option>
-              </select>
-            </label>
+            {/* The discount-type toggle lives in the per-line DiscountDialog
+                (mobile parity) — a header-level select could silently wipe
+                every line's discount on a stray change. */}
           </div>
           {lines.length === 0 ? (
             <p className="px-tk-md py-tk-lg text-center text-bodySmall text-light-text-hint">Cart is empty.</p>
@@ -139,12 +139,22 @@ export function CartBuilder({ store }: { store: CartStore }) {
                           onChange={(e) => setQty(l.id, Number(e.target.value))}
                           className="w-16 rounded-md border border-light-border px-tk-sm py-[4px]" />
                       </label>
-                      <label className="flex items-center gap-tk-xs">
-                        {isPct ? '%' : '₱'} off
-                        <input type="number" min={0} step="0.01" value={l.discountValue}
-                          onChange={(e) => setLineDiscount(l.id, Number(e.target.value))}
-                          className="w-20 rounded-md border border-light-border px-tk-sm py-[4px]" />
-                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setDiscountLineId(l.id)}
+                        className={cn(
+                          'rounded-md border border-light-border px-tk-sm py-[4px] text-[12px] hover:bg-light-subtle',
+                          l.discountValue > 0
+                            ? 'font-medium text-success-dark'
+                            : 'text-light-text-secondary',
+                        )}
+                      >
+                        {l.discountValue > 0
+                          ? isPct
+                            ? `${l.discountValue}% off`
+                            : `${formatMoney(l.discountValue)} off`
+                          : 'Discount'}
+                      </button>
                       <span className="ml-auto font-medium text-light-text">{formatMoney(saleItemNet(l, isPct))}</span>
                     </div>
                     {lowStock.has(l.productId) ? <p className="text-[11px] text-warning-dark">⚠ exceeds on-hand stock</p> : null}
@@ -158,6 +168,21 @@ export function CartBuilder({ store }: { store: CartStore }) {
           <CartTotals lines={lines} discountType={discountType} laborLines={laborLines} feeLines={feeLines} />
         </div>
       </section>
+
+      {discountLine ? (
+        <DiscountDialog
+          key={`${discountLine.id}:${discountType}`}
+          open
+          onClose={() => setDiscountLineId(null)}
+          itemName={saleItemDisplayName(discountLine)}
+          currentDiscount={discountLine.discountValue}
+          discountType={discountType}
+          maxAmount={saleItemGross(discountLine)}
+          hasOtherDiscounts={lines.some((o) => o.id !== discountLine.id && o.discountValue > 0)}
+          onApply={(value) => setLineDiscount(discountLine.id, value)}
+          onTypeChange={setDiscountType}
+        />
+      ) : null}
 
       {pending ? (
         <SellingOptionDialog
