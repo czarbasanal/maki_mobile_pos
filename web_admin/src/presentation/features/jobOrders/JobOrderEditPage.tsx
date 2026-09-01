@@ -26,6 +26,7 @@ export function JobOrderEditPage() {
   const mechanicId = useJobOrderEditStore((s) => s.mechanicId);
   const mechanicName = useJobOrderEditStore((s) => s.mechanicName);
   const notes = useJobOrderEditStore((s) => s.notes);
+  const motorcycleModel = useJobOrderEditStore((s) => s.motorcycleModel);
   const setNotes = useJobOrderEditStore((s) => s.setNotes);
 
   const [name, setName] = useState('');
@@ -75,6 +76,7 @@ export function JobOrderEditPage() {
         feeLines,
         mechanicId,
         mechanicName,
+        motorcycleModel,
         notes: (notes ?? '').trim() || null,
       });
       navigate(RoutePaths.jobOrders);
@@ -99,9 +101,6 @@ export function JobOrderEditPage() {
           className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm font-mono text-bodySmall text-light-text outline-none focus:border-light-text" />
       </label>
 
-      {/* Read-only: the model comes from the shared motorcycle_models list,
-          which only the mobile app can pick from today. Shown even when unset
-          so an admin can tell an empty field from a missing one. */}
       <label className="block max-w-sm space-y-tk-xs">
         <span className="text-bodySmall text-light-text-secondary">Notes</span>
         <textarea rows={3} value={notes ?? ''} onChange={(e) => setNotes(e.target.value)}

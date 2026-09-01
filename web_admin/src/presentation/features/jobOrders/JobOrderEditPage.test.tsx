@@ -223,3 +223,23 @@ describe('JobOrderEditPage', () => {
     expect(patch.feeLines).toEqual(feeLines);
   });
 });
+
+describe('JobOrderEditPage — motorcycle model persists (review blocker)', () => {
+  it('saving carries the picked model into the update patch', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    harness({
+      getById: vi.fn().mockResolvedValue(jobOrder({ motorcycleModel: null })),
+      update,
+    });
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: /motorcycle/i })).toBeInTheDocument(),
+    );
+    // Simulate a pick landing in the edit store (the picker's own behavior is
+    // covered by MotorcycleModelPicker.test) then save.
+    act(() => useJobOrderEditStore.getState().setMotorcycleModel('Nmax 155'));
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    const patch = update.mock.calls[0][1];
+    expect(patch.motorcycleModel).toBe('Nmax 155');
+  });
+});

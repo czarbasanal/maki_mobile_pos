@@ -11,7 +11,7 @@ import { CategoryKind } from '@/domain/categories/categoryKind';
 import { canVoidSale } from '@/domain/sales/voiding';
 import { BackLink } from '@/presentation/components/common/BackLink';
 import { RoutePaths } from '@/presentation/router/routePaths';
-import { saleIsVoided , feeLineDisplayLabel } from '@/domain/entities';
+import { feeLineDisplayLabel, saleIsVoided } from '@/domain/entities';
 import { cn } from '@/core/utils/cn';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Receipt } from './Receipt';
