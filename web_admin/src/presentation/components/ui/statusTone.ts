@@ -7,13 +7,19 @@ const TONE_BY_STATUS: Record<string, Tone> = {
   completed: 'positive',
   approved: 'positive',
   received: 'positive',
+  billed: 'positive',
   pending: 'warning',
-  open: 'warning',
   partial: 'warning',
+  'in progress': 'warning',
+  in_progress: 'warning',
+  // A ticket on the bench is information, not a warning (JO guide §A).
+  open: 'info',
   refunded: 'negative',
   rejected: 'negative',
   cancelled: 'negative',
-  voided: 'neutral',
+  // The number and money are struck through wherever a voided sale shows;
+  // the pill matches in --neg (JO guide §A status tones).
+  voided: 'negative',
   draft: 'neutral',
 };
 

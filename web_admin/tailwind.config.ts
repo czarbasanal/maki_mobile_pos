@@ -45,7 +45,9 @@ const config: Config = {
         error: colors.error,
         'error-light': colors.errorLight,
         'error-dark': colors.errorDark,
-        info: colors.info,
+        // DEFAULT/soft are the new-skin CSS variables (theme.css); the
+        // legacy light/dark literals stay for the old-skin screens.
+        info: { DEFAULT: 'var(--info)', soft: 'var(--info-soft)' },
         'info-light': colors.infoLight,
         'info-dark': colors.infoDark,
         role: colors.role,

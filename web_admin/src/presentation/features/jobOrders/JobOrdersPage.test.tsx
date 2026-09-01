@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,7 +7,6 @@ import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { JobOrdersPage } from './JobOrdersPage';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cartGrandTotal } from '@/domain/sales/cart';
-import { formatMoney } from '@/core/utils/money';
 import { DiscountType } from '@/domain/enums/DiscountType';
 import type { JobOrder } from '@/domain/entities';
 
@@ -82,24 +81,24 @@ describe('JobOrdersPage', () => {
     });
     harness([open]);
 
-    const joCell = screen.getByText('JO-072326-001');
+    const joCell = screen.getByText('JO-072326-001').closest('td')!;
     expect(joCell).toHaveClass('font-mono');
     expect(screen.getByText('Kuya Bert')).toBeInTheDocument();
     // The bike is how staff recognise a ticket at a glance — same as mobile's
     // list tile, which shows it as a chip.
     expect(screen.getByText('Honda Click 125i')).toBeInTheDocument();
-    expect(screen.getByText(formatMoney(cartGrandTotal(open.items, open.laborLines, open.discountType, open.feeLines)))).toBeInTheDocument();
-    expect(screen.getByText('Open')).toBeInTheDocument();
+    // An empty ticket shows — for total and items, not ₱0.00 (guide §A).
+    expect(cartGrandTotal(open.items, open.laborLines, open.discountType, open.feeLines)).toBe(0);
+    const row = joCell.closest('tr')!;
+    expect(within(row).getByText('Open')).toBeInTheDocument();
   });
 
-  it('shows a Billed pill for converted job orders and keeps them in the list, visually muted', () => {
+  it('shows a Billed pill for converted job orders and keeps them in the list', () => {
     const billed = jobOrder({ id: 'd2', name: 'JO-072326-002', isConverted: true });
     harness([billed]);
 
-    expect(screen.getByText('JO-072326-002')).toBeInTheDocument();
-    expect(screen.getByText('Billed')).toBeInTheDocument();
-    // Muted: the JO number itself carries the hint/muted text color once billed.
-    expect(screen.getByText('JO-072326-002')).toHaveClass('text-light-text-hint');
+    const row = screen.getByText('JO-072326-002').closest('tr')!;
+    expect(within(row).getByText('Billed')).toBeInTheDocument();
   });
 
   it('keeps both open and converted rows in the same list', () => {
@@ -107,10 +106,10 @@ describe('JobOrdersPage', () => {
     const billed = jobOrder({ id: 'd2', name: 'JO-072326-002', isConverted: true });
     harness([open, billed]);
 
-    expect(screen.getByText('JO-072326-001')).toBeInTheDocument();
-    expect(screen.getByText('JO-072326-002')).toBeInTheDocument();
-    expect(screen.getByText('Open')).toBeInTheDocument();
-    expect(screen.getByText('Billed')).toBeInTheDocument();
+    const openRow = screen.getByText('JO-072326-001').closest('tr')!;
+    const billedRow = screen.getByText('JO-072326-002').closest('tr')!;
+    expect(within(openRow).getByText('Open')).toBeInTheDocument();
+    expect(within(billedRow).getByText('Billed')).toBeInTheDocument();
   });
 
   it('shows an empty state with no job orders', () => {
@@ -231,33 +230,25 @@ describe('JobOrdersPage — date range', () => {
     ).toBeInTheDocument();
   });
 
-  it('offers the presets the shop actually asks for, plus a custom calendar', async () => {
+  it('offers the segmented presets from the guide, all nowrap', () => {
     harness([jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today })]);
 
-    const picker = screen.getByRole('combobox') as HTMLSelectElement;
-    const labels = Array.from(picker.options).map((o) => o.textContent);
-    expect(labels).toEqual([
-      'Today',
-      'Yesterday',
-      'Last 7 days',
-      'Last 30 days',
-      'This month',
-      'Custom range',
-    ]);
-
-    // Custom reveals two date inputs — the browser's own calendar.
-    await userEvent.selectOptions(picker, 'custom');
-    expect(screen.getAllByLabelText(/start|end/i).length).toBeGreaterThanOrEqual(2);
+    const group = screen.getByRole('radiogroup', { name: 'Date range' });
+    const labels = within(group)
+      .getAllByRole('radio')
+      .map((r) => r.textContent);
+    expect(labels).toEqual(['Today', 'Yesterday', '7 days', '30 days']);
+    expect(screen.getByRole('radio', { name: 'Today' })).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('widening to yesterday brings the older ticket back', async () => {
+  it('widening to 7 days brings the older ticket back', async () => {
     harness([
       jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: today }),
       jobOrder({ id: 'd2', name: 'JO-OLD', createdAt: yesterday }),
     ]);
     expect(screen.queryByText('JO-OLD')).not.toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByRole('combobox'), 'last7');
+    await userEvent.click(screen.getByRole('radio', { name: '7 days' }));
     expect(screen.getByText('JO-OLD')).toBeInTheDocument();
   });
 
@@ -268,5 +259,58 @@ describe('JobOrdersPage — date range', () => {
     ]);
 
     expect(screen.queryByText(/outside this range/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('JobOrdersPage — saved views + filters (reskin)', () => {
+  const today = new Date();
+
+  it('view chips carry live counts and filter the rows', async () => {
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-A', isConverted: false }),
+      jobOrder({ id: 'd2', name: 'JO-B', isConverted: true }),
+      jobOrder({ id: 'd3', name: 'JO-C', isConverted: true }),
+    ]);
+
+    expect(screen.getByRole('button', { name: /All 3/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open 1/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Billed 2/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Billed 2/ }));
+    expect(screen.queryByText('JO-A')).not.toBeInTheDocument();
+    expect(screen.getByText('JO-B')).toBeInTheDocument();
+  });
+
+  it('the mechanic dropdown filters rows and offers counts', async () => {
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-A', mechanicId: 'm1', mechanicName: 'Jeric', createdAt: today }),
+      jobOrder({ id: 'd2', name: 'JO-B', mechanicId: 'm2', mechanicName: 'Nonoy', createdAt: today }),
+    ]);
+
+    await userEvent.click(screen.getByRole('button', { name: /Mechanic/ }));
+    await userEvent.click(screen.getByRole('option', { name: /Jeric/ }));
+
+    expect(screen.getByText('JO-A')).toBeInTheDocument();
+    expect(screen.queryByText('JO-B')).not.toBeInTheDocument();
+    expect(screen.getByText(/1 ticket$/)).toBeInTheDocument();
+  });
+
+  it('filtered-to-nothing shows the no-matches state with Clear filters, never the first-run copy', async () => {
+    harness([jobOrder({ id: 'd1', name: 'JO-A', mechanicName: 'Jeric', createdAt: today })]);
+
+    await userEvent.type(screen.getByPlaceholderText(/Search JO no/), 'zzz');
+    expect(await screen.findByText(/no job orders match these filters/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no job orders yet/i)).not.toBeInTheDocument();
+
+    // Both the filter band and the empty state offer Clear filters.
+    await userEvent.click(screen.getAllByRole('button', { name: /clear filters/i })[0]);
+    expect(screen.getByText('JO-A')).toBeInTheDocument();
+  });
+
+  it('first-run (no job orders at all) teaches and offers the primary action', () => {
+    harness([]);
+    expect(screen.getByText(/no job orders yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/open a ticket when a unit comes in/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /new job order/i }).length).toBeGreaterThanOrEqual(2);
   });
 });

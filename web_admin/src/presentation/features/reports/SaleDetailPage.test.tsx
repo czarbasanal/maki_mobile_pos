@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -87,6 +87,8 @@ interface HarnessOptions {
   /** Router history, last entry being the page under test. */
   entries?: string[];
   activityLogRepo?: Partial<Container['activityLogRepo']>;
+  /** For the JO identity chip — only queried when the sale carries a jobOrderId. */
+  jobOrderRepo?: Partial<Container['jobOrderRepo']>;
 }
 
 function harness(saleRepo: Partial<Container['saleRepo']>, opts: HarnessOptions = {}) {
@@ -127,6 +129,9 @@ function harness(saleRepo: Partial<Container['saleRepo']>, opts: HarnessOptions 
         categoryRepo: categoryRepo as Container['categoryRepo'],
         voidRequestRepo: voidRequestRepo as Container['voidRequestRepo'],
         activityLogRepo: activityLogRepo as Container['activityLogRepo'],
+        ...(opts.jobOrderRepo
+          ? { jobOrderRepo: opts.jobOrderRepo as Container['jobOrderRepo'] }
+          : {}),
       }}
     >
       <QueryClientProvider client={qc}>
@@ -291,14 +296,15 @@ describe('SaleDetailPage — void gating by role (cashier web access)', () => {
         voidReason: 'Wrong item scanned',
       });
 
-    it('replaces the action with a disabled Voided button', async () => {
-      // Previously the button simply vanished, which reads the same as "you
-      // are not allowed to void" — say what happened instead.
+    it('shows the Voided pill and offers no void action', async () => {
+      // The reskin says it three ways — the pill, the struck number, and the
+      // reason banner — so the old disabled placeholder button is gone.
       harness({ getById: vi.fn().mockResolvedValue(voided()) });
       await screen.findByRole('heading', { name: 'OR-0001' });
 
-      const btn = screen.getByRole('button', { name: 'Voided' });
-      expect(btn).toBeDisabled();
+      expect(screen.getByText('Voided')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /void sale/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /request void/i })).not.toBeInTheDocument();
     });
 
     it('strikes through the sale number and the total', async () => {
@@ -406,5 +412,55 @@ describe('SaleDetailPage — going back', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /back/i }));
     expect(await screen.findByText('day sales page')).toBeInTheDocument();
+  });
+});
+
+describe('SaleDetailPage — reskin bands (facts strip, line chips, tender)', () => {
+  it('the facts strip labels cashier, mechanic, motorcycle and tender', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale()) });
+    await screen.findByRole('heading', { name: 'OR-0001' });
+
+    expect(screen.getByText('Cashier on shift')).toBeInTheDocument();
+    expect(screen.getByText('Juan Dela Cruz')).toBeInTheDocument();
+    expect(screen.getByText('Motorcycle serviced')).toBeInTheDocument();
+    expect(screen.getByText('Yamaha Mio i 125')).toBeInTheDocument();
+    expect(screen.getByText('Paid in full')).toBeInTheDocument();
+  });
+
+  it('labor rows carry a LABOR chip with — in Qty and Unit', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale()) });
+    await screen.findByRole('heading', { name: 'OR-0001' });
+
+    const row = screen.getByText('Tune-up').closest('tr')!;
+    expect(within(row).getByText('LABOR')).toBeInTheDocument();
+    expect(within(row).getAllByText('—')).toHaveLength(2);
+  });
+
+  it('shows the originating JO number as a chip when the sale came from a ticket', async () => {
+    harness(
+      { getById: vi.fn().mockResolvedValue(sale({ jobOrderId: 'jo1' })) },
+      {
+        jobOrderRepo: {
+          getById: vi.fn().mockResolvedValue({ id: 'jo1', name: 'JO-051326-004' }),
+        },
+      },
+    );
+    expect(await screen.findByRole('button', { name: 'JO-051326-004' })).toBeInTheDocument();
+  });
+
+  it('a Paid sale wears the positive pill', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale()) });
+    await screen.findByRole('heading', { name: 'OR-0001' });
+    expect(screen.getByText('Paid')).toBeInTheDocument();
+  });
+
+  it('the tender block names the method and shows amount received + change', async () => {
+    harness({ getById: vi.fn().mockResolvedValue(sale()) });
+    await screen.findByRole('heading', { name: 'OR-0001' });
+
+    // The hidden print Receipt repeats these labels — scope to the block.
+    const block = screen.getByText(/Tender · Cash/i).closest('div')!;
+    expect(within(block).getByText('Amount received')).toBeInTheDocument();
+    expect(within(block).getByText('Change')).toBeInTheDocument();
   });
 });
