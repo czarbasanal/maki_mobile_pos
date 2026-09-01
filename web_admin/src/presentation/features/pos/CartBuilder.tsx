@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
+import { useCostCode } from '@/presentation/hooks/useCostCode';
 import type { CartStore } from '@/presentation/stores/cartStore';
 import { lowStockLines } from '@/domain/sales/cart';
 import {
@@ -21,6 +22,7 @@ import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { displaySku } from '@/domain/products/sku';
 import { findByScannedCode, matchesPosQuery } from '@/domain/products/posSearch';
+import { encodeCostCode } from '@/domain/entities/CostCode';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { IconButton } from '@/presentation/components/ui/IconButton';
@@ -67,6 +69,7 @@ export function CartBuilder({
   allowReset?: boolean;
 }) {
   const { data: products } = useProducts();
+  const { data: costCode } = useCostCode();
   const lines = store((s) => s.lines);
   const discountType = store((s) => s.discountType);
   const addLine = store((s) => s.addLine);
@@ -269,8 +272,15 @@ export function CartBuilder({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-amount font-medium text-ink">{saleItemDisplayName(l)}</p>
-                        <p className="font-mono text-micro text-ink-3">
+                        <p className="flex items-center gap-1.5 font-mono text-micro text-ink-3">
                           {displaySku(l.sku)} · {formatMoney(l.unitPrice)} ea
+                          {costCode ? (
+                            /* Encoded cost (mobile cost_code_pill parity) —
+                               readable by staff without exposing the number. */
+                            <span className="rounded-chip bg-surface-3 px-1 py-px text-micro font-semibold text-ink-2">
+                              {encodeCostCode(costCode, l.unitCost)}
+                            </span>
+                          ) : null}
                         </p>
                         {caption ? <p className="text-micro text-ink-3">{caption}</p> : null}
                       </div>

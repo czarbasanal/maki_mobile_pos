@@ -6,6 +6,7 @@ import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { CartBuilder } from './CartBuilder';
 import { Toaster } from '@/presentation/components/ui/Toaster';
 import { createCartStore } from '@/presentation/stores/cartStore';
+import { defaultCostCode } from '@/domain/entities/CostCode';
 import type { Product, Mechanic } from '@/domain/entities';
 import type { SellingOption } from '@/domain/entities/SellingOption';
 
@@ -40,6 +41,12 @@ function harness(products: Product[]) {
       return () => {};
     },
   };
+  const costCodeRepo: Partial<Container['costCodeRepo']> = {
+    watch: (cb) => {
+      cb(defaultCostCode);
+      return () => {};
+    },
+  };
   const store = createCartStore();
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const utils = render(
@@ -48,6 +55,7 @@ function harness(products: Product[]) {
         productRepo: productRepo as Container['productRepo'],
         mechanicRepo: mechanicRepo as Container['mechanicRepo'],
         motorcycleModelRepo: motorcycleModelRepo as Container['motorcycleModelRepo'],
+        costCodeRepo: costCodeRepo as Container['costCodeRepo'],
       }}
     >
       <QueryClientProvider client={qc}>
@@ -240,5 +248,16 @@ describe('CartBuilder — register behaviors (reskin)', () => {
     await userEvent.keyboard('{ArrowDown}{Enter}');
     expect(store.getState().lines).toHaveLength(1);
     expect(store.getState().lines[0].productId).toBe('pb');
+  });
+});
+
+describe('CartBuilder — cost-code pill on cart lines', () => {
+  it('shows the encoded unit cost beside the price', async () => {
+    const { store } = harness([plainProduct({ id: 'pc', name: 'Coded Part', cost: 120 })]);
+    await search('coded');
+    await userEvent.click(await screen.findByText('Coded Part'));
+    // default mapping: 1→N, 2→B, 0→S ⇒ 120 → NBS
+    expect(within(screen.getByRole('list')).getByText('NBS')).toBeInTheDocument();
+    expect(store.getState().lines).toHaveLength(1);
   });
 });
