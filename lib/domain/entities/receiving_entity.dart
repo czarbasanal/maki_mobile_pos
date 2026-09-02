@@ -176,6 +176,10 @@ class ReceivingItemEntity extends Equatable {
   /// Cost per unit
   final double unitCost;
 
+  /// Selling price entered for this line — applied when the line spawns a
+  /// variation (null inherits the base product's price).
+  final double? unitPrice;
+
   /// Encoded cost code
   final String costCode;
 
@@ -196,6 +200,7 @@ class ReceivingItemEntity extends Equatable {
     required this.quantity,
     required this.unit,
     required this.unitCost,
+    this.unitPrice,
     required this.costCode,
     this.isNewVariation = false,
     this.newProductId,
@@ -216,6 +221,7 @@ class ReceivingItemEntity extends Equatable {
     int? quantity,
     String? unit,
     double? unitCost,
+    double? unitPrice,
     String? costCode,
     bool? isNewVariation,
     String? newProductId,
@@ -232,6 +238,7 @@ class ReceivingItemEntity extends Equatable {
       quantity: quantity ?? this.quantity,
       unit: unit ?? this.unit,
       unitCost: unitCost ?? this.unitCost,
+      unitPrice: unitPrice ?? this.unitPrice,
       costCode: costCode ?? this.costCode,
       isNewVariation: isNewVariation ?? this.isNewVariation,
       newProductId:
@@ -249,6 +256,7 @@ class ReceivingItemEntity extends Equatable {
         quantity,
         unit,
         unitCost,
+        unitPrice,
         costCode,
         isNewVariation,
         newProductId,

@@ -59,6 +59,7 @@ function normalizeItems(items: ReceivingItem[]): ReceivingItem[] {
   return items.map((it) => ({
     ...it,
     id: it.id || crypto.randomUUID(),
+    unitPrice: it.unitPrice ?? null,
     pendingNewProduct: it.pendingNewProduct ?? null,
   }));
 }
@@ -97,8 +98,12 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
 
     const batch = writeBatch(this.db);
     for (const [productId, delta] of outcome.increments) {
+      // A matched product with no supplier takes this receiving's
+      // (fill-when-empty) — folded into the same update as its increment.
+      const fill = outcome.supplierFills.get(productId);
       batch.update(doc(this.db, FirestoreCollections.products, productId), {
         quantity: increment(delta),
+        ...(fill ? { supplierId: fill.supplierId, supplierName: fill.supplierName } : {}),
         updatedBy: actor.id,
         updatedByName: actor.name,
         updatedAt: serverTimestamp(),

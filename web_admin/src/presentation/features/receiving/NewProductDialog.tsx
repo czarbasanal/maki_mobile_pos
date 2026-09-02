@@ -10,7 +10,7 @@
 // under the category code) — the retired name-based generator is not used.
 // Nothing is created here: the dialog only queues a pendingNewProduct line;
 // the product exists once the receiving is completed.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { SellingOptionsEditor } from '@/presentation/features/inventory/SellingOptionsEditor';
@@ -30,11 +30,14 @@ const inputCls =
 interface NewProductDialogProps {
   open: boolean;
   onClose: () => void;
-  /** Queues the line; creation happens when the receiving completes. */
+  /** Queues (or, in edit mode, replaces) the line; creation happens when the
+   *  receiving completes. */
   onAdd: (spec: NewProductSpec) => void;
+  /** Edit mode: prefill from an already-queued line's spec. */
+  initial?: NewProductSpec | null;
 }
 
-export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps) {
+export function NewProductDialog({ open, onClose, onAdd, initial = null }: NewProductDialogProps) {
   const { data: productCats } = useActiveCategories(CategoryKind.product);
   const { data: units } = useActiveCategories(CategoryKind.unit);
   const isAdmin = useAuthStore((s) => s.user?.role === UserRole.admin);
@@ -81,6 +84,31 @@ export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps
     setSku(composeAutoSku(code, 1));
     setSkuHint('The SKU is assigned when the receiving is saved.');
   };
+
+  // Edit mode: hydrate every field from the queued spec when opening. Keyed
+  // on `open` so a second edit of the same line re-hydrates fresh state.
+  useEffect(() => {
+    if (!open || !initial) return;
+    setName(initial.name);
+    setSku(initial.sku);
+    setAutoSku(initial.autoGenerateSku);
+    setSkuHint(
+      initial.autoGenerateSku && initial.autoSkuCategoryCode != null
+        ? 'The SKU is assigned when the receiving is saved.'
+        : null,
+    );
+    setCategory(initial.category);
+    setUnit(initial.unit);
+    setCost(String(initial.cost));
+    setPrice(String(initial.price));
+    setQuantity(String(initial.quantity));
+    setReorderLevel(initial.reorderLevel ? String(initial.reorderLevel) : '');
+    setBarcodes(initial.barcodes);
+    setBarcodeDraft('');
+    setNotes(initial.notes ?? '');
+    setSellingOptions(initial.sellingOptions);
+    setError(null);
+  }, [open, initial]);
 
   const sellingOptionsError = useMemo(
     () => validateSellingOptions(sellingOptions),
@@ -148,7 +176,7 @@ export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps
     <Dialog
       open={open}
       onClose={() => { reset(); onClose(); }}
-      title="New product"
+      title={initial ? 'Edit product' : 'New product'}
       description="Added to inventory when this receiving is completed. Photo can be added afterward from the product page."
       className="max-w-2xl"
     >
@@ -297,7 +325,7 @@ export function NewProductDialog({ open, onClose, onAdd }: NewProductDialogProps
           </button>
           <button type="button" onClick={submit}
             className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark">
-            Add to receiving
+            {initial ? 'Save changes' : 'Add to receiving'}
           </button>
         </div>
       </div>

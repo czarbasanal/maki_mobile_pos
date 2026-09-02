@@ -38,10 +38,10 @@ describe('classifiedToReceivable', () => {
     });
   });
 
-  it('maps a mismatch to {kind:mismatch, product, quantity, cost}', () => {
+  it('maps a mismatch to {kind:mismatch, product, quantity, cost, price} — the CSV price applies to the variation', () => {
     const p = product();
-    expect(classifiedToReceivable(row('mismatch', { quantity: 4, cost: 200 }, p), new Map())).toEqual({
-      ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200,
+    expect(classifiedToReceivable(row('mismatch', { quantity: 4, cost: 200, price: 260 }, p), new Map())).toEqual({
+      ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: 260,
     });
   });
 
@@ -104,3 +104,12 @@ describe('classifiedToReceivable — auto rows carry the category code', () => {
   });
 });
 
+
+describe('classifiedToReceivable — mismatch price 0 means inherit', () => {
+  it('maps a 0 price column to null (old templates filled 0 on mismatch rows)', () => {
+    const p = product();
+    expect(
+      classifiedToReceivable(row('mismatch', { quantity: 4, cost: 200, price: 0 }, p), new Map()),
+    ).toMatchObject({ kind: 'mismatch', price: null });
+  });
+});

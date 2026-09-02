@@ -40,7 +40,7 @@ describe('receivingConverter.fromFirestore', () => {
     expect(r.items).toHaveLength(1);
     expect(r.items[0]).toEqual({
       id: 'i1', productId: 'p1', sku: 'BANGUS-1KG', name: 'Bangus 1kg',
-      quantity: 10, unit: 'kg', unitCost: 180, costCode: 'AB-CD',
+      quantity: 10, unit: 'kg', unitCost: 180, unitPrice: null, costCode: 'AB-CD',
       isNewVariation: false, newProductId: null, notes: null, pendingNewProduct: null,
     });
     expect(r.totalCost).toBe(1800);
@@ -131,5 +131,21 @@ describe('receivingConverter.fromFirestore', () => {
       opts,
     );
     expect(unknown.status).toBe('draft');
+  });
+});
+
+describe('receivingConverter — unitPrice on items', () => {
+  it('parses a stored unitPrice and defaults pre-field items to null', () => {
+    const r = receivingConverter.fromFirestore(
+      snap('r1', {
+        items: [
+          { id: 'i1', productId: 'p1', sku: 'A', name: 'A', quantity: 1, unit: 'pcs', unitCost: 100, unitPrice: 260, costCode: 'X', isNewVariation: true, newProductId: 'v1', notes: null },
+          { id: 'i2', productId: 'p2', sku: 'B', name: 'B', quantity: 1, unit: 'pcs', unitCost: 50, costCode: 'X', isNewVariation: false, newProductId: null, notes: null },
+        ],
+        createdAt: new Date('2026-06-08T10:00:00Z'),
+      }),
+    );
+    expect(r.items[0].unitPrice).toBe(260);
+    expect(r.items[1].unitPrice).toBeNull();
   });
 });

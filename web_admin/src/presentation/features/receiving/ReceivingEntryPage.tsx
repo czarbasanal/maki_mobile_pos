@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { TrashIcon } from '@heroicons/react/24/outline';
-import { useReceivingEntry } from './useReceivingEntry';
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useReceivingEntry, type NewProductSpec } from './useReceivingEntry';
 import { NewProductDialog } from './NewProductDialog';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -16,7 +16,13 @@ export function ReceivingEntryPage() {
   const [picked, setPicked] = useState<Product | null>(null);
   const [qty, setQty] = useState('1');
   const [cost, setCost] = useState('');
+  const [price, setPrice] = useState('');
   const [showNew, setShowNew] = useState(false);
+  // Line being edited via the row pencil: the picked box (existing product)
+  // or the product dialog (pending new product) reopens on it, and the
+  // confirm rewrites the line instead of appending one.
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [editingSpec, setEditingSpec] = useState<NewProductSpec | null>(null);
 
   useEffect(() => {
     document.title = `${entry.isResuming ? 'Resume' : 'New'} receiving · MAKI POS Admin`;
@@ -24,17 +30,65 @@ export function ReceivingEntryPage() {
 
   function pick(p: Product) {
     setPicked(p);
+    setEditingLineId(null);
     setQty('1');
     setCost(String(p.cost));
+    setPrice(String(p.price));
   }
+
+  // The price only applies when the entered cost spawns a variation; a plain
+  // top-up never touches the existing product's price.
+  const costDiffers = picked != null && Math.abs(Number(cost) - picked.cost) > 0.01;
 
   function confirmExisting() {
     if (!picked) return;
     const q = Number(qty);
     const c = Number(cost);
+    const pr = Number(price);
     if (!Number.isFinite(q) || q <= 0 || !Number.isFinite(c) || c < 0) return;
-    entry.addExisting(picked, q, c);
+    if (costDiffers && (!Number.isFinite(pr) || pr < 0)) return;
+    const unitPrice = costDiffers ? pr : null;
+    if (editingLineId) {
+      entry.updateExisting(editingLineId, { quantity: q, unitCost: c, unitPrice });
+    } else {
+      entry.addExisting(picked, q, c, unitPrice);
+    }
     setPicked(null);
+    setEditingLineId(null);
+  }
+
+  function editLine(l: (typeof entry.lines)[number]) {
+    if (l.pendingNewProduct) {
+      const np = l.pendingNewProduct;
+      setEditingSpec({
+        name: l.name,
+        sku: l.sku,
+        autoGenerateSku: np.autoGenerateSku,
+        category: np.category,
+        unit: l.unit,
+        cost: l.unitCost,
+        price: np.price,
+        quantity: l.quantity,
+        reorderLevel: np.reorderLevel,
+        autoSkuCategoryCode: np.autoSkuCategoryCode ?? null,
+        barcodes: np.barcodes ?? [],
+        notes: np.notes ?? null,
+        sellingOptions: np.sellingOptions ?? [],
+      });
+      setEditingLineId(l.id);
+      // Close the inline box if another line was mid-edit — leaving it open
+      // would silently degrade its Update back into an appending Add.
+      setPicked(null);
+      setShowNew(true);
+      return;
+    }
+    const product = entry.products.find((p) => p.id === l.productId);
+    if (!product) return;
+    setPicked(product);
+    setEditingLineId(l.id);
+    setQty(String(l.quantity));
+    setCost(String(l.unitCost));
+    setPrice(String(l.unitPrice ?? product.price));
   }
 
 
@@ -43,7 +97,8 @@ export function ReceivingEntryPage() {
   // since the receiving was written has none to show.
   const priceByProductId = new Map(entry.products.map((p) => [p.id, p.price]));
   const sellingPriceText = (l: (typeof entry.lines)[number]): string => {
-    const price = l.pendingNewProduct?.price ?? priceByProductId.get(l.productId ?? '');
+    const price =
+      l.unitPrice ?? l.pendingNewProduct?.price ?? priceByProductId.get(l.productId ?? '');
     return price == null ? '—' : formatMoney(price);
   };
 
@@ -88,7 +143,7 @@ export function ReceivingEntryPage() {
           <h2 className="text-bodyMedium font-semibold text-light-text">Add items</h2>
           <button
             type="button"
-            onClick={() => { setShowNew(true); setPicked(null); }}
+            onClick={() => { setShowNew(true); setPicked(null); setEditingSpec(null); setEditingLineId(null); }}
             className="rounded-md border border-light-border px-tk-md py-[6px] text-bodySmall text-light-text hover:bg-light-subtle"
           >
             + New product
@@ -127,16 +182,22 @@ export function ReceivingEntryPage() {
               onChange={(e) => setQty(e.target.value)} /></Field>
             <Field label="Unit cost"><input type="number" className={inputCls} value={cost}
               onChange={(e) => setCost(e.target.value)} /></Field>
-            {Number(cost) !== picked.cost ? (
+            <Field label="Price">
+              <input type="number" aria-label="Price" className={inputCls} value={price}
+                disabled={!costDiffers}
+                title={costDiffers ? undefined : 'Price applies when a cost change spawns a variation'}
+                onChange={(e) => setPrice(e.target.value)} />
+            </Field>
+            {costDiffers ? (
               <span className="text-[11px] text-warning-dark">
-                Cost differs → a {picked.baseSku ?? picked.sku}-N variation will be created
+                Cost differs → a {picked.baseSku ?? picked.sku}-N variation will be created at this cost and price
               </span>
             ) : null}
             <button type="button" onClick={confirmExisting}
               className="rounded-md bg-primary-dark px-tk-md py-[8px] text-bodySmall font-medium text-white hover:opacity-90">
-              Add
+              {editingLineId ? 'Update' : 'Add'}
             </button>
-            <button type="button" onClick={() => setPicked(null)}
+            <button type="button" onClick={() => { setPicked(null); setEditingLineId(null); }}
               className="px-tk-sm py-[8px] text-bodySmall text-light-text-secondary hover:underline">
               Cancel
             </button>
@@ -147,8 +208,14 @@ export function ReceivingEntryPage() {
       {/* Items */}
       <NewProductDialog
         open={showNew}
-        onClose={() => setShowNew(false)}
-        onAdd={(spec) => entry.addNew(spec)}
+        initial={editingSpec}
+        onClose={() => { setShowNew(false); setEditingSpec(null); setEditingLineId(null); }}
+        onAdd={(spec) => {
+          if (editingLineId && editingSpec) entry.updateNew(editingLineId, spec);
+          else entry.addNew(spec);
+          setEditingSpec(null);
+          setEditingLineId(null);
+        }}
       />
 
       <section className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
@@ -186,10 +253,23 @@ export function ReceivingEntryPage() {
                   <td className="px-tk-md py-tk-sm text-right tabular-nums">{sellingPriceText(l)}</td>
                   <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(l.unitCost * l.quantity)}</td>
                   <td className="px-tk-md py-tk-sm text-right">
-                    <button type="button" onClick={() => entry.removeLine(l.id)}
-                      className="text-light-text-hint hover:text-error" aria-label="Remove">
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-tk-sm">
+                      <button type="button" onClick={() => editLine(l)}
+                        disabled={!l.pendingNewProduct && !priceByProductId.has(l.productId ?? '')}
+                        title={
+                          !l.pendingNewProduct && !priceByProductId.has(l.productId ?? '')
+                            ? 'Product no longer exists'
+                            : undefined
+                        }
+                        className="text-light-text-hint hover:text-light-text disabled:opacity-40 disabled:hover:text-light-text-hint"
+                        aria-label="Edit">
+                        <PencilSquareIcon className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={() => entry.removeLine(l.id)}
+                        className="text-light-text-hint hover:text-error" aria-label="Remove">
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

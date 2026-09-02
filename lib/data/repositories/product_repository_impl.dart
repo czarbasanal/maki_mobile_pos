@@ -839,6 +839,8 @@ class ProductRepositoryImpl implements ProductRepository {
     required double newCost,
     required String newCostCode,
     double? newPrice,
+    String? supplierId,
+    String? supplierName,
     required String createdBy,
     String? createdByName,
   }) async {
@@ -864,6 +866,10 @@ class ProductRepositoryImpl implements ProductRepository {
           cost: newCost,
           costCode: newCostCode,
           price: newPrice ?? originalProduct.price,
+          // The receiving that spawns this variation names where the stock
+          // actually came from; without one, the base's supplier carries over.
+          supplierId: supplierId ?? originalProduct.supplierId,
+          supplierName: supplierName ?? originalProduct.supplierName,
           quantity: 0,
           baseSku: baseSku,
           variationNumber: variationNum,

@@ -69,7 +69,7 @@ describe('applyReceivedItems', () => {
       imageUrl: 'https://example.test/sp.jpg',
       sellingOptions: [{ id: 'o1', label: 'Half set', pieces: 2, price: 130 }],
     });
-    const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }];
+    const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }];
     const repo = fakeRepo();
     await applyReceivedItems(items, repo, ctx({ knownSkus: ['SP'] }));
     const input = (repo.create as unknown as { mock: { calls: [{ imageUrl: string | null; sellingOptions: unknown }][] } }).mock.calls[0][0];
@@ -92,7 +92,7 @@ describe('applyReceivedItems', () => {
 
   it('mismatch → creates a <base>-N variation, records a price change, emits a variation item', async () => {
     const p = product({ id: 'p1', sku: 'SP', baseSku: null, cost: 180 });
-    const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }];
+    const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }];
     const repo = fakeRepo();
     const out = await applyReceivedItems(items, repo, ctx({ knownSkus: ['SP'] }));
     expect(repo.create).toHaveBeenCalledTimes(1);
@@ -114,7 +114,7 @@ describe('applyReceivedItems', () => {
           { id: 'o2', label: 'By 3', pieces: 3, price: 330 },
         ],
       });
-      const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }];
+      const items: ReceivableItem[] = [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }];
       const repo = fakeRepo();
       await applyReceivedItems(items, repo, ctx({ knownSkus: ['SP'] }));
 
@@ -139,7 +139,7 @@ describe('applyReceivedItems', () => {
       recordPriceChange: vi.fn(async () => {}),
     });
     const out = await applyReceivedItems(
-      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200 }],
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }],
       repo, ctx({ knownSkus: ['SP'] }),
     );
     expect(calls).toBe(2);
@@ -191,3 +191,46 @@ describe('applyReceivedItems — category-driven auto-SKU', () => {
   });
 });
 
+
+describe('applyReceivedItems — supplier mapping + variation price (bulk path)', () => {
+  const supplier = { id: 's1', name: 'Boss Atan Argao' };
+
+  it('a variation takes the receiving’s supplier over the base’s', async () => {
+    const p = product({ id: 'p1', sku: 'SP', cost: 180, supplierId: 's9', supplierName: 'Old Supplier' });
+    const repo = fakeRepo();
+    await applyReceivedItems(
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: null }],
+      repo, ctx({ supplier, knownSkus: ['SP'] }),
+    );
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ supplierId: 's1', supplierName: 'Boss Atan Argao' }),
+      'u1',
+    );
+  });
+
+  it('the CSV row’s price becomes the variation’s price + history entry', async () => {
+    const p = product({ id: 'p1', sku: 'SP', cost: 180, price: 220 });
+    const repo = fakeRepo();
+    const out = await applyReceivedItems(
+      [{ ref: 1, kind: 'mismatch', product: p, quantity: 4, cost: 200, price: 260 }],
+      repo, ctx({ knownSkus: ['SP'] }),
+    );
+    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ price: 260 }), 'u1');
+    expect(repo.recordPriceChange).toHaveBeenCalledWith('new-1', expect.objectContaining({ price: 260 }));
+    expect(out.items[0].unitPrice).toBe(260);
+  });
+
+  it('match fills the supplier only when the product has none', async () => {
+    const empty = product({ id: 'p1', supplierId: null, supplierName: null });
+    const kept = product({ id: 'p2', supplierId: 's9', supplierName: 'Old Supplier' });
+    const out = await applyReceivedItems(
+      [
+        { ref: 1, kind: 'match', product: empty, quantity: 10 },
+        { ref: 2, kind: 'match', product: kept, quantity: 3 },
+      ],
+      fakeRepo(), ctx({ supplier }),
+    );
+    expect(out.supplierFills.get('p1')).toEqual({ supplierId: 's1', supplierName: 'Boss Atan Argao' });
+    expect(out.supplierFills.has('p2')).toBe(false);
+  });
+});

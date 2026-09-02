@@ -30,6 +30,10 @@ export interface ReceivePlan {
   creates: PlannedCreate[];
   /** productId -> qty to increment (matches only; new/variation get stock at create). */
   increments: Map<string, number>;
+  /** productId -> the receiving's supplier, for matched products that have
+   *  none yet (fill-when-empty; a product's existing supplier is never
+   *  overwritten). Always a subset of `increments`' keys. */
+  supplierFills: Map<string, { supplierId: string; supplierName: string }>;
   items: ReceivingItem[];
   newProducts: number;
   variations: number;
@@ -63,7 +67,7 @@ function productInput(
 }
 
 function item(over: Omit<ReceivingItem, 'id' | 'notes' | 'pendingNewProduct'>): ReceivingItem {
-  return { ...over, id: crypto.randomUUID(), notes: null, pendingNewProduct: null };
+  return { unitPrice: null, ...over, id: crypto.randomUUID(), notes: null, pendingNewProduct: null };
 }
 
 /**
@@ -81,6 +85,7 @@ export function planReceive(
 ): ReceivePlan {
   const creates: PlannedCreate[] = [];
   const increments = new Map<string, number>();
+  const supplierFills = new Map<string, { supplierId: string; supplierName: string }>();
   const items: ReceivingItem[] = [];
   const knownSkus = [...ctx.knownSkus];
   let newProducts = 0;
@@ -90,6 +95,14 @@ export function planReceive(
     if (rec.kind === 'match') {
       const p = rec.product;
       increments.set(p.id, (increments.get(p.id) ?? 0) + rec.quantity);
+      // Fill-when-empty: a matched product with no supplier takes the
+      // receiving's; one that already names a supplier is left alone.
+      if (p.supplierId == null && ctx.supplier != null) {
+        supplierFills.set(p.id, {
+          supplierId: ctx.supplier.id,
+          supplierName: ctx.supplier.name,
+        });
+      }
       items.push(item({
         productId: p.id, sku: p.sku, name: p.name, quantity: rec.quantity,
         unit: p.unit, unitCost: p.cost, costCode: p.costCode,
@@ -103,22 +116,28 @@ export function planReceive(
       const sku = variationSku(base, n);
       knownSkus.push(sku);
       const productId = makeId();
+      // The stock physically came from THIS receiving's supplier, so the
+      // variation records it — the base's supplier is only the fallback.
+      const price = rec.price ?? p.price;
       creates.push({
         productId,
         autoSkuCategoryCode: null,
         input: productInput({
-          sku, name: p.name, cost: rec.cost, costCode, price: p.price,
+          sku, name: p.name, cost: rec.cost, costCode, price,
           quantity: rec.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
-          category: p.category, supplierId: p.supplierId, supplierName: p.supplierName,
+          category: p.category,
+          supplierId: ctx.supplier?.id ?? p.supplierId,
+          supplierName: ctx.supplier?.name ?? p.supplierName,
           baseSku: base, variationNumber: n,
           imageUrl: p.imageUrl, sellingOptions: p.sellingOptions,
         }, ctx.actor),
-        priceHistory: { price: p.price, cost: rec.cost, reason: 'receiving' },
+        priceHistory: { price, cost: rec.cost, reason: 'receiving' },
       });
       variations += 1;
       items.push(item({
         productId: p.id, sku, name: p.name, quantity: rec.quantity, unit: p.unit,
-        unitCost: rec.cost, costCode, isNewVariation: true, newProductId: productId,
+        unitCost: rec.cost, unitPrice: rec.price, costCode,
+        isNewVariation: true, newProductId: productId,
       }));
     } else {
       // Category-coded auto rows keep their peeked/placeholder preview — the
@@ -155,5 +174,5 @@ export function planReceive(
     }
   }
 
-  return { creates, increments, items, newProducts, variations, received: items.length };
+  return { creates, increments, supplierFills, items, newProducts, variations, received: items.length };
 }

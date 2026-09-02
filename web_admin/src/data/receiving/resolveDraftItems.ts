@@ -30,7 +30,11 @@ export function resolveDraftItems(items: ReceivingItem[], products: Product[]): 
     if (Math.abs(product.cost - it.unitCost) <= COST_TOLERANCE) {
       out.push({ ref: index, kind: 'match', product, quantity: it.quantity });
     } else {
-      out.push({ ref: index, kind: 'mismatch', product, quantity: it.quantity, cost: it.unitCost });
+      out.push({
+        ref: index, kind: 'mismatch', product, quantity: it.quantity, cost: it.unitCost,
+        // Pre-unitPrice drafts carry none — the variation inherits the base's.
+        price: it.unitPrice ?? null,
+      });
     }
   });
   return out;

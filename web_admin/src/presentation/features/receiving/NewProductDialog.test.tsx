@@ -10,6 +10,7 @@ import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { NewProductDialog } from './NewProductDialog';
+import type { NewProductSpec } from './useReceivingEntry';
 import type { Category } from '@/domain/entities';
 
 const codedCategory = {
@@ -32,7 +33,7 @@ function signIn(role: UserRole = UserRole.admin) {
   });
 }
 
-function harness(onAdd = vi.fn()) {
+function harness(onAdd = vi.fn(), initial: NewProductSpec | null = null) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const categoryRepo: Partial<Container['categoryRepo']> = {
     watchAll: (kind, cb) => {
@@ -44,7 +45,7 @@ function harness(onAdd = vi.fn()) {
   render(
     <DiProvider override={{ categoryRepo: categoryRepo as Container['categoryRepo'] }}>
       <QueryClientProvider client={qc}>
-        <NewProductDialog open onClose={() => {}} onAdd={onAdd} />
+        <NewProductDialog open onClose={() => {}} onAdd={onAdd} initial={initial} />
       </QueryClientProvider>
     </DiProvider>,
   );
@@ -147,5 +148,40 @@ describe('NewProductDialog full fields', () => {
     harness();
 
     expect(screen.queryByText('Selling options')).toBeNull();
+  });
+});
+
+describe('NewProductDialog — edit mode', () => {
+  const spec: NewProductSpec = {
+    name: 'Squid', sku: 'SQ-9', autoGenerateSku: false, category: 'Snacks', unit: 'pcs',
+    cost: 90, price: 130, quantity: 3, reorderLevel: 1, autoSkuCategoryCode: null,
+    barcodes: ['4800111222333'], notes: 'fresh', sellingOptions: [],
+  };
+
+  it('prefills every field from the queued spec and retitles to Edit', async () => {
+    signIn();
+    harness(vi.fn(), spec);
+
+    expect(await screen.findByText('Edit product')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Squid')).toBeInTheDocument();
+    expect(screen.getByLabelText('SKU')).toHaveValue('SQ-9');
+    expect(screen.getByDisplayValue('90')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('130')).toBeInTheDocument();
+    expect(screen.getByText('4800111222333')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+  });
+
+  it('hands the edited spec back through onAdd', async () => {
+    signIn();
+    const onAdd = harness(vi.fn(), spec);
+
+    const name = await screen.findByDisplayValue('Squid');
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Squid Large');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Squid Large', sku: 'SQ-9', cost: 90, price: 130, quantity: 3 }),
+    );
   });
 });

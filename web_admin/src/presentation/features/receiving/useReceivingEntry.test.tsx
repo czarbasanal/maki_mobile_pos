@@ -118,3 +118,64 @@ describe('useReceivingEntry — concurrent draft edits', () => {
     expect(update.mock.calls[1][3]).toBe(4);
   });
 });
+
+describe('useReceivingEntry — line editing', () => {
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.c', displayName: 'Czar', role: 'admin', isActive: true } as never,
+    });
+  });
+
+  const productFixture = {
+    id: 'p1', sku: '00220004', name: 'Beast Tire', category: 'Tires', unit: 'pcs',
+    cost: 1200, price: 1600, quantity: 5, reorderLevel: 2, costCode: 'AB',
+    barcodes: [], sellingOptions: [], supplierId: null, supplierName: null,
+    baseSku: null, variationNumber: null, isActive: true, imageUrl: null, notes: null,
+    searchKeywords: [], createdAt: new Date(), updatedAt: null,
+    createdBy: 'u1', updatedBy: 'u1', createdByName: 'Czar', updatedByName: 'Czar',
+  };
+
+  function mounted() {
+    return renderHook(() => useReceivingEntry(), {
+      wrapper: wrap({
+        getById: vi.fn(async () => draft()),
+        update: vi.fn(async () => {}),
+      } as Partial<Container['receivingRepo']>),
+    });
+  }
+
+  it('addExisting stamps the entered unitPrice on the line', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    act(() => result.current.addExisting(productFixture as never, 4, 1312, 1680));
+    expect(result.current.lines[0]).toMatchObject({ quantity: 4, unitCost: 1312, unitPrice: 1680 });
+  });
+
+  it('updateExisting rewrites qty/cost/price in place, keeping the line id', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    act(() => result.current.addExisting(productFixture as never, 4, 1312, null));
+    const id = result.current.lines[0].id;
+    act(() => result.current.updateExisting(id, { quantity: 6, unitCost: 1350, unitPrice: 1700 }));
+    expect(result.current.lines).toHaveLength(1);
+    expect(result.current.lines[0]).toMatchObject({
+      id, quantity: 6, unitCost: 1350, unitPrice: 1700, productId: 'p1',
+    });
+  });
+
+  it('updateNew rebuilds a pending-new line from the edited spec, keeping the line id', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    const spec = {
+      name: 'Squid', sku: '00090001', autoGenerateSku: true, category: 'Fish', unit: 'kg',
+      cost: 90, price: 130, quantity: 3, reorderLevel: 1, autoSkuCategoryCode: '0009',
+      barcodes: [], notes: null, sellingOptions: [],
+    };
+    act(() => result.current.addNew(spec));
+    const id = result.current.lines[0].id;
+    act(() => result.current.updateNew(id, { ...spec, name: 'Squid Large', cost: 95, price: 140, quantity: 5 }));
+    expect(result.current.lines).toHaveLength(1);
+    expect(result.current.lines[0]).toMatchObject({ id, name: 'Squid Large', unitCost: 95, quantity: 5 });
+    expect(result.current.lines[0].pendingNewProduct).toMatchObject({ price: 140 });
+  });
+});

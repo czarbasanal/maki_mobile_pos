@@ -31,6 +31,15 @@ describe('resolveDraftItems', () => {
     expect(out[0]).toMatchObject({ kind: 'mismatch', quantity: 10, cost: 200 });
   });
 
+  it('mismatch carries the line\'s unitPrice; drafts without one carry null', () => {
+    const priced = resolveDraftItems(
+      [draftItem({ unitCost: 200, unitPrice: 260 })], [product({ cost: 180 })],
+    );
+    expect(priced[0]).toMatchObject({ kind: 'mismatch', price: 260 });
+    const legacy = resolveDraftItems([draftItem({ unitCost: 200 })], [product({ cost: 180 })]);
+    expect(legacy[0]).toMatchObject({ kind: 'mismatch', price: null });
+  });
+
   it('pendingNewProduct → new', () => {
     const out = resolveDraftItems(
       [draftItem({

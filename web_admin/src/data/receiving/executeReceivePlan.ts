@@ -162,8 +162,12 @@ export async function executeReceivePlan(
     });
   }
   for (const [productId, delta] of plan.increments) {
+    // A matched product with no supplier takes this receiving's
+    // (fill-when-empty) — folded into the same update as its stock increment.
+    const fill = plan.supplierFills.get(productId);
     tx.update(doc(db, FirestoreCollections.products, productId), {
       quantity: increment(delta),
+      ...(fill ? { supplierId: fill.supplierId, supplierName: fill.supplierName } : {}),
       updatedBy: actor.id,
       updatedByName: actor.name,
       updatedAt: serverTimestamp(),

@@ -193,6 +193,7 @@ class ReceivingItemModel {
   final int quantity;
   final String unit;
   final double unitCost;
+  final double? unitPrice;
   final String costCode;
   final bool isNewVariation;
   final String? newProductId;
@@ -206,6 +207,7 @@ class ReceivingItemModel {
     required this.quantity,
     required this.unit,
     required this.unitCost,
+    this.unitPrice,
     required this.costCode,
     this.isNewVariation = false,
     this.newProductId,
@@ -221,6 +223,7 @@ class ReceivingItemModel {
       quantity: (map['quantity'] as num?)?.toInt() ?? 0,
       unit: map['unit'] as String? ?? 'pcs',
       unitCost: (map['unitCost'] as num?)?.toDouble() ?? 0.0,
+      unitPrice: (map['unitPrice'] as num?)?.toDouble(),
       costCode: map['costCode'] as String? ?? '',
       isNewVariation: map['isNewVariation'] as bool? ?? false,
       newProductId: map['newProductId'] as String?,
@@ -237,6 +240,7 @@ class ReceivingItemModel {
       'quantity': quantity,
       'unit': unit,
       'unitCost': unitCost,
+      'unitPrice': unitPrice,
       'costCode': costCode,
       'isNewVariation': isNewVariation,
       'newProductId': newProductId,
@@ -253,6 +257,7 @@ class ReceivingItemModel {
       quantity: quantity,
       unit: unit,
       unitCost: unitCost,
+      unitPrice: unitPrice,
       costCode: costCode,
       isNewVariation: isNewVariation,
       newProductId: newProductId,
@@ -269,6 +274,7 @@ class ReceivingItemModel {
       quantity: entity.quantity,
       unit: entity.unit,
       unitCost: entity.unitCost,
+      unitPrice: entity.unitPrice,
       costCode: entity.costCode,
       isNewVariation: entity.isNewVariation,
       newProductId: entity.newProductId,

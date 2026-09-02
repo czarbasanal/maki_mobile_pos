@@ -18,6 +18,9 @@ export interface ReceiveContext {
 export interface ReceiveOutcome {
   items: ReceivingItem[];
   increments: Map<string, number>;
+  /** productId -> the receiving's supplier, for matched products that have
+   *  none yet (fill-when-empty; an existing supplier is never overwritten). */
+  supplierFills: Map<string, { supplierId: string; supplierName: string }>;
   newProducts: number;
   variations: number;
   failed: { ref: string | number; message: string }[];
@@ -50,7 +53,7 @@ function buildProductInput(p: NewProductFields, actor: ReceiveContext['actor']):
 }
 
 function buildItem(over: Omit<ReceivingItem, 'id' | 'notes'>): ReceivingItem {
-  return { ...over, id: crypto.randomUUID(), notes: null };
+  return { unitPrice: null, ...over, id: crypto.randomUUID(), notes: null };
 }
 
 export async function applyReceivedItems(
@@ -60,6 +63,7 @@ export async function applyReceivedItems(
 ): Promise<ReceiveOutcome> {
   const items: ReceivingItem[] = [];
   const increments = new Map<string, number>();
+  const supplierFills = new Map<string, { supplierId: string; supplierName: string }>();
   const knownSkus = [...ctx.knownSkus];
   const failed: ReceiveOutcome['failed'] = [];
   let newProducts = 0;
@@ -70,6 +74,14 @@ export async function applyReceivedItems(
       if (rec.kind === 'match') {
         const p = rec.product;
         increments.set(p.id, (increments.get(p.id) ?? 0) + rec.quantity);
+        // Fill-when-empty: a matched product with no supplier takes the
+        // receiving's; one that already names a supplier is left alone.
+        if (p.supplierId == null && ctx.supplier != null) {
+          supplierFills.set(p.id, {
+            supplierId: ctx.supplier.id,
+            supplierName: ctx.supplier.name,
+          });
+        }
         items.push(buildItem({
           productId: p.id, sku: p.sku, name: p.name, quantity: rec.quantity,
           unit: p.unit, unitCost: p.cost, costCode: p.costCode,
@@ -79,6 +91,9 @@ export async function applyReceivedItems(
         const p = rec.product;
         const base = p.baseSku ?? p.sku;
         const costCode = encodeCostCode(ctx.cipher, rec.cost);
+        // The stock physically came from THIS receiving's supplier, so the
+        // variation records it — the base's supplier is only the fallback.
+        const price = rec.price ?? p.price;
         let n = nextVariationNumber(base, knownSkus);
         let created: Product | undefined;
         let sku = '';
@@ -87,9 +102,11 @@ export async function applyReceivedItems(
           try {
             created = await products.create(
               buildProductInput({
-                sku, name: p.name, cost: rec.cost, costCode, price: p.price,
+                sku, name: p.name, cost: rec.cost, costCode, price,
                 quantity: rec.quantity, reorderLevel: p.reorderLevel, unit: p.unit,
-                category: p.category, supplierId: p.supplierId, supplierName: p.supplierName,
+                category: p.category,
+                supplierId: ctx.supplier?.id ?? p.supplierId,
+                supplierName: ctx.supplier?.name ?? p.supplierName,
                 baseSku: base, variationNumber: n,
                 imageUrl: p.imageUrl, sellingOptions: p.sellingOptions,
               }, ctx.actor),
@@ -104,12 +121,13 @@ export async function applyReceivedItems(
         if (!created) throw new Error(`Could not allocate a unique variation SKU for "${base}"`);
         knownSkus.push(sku);
         await products.recordPriceChange(created.id, {
-          price: p.price, cost: rec.cost, changedBy: ctx.actor.id, reason: 'receiving',
+          price, cost: rec.cost, changedBy: ctx.actor.id, reason: 'receiving',
         });
         variations += 1;
         items.push(buildItem({
           productId: p.id, sku, name: p.name, quantity: rec.quantity, unit: p.unit,
-          unitCost: rec.cost, costCode, isNewVariation: true, newProductId: created.id,
+          unitCost: rec.cost, unitPrice: rec.price, costCode,
+          isNewVariation: true, newProductId: created.id,
         }));
       } else {
         // new. An auto row without a category code should have been rejected
@@ -149,5 +167,5 @@ export async function applyReceivedItems(
     }
   }
 
-  return { items, increments, newProducts, variations, failed };
+  return { items, increments, supplierFills, newProducts, variations, failed };
 }

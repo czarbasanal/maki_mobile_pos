@@ -24,6 +24,8 @@ const entry = {
   ],
   addExisting: vi.fn(),
   addNew: vi.fn(),
+  updateExisting: vi.fn(),
+  updateNew: vi.fn(),
   removeLine: vi.fn(),
   totals: { quantity: 12, cost: 120 },
   error: null,
@@ -186,5 +188,116 @@ describe('ReceivingEntryPage selling price column', () => {
     const row = screen.getByText('Brake Pad').closest('tr')!;
     const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
     expect(cells[4]).toBe('—');
+  });
+});
+
+const productP1 = {
+  id: 'p1', sku: 'SKU-1', name: 'Brake Pad', category: null, unit: 'pcs',
+  cost: 10, price: 25, quantity: 5, reorderLevel: 2, costCode: 'A',
+  barcodes: [], sellingOptions: [], supplierId: null, supplierName: null,
+  baseSku: null, variationNumber: null, isActive: true, imageUrl: null, notes: null,
+  searchKeywords: [], createdAt: new Date(), updatedAt: null,
+  createdBy: 'u1', updatedBy: 'u1', createdByName: 'C', updatedByName: 'C',
+};
+
+describe('ReceivingEntryPage — variation price entry', () => {
+  it('price stays disabled at the base cost and unlocks when the cost differs', async () => {
+    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
+    entry.matches = [productP1] as never;
+    entry.products = [productP1] as never;
+    renderPage();
+    await userEvent.click(screen.getByRole('button', { name: /Brake Pad/ }));
+
+    const price = screen.getByLabelText('Price');
+    expect(price).toBeDisabled();
+    expect(price).toHaveValue(25);
+
+    const cost = screen.getByLabelText('Unit cost', { selector: 'input' });
+    await userEvent.clear(cost);
+    await userEvent.type(cost, '12');
+    expect(screen.getByLabelText('Price')).toBeEnabled();
+    expect(screen.getByText(/variation will be created at this cost and price/)).toBeInTheDocument();
+
+    await userEvent.clear(screen.getByLabelText('Price'));
+    await userEvent.type(screen.getByLabelText('Price'), '30');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    expect(entry.addExisting).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), 1, 12, 30);
+    entry.matches = [] as never;
+    entry.products = [] as never;
+  });
+});
+
+describe('ReceivingEntryPage — row editing', () => {
+  it('the pencil on an existing line reopens the box prefilled and Update rewrites the line', async () => {
+    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
+    entry.products = [productP1] as never;
+    renderPage();
+
+    const row = screen.getByText('Brake Pad', { selector: 'td span' }).closest('tr')!;
+    await userEvent.click(within(row).getByRole('button', { name: 'Edit' }));
+
+    expect(screen.getByLabelText('Qty', { selector: 'input' })).toHaveValue(4);
+    const update = screen.getByRole('button', { name: 'Update' });
+    await userEvent.click(update);
+    expect(entry.updateExisting).toHaveBeenCalledWith('i1', { quantity: 4, unitCost: 10, unitPrice: null });
+    entry.products = [] as never;
+  });
+
+  it('the pencil is disabled when the line’s product no longer exists', () => {
+    renderPage(); // entry.products is empty — every product is "gone"
+    const row = screen.getByText('Chain').closest('tr')!;
+    expect(within(row).getByRole('button', { name: 'Edit' })).toBeDisabled();
+  });
+
+  it('the pencil on a new-product line opens the dialog in edit mode, prefilled', async () => {
+    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
+    const saved = entry.lines[2];
+    entry.lines[2] = {
+      ...saved, productId: '', name: 'Squid', sku: 'SQ-9',
+      pendingNewProduct: {
+        category: null, price: 130, reorderLevel: 1, autoGenerateSku: false,
+        autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
+      },
+    } as never;
+    renderPage();
+
+    const row = screen.getByText('Squid').closest('tr')!;
+    await userEvent.click(within(row).getByRole('button', { name: 'Edit' }));
+
+    expect(await screen.findByText('Edit product')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Squid')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(entry.updateNew).toHaveBeenCalledWith('i3', expect.objectContaining({ name: 'Squid', price: 130 }));
+    entry.lines[2] = saved;
+  });
+});
+
+describe('ReceivingEntryPage — no stale inline box behind the dialog', () => {
+  it('pencil-editing a new-product line closes an inline edit that was in progress', async () => {
+    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
+    const saved = entry.lines[2];
+    entry.products = [productP1] as never;
+    entry.lines[2] = {
+      ...saved, productId: '', name: 'Squid', sku: 'SQ-9',
+      pendingNewProduct: {
+        category: null, price: 130, reorderLevel: 1, autoGenerateSku: false,
+        autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
+      },
+    } as never;
+    renderPage();
+
+    // Open the inline box in Update mode on the existing line…
+    const rowA = screen.getByText('Brake Pad', { selector: 'td span' }).closest('tr')!;
+    await userEvent.click(within(rowA).getByRole('button', { name: 'Edit' }));
+    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+
+    // …then pencil the new-product line: the inline box must close, or its
+    // confirm would silently append instead of update after the dialog closes.
+    const rowB = screen.getByText('Squid').closest('tr')!;
+    await userEvent.click(within(rowB).getByRole('button', { name: 'Edit' }));
+    expect(screen.queryByRole('button', { name: 'Update' })).not.toBeInTheDocument();
+
+    entry.products = [] as never;
+    entry.lines[2] = saved;
   });
 });
