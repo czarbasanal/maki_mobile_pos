@@ -47,12 +47,14 @@ function SaleStub() {
 function harness(jobOrders: JobOrder[]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   let emit: (next: JobOrder[]) => void = () => {};
+  const deleteFn = vi.fn(async () => {});
   const jobOrderRepo: Partial<Container['jobOrderRepo']> = {
     watchAll: vi.fn((cb: (jobOrders: JobOrder[]) => void) => {
       emit = cb;
       cb(jobOrders);
       return () => {};
     }),
+    delete: deleteFn,
   };
   const view = render(
     <DiProvider override={{ jobOrderRepo: jobOrderRepo as Container['jobOrderRepo'] }}>
@@ -67,7 +69,7 @@ function harness(jobOrders: JobOrder[]) {
       </QueryClientProvider>
     </DiProvider>,
   );
-  return { ...view, emit: (next: JobOrder[]) => emit(next) };
+  return { ...view, emit: (next: JobOrder[]) => emit(next), deleteFn };
 }
 
 describe('JobOrdersPage', () => {
@@ -380,15 +382,27 @@ describe('JobOrdersPage — delete, open tickets only', () => {
     expect(within(billedRow).queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   });
 
-  it('confirming the delete fires the mutation without triggering the row action', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    harness([jobOrder({ id: 'd1', name: 'JO-OPEN', isConverted: false })]);
+  it('the trash opens the skinned confirm dialog; Delete fires the mutation', async () => {
+    const { deleteFn } = harness([jobOrder({ id: 'd1', name: 'JO-OPEN', isConverted: false })]);
 
     await userEvent.click(screen.getByRole('button', { name: /delete job order/i }));
-    expect(confirmSpy).toHaveBeenCalledWith('Delete Job Order "JO-OPEN"?');
-    // The row action (Resume) would navigate to the POS; deletion must not —
-    // the list (with its search bar) is still on screen.
+    // A Dialog on the skin, not window.confirm — it names the ticket.
+    expect(screen.getByText('Delete Job Order?')).toBeInTheDocument();
+    expect(screen.getByText('JO-OPEN', { selector: 'p span' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(deleteFn).toHaveBeenCalledWith('d1');
+    // Still on the list — the row's Resume never fired.
     expect(screen.getByPlaceholderText(/Search JO no/)).toBeInTheDocument();
-    confirmSpy.mockRestore();
+  });
+
+  it('Cancel closes the dialog without deleting', async () => {
+    const { deleteFn } = harness([jobOrder({ id: 'd1', name: 'JO-OPEN', isConverted: false })]);
+
+    await userEvent.click(screen.getByRole('button', { name: /delete job order/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(deleteFn).not.toHaveBeenCalled();
+    expect(screen.queryByText('Delete Job Order?')).not.toBeInTheDocument();
   });
 });

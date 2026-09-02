@@ -29,6 +29,7 @@ import { statusTone } from '@/presentation/components/ui/statusTone';
 import { formatInShopZone } from '@/domain/time/shopTime';
 import { cn } from '@/core/utils/cn';
 import type { JobOrder } from '@/domain/entities';
+import { Dialog } from '@/presentation/components/common/Dialog';
 import { NewJobOrderDialog } from './NewJobOrderDialog';
 import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
@@ -74,6 +75,8 @@ export function JobOrdersPage() {
   // this list (the guide's custom range picker isn't built yet).
   const [showOutsideOpen, setShowOutsideOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  // The ticket a skinned confirm dialog is asking about; null = closed.
+  const [deleting, setDeleting] = useState<JobOrder | null>(null);
 
   // Same collision-safe numbering as the POS save dialog: null while the
   // live list is loading so a stale/empty name set can't mint a duplicate.
@@ -159,10 +162,6 @@ export function JobOrdersPage() {
     if (lines.length > 0 && !window.confirm('Replace the current cart with this Job Order?')) return;
     loadJobOrder(jobOrder);
     navigate(RoutePaths.pos);
-  };
-  const onDelete = (jo: JobOrder) => {
-    if (!window.confirm(`Delete Job Order "${jo.name}"?`)) return;
-    deleteJobOrder.mutate({ id: jo.id, name: jo.name });
   };
   const onRow = (jo: JobOrder) => {
     if (jo.isConverted) {
@@ -259,7 +258,8 @@ export function JobOrdersPage() {
                 tone="danger"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(jo);
+                  deleteJobOrder.reset();
+                  setDeleting(jo);
                 }}
               >
                 <TrashIcon className="h-4 w-4" />
@@ -500,6 +500,47 @@ export function JobOrdersPage() {
         jobOrderNumber={newJobOrderNumber}
         onClose={() => setNewOpen(false)}
       />
+
+      <Dialog
+        open={deleting !== null}
+        onClose={() => {
+          if (!deleteJobOrder.isPending) setDeleting(null);
+        }}
+        title="Delete Job Order?"
+        dismissable={!deleteJobOrder.isPending}
+      >
+        <p className="text-cell text-ink-2">
+          <span className="font-mono font-medium text-ink">{deleting?.name}</span> and everything
+          on it will be removed. This can’t be undone.
+        </p>
+        <div className="mt-tk-md flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setDeleting(null)}
+            disabled={deleteJobOrder.isPending}
+            className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={deleteJobOrder.isPending}
+            onClick={async () => {
+              if (!deleting) return;
+              try {
+                await deleteJobOrder.mutateAsync({ id: deleting.id, name: deleting.name });
+                setDeleting(null);
+              } catch {
+                // surfaced via the banner above the table
+                setDeleting(null);
+              }
+            }}
+            className="rounded-ctl bg-neg-soft px-tk-md py-tk-sm text-ctl-md font-medium text-neg hover:brightness-95 disabled:opacity-60"
+          >
+            {deleteJobOrder.isPending ? 'Deleting…' : 'Delete'}
+          </button>
+        </div>
+      </Dialog>
     </div>
   );
 }
