@@ -37,6 +37,7 @@ import { formatInShopZone } from '@/domain/time/shopTime';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { PrinterIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
@@ -108,7 +109,7 @@ export function SaleDetailPage() {
 
   return (
     <>
-    <div className="space-y-tk-md print:hidden">
+    <div className="max-w-[1180px] space-y-tk-md print:hidden">
       <BackLink fallback={RoutePaths.salesReport} />
 
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
@@ -116,7 +117,7 @@ export function SaleDetailPage() {
         <div className="flex flex-wrap items-center gap-tk-sm border-b border-line-2 px-5 py-4">
           <h2
             className={cn(
-              'flex items-center gap-[7px] font-mono text-[19px] font-semibold tracking-tight',
+              'flex items-center gap-[7px] font-mono text-[19px] font-semibold tracking-[-0.6px]',
               // Struck through, not just badged: the number and the money are
               // what someone scans for, and a pill alone is easy to miss.
               voided ? 'text-ink-3 line-through' : 'text-ink',
@@ -131,13 +132,18 @@ export function SaleDetailPage() {
               type="button"
               onClick={() => navigate(RoutePaths.jobOrders)}
               title="Back to job orders"
-              className="rounded-chip bg-surface-3 px-2 py-0.5 font-mono text-micro font-semibold text-ink-2 hover:text-ink"
+              className="rounded-pill bg-surface-3 px-2.5 py-[3px] font-mono text-[11px] font-medium text-ink-2 hover:text-ink"
             >
               {jobOrder.name}
             </button>
           ) : null}
           <div className="ml-auto flex items-center gap-tk-sm">
-            <Button variant="primary" size="sm" onClick={() => window.print()}>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<PrinterIcon className="h-3.5 w-3.5" />}
+              onClick={() => window.print()}
+            >
               Print receipt
             </Button>
             {canVoidSale(sale) && !voidPending && canVoidDirect ? (
@@ -148,7 +154,7 @@ export function SaleDetailPage() {
                   voidSale.reset();
                   setVoidOpen(true);
                 }}
-                className="rounded-ctl px-2.5 py-[7px] text-ctl-sm font-medium text-neg hover:bg-neg-soft"
+                className="rounded-ctl border border-line px-3.5 py-[7px] text-ctl-sm font-medium text-neg hover:border-neg hover:bg-neg-soft"
               >
                 Void sale
               </button>
@@ -162,7 +168,7 @@ export function SaleDetailPage() {
                   requestVoid.reset();
                   setRequestOpen(true);
                 }}
-                className="rounded-ctl px-2.5 py-[7px] text-ctl-sm font-medium text-neg hover:bg-neg-soft"
+                className="rounded-ctl border border-line px-3.5 py-[7px] text-ctl-sm font-medium text-neg hover:border-neg hover:bg-neg-soft"
               >
                 Request void
               </button>
@@ -204,10 +210,10 @@ export function SaleDetailPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[400px] border-collapse">
             <thead>
-              <tr className="border-b border-line bg-surface-2">
+              <tr className="border-b border-line-2 bg-surface-2">
                 <Th>Item</Th>
-                <Th className="w-[52px] text-right">Qty</Th>
-                <Th className="w-[92px] text-right">Unit</Th>
+                <Th className="w-[52px] px-3 text-right">Qty</Th>
+                <Th className="w-[92px] px-3 text-right">Unit</Th>
                 <Th className="w-[100px] text-right">Net</Th>
               </tr>
             </thead>
@@ -222,7 +228,7 @@ export function SaleDetailPage() {
                 const caption = saleItemOptionSetsCaption(it);
                 return (
                   <tr key={it.id} className="border-b border-line-2 last:border-b-0">
-                    <td className="px-5 py-2.5">
+                    <td className="px-5 py-3">
                       <div className="text-cell font-medium text-ink">
                         {it.name}
                         {hasOption ? <span className="text-ink-2"> · {it.optionLabel}</span> : null}
@@ -233,11 +239,11 @@ export function SaleDetailPage() {
                       </div>
                       {caption ? <div className="text-micro text-ink-3">{caption}</div> : null}
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-cell text-ink">{it.quantity}</td>
-                    <td className="px-4 py-2.5 text-right font-mono text-cell text-ink">
+                    <td className="px-3 py-3 text-right font-mono text-cell text-ink">{it.quantity}</td>
+                    <td className="px-3 py-3 text-right font-mono text-cell text-ink-2">
                       {formatMoney(it.unitPrice)}
                     </td>
-                    <td className="px-5 py-2.5 text-right font-mono text-[13px] font-semibold text-ink">
+                    <td className="px-5 py-3 text-right font-mono text-[13px] font-semibold text-ink">
                       {formatMoney(saleItemNet(it, isPct))}
                     </td>
                   </tr>
@@ -253,51 +259,53 @@ export function SaleDetailPage() {
           </table>
         </div>
 
-        {/* Band 4 — totals, then tender, right-aligned in a narrow column */}
-        <div className="flex justify-end px-5 py-4">
-          <div className="w-full max-w-[340px] space-y-tk-sm">
-            <div className="space-y-tk-xs">
-              <Row label="Parts subtotal" value={formatMoney(salePartsSubtotal(sale))} struck={voided} />
-              <Row label="Labor" value={formatMoney(saleLaborSubtotal(sale))} struck={voided} />
-              {sale.feeLines.length > 0 ? (
-                <Row label="Shop fees" value={formatMoney(saleFeesTotal(sale))} struck={voided} />
-              ) : null}
-              <div className="flex justify-between text-cell">
-                <span className="text-ink-2">Discount</span>
-                <span
-                  className={cn(
-                    'font-mono tabular-nums',
-                    voided ? 'text-ink-3 line-through' : discount > 0 ? 'text-neg' : 'text-ink-3',
-                  )}
-                >
-                  {discount > 0 ? `− ${formatMoney(discount)}` : formatMoney(0)}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between border-t border-line pt-tk-sm">
-                <span className="text-cell text-ink-2">Total</span>
-                <span
-                  data-testid="sale-total"
-                  className={cn(
-                    'tnum font-mono text-[23px] font-semibold tracking-[-1px]',
-                    voided ? 'text-ink-3 line-through' : 'text-ink',
-                  )}
-                >
-                  {formatMoney(saleGrandTotal(sale))}
-                </span>
-              </div>
+        {/* Band 4 — totals, then the tender band (full-width, surface-2),
+            both right-aligned in a 340px column */}
+        <div className="flex justify-end border-t border-line px-5 py-3.5">
+          <div className="flex w-full max-w-[340px] flex-col gap-[9px]">
+            <Row label="Parts subtotal" value={formatMoney(salePartsSubtotal(sale))} struck={voided} />
+            <Row label="Labor" value={formatMoney(saleLaborSubtotal(sale))} struck={voided} />
+            {sale.feeLines.length > 0 ? (
+              <Row label="Shop fees" value={formatMoney(saleFeesTotal(sale))} struck={voided} />
+            ) : null}
+            <div className="flex justify-between text-cell">
+              <span className="text-ink-2">Discount</span>
+              <span
+                className={cn(
+                  'font-mono tabular-nums',
+                  voided ? 'text-ink-3 line-through' : discount > 0 ? 'text-neg' : 'text-ink-3',
+                )}
+              >
+                {discount > 0 ? `− ${formatMoney(discount)}` : formatMoney(0)}
+              </span>
             </div>
-            <div className="space-y-tk-xs rounded-ctl bg-surface-2 px-tk-md py-tk-sm">
-              <p className="text-micro font-semibold uppercase tracking-[1px] text-ink-3">
-                Tender · {tenderMethods.map((m) => paymentMethodDisplayName[m]).join(' + ') || paymentMethodDisplayName[sale.paymentMethod]}
-              </p>
-              {tenderMethods.length > 1
-                ? tenderMethods.map((m) => (
-                    <Row key={m} label={paymentMethodDisplayName[m]} value={formatMoney(tenders[m] ?? 0)} muted />
-                  ))
-                : null}
-              <Row label="Amount received" value={formatMoney(sale.amountReceived)} muted />
-              <Row label="Change" value={formatMoney(sale.changeGiven)} muted />
+            <div className="flex items-baseline justify-between border-t border-line pt-[11px]">
+              <span className="text-[13.5px] font-semibold text-ink">Total</span>
+              <span
+                data-testid="sale-total"
+                className={cn(
+                  'tnum font-mono text-[23px] font-semibold tracking-[-1px]',
+                  voided ? 'text-ink-3 line-through' : 'text-ink',
+                )}
+              >
+                {formatMoney(saleGrandTotal(sale))}
+              </span>
             </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end border-t border-line-2 bg-surface-2 px-5 py-3.5">
+          <div className="flex w-full max-w-[340px] flex-col gap-[9px]">
+            <p className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">
+              Tender · {tenderMethods.map((m) => paymentMethodDisplayName[m]).join(' + ') || paymentMethodDisplayName[sale.paymentMethod]}
+            </p>
+            {tenderMethods.length > 1
+              ? tenderMethods.map((m) => (
+                  <Row key={m} label={paymentMethodDisplayName[m]} value={formatMoney(tenders[m] ?? 0)} muted />
+                ))
+              : null}
+            <Row label="Amount received" value={formatMoney(sale.amountReceived)} muted />
+            <Row label="Change" value={formatMoney(sale.changeGiven)} muted />
           </div>
         </div>
       </section>
@@ -493,8 +501,8 @@ function LineRow({
 }) {
   return (
     <tr className="border-b border-line-2 last:border-b-0">
-      <td className="px-5 py-2.5">
-        <span className="flex items-center gap-2">
+      <td className="px-5 py-3">
+        <span className="flex items-center gap-[9px]">
           <span className="rounded-[5px] bg-info-soft px-[7px] py-0.5 text-[9.5px] font-bold tracking-[0.8px] text-info">
             {chip}
           </span>
@@ -502,9 +510,9 @@ function LineRow({
           {detail ? <span className="text-micro text-ink-3">{detail}</span> : null}
         </span>
       </td>
-      <td className="px-4 py-2.5 text-right font-mono text-cell text-ink-3">—</td>
-      <td className="px-4 py-2.5 text-right font-mono text-cell text-ink-3">—</td>
-      <td className="px-5 py-2.5 text-right font-mono text-[13px] font-semibold text-ink">
+      <td className="px-3 py-3 text-right font-mono text-cell text-ink-3">—</td>
+      <td className="px-3 py-3 text-right font-mono text-cell text-ink-3">—</td>
+      <td className="px-5 py-3 text-right font-mono text-[13px] font-semibold text-ink">
         {formatMoney(amount)}
       </td>
     </tr>

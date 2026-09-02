@@ -22,6 +22,10 @@ export interface DataTableProps<T> {
   loading?: boolean;
   skeletonRows?: number;
   empty?: ReactNode;
+  /** Intrinsic min-content width of the table (e.g. '820px'). The wrapper is
+   *  the horizontal scroller, so narrow viewports scroll instead of clipping
+   *  the last columns behind the card's rounded overflow:hidden (JO guide §A). */
+  minWidth?: string;
 }
 
 const alignCls = { left: 'text-left', right: 'text-right', center: 'text-center' } as const;
@@ -34,6 +38,7 @@ export function DataTable<T>({
   loading = false,
   skeletonRows = 8,
   empty,
+  minWidth,
 }: DataTableProps<T>) {
   if (!loading && rows.length === 0) {
     return <>{empty ?? <EmptyState message="Nothing here yet" />}</>;
@@ -41,7 +46,7 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
+      <table className="w-full border-collapse" style={minWidth ? { minWidth } : undefined}>
         <thead>
           <tr className="border-y border-line bg-surface-2">
             {columns.map((col) => (

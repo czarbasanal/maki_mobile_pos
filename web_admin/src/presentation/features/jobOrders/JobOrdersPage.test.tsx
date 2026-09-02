@@ -164,25 +164,27 @@ describe('JobOrdersPage — pagination', () => {
     expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
     expect(screen.queryByText('JO-072326-030')).not.toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByLabelText(/rows per page/i), '50');
+    // Reference footer: 25 / 50 / 100 as mono buttons, not a select.
+    await userEvent.click(screen.getByRole('button', { name: '50' }));
 
     expect(screen.getByText('1–30 of 30')).toBeInTheDocument();
     expect(screen.getByText('JO-072326-030')).toBeInTheDocument();
-    // Still reachable so the size can be changed back.
-    expect(screen.getByLabelText(/rows per page/i)).toHaveValue('50');
 
     // Remembered on the next visit, and scoped to this table only.
     view.unmount();
     harness(many);
-    expect(screen.getByLabelText(/rows per page/i)).toHaveValue('50');
+    expect(screen.getByText('1–30 of 30')).toBeInTheDocument();
     expect(localStorage.getItem('maki.pageSize.inventory')).toBeNull();
   });
 
-  it('hides the pager at exactly 25 job orders', () => {
+  it('shows the footer whenever there are rows, even under one page', () => {
+    // Reference behavior: the footer is part of the card whenever rows
+    // render; it hides only on the empty states.
     const exactly25 = Array.from({ length: 25 }, (_, i) => jobOrder({ id: `d${i + 1}`, name: `JO-072326-${String(i + 1).padStart(3, '0')}` }));
     harness(exactly25);
 
-    expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
+    expect(screen.getByText('1–25 of 25')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
   });
 
   it('snaps back to the last page when the list shrinks under a parked page 2 (delete-in-place)', () => {
@@ -194,12 +196,11 @@ describe('JobOrdersPage — pagination', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('26–26 of 26')).toBeInTheDocument();
 
-    // Live snapshot shrinks to 25 (e.g. the parked-on row was deleted): the
-    // pager unmounts (total <= pageSize), so without a clamp the page stays 2
-    // and the table renders empty with no Prev button to escape.
+    // Live snapshot shrinks to 25 (e.g. the parked-on row was removed on
+    // mobile): without a clamp the page stays 2 and the table renders empty.
     act(() => emit(many.slice(0, 25)));
     expect(screen.getByText('JO-072326-001')).toBeInTheDocument();
-    expect(screen.queryByText(/of 25/)).not.toBeInTheDocument();
+    expect(screen.getByText('1–25 of 25')).toBeInTheDocument();
   });
 });
 

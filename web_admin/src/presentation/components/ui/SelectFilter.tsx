@@ -25,6 +25,7 @@ export function SelectFilter({
   onChange,
   /** Shown (and selectable) as the "no filter" row, e.g. "All mechanics". */
   allLabel,
+  allTriggerLabel,
 }: {
   label: string;
   /** '' = no filter (the allLabel row). */
@@ -32,6 +33,9 @@ export function SelectFilter({
   options: SelectFilterOption[];
   onChange: (value: string) => void;
   allLabel: string;
+  /** Shorter trigger text for the unfiltered state (e.g. "All"); the menu
+   *  row keeps the full allLabel. */
+  allTriggerLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -68,11 +72,11 @@ export function SelectFilter({
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={clsx(
-          'flex min-w-[186px] items-center gap-2 rounded-ctl border bg-surface px-3 py-1.5 text-left',
+          'flex min-w-[186px] items-center gap-2 rounded-ctl border bg-surface px-[13px] py-[9px] text-left shadow-card',
           active ? 'border-accent-text' : 'border-line',
         )}
       >
-        <span className="flex min-w-0 flex-1 flex-col">
+        <span className="flex min-w-0 flex-1 items-center gap-2">
           <span className="text-micro text-ink-3">{label}</span>
           <span
             className={clsx(
@@ -80,7 +84,7 @@ export function SelectFilter({
               active ? 'text-accent-text' : 'text-ink',
             )}
           >
-            {current?.label ?? allLabel}
+            {current?.label ?? allTriggerLabel ?? allLabel}
           </span>
         </span>
         <ChevronDownIcon
