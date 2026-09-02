@@ -16,6 +16,11 @@ describe('statusTone', () => {
     expect(statusTone('In progress')).toBe('warning');
     expect(statusTone('open')).toBe('info');
   });
+  it('maps receiving statuses per the receiving guide', () => {
+    expect(statusTone('draft')).toBe('info');
+    expect(statusTone('partial')).toBe('warning');
+    expect(statusTone('cancelled')).toBe('negative');
+  });
   it('falls back to neutral for unknown statuses', () => {
     expect(statusTone('sideways')).toBe('neutral');
   });

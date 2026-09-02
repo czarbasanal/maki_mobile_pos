@@ -26,8 +26,7 @@ import { PriceChangeReportPage } from '@/presentation/features/reports/PriceChan
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
 import { DaySalesPage } from '@/presentation/features/sales/DaySalesPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
-import { ReceivingDashboardPage } from '@/presentation/features/receiving/ReceivingDashboardPage';
-import { ReceivingHistoryPage } from '@/presentation/features/receiving/ReceivingHistoryPage';
+import { ReceivingListPage } from '@/presentation/features/receiving/ReceivingListPage';
 import { ReceivingDetailPage } from '@/presentation/features/receiving/ReceivingDetailPage';
 import { ReceivingEntryPage } from '@/presentation/features/receiving/ReceivingEntryPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
@@ -182,7 +181,7 @@ export const router = createBrowserRouter(
         },
         {
           path: RoutePaths.receiving,
-          element: <ReceivingDashboardPage />,
+          element: <ReceivingListPage />,
           handle: {
             title: 'Receiving',
             subtitle: "Record incoming stock from suppliers, and track what you've received.",
@@ -199,11 +198,12 @@ export const router = createBrowserRouter(
           handle: { title: 'Resume receiving' } satisfies PageChrome,
         },
         {
+          // History folded into the redesigned list (search, filters, date
+          // range, pagination live there now); old links land on it.
           path: RoutePaths.receivingHistory,
-          element: <ReceivingHistoryPage />,
+          element: <Navigate to={RoutePaths.receiving} replace />,
           handle: {
-            title: 'Receiving history',
-            subtitle: 'Stock received from suppliers in the selected range.',
+            title: 'Receiving',
           } satisfies PageChrome,
         },
         {

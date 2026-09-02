@@ -1,33 +1,51 @@
+// Receiving detail — per design/maki-pos-receiving-redesign §B: one card,
+// four bands. Identity + actions, the facts strip (supplier / received /
+// recorded by / total cost — the fix for the old buried subtitle line), the
+// items table full width (SKU as its own scannable column, Margin new), then
+// totals and the expected-value band. Retail value and Expected profit are
+// client-derived projections at today's prices; the receipt's own totals
+// come from the document, never recomputed.
 import { useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { PrinterIcon } from '@heroicons/react/24/outline';
 import { useReceiving } from '@/presentation/hooks/useReceiving';
+import { useProducts } from '@/presentation/hooks/useProducts';
 import { formatMoney } from '@/core/utils/money';
+import { formatInShopZone } from '@/domain/time/shopTime';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
+import { ProductImage } from '@/presentation/components/common/ProductImage';
 import { RoutePaths } from '@/presentation/router/routePaths';
-import { ReceivingStatusBadge } from './ReceivingStatusBadge';
+import { Badge } from '@/presentation/components/ui/Badge';
+import { Button } from '@/presentation/components/ui/Button';
+import { CopyButton } from '@/presentation/components/ui/CopyButton';
+import { statusTone } from '@/presentation/components/ui/statusTone';
 import { displaySku } from '@/domain/products/sku';
-import { useProducts } from '@/presentation/hooks/useProducts';
-import { BackLink } from '@/presentation/components/common/BackLink';
+import { cn } from '@/core/utils/cn';
+import type { Receiving } from '@/domain/entities';
 
-const dtFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
+const STATUS_LABEL: Record<Receiving['status'], string> = {
+  draft: 'Draft',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
 
 export function ReceivingDetailPage() {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
   const { data: receiving, isLoading, error } = useReceiving(id);
 
   useEffect(() => {
     document.title = 'Receiving detail · MAKI POS Admin';
   }, []);
 
-  // Receiving items denormalize cost but not the selling price, so it is
-  // resolved from the product. Hooks cannot sit behind the guards below.
+  // Receiving items denormalize cost (and, since the supplier/price fix, a
+  // variation's unitPrice) but not every selling price — the rest resolve
+  // from the product's CURRENT price. Hooks can't sit behind the guards.
   const { data: allProducts } = useProducts();
 
-  if (isLoading) {
-    return <LoadingView label="Loading receiving…" />;
-  }
+  if (isLoading) return <LoadingView label="Loading receiving…" />;
   if (error) {
     return <ErrorView title="Could not load receiving" message={(error as Error).message} />;
   }
@@ -37,99 +55,260 @@ export function ReceivingDetailPage() {
         title="Receiving not found"
         description="It may have been removed."
         action={
-          <Link to={RoutePaths.receiving} className="text-light-text underline">
+          <button
+            type="button"
+            onClick={() => navigate(RoutePaths.receiving)}
+            className="text-ink underline"
+          >
             Back to receiving
-          </Link>
+          </button>
         }
       />
     );
   }
 
-  // This is the product's CURRENT price, not the price at the time of
-  // receipt; a product deleted since the receiving was written shows none.
   const priceByProductId = new Map((allProducts ?? []).map((p) => [p.id, p.price]));
-  const sellingPriceText = (it: (typeof receiving.items)[number]): string => {
-    const price = priceByProductId.get(it.newProductId ?? it.productId ?? '');
-    return price == null ? '—' : formatMoney(price);
-  };
+  const imageByProductId = new Map((allProducts ?? []).map((p) => [p.id, p.imageUrl]));
+  const sellPriceOf = (it: (typeof receiving.items)[number]): number | null =>
+    it.unitPrice ?? priceByProductId.get(it.newProductId ?? it.productId ?? '') ?? null;
+
+  const when = receiving.completedAt ?? receiving.createdAt;
+  const totalUnits = receiving.totalQuantity;
+
+  // Projections at these prices — lines whose product is gone (no price to
+  // project with) are left out of both sides so the pair stays comparable.
+  let retail = 0;
+  let pricedCost = 0;
+  for (const it of receiving.items) {
+    const price = sellPriceOf(it);
+    if (price == null) continue;
+    retail += price * it.quantity;
+    pricedCost += it.unitCost * it.quantity;
+  }
 
   return (
-    <div className="space-y-tk-lg">
-      <header className="space-y-tk-xs">
-        <BackLink fallback={RoutePaths.receiving} />
-        <div className="flex items-center gap-tk-md">
-          <h2 className="text-headingMedium font-semibold tracking-tight text-light-text">
+    <div className="flex max-w-[1180px] flex-col gap-3 print:hidden">
+      <button
+        type="button"
+        onClick={() => navigate(RoutePaths.receiving)}
+        className="flex w-fit items-center gap-1.5 whitespace-nowrap rounded-ctl border border-line bg-surface py-2 pl-[11px] pr-3.5 text-ctl-sm font-medium text-ink-2 shadow-card hover:border-accent-line hover:text-ink"
+      >
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" className="shrink-0">
+          <polyline points="12,4.5 6.5,10 12,15.5" />
+        </svg>
+        Back to receiving
+      </button>
+
+      <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+        {/* Band 1 — identity and actions */}
+        <div className="flex flex-wrap items-center gap-3 border-b border-line-2 px-5 py-4">
+          <span className="flex items-center gap-2 font-mono text-[19px] font-semibold tracking-[-0.6px] text-ink">
             {receiving.referenceNumber}
-          </h2>
-          <ReceivingStatusBadge status={receiving.status} />
-        </div>
-        <p className="text-bodySmall text-light-text-secondary">
-          {receiving.supplierName ?? 'No supplier'} ·{' '}
-          {dtFmt.format(receiving.completedAt ?? receiving.createdAt)} · {receiving.createdByName}
-        </p>
-      </header>
-
-      <section className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
-        <table className="w-full text-bodySmall">
-          <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
-            <tr>
-              <th className="px-tk-md py-tk-sm text-left font-medium">SKU</th>
-              <th className="px-tk-md py-tk-sm text-left font-medium">Item name</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Qty</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Cost</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Price</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Line total</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-light-hairline">
-            {receiving.items.map((it, index) => (
-              // Legacy/web-written items can have an empty id; fall back to the
-              // (stable, non-reordering) array index so keys stay unique.
-              <tr key={it.id || index}>
-                <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">
-                  {displaySku(it.sku)}
-                </td>
-                {/* The new-variation badge describes the product, so it stays
-                    with the name rather than the code. */}
-                <td className="px-tk-md py-tk-sm">
-                  <span className="font-medium text-light-text">{it.name}</span>
-                  {it.isNewVariation ? (
-                    <span className="ml-tk-sm rounded-full bg-info-light px-tk-sm py-[1px] text-[10px] font-semibold uppercase text-info-dark">
-                      New variation
-                    </span>
-                  ) : null}
-                </td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">{it.quantity}</td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">
-                  {formatMoney(it.unitCost)}
-                </td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">
-                  {sellingPriceText(it)}
-                </td>
-                <td className="px-tk-md py-tk-sm text-right tabular-nums">
-                  {formatMoney(it.unitCost * it.quantity)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section className="ml-auto w-full max-w-sm space-y-tk-xs rounded-lg border border-light-hairline bg-light-card p-tk-lg text-bodySmall">
-        <div className="flex justify-between">
-          {/* Generic "units", not the line's real unit or poQuantityLabel: a
-              receiving can span suppliers with different units, and two
-              sibling tables head this same sum as a plain column header. */}
-          <span className="text-light-text-secondary">Total units</span>
-          <span className="tabular-nums text-light-text">{receiving.totalQuantity}</span>
-        </div>
-        <div className="flex justify-between border-t border-light-hairline pt-tk-xs">
-          <span className="font-semibold text-light-text">Total cost</span>
-          <span className="tabular-nums font-semibold text-light-text">
-            {formatMoney(receiving.totalCost)}
+            <CopyButton value={receiving.referenceNumber} label="reference" />
           </span>
+          <Badge tone={statusTone(receiving.status)}>{STATUS_LABEL[receiving.status]}</Badge>
+          <div className="ml-auto flex gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<PrinterIcon className="h-3.5 w-3.5" />}
+              onClick={() => window.print()}
+            >
+              Print slip
+            </Button>
+          </div>
+        </div>
+
+        {/* Band 2 — the facts strip */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] divide-x divide-line-2 border-b border-line-2">
+          <Fact
+            label="Supplier"
+            value={receiving.supplierName ?? 'No supplier'}
+            sub={receiving.supplierName ? 'Delivered by' : 'Walk-in or unrecorded'}
+            dim={!receiving.supplierName}
+          />
+          <Fact
+            label="Received"
+            value={formatInShopZone(when, { hour: 'numeric', minute: '2-digit', hour12: true })}
+            sub={`${formatInShopZone(when, { month: 'short', day: 'numeric', year: 'numeric' })} · ${formatInShopZone(when, { weekday: 'short' })}`}
+            mono
+          />
+          <Fact
+            label="Recorded by"
+            value={receiving.createdByName || '—'}
+            sub="Recorded this receipt"
+          />
+          <Fact
+            label="Total cost"
+            value={formatMoney(receiving.totalCost)}
+            sub={`${totalUnits} units in`}
+            mono
+          />
+        </div>
+
+        {/* Band 3 — items, full width */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] border-collapse">
+            <thead>
+              <tr className="border-b border-line-2 bg-surface-2">
+                <Th className="px-5">Item</Th>
+                <Th className="w-[132px]">SKU</Th>
+                <Th className="w-[60px] px-3 text-right">Qty</Th>
+                <Th className="w-[96px] px-3 text-right">Unit cost</Th>
+                <Th className="w-[96px] px-3 text-right">Sell price</Th>
+                <Th className="w-[78px] px-3 text-right">Margin</Th>
+                <Th className="w-[110px] px-5 text-right">Line total</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {receiving.items.map((it, index) => {
+                const price = sellPriceOf(it);
+                const margin =
+                  price != null && price > 0
+                    ? Math.round(((price - it.unitCost) / price) * 100)
+                    : null;
+                return (
+                  // Legacy/web-written items can have an empty id; the index
+                  // fallback stays unique in this non-reordering list.
+                  <tr key={it.id || index} className="border-b border-line-2 last:border-b-0">
+                    <td className="px-5 py-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <ProductImage
+                          src={imageByProductId.get(it.newProductId ?? it.productId ?? '')}
+                          alt={it.name}
+                          size="sm"
+                          className="h-9 w-9 shrink-0 rounded-[9px]"
+                        />
+                        <span className="min-w-0 text-ctl-sm font-medium text-ink">
+                          {it.name}
+                          {it.isNewVariation ? (
+                            <span className="ml-1.5 rounded-[5px] bg-info-soft px-[7px] py-0.5 text-[9.5px] font-bold tracking-[0.8px] text-info">
+                              NEW VARIATION
+                            </span>
+                          ) : null}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3.5 py-3">
+                      <span className="flex items-center gap-1.5 font-mono text-[12px] text-ink-2">
+                        {displaySku(it.sku)}
+                        <CopyButton value={it.sku} label="SKU" />
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-right font-mono text-ctl-sm text-ink">
+                      {it.quantity}
+                    </td>
+                    <td className="px-3 py-3 text-right font-mono text-ctl-sm text-ink-2">
+                      {formatMoney(it.unitCost)}
+                    </td>
+                    <td className="px-3 py-3 text-right font-mono text-ctl-sm text-ink-2">
+                      {price == null ? '—' : formatMoney(price)}
+                    </td>
+                    <td
+                      className={cn(
+                        'px-3 py-3 text-right font-mono text-[12px] font-semibold',
+                        margin == null
+                          ? 'text-ink-3'
+                          : margin >= 50
+                            ? 'text-pos'
+                            : margin >= 25
+                              ? 'text-ink-2'
+                              : 'text-neg',
+                      )}
+                    >
+                      {margin == null ? '—' : `${margin}%`}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono text-[13px] font-semibold text-ink">
+                      {formatMoney(it.unitCost * it.quantity)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Band 4 — totals, then the expected-value band */}
+        <div className="flex justify-end border-t border-line px-5 py-3.5">
+          <div className="flex w-full max-w-[340px] flex-col gap-[9px]">
+            <Row label="Lines" value={String(receiving.items.length)} />
+            <Row label="Total units" value={String(totalUnits)} />
+            <div className="flex items-baseline justify-between border-t border-line pt-[11px]">
+              <span className="text-[13.5px] font-semibold text-ink">Total cost</span>
+              <span className="tnum font-mono text-[23px] font-semibold tracking-[-1px] text-ink">
+                {formatMoney(receiving.totalCost)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end border-t border-line-2 bg-surface-2 px-5 py-3.5">
+          <div className="flex w-full max-w-[340px] flex-col gap-[9px]">
+            <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">
+              Expected at these prices
+            </span>
+            <Row label="Retail value" value={formatMoney(retail)} />
+            <div className="flex justify-between text-cell">
+              <span className="text-ink-2">Expected profit</span>
+              <span className="font-mono tabular-nums text-pos">
+                {formatMoney(retail - pricedCost)}
+              </span>
+            </div>
+          </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function Th({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <th
+      className={cn(
+        'px-3.5 py-2.5 text-left text-micro-caps uppercase text-ink-3',
+        className,
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function Fact({
+  label,
+  value,
+  sub,
+  mono,
+  dim,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  mono?: boolean;
+  dim?: boolean;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-[5px] px-5 py-3.5">
+      <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{label}</span>
+      <span
+        className={cn(
+          'text-[13.5px] font-semibold tracking-[-0.2px]',
+          dim ? 'text-ink-3' : 'text-ink',
+          mono && 'font-mono',
+        )}
+      >
+        {value}
+      </span>
+      <span className="text-[11px] text-ink-3">{sub}</span>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between text-cell">
+      <span className="text-ink-2">{label}</span>
+      <span className="font-mono tabular-nums text-ink">{value}</span>
     </div>
   );
 }

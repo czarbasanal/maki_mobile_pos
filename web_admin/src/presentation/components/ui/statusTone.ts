@@ -20,7 +20,8 @@ const TONE_BY_STATUS: Record<string, Tone> = {
   // The number and money are struck through wherever a voided sale shows;
   // the pill matches in --neg (JO guide §A status tones).
   voided: 'negative',
-  draft: 'neutral',
+  // A draft receipt is a working view, not a dead state (receiving guide §A).
+  draft: 'info',
 };
 
 export function statusTone(status: string): Tone {

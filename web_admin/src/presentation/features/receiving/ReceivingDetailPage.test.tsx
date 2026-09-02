@@ -14,7 +14,7 @@ const receiving = {
   supplierName: 'Acme',
   items: [
     { id: 'i1', productId: 'p1', sku: 'SKU-1', name: 'Brake Pad', quantity: 4, unit: 'pcs', unitCost: 10, costCode: 'A', isNewVariation: false, newProductId: null, notes: null },
-    { id: 'i2', productId: 'p2', sku: 'SKU-2', name: 'Chain', quantity: 5, unit: 'pcs', unitCost: 10, costCode: 'A', isNewVariation: false, newProductId: null, notes: null },
+    { id: 'i2', productId: 'p2', sku: 'SKU-2', name: 'Chain', quantity: 5, unit: 'pcs', unitCost: 10, costCode: 'A', isNewVariation: true, newProductId: null, notes: null },
     { id: 'i3', productId: 'p3', sku: 'SKU-3', name: 'Bolt', quantity: 3, unit: 'pcs', unitCost: 10, costCode: 'A', isNewVariation: false, newProductId: null, notes: null },
   ],
   totalCost: 120,
@@ -67,8 +67,10 @@ describe('ReceivingDetailPage item table columns', () => {
   it('gives the SKU its own column ahead of the item name', () => {
     renderPage();
 
+    // Redesign order: Item leads (thumbnail + name), then the scannable SKU
+    // column, with Margin new between Sell price and Line total.
     const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['SKU', 'Item name', 'Qty', 'Cost', 'Price', 'Line total']);
+    expect(headers).toEqual(['Item', 'SKU', 'Qty', 'Unit cost', 'Sell price', 'Margin', 'Line total']);
   });
 
   it('puts each row’s SKU in the first cell, not trailing the name', () => {
@@ -76,9 +78,10 @@ describe('ReceivingDetailPage item table columns', () => {
 
     const row = screen.getByText('Brake Pad').closest('tr')!;
     const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
-    expect(cells[0]).toBe('SKU-1');
-    // The name cell must no longer carry the SKU alongside it.
-    expect(cells[1]).toBe('Brake Pad');
+    // Item cell carries the name; the SKU sits alone in its own second cell.
+    expect(cells[0]).toContain('Brake Pad');
+    expect(cells[0]).not.toContain('SKU-1');
+    expect(cells[1]).toContain('SKU-1');
   });
 
   it('keeps the new-variation badge with the item name', () => {
@@ -86,8 +89,10 @@ describe('ReceivingDetailPage item table columns', () => {
     // must not strand it in the SKU cell.
     renderPage();
 
-    const row = screen.getByText('Brake Pad').closest('tr')!;
+    const row = screen.getByText('Chain').closest('tr')!;
     const cells = Array.from(row.querySelectorAll('td'));
-    expect(cells).toHaveLength(6);
+    expect(cells).toHaveLength(7);
+    expect(cells[0].textContent).toContain('NEW VARIATION');
+    expect(cells[1].textContent).not.toContain('NEW VARIATION');
   });
 });
