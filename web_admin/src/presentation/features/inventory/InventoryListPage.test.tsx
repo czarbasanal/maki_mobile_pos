@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -70,33 +70,55 @@ function signIn(role: UserRole) {
   });
 }
 
-describe('InventoryListPage totals strip', () => {
-  it('shows the three figures computed from the visible list to an admin', () => {
+describe('InventoryListPage money cards', () => {
+  it('shows the three whole-catalog figures to an admin, with their bases', () => {
     signIn(UserRole.admin);
     harness();
-    expect(screen.getByText('Stock Cost')).toBeInTheDocument();
+    expect(screen.getByText('Stock cost')).toBeInTheDocument();
     expect(screen.getByText(formatMoney(700))).toBeInTheDocument();
-    expect(screen.getByText('Retail Value')).toBeInTheDocument();
+    expect(screen.getByText('Retail value')).toBeInTheDocument();
     expect(screen.getByText(formatMoney(1300))).toBeInTheDocument();
-    expect(screen.getByText('Expected Profit')).toBeInTheDocument();
+    expect(screen.getByText('Expected profit')).toBeInTheDocument();
     expect(screen.getByText(formatMoney(600))).toBeInTheDocument();
+    // Notes carry the basis so the numbers aren't ambiguous (guide §2).
+    expect(screen.getByText('at latest cost')).toBeInTheDocument();
+    expect(screen.getByText(/blended margin/)).toBeInTheDocument();
   });
 
-  it('hides the totals strip from non-admin roles', () => {
+  it('hides the money cards from non-admin roles', () => {
     signIn(UserRole.staff);
     harness();
-    expect(screen.queryByText('Stock Cost')).not.toBeInTheDocument();
-    expect(screen.queryByText('Retail Value')).not.toBeInTheDocument();
-    expect(screen.queryByText('Expected Profit')).not.toBeInTheDocument();
+    expect(screen.queryByText('Stock cost')).not.toBeInTheDocument();
+    expect(screen.queryByText('Retail value')).not.toBeInTheDocument();
+    expect(screen.queryByText('Expected profit')).not.toBeInTheDocument();
   });
 
-  it('recomputes totals for the filtered subset when a category is applied', async () => {
+  it('summary stays whole-catalog when a category filter is applied (reference reading)', async () => {
     signIn(UserRole.admin);
     harness();
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Widgets');
-    expect(screen.getByText(formatMoney(330))).toBeInTheDocument(); // cost: 110 * 3
-    expect(screen.getByText(formatMoney(690))).toBeInTheDocument(); // retail: 230 * 3
-    expect(screen.getByText(formatMoney(360))).toBeInTheDocument(); // profit: 690 - 330
+    await userEvent.click(screen.getByRole('button', { name: /Category/ }));
+    await userEvent.click(screen.getByRole('option', { name: /Widgets/ }));
+    // Rows narrow to Widgets, the cards do not move.
+    expect(screen.queryByText('Gadget')).not.toBeInTheDocument();
+    expect(screen.getByText(formatMoney(700))).toBeInTheDocument();
+    expect(screen.getByText(formatMoney(1300))).toBeInTheDocument();
+  });
+});
+
+describe('InventoryListPage stock health card', () => {
+  it('counts the three buckets and filters the table when a row is clicked', async () => {
+    signIn(UserRole.staff);
+    harness([
+      widget({ id: 'a', sku: 'IN-1', name: 'Healthy', quantity: 30, reorderLevel: 2 }),
+      widget({ id: 'b', sku: 'OUT-1', name: 'Gone', quantity: 0, reorderLevel: 2 }),
+    ]);
+
+    expect(screen.getByText('2 SKUs')).toBeInTheDocument();
+    // The health rows and the view chips both label the buckets — pick the
+    // card's row (it has the color square, the chip has a count).
+    await userEvent.click(screen.getAllByRole('button', { name: /Out of stock/ })[0]);
+    expect(screen.getByText('Gone')).toBeInTheDocument();
+    expect(screen.queryByText('Healthy')).not.toBeInTheDocument();
   });
 });
 
@@ -120,11 +142,14 @@ describe('InventoryListPage pagination', () => {
     expect(screen.queryByText('Product 1')).not.toBeInTheDocument();
   });
 
-  it('hides the pager entirely when the filtered set is at or under 25', () => {
+  it('keeps the footer visible under one page, with Next disabled', () => {
+    // Reference behavior: the footer is part of the card whenever rows
+    // render; it hides only on the empty states.
     signIn(UserRole.staff);
     harness(many.slice(0, 25));
 
-    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+    expect(screen.getByText('1–25 of 25')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
   });
 });
 
@@ -217,14 +242,81 @@ describe('InventoryListPage status filter', () => {
     expect(screen.queryByRole('button', { name: /inactive/i })).not.toBeInTheDocument();
   });
 
-  it('shows only archived products when Status is set to Inactive', async () => {
+  it('shows only archived products when the state segmented is set to Inactive', async () => {
     signIn(UserRole.admin);
     harness([
       widget({ id: 'a', sku: 'LIVE-1', name: 'Live Part', isActive: true }),
       widget({ id: 'b', sku: 'DEAD-1', name: 'Retired Part', isActive: false }),
     ]);
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Status' }), 'inactive');
+    await userEvent.click(screen.getByRole('radio', { name: 'Inactive' }));
     expect(screen.getByText('DEAD-1')).toBeInTheDocument();
     expect(screen.queryByText('LIVE-1')).not.toBeInTheDocument();
+  });
+});
+
+describe('InventoryListPage — redesign specifics', () => {
+  it('Margin and Cost columns render only for cost-holders, colored by threshold', () => {
+    signIn(UserRole.admin);
+    harness([
+      widget({ id: 'a', sku: 'FAT-1', name: 'Fat', cost: 10, price: 100 }), // 90%
+      widget({ id: 'b', sku: 'THIN-1', name: 'Thin', cost: 90, price: 100 }), // 10%
+    ]);
+    expect(screen.getByText('Margin')).toBeInTheDocument();
+    expect(screen.getByText('90%')).toHaveClass('text-pos');
+    expect(screen.getByText('10%')).toHaveClass('text-neg');
+  });
+
+  it('staff see neither Cost nor Margin', () => {
+    signIn(UserRole.staff);
+    harness();
+    expect(screen.queryByText('Margin')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cost')).not.toBeInTheDocument();
+  });
+
+  it('margin shows — when the price is zero', () => {
+    signIn(UserRole.admin);
+    harness([widget({ id: 'a', sku: 'FREE-1', name: 'Free', cost: 10, price: 0 })]);
+    const row = screen.getByText('FREE-1').closest('tr')!;
+    expect(within(row).getAllByText('—').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('the stock cell reads none / N on hand by bucket', () => {
+    signIn(UserRole.staff);
+    harness([
+      widget({ id: 'a', sku: 'OUT-1', name: 'Gone', quantity: 0, reorderLevel: 2 }),
+      widget({ id: 'b', sku: 'IN-1', name: 'Healthy', quantity: 30, reorderLevel: 2 }),
+    ]);
+    expect(screen.getByText('none')).toHaveClass('text-neg');
+    expect(screen.getByText('30 on hand')).toHaveClass('text-ink-2');
+  });
+
+  it('export downloads the FILTERED rows and toasts the count', async () => {
+    signIn(UserRole.admin);
+    // jsdom ships no createObjectURL — stub the pair downloadCsv uses.
+    const urlSpy = vi.fn(() => 'blob:x');
+    const revokeSpy = vi.fn();
+    Object.assign(URL, { createObjectURL: urlSpy, revokeObjectURL: revokeSpy });
+    harness();
+
+    await userEvent.click(screen.getByRole('button', { name: /Category/ }));
+    await userEvent.click(screen.getByRole('option', { name: /Widgets/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+
+    // The Toaster isn't mounted in this harness — the download itself is the
+    // observable: a blob URL was minted (and the CSV held the filtered row).
+    expect(urlSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('first-run and filtered-empty states are distinct', async () => {
+    signIn(UserRole.admin);
+    const view = harness([]);
+    expect(screen.getByText('No products yet')).toBeInTheDocument();
+    view.unmount();
+
+    signIn(UserRole.admin);
+    harness();
+    await userEvent.type(screen.getByPlaceholderText('Search by name or SKU'), 'zzz');
+    expect(await screen.findByText('No products match these filters')).toBeInTheDocument();
+    expect(screen.queryByText('No products yet')).not.toBeInTheDocument();
   });
 });

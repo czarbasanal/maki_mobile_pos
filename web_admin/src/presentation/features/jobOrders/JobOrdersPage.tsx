@@ -16,7 +16,7 @@ import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
-import { usePageSize, type PageSize } from '@/presentation/hooks/usePageSize';
+import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
@@ -25,6 +25,7 @@ import { IconButton } from '@/presentation/components/ui/IconButton';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
 import { Segmented } from '@/presentation/components/ui/Segmented';
 import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
+import { TableFooter } from '@/presentation/components/ui/TableFooter';
 import { statusTone } from '@/presentation/components/ui/statusTone';
 import { formatInShopZone } from '@/domain/time/shopTime';
 import { cn } from '@/core/utils/cn';
@@ -43,8 +44,6 @@ const DATE_OPTIONS: Array<{ value: DatePreset; label: string }> = [
   { value: 'last7', label: '7 days' },
   { value: 'last30', label: '30 days' },
 ];
-
-const FOOTER_SIZES = [25, 50, 100] as const;
 
 const openedFmt = (d: Date) =>
   `${formatInShopZone(d, { month: 'short', day: 'numeric' })} · ${formatInShopZone(d, {
@@ -279,10 +278,6 @@ export function JobOrdersPage() {
   if (error) return <ErrorView title="Could not load Job Orders" message={error.message} />;
 
   const firstRun = !isLoading && (jobOrders ?? []).length === 0;
-  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
-  const footerSizes: number[] = FOOTER_SIZES.includes(pageSize as (typeof FOOTER_SIZES)[number])
-    ? [...FOOTER_SIZES]
-    : [...FOOTER_SIZES, pageSize].sort((a, b) => a - b);
 
   return (
     <div className="flex flex-col gap-3">
@@ -453,50 +448,16 @@ export function JobOrdersPage() {
           }
         />
         {rows.length > 0 ? (
-          <div className="flex items-center gap-3 border-t border-line bg-surface-2 px-5 py-3">
-            <span className="font-mono text-[11.5px] text-ink-3">
-              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, rows.length)} of {rows.length}
-            </span>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-[11.5px] text-ink-3">Rows per page</span>
-              <div className="flex gap-[3px]">
-                {footerSizes.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => {
-                      setPageSize(n as PageSize);
-                      setPage(1);
-                    }}
-                    className={cn(
-                      'rounded-[7px] px-[9px] py-1 font-mono text-[11.5px]',
-                      n === pageSize ? 'bg-surface font-semibold text-ink' : 'text-ink-3 hover:text-ink-2',
-                    )}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-              <div className="ml-1.5 flex gap-[5px]">
-                <button
-                  type="button"
-                  onClick={() => setPage(page - 1)}
-                  disabled={page <= 1}
-                  className="rounded-[8px] border border-line px-[11px] py-[5px] text-[11.5px] text-ink-2 hover:border-accent-line hover:text-ink disabled:cursor-not-allowed disabled:text-ink-3 disabled:hover:border-line"
-                >
-                  Prev
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= totalPages}
-                  className="rounded-[8px] border border-line px-[11px] py-[5px] text-[11.5px] text-ink-2 hover:border-accent-line hover:text-ink disabled:cursor-not-allowed disabled:text-ink-3 disabled:hover:border-line"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
+          <TableFooter
+            total={rows.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
         ) : null}
       </section>
 
