@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#f8fafb; --surface-3:#eef1f4;
+  --border:#e4e8ed; --border-2:#eef1f4;
+  --text:#14171c; --text-2:#69727f; --text-3:#98a1ad;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#fdf4d2; --accent-line:#e0b200; --accent-text:#8a6300;
+  --pos:#12866a; --pos-soft:#e3f4ef; --neg:#c04b38; --neg-soft:#fbeae6;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 10px 28px -12px rgba(16,24,40,.10);
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f12; --surface:#15181d; --surface-2:#1a1e24; --surface-3:#222731;
+  --border:#252b34; --border-2:#1e232a;
+  --text:#eceff3; --text-2:#98a1ad; --text-3:#6a7482;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#332a0a; --accent-line:#f0c53a; --accent-text:#f0c53a;
+  --pos:#3fc79f; --pos-soft:#132a25; --neg:#e5806c; --neg-soft:#2c1a17;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -12px rgba(0,0,0,.6);
+}
+html,body{margin:0;padding:0;background:var(--bg);}
+*{box-sizing:border-box;}
+a{color:var(--text);text-decoration:none;}
+a:hover{color:var(--accent-text);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:3px solid transparent;background-clip:content-box;}
+@keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;width:100%;background:var(--bg);font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--text);">
+
+  <aside style="width:248px;flex:0 0 248px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;">
+
+    <div style="padding:20px 18px 16px 18px;display:flex;align-items:center;gap:11px;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 34px;box-shadow:0 2px 8px -2px var(--accent-line);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:var(--accent-ink);letter-spacing:-.5px;">M</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+        <span style="font-size:14px;font-weight:600;letter-spacing:.3px;">MAKI MOTOR PARTS</span>
+        <span style="font-size:10.5px;color:var(--text-3);">Point of sale</span>
+      </div>
+      <div style="margin-left:auto;display:flex;flex-direction:column;gap:3px;cursor:pointer;padding:6px;border-radius:8px;flex:0 0 auto;" style-hover="background:var(--surface-2);">
+        <span style="display:block;width:13px;height:1.5px;border-radius:1px;background:var(--text-3);"></span>
+        <span style="display:block;width:13px;height:1.5px;border-radius:1px;background:var(--text-3);"></span>
+        <span style="display:block;width:13px;height:1.5px;border-radius:1px;background:var(--text-3);"></span>
+      </div>
+    </div>
+
+    <div style="padding:2px 10px;">
+      <button onClick="{{ pickDashboard }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:13.5px;background:{{ nav.dashboard.bg }};color:{{ nav.dashboard.fg }};font-weight:{{ nav.dashboard.fw }};">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="2.5" y="11.1" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="11.1" width="6.4" height="6.4" rx="1.8"></rect></svg>
+        Dashboard
+      </button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:0 10px 8px 10px;display:flex;flex-direction:column;gap:2px;">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:16px 11px 6px 11px;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-3);font-weight:600;">{{ g.label }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;">
+              <button onClick="{{ it.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:10px;font-size:13.5px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.fw }};">
+                <span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex:0 0 16px;">
+                  <span style="width:7px;height:7px;border-radius:2px;background:{{ it.dot }};display:block;"></span>
+                </span>
+                {{ it.name }}
+                <sc-if value="{{ it.hasChildren }}" hint-placeholder-val="{{ false }}">
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-left:auto;flex:0 0 13px;transform:rotate({{ it.rot }}deg);"><polyline points="5,8 10,13 15,8"></polyline></svg>
+                </sc-if>
+                <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}">
+                  <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:2px 6px;border-radius:6px;background:var(--accent-soft);color:var(--accent-text);font-weight:600;">{{ it.badge }}</span>
+                </sc-if>
+              </button>
+              <sc-if value="{{ it.open }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 0;padding-left:27px;">
+                  <sc-for list="{{ it.children }}" as="c" hint-placeholder-count="3">
+                    <button style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;padding:6px 11px;border-radius:8px;font-size:12.5px;color:var(--text-2);border-left:1px solid var(--border);" style-hover="color:var(--text);background:var(--surface-2);">{{ c }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding:10px;border-top:1px solid var(--border-2);">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;background:var(--surface-2);">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text-2);flex:0 0 32px;">C</div>
+        <div style="display:flex;flex-direction:column;min-width:0;">
+          <span style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">czarbasanal@gmail.com</span>
+          <span style="font-size:10px;letter-spacing:.7px;color:var(--text-3);font-weight:600;">ADMIN</span>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.7" style="margin-left:auto;flex:0 0 14px;"><polyline points="5,12 10,7 15,12"></polyline></svg>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;">
+
+    <header style="display:flex;align-items:center;gap:14px;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;">
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-.4px;">{{ pageTitle }}</h1>
+        <span style="font-size:12.5px;color:var(--text-3);">{{ pageSub }}</span>
+      </div>
+
+      <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+        <span style="font-size:12.5px;font-weight:600;letter-spacing:-.1px;padding-right:3px;">Monday, Aug 31 2026</span>
+        <div style="display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--pos);"></span>
+          Register open
+        </div>
+        <button onClick="{{ toggleTheme }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);" style-hover="color:var(--text);">
+          {{ themeIcon }} {{ themeLabel }}
+        </button>
+        <button style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-weight:600;">New sale</button>
+      </div>
+    </header>
+
+    <div style="flex:1;padding:22px 28px 40px 28px;display:flex;flex-direction:column;gap:16px;animation:rise .3s ease both;">
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:15px 16px;display:flex;flex-direction:column;gap:8px;">
+            <span style="font-size:11.5px;color:var(--text-2);font-weight:500;">{{ k.label }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:23px;font-weight:600;letter-spacing:-1px;font-feature-settings:'tnum';">{{ k.value }}</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;padding:2.5px 6px;border-radius:6px;background:{{ k.dBg }};color:{{ k.dFg }};">{{ k.delta }}</span>
+              <span style="font-size:10.5px;color:var(--text-3);">{{ k.note }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:14px;">
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px 16px 20px;display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:20px;">
+            <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">Sales through the day</h2>
+            <span style="font-size:11.5px;color:var(--text-3);">27 sales · 9:00 AM – now</span>
+            <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">peak 12:00 PM</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:9px;height:158px;">
+            <sc-for list="{{ hours }}" as="h" hint-placeholder-count="9">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-3);">{{ h.n }}</span>
+                <div style="width:100%;border-radius:6px 6px 3px 3px;background:{{ h.color }};height:{{ h.v }}%;"></div>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-3);">{{ h.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-2);display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:baseline;gap:10px;">
+              <span style="font-size:12px;color:var(--text-2);font-weight:500;">Margin on today's gross</span>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;">41.4%</span>
+            </div>
+            <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;">
+              <div style="width:58.6%;background:var(--surface-3);"></div>
+              <div style="width:41.4%;background:var(--accent);"></div>
+            </div>
+            <div style="display:flex;gap:18px;font-size:11.5px;color:var(--text-2);">
+              <span style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface-3);"></span>Total COGS <span style="font-family:'IBM Plex Mono',monospace;color:var(--text);">₱5,246.00</span></span>
+              <span style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent);"></span>Gross profit <span style="font-family:'IBM Plex Mono',monospace;color:var(--text);">₱3,699.00</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;">
+            <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">Inventory status</h2>
+            <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">1,633 SKUs</span>
+          </div>
+
+          <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin-bottom:18px;">
+            <div style="width:91.7%;background:var(--pos);"></div>
+            <div style="width:2.0%;background:var(--accent);"></div>
+            <div style="width:6.3%;background:var(--neg);"></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;">
+            <sc-for list="{{ invStatus }}" as="s" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border-2);">
+                <span style="width:8px;height:8px;border-radius:2px;background:{{ s.color }};flex:0 0 8px;"></span>
+                <span style="font-size:12.5px;color:{{ s.labelFg }};font-weight:{{ s.fw }};">{{ s.label }}</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-3);">{{ s.share }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;width:52px;text-align:right;">{{ s.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:auto;padding-top:16px;display:flex;flex-direction:column;gap:9px;">
+            <span style="font-size:11px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Needs attention</span>
+            <sc-for list="{{ attention }}" as="a" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;background:var(--surface-2);">
+                <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+                  <span style="font-size:12px;font-weight:500;">{{ a.name }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-3);">{{ a.sku }}</span>
+                </div>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:3px 7px;border-radius:7px;background:{{ a.bg }};color:{{ a.fg }};">{{ a.tag }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 20px 14px 20px;">
+          <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">Recent sales</h2>
+          <div style="display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:6px 11px;width:230px;margin-left:12px;">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8"><circle cx="9" cy="9" r="5.6"></circle><line x1="13.2" y1="13.2" x2="17" y2="17"></line></svg>
+            <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search sale no." style="all:unset;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:var(--text);width:100%;" />
+          </div>
+          <a href="#" style="margin-left:auto;font-size:12px;color:var(--text-2);">View all →</a>
+        </div>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--surface-2);">
+              <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:10px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">Sale no.</th>
+              <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:10px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">Time</th>
+              <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:10px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">Items</th>
+              <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:10px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">Tender</th>
+              <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:10px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">Status</th>
+              <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:10px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ sales }}" as="s" hint-placeholder-count="8">
+              <tr style-hover="background:var(--surface-2);">
+                <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);">
+                  <div style="display:flex;align-items:center;gap:7px;">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:500;">{{ s.id }}</span>
+                    <button onClick="{{ s.copy }}" title="Copy sale no." style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;color:var(--text-3);flex:0 0 22px;" style-hover="background:var(--surface-3);color:var(--text-2);">
+                      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="7" width="9.5" height="9.5" rx="2.2"></rect><path d="M13 4.6a2.2 2.2 0 0 0-2.2-2.1H5.7A2.2 2.2 0 0 0 3.5 4.7v5.1a2.2 2.2 0 0 0 2.1 2.2"></path></svg>
+                    </button>
+                  </div>
+                </td>
+                <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ s.time }}</td>
+                <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);font-size:12.5px;color:var(--text-2);">{{ s.items }}</td>
+                <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);font-size:12.5px;color:var(--text-2);">{{ s.tender }}</td>
+                <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);">
+                  <span style="font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:var(--pos-soft);color:var(--pos);">Completed</span>
+                </td>
+                <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;">{{ s.amount }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <sc-if value="{{ noSales }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:44px 20px;text-align:center;color:var(--text-3);font-size:13px;">No sales match that search.</div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:10px;padding:11px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--border);box-shadow:0 18px 44px -14px rgba(0,0,0,.35);font-family:'IBM Plex Sans',sans-serif;color:var(--text);animation:rise .18s ease both;">
+      <span style="width:18px;height:18px;border-radius:50%;background:var(--pos-soft);color:var(--pos);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 18px;">✓</span>
+      <span style="font-size:12.5px;font-weight:500;">Copied to clipboard</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:950}}">
+const SALES = [
+  {id:'SALE-20260831-027', time:'12:41 PM', items:'1 item',   tender:'Cash', amount:'₱330.00'},
+  {id:'SALE-20260831-026', time:'12:40 PM', items:'24 items', tender:'Cash', amount:'₱1,040.00'},
+  {id:'SALE-20260831-025', time:'11:16 AM', items:'1 item',   tender:'Cash', amount:'₱185.00'},
+  {id:'SALE-20260831-024', time:'10:34 AM', items:'1 item',   tender:'Cash', amount:'₱30.00'},
+  {id:'SALE-20260831-023', time:'10:34 AM', items:'2 items',  tender:'Cash', amount:'₱300.00'},
+  {id:'SALE-20260831-022', time:'10:22 AM', items:'1 item',   tender:'Cash', amount:'₱280.00'},
+  {id:'SALE-20260831-021', time:'10:22 AM', items:'1 item',   tender:'Cash', amount:'₱1,250.00'},
+  {id:'SALE-20260831-020', time:'9:46 AM',  items:'1 item',   tender:'Cash', amount:'₱350.00'}
+];
+
+const GROUPS = [
+  {label:'SELL',  items:[{name:'POS'}, {name:'Job Orders', badge:'4'}]},
+  {label:'STOCK', items:[{name:'Inventory'}, {name:'Receiving'}, {name:'Suppliers'}]},
+  {label:'MONEY', items:[{name:'Expenses'}, {name:'Reports'}]},
+  {label:'ADMIN', items:[{name:'Void Requests', badge:'2'}, {name:'Users'}, {name:'Activity Logs'}, {name:'HR', children:['Employees','Attendance','Payroll']}, {name:'Settings'}]}
+];
+
+class Component extends DCLogic {
+  state = {theme:'light', active:'Dashboard', open:{}, query:'', toast:null};
+
+  copy(text){
+    return (e) => {
+      if(e && e.stopPropagation) e.stopPropagation();
+      try {
+        if(navigator.clipboard) navigator.clipboard.writeText(text);
+      } catch(err) {}
+      clearTimeout(this._toastT);
+      this.setState({toast:text});
+      this._toastT = setTimeout(() => this.setState({toast:null}), 1900);
+    };
+  }
+  componentWillUnmount(){ clearTimeout(this._toastT); }
+
+  componentDidMount(){
+    let t = 'light';
+    try { t = localStorage.getItem('maki-pos-theme') || 'light'; } catch(e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    this.setState({theme:t});
+  }
+  setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('maki-pos-theme', t); } catch(e) {}
+    this.setState({theme:t});
+  }
+
+  renderVals(){
+    const st = this.state;
+    const on = (n) => st.active === n;
+    const style = (n) => on(n)
+      ? {bg:'var(--accent-soft)', fg:'var(--accent-text)', fw:'600', dot:'var(--accent-line)'}
+      : {bg:'transparent', fg:'var(--text-2)', fw:'500', dot:'var(--border)'};
+
+    const q = st.query.trim().toLowerCase();
+    const sales = SALES.filter(s => !q || s.id.toLowerCase().includes(q));
+
+    const hourVals = [[ '9a',34,3],['10a',72,7],['11a',48,4],['12p',100,9],['1p',56,5],['2p',30,2],['3p',18,1],['4p',12,1],['5p',0,0]];
+
+    return {
+      pageTitle: st.active === 'Dashboard' ? 'Dashboard' : st.active,
+      pageSub: st.active === 'Dashboard' ? "Live snapshot of today's activity." : 'Section preview — dashboard layout shown below.',
+
+      themeLabel: st.theme === 'light' ? 'Dark' : 'Light',
+      themeIcon: st.theme === 'light' ? '☾' : '☀',
+      toggleTheme: () => this.setTheme(st.theme === 'light' ? 'dark' : 'light'),
+
+      pickDashboard: () => this.setState({active:'Dashboard'}),
+      nav: {dashboard: style('Dashboard')},
+
+      navGroups: GROUPS.map(g => ({
+        label: g.label,
+        items: g.items.map(it => {
+          const s = style(it.name);
+          const isOpen = !!st.open[it.name];
+          return {
+            name: it.name, badge: it.badge || false,
+            hasChildren: !!it.children, children: it.children || [],
+            open: isOpen, rot: isOpen ? 180 : 0,
+            bg:s.bg, fg:s.fg, fw:s.fw, dot:s.dot,
+            pick: () => this.setState(prev => ({
+              active: it.name,
+              open: it.children ? Object.assign({}, prev.open, {[it.name]: !prev.open[it.name]}) : prev.open
+            }))
+          };
+        })
+      })),
+
+      kpis:[
+        {label:'Sales today',  value:'27',        delta:'+5',     note:'vs. yesterday',   dBg:'var(--pos-soft)', dFg:'var(--pos)'},
+        {label:'Gross Sales',  value:'₱8,945.00', delta:'+14.2%', note:'vs. yesterday',   dBg:'var(--pos-soft)', dFg:'var(--pos)'},
+        {label:'Total COGS',   value:'₱5,246.00', delta:'58.6%',  note:'of gross sales',  dBg:'var(--surface-3)',dFg:'var(--text-2)'},
+        {label:'Gross profit', value:'₱3,699.00', delta:'+9.8%',  note:'41.4% margin',    dBg:'var(--pos-soft)', dFg:'var(--pos)'},
+        {label:'Avg order',    value:'₱370.37',   delta:'−2.1%',  note:'trailing 7 days', dBg:'var(--neg-soft)', dFg:'var(--neg)'}
+      ],
+
+      hours: hourVals.map(h => ({label:h[0], v:h[1], n: h[2] || '', color: h[1] === 100 ? 'var(--accent)' : 'var(--surface-3)'})),
+
+      invStatus:[
+        {label:'Total',        value:'1,633', share:'',      color:'var(--text-3)', labelFg:'var(--text)',   fw:'600'},
+        {label:'In stock',     value:'1,497', share:'91.7%', color:'var(--pos)',    labelFg:'var(--text-2)', fw:'500'},
+        {label:'Low stock',    value:'32',    share:'2.0%',  color:'var(--accent)', labelFg:'var(--text-2)', fw:'500'},
+        {label:'Out of stock', value:'104',   share:'6.3%',  color:'var(--neg)',    labelFg:'var(--text-2)', fw:'500'}
+      ],
+
+      attention:[
+        {name:'Out of stock',   sku:'104 SKUs unavailable at register', tag:'Reorder', bg:'var(--neg-soft)',    fg:'var(--neg)'},
+        {name:'Low stock',      sku:'32 SKUs below reorder point',      tag:'Review',  bg:'var(--accent-soft)', fg:'var(--accent-text)'},
+        {name:'Void requests',  sku:'2 pending manager approval',       tag:'Approve', bg:'var(--surface-3)',   fg:'var(--text-2)'}
+      ],
+
+      query: st.query,
+      onQuery: (e) => this.setState({query:e.target.value}),
+      sales: sales.map(s => Object.assign({}, s, {copy: this.copy(s.id)})),
+      noSales: sales.length === 0,
+      toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
