@@ -12,6 +12,7 @@ import { useSignIn } from '@/presentation/hooks/useSignIn';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { cn } from '@/core/utils/cn';
+import makiLogo from '@/assets/maki_logo_yellow.png';
 
 export function LoginPage() {
   const { status, user } = useAuthStore();
@@ -72,11 +73,7 @@ export function LoginPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col items-center gap-[13px]">
-        <div className="flex h-11 w-11 items-center justify-center rounded-[13px] bg-accent shadow-[0_4px_12px_-4px_var(--accent-line)]">
-          <span className="font-mono text-[19px] font-semibold tracking-[-0.6px] text-accent-ink">
-            M
-          </span>
-        </div>
+        <img src={makiLogo} alt="MAKI Motor Parts" className="h-11 w-11" />
         <div className="flex flex-col items-center gap-[5px]">
           <h1 className="text-[21px] font-semibold tracking-[-0.55px] text-ink">MAKI POS Admin</h1>
           <span className="text-[13px] text-ink-2">Sign in to continue</span>
