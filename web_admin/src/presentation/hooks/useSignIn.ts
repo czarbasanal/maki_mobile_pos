@@ -10,14 +10,16 @@ import { ActivityType, type User } from '@/domain/entities';
 export interface SignInInput {
   email: string;
   password: string;
+  /** Keep me signed in — false = session-only persistence. */
+  remember?: boolean;
 }
 
 export function useSignIn() {
   const authRepo = useAuthRepo();
   const activityLogRepo = useActivityLogRepo();
   return useMutation<User, Error, SignInInput>({
-    mutationFn: async ({ email, password }) => {
-      const user = await authRepo.signInWithEmailAndPassword(email, password);
+    mutationFn: async ({ email, password, remember }) => {
+      const user = await authRepo.signInWithEmailAndPassword(email, password, remember);
       // Passed explicitly (not read off the store): the Zustand auth store
       // only updates later via the onAuthStateChanged bridge
       // (useAuthBootstrap), which may not have run yet at this point.

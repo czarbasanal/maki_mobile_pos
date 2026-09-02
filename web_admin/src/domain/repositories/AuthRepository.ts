@@ -6,7 +6,8 @@ export type AuthStateListener = (user: User | null) => void;
 export type Unsubscribe = () => void;
 
 export interface AuthRepository {
-  signInWithEmailAndPassword(email: string, password: string): Promise<User>;
+  /** `remember=false` drops to session-only persistence (shared terminals). */
+  signInWithEmailAndPassword(email: string, password: string, remember?: boolean): Promise<User>;
   signOut(): Promise<void>;
   getCurrentUser(): Promise<User | null>;
   onAuthStateChanged(listener: AuthStateListener): Unsubscribe;

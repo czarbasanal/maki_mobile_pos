@@ -11,6 +11,9 @@ import {
   updatePassword as fbUpdatePassword,
   type Auth,
   type User as FirebaseUser,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
 import {
   doc,
@@ -80,8 +83,18 @@ export class FirebaseAuthRepository implements AuthRepository {
     return this.auth.currentUser?.uid ?? null;
   }
 
-  async signInWithEmailAndPassword(email: string, password: string): Promise<User> {
+  async signInWithEmailAndPassword(
+    email: string,
+    password: string,
+    remember = true,
+  ): Promise<User> {
     try {
+      // "Keep me signed in": local persistence survives the browser closing;
+      // unchecked drops to session-only for shared terminals.
+      await setPersistence(
+        this.auth,
+        remember ? browserLocalPersistence : browserSessionPersistence,
+      );
       const cred = await fbSignIn(this.auth, email.trim(), password);
       const user = await this.loadProfile(cred.user.uid);
       if (!user) {

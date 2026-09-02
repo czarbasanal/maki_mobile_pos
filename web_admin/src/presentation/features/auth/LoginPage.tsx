@@ -1,26 +1,17 @@
-// /admin/login form. Vercel-airy refresh of the original — flat surface,
-// hairline borders, monogram brand, minimal Heroicons. Friendly error copy
-// still flows up from FirebaseAuthRepository.
-
+// /login — per design/maki-pos-signin-redesign: the form sits in a 392px
+// card on the app's --bg (amber 44px brand mark, accent primary button),
+// with an in-card error banner (one generic message, never which field
+// failed), password reveal, and a tokenized "Keep me signed in" checkbox
+// wired to Firebase persistence. AuthLayout carries the theme toggle and
+// the pinned v1.0.0.
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { useSignIn } from '@/presentation/hooks/useSignIn';
 import { RoutePaths } from '@/presentation/router/routePaths';
-import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
+import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { cn } from '@/core/utils/cn';
-import { ErrorBanner, Field, inputCls } from './authUi';
-
-const loginSchema = z.object({
-  email: z.string().trim().min(1, 'Email is required').email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const { status, user } = useAuthStore();
@@ -28,20 +19,16 @@ export function LoginPage() {
   const navigate = useNavigate();
   const from = (location.state as { from?: string } | null)?.from ?? RoutePaths.dashboard;
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [show, setShow] = useState(false);
+  // Default ON per the reference (an admin's own machine); a shared register
+  // unchecks it for a session-only sign-in.
+  const [remember, setRemember] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const signIn = useSignIn();
-
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    setError: setFieldError,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
-  });
+  const submitting = signIn.isPending;
 
   useEffect(() => {
     document.title = 'Sign in · MAKI POS Admin';
@@ -52,120 +39,174 @@ export function LoginPage() {
     return <Navigate to={from} replace />;
   }
 
-  const onSubmit = async (values: LoginValues) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (submitting) return;
+    // Presence only — never say which of the two was wrong.
+    if (!email.trim() || !password) {
+      setError('Enter your email and password to continue.');
+      return;
+    }
+    setError(null);
     signIn.reset();
     try {
-      const signedIn = await signIn.mutateAsync(values);
+      const signedIn = await signIn.mutateAsync({ email, password, remember });
       if (signedIn.role !== 'admin' && signedIn.role !== 'cashier') {
         navigate(RoutePaths.accessDenied, { replace: true });
         return;
       }
       navigate(from, { replace: true });
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Sign-in failed';
-      setFieldError('password', { type: 'auth', message });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed');
     }
   };
 
-  const submitting = isSubmitting || signIn.isPending;
-  const banner = signIn.error?.message ?? null;
+  const hasError = error !== null;
+  const fieldCls = cn(
+    'w-full rounded-[11px] border bg-surface-2 px-[13px] py-[11px] text-[13.5px] text-ink outline-none transition-colors placeholder:text-ink-3',
+    // On error BOTH borders go --neg — the user sees which form failed, not
+    // which field. Focus takes the accent line otherwise.
+    hasError ? 'border-neg' : 'border-line focus-within:border-accent-line focus:border-accent-line',
+  );
 
   return (
-    <div className="space-y-tk-xl">
-      <Header />
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col items-center gap-[13px]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-[13px] bg-accent shadow-[0_4px_12px_-4px_var(--accent-line)]">
+          <span className="font-mono text-[19px] font-semibold tracking-[-0.6px] text-accent-ink">
+            M
+          </span>
+        </div>
+        <div className="flex flex-col items-center gap-[5px]">
+          <h1 className="text-[21px] font-semibold tracking-[-0.55px] text-ink">MAKI POS Admin</h1>
+          <span className="text-[13px] text-ink-2">Sign in to continue</span>
+        </div>
+      </div>
 
-      {banner ? <ErrorBanner message={banner} onDismiss={() => signIn.reset()} /> : null}
+      <form
+        onSubmit={submit}
+        noValidate
+        className="flex flex-col gap-[15px] rounded-[16px] border border-line bg-surface p-[22px] shadow-card-lg"
+      >
+        {hasError ? (
+          <div
+            role="alert"
+            className="shake flex items-center gap-2.5 rounded-[11px] border border-neg bg-neg-soft px-[13px] py-[11px]"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="var(--neg)"
+              strokeWidth="1.8"
+              className="shrink-0"
+              aria-hidden
+            >
+              <circle cx="10" cy="10" r="7" />
+              <line x1="10" y1="6.4" x2="10" y2="10.8" />
+              <circle cx="10" cy="13.6" r="0.6" fill="var(--neg)" />
+            </svg>
+            <span className="text-ctl-sm font-medium text-neg">{error}</span>
+          </div>
+        ) : null}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-tk-md" noValidate>
-        <Field
-          label="Email"
-          error={errors.email?.message}
-          input={
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="email" className="text-[11.5px] font-semibold tracking-[0.1px] text-ink-2">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="username"
+            autoFocus
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
+            placeholder="you@makimotorparts.ph"
+            className={fieldCls}
+          />
+        </div>
+
+        <div className="flex flex-col gap-[7px]">
+          <label
+            htmlFor="password"
+            className="text-[11.5px] font-semibold tracking-[0.1px] text-ink-2"
+          >
+            Password
+          </label>
+          <div
+            className={cn(
+              'flex items-center gap-[9px] rounded-[11px] border bg-surface-2 px-[13px] py-[11px] transition-colors focus-within:border-accent-line',
+              hasError ? 'border-neg focus-within:border-neg' : 'border-line',
+            )}
+          >
             <input
-              type="email"
-              autoComplete="email"
-              autoFocus
-              {...register('email')}
-              className={inputCls(!!errors.email)}
+              id="password"
+              type={show ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(null);
+              }}
+              placeholder="••••••••"
+              className="w-full bg-transparent text-[13.5px] text-ink outline-none placeholder:text-ink-3"
             />
-          }
-        />
+            <button
+              type="button"
+              onClick={() => setShow((v) => !v)}
+              title={show ? 'Hide password' : 'Show password'}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px] text-ink-3 hover:bg-surface-3 hover:text-ink-2"
+            >
+              {show ? <EyeSlashIcon className="h-[15px] w-[15px]" /> : <EyeIcon className="h-[15px] w-[15px]" />}
+            </button>
+          </div>
+        </div>
 
-        <Field
-          label="Password"
-          error={errors.password?.message}
-          input={
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                {...register('password')}
-                className={cn(inputCls(!!errors.password), 'pr-10')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? (
-                  <EyeSlashIcon className="h-4 w-4" />
-                ) : (
-                  <EyeIcon className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          }
-        />
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="flex w-full items-center justify-center gap-tk-sm rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {submitting ? <Spinner className="h-4 w-4" /> : null}
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
-
-        <div className="flex justify-center pt-tk-xs">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={remember}
+            onClick={() => setRemember((v) => !v)}
+            className="flex items-center gap-[9px]"
+          >
+            <span
+              aria-hidden
+              className={cn(
+                'flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[5px] border',
+                remember ? 'border-accent-line bg-accent' : 'border-line bg-surface-2',
+              )}
+            >
+              {remember ? <CheckIcon className="h-3 w-3 stroke-[3] text-accent-ink" /> : null}
+            </span>
+            <span className="text-ctl-sm text-ink-2">Keep me signed in</span>
+          </button>
           <button
             type="button"
             onClick={() =>
-              navigate(RoutePaths.forgotPassword, {
-                state: { email: getValues('email').trim() },
-              })
+              navigate(RoutePaths.forgotPassword, { state: { email: email.trim() } })
             }
-            className="text-bodySmall text-light-text-secondary underline-offset-2 hover:text-light-text hover:underline"
+            className="ml-auto text-[12px] text-ink-3 hover:text-accent-text"
           >
             Forgot password?
           </button>
         </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className={cn(
+            'w-full rounded-[12px] bg-accent p-[13px] text-center text-[13.5px] font-semibold text-accent-ink shadow-[0_6px_18px_-8px_var(--accent-line)] hover:brightness-95',
+            submitting && 'pointer-events-none opacity-[.65]',
+          )}
+        >
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </button>
       </form>
-
-      <Footer />
     </div>
   );
 }
-
-function Header() {
-  return (
-    <div className="flex flex-col items-center text-center">
-      <div className="grid h-12 w-12 place-items-center rounded-md border border-light-border">
-        <span className="text-[20px] font-semibold leading-none text-light-text">M</span>
-      </div>
-      <h1 className="mt-tk-md text-bodyLarge font-semibold tracking-tight text-light-text">
-        MAKI POS Admin
-      </h1>
-      <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
-        Sign in to continue
-      </p>
-    </div>
-  );
-}
-
-function Footer() {
-  return (
-    <p className="text-center text-[11px] tracking-[0.5px] text-light-text-hint">v1.0.0</p>
-  );
-}
-

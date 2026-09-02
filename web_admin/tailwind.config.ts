@@ -84,6 +84,7 @@ const config: Config = {
       },
       boxShadow: {
         card: 'var(--shadow)',
+        'card-lg': 'var(--shadow-lg)',
       },
       width: {
         'sidebar-extended': layout.sidebarExtended,
