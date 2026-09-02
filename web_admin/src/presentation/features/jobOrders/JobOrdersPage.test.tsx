@@ -366,3 +366,29 @@ describe('JobOrdersPage — Closed column', () => {
     expect(within(openRow).getAllByText(/·.*[AP]M/)).toHaveLength(1);
   });
 });
+
+describe('JobOrdersPage — delete, open tickets only', () => {
+  it('an open row has a delete icon beside Resume; a billed row has none', () => {
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-OPEN', isConverted: false }),
+      jobOrder({ id: 'd2', name: 'JO-BILLED', isConverted: true, convertedToSaleId: 's1' }),
+    ]);
+
+    const openRow = screen.getByText('JO-OPEN').closest('tr')!;
+    expect(within(openRow).getByRole('button', { name: /delete job order/i })).toBeInTheDocument();
+    const billedRow = screen.getByText('JO-BILLED').closest('tr')!;
+    expect(within(billedRow).queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it('confirming the delete fires the mutation without triggering the row action', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    harness([jobOrder({ id: 'd1', name: 'JO-OPEN', isConverted: false })]);
+
+    await userEvent.click(screen.getByRole('button', { name: /delete job order/i }));
+    expect(confirmSpy).toHaveBeenCalledWith('Delete Job Order "JO-OPEN"?');
+    // The row action (Resume) would navigate to the POS; deletion must not —
+    // the list (with its search bar) is still on screen.
+    expect(screen.getByPlaceholderText(/Search JO no/)).toBeInTheDocument();
+    confirmSpy.mockRestore();
+  });
+});

@@ -7,8 +7,9 @@
 // clicks the same way.
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useJobOrders } from '@/presentation/hooks/useJobOrders';
+import { useDeleteJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { useCartStore } from '@/presentation/stores/cartStore';
 import { cartGrandTotal } from '@/domain/sales/cart';
 import { formatMoney } from '@/core/utils/money';
@@ -20,6 +21,7 @@ import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { IconButton } from '@/presentation/components/ui/IconButton';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
 import { Segmented } from '@/presentation/components/ui/Segmented';
 import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
@@ -58,6 +60,7 @@ export function JobOrdersPage() {
   const { data: jobOrders, isLoading, error } = useJobOrders();
   const lines = useCartStore((s) => s.lines);
   const loadJobOrder = useCartStore((s) => s.loadJobOrder);
+  const deleteJobOrder = useDeleteJobOrder();
   const navigate = useNavigate();
 
   // Today by default: the list is opened to work the day's tickets.
@@ -157,6 +160,10 @@ export function JobOrdersPage() {
     loadJobOrder(jobOrder);
     navigate(RoutePaths.pos);
   };
+  const onDelete = (jo: JobOrder) => {
+    if (!window.confirm(`Delete Job Order "${jo.name}"?`)) return;
+    deleteJobOrder.mutate({ id: jo.id, name: jo.name });
+  };
   const onRow = (jo: JobOrder) => {
     if (jo.isConverted) {
       if (jo.convertedToSaleId) navigate(RoutePaths.saleDetail.replace(':id', jo.convertedToSaleId));
@@ -223,26 +230,42 @@ export function JobOrdersPage() {
       },
     },
     {
-      // ONE action per row (reference): View sale on billed, Resume on open.
-      // The whole row does the same thing.
-      key: 'action', header: '', align: 'right', width: '112px',
+      // The row's action (reference): View sale on billed, Resume on open —
+      // the whole row does the same thing. An OPEN ticket also gets a delete
+      // beside Resume; a billed one is a financial record and can't be
+      // deleted (void the sale instead).
+      key: 'action', header: '', align: 'right', width: '140px',
       render: (jo) => {
         if (jo.isConverted && !jo.convertedToSaleId) return null;
         const billed = jo.isConverted;
         return (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRow(jo);
-            }}
-            className={cn(
-              'rounded-[9px] border border-line px-3 py-1.5 text-[11.5px] font-medium hover:border-accent-line hover:text-ink',
-              billed ? 'text-ink-2' : 'text-accent-text',
-            )}
-          >
-            {billed ? 'View sale' : 'Resume'}
-          </button>
+          <span className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRow(jo);
+              }}
+              className={cn(
+                'rounded-[9px] border border-line px-3 py-1.5 text-[11.5px] font-medium hover:border-accent-line hover:text-ink',
+                billed ? 'text-ink-2' : 'text-accent-text',
+              )}
+            >
+              {billed ? 'View sale' : 'Resume'}
+            </button>
+            {!billed ? (
+              <IconButton
+                title="Delete Job Order"
+                tone="danger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(jo);
+                }}
+              >
+                <TrashIcon className="h-4 w-4" />
+              </IconButton>
+            ) : null}
+          </span>
         );
       },
     },
@@ -352,6 +375,11 @@ export function JobOrdersPage() {
             show {openOutsideRange === 1 ? 'it' : 'them'}
           </button>
           .
+        </p>
+      ) : null}
+      {deleteJobOrder.error ? (
+        <p className="rounded-ctl border border-neg bg-neg-soft px-tk-md py-tk-sm text-ctl-sm text-neg">
+          Could not delete the Job Order: {deleteJobOrder.error.message}
         </p>
       ) : null}
       {showOutsideOpen ? (
