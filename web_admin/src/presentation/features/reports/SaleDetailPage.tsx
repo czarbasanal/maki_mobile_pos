@@ -3,7 +3,7 @@
 // the old buried subtitle line), then the items table full width, then
 // totals + tender right-aligned in a narrow column.
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useJobOrderRepo, useSaleRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -37,7 +37,7 @@ import { formatInShopZone } from '@/domain/time/shopTime';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
-import { PrinterIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
@@ -48,6 +48,11 @@ export function SaleDetailPage() {
   const repo = useSaleRepo();
   const jobOrderRepo = useJobOrderRepo();
   const navigate = useNavigate();
+  // Smart back, same rule as BackLink: a deep link / refresh has nothing to
+  // go back to (React Router marks the first session entry 'default').
+  const location = useLocation();
+  const goBack = () =>
+    location.key !== 'default' ? navigate(-1) : navigate(RoutePaths.salesReport);
   const { data: sale, isLoading, error } = useQuery({
     queryKey: ['sales', id],
     queryFn: () => repo.getById(id),
@@ -110,11 +115,18 @@ export function SaleDetailPage() {
   return (
     <>
     <div className="max-w-[1180px] space-y-tk-md print:hidden">
-      <BackLink fallback={RoutePaths.salesReport} />
-
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
-        {/* Band 1 — identity and actions */}
+        {/* Band 1 — identity and actions, led by the back chevron */}
         <div className="flex flex-wrap items-center gap-tk-sm border-b border-line-2 px-5 py-4">
+          <button
+            type="button"
+            onClick={goBack}
+            aria-label="Back"
+            title="Back"
+            className="-ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-ink-2 hover:bg-surface-3 hover:text-ink"
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+          </button>
           <h2
             className={cn(
               'flex items-center gap-[7px] font-mono text-[19px] font-semibold tracking-[-0.6px]',

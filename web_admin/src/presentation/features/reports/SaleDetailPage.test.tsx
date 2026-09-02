@@ -464,3 +464,20 @@ describe('SaleDetailPage — reskin bands (facts strip, line chips, tender)', ()
     expect(within(block).getByText('Change')).toBeInTheDocument();
   });
 });
+
+describe('SaleDetailPage — back chevron in the identity band', () => {
+  it('renders the back button beside the sale number and it navigates back', async () => {
+    harness(
+      { getById: vi.fn().mockResolvedValue(sale()) },
+      { entries: ['/sales/day', '/reports/sales/s1'] },
+    );
+    const heading = await screen.findByRole('heading', { name: 'OR-0001' });
+
+    const back = screen.getByRole('button', { name: 'Back' });
+    // Same band as the sale number — not a standalone row above the card.
+    expect(back.parentElement).toBe(heading.parentElement);
+    const { default: userEvent } = await import('@testing-library/user-event');
+    await userEvent.click(back);
+    expect(screen.getByText('day sales page')).toBeInTheDocument();
+  });
+});
