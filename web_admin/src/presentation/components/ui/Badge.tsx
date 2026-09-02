@@ -1,13 +1,14 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
-export type Tone = 'positive' | 'warning' | 'negative' | 'neutral';
+export type Tone = 'positive' | 'warning' | 'negative' | 'info' | 'neutral';
 export type BadgeShape = 'pill' | 'chip';
 
 const toneCls: Record<Tone, string> = {
   positive: 'bg-pos-soft text-pos',
   warning: 'bg-accent-soft text-accent-text',
   negative: 'bg-neg-soft text-neg',
+  info: 'bg-info-soft text-info',
   neutral: 'bg-surface-3 text-ink-3',
 };
 
