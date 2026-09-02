@@ -22,9 +22,9 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
-  // Default ON per the reference (an admin's own machine); a shared register
-  // unchecks it for a session-only sign-in.
-  const [remember, setRemember] = useState(true);
+  // Default OFF (user call): the shop's registers are shared terminals, so a
+  // sign-in dies with the browser unless someone deliberately opts in.
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const signIn = useSignIn();

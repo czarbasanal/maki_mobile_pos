@@ -68,11 +68,15 @@ describe('LoginPage (sign-in redesign)', () => {
     );
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.co');
     await userEvent.type(screen.getByLabelText('Password'), 'secret');
-    // Default ON → toggle it OFF.
+    // Default OFF (shared registers) → opt in.
+    expect(screen.getByRole('checkbox', { name: /keep me signed in/i })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
     await userEvent.click(screen.getByRole('checkbox', { name: /keep me signed in/i }));
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() =>
-      expect(signInFn).toHaveBeenCalledWith('a@b.co', 'secret', false),
+      expect(signInFn).toHaveBeenCalledWith('a@b.co', 'secret', true),
     );
   });
 
