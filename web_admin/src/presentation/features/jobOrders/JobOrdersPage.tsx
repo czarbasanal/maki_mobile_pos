@@ -195,6 +195,16 @@ export function JobOrdersPage() {
       render: (jo) => <span className="text-micro text-ink-2">{openedFmt(jo.createdAt)}</span>,
     },
     {
+      // When the ticket was billed out; open tickets show — (still on the bench).
+      key: 'closed', header: 'Closed', mono: true,
+      render: (jo) =>
+        jo.convertedAt ? (
+          <span className="text-micro text-ink-2">{openedFmt(jo.convertedAt)}</span>
+        ) : (
+          <span className="text-ink-3">—</span>
+        ),
+    },
+    {
       key: 'items', header: 'Items', align: 'right', mono: true,
       render: (jo) => {
         const n = jo.items.length + jo.laborLines.length;
@@ -365,7 +375,7 @@ export function JobOrdersPage() {
           rowKey={(jo) => jo.id}
           onRowClick={onRow}
           loading={isLoading}
-          minWidth="820px"
+          minWidth="930px"
           empty={
             firstRun ? (
               <div className="flex flex-col items-center gap-[5px] px-6 py-16 text-center">

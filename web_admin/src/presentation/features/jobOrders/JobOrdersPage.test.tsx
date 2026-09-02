@@ -348,3 +348,21 @@ describe('JobOrdersPage — open tickets beyond the preset cap stay reachable', 
     expect(screen.queryByText('JO-ANCIENT')).not.toBeInTheDocument();
   });
 });
+
+describe('JobOrdersPage — Closed column', () => {
+  it('shows the billed-out timestamp for converted tickets and — for open ones', () => {
+    const billed = jobOrder({
+      id: 'd1', name: 'JO-BILLED', isConverted: true, convertedToSaleId: 's1',
+      convertedAt: new Date(),
+    });
+    const open = jobOrder({ id: 'd2', name: 'JO-OPEN', isConverted: false, convertedAt: null });
+    harness([billed, open]);
+
+    expect(screen.getByText('Closed')).toBeInTheDocument();
+    const billedRow = screen.getByText('JO-BILLED').closest('tr')!;
+    // Opened + Closed both carry a "MMM D · time" stamp on a billed row.
+    expect(within(billedRow).getAllByText(/·.*[AP]M/)).toHaveLength(2);
+    const openRow = screen.getByText('JO-OPEN').closest('tr')!;
+    expect(within(openRow).getAllByText(/·.*[AP]M/)).toHaveLength(1);
+  });
+});
