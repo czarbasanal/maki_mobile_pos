@@ -153,11 +153,15 @@ export function InventoryListPage() {
     }
   }, [categoryOptions, category]);
 
-  const isFiltered = stock !== 'all' || category !== 'all' || search.trim() !== '';
+  // The state segmented counts as a filter too — without it, an Inactive
+  // view over zero archived products shows a Clear button that does nothing.
+  const isFiltered =
+    stock !== 'all' || category !== 'all' || search.trim() !== '' || status !== 'active';
   const clearFilters = () => {
     setStock('all');
     setCategory('all');
     setSearch('');
+    setStatus('active');
     setPage(1);
   };
 

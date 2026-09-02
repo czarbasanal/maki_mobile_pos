@@ -31,8 +31,8 @@ export function TableFooter({
   return (
     <div className="flex items-center gap-3 border-t border-line bg-surface-2 px-5 py-3">
       <span className="font-mono text-[11.5px] text-ink-3">
-        {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total).toLocaleString('en-PH')} of{' '}
-        {total.toLocaleString('en-PH')}
+        {((page - 1) * pageSize + 1).toLocaleString('en-PH')}–
+        {Math.min(page * pageSize, total).toLocaleString('en-PH')} of {total.toLocaleString('en-PH')}
       </span>
       <div className="ml-auto flex items-center gap-2">
         <span className="text-[11.5px] text-ink-3">Rows per page</span>

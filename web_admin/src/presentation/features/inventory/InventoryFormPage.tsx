@@ -604,26 +604,26 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
       {!embedded ? (
         <Link
           to={RoutePaths.inventory}
-          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
+          className="inline-flex items-center gap-tk-xs text-ctl-sm text-ink-2 hover:text-ink"
         >
           <ArrowLeftIcon className="h-3.5 w-3.5" /> Inventory
         </Link>
       ) : null}
 
       {mutationError && !errors.sku ? (
-        <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+        <p className="rounded-field border border-neg bg-neg-soft px-tk-md py-tk-sm text-ctl-sm text-neg">
           {mutationError}
         </p>
       ) : null}
       {loadNotice ? (
-        <p className="rounded-md border border-warning-light bg-warning-light/40 px-tk-md py-tk-sm text-bodySmall text-warning-dark">
+        <p className="rounded-field border border-accent-line bg-accent-soft px-tk-md py-tk-sm text-ctl-sm text-accent-text">
           {loadNotice}
         </p>
       ) : null}
 
       <form onSubmit={onFormSubmit} className="space-y-tk-lg" noValidate>
         {isEditing && nameOnly ? (
-          <div className="rounded-md border border-light-hairline bg-light-subtle px-tk-md py-tk-sm text-bodySmall text-light-text-secondary">
+          <div className="rounded-field border border-line-2 bg-surface-2 px-tk-md py-tk-sm text-ctl-sm text-ink-2">
             You can edit the product name and image.
           </div>
         ) : null}
@@ -640,7 +640,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
             } />
 
           {!isEditing ? (
-            <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">
+            <label className="flex items-center gap-tk-sm text-ctl-sm text-ink">
               <input
                 type="checkbox"
                 checked={autoSku}
@@ -663,16 +663,16 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               <input
                 type="text"
                 readOnly={skuLocked}
-                className={cn(inputCls(!!errors.sku), skuLocked && 'bg-light-subtle text-light-text-secondary')}
+                className={cn(inputCls(!!errors.sku), skuLocked && 'bg-surface-2 text-ink-2')}
                 {...skuField}
                 onChange={(e) => { upperizeInput(e); void skuField.onChange(e); }}
               />
             } />
           {skuLocked && skuHint ? (
-            <p className="text-[12px] text-light-text-hint">{skuHint}</p>
+            <p className="text-[12px] text-ink-3">{skuHint}</p>
           ) : null}
           {isEditing ? (
-            <p className="text-[12px] text-light-text-hint">
+            <p className="text-[12px] text-ink-3">
               Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.
             </p>
           ) : null}
@@ -683,10 +683,10 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                 {barcodes.length ? (
                   <div className="flex flex-wrap gap-tk-xs">
                     {barcodes.map((code) => (
-                      <span key={code} className="inline-flex items-center gap-tk-xs rounded-full bg-light-subtle px-tk-sm py-[2px] text-[12px] text-light-text">
+                      <span key={code} className="inline-flex items-center gap-tk-xs rounded-full bg-surface-2 px-tk-sm py-[2px] text-[12px] text-ink">
                         <span className="font-mono">{code}</span>
                         {nameOnly ? null : (
-                          <button type="button" onClick={() => removeBarcode(code)} className="text-light-text-hint hover:text-error" aria-label={`Remove ${code}`}>×</button>
+                          <button type="button" onClick={() => removeBarcode(code)} className="text-ink-3 hover:text-neg" aria-label={`Remove ${code}`}>×</button>
                         )}
                       </span>
                     ))}
@@ -703,7 +703,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                     className={inputCls(false)}
                   />
                   <button type="button" onClick={() => commitBarcode(barcodeInput)}
-                    className="inline-flex shrink-0 items-center rounded-md border border-light-border px-tk-md py-[10px] text-bodySmall text-light-text hover:bg-light-subtle">
+                    className="inline-flex shrink-0 items-center rounded-field border border-line px-tk-md py-[10px] text-ctl-sm text-ink hover:bg-surface-2">
                     Add
                   </button>
                 </div>
@@ -716,13 +716,13 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               <div className="flex items-center gap-tk-md">
                 <ProductImage src={shownImage} alt={target?.name ?? 'Product'} size="md" />
                 <div className="flex items-center gap-tk-sm">
-                  <label className="cursor-pointer rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
+                  <label className="cursor-pointer rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2">
                     {shownImage ? 'Change' : 'Upload'}
                     <input type="file" accept="image/*" className="hidden" onChange={onPickFile} />
                   </label>
                   {shownImage ? (
                     <button type="button" onClick={removeImage}
-                      className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text-secondary hover:bg-light-subtle">
+                      className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink-2 hover:bg-surface-2">
                       Remove
                     </button>
                   ) : null}
@@ -748,7 +748,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               carries selling options — a picker gates every sale instead.
               Say so in plain shop-owner language, not developer jargon. */}
           {sellingOptions.length > 0 ? (
-            <p className="text-[12px] text-light-text-hint">
+            <p className="text-[12px] text-ink-3">
               The POS will ask for a selling option — this price is used for inventory value, not charged directly.
             </p>
           ) : null}
@@ -781,7 +781,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               <button
                 type="button"
                 onClick={() => setAdjustOpen(true)}
-                className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-[4px] text-bodySmall text-light-text hover:bg-light-subtle"
+                className="inline-flex items-center gap-tk-xs rounded-field border border-line px-tk-sm py-[4px] text-ctl-sm text-ink hover:bg-surface-2"
               >
                 <AdjustmentsHorizontalIcon className="h-3.5 w-3.5" /> Adjust stock
               </button>
@@ -837,17 +837,17 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="mr-auto inline-flex items-center gap-tk-xs rounded-md border border-error-light px-tk-md py-tk-sm text-bodySmall text-error-dark hover:bg-error-light/40"
+              className="mr-auto inline-flex items-center gap-tk-xs rounded-field border border-neg px-tk-md py-tk-sm text-ctl-sm text-neg hover:bg-neg-soft"
             >
               <TrashIcon className="h-4 w-4" /> Delete
             </button>
           ) : null}
           <Link to={exitTo}
-            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
+            className="rounded-field px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2">
             Cancel
           </Link>
           <button type="submit" disabled={submitting || !!sellingOptionsError}
-            className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60">
+            className="flex items-center gap-tk-xs rounded-field bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60">
             {submitting ? <Spinner className="h-3.5 w-3.5" /> : null}
             {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create product'}
           </button>
@@ -861,12 +861,12 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
         dismissable={!submitting}
       >
         <div className="space-y-tk-md">
-          <p className="text-bodySmall text-light-text">
+          <p className="text-ctl-sm text-ink">
             <span className="font-mono">{target?.sku}</span>
-            <span className="px-tk-sm text-light-text-hint">→</span>
+            <span className="px-tk-sm text-ink-3">→</span>
             <span className="font-mono">{skuDialog.values?.sku}</span>
           </p>
-          <ul className="list-disc space-y-tk-xs pl-5 text-bodySmall text-light-text-secondary">
+          <ul className="list-disc space-y-tk-xs pl-5 text-ctl-sm text-ink-2">
             <li>Past sales and receiving records keep their original SKU.</li>
             {skuDialog.count > 0 ? (
               <li>{skuDialog.count} linked variation(s) will be re-pointed to the new SKU.</li>
@@ -875,7 +875,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
           <div className="flex justify-end gap-tk-sm pt-tk-sm">
             <button type="button" disabled={submitting}
               onClick={() => setSkuDialog((d) => ({ ...d, open: false }))}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
+              className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2">
               Cancel
             </button>
             <button type="button" disabled={submitting}
@@ -884,7 +884,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                 setSkuDialog((d) => ({ ...d, open: false }));
                 if (values) await doSave(values);
               }}
-              className="inline-flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60">
+              className="inline-flex items-center gap-tk-xs rounded-field bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95 disabled:opacity-60">
               {submitting ? <Spinner className="h-3.5 w-3.5" /> : null} Change SKU
             </button>
           </div>
@@ -900,16 +900,16 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
         dismissable={!createVariation.isPending}
       >
         <div className="space-y-tk-md">
-          <p className="text-bodySmall text-light-text">
+          <p className="text-ctl-sm text-ink">
             “{variationDialog.existing?.name}” is on file at a cost of ₱
             {variationDialog.existing?.cost.toFixed(2)}.
           </p>
-          <p className="text-bodySmall text-light-text">
+          <p className="text-ctl-sm text-ink">
             Create variation{' '}
             <span className="font-mono">{variationDialog.nextSku}</span> at ₱
             {variationDialog.cost.toFixed(2)}?
           </p>
-          <p className="text-bodySmall text-light-text-secondary">
+          <p className="text-ctl-sm text-ink-2">
             It copies the existing product’s name, price and unit, and starts at 0 stock with
             no barcodes. The name, price, quantity and barcodes you typed will not be saved.
           </p>
@@ -918,7 +918,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               type="button"
               disabled={createVariation.isPending}
               onClick={declineVariation}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+              className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
             >
               Cancel
             </button>
@@ -945,7 +945,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                   });
                 }
               }}
-              className="inline-flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:opacity-60"
+              className="inline-flex items-center gap-tk-xs rounded-field bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95 disabled:opacity-60"
             >
               {createVariation.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Create
               variation
@@ -963,13 +963,13 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
         dismissable={!createVariation.isPending}
       >
         <div className="space-y-tk-md">
-          <p className="text-bodySmall text-light-text">
+          <p className="text-ctl-sm text-ink">
             “{dupDialog.existing?.name}” ({displaySku(dupDialog.existing?.sku ?? '')}) is already
             on file in {dupDialog.existing?.category ?? 'no category'}, at a cost of ₱
             {dupDialog.existing?.cost.toFixed(2)} and selling at ₱
             {dupDialog.existing?.price.toFixed(2)}.
           </p>
-          <p className="text-bodySmall text-light-text-secondary">
+          <p className="text-ctl-sm text-ink-2">
             If this is the same part at a new cost, make it a variation — it keeps one item on
             the shelf and one stock history. If it is genuinely a different part, save it
             separately.
@@ -978,7 +978,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
             <button
               type="button"
               disabled={createVariation.isPending}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+              className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
               onClick={() => setDupDialog({ open: false, existing: null, values: null })}
             >
               Cancel
@@ -986,7 +986,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
             <button
               type="button"
               disabled={createVariation.isPending}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+              className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
               onClick={async () => {
                 const v = dupDialog.values;
                 setDupDialog({ open: false, existing: null, values: null });
@@ -998,7 +998,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
             <button
               type="button"
               disabled={createVariation.isPending}
-              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background disabled:opacity-60"
+              className="rounded-field bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink disabled:opacity-60"
               onClick={async () => {
                 const { existing, values: v } = dupDialog;
                 if (!existing || !v) {
@@ -1044,19 +1044,19 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
           dismissable={!deactivate.isPending}
         >
           <div className="space-y-tk-md">
-            <p className="text-bodySmall text-light-text-secondary">
+            <p className="text-ctl-sm text-ink-2">
               Delete “{target.name}”? This product will be hidden from POS and inventory lists.
               Past sales and receivings that reference it remain intact.
             </p>
             {deactivate.error ? (
-              <p className="text-bodySmall text-error-dark">{deactivate.error.message}</p>
+              <p className="text-ctl-sm text-neg">{deactivate.error.message}</p>
             ) : null}
             <div className="flex justify-end gap-tk-sm pt-tk-sm">
               <button
                 type="button"
                 disabled={deactivate.isPending}
                 onClick={() => setConfirmDelete(false)}
-                className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+                className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
               >
                 Cancel
               </button>
@@ -1071,7 +1071,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                   // carries — go back to the list instead.
                   navigate(RoutePaths.inventory);
                 }}
-                className="inline-flex items-center gap-tk-xs rounded-md bg-error-dark px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                className="inline-flex items-center gap-tk-xs rounded-field bg-neg px-tk-md py-tk-sm text-ctl-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
               >
                 {deactivate.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
               </button>
@@ -1091,7 +1091,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
 
       <Dialog open={!!cropSrc} onClose={closeCrop} title="Crop image" dismissable>
         <div className="space-y-tk-md">
-          <div className="relative h-64 w-full overflow-hidden rounded-md bg-light-subtle">
+          <div className="relative h-64 w-full overflow-hidden rounded-field bg-surface-2">
             {cropSrc ? (
               <Cropper
                 image={cropSrc}
@@ -1104,18 +1104,18 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               />
             ) : null}
           </div>
-          <label className="flex items-center gap-tk-sm text-bodySmall text-light-text">
+          <label className="flex items-center gap-tk-sm text-ctl-sm text-ink">
             Zoom
             <input type="range" min={1} max={3} step={0.1} value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))} className="flex-1" />
           </label>
           <div className="flex justify-end gap-tk-sm">
             <button type="button" onClick={closeCrop}
-              className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
+              className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2">
               Cancel
             </button>
             <button type="button" onClick={confirmCrop}
-              className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark">
+              className="rounded-field bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95">
               Save
             </button>
           </div>
@@ -1127,18 +1127,18 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
 
 function inputCls(hasError: boolean): string {
   return cn(
-    'w-full rounded-md border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none transition-colors',
-    'focus:border-light-text focus:outline focus:outline-1 focus:outline-light-text focus:outline-offset-0',
-    hasError ? 'border-error focus:border-error focus:outline-error' : 'border-light-border',
+    'w-full rounded-field border bg-surface px-tk-md py-[10px] text-ctl-sm text-ink outline-none transition-colors',
+    'focus:border-ink focus:outline focus:outline-1 focus:outline-ink focus:outline-offset-0',
+    hasError ? 'border-neg focus:border-neg focus:outline-neg' : 'border-line',
   );
 }
 
 function Field({ label, error, input }: { label: string; error?: string; input: ReactNode }) {
   return (
     <label className="block space-y-tk-xs">
-      <span className="text-bodySmall font-medium text-light-text">{label}</span>
+      <span className="text-ctl-sm font-medium text-ink">{label}</span>
       {input}
-      {error ? <span className="block text-[12px] text-error">{error}</span> : null}
+      {error ? <span className="block text-[12px] text-neg">{error}</span> : null}
     </label>
   );
 }
@@ -1156,10 +1156,10 @@ function Section({
   return (
     <section className="space-y-tk-sm">
       <div className="flex items-center justify-between gap-tk-md">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-light-text-hint">{title}</h2>
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">{title}</h2>
         {action}
       </div>
-      <div className="space-y-tk-md rounded-lg border border-light-hairline bg-light-card p-tk-md">{children}</div>
+      <div className="space-y-tk-md rounded-card border border-line-2 bg-surface p-tk-md">{children}</div>
     </section>
   );
 }

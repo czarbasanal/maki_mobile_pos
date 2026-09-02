@@ -87,7 +87,10 @@ describe('router — product view is a drawer over the inventory list', () => {
     await act(async () => {
       await router.navigate('/inventory/add');
     });
-    await waitFor(() => expect(paths()).toContain('/inventory/add'));
+    // Now a CHILD of the list (the add-product modal renders over it), so
+    // the match is '/inventory' + 'add' — and never the dynamic ':id'.
+    await waitFor(() => expect(paths()).toContain('add'));
+    expect(paths()).toContain('/inventory');
     expect(paths()).not.toContain(':id');
   });
 

@@ -34,7 +34,7 @@ import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistory
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
 import { ProductDrawer } from '@/presentation/features/inventory/ProductDrawer';
 import { ProductEditDrawer } from '@/presentation/features/inventory/ProductEditDrawer';
-import { InventoryFormPage } from '@/presentation/features/inventory/InventoryFormPage';
+import { AddProductModal } from '@/presentation/features/inventory/AddProductModal';
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
@@ -145,14 +145,12 @@ export const router = createBrowserRouter(
             subtitle: 'Products, stock levels, and pricing.',
           } satisfies PageChrome,
           children: [
+            // Static 'add' outranks the dynamic ':id' in route matching, so
+            // the modal wins over the drawer for /inventory/add.
+            { path: 'add', element: <AddProductModal /> },
             { path: ':id', element: <ProductDrawer /> },
             { path: ':id/edit', element: <ProductEditDrawer /> },
           ],
-        },
-        {
-          path: RoutePaths.productAdd,
-          element: <InventoryFormPage />,
-          handle: { title: 'New product' } satisfies PageChrome,
         },
         {
           path: RoutePaths.priceHistory,
