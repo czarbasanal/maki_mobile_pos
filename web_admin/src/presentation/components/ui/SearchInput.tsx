@@ -70,7 +70,10 @@ export function SearchInput({
         placeholder={placeholder}
         className={clsx(
           'bg-transparent text-ink outline-none placeholder:text-ink-3',
-          hero ? 'w-full text-ctl-lg' : 'w-40 text-ctl-sm',
+          // `grow` keeps the 160px basis where the wrapper is unconstrained
+          // (dashboard header) but fills a sized wrapper (JO's 290px box),
+          // pinning the clear button to the far end of the bar.
+          hero ? 'w-full text-ctl-lg' : 'w-40 grow text-ctl-sm',
         )}
       />
       {text && (
