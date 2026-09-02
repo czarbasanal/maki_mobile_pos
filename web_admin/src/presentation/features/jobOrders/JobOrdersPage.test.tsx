@@ -406,3 +406,22 @@ describe('JobOrdersPage — delete, open tickets only', () => {
     expect(screen.queryByText('Delete Job Order?')).not.toBeInTheDocument();
   });
 });
+
+describe('JobOrdersPage — resume over a non-empty cart (skinned confirm)', () => {
+  it('asks before replacing the cart; Replace resumes, Cancel keeps the cart', async () => {
+    const { useCartStore } = await import('@/presentation/stores/cartStore');
+    useCartStore.setState({
+      lines: [{ id: 'l1' }] as never,
+    });
+    harness([jobOrder({ id: 'd1', name: 'JO-OPEN', isConverted: false })]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    expect(screen.getByText('Replace the current cart?')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByText('Replace the current cart?')).not.toBeInTheDocument();
+    // Still on the list, cart untouched.
+    expect(useCartStore.getState().lines).toHaveLength(1);
+    useCartStore.setState({ lines: [] as never });
+  });
+});

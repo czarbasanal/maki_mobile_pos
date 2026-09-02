@@ -75,8 +75,9 @@ export function JobOrdersPage() {
   // this list (the guide's custom range picker isn't built yet).
   const [showOutsideOpen, setShowOutsideOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
-  // The ticket a skinned confirm dialog is asking about; null = closed.
+  // Tickets a skinned confirm dialog is asking about; null = closed.
   const [deleting, setDeleting] = useState<JobOrder | null>(null);
+  const [resuming, setResuming] = useState<JobOrder | null>(null);
 
   // Same collision-safe numbering as the POS save dialog: null while the
   // live list is loading so a stale/empty name set can't mint a duplicate.
@@ -158,10 +159,14 @@ export function JobOrdersPage() {
     setPage(1);
   };
 
-  const onResume = (jobOrder: JobOrder) => {
-    if (lines.length > 0 && !window.confirm('Replace the current cart with this Job Order?')) return;
+  const resume = (jobOrder: JobOrder) => {
     loadJobOrder(jobOrder);
     navigate(RoutePaths.pos);
+  };
+  const onResume = (jobOrder: JobOrder) => {
+    // A non-empty register cart would be silently replaced — confirm first.
+    if (lines.length > 0) setResuming(jobOrder);
+    else resume(jobOrder);
   };
   const onRow = (jo: JobOrder) => {
     if (jo.isConverted) {
@@ -500,6 +505,36 @@ export function JobOrdersPage() {
         jobOrderNumber={newJobOrderNumber}
         onClose={() => setNewOpen(false)}
       />
+
+      <Dialog
+        open={resuming !== null}
+        onClose={() => setResuming(null)}
+        title="Replace the current cart?"
+      >
+        <p className="text-cell text-ink-2">
+          Resuming <span className="font-mono font-medium text-ink">{resuming?.name}</span> loads
+          its items into the register and clears what’s in the cart now.
+        </p>
+        <div className="mt-tk-md flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setResuming(null)}
+            className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (resuming) resume(resuming);
+              setResuming(null);
+            }}
+            className="rounded-ctl bg-neg-soft px-tk-md py-tk-sm text-ctl-md font-medium text-neg hover:brightness-95"
+          >
+            Replace cart
+          </button>
+        </div>
+      </Dialog>
 
       <Dialog
         open={deleting !== null}
