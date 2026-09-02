@@ -118,7 +118,9 @@ describe('HeaderBar (via AppShell)', () => {
       harness({ title: 'Dashboard' });
       expect(document.documentElement.getAttribute('data-theme')).not.toBe('dark');
 
-      await userEvent.click(screen.getByRole('button', { name: /switch to dark mode/i }));
+      // The boxed toggle is labeled with the mode it switches TO (reference
+      // header): "Dark" while light, "Light" while dark.
+      await userEvent.click(screen.getByRole('button', { name: 'Dark' }));
 
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
