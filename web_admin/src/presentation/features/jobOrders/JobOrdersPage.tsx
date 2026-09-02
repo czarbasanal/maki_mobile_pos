@@ -297,6 +297,7 @@ export function JobOrdersPage() {
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="w-[290px]">
           <SearchInput
+            variant="bar"
             value={search}
             onChange={(v) => {
               setSearch(v);

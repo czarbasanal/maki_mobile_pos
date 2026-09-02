@@ -8,8 +8,10 @@ export interface SearchInputProps {
   placeholder?: string;
   debounce?: number;
   /** 'hero' is the POS register treatment: surface card, 12px radius,
-   *  shadow, 14px input — the primary target on its screen. */
-  variant?: 'field' | 'hero';
+   *  shadow, 14px input — the primary target on its screen. 'bar' is the
+   *  filter-band treatment (JO guide §A): surface fill, 10px radius, shadow,
+   *  9x13 padding — the same height as a SelectFilter trigger beside it. */
+  variant?: 'field' | 'hero' | 'bar';
   autoFocus?: boolean;
   /** Keyboard events from the inner input (register keyboard map). The
    *  second argument is the LIVE text — a wedge scanner sends Enter faster
@@ -51,13 +53,14 @@ export function SearchInput({
   }
 
   const hero = variant === 'hero';
+  const bar = variant === 'bar';
   return (
     <div
       className={clsx(
         'flex items-center',
-        hero
-          ? 'gap-2.5 rounded-[12px] border border-line bg-surface px-[15px] py-3 shadow-card'
-          : 'gap-1.5 rounded-field border border-line bg-surface-2 px-2.5 py-1.5',
+        hero && 'gap-2.5 rounded-[12px] border border-line bg-surface px-[15px] py-3 shadow-card',
+        bar && 'gap-[9px] rounded-ctl border border-line bg-surface px-[13px] py-[9px] shadow-card',
+        !hero && !bar && 'gap-1.5 rounded-field border border-line bg-surface-2 px-2.5 py-1.5',
       )}
     >
       <MagnifyingGlassIcon className={clsx('shrink-0 text-ink-3', hero ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
@@ -74,6 +77,7 @@ export function SearchInput({
           // (dashboard header) but fills a sized wrapper (JO's 290px box),
           // pinning the clear button to the far end of the bar.
           hero ? 'w-full text-ctl-lg' : 'w-40 grow text-ctl-sm',
+          bar && 'w-full',
         )}
       />
       {text && (
