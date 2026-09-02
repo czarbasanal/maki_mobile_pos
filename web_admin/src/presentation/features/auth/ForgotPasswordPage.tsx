@@ -54,17 +54,17 @@ export function ForgotPasswordPage() {
       <div className="space-y-tk-xl">
         <div className="flex flex-col items-center text-center">
           <CheckCircleIcon className="h-10 w-10 text-success" />
-          <h1 className="mt-tk-md text-bodyLarge font-semibold tracking-tight text-light-text">
+          <h1 className="mt-tk-md text-[21px] tracking-[-0.55px] font-semibold tracking-tight text-ink">
             Check your inbox
           </h1>
-          <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
+          <p className="mt-tk-xs text-ctl-sm text-ink-2">
             Reset email sent to <span className="font-semibold">{sentTo}</span>.
           </p>
         </div>
         <div className="flex justify-center">
           <Link
             to={RoutePaths.login}
-            className="text-bodySmall text-light-text-secondary underline-offset-2 hover:text-light-text hover:underline"
+            className="text-ctl-sm text-ink-2 underline-offset-2 hover:text-ink hover:underline"
           >
             Back to login
           </Link>
@@ -76,10 +76,10 @@ export function ForgotPasswordPage() {
   return (
     <div className="space-y-tk-xl">
       <div className="flex flex-col items-center text-center">
-        <h1 className="text-bodyLarge font-semibold tracking-tight text-light-text">
+        <h1 className="text-[21px] tracking-[-0.55px] font-semibold tracking-tight text-ink">
           Reset password
         </h1>
-        <p className="mt-tk-xs text-bodySmall text-light-text-secondary">
+        <p className="mt-tk-xs text-ctl-sm text-ink-2">
           Enter your email and we&apos;ll send you a reset link.
         </p>
       </div>
@@ -109,7 +109,7 @@ export function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={sendReset.isPending}
-          className="flex w-full items-center justify-center gap-tk-sm rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-tk-sm rounded-[12px] bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {sendReset.isPending ? <Spinner className="h-4 w-4" /> : null}
           {sendReset.isPending ? 'Sending…' : 'Send reset link'}
@@ -118,7 +118,7 @@ export function ForgotPasswordPage() {
         <div className="flex justify-center pt-tk-xs">
           <Link
             to={RoutePaths.login}
-            className="text-bodySmall text-light-text-secondary underline-offset-2 hover:text-light-text hover:underline"
+            className="text-ctl-sm text-ink-2 underline-offset-2 hover:text-ink hover:underline"
           >
             Back to login
           </Link>
