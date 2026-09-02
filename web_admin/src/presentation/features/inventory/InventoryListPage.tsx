@@ -187,17 +187,20 @@ export function InventoryListPage() {
             size="sm"
             className="h-[38px] w-[38px] shrink-0 rounded-[9px]"
           />
-          <div className="flex min-w-0 flex-col gap-[3px]">
-            <span className="text-ctl-sm font-medium tracking-[-0.1px] text-ink">
-              {p.name}
-              {!p.isActive ? <span className="ml-1.5 text-ink-3">(inactive)</span> : null}
-            </span>
-            <span className="flex items-center gap-1.5 font-mono text-[10.5px] text-ink-3">
-              {displaySku(p.sku)}
-              <CopyButton value={p.sku} label="SKU" />
-            </span>
-          </div>
+          <span className="min-w-0 text-ctl-sm font-medium tracking-[-0.1px] text-ink">
+            {p.name}
+            {!p.isActive ? <span className="ml-1.5 text-ink-3">(inactive)</span> : null}
+          </span>
         </div>
+      ),
+    },
+    {
+      key: 'sku', header: 'SKU', mono: true, width: '120px',
+      render: (p) => (
+        <span className="flex items-center gap-1.5 text-[11.5px] text-ink-2">
+          {displaySku(p.sku)}
+          <CopyButton value={p.sku} label="SKU" />
+        </span>
       ),
     },
     {
@@ -450,7 +453,7 @@ export function InventoryListPage() {
           rowKey={(p) => p.id}
           onRowClick={(p) => navigate(`/inventory/${p.id}`)}
           loading={isLoading}
-          minWidth="920px"
+          minWidth="1010px"
           empty={
             firstRun ? (
               <div className="flex flex-col items-center gap-[5px] px-6 py-16 text-center">

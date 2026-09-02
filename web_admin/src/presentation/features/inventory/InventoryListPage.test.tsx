@@ -159,7 +159,8 @@ describe('InventoryListPage SKU cell', () => {
     harness([widget({ sku: '00070153' })]);
     const cell = screen.getByText('00070153');
     expect(cell).toBeInTheDocument();
-    expect(cell).toHaveClass('font-mono');
+    // Its own dedicated column now — mono comes from the td.
+    expect(cell.closest('td')).toHaveClass('font-mono');
   });
 
   it('passes a non-coded SKU through unchanged', () => {
