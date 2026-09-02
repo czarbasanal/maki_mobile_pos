@@ -17,7 +17,7 @@ import { useReceivings } from '@/presentation/hooks/useReceivings';
 import { useDraftReceivings } from '@/presentation/hooks/useDraftReceivings';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Receiving, ReceivingStatus } from '@/domain/entities';
-import { formatInShopZone, instantOf, shopTimeOf, shopWall } from '@/domain/time/shopTime';
+import { formatInShopZone } from '@/domain/time/shopTime';
 import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
@@ -85,6 +85,12 @@ export function ReceivingListPage() {
 
   const { data: ranged, isLoading, error } = useReceivings(dateRange);
   const { data: drafts } = useDraftReceivings();
+  // The pipeline + money cards are month-scoped whatever the range picker
+  // says, so they get their own always-full-month subscription (cached
+  // per-range) instead of leaning on the picker's fetch — with Today active,
+  // "Received this month" must still mean the month.
+  const monthRange = useMemo(() => resolvePreset('thisMonth'), []);
+  const { data: monthReceipts } = useReceivings(monthRange);
 
   // A draft is open work — it stays visible whatever the date range says,
   // the same reasoning as open job orders outside the range. Everything on
@@ -100,11 +106,7 @@ export function ReceivingListPage() {
 
   // The pipeline card is SHOP-month-scoped and says so in its label.
   const monthLabel = formatInShopZone(now, { month: 'long' });
-  const inMonth = useMemo(() => {
-    const wall = shopTimeOf(now);
-    const monthStart = instantOf(shopWall(wall.getUTCFullYear(), wall.getUTCMonth() + 1, 1));
-    return source.filter((r) => receivedAt(r) >= monthStart);
-  }, [source, now]);
+  const inMonth = useMemo(() => monthReceipts ?? [], [monthReceipts]);
   const monthByStatus = useMemo(() => {
     const counts: Record<ReceivingStatus, number> = { draft: 0, completed: 0, cancelled: 0 };
     for (const r of inMonth) counts[r.status] += 1;
@@ -190,6 +192,11 @@ export function ReceivingListPage() {
     setPage(1);
   };
 
+  // "No receipts yet" is a first-run claim — never make it while a date range
+  // could be hiding history. Anything short of All time gets the filtered
+  // empty state, whose copy points at the range control.
+  const firstRun = !isLoading && source.length === 0 && range === 'allTime' && !isFiltered;
+
   // Draft rows resume the form; completed and cancelled open the detail.
   const onRow = (r: Receiving) => {
     if (r.status === 'draft') navigate(`/receiving/new/${r.id}`);
@@ -252,8 +259,6 @@ export function ReceivingListPage() {
   ];
 
   if (error) return <ErrorView title="Could not load receiving" message={error.message} />;
-
-  const firstRun = !isLoading && source.length === 0;
 
   return (
     <div className="flex flex-col gap-3">

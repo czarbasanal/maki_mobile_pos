@@ -119,11 +119,55 @@ describe('ReceivingListPage', () => {
     expect(completedRow).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('first-run and filtered-empty states are distinct', async () => {
+  it('claims first-run ONLY on All time — a narrow range gets the filtered copy', async () => {
     harness([]);
+    // Default range is 30 days: an empty fetch must NOT claim "No receipts
+    // yet" — older history may exist outside the range.
+    expect(screen.queryByText('No receipts yet')).not.toBeInTheDocument();
+    expect(screen.getByText('No receipts match these filters')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'All time' }));
     expect(screen.getByText('No receipts yet')).toBeInTheDocument();
     // Offered in the views row AND inside the first-run state.
     expect(screen.getAllByRole('button', { name: /new receiving/i }).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('the month cards use their own subscription, independent of the range picker', async () => {
+    clearSubscriptionCache();
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.c', displayName: 'C', role: UserRole.admin, isActive: true } as never,
+      status: 'signedIn',
+    });
+    const watchAll = vi.fn((_range, cb: (r: Receiving[]) => void) => {
+      cb([receipt()]);
+      return () => {};
+    });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <DiProvider
+        override={{
+          receivingRepo: {
+            watchAll,
+            watchDrafts: (cb: (r: Receiving[]) => void) => {
+              cb([]);
+              return () => {};
+            },
+          } as unknown as Container['receivingRepo'],
+        }}
+      >
+        <QueryClientProvider client={qc}>
+          <MemoryRouter initialEntries={['/receiving']}>
+            <Routes>
+              <Route path="/receiving" element={<ReceivingListPage />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </DiProvider>,
+    );
+    // One subscription for the picker's range, one pinned to the shop month
+    // — so "Received this month" never shrinks when the picker narrows.
+    const ranges = watchAll.mock.calls.map((c) => (c[0] as { start: Date }).start.getTime());
+    expect(new Set(ranges).size).toBeGreaterThanOrEqual(2);
   });
 
   it('search narrows by reference and supplier, and Clear filters resets', async () => {
