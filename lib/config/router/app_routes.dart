@@ -54,6 +54,7 @@ import 'package:maki_mobile_pos/presentation/mobile/screens/settings/mechanic_ed
 import 'package:maki_mobile_pos/presentation/mobile/screens/hr/payslip_detail_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/shop_fee_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/motorcycle_model_editor_screen.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/settings/tag_editor_screen.dart';
 import 'package:maki_mobile_pos/presentation/providers/category_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/settings/about_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/screens/logs/activity_logs_screen.dart';
@@ -504,6 +505,11 @@ List<RouteBase> featureRoutes() => [
             path: 'motorcycle-models',
             name: RouteNames.motorcycleModels,
             builder: (context, state) => const MotorcycleModelEditorScreen(),
+          ),
+          GoRoute(
+            path: 'tags',
+            name: RouteNames.productTags,
+            builder: (context, state) => const TagEditorScreen(),
           ),
           GoRoute(
             path: 'about',

@@ -174,6 +174,9 @@ abstract class RouteNames {
   /// Mechanics admin editor — `/settings/mechanics`.
   static const String mechanics = 'mechanics';
 
+  /// Product tags admin editor — `/settings/tags`.
+  static const String productTags = 'productTags';
+
   /// HR hub (Employees | Payroll | Payslips tabs) — `/hr`.
   static const String hr = 'hr';
 
@@ -282,6 +285,7 @@ abstract class RoutePaths {
   static const String categorySettings = '/settings/categories';
   static const String categoryEditor = '/settings/categories/:kind';
   static const String mechanics = '/settings/mechanics';
+  static const String productTags = '/settings/tags';
   static const String hr = '/hr';
 
   /// Prefix for payslip-detail pushes (`/hr/payslips/<id>`) — the list itself

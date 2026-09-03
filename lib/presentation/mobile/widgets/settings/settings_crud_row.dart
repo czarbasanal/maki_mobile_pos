@@ -20,6 +20,8 @@ class SettingsCrudRow extends StatelessWidget {
     this.onDelete,
     this.leadingIcon,
     this.badge,
+    this.leading,
+    this.subtitle,
   });
 
   final String name;
@@ -42,6 +44,16 @@ class SettingsCrudRow extends StatelessWidget {
   /// with RobotoMono text and neutral tint background.
   final String? badge;
 
+  /// When non-null, replaces the [leadingIcon] tile entirely (same trailing
+  /// gap) — used by rows that need a custom leading widget (e.g. tag color
+  /// swatch tiles) rather than a plain neutral glyph.
+  final Widget? leading;
+
+  /// When non-null, a secondary line rendered under the name in the same
+  /// style as the "Inactive" line. Shown alongside it as `'Inactive ·
+  /// $subtitle'` when the row is also inactive.
+  final String? subtitle;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -54,12 +66,16 @@ class SettingsCrudRow extends StatelessWidget {
     return AppCard(
       radius: 14,
       onTap: onEdit,
-      padding: EdgeInsets.fromLTRB(leadingIcon != null ? 12 : 16, 8, 8, 8),
+      padding: EdgeInsets.fromLTRB(
+          leading != null || leadingIcon != null ? 12 : 16, 8, 8, 8),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 42),
         child: Row(
           children: [
-            if (leadingIcon != null) ...[
+            if (leading != null) ...[
+              leading!,
+              const SizedBox(width: 10),
+            ] else if (leadingIcon != null) ...[
               Container(
                 width: 38,
                 height: 38,
@@ -117,10 +133,14 @@ class SettingsCrudRow extends StatelessWidget {
                       ],
                     ],
                   ),
-                  if (!isActive) ...[
+                  if (!isActive || subtitle != null) ...[
                     const SizedBox(height: 1),
                     Text(
-                      'Inactive',
+                      !isActive
+                          ? (subtitle != null
+                              ? 'Inactive · $subtitle'
+                              : 'Inactive')
+                          : subtitle!,
                       style: TextStyle(fontSize: 12, color: inactiveText),
                     ),
                   ],

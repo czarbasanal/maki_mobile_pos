@@ -133,6 +133,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Charges for outside items, air, charging',
                   onTap: () => context.push(RoutePaths.shopFees),
                 ),
+                SettingsTile(
+                  icon: LucideIcons.tags,
+                  title: 'Product Tags',
+                  subtitle: 'Color-coded markers shown on inventory',
+                  onTap: () => context.push(RoutePaths.productTags),
+                ),
               ],
             ),
           ],
