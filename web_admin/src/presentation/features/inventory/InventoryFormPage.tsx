@@ -65,7 +65,12 @@ const schema = z.object({
   cost: reqNumber('Cost is required'),
   price: reqNumber('Price is required'),
   quantity: reqNumber('Quantity is required', true),
-  reorderLevel: reqNumber('Reorder level is required', true),
+  // Optional: left blank at creation it defaults to 1 (user call) — an
+  // explicit 0 ("never reorder") is respected.
+  reorderLevel: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : typeof v === 'string' ? Number(v) : v),
+    z.number({ invalid_type_error: 'Whole number' }).int('Whole number').min(0, 'Must be ≥ 0').optional(),
+  ),
   unit: z.string().trim().min(1, 'Unit is required'),
   category: z.string().optional().or(z.literal('')),
   supplierId: z.string().optional().or(z.literal('')),
@@ -186,7 +191,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: '', sku: '', cost: 0, price: 0, quantity: 0, reorderLevel: 0,
+      name: '', sku: '', cost: 0, price: 0, quantity: 0, reorderLevel: '' as unknown as number,
       unit: 'pcs', category: '', supplierId: '', notes: '',
     },
   });
@@ -468,7 +473,9 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
         cost: costNum,
         price: priceNum,
         quantity: Number(values.quantity),
-        reorderLevel: Number(values.reorderLevel),
+        // Unset at creation → 1, so a brand-new part is never invisible to
+        // the low-stock and buying-list engines.
+        reorderLevel: values.reorderLevel == null ? 1 : Number(values.reorderLevel),
         unit: values.unit.trim() || 'pcs',
         supplierId: supplier.id,
         supplierName: supplier.name,
@@ -520,7 +527,8 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
         cost: costNum,
         costCode,
         price: priceNum,
-        reorderLevel: Number(values.reorderLevel),
+        reorderLevel:
+          values.reorderLevel == null ? (target?.reorderLevel ?? 1) : Number(values.reorderLevel),
         unit: values.unit.trim() || 'pcs',
         supplierId: supplier.id,
         supplierName: supplier.name,
@@ -794,7 +802,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                 input={<input type="number" className={inputCls(!!errors.quantity)} {...register('quantity')} />} />
             ) : null}
             <Field label="Reorder level" error={errors.reorderLevel?.message}
-              input={<input type="number" disabled={nameOnly} className={inputCls(!!errors.reorderLevel)} {...register('reorderLevel')} />} />
+              input={<input type="number" placeholder="1" disabled={nameOnly} className={inputCls(!!errors.reorderLevel)} {...register('reorderLevel')} />} />
             <Field label="Unit" error={errors.unit?.message}
               input={
                 <select disabled={nameOnly} className={cn(inputCls(!!errors.unit), 'pr-8')} {...register('unit')}>

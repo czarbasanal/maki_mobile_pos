@@ -185,3 +185,30 @@ describe('NewProductDialog — edit mode', () => {
     );
   });
 });
+
+describe('NewProductDialog — reorder level default', () => {
+  async function fillRequired() {
+    await userEvent.type(screen.getByLabelText(/name/i), 'Squid');
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await userEvent.type(screen.getByLabelText(/cost/i), '90');
+    await userEvent.type(screen.getByLabelText(/price/i), '130');
+    await userEvent.type(screen.getByLabelText(/quantity/i), '3');
+  }
+
+  it('left unset it defaults to 1', async () => {
+    signIn();
+    const onAdd = harness();
+    await fillRequired();
+    await userEvent.click(screen.getByRole('button', { name: /add to receiving/i }));
+    expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ reorderLevel: 1 }));
+  });
+
+  it('an explicit 0 is kept — never overridden', async () => {
+    signIn();
+    const onAdd = harness();
+    await fillRequired();
+    await userEvent.type(screen.getByLabelText('Reorder level'), '0');
+    await userEvent.click(screen.getByRole('button', { name: /add to receiving/i }));
+    expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ reorderLevel: 0 }));
+  });
+});

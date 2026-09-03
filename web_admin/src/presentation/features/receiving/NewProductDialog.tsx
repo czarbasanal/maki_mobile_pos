@@ -163,7 +163,9 @@ export function NewProductDialog({ open, onClose, onAdd, initial = null }: NewPr
       cost: c,
       price: p,
       quantity: q,
-      reorderLevel: Number(reorderLevel) || 0,
+      // Unset → 1 (user call): a brand-new part should never be invisible
+      // to the low-stock and buying-list engines. An explicit 0 is kept.
+      reorderLevel: reorderLevel.trim() === '' ? 1 : Number(reorderLevel) || 0,
       barcodes,
       notes: notes.trim() || null,
       sellingOptions,
@@ -250,6 +252,7 @@ export function NewProductDialog({ open, onClose, onAdd, initial = null }: NewPr
           </Field>
           <Field label="Reorder level">
             <input type="number" className={inputCls} aria-label="Reorder level"
+              placeholder="1"
               value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />
           </Field>
           <Field label="Cost">
