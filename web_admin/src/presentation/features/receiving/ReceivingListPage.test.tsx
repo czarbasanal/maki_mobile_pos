@@ -141,10 +141,10 @@ describe('ReceivingListPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('offers Today / 7 days / 30 days / Custom — no All time', () => {
+  it('offers Today / Yesterday / 7 days / 30 days / Custom — no All time', () => {
     harness([receipt()]);
     const labels = screen.getAllByRole('radio').map((r) => r.textContent);
-    expect(labels).toEqual(['Today', '7 days', '30 days', 'Custom']);
+    expect(labels).toEqual(['Today', 'Yesterday', '7 days', '30 days', 'Custom']);
   });
 
   it('the month cards use their own subscription, independent of the range picker', async () => {

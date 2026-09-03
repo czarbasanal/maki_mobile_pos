@@ -37,10 +37,11 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 
 type StatusView = 'all' | ReceivingStatus;
-type Range = 'today' | 'last7' | 'last30' | 'custom';
+type Range = 'today' | 'yesterday' | 'last7' | 'last30' | 'custom';
 
 const RANGE_OPTIONS: Array<{ value: Range; label: string }> = [
   { value: 'today', label: 'Today' },
+  { value: 'yesterday', label: 'Yesterday' },
   { value: 'last7', label: '7 days' },
   { value: 'last30', label: '30 days' },
   { value: 'custom', label: 'Custom' },
