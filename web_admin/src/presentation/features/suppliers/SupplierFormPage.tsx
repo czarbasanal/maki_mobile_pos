@@ -56,7 +56,7 @@ const TERMS_OPTIONS: TransactionType[] = [
   TransactionType.notApplicable,
 ];
 
-export function SupplierFormPage() {
+export function SupplierFormPage({ embedded = false }: { embedded?: boolean } = {}) {
   const params = useParams<{ id?: string }>();
   const editingId = params.id;
   const isEditing = !!editingId;
@@ -144,19 +144,22 @@ export function SupplierFormPage() {
   };
 
   return (
-    <div className="space-y-tk-xl">
-      <header className="space-y-tk-sm">
-        <Link
-          to={RoutePaths.suppliers}
-          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" />
-          Suppliers
-        </Link>
-      </header>
+    <div className={embedded ? 'space-y-tk-lg' : 'space-y-tk-xl'}>
+      {/* The modal shell already names the supplier and offers a close. */}
+      {!embedded ? (
+        <header className="space-y-tk-sm">
+          <Link
+            to={RoutePaths.suppliers}
+            className="inline-flex items-center gap-tk-xs text-ctl-sm text-ink-2 hover:text-ink"
+          >
+            <ArrowLeftIcon className="h-3.5 w-3.5" />
+            Suppliers
+          </Link>
+        </header>
+      ) : null}
 
       {mutationError && !errors.name ? (
-        <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
+        <p className="rounded-field border border-neg bg-neg-soft px-tk-md py-tk-sm text-ctl-sm text-neg">
           {mutationError}
         </p>
       ) : null}
@@ -278,14 +281,14 @@ export function SupplierFormPage() {
           <span className="ml-auto" />
           <Link
             to={RoutePaths.suppliers}
-            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
+            className="rounded-field px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex items-center gap-tk-xs rounded-field bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? <Spinner className="h-3.5 w-3.5" /> : null}
             {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create supplier'}
@@ -341,9 +344,9 @@ export function SupplierFormPage() {
 
 function inputCls(hasError: boolean): string {
   return cn(
-    'w-full rounded-md border bg-light-card px-tk-md py-[10px] text-bodySmall text-light-text outline-none transition-colors',
-    'focus:border-light-text focus:outline focus:outline-1 focus:outline-light-text focus:outline-offset-0',
-    hasError ? 'border-error focus:border-error focus:outline-error' : 'border-light-border',
+    'w-full rounded-field border bg-surface px-tk-md py-[10px] text-ctl-sm text-ink outline-none transition-colors',
+    'focus:border-ink focus:outline focus:outline-1 focus:outline-ink focus:outline-offset-0',
+    hasError ? 'border-neg focus:border-neg focus:outline-neg' : 'border-line',
   );
 }
 
@@ -358,9 +361,9 @@ function Field({
 }) {
   return (
     <label className="block space-y-tk-xs">
-      <span className="text-bodySmall font-medium text-light-text">{label}</span>
+      <span className="text-ctl-sm font-medium text-ink">{label}</span>
       {input}
-      {error ? <span className="block text-[12px] text-error">{error}</span> : null}
+      {error ? <span className="block text-[12px] text-neg">{error}</span> : null}
     </label>
   );
 }
@@ -368,10 +371,10 @@ function Field({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-tk-sm">
-      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-light-text-hint">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
         {title}
       </h2>
-      <div className="rounded-lg border border-light-hairline bg-light-card p-tk-md space-y-tk-md">
+      <div className="rounded-card border border-line-2 bg-surface p-tk-md space-y-tk-md">
         {children}
       </div>
     </section>

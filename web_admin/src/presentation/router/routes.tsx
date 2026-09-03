@@ -37,7 +37,7 @@ import { AddProductModal } from '@/presentation/features/inventory/AddProductMod
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
-import { SupplierFormPage } from '@/presentation/features/suppliers/SupplierFormPage';
+import { SupplierModal } from '@/presentation/features/suppliers/SupplierModal';
 import { PosPage } from '@/presentation/features/pos/PosPage';
 import { CheckoutPage } from '@/presentation/features/pos/CheckoutPage';
 import { JobOrdersPage } from '@/presentation/features/jobOrders/JobOrdersPage';
@@ -227,16 +227,11 @@ export const router = createBrowserRouter(
             title: 'Suppliers',
             subtitle: 'Vendor directory used by inventory and receiving.',
           } satisfies PageChrome,
-        },
-        {
-          path: RoutePaths.supplierAdd,
-          element: <SupplierFormPage />,
-          handle: { title: 'New supplier' } satisfies PageChrome,
-        },
-        {
-          path: RoutePaths.supplierEdit,
-          element: <SupplierFormPage />,
-          handle: { title: 'Edit supplier' } satisfies PageChrome,
+          children: [
+            // Add/edit render as modals over the directory via its Outlet.
+            { path: 'add', element: <SupplierModal /> },
+            { path: 'edit/:id', element: <SupplierModal /> },
+          ],
         },
         {
           path: RoutePaths.expenses,

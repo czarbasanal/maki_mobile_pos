@@ -9,7 +9,7 @@
 // counts-disagree trap (guide §2) — and a clickable stat filters to exactly
 // its own number.
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useSuppliers } from '@/presentation/hooks/useSuppliers';
 import { useProducts } from '@/presentation/hooks/useProducts';
@@ -338,7 +338,7 @@ export function SuppliersListPage() {
         <MoneyCard
           label="Spend, last 90 days"
           value={formatMoney(spend90Total)}
-          note="completed receipts only"
+          note="completed supplier receipts only"
         />
         <MoneyCard
           label="Buying on terms"
@@ -473,6 +473,10 @@ export function SuppliersListPage() {
           />
         ) : null}
       </section>
+
+      {/* The add/edit supplier modal (/suppliers/add, /suppliers/edit/:id)
+          renders here, over the directory. */}
+      <Outlet />
     </div>
   );
 }

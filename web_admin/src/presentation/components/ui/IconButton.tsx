@@ -10,12 +10,27 @@ export interface IconButtonProps
   tone?: 'default' | 'danger';
 }
 
-export function IconButton({ title, size = 22, tone = 'default', children, type = 'button', ...rest }: IconButtonProps) {
+export function IconButton({
+  title,
+  size = 22,
+  tone = 'default',
+  children,
+  type = 'button',
+  onKeyDown,
+  ...rest
+}: IconButtonProps) {
   return (
     <button
       type={type}
       title={title}
       aria-label={title}
+      // Enter/Space on an in-row icon button (CopyButton and friends) must
+      // not bubble into the row's keyboard activation — same containment as
+      // the tokenized Checkbox.
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        onKeyDown?.(e);
+      }}
       className={clsx(
         'inline-flex shrink-0 items-center justify-center rounded-chip text-ink-3 transition-[color]',
         tone === 'danger' ? 'hover:bg-neg-soft hover:text-neg' : 'hover:bg-surface-3 hover:text-ink-2',
