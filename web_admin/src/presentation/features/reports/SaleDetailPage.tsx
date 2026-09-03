@@ -116,7 +116,7 @@ export function SaleDetailPage() {
 
   return (
     <>
-    <div className="flex max-w-[1180px] flex-col gap-3 print:hidden">
+    <div className="flex flex-col gap-3 print:hidden">
       <BackButton label="Back" onClick={goBack} />
 
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">

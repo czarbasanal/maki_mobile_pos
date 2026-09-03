@@ -29,6 +29,9 @@ import { saleItemConverter } from '@/data/converters/saleItemConverter';
 import { counterKey, formatSaleNumber } from '@/domain/sales/saleNumber';
 import { SaleStatus } from '@/domain/enums/SaleStatus';
 import { jobOrderConversionOutcome } from '@/domain/sales/jobOrderConversion';
+import { jobOrderItemsToMaps } from '@/data/converters/jobOrderConverter';
+import { laborLinesToMaps } from '@/data/converters/laborLines';
+import { feeLinesToMaps } from '@/data/converters/feeLines';
 import { phDayInt } from '@/core/utils/businessDay';
 import { shopEndOfDay, shopStartOfDay } from '@/domain/time/shopTime';
 
@@ -112,6 +115,7 @@ export class FirestoreSaleRepository implements SaleRepository {
     input: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>,
     actorId: string,
     saleId?: string,
+    autoJobOrderName?: string | null,
   ): Promise<Sale> {
     // Mobile parity (_validateSale): a labor-only or fee-only ticket is a
     // legitimate sale — only a cart with NOTHING billable is refused.
@@ -141,6 +145,16 @@ export class FirestoreSaleRepository implements SaleRepository {
     const jobOrderRef = input.jobOrderId
       ? doc(this.db, FirestoreCollections.jobOrders, input.jobOrderId)
       : null;
+    // Service work billed on the spot (a mechanic or motorcycle on a cart
+    // that came from no ticket) records a job order IN THE SAME TRANSACTION,
+    // already billed and linked — otherwise the JO ledger only ever holds
+    // deferred tickets and undercounts the bench history. The caller mints
+    // the number; without one (JO list still loading) the sale proceeds
+    // without a ticket rather than blocking the register.
+    const autoJoRef =
+      !jobOrderRef && autoJobOrderName && (input.mechanicId || input.motorcycleModel)
+        ? doc(collection(this.db, FirestoreCollections.jobOrders))
+        : null;
     const drawerStateRef = doc(this.db, FirestoreCollections.drawerState, 'state');
 
     await runTransaction(this.db, async (tx) => {
@@ -185,7 +199,7 @@ export class FirestoreSaleRepository implements SaleRepository {
         mechanicId: input.mechanicId,
         mechanicName: input.mechanicName,
         motorcycleModel: input.motorcycleModel ?? null,
-        jobOrderId: input.jobOrderId,
+        jobOrderId: autoJoRef ? autoJoRef.id : input.jobOrderId,
         notes: input.notes,
         voidedBy: null,
         voidedByName: null,
@@ -236,6 +250,28 @@ export class FirestoreSaleRepository implements SaleRepository {
           isConverted: true,
           convertedToSaleId: saleRef.id,
           convertedAt: serverTimestamp(),
+        });
+      }
+      if (autoJoRef) {
+        // Same shape as FirestoreJobOrderRepository.create, born converted.
+        tx.set(autoJoRef, {
+          name: autoJobOrderName,
+          items: jobOrderItemsToMaps(input.items),
+          laborLines: laborLinesToMaps(input.laborLines),
+          feeLines: feeLinesToMaps(input.feeLines),
+          mechanicId: input.mechanicId ?? null,
+          mechanicName: input.mechanicName ?? null,
+          motorcycleModel: input.motorcycleModel ?? null,
+          discountType: input.discountType,
+          createdBy: actorId,
+          createdByName: input.cashierName,
+          updatedBy: null,
+          isConverted: true,
+          convertedToSaleId: saleRef.id,
+          convertedAt: serverTimestamp(),
+          notes: input.notes ?? null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
       }
     });

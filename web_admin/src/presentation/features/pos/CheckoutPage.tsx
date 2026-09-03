@@ -8,6 +8,8 @@ import { describedLaborLines, laborValidationError } from '@/domain/sales/labor'
 import { chargeableFeeLines } from '@/domain/entities';
 import { useRegisterStatus } from '@/presentation/hooks/useRegisterStatus';
 import { useProducts } from '@/presentation/hooks/useProducts';
+import { useJobOrders } from '@/presentation/hooks/useJobOrders';
+import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { stockShortfalls, type StockShortfall } from '@/domain/sales/cart';
 import { CheckoutSuccessDialog } from './CheckoutSuccessDialog';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -31,6 +33,15 @@ export function CheckoutPage() {
   const navigate = useNavigate();
   const { previousDayUnsettled } = useRegisterStatus();
   const { data: liveProducts } = useProducts();
+  // A direct service sale (mechanic/motorcycle, no source ticket) records a
+  // billed job order in the same transaction — the number is minted here
+  // from the live list, same collision-safe rule as Save-as-JO. Null while
+  // the list loads: the sale is never blocked, it just skips the ticket.
+  const { data: allJobOrders } = useJobOrders();
+  const autoJobOrderName =
+    jobOrderId === null && (mechanicId !== null || motorcycleModel !== null) && allJobOrders
+      ? nextJobOrderNumber(new Date(), allJobOrders.map((j) => j.name))
+      : null;
   const [completed, setCompleted] = useState<{
     saleId: string;
     saleNumber: string;
@@ -79,6 +90,7 @@ export function CheckoutPage() {
         mechanicName,
         motorcycleModel,
         jobOrderId,
+        autoJobOrderName,
         notes,
       });
       // The cart stays intact until Done — the idempotent checkoutId makes an

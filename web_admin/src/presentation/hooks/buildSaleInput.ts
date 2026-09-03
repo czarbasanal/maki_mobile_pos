@@ -26,6 +26,10 @@ export interface CheckoutInput {
   /** Carried from the job order this checkout bills out; null for a walk-in. */
   motorcycleModel: string | null;
   jobOrderId: string | null;
+  /** Pre-minted JO number for a direct service sale (mechanic/motorcycle,
+   *  no source ticket) — the sale transaction records a billed job order
+   *  under it. Null = no auto ticket. */
+  autoJobOrderName: string | null;
   // Cart notes (typed at JO save or restored on resume) ride onto the sale —
   // mobile's toSale() does the same.
   notes: string | null;

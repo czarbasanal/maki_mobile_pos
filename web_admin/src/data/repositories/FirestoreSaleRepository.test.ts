@@ -470,3 +470,80 @@ describe('FirestoreSaleRepository.watchToday — SHOP-day window', () => {
     expect((leCall[2] as Date).getTime()).toBe(shopEndOfDay(now).getTime());
   });
 });
+
+describe('FirestoreSaleRepository.create — auto job order for direct service sales', () => {
+  beforeEach(() => {
+    state.writes = [];
+    state.autoIdSeq = 0;
+    state.counterExists = false;
+    state.counterData = {};
+    state.jobOrderDoc = null;
+    vi.useRealTimers();
+  });
+
+  it('a mechanic on a ticket-less sale records a billed JO in the same transaction', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+
+    await repo.create(
+      { ...baseInput(), mechanicId: 'm1', mechanicName: 'Jeric', motorcycleModel: 'Smash' },
+      'actor-1',
+      undefined,
+      'JO-090326-004',
+    );
+
+    const joWrite = state.writes.find((w) => w.kind === 'set' && w.path.startsWith('job_orders/'));
+    expect(joWrite).toBeDefined();
+    const jo = joWrite!.data as Record<string, unknown>;
+    expect(jo.name).toBe('JO-090326-004');
+    expect(jo.isConverted).toBe(true);
+    expect(jo.mechanicName).toBe('Jeric');
+    expect(jo.motorcycleModel).toBe('Smash');
+    expect(jo.createdBy).toBe('actor-1');
+
+    // The sale links back to the freshly created ticket.
+    const saleWrite = state.writes.find((w) => w.kind === 'set' && w.path.startsWith('sales/'));
+    const joId = joWrite!.path.split('/')[1];
+    expect((saleWrite!.data as Record<string, unknown>).jobOrderId).toBe(joId);
+    expect(jo.convertedToSaleId).toBe(saleWrite!.path.split('/')[1]);
+  });
+
+  it('a plain retail sale (no mechanic, no motorcycle) never creates a ticket', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+
+    await repo.create(baseInput(), 'actor-1', undefined, 'JO-090326-004');
+
+    expect(state.writes.some((w) => w.path.startsWith('job_orders/'))).toBe(false);
+  });
+
+  it('billing out an EXISTING ticket never creates a second one', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+    state.jobOrderDoc = { exists: true, isConverted: false };
+
+    await repo.create(
+      { ...baseInput(), jobOrderId: 'jo-1', mechanicId: 'm1', mechanicName: 'Jeric' },
+      'actor-1',
+      undefined,
+      'JO-090326-004',
+    );
+
+    const joSets = state.writes.filter((w) => w.kind === 'set' && w.path.startsWith('job_orders/'));
+    expect(joSets).toHaveLength(0); // the existing ticket is UPDATED, not re-created
+    const joUpdate = state.writes.find((w) => w.kind === 'update' && w.path === 'job_orders/jo-1');
+    expect(joUpdate).toBeDefined();
+  });
+
+  it('without a minted name (list still loading) the sale proceeds without a ticket', async () => {
+    const repo = new FirestoreSaleRepository({} as unknown as Firestore);
+
+    await repo.create(
+      { ...baseInput(), mechanicId: 'm1', mechanicName: 'Jeric' },
+      'actor-1',
+      undefined,
+      null,
+    );
+
+    expect(state.writes.some((w) => w.path.startsWith('job_orders/'))).toBe(false);
+    const saleWrite = state.writes.find((w) => w.kind === 'set' && w.path.startsWith('sales/'));
+    expect((saleWrite!.data as Record<string, unknown>).jobOrderId).toBeNull();
+  });
+});

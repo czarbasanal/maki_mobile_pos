@@ -24,6 +24,11 @@ export interface SaleRepository {
     sale: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>,
     actorId: string,
     saleId?: string,
+    /** A pre-minted JO number: a direct sale carrying a mechanic or
+     *  motorcycle (service work billed on the spot) records a job order in
+     *  the same transaction, already billed and linked — so the JO ledger
+     *  is the complete service history, not just deferred tickets. */
+    autoJobOrderName?: string | null,
   ): Promise<Sale>;
   voidSale(id: string, reason: string, actorId: string, actorName: string): Promise<void>;
 }

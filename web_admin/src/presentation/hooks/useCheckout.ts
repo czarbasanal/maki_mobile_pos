@@ -19,7 +19,12 @@ export function useCheckout() {
       if (!actor) throw new Error('Not signed in');
       let sale: Sale;
       try {
-        sale = await repo.create(buildSaleInput(input, actor), actor.id, input.checkoutId);
+        sale = await repo.create(
+          buildSaleInput(input, actor),
+          actor.id,
+          input.checkoutId,
+          input.autoJobOrderName,
+        );
       } catch (e) {
         // The server-side drawer rule denies sales while an earlier day is
         // unclosed; surface it as the operational message, not SDK jargon

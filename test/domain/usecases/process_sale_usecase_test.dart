@@ -37,6 +37,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(_FakeSaleEntity());
+    registerFallbackValue(_FakeJobOrderEntity());
   });
 
   late ProcessSaleUseCase useCase;
@@ -461,6 +462,78 @@ void main() {
           actor: _cashier(), sale: sale, checkoutId: 'chk-dup');
 
       verifyNever(() => mockLogRepo.logActivity(any()));
+    });
+  });
+
+  group('direct service sales record a job order (web parity)', () {
+    SaleEntity serviceSale() => createTestSale().copyWith(
+          mechanicId: 'm1',
+          mechanicName: 'Jeric',
+          motorcycleModel: 'Smash',
+        );
+
+    void stubHappyCreate(SaleEntity created) {
+      when(() => mockSaleRepo.createSale(any(),
+              id: any(named: 'id'),
+              decrementStock: any(named: 'decrementStock')))
+          .thenAnswer((_) async => created);
+      when(() => mockProductRepo.getProductById(any()))
+          .thenAnswer((_) async => null);
+    }
+
+    test('mechanic + motorcycle with no source ticket creates a billed JO',
+        () async {
+      final sale = serviceSale();
+      final created = sale.copyWith(id: 'sale-9', saleNumber: 'SALE-009');
+      stubHappyCreate(created);
+      when(() => mockJobOrderRepo.getJobOrdersByDateRange(
+            startDate: any(named: 'startDate'),
+            endDate: any(named: 'endDate'),
+            includeConverted: any(named: 'includeConverted'),
+          )).thenAnswer((_) async => const []);
+      when(() => mockJobOrderRepo.createJobOrder(any()))
+          .thenAnswer((inv) async =>
+              (inv.positionalArguments[0] as JobOrderEntity).copyWith(id: 'jo-9'));
+
+      final result = await useCase.execute(
+          actor: _cashier(), sale: sale, checkoutId: 'chk-9');
+
+      expect(result.success, isTrue);
+      final capturedJo = verify(() => mockJobOrderRepo.createJobOrder(captureAny()))
+          .captured
+          .single as JobOrderEntity;
+      expect(capturedJo.isConverted, isTrue);
+      expect(capturedJo.convertedToSaleId, 'sale-9');
+      expect(capturedJo.mechanicName, 'Jeric');
+      expect(capturedJo.motorcycleModel, 'Smash');
+      expect(capturedJo.name, startsWith('JO-'));
+    });
+
+    test('a plain retail sale never creates a ticket', () async {
+      final sale = createTestSale();
+      stubHappyCreate(sale.copyWith(id: 'sale-10', saleNumber: 'SALE-010'));
+
+      final result = await useCase.execute(
+          actor: _cashier(), sale: sale, checkoutId: 'chk-10');
+
+      expect(result.success, isTrue);
+      verifyNever(() => mockJobOrderRepo.createJobOrder(any()));
+    });
+
+    test('a JO-creation failure warns but never sinks the sale', () async {
+      final sale = serviceSale();
+      stubHappyCreate(sale.copyWith(id: 'sale-11', saleNumber: 'SALE-011'));
+      when(() => mockJobOrderRepo.getJobOrdersByDateRange(
+            startDate: any(named: 'startDate'),
+            endDate: any(named: 'endDate'),
+            includeConverted: any(named: 'includeConverted'),
+          )).thenThrow(Exception('offline'));
+
+      final result = await useCase.execute(
+          actor: _cashier(), sale: sale, checkoutId: 'chk-11');
+
+      expect(result.success, isTrue);
+      expect(result.warnings, anyElement(contains('Service ticket record failed')));
     });
   });
 }

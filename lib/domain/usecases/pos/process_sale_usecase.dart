@@ -1,4 +1,5 @@
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/job_order_number.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/repositories.dart';
@@ -73,6 +74,11 @@ class ProcessSaleUseCase {
 
       // 4. Mark the source job order converted (if any)
       await _reconcileJobOrder(sale, createdSale.id, warnings);
+
+      // 4b. A direct service sale (mechanic or motorcycle, no source ticket)
+      //     records a job order born converted, so the JO ledger is the full
+      //     bench history and not just deferred tickets (web parity).
+      await _recordDirectServiceTicket(createdSale, warnings);
 
       // Fresh creates only — the DuplicateSaleException retry path above
       // reloads a sale that was already recorded (and already logged), so
@@ -161,6 +167,55 @@ class ProcessSaleUseCase {
         // Don't fail the sale if job order update fails
         warnings.add('Job Order conversion failed: $e');
       }
+    }
+  }
+
+  /// Records a billed job order for a direct service sale that came from no
+  /// ticket. Best-effort like [_reconcileJobOrder]: a failure warns, never
+  /// sinks the sale. Fresh creates only — the replayed-checkout path skips it
+  /// rather than risking a duplicate ticket (the first attempt normally
+  /// created it).
+  Future<void> _recordDirectServiceTicket(
+    SaleEntity sale,
+    List<String> warnings,
+  ) async {
+    final hasSourceTicket =
+        sale.jobOrderId != null && sale.jobOrderId!.isNotEmpty;
+    final isServiceSale =
+        (sale.mechanicId != null && sale.mechanicId!.isNotEmpty) ||
+            (sale.motorcycleModel != null && sale.motorcycleModel!.isNotEmpty);
+    if (hasSourceTicket || !isServiceSale) return;
+
+    try {
+      final now = DateTime.now();
+      // Same minting rule as Save-as-JO: today's names, converted included,
+      // so a billed-out number is never reissued.
+      final todays = await _jobOrderRepository.getJobOrdersByDateRange(
+        startDate: now,
+        endDate: now,
+        includeConverted: true,
+      );
+      final name = nextJobOrderNumber(now, todays.map((j) => j.name));
+      await _jobOrderRepository.createJobOrder(JobOrderEntity(
+        id: '',
+        name: name,
+        items: sale.items,
+        laborLines: sale.laborLines,
+        feeLines: sale.feeLines,
+        mechanicId: sale.mechanicId,
+        mechanicName: sale.mechanicName,
+        motorcycleModel: sale.motorcycleModel,
+        discountType: sale.discountType,
+        createdBy: sale.cashierId,
+        createdByName: sale.cashierName,
+        createdAt: now,
+        isConverted: true,
+        convertedToSaleId: sale.id,
+        convertedAt: now,
+        notes: sale.notes,
+      ));
+    } catch (e) {
+      warnings.add('Service ticket record failed: $e');
     }
   }
 

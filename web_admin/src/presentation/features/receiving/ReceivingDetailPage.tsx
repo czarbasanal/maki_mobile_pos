@@ -89,7 +89,7 @@ export function ReceivingDetailPage() {
   }
 
   return (
-    <div className="flex max-w-[1180px] flex-col gap-3 print:hidden">
+    <div className="flex flex-col gap-3 print:hidden">
       <BackButton label="Back to receiving" onClick={() => navigate(RoutePaths.receiving)} />
 
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
