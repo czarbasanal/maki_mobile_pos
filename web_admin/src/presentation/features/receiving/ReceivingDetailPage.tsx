@@ -11,6 +11,7 @@ import { PrinterIcon } from '@heroicons/react/24/outline';
 import { useReceiving } from '@/presentation/hooks/useReceiving';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { formatMoney } from '@/core/utils/money';
+import { marginPct, marginToneClass } from '@/domain/products/margin';
 import { formatInShopZone } from '@/domain/time/shopTime';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -156,10 +157,7 @@ export function ReceivingDetailPage() {
             <tbody>
               {receiving.items.map((it, index) => {
                 const price = sellPriceOf(it);
-                const margin =
-                  price != null && price > 0
-                    ? Math.round(((price - it.unitCost) / price) * 100)
-                    : null;
+                const margin = price != null ? marginPct(price, it.unitCost) : null;
                 return (
                   // Legacy/web-written items can have an empty id; the index
                   // fallback stays unique in this non-reordering list.
@@ -200,13 +198,7 @@ export function ReceivingDetailPage() {
                     <td
                       className={cn(
                         'px-3 py-3 text-right font-mono text-[12px] font-semibold',
-                        margin == null
-                          ? 'text-ink-3'
-                          : margin >= 50
-                            ? 'text-pos'
-                            : margin >= 25
-                              ? 'text-ink-2'
-                              : 'text-neg',
+                        marginToneClass(margin),
                       )}
                     >
                       {margin == null ? '—' : `${margin}%`}

@@ -1,6 +1,6 @@
 /**
  * Thrown by the product repository when a SKU's product_skus claim is already
- * taken. Message matches the string InventoryFormPage maps to a field error;
+ * taken. Message matches the string ProductModal maps to a field error;
  * the Bulk-Receiving retry catches this type to bump the variation number.
  */
 export class DuplicateSkuError extends Error {
@@ -12,7 +12,7 @@ export class DuplicateSkuError extends Error {
 
 /**
  * Thrown by the product repository when a barcode's product_barcodes claim is
- * already taken. Message matches the string InventoryFormPage maps to a field
+ * already taken. Message matches the string ProductModal maps to a field
  * error.
  */
 export class DuplicateBarcodeError extends Error {

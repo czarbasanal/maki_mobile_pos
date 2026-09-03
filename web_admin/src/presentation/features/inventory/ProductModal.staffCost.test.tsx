@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { InventoryFormPage } from './InventoryFormPage';
+import { ProductModal } from './ProductModal';
 import { defaultCostCode } from '@/domain/entities/CostCode';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
@@ -72,7 +72,7 @@ function harness() {
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/inventory/p1/edit']}>
           <Routes>
-            <Route path="/inventory/:id/edit" element={<InventoryFormPage />} />
+            <Route path="/inventory/:id/edit" element={<ProductModal />} />
             <Route path="/inventory" element={<div>list</div>} />
             <Route path="/inventory/:id" element={<div>view</div>} />
           </Routes>
@@ -83,7 +83,7 @@ function harness() {
   return { updateProductWithClaims, update };
 }
 
-describe('InventoryFormPage — staff editing and cost secrecy', () => {
+describe('ProductModal — staff editing and cost secrecy', () => {
   it('hides the Cost field from staff in edit mode', async () => {
     signIn(UserRole.staff);
     harness();

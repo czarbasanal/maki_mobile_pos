@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { Link, useNavigate, useParams, generatePath } from 'react-router-dom';
+import { useNavigate, useParams, generatePath } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AdjustmentsHorizontalIcon, ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { AdjustmentsHorizontalIcon, CubeIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { useProduct } from '@/presentation/hooks/useProduct';
 import {
   useCreateProduct,
   useCreateVariation,
   useDeactivateProduct,
+  useDeleteProduct,
+  useReactivateProduct,
   useUpdateProduct,
 } from '@/presentation/hooks/useProductMutations';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
@@ -34,10 +36,14 @@ import {
 import type { ProductUpdateInput } from '@/domain/repositories/ProductRepository';
 import { SellingOptionsEditor } from './SellingOptionsEditor';
 import { AdjustStockDialog } from './AdjustStockDialog';
-import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
+import { Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
-import { ProductImage } from '@/presentation/components/common/ProductImage';
+import { Modal } from '@/presentation/components/ui/Modal';
+import { Chip } from '@/presentation/components/ui/Chip';
+import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
+import { toast } from '@/presentation/components/ui/toast';
+import { marginPct, marginToneClass } from '@/domain/products/margin';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 import Cropper, { type Area } from 'react-easy-crop';
@@ -85,20 +91,18 @@ function withCurrent(names: string[], current: string | null): string[] {
   return names;
 }
 
-interface InventoryFormPageProps {
-  /** Rendered inside the product drawer: the drawer supplies the title, close
-   *  button and padding, so the form drops its own page chrome and returns to
-   *  the product view rather than the list. */
-  embedded?: boolean;
-}
-
-export function InventoryFormPage({ embedded = false }: InventoryFormPageProps = {}) {
+/**
+ * The product modal — ONE component, two modes (product-modal guide): routed
+ * at /inventory/add (add) and /inventory/:id/edit (edit) over the list, on
+ * the shared Modal shell. Everything that differs between modes flows from
+ * `isEditing`; do not fork a second form.
+ */
+export function ProductModal() {
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
-  // Embedded, the form sits over the product view it was opened from — going
-  // back to the list would throw away more context than the user asked to
-  // leave.
-  const exitTo = embedded && id ? generatePath(RoutePaths.productDetail, { id }) : RoutePaths.inventory;
+  // Edit sits over the product view it was opened from — closing returns
+  // there rather than throwing away that context; add returns to the list.
+  const exitTo = id ? generatePath(RoutePaths.productDetail, { id }) : RoutePaths.inventory;
   const navigate = useNavigate();
   const repo = useProductRepo();
   const categoryRepo = useCategoryRepo();
@@ -130,7 +134,14 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   const createVariation = useCreateVariation();
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** The typed-SKU gate on the delete confirm — a hard delete is not a
+   *  button you can hit by muscle memory. */
+  const [deleteTyped, setDeleteTyped] = useState('');
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const deactivate = useDeactivateProduct();
+  const reactivate = useReactivateProduct();
+  const deleteProduct = useDeleteProduct();
   /** Open when a typed SKU collided with a product carrying a different cost. */
   const [variationDialog, setVariationDialog] = useState<{
     open: boolean;
@@ -187,7 +198,7 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
     setValue,
     getValues,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -204,8 +215,13 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
       : 'New product · Inventory';
   }, [isEditing, target]);
 
+  // Seed ONCE per product id: deactivate/reactivate invalidate the product
+  // query, and the refetch must not silently revert a half-edited draft
+  // (reviewer catch — the in-place danger zone made that routine).
+  const seededId = useRef<string | null>(null);
   useEffect(() => {
-    if (!target) return;
+    if (!target || seededId.current === target.id) return;
+    seededId.current = target.id;
     reset({
       name: target.name,
       sku: target.sku,
@@ -257,13 +273,24 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   }, [suppliers, target?.supplierId, target?.supplierName]);
 
   if (isEditing && error) {
-    return <ErrorView title="Could not load product" message={error.message} />;
+    return (
+      <Modal open onClose={() => navigate(RoutePaths.inventory)} title="Edit product" widthClassName="max-w-[680px]">
+        <ErrorView title="Could not load product" message={error.message} />
+      </Modal>
+    );
   }
   if (isEditing && (isLoading || !target)) {
-    return <LoadingView label="Loading product…" />;
+    return (
+      <Modal open onClose={() => navigate(RoutePaths.inventory)} title="Edit product" widthClassName="max-w-[680px]">
+        <div className="flex items-center justify-center py-10">
+          <Spinner className="h-5 w-5" />
+        </div>
+      </Modal>
+    );
   }
 
-  const submitting = isSubmitting || update.isPending || create.isPending;
+  const submitting =
+    isSubmitting || update.isPending || create.isPending || createVariation.isPending;
   const mutationError = update.error?.message ?? create.error?.message ?? null;
   const skuLocked = (!isEditing && autoSku) || (isEditing && nameOnly);
   // Only admins can SEE (and fix) the selling-options editor, and every
@@ -271,6 +298,44 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   // validation lock. Otherwise one malformed stored option would silently
   // dead-end staff/cashier saves behind a section they cannot render.
   const sellingOptionsError = isAdmin ? validateSellingOptions(sellingOptions) : null;
+
+  const busy = submitting || deactivate.isPending || reactivate.isPending || deleteProduct.isPending;
+  // Draft-vs-record dirtiness: RHF covers registered fields; barcodes, selling
+  // options and the image live in local state and count too. A typed-but-not-
+  // added barcode is work worth confirming over.
+  const dirty =
+    isDirty ||
+    imageBlob !== null ||
+    imageRemoved ||
+    barcodeInput.trim() !== '' ||
+    JSON.stringify(barcodes) !== JSON.stringify(target?.barcodes ?? []) ||
+    JSON.stringify(sellingOptions) !== JSON.stringify(target?.sellingOptions ?? []);
+  const requestClose = () => {
+    if (busy) return;
+    if (dirty) setConfirmDiscard(true);
+    else navigate(exitTo);
+  };
+  // Guide rule: Save refuses until a name and a price above zero exist (cost
+  // may legitimately be zero). Editors whose patch can't change price (the
+  // field is admin-only in edit mode) are exempt — a legacy zero must not
+  // trap them behind a field they cannot touch.
+  const priceLocked = nameOnly || (isEditing && !isAdmin);
+  const canSave =
+    !busy &&
+    !sellingOptionsError &&
+    !!String(watch('name') ?? '').trim() &&
+    (priceLocked || Number(watch('price')) > 0);
+  const liveMargin = marginPct(Number(watch('price')) || 0, Number(watch('cost')) || 0);
+  const subtitle =
+    isEditing && target
+      ? [displaySku(target.sku), target.category?.toUpperCase(), `${target.quantity} on hand`]
+          .filter(Boolean)
+          .join(' · ')
+      : 'Set a cost and a price and the register handles the rest.';
+  const typedMatches =
+    !!target &&
+    (deleteTyped.trim().toUpperCase() === target.sku.toUpperCase() ||
+      deleteTyped.trim().toUpperCase() === displaySku(target.sku).toUpperCase());
 
   /** Looks up the active product category matching `name` (case-sensitive,
    *  mirrors the dropdown's exact-name matching). */
@@ -592,7 +657,16 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
     // it, so guard here too. The submit button is also disabled while this
     // is truthy, but a native Enter-to-submit bypasses a disabled button, so
     // this is the actual enforcement point.
+    // The footer button is aria-disabled (not disabled) so the .45-opacity
+    // styling stays clickable-looking per the guide — this is the actual
+    // double-submit guard (a second click or Enter during a slow create
+    // would otherwise mint a second sequential auto-SKU).
+    if (busy) return;
     if (sellingOptionsError) return;
+    if (!priceLocked && Number(values.price) <= 0) {
+      setError('price', { type: 'min', message: 'Price must be above zero' });
+      return;
+    }
     if (isEditing && target && values.sku.trim() !== target.sku) {
       const count = await repo.countSkuVariations(target.sku);
       setSkuDialog({ open: true, count, values });
@@ -606,261 +680,435 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
   };
 
   return (
-    <div className={embedded ? 'space-y-tk-lg' : 'space-y-tk-xl'}>
-      {/* The drawer already shows the product name and a close button, so
-          embedding this would say the same thing twice. */}
-      {!embedded ? (
-        <Link
-          to={RoutePaths.inventory}
-          className="inline-flex items-center gap-tk-xs text-ctl-sm text-ink-2 hover:text-ink"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Inventory
-        </Link>
-      ) : null}
-
-      {mutationError && !errors.sku ? (
-        <p className="rounded-field border border-neg bg-neg-soft px-tk-md py-tk-sm text-ctl-sm text-neg">
-          {mutationError}
-        </p>
-      ) : null}
-      {loadNotice ? (
-        <p className="rounded-field border border-accent-line bg-accent-soft px-tk-md py-tk-sm text-ctl-sm text-accent-text">
-          {loadNotice}
-        </p>
-      ) : null}
-
-      <form onSubmit={onFormSubmit} className="space-y-tk-lg" noValidate>
+    <>
+      <Modal
+        open
+        onClose={requestClose}
+        title={isEditing ? 'Edit product' : 'New product'}
+        subtitle={subtitle}
+        icon={
+          <div
+            aria-hidden
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-accent-text"
+          >
+            <CubeIcon className="h-[18px] w-[18px]" />
+          </div>
+        }
+        widthClassName="max-w-[680px]"
+        initialFocus={isEditing ? 'none' : 'first-input'}
+        footer={
+          <>
+            <span className="ml-auto" />
+            <button
+              type="button"
+              onClick={requestClose}
+              disabled={busy}
+              className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-sm text-ink-2 hover:bg-surface-2"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="product-form"
+              aria-disabled={!canSave || undefined}
+              className={cn(
+                'inline-flex items-center gap-tk-xs rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95',
+                !canSave && 'cursor-default opacity-[.45]',
+              )}
+            >
+              {submitting ? <Spinner className="h-3.5 w-3.5" /> : null}
+              {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create product'}
+            </button>
+          </>
+        }
+      >
+        {mutationError && !errors.sku ? (
+          <p className="rounded-ctl border border-neg bg-neg-soft px-tk-md py-tk-sm text-ctl-sm text-neg">
+            {mutationError}
+          </p>
+        ) : null}
+        {loadNotice ? (
+          <p className="rounded-ctl border border-accent-line bg-accent-soft px-tk-md py-tk-sm text-ctl-sm text-accent-text">
+            {loadNotice}
+          </p>
+        ) : null}
         {isEditing && nameOnly ? (
-          <div className="rounded-field border border-line-2 bg-surface-2 px-tk-md py-tk-sm text-ctl-sm text-ink-2">
+          <div className="rounded-ctl border border-line-2 bg-surface-2 px-tk-md py-tk-sm text-ctl-sm text-ink-2">
             You can edit the product name and image.
           </div>
         ) : null}
 
-        <Section title="Identity">
-          <Field label="Name" error={errors.name?.message}
-            input={
-              <input
-                type="text"
-                className={inputCls(!!errors.name)}
-                {...nameField}
-                onChange={(e) => { upperizeInput(e); void nameField.onChange(e); }}
-              />
-            } />
+        <form id="product-form" onSubmit={onFormSubmit} noValidate className="flex flex-col gap-[18px]">
+          {/* Identity: photo slot beside name, SKU/barcode pair beneath. */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-[14px]">
+            <div className="flex shrink-0 flex-col items-start gap-1.5">
+              <label
+                className={cn(
+                  'flex h-[88px] w-[88px] cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-[12px] border text-ink-3 transition-colors',
+                  shownImage
+                    ? 'border-solid border-line'
+                    : 'border-dashed border-line hover:border-accent-line hover:text-accent-text',
+                )}
+              >
+                {shownImage ? (
+                  <img src={shownImage} alt={target?.name ?? 'Product'} className="h-full w-full object-cover" />
+                ) : (
+                  <>
+                    <PhotoIcon className="h-5 w-5" />
+                    <span className="text-[10.5px] font-medium">Add photo</span>
+                  </>
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+              </label>
+              {shownImage ? (
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="text-[11px] text-ink-3 hover:text-neg"
+                >
+                  Remove photo
+                </button>
+              ) : null}
+            </div>
 
-          {!isEditing ? (
-            <label className="flex items-center gap-tk-sm text-ctl-sm text-ink">
-              <input
-                type="checkbox"
-                checked={autoSku}
-                onChange={(e) => {
-                  const on = e.target.checked;
-                  setAutoSku(on);
-                  // Cancel any in-flight peek when toggling.
-                  skuPeekToken.current++;
-                  if (on) {
-                    applyCategoryForSku(categoryEntityForName(getValues('category') ?? ''), true);
-                  }
-                }}
-              />
-              Auto-generate SKU from category
-            </label>
-          ) : null}
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <Field label="Name" error={errors.name?.message}>
+                <input
+                  data-autofocus
+                  type="text"
+                  className={inputCls(!!errors.name)}
+                  {...nameField}
+                  onChange={(e) => { upperizeInput(e); void nameField.onChange(e); }}
+                />
+              </Field>
 
-          <Field label="SKU" error={errors.sku?.message}
-            input={
-              <input
-                type="text"
-                readOnly={skuLocked}
-                className={cn(inputCls(!!errors.sku), skuLocked && 'bg-surface-2 text-ink-2')}
-                {...skuField}
-                onChange={(e) => { upperizeInput(e); void skuField.onChange(e); }}
-              />
-            } />
-          {skuLocked && skuHint ? (
-            <p className="text-[12px] text-ink-3">{skuHint}</p>
-          ) : null}
-          {isEditing ? (
-            <p className="text-[12px] text-ink-3">
-              Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.
-            </p>
-          ) : null}
-
-          <Field label="Barcodes" error={barcodeError ?? undefined}
-            input={
-              <div className="space-y-tk-sm">
-                {barcodes.length ? (
-                  <div className="flex flex-wrap gap-tk-xs">
-                    {barcodes.map((code) => (
-                      <span key={code} className="inline-flex items-center gap-tk-xs rounded-full bg-surface-2 px-tk-sm py-[2px] text-[12px] text-ink">
-                        <span className="font-mono">{code}</span>
-                        {nameOnly ? null : (
-                          <button type="button" onClick={() => removeBarcode(code)} className="text-ink-3 hover:text-neg" aria-label={`Remove ${code}`}>×</button>
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                {nameOnly ? null : (
-                <div className="flex items-center gap-tk-sm">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+                <div className="flex flex-col gap-[6px]">
+                  <span className="flex items-center justify-between text-[11.5px] font-semibold text-ink-2">
+                    SKU
+                    {!isEditing ? (
+                      <label className="flex cursor-pointer items-center gap-1.5 font-medium text-ink-3">
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5"
+                          checked={autoSku}
+                          onChange={(e) => {
+                            const on = e.target.checked;
+                            setAutoSku(on);
+                            // Cancel any in-flight peek when toggling.
+                            skuPeekToken.current++;
+                            if (on) {
+                              applyCategoryForSku(categoryEntityForName(getValues('category') ?? ''), true);
+                            }
+                          }}
+                        />
+                        Auto
+                      </label>
+                    ) : null}
+                  </span>
+                  {/* readOnly, not styled-as-disabled: the guide's trap. While
+                      auto is on the field is genuinely locked, and its text
+                      stays --text on the --surface-3 fill. */}
                   <input
                     type="text"
-                    value={barcodeInput}
-                    onChange={(e) => { setBarcodeInput(e.target.value); if (barcodeError) setBarcodeError(null); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitBarcode(barcodeInput); } }}
-                    placeholder="Add barcode"
-                    className={inputCls(false)}
+                    readOnly={skuLocked}
+                    aria-label="SKU"
+                    className={cn(inputCls(!!errors.sku), 'font-mono', skuLocked && 'cursor-default bg-surface-3')}
+                    {...skuField}
+                    onChange={(e) => { upperizeInput(e); void skuField.onChange(e); }}
                   />
-                  <button type="button" onClick={() => commitBarcode(barcodeInput)}
-                    className="inline-flex shrink-0 items-center rounded-field border border-line px-tk-md py-[10px] text-ctl-sm text-ink hover:bg-surface-2">
-                    Add
-                  </button>
-                </div>
-                )}
-              </div>
-            } />
-
-          <Field label="Image"
-            input={
-              <div className="flex items-center gap-tk-md">
-                <ProductImage src={shownImage} alt={target?.name ?? 'Product'} size="md" />
-                <div className="flex items-center gap-tk-sm">
-                  <label className="cursor-pointer rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2">
-                    {shownImage ? 'Change' : 'Upload'}
-                    <input type="file" accept="image/*" className="hidden" onChange={onPickFile} />
-                  </label>
-                  {shownImage ? (
-                    <button type="button" onClick={removeImage}
-                      className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink-2 hover:bg-surface-2">
-                      Remove
-                    </button>
+                  {errors.sku?.message ? (
+                    <span className="text-[11.5px] text-neg">{errors.sku.message}</span>
+                  ) : null}
+                  {skuLocked && skuHint ? (
+                    <span className="text-[11.5px] text-ink-3">{skuHint}</span>
+                  ) : null}
+                  {isEditing && !nameOnly ? (
+                    <span className="text-[11.5px] text-ink-3">
+                      Changing the SKU keeps past sales &amp; receiving records on the old code and re-points linked variations.
+                    </span>
                   ) : null}
                 </div>
+
+                <Field group label="Barcodes" error={barcodeError ?? undefined}>
+                  <div className="flex flex-col gap-2">
+                    {barcodes.length ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {barcodes.map((code) => (
+                          <span
+                            key={code}
+                            className="inline-flex items-center gap-1.5 rounded-pill bg-surface-2 px-2.5 py-[2px] text-[12px] text-ink"
+                          >
+                            <span className="font-mono">{code}</span>
+                            {nameOnly ? null : (
+                              <button
+                                type="button"
+                                onClick={() => removeBarcode(code)}
+                                className="text-ink-3 hover:text-neg"
+                                aria-label={`Remove ${code}`}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {nameOnly ? null : (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={barcodeInput}
+                          onChange={(e) => { setBarcodeInput(e.target.value); if (barcodeError) setBarcodeError(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitBarcode(barcodeInput); } }}
+                          placeholder="Add barcode"
+                          className={cn(inputCls(false), 'font-mono')}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => commitBarcode(barcodeInput)}
+                          className="shrink-0 rounded-ctl border border-line px-tk-md py-2.5 text-ctl-sm text-ink hover:bg-surface-2"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </Field>
               </div>
-            } />
-        </Section>
-
-        <Section title="Pricing">
-          <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
-            {!isEditing || canSeeCost ? (
-              <Field label="Cost" error={errors.cost?.message}
-                input={<input type="number" step="0.01" className={inputCls(!!errors.cost)} {...register('cost')} />} />
-            ) : null}
-            {/* Staff/cashier may not CHANGE price (rules reject the whole
-                update), so editing it would only invite a save that cannot
-                succeed. The seeded value still rides the patch unchanged. */}
-            <Field label="Price" error={errors.price?.message}
-              input={<input type="number" step="0.01" disabled={isEditing && !isAdmin}
-                className={inputCls(!!errors.price)} {...register('price')} />} />
+            </div>
           </div>
-          {/* The base price stops being directly sellable once a product
-              carries selling options — a picker gates every sale instead.
-              Say so in plain shop-owner language, not developer jargon. */}
-          {sellingOptions.length > 0 ? (
-            <p className="text-[12px] text-ink-3">
-              The POS will ask for a selling option — this price is used for inventory value, not charged directly.
-            </p>
-          ) : null}
-        </Section>
 
-        {/* Admin-only, same as InventoryListPage's totals strip. Shown in
-            both create and edit — creation is unrestricted for this field,
-            matching how `price` already works (Task 13). */}
-        {isAdmin ? (
-          <Section title="Selling options">
-            <SellingOptionsEditor
-              value={sellingOptions}
-              onChange={setSellingOptions}
-              unitCost={Number(watch('cost')) || 0}
-              unit={watch('unit') || 'pcs'}
-              showMargin={isAdmin}
-              error={sellingOptionsError}
-            />
-          </Section>
-        ) : null}
-
-        {/* Stock moves through an audited adjustment, not by typing over the
-            quantity — so the control sits on this section's heading rather
-            than among the fields, where it would read as an alternative to
-            them. Create mode has no stock to adjust yet. */}
-        <Section
-          title="Stock & classification"
-          action={
-            isEditing && target && canEditStock ? (
-              <button
-                type="button"
-                onClick={() => setAdjustOpen(true)}
-                className="inline-flex items-center gap-tk-xs rounded-field border border-line px-tk-sm py-[4px] text-ctl-sm text-ink hover:bg-surface-2"
-              >
-                <AdjustmentsHorizontalIcon className="h-3.5 w-3.5" /> Adjust stock
-              </button>
-            ) : null
-          }
-        >
-          <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
-            {!isEditing ? (
-              <Field label="Initial quantity" error={errors.quantity?.message}
-                input={<input type="number" className={inputCls(!!errors.quantity)} {...register('quantity')} />} />
+          <section className="flex flex-col gap-2">
+            <SectionLabel>Pricing</SectionLabel>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+              {!isEditing || canSeeCost ? (
+                <Field label="Cost" error={errors.cost?.message}>
+                  <input type="number" step="0.01" className={inputCls(!!errors.cost)} {...register('cost')} />
+                </Field>
+              ) : null}
+              {/* Staff/cashier may not CHANGE price (rules reject the whole
+                  update), so editing it would only invite a save that cannot
+                  succeed. The seeded value still rides the patch unchanged. */}
+              <Field label="Price" error={errors.price?.message}>
+                <input
+                  type="number"
+                  step="0.01"
+                  disabled={isEditing && !isAdmin}
+                  className={inputCls(!!errors.price)}
+                  {...register('price')}
+                />
+              </Field>
+              {/* The buyer should never have to compute the one number that
+                  decides whether the price is right. Hidden with Cost — a
+                  margin plus a visible price would leak the cost. */}
+              {!isEditing || canSeeCost ? (
+                <div className="flex flex-col justify-center gap-[3px] rounded-ctl bg-surface-2 px-3 py-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">Margin</span>
+                  <span className={cn('font-mono text-[17px] font-semibold leading-none', marginToneClass(liveMargin))}>
+                    {liveMargin === null ? '—' : `${liveMargin}%`}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+            {sellingOptions.length > 0 ? (
+              <p className="text-[11.5px] text-ink-3">
+                The POS will ask for a selling option — this price is used for inventory value, not charged directly.
+              </p>
             ) : null}
-            <Field label="Reorder level" error={errors.reorderLevel?.message}
-              input={<input type="number" placeholder="1" disabled={nameOnly} className={inputCls(!!errors.reorderLevel)} {...register('reorderLevel')} />} />
-            <Field label="Unit" error={errors.unit?.message}
-              input={
-                <select disabled={nameOnly} className={cn(inputCls(!!errors.unit), 'pr-8')} {...register('unit')}>
-                  {unitOptions.map((u) => (<option key={u} value={u}>{u}</option>))}
-                </select>
-              } />
-            <Field label="Category" error={errors.category?.message}
-              input={
-                <select disabled={nameOnly} className={cn(inputCls(false), 'pr-8')}
-                  {...register('category', {
-                    onChange: (e) => applyCategoryForSku(categoryEntityForName(e.target.value), autoSku),
-                  })}
-                >
-                  <option value="">(none)</option>
-                  {categoryOptions.map((c) => (<option key={c} value={c}>{c}</option>))}
-                </select>
-              } />
-            <Field label="Supplier" error={errors.supplierId?.message}
-              input={
-                <select disabled={nameOnly} className={cn(inputCls(false), 'pr-8')} {...register('supplierId')}>
-                  <option value="">No supplier</option>
-                  {supplierOptions.map((s) => (
-                    <option key={s.id} value={s.id}>{s.isActive ? s.name : `${s.name} (inactive)`}</option>
+          </section>
+
+          {/* Selling options are REAL here (per-option price and pieces gate
+              every POS sale), so the section stays — the guide dropped only
+              the original's empty placeholder card. Admin-only, same as the
+              list's money columns. */}
+          {isAdmin ? (
+            <section className="flex flex-col gap-2">
+              <SectionLabel>Selling options</SectionLabel>
+              <SellingOptionsEditor
+                value={sellingOptions}
+                onChange={setSellingOptions}
+                unitCost={Number(watch('cost')) || 0}
+                unit={watch('unit') || 'pcs'}
+                showMargin={isAdmin}
+                error={sellingOptionsError}
+              />
+            </section>
+          ) : null}
+
+          <section className="flex flex-col gap-2">
+            <SectionLabel>Stock &amp; classification</SectionLabel>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+              {!isEditing ? (
+                <Field label="Initial quantity" error={errors.quantity?.message}>
+                  <input type="number" className={inputCls(!!errors.quantity)} {...register('quantity')} />
+                </Field>
+              ) : (
+                <Field group label="On hand">
+                  {/* Stock moves through an audited adjustment, never by
+                      typing over the number (guide §5: a silent overwrite is
+                      a stock movement with no record). */}
+                  <div className="flex items-center gap-2">
+                    <div className={cn(inputCls(false), 'flex-1 cursor-default select-none bg-surface-3 font-mono')}>
+                      {target?.quantity ?? 0}
+                    </div>
+                    {target && canEditStock ? (
+                      <button
+                        type="button"
+                        onClick={() => setAdjustOpen(true)}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-ctl border border-line px-tk-md py-2.5 text-ctl-sm text-ink hover:bg-surface-2"
+                      >
+                        <AdjustmentsHorizontalIcon className="h-3.5 w-3.5" /> Adjust stock
+                      </button>
+                    ) : null}
+                  </div>
+                </Field>
+              )}
+              <Field label="Reorder level" error={errors.reorderLevel?.message}>
+                <input
+                  type="number"
+                  placeholder="1"
+                  disabled={nameOnly}
+                  className={inputCls(!!errors.reorderLevel)}
+                  {...register('reorderLevel')}
+                />
+              </Field>
+            </div>
+
+            <Field group={!nameOnly} label="Unit" error={errors.unit?.message}>
+              {nameOnly ? (
+                <input type="text" readOnly className={cn(inputCls(false), 'cursor-default bg-surface-3')} value={watch('unit')} />
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {unitOptions.map((u) => (
+                    <Chip key={u} active={watch('unit') === u} onClick={() => setValue('unit', u, { shouldDirty: true })}>
+                      {u}
+                    </Chip>
                   ))}
-                </select>
-              } />
-          </div>
-        </Section>
+                </div>
+              )}
+            </Field>
 
-        <Section title="Notes">
-          <Field label="Notes" error={errors.notes?.message}
-            input={<textarea rows={3} disabled={nameOnly} className={cn(inputCls(!!errors.notes), 'resize-y leading-relaxed')} {...register('notes')} />} />
-        </Section>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+              <Field group={!nameOnly} label="Category" error={errors.category?.message}>
+                {nameOnly ? (
+                  <input type="text" readOnly className={cn(inputCls(false), 'cursor-default bg-surface-3')} value={watch('category') || '(none)'} />
+                ) : (
+                  <SelectFilter
+                    label="Category"
+                    value={watch('category') ?? ''}
+                    options={categoryOptions.map((c) => ({ value: c, label: c }))}
+                    allLabel="(none)"
+                    onChange={(v) => {
+                      setValue('category', v, { shouldDirty: true });
+                      applyCategoryForSku(categoryEntityForName(v), autoSku);
+                    }}
+                  />
+                )}
+              </Field>
+              <Field group={!nameOnly} label="Supplier" error={errors.supplierId?.message}>
+                {nameOnly ? (
+                  <input type="text" readOnly className={cn(inputCls(false), 'cursor-default bg-surface-3')} value={resolveSupplier(watch('supplierId') ?? '').name ?? 'No supplier'} />
+                ) : (
+                  <SelectFilter
+                    label="Supplier"
+                    value={watch('supplierId') ?? ''}
+                    options={supplierOptions.map((sup) => ({
+                      value: sup.id,
+                      label: sup.isActive ? sup.name : `${sup.name} (inactive)`,
+                    }))}
+                    allLabel="No supplier"
+                    onChange={(v) => setValue('supplierId', v, { shouldDirty: true })}
+                  />
+                )}
+              </Field>
+            </div>
+          </section>
 
-        <div className="flex flex-wrap items-center justify-end gap-tk-sm">
-          {/* Deleting lives here rather than in the read-only view, so the
-              destructive action sits behind the deliberate act of editing.
-              Pushed to the far left, away from Save. */}
+          <Field label="Notes" error={errors.notes?.message}>
+            <textarea
+              rows={3}
+              disabled={nameOnly}
+              className={cn(inputCls(!!errors.notes), 'min-h-[74px] resize-y leading-normal')}
+              {...register('notes')}
+            />
+          </Field>
+
+          {/* Danger zone — at the bottom of the BODY, behind every field,
+              never in the footer beside Save (guide §3: a destructive button
+              adjacent to the primary is hit by muscle memory). */}
           {isEditing && target && canDeleteProduct ? (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              className="mr-auto inline-flex items-center gap-tk-xs rounded-field border border-neg px-tk-md py-tk-sm text-ctl-sm text-neg hover:bg-neg-soft"
-            >
-              <TrashIcon className="h-4 w-4" /> Delete
-            </button>
+            <section className="flex flex-col gap-2">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[1px] text-neg">Danger zone</h3>
+              <div className="overflow-hidden rounded-[12px] border border-neg">
+                <div className="flex flex-wrap items-center gap-3 bg-surface px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] font-semibold text-ink">
+                      {target.isActive ? 'Deactivate this product' : 'Product is deactivated'}
+                    </p>
+                    <p className="text-[11.5px] leading-snug text-ink-3">
+                      {target.isActive
+                        ? 'Stops it appearing at the register and in purchase orders. Nothing is lost, and you can turn it back on.'
+                        : 'Hidden from the register and from purchase orders. Stock, cost and history are untouched.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      if (target.isActive) {
+                        deactivate.reset();
+                        setConfirmDeactivate(true);
+                      } else {
+                        void reactivate
+                          .mutateAsync({ id: target.id, name: target.name, sku: target.sku })
+                          .then(() => toast.success('Product reactivated', target.name))
+                          .catch(() => undefined);
+                      }
+                    }}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2 disabled:opacity-60"
+                  >
+                    {reactivate.isPending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                    {target.isActive ? 'Deactivate' : 'Reactivate'}
+                  </button>
+                  {reactivate.error ? (
+                    <p className="w-full text-[11.5px] text-neg">{reactivate.error.message}</p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-3 border-t border-neg bg-neg-soft px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] font-semibold text-neg">Delete this product</p>
+                    {/* The gating is legible in the copy itself — the inert
+                        button never needs a tooltip to explain why. */}
+                    <p className="text-[11.5px] leading-snug text-ink-3">
+                      {target.isActive
+                        ? 'Deactivate it first — an active part cannot be deleted.'
+                        : 'Removes it from the catalog for good. Past sales, receipts and job orders keep their record of it.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-disabled={target.isActive || undefined}
+                    onClick={() => {
+                      if (target.isActive || busy) return;
+                      setDeleteTyped('');
+                      setConfirmDelete(true);
+                    }}
+                    className={cn(
+                      'shrink-0 rounded-ctl border px-tk-md py-tk-sm text-ctl-sm font-medium',
+                      target.isActive
+                        ? 'cursor-not-allowed border-line text-ink-3 opacity-50'
+                        : 'border-neg text-neg hover:bg-neg hover:text-white',
+                    )}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </section>
           ) : null}
-          <Link to={exitTo}
-            className="rounded-field px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2">
-            Cancel
-          </Link>
-          <button type="submit" disabled={submitting || !!sellingOptionsError}
-            className="flex items-center gap-tk-xs rounded-field bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60">
-            {submitting ? <Spinner className="h-3.5 w-3.5" /> : null}
-            {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create product'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </Modal>
 
       <Dialog
         open={skuDialog.open}
@@ -1046,16 +1294,22 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
 
       {isEditing && target ? (
         <Dialog
-          open={confirmDelete}
-          onClose={() => { if (!deactivate.isPending) setConfirmDelete(false); }}
-          title="Delete Product?"
+          open={confirmDeactivate}
+          onClose={() => { if (!deactivate.isPending) setConfirmDeactivate(false); }}
+          title="Deactivate product?"
           dismissable={!deactivate.isPending}
         >
           <div className="space-y-tk-md">
             <p className="text-ctl-sm text-ink-2">
-              Delete “{target.name}”? This product will be hidden from POS and inventory lists.
-              Past sales and receivings that reference it remain intact.
+              “{target.name}” stops appearing at the register and in purchase orders. Nothing is
+              lost, and you can turn it back on.
             </p>
+            {target.quantity > 0 ? (
+              <p className="rounded-ctl border border-accent-line bg-accent-soft px-tk-md py-tk-sm text-ctl-sm text-accent-text">
+                {target.quantity} on hand will stop appearing at the register and in stock
+                reports while it is deactivated.
+              </p>
+            ) : null}
             {deactivate.error ? (
               <p className="text-ctl-sm text-neg">{deactivate.error.message}</p>
             ) : null}
@@ -1063,8 +1317,8 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
               <button
                 type="button"
                 disabled={deactivate.isPending}
-                onClick={() => setConfirmDelete(false)}
-                className="rounded-field border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
+                onClick={() => setConfirmDeactivate(false)}
+                className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
               >
                 Cancel
               </button>
@@ -1072,21 +1326,102 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
                 type="button"
                 disabled={deactivate.isPending}
                 onClick={async () => {
-                  await deactivate.mutateAsync({ id: target.id, name: target.name, sku: target.sku });
-                  setConfirmDelete(false);
-                  // The product is hidden from inventory now, so the product
-                  // view we came from would show a record the list no longer
-                  // carries — go back to the list instead.
-                  navigate(RoutePaths.inventory);
+                  try {
+                    await deactivate.mutateAsync({ id: target.id, name: target.name, sku: target.sku });
+                    setConfirmDeactivate(false);
+                    toast.success('Product deactivated', target.name);
+                  } catch {
+                    // deactivate.error renders above
+                  }
                 }}
-                className="inline-flex items-center gap-tk-xs rounded-field bg-neg px-tk-md py-tk-sm text-ctl-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                className="inline-flex items-center gap-tk-xs rounded-ctl bg-neg px-tk-md py-tk-sm text-ctl-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
               >
-                {deactivate.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+                {deactivate.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Deactivate
               </button>
             </div>
           </div>
         </Dialog>
       ) : null}
+
+      {isEditing && target ? (
+        <Dialog
+          open={confirmDelete}
+          onClose={() => { if (!deleteProduct.isPending) setConfirmDelete(false); }}
+          title="Delete product?"
+          dismissable={!deleteProduct.isPending}
+        >
+          <div className="space-y-tk-md">
+            <p className="text-ctl-sm text-ink-2">
+              “{target.name}” (<span className="font-mono">{displaySku(target.sku)}</span>) is
+              removed from the catalog for good and its SKU is freed for reuse. Past sales,
+              receipts and job orders keep their record of it.
+            </p>
+            <label className="flex flex-col gap-[6px]">
+              <span className="text-[11.5px] font-semibold text-ink-2">
+                Type <span className="font-mono">{displaySku(target.sku)}</span> to confirm
+              </span>
+              <input
+                type="text"
+                value={deleteTyped}
+                onChange={(e) => setDeleteTyped(e.target.value)}
+                className={cn(inputCls(false), 'font-mono')}
+              />
+            </label>
+            {deleteProduct.error ? (
+              <p className="text-ctl-sm text-neg">{deleteProduct.error.message}</p>
+            ) : null}
+            <div className="flex justify-end gap-tk-sm pt-tk-sm">
+              <button
+                type="button"
+                disabled={deleteProduct.isPending}
+                onClick={() => setConfirmDelete(false)}
+                className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteProduct.isPending || !typedMatches}
+                onClick={async () => {
+                  try {
+                    await deleteProduct.mutateAsync({ id: target.id, name: target.name, sku: target.sku });
+                    setConfirmDelete(false);
+                    toast.success('Product deleted', `${target.name} · ${displaySku(target.sku)}`);
+                    navigate(RoutePaths.inventory);
+                  } catch {
+                    // deleteProduct.error renders above
+                  }
+                }}
+                className="inline-flex items-center gap-tk-xs rounded-ctl bg-neg px-tk-md py-tk-sm text-ctl-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
+              >
+                {deleteProduct.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete product
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      ) : null}
+
+      <Dialog open={confirmDiscard} onClose={() => setConfirmDiscard(false)} title="Discard changes?">
+        <div className="space-y-tk-md">
+          <p className="text-ctl-sm text-ink-2">You have unsaved changes. Close without saving?</p>
+          <div className="flex justify-end gap-tk-sm pt-tk-sm">
+            <button
+              type="button"
+              onClick={() => setConfirmDiscard(false)}
+              className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-sm text-ink hover:bg-surface-2"
+            >
+              Keep editing
+            </button>
+            <button
+              type="button"
+              onClick={() => { setConfirmDiscard(false); navigate(exitTo); }}
+              className="rounded-ctl bg-neg px-tk-md py-tk-sm text-ctl-sm font-semibold text-white hover:opacity-90"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      </Dialog>
 
       {isEditing && target ? (
         <AdjustStockDialog
@@ -1129,45 +1464,43 @@ export function InventoryFormPage({ embedded = false }: InventoryFormPageProps =
           </div>
         </div>
       </Dialog>
-    </div>
+    </>
   );
 }
 
 function inputCls(hasError: boolean): string {
   return cn(
-    'w-full rounded-field border bg-surface px-tk-md py-[10px] text-ctl-sm text-ink outline-none transition-colors',
-    'focus:border-ink focus:outline focus:outline-1 focus:outline-ink focus:outline-offset-0',
-    hasError ? 'border-neg focus:border-neg focus:outline-neg' : 'border-line',
+    'w-full rounded-ctl border bg-surface-2 px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-3',
+    hasError ? 'border-neg' : 'border-line focus:border-accent-line',
   );
 }
 
-function Field({ label, error, input }: { label: string; error?: string; input: ReactNode }) {
-  return (
-    <label className="block space-y-tk-xs">
-      <span className="text-ctl-sm font-medium text-ink">{label}</span>
-      {input}
-      {error ? <span className="block text-[12px] text-neg">{error}</span> : null}
-    </label>
-  );
-}
-
-function Section({
-  title,
-  action,
+function Field({
+  label,
+  error,
+  group = false,
   children,
 }: {
-  title: string;
-  /** Optional control sitting opposite the heading, right-aligned. */
-  action?: ReactNode;
+  label: string;
+  error?: string;
+  /** Composite content (buttons, chips, dropdowns) must NOT sit in a <label>:
+   *  a label associates with its first labelable descendant — buttons
+   *  included — and steals their accessible name. */
+  group?: boolean;
   children: ReactNode;
 }) {
+  const Tag = group ? 'div' : 'label';
   return (
-    <section className="space-y-tk-sm">
-      <div className="flex items-center justify-between gap-tk-md">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">{title}</h2>
-        {action}
-      </div>
-      <div className="space-y-tk-md rounded-card border border-line-2 bg-surface p-tk-md">{children}</div>
-    </section>
+    <Tag className="flex flex-col gap-[6px]">
+      <span className="text-[11.5px] font-semibold text-ink-2">{label}</span>
+      {children}
+      {error ? <span className="text-[11.5px] text-neg">{error}</span> : null}
+    </Tag>
+  );
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{children}</span>
   );
 }

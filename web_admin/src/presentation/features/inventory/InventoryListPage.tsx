@@ -31,6 +31,7 @@ import { TableFooter } from '@/presentation/components/ui/TableFooter';
 import { toast } from '@/presentation/components/ui/toast';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
 import { formatMoney } from '@/core/utils/money';
+import { marginPct, marginToneClass } from '@/domain/products/margin';
 import { cn } from '@/core/utils/cn';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
@@ -47,11 +48,6 @@ const BUCKETS: Array<{ status: StockStatus; label: string; color: string }> = [
  *  Never below the on-hand count so the fill can't overflow. */
 function barBasis(p: Pick<Product, 'quantity' | 'reorderLevel'>): number {
   return Math.max(p.reorderLevel * 3, p.quantity, 1);
-}
-
-function marginPct(p: Pick<Product, 'price' | 'cost'>): number | null {
-  if (p.price <= 0) return null;
-  return Math.round(((p.price - p.cost) / p.price) * 100);
 }
 
 const STATUS_OPTIONS = [
@@ -269,10 +265,9 @@ export function InventoryListPage() {
           {
             key: 'margin', header: 'Margin', align: 'right', width: '82px', mono: true,
             render: (p) => {
-              const m = marginPct(p);
+              const m = marginPct(p.price, p.cost);
               if (m === null) return <span className="text-ink-3">—</span>;
-              const cls = m >= 50 ? 'text-pos' : m >= 25 ? 'text-ink-2' : 'text-neg';
-              return <span className={cn('text-[12px] font-semibold', cls)}>{m}%</span>;
+              return <span className={cn('text-[12px] font-semibold', marginToneClass(m))}>{m}%</span>;
             },
           } satisfies Column<Product>,
         ]

@@ -1,4 +1,4 @@
-// InventoryFormPage's create-mode auto-SKU wiring: selecting a coded product
+// ProductModal's create-mode auto-SKU wiring: selecting a coded product
 // category peeks the category's next sequence and fills the SKU field
 // (mirrors the mobile product form's category-onChanged peek — see
 // lib/presentation/mobile/screens/inventory/product_form_screen.dart
@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { InventoryFormPage } from './InventoryFormPage';
+import { ProductModal } from './ProductModal';
 import { defaultCostCode } from '@/domain/entities/CostCode';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
@@ -146,7 +146,7 @@ function harness(opts: {
     >
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/inventory/add']}>
-          <InventoryFormPage />
+          <ProductModal />
         </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
@@ -154,7 +154,7 @@ function harness(opts: {
 }
 
 async function selectCategory(name: string) {
-  await userEvent.selectOptions(screen.getByLabelText('Category'), name);
+  await pickCategory(userEvent, name);
 }
 
 /** Fills name, category, cost and price by their field labels. */
@@ -172,12 +172,19 @@ async function fillForm(values: { name: string; category?: string; cost: string;
   await userEvent.type(screen.getByLabelText('Price'), values.price);
 }
 
-describe('InventoryFormPage — create-mode auto-SKU', () => {
+
+/** SelectFilter replaced the native category select — open it, pick a row. */
+async function pickCategory(user: ReturnType<typeof userEvent.setup> | typeof userEvent, name: string) {
+  await user.click(screen.getByRole('button', { name: /^Category/ }));
+  await user.click(await screen.findByRole('option', { name }));
+}
+
+describe('ProductModal — create-mode auto-SKU', () => {
   it('selecting a coded category peeks the next sequence and fills the SKU field', async () => {
     const peekNextSequence = vi.fn().mockResolvedValue(5);
     harness({ peekNextSequence });
 
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory(userEvent, 'Brakes');
 
     expect(peekNextSequence).toHaveBeenCalledWith('0007');
     await waitFor(() => {
@@ -190,7 +197,7 @@ describe('InventoryFormPage — create-mode auto-SKU', () => {
     const create = vi.fn().mockResolvedValue({ id: 'new-product' } as Product);
     harness({ create });
 
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory(userEvent, 'Brakes');
     await waitFor(() => {
       expect(screen.getByLabelText('SKU')).toHaveValue('00070005');
     });
@@ -210,14 +217,14 @@ describe('InventoryFormPage — create-mode auto-SKU', () => {
   it('a manual override after unchecking auto-generate survives further category changes', async () => {
     harness();
 
-    await userEvent.click(screen.getByLabelText('Auto-generate SKU from category'));
+    await userEvent.click(screen.getByLabelText('Auto'));
     const skuField = screen.getByLabelText('SKU');
     await userEvent.clear(skuField);
     await userEvent.type(skuField, 'MANUAL-1');
 
     // Changing the category no longer drives the field once auto-generate
     // is off — the peek must not fire and the typed value must survive.
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory(userEvent, 'Brakes');
 
     expect(screen.getByLabelText('SKU')).toHaveValue('MANUAL-1');
   });
@@ -293,7 +300,7 @@ describe('InventoryFormPage — create-mode auto-SKU', () => {
   });
 });
 
-describe('InventoryFormPage — edit-mode supplier mapping', () => {
+describe('ProductModal — edit-mode supplier mapping', () => {
   it('shows the saved supplier even while the suppliers list has not loaded', async () => {
     signIn();
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -330,19 +337,19 @@ describe('InventoryFormPage — edit-mode supplier mapping', () => {
         <QueryClientProvider client={qc}>
           <MemoryRouter initialEntries={['/inventory/p1/edit']}>
             <Routes>
-              <Route path="/inventory/:id/edit" element={<InventoryFormPage />} />
+              <Route path="/inventory/:id/edit" element={<ProductModal />} />
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
       </DiProvider>,
     );
-    const option = (await screen.findByRole('option', { name: 'FUGO' })) as HTMLOptionElement;
-    expect(option.value).toBe('sup-1');
-    expect(option.selected).toBe(true);
+    // SelectFilter trigger shows the synthesized saved-supplier option.
+    const trigger = await screen.findByRole('button', { name: /^Supplier/ });
+    expect(trigger).toHaveTextContent('FUGO');
   });
 });
 
-describe('InventoryFormPage — uppercase inputs', () => {
+describe('ProductModal — uppercase inputs', () => {
   it('name and sku fields uppercase as you type', async () => {
     signIn();
     harness();
@@ -351,7 +358,7 @@ describe('InventoryFormPage — uppercase inputs', () => {
     await user.type(name, 'brake pad');
     expect(name.value).toBe('BRAKE PAD');
 
-    const autoToggle = screen.getByRole('checkbox', { name: /auto-generate/i });
+    const autoToggle = screen.getByRole('checkbox', { name: /^auto$/i });
     if ((autoToggle as HTMLInputElement).checked) await user.click(autoToggle);
     const sku = screen.getByLabelText('SKU') as HTMLInputElement;
     await user.clear(sku);
@@ -360,7 +367,7 @@ describe('InventoryFormPage — uppercase inputs', () => {
   });
 });
 
-describe('InventoryFormPage — selling options', () => {
+describe('ProductModal — selling options', () => {
   const editableProduct = (o: Partial<Product> = {}): Product =>
     ({
       id: 'p1',
@@ -453,7 +460,7 @@ describe('InventoryFormPage — selling options', () => {
         <QueryClientProvider client={qc}>
           <MemoryRouter initialEntries={[`/inventory/${target.id}/edit`]}>
             <Routes>
-              <Route path="/inventory/:id/edit" element={<InventoryFormPage />} />
+              <Route path="/inventory/:id/edit" element={<ProductModal />} />
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
@@ -521,7 +528,7 @@ describe('InventoryFormPage — selling options', () => {
     const create = vi.fn().mockResolvedValue({ id: 'new-product' } as Product);
     harness({ create });
 
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory(userEvent, 'Brakes');
     await waitFor(() => expect(screen.getByLabelText('SKU')).toHaveValue('00070005'));
     await userEvent.type(screen.getByLabelText('Name'), 'Brake Pad');
     await userEvent.type(screen.getByLabelText('Cost'), '60');
@@ -633,7 +640,8 @@ describe('duplicate name detection', () => {
 
     await fillForm({ name: 'BANDO BELT', category: 'CVT', cost: '130', price: '300' });
     await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
-    await userEvent.click(await screen.findByRole('button', { name: /cancel/i }));
+    const dupDialog = await screen.findByRole('dialog', { name: /already exists/ });
+    await userEvent.click(within(dupDialog).getByRole('button', { name: /cancel/i }));
 
     expect(create).not.toHaveBeenCalled();
     expect(createVariation).not.toHaveBeenCalled();

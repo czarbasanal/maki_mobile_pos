@@ -47,7 +47,7 @@ export function Dialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-tk-lg"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 p-tk-lg"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && dismissable) onClose();
       }}

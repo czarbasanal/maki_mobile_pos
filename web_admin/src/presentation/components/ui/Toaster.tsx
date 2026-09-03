@@ -30,7 +30,7 @@ export function Toaster() {
   return (
     <div
       role="status"
-      className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-[12px] border border-line bg-surface px-4 py-2.5 shadow-card"
+      className="fixed bottom-6 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-2 rounded-[12px] border border-line bg-surface px-4 py-2.5 shadow-card"
     >
       {toneIcon[current.tone]}
       <span className="text-ctl-md font-medium text-ink">{current.message}</span>

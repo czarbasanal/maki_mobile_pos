@@ -22,6 +22,8 @@ export function Modal({
   subtitle,
   icon,
   size = 'md',
+  widthClassName,
+  initialFocus = 'first-input',
   footer,
   children,
 }: {
@@ -33,6 +35,11 @@ export function Modal({
   /** Small leading tile (e.g. an initials mark). */
   icon?: ReactNode;
   size?: keyof typeof SIZES;
+  /** Exact panel width when a guide names one outside sm/md/lg (e.g. 'max-w-[680px]'). */
+  widthClassName?: string;
+  /** 'none': open without focusing a field — for edit forms, where the user
+   *  came to change one specific thing, not to retype the first input. */
+  initialFocus?: 'first-input' | 'none';
   /** Pinned bar under the scrolling body. */
   footer?: ReactNode;
   children: ReactNode;
@@ -46,13 +53,17 @@ export function Modal({
     if (!open) return;
     const trigger = document.activeElement as HTMLElement | null;
     document.body.style.overflow = 'hidden';
-    const first = panel.current?.querySelector<HTMLElement>('[data-autofocus], input, textarea');
-    first?.focus();
+    if (initialFocus === 'none') {
+      panel.current?.focus();
+    } else {
+      const first = panel.current?.querySelector<HTMLElement>('[data-autofocus], input, textarea');
+      first?.focus();
+    }
     return () => {
       document.body.style.overflow = '';
       trigger?.focus?.();
     };
-  }, [open]);
+  }, [open, initialFocus]);
 
   if (!open) return null;
 
@@ -80,6 +91,7 @@ export function Modal({
     >
       <div
         ref={panel}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -87,7 +99,7 @@ export function Modal({
         onKeyDown={trapTab}
         className={clsx(
           'flex max-h-full w-full flex-col overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_32px_72px_-24px_rgba(0,0,0,0.45)]',
-          SIZES[size],
+          widthClassName ?? SIZES[size],
         )}
       >
         <div className="flex items-center gap-3 border-b border-line-2 px-5 py-4">

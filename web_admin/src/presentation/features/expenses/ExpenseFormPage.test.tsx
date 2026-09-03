@@ -1,5 +1,5 @@
 // Create (upload-before-create pattern), edit-prefill (incl. paidVia), and
-// validation — mirrors InventoryFormPage.test.tsx's harness shape. Receipt
+// validation — mirrors ProductModal.test.tsx's harness shape. Receipt
 // storage is a plain module (not part of the DI container), so it's mocked
 // directly.
 import { beforeEach, describe, expect, it, vi } from 'vitest';

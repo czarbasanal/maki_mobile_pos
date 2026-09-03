@@ -32,8 +32,7 @@ import { ReceivingEntryPage } from '@/presentation/features/receiving/ReceivingE
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
 import { ProductDrawer } from '@/presentation/features/inventory/ProductDrawer';
-import { ProductEditDrawer } from '@/presentation/features/inventory/ProductEditDrawer';
-import { AddProductModal } from '@/presentation/features/inventory/AddProductModal';
+import { ProductModal } from '@/presentation/features/inventory/ProductModal';
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
@@ -146,9 +145,9 @@ export const router = createBrowserRouter(
           children: [
             // Static 'add' outranks the dynamic ':id' in route matching, so
             // the modal wins over the drawer for /inventory/add.
-            { path: 'add', element: <AddProductModal /> },
+            { path: 'add', element: <ProductModal /> },
             { path: ':id', element: <ProductDrawer /> },
-            { path: ':id/edit', element: <ProductEditDrawer /> },
+            { path: ':id/edit', element: <ProductModal /> },
           ],
         },
         {

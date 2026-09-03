@@ -216,6 +216,35 @@ export function useReactivateProduct() {
   });
 }
 
+/** PERMANENT delete of a deactivated product (danger-zone rule: deactivate
+ *  first — the caller gates on `!isActive`, firestore.rules enforces it too).
+ *  Best-effort image cleanup first; history keeps its denormalized name/SKU. */
+export function useDeleteProduct() {
+  const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<void, Error, { id: string; name: string; sku: string }>({
+    mutationFn: async ({ id, name, sku }) => {
+      if (!actor) throw new Error('Not signed in');
+      await repo.hardDelete(id);
+      try {
+        await deleteProductImage(id);
+      } catch {
+        // Best-effort: the record is gone; an orphaned image is harmless.
+      }
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.inventory,
+        action: `Deleted product: ${name}`,
+        details: `SKU ${sku} — permanently removed from the catalog`,
+        entityId: id,
+        entityType: 'product',
+      }));
+      qc.invalidateQueries({ queryKey: ['product', id] });
+    },
+  });
+}
+
 /** Fields the create form supplies; the hook assembles the rest of ProductCreateInput. */
 export interface CreateProductInput {
   sku: string;

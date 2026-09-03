@@ -3,12 +3,12 @@
 // Same cost is still a plain duplicate. Mirrors the receiving flow's
 // cost-mismatch behavior (domain/receiving/classifyReceivingRows.ts).
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { InventoryFormPage } from './InventoryFormPage';
+import { ProductModal } from './ProductModal';
 import { defaultCostCode } from '@/domain/entities/CostCode';
 import { encodeCostCode } from '@/domain/entities';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -128,7 +128,7 @@ function harness(opts: {
     >
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/inventory/add']}>
-          <InventoryFormPage />
+          <ProductModal />
         </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
@@ -138,7 +138,7 @@ function harness(opts: {
 
 /** Fills the form with a manually-typed SKU (auto-generate off) and submits. */
 async function submitManual(sku: string, cost: string) {
-  await userEvent.click(screen.getByLabelText('Auto-generate SKU from category'));
+  await userEvent.click(screen.getByLabelText('Auto'));
   await userEvent.type(screen.getByLabelText('SKU'), sku);
   await userEvent.type(screen.getByLabelText('Name'), 'Brake shoe (Yamaha)');
   await userEvent.type(screen.getByLabelText('Cost'), cost);
@@ -147,7 +147,14 @@ async function submitManual(sku: string, cost: string) {
   await userEvent.click(screen.getByRole('button', { name: 'Create product' }));
 }
 
-describe('InventoryFormPage — cost variation on create', () => {
+
+/** SelectFilter replaced the native category select — open it, pick a row. */
+async function pickCategory(user: ReturnType<typeof userEvent.setup> | typeof userEvent, name: string) {
+  await user.click(screen.getByRole('button', { name: /^Category/ }));
+  await user.click(await screen.findByRole('option', { name }));
+}
+
+describe('ProductModal — cost variation on create', () => {
   it('offers a variation when the SKU is taken at a different cost', async () => {
     signIn();
     harness();
@@ -228,7 +235,11 @@ describe('InventoryFormPage — cost variation on create', () => {
 
     await submitManual('ABC123', '185');
     await screen.findByText('SKU already exists');
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(
+      within(screen.getByRole('dialog', { name: 'SKU already exists' })).getByRole('button', {
+        name: 'Cancel',
+      }),
+    );
 
     // Declining must leave the user knowing why the save didn't go through.
     expect(
@@ -243,7 +254,11 @@ describe('InventoryFormPage — cost variation on create', () => {
 
     await submitManual('ABC123', '185');
     await screen.findByText('SKU already exists');
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(
+      within(screen.getByRole('dialog', { name: 'SKU already exists' })).getByRole('button', {
+        name: 'Cancel',
+      }),
+    );
 
     await waitFor(() => expect(screen.queryByText('SKU already exists')).toBeNull());
     expect(createVariation).not.toHaveBeenCalled();
@@ -255,7 +270,7 @@ describe('InventoryFormPage — cost variation on create', () => {
     const create = vi.fn().mockResolvedValue({ id: 'new-product' } as Product);
     harness({ createVariation, create });
 
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory(userEvent, 'Brakes');
     await waitFor(() => expect(screen.getByLabelText('SKU')).toHaveValue('00070005'));
     await userEvent.type(screen.getByLabelText('Name'), 'Brake shoe (Yamaha)');
     await userEvent.type(screen.getByLabelText('Cost'), '185');

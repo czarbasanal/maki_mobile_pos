@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
-import { InventoryFormPage } from './InventoryFormPage';
+import { ProductModal } from './ProductModal';
 import { defaultCostCode } from '@/domain/entities/CostCode';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
@@ -74,7 +74,7 @@ function harness(freshOnSave?: Product, initial?: Product) {
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/inventory/p1/edit']}>
           <Routes>
-            <Route path="/inventory/:id/edit" element={<InventoryFormPage />} />
+            <Route path="/inventory/:id/edit" element={<ProductModal />} />
             <Route path="/inventory" element={<div>list</div>} />
             <Route path="/inventory/:id" element={<div>view</div>} />
           </Routes>
@@ -85,7 +85,7 @@ function harness(freshOnSave?: Product, initial?: Product) {
   return { update, recordPriceChange };
 }
 
-describe('InventoryFormPage — cashier name-only editing', () => {
+describe('ProductModal — cashier name-only editing', () => {
   it('shows the name-and-image banner and disables everything else', async () => {
     signIn(UserRole.cashier);
     harness();
@@ -95,9 +95,11 @@ describe('InventoryFormPage — cashier name-only editing', () => {
     expect(screen.getByLabelText('Name')).not.toBeDisabled();
     expect(screen.getByLabelText('SKU')).toHaveAttribute('readonly');
     expect(screen.getByLabelText('Reorder level')).toBeDisabled();
-    expect(screen.getByLabelText('Unit')).toBeDisabled();
-    expect(screen.getByLabelText('Category')).toBeDisabled();
-    expect(screen.getByLabelText('Supplier')).toBeDisabled();
+    // Unit/Category/Supplier render as read-only fields for a name-only
+    // editor (the chips/dropdowns they replace would imply editability).
+    expect(screen.getByLabelText('Unit')).toHaveAttribute('readonly');
+    expect(screen.getByLabelText('Category')).toHaveAttribute('readonly');
+    expect(screen.getByLabelText('Supplier')).toHaveAttribute('readonly');
     expect(screen.getByLabelText('Notes')).toBeDisabled();
     expect(screen.queryByPlaceholderText('Add barcode')).not.toBeInTheDocument();
     // Cost hidden, price dead (already staff behavior, pinned for cashier too).

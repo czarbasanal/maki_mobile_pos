@@ -67,6 +67,12 @@ export interface ProductRepository {
   setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;
   deactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
   reactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
+  /** PERMANENT removal of a deactivated product: the doc, its price_history
+   *  subdocs, and the SKU/barcode claims it holds (freeing them for reuse —
+   *  mirrors scripts/purge-archived-products.mjs). Historical sale/receiving/
+   *  job-order lines keep their own denormalized name + SKU. Caller enforces
+   *  the deactivate-first gate; firestore.rules enforces it server-side. */
+  hardDelete(id: string): Promise<void>;
   recordPriceChange(productId: string, entry: Omit<PriceHistoryEntry, 'changedAt'>): Promise<void>;
   listPriceHistory(productId: string): Promise<PriceHistoryEntry[]>;
   /** Cross-product price/cost changes in the range, newest-first (admin-only;

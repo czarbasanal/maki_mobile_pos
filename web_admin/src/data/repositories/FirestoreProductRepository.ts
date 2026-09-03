@@ -18,6 +18,7 @@ import {
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -523,6 +524,38 @@ export class FirestoreProductRepository implements ProductRepository {
       updatedByName: actorName,
       updatedAt: serverTimestamp(),
     });
+  }
+  async hardDelete(id: string): Promise<void> {
+    const productRef = doc(this.db, FirestoreCollections.products, id).withConverter(
+      productConverter,
+    );
+    const snap = await getDoc(productRef);
+    if (!snap.exists()) return; // already gone — deleting twice is a no-op
+    const product = snap.data();
+
+    const batch = writeBatch(this.db);
+    // Firestore never cascades subcollections; orphaned entries would keep
+    // surfacing in the collection-group price-change report.
+    const history = await getDocs(
+      collection(this.db, FirestoreCollections.products, id, Subcollections.priceHistory),
+    );
+    history.forEach((h) => batch.delete(h.ref));
+    // Release only the claims actually held by THIS product — after a rename
+    // the normalized key can belong to someone else.
+    const skuClaimRef = doc(this.db, FirestoreCollections.productSkus, normalizeSku(product.sku));
+    const skuClaim = await getDoc(skuClaimRef);
+    if (skuClaim.exists() && (skuClaim.data() as { productId?: string }).productId === id) {
+      batch.delete(skuClaimRef);
+    }
+    for (const code of product.barcodes) {
+      const ref = doc(this.db, FirestoreCollections.productBarcodes, normalizeBarcode(code));
+      const claim = await getDoc(ref);
+      if (claim.exists() && (claim.data() as { productId?: string }).productId === id) {
+        batch.delete(ref);
+      }
+    }
+    batch.delete(doc(this.db, FirestoreCollections.products, id));
+    await batch.commit();
   }
   async recordPriceChange(
     productId: string,

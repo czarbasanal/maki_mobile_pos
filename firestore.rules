@@ -117,9 +117,11 @@ service cloud.firestore {
       
       // Admin and staff can create products. Staff enter a cost CODE that the
       // app decodes to cost, so there is no field-level cost constraint here.
-      // Cashier cannot create. Delete stays admin-only.
+      // Cashier cannot create. Delete stays admin-only, and only for a
+      // DEACTIVATED product — the web danger zone's deactivate-first gate,
+      // enforced server-side so a client bug can't remove an active part.
       allow create: if (isAdmin() || hasRole('staff')) && isActiveUser();
-      allow delete: if isAdmin() && isActiveUser();
+      allow delete: if isAdmin() && isActiveUser() && resource.data.isActive == false;
 
       // Admin can update any product field
       allow update: if isAdmin() && isActiveUser();
