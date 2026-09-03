@@ -23,6 +23,9 @@ void main() {
         ],
         totalCost: 220,
         totalQuantity: 4,
+        // Provenance of the suggested quantities — must survive round-trips.
+        windowDays: 30,
+        coverDays: 14,
         status: PurchaseOrderStatus.ordered,
         notes: 'rush',
         createdAt: DateTime(2026, 7, 3, 10),

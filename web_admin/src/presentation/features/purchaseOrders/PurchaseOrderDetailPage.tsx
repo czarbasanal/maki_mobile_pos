@@ -66,6 +66,12 @@ export function PurchaseOrderDetailPage() {
         </div>
         <p className="text-bodySmall text-light-text-secondary">
           Created by {po.createdByName}. Set where each part was bought as you go.
+          {po.windowDays != null && po.coverDays != null ? (
+            <span className="block text-[12px] text-light-text-hint">
+              Quantities suggested from a {po.windowDays}-day movement window with{' '}
+              {po.coverDays} days of cover.
+            </span>
+          ) : null}
         </p>
       </header>
 

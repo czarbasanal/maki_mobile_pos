@@ -55,3 +55,31 @@ describe('purchaseOrderConverter', () => {
     expect(() => (purchaseOrderConverter.toFirestore as () => unknown)()).toThrow();
   });
 });
+
+describe('purchaseOrderConverter — provenance fields', () => {
+  it('parses windowDays/coverDays and defaults pre-field docs to null', () => {
+    const withProvenance = purchaseOrderConverter.fromFirestore(
+      snap('po1', {
+        referenceNumber: 'PO-1',
+        items: [],
+        status: 'ordered',
+        createdAt: new Date('2026-09-03'),
+        windowDays: 30,
+        coverDays: 14,
+      }) as never,
+    );
+    expect(withProvenance.windowDays).toBe(30);
+    expect(withProvenance.coverDays).toBe(14);
+
+    const legacy = purchaseOrderConverter.fromFirestore(
+      snap('po2', {
+        referenceNumber: 'PO-2',
+        items: [],
+        status: 'ordered',
+        createdAt: new Date('2026-09-03'),
+      }) as never,
+    );
+    expect(legacy.windowDays).toBeNull();
+    expect(legacy.coverDays).toBeNull();
+  });
+});

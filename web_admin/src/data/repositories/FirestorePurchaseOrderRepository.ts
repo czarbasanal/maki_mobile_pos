@@ -100,6 +100,8 @@ export class FirestorePurchaseOrderRepository
         orderedAt: input.status === 'ordered' ? serverTimestamp() : null,
         receivedAt: null,
         receivingId: null,
+        windowDays: input.windowDays,
+        coverDays: input.coverDays,
       });
     });
 

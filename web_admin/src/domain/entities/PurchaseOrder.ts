@@ -54,6 +54,12 @@ export interface PurchaseOrder {
   orderedAt: Date | null;
   receivedAt: Date | null;
   receivingId: string | null;
+  /** Provenance of the suggested quantities — the movement window and cover
+   *  period that produced them (null on orders from before the field, and on
+   *  hand-built ones). "Why did we buy 40 of these" is answerable only if
+   *  the assumptions were recorded. */
+  windowDays: number | null;
+  coverDays: number | null;
 }
 
 /** Still unfinished business: being built, or out being bought. */

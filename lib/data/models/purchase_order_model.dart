@@ -18,6 +18,8 @@ class PurchaseOrderModel {
   final DateTime? orderedAt;
   final DateTime? receivedAt;
   final String? receivingId;
+  final int? windowDays;
+  final int? coverDays;
 
   const PurchaseOrderModel({
     required this.id,
@@ -35,6 +37,8 @@ class PurchaseOrderModel {
     this.orderedAt,
     this.receivedAt,
     this.receivingId,
+    this.windowDays,
+    this.coverDays,
   });
 
   /// Creates from Firestore document.
@@ -67,6 +71,8 @@ class PurchaseOrderModel {
       orderedAt: _parseTimestamp(map['orderedAt']),
       receivedAt: _parseTimestamp(map['receivedAt']),
       receivingId: map['receivingId'] as String?,
+      windowDays: (map['windowDays'] as num?)?.toInt(),
+      coverDays: (map['coverDays'] as num?)?.toInt(),
     );
   }
 
@@ -86,6 +92,8 @@ class PurchaseOrderModel {
       'orderedAt': orderedAt != null ? Timestamp.fromDate(orderedAt!) : null,
       'receivedAt': receivedAt != null ? Timestamp.fromDate(receivedAt!) : null,
       'receivingId': receivingId,
+      'windowDays': windowDays,
+      'coverDays': coverDays,
     };
     map['createdAt'] =
         forCreate ? FieldValue.serverTimestamp() : Timestamp.fromDate(createdAt);
@@ -110,6 +118,8 @@ class PurchaseOrderModel {
       orderedAt: orderedAt,
       receivedAt: receivedAt,
       receivingId: receivingId,
+      windowDays: windowDays,
+      coverDays: coverDays,
     );
   }
 
@@ -133,6 +143,8 @@ class PurchaseOrderModel {
       orderedAt: entity.orderedAt,
       receivedAt: entity.receivedAt,
       receivingId: entity.receivingId,
+      windowDays: entity.windowDays,
+      coverDays: entity.coverDays,
     );
   }
 

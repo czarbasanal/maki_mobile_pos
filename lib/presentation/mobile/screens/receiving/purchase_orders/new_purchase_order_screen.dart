@@ -569,6 +569,9 @@ class NewPurchaseOrderScreenState
             referenceNumber: refNumber,
             supplierId: first.supplierId,
             supplierName: first.supplierName,
+            // Provenance: the dials that produced the suggested quantities.
+            windowDays: _windowDays,
+            coverDays: _cover,
             items: [
               for (final line in group)
                 PurchaseOrderItemEntity(

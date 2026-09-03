@@ -70,6 +70,8 @@ export const purchaseOrderConverter: FirestoreDataConverter<PurchaseOrder> = {
       orderedAt: toDate(d.orderedAt),
       receivedAt: toDate(d.receivedAt),
       receivingId: d.receivingId ?? null,
+      windowDays: typeof d.windowDays === 'number' ? d.windowDays : null,
+      coverDays: typeof d.coverDays === 'number' ? d.coverDays : null,
     };
   },
 };

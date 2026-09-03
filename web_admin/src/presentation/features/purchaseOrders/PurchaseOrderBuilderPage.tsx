@@ -55,9 +55,12 @@ export function PurchaseOrderBuilderPage() {
   const [scope, setScope] = useState<Scope>('needs');
 
   // Ticked lines and quantity edits, both keyed by product id. Recomputing
-  // the suggestions resets them — the rows underneath have changed.
+  // the suggestions resets them — the rows underneath have changed. Edits
+  // are RAW STRINGS so backspacing to empty doesn't snap to 1 mid-typing;
+  // an empty/invalid field falls back to the suggestion (and commits back
+  // to it on blur).
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [qty, setQty] = useState<Record<string, number>>({});
+  const [qty, setQty] = useState<Record<string, string>>({});
   useEffect(() => {
     setPicked(new Set(rows.map((r) => r.product.id)));
     setQty({});
@@ -82,7 +85,12 @@ export function PurchaseOrderBuilderPage() {
     [rows, scope],
   );
 
-  const qtyOf = (id: string, fallback: number) => qty[id] ?? fallback;
+  const qtyOf = (id: string, fallback: number) => {
+    const raw = qty[id];
+    if (raw === undefined) return fallback;
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) && n >= 1 ? n : fallback;
+  };
   const chosen = rows.filter((r) => picked.has(r.product.id));
   const totalUnits = chosen.reduce((n, r) => n + qtyOf(r.product.id, r.suggestedQty), 0);
   const totalCost = chosen.reduce(
@@ -126,7 +134,14 @@ export function PurchaseOrderBuilderPage() {
       supplierId: null,
       supplierName: null,
     }));
-    const created = await create.mutateAsync({ items, notes: null, status });
+    const created = await create.mutateAsync({
+      items,
+      notes: null,
+      status,
+      // Provenance: what produced these numbers.
+      windowDays,
+      coverDays,
+    });
     navigate(`${RoutePaths.purchaseOrders}/${created.id}`);
   }
 
@@ -193,7 +208,7 @@ export function PurchaseOrderBuilderPage() {
       key: 'qty', header: 'Qty', align: 'right', width: '104px',
       render: (r) => {
         const id = r.product.id;
-        const overridden = qty[id] !== undefined && qty[id] !== r.suggestedQty;
+        const overridden = qty[id] !== undefined && qtyOf(id, r.suggestedQty) !== r.suggestedQty;
         return (
           <span className="flex items-center justify-end gap-1">
             {overridden ? (
@@ -216,9 +231,19 @@ export function PurchaseOrderBuilderPage() {
               type="number"
               min={1}
               aria-label={`Quantity for ${r.product.name}`}
-              value={qtyOf(id, r.suggestedQty)}
-              onChange={(e) =>
-                setQty((prev) => ({ ...prev, [id]: Math.max(1, Number(e.target.value) || 1) }))
+              value={qty[id] ?? String(r.suggestedQty)}
+              onChange={(e) => setQty((prev) => ({ ...prev, [id]: e.target.value }))}
+              onBlur={() =>
+                setQty((prev) => {
+                  const raw = prev[id];
+                  if (raw === undefined) return prev;
+                  const n = Math.floor(Number(raw));
+                  const next = { ...prev };
+                  // Empty/invalid or back at the suggestion — drop the edit.
+                  if (!Number.isFinite(n) || n < 1 || n === r.suggestedQty) delete next[id];
+                  else next[id] = String(n);
+                  return next;
+                })
               }
               className={cn(
                 'w-14 rounded-field border bg-surface px-1.5 py-1 text-right font-mono text-ctl-sm text-ink outline-none',

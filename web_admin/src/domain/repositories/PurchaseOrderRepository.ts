@@ -13,6 +13,9 @@ export interface PurchaseOrderInput {
   createdByName: string;
   /** `draft` while still being built, `ordered` once committed to. */
   status: Extract<PurchaseOrderStatus, 'draft' | 'ordered'>;
+  /** Provenance: the dials that produced the suggested quantities. */
+  windowDays: number | null;
+  coverDays: number | null;
 }
 
 export interface PurchaseOrderRepository {

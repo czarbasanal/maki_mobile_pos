@@ -39,6 +39,11 @@ class PurchaseOrderEntity extends Equatable {
   /// The receiving draft/record fulfilling this PO, once Receive was tapped.
   final String? receivingId;
 
+  /// Provenance of the suggested quantities — the movement window and cover
+  /// period that produced them (null on hand-built or pre-field orders).
+  final int? windowDays;
+  final int? coverDays;
+
   const PurchaseOrderEntity({
     required this.id,
     required this.referenceNumber,
@@ -55,6 +60,8 @@ class PurchaseOrderEntity extends Equatable {
     this.orderedAt,
     this.receivedAt,
     this.receivingId,
+    this.windowDays,
+    this.coverDays,
   });
 
   bool get isDraft => status == PurchaseOrderStatus.draft;
@@ -81,6 +88,8 @@ class PurchaseOrderEntity extends Equatable {
     DateTime? orderedAt,
     DateTime? receivedAt,
     String? receivingId,
+    int? windowDays,
+    int? coverDays,
     bool clearSupplierId = false,
     bool clearSupplierName = false,
     bool clearNotes = false,
@@ -105,6 +114,8 @@ class PurchaseOrderEntity extends Equatable {
       orderedAt: clearOrderedAt ? null : (orderedAt ?? this.orderedAt),
       receivedAt: clearReceivedAt ? null : (receivedAt ?? this.receivedAt),
       receivingId: clearReceivingId ? null : (receivingId ?? this.receivingId),
+      windowDays: windowDays ?? this.windowDays,
+      coverDays: coverDays ?? this.coverDays,
     );
   }
 
@@ -131,6 +142,8 @@ class PurchaseOrderEntity extends Equatable {
         orderedAt,
         receivedAt,
         receivingId,
+        windowDays,
+        coverDays,
       ];
 }
 

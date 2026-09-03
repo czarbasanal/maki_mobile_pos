@@ -31,6 +31,8 @@ const po = (o: Partial<PurchaseOrder> = {}): PurchaseOrder => ({
   orderedAt: null,
   receivedAt: null,
   receivingId: null,
+  windowDays: null,
+  coverDays: null,
   ...o,
 });
 

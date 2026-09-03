@@ -8,6 +8,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { PurchaseOrderBuilderPage } from './PurchaseOrderBuilderPage';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { UserRole } from '@/domain/enums';
 import { clearSubscriptionCache } from '@/presentation/hooks/useFirestoreSubscription';
 import type { Product, Sale } from '@/domain/entities';
 
@@ -24,6 +26,10 @@ const product = (o: Partial<Product> = {}): Product =>
 
 function harness(products: Product[], createFn = vi.fn(), sales: Sale[] = []) {
   clearSubscriptionCache();
+  useAuthStore.setState({
+    user: { id: 'u1', email: 'a@b.c', displayName: 'Czar', role: UserRole.admin, isActive: true } as never,
+    status: 'signedIn',
+  });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const override = {
     productRepo: {
@@ -159,5 +165,41 @@ describe('PurchaseOrderBuilderPage — selection vs scope (review pins)', () => 
     // Chain (hidden, still picked) keeps the bar's line count at 1.
     const lines = screen.getByText('Lines').nextElementSibling!;
     expect(lines.textContent).toBe('1');
+  });
+});
+
+describe('PurchaseOrderBuilderPage — qty typing (no mid-typing snap)', () => {
+  it('backspacing to empty stays empty; blur restores the suggestion', async () => {
+    harness([product({ quantity: 0 })]);
+    const input = await screen.findByLabelText('Quantity for Brake Pad');
+    const suggested = (input as HTMLInputElement).value;
+
+    await userEvent.clear(input);
+    expect(input).toHaveValue(null); // empty, NOT snapped to 1
+
+    fireEvent.blur(input);
+    expect(input).toHaveValue(Number(suggested));
+    expect(input).not.toHaveClass('border-accent-text');
+  });
+});
+
+describe('PurchaseOrderBuilderPage — provenance', () => {
+  it('stamps the active window and cover onto the created order', async () => {
+    const createFn = vi.fn(async (input: unknown) => ({
+      ...(input as object),
+      id: 'po9',
+      referenceNumber: 'PO-9',
+    }));
+    harness([product({ quantity: 0 })], createFn);
+    await screen.findByText('Brake Pad');
+
+    // Move the dials off the defaults, then create.
+    await userEvent.click(screen.getByRole('radio', { name: '90 days' }));
+    await screen.findByText('Brake Pad'); // rows recomputed
+    await userEvent.click(screen.getByRole('button', { name: 'Create purchase order' }));
+
+    expect(createFn).toHaveBeenCalledWith(
+      expect.objectContaining({ windowDays: 90, coverDays: 14, status: 'ordered' }),
+    );
   });
 });
