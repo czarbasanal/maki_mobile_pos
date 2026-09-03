@@ -285,6 +285,9 @@ export interface CreateProductInput {
    *  `buildProductWrites` defaults a missing value to `[]` at the write
    *  layer, so this hook doesn't need to. */
   sellingOptions?: SellingOption[];
+  /** Optional, same reasoning as `sellingOptions` — `buildProductWrites`
+   *  defaults a missing value to `[]` at the write layer. */
+  tagIds?: string[];
   /** Set when a coded category drove the SKU field; relied on by the create
    *  transaction's peek-then-claim scan (see FirestoreProductRepository.create).
    *  Ignored (falls back to the plain manual path) unless `sku` still matches

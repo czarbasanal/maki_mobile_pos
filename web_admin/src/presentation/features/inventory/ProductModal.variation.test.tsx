@@ -125,6 +125,7 @@ function harness(opts: {
         costCodeRepo: costCodeRepo as Container['costCodeRepo'],
         productRepo: productRepo as Container['productRepo'],
         activityLogRepo,
+        tagRepo: { watchAll: (cb: (t: never[]) => void) => { cb([]); return () => {}; } } as unknown as Container['tagRepo'],
       }}
     >
       <QueryClientProvider client={qc}>

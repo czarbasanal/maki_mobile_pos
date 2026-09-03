@@ -142,6 +142,7 @@ function harness(opts: {
         costCodeRepo: costCodeRepo as Container['costCodeRepo'],
         productRepo: productRepo as Container['productRepo'],
         activityLogRepo,
+        tagRepo: { watchAll: (cb: (t: never[]) => void) => { cb([]); return () => {}; } } as unknown as Container['tagRepo'],
       }}
     >
       <QueryClientProvider client={qc}>
@@ -332,6 +333,7 @@ describe('ProductModal — edit-mode supplier mapping', () => {
           supplierRepo: supplierRepo as Container['supplierRepo'],
           costCodeRepo: costCodeRepo as Container['costCodeRepo'],
           productRepo: productRepo as Container['productRepo'],
+          tagRepo: { watchAll: (cb: (t: never[]) => void) => { cb([]); return () => {}; } } as unknown as Container['tagRepo'],
         }}
       >
         <QueryClientProvider client={qc}>
@@ -455,6 +457,7 @@ describe('ProductModal — selling options', () => {
           costCodeRepo: costCodeRepo as Container['costCodeRepo'],
           productRepo: productRepo as Container['productRepo'],
           activityLogRepo,
+          tagRepo: { watchAll: (cb: (t: never[]) => void) => { cb([]); return () => {}; } } as unknown as Container['tagRepo'],
         }}
       >
         <QueryClientProvider client={qc}>

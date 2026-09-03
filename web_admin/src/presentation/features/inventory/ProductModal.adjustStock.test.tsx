@@ -61,6 +61,7 @@ function harness(p: Product = product()) {
         supplierRepo: supplierRepo as Container['supplierRepo'],
         costCodeRepo: costCodeRepo as Container['costCodeRepo'],
         activityLogRepo,
+        tagRepo: { watchAll: (cb: (t: never[]) => void) => { cb([]); return () => {}; } } as unknown as Container['tagRepo'],
       }}
     >
       <QueryClientProvider client={qc}>
@@ -122,6 +123,7 @@ describe('ProductModal — stock adjustment is edit-only', () => {
           categoryRepo: categoryRepo as Container['categoryRepo'],
           supplierRepo: supplierRepo as Container['supplierRepo'],
           costCodeRepo: costCodeRepo as Container['costCodeRepo'],
+          tagRepo: { watchAll: (cb: (t: never[]) => void) => { cb([]); return () => {}; } } as unknown as Container['tagRepo'],
         }}
       >
         <QueryClientProvider client={qc}>

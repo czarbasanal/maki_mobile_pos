@@ -14,6 +14,8 @@ import {
   useUpdateProduct,
 } from '@/presentation/hooks/useProductMutations';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
+import { useActiveTags } from '@/presentation/hooks/useTags';
+import { tagChipStyle } from '@/domain/tags/tagColors';
 import { useSuppliers } from '@/presentation/hooks/useSuppliers';
 import { useCostCode } from '@/presentation/hooks/useCostCode';
 import { useProductRepo, useCategoryRepo } from '@/infrastructure/di/container';
@@ -81,6 +83,7 @@ const schema = z.object({
   category: z.string().optional().or(z.literal('')),
   supplierId: z.string().optional().or(z.literal('')),
   notes: z.string().trim().optional().or(z.literal('')),
+  tagIds: z.array(z.string()).optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -203,9 +206,11 @@ export function ProductModal() {
     resolver: zodResolver(schema),
     defaultValues: {
       name: '', sku: '', cost: 0, price: 0, quantity: 0, reorderLevel: '' as unknown as number,
-      unit: 'pcs', category: '', supplierId: '', notes: '',
+      unit: 'pcs', category: '', supplierId: '', notes: '', tagIds: [],
     },
   });
+
+  const { data: activeTags } = useActiveTags();
 
   useEffect(() => {
     document.title = isEditing
@@ -233,6 +238,7 @@ export function ProductModal() {
       category: target.category ?? '',
       supplierId: target.supplierId ?? '',
       notes: target.notes ?? '',
+      tagIds: target.tagIds,
     });
     setBarcodes(target.barcodes);
     setSellingOptions(target.sellingOptions);
@@ -547,6 +553,7 @@ export function ProductModal() {
         barcodes: allBarcodes,
         category: blank(values.category),
         notes: blank(values.notes),
+        tagIds: values.tagIds ?? [],
         imageBlob,
         autoSkuCategoryCode: autoSkuCategoryCodeForSubmit(values),
         // Unrestricted at creation (Task 13's posture, same as `price`) — no
@@ -599,6 +606,7 @@ export function ProductModal() {
         supplierName: supplier.name,
         barcodes: allBarcodes,
         notes: blank(values.notes),
+        tagIds: values.tagIds ?? [],
         // Always included in the patch — same as every other field here.
         // Whether it actually reaches Firestore is decided one layer down
         // (useUpdateProduct's includeSellingOptions, gated on the actor's
@@ -1033,6 +1041,41 @@ export function ProductModal() {
               {...register('notes')}
             />
           </Field>
+
+          {(activeTags ?? []).length > 0 || (watch('tagIds') ?? []).length > 0 ? (
+            <Field group={!nameOnly} label="Tags">
+              <div className="flex flex-wrap gap-1.5">
+                {(activeTags ?? []).map((t) => {
+                  const selected = (watch('tagIds') ?? []).includes(t.id);
+                  const s = tagChipStyle(t.color);
+                  if (nameOnly) {
+                    return selected ? (
+                      <span key={t.id} className="rounded-[6px] px-2 py-[3px] text-[11px] font-medium"
+                        style={{ background: s.bg, color: s.fg }}>{t.name}</span>
+                    ) : null;
+                  }
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        const cur = watch('tagIds') ?? [];
+                        const next = selected ? cur.filter((id) => id !== t.id) : [...cur, t.id];
+                        setValue('tagIds', next, { shouldDirty: true });
+                      }}
+                      className={cn(
+                        'rounded-[6px] border px-2 py-[3px] text-[11px] font-medium',
+                        selected ? 'border-transparent' : 'border-line bg-surface text-ink-3',
+                      )}
+                      style={selected ? { background: s.bg, color: s.fg } : undefined}
+                    >
+                      {t.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          ) : null}
 
           {/* Danger zone — at the bottom of the BODY, behind every field,
               never in the footer beside Save (guide §3: a destructive button
