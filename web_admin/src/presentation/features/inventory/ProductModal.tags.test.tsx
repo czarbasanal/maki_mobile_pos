@@ -121,4 +121,13 @@ describe('ProductModal — tags field', () => {
     expect(screen.getByText('Intact')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Intact' })).toBeNull();
   });
+
+  it('cashier name-only mode: an orphaned tagId (no active tag matches) shows no Tags field at all', async () => {
+    signIn(UserRole.cashier);
+    // The only tag the repo serves is 't1' ("Intact") — 'ghost' resolves to
+    // nothing, so no chip can ever render for this product.
+    harness('/inventory/p9/edit', product({ tagIds: ['ghost'] }));
+    await screen.findByDisplayValue('Brake shoe (Yamaha)');
+    expect(screen.queryByText('Tags')).toBeNull();
+  });
 });

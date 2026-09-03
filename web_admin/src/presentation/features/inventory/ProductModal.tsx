@@ -1042,40 +1042,52 @@ export function ProductModal() {
             />
           </Field>
 
-          {(activeTags ?? []).length > 0 || (watch('tagIds') ?? []).length > 0 ? (
-            <Field group={!nameOnly} label="Tags">
-              <div className="flex flex-wrap gap-1.5">
-                {(activeTags ?? []).map((t) => {
-                  const selected = (watch('tagIds') ?? []).includes(t.id);
-                  const s = tagChipStyle(t.color);
-                  if (nameOnly) {
-                    return selected ? (
-                      <span key={t.id} className="rounded-[6px] px-2 py-[3px] text-[11px] font-medium"
-                        style={{ background: s.bg, color: s.fg }}>{t.name}</span>
-                    ) : null;
-                  }
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        const cur = watch('tagIds') ?? [];
-                        const next = selected ? cur.filter((id) => id !== t.id) : [...cur, t.id];
-                        setValue('tagIds', next, { shouldDirty: true });
-                      }}
-                      className={cn(
-                        'rounded-[6px] border px-2 py-[3px] text-[11px] font-medium',
-                        selected ? 'border-transparent' : 'border-line bg-surface text-ink-3',
-                      )}
-                      style={selected ? { background: s.bg, color: s.fg } : undefined}
-                    >
-                      {t.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </Field>
-          ) : null}
+          {(() => {
+            const selectedTagIds = watch('tagIds') ?? [];
+            // A chip only ever renders for an ACTIVE tag — nameOnly further
+            // narrows to ones this product actually has selected. An id
+            // pointing at a deactivated/deleted tag renders nothing, so the
+            // Field itself must not appear when no chip would (an empty
+            // labeled box is worse than no field at all).
+            const anyChipWillRender = nameOnly
+              ? (activeTags ?? []).some((t) => selectedTagIds.includes(t.id))
+              : (activeTags ?? []).length > 0;
+            if (!anyChipWillRender) return null;
+            return (
+              <Field group={!nameOnly} label="Tags">
+                <div className="flex flex-wrap gap-1.5">
+                  {(activeTags ?? []).map((t) => {
+                    const selected = selectedTagIds.includes(t.id);
+                    const s = tagChipStyle(t.color);
+                    if (nameOnly) {
+                      return selected ? (
+                        <span key={t.id} className="rounded-[6px] px-2 py-[3px] text-[11px] font-medium"
+                          style={{ background: s.bg, color: s.fg }}>{t.name}</span>
+                      ) : null;
+                    }
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          const cur = watch('tagIds') ?? [];
+                          const next = selected ? cur.filter((id) => id !== t.id) : [...cur, t.id];
+                          setValue('tagIds', next, { shouldDirty: true });
+                        }}
+                        className={cn(
+                          'rounded-[6px] border px-2 py-[3px] text-[11px] font-medium',
+                          selected ? 'border-transparent' : 'border-line bg-surface text-ink-3',
+                        )}
+                        style={selected ? { background: s.bg, color: s.fg } : undefined}
+                      >
+                        {t.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
+            );
+          })()}
 
           {/* Danger zone — at the bottom of the BODY, behind every field,
               never in the footer beside Save (guide §3: a destructive button
