@@ -523,6 +523,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           return _buildEmptyState(inventoryState);
         }
 
+        final tagById = {
+          for (final t in ref.watch(activeTagsProvider).valueOrNull ?? <TagEntity>[])
+            t.id: t,
+        };
+
         return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(productsProvider);
@@ -538,6 +543,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 onTap: () => _navigateToProductDetail(product),
                 onLongPress:
                     isAdmin ? () => _confirmAndDelete(context, product) : null,
+                tags: [
+                  for (final id in product.tagIds)
+                    if (tagById[id] != null) tagById[id]!,
+                ],
               );
             },
           ),

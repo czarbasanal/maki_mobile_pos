@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:maki_mobile_pos/core/constants/tag_colors.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
@@ -20,6 +21,7 @@ class ProductListTile extends StatelessWidget {
   final bool showCost;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final List<TagEntity> tags;
 
   const ProductListTile({
     super.key,
@@ -27,6 +29,7 @@ class ProductListTile extends StatelessWidget {
     required this.showCost,
     required this.onTap,
     this.onLongPress,
+    this.tags = const [],
   });
 
   @override
@@ -63,6 +66,17 @@ class ProductListTile extends StatelessWidget {
                   ],
                 ],
               ),
+              if (tags.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 3,
+                  children: [
+                    ...tags.take(2).map((t) => _TagChip(tag: t, isDark: isDark)),
+                    if (tags.length > 2) _OverflowChip(count: tags.length - 2),
+                  ],
+                ),
+              ],
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
@@ -168,6 +182,58 @@ class _CategoryChip extends StatelessWidget {
         style: theme.textTheme.labelSmall?.copyWith(
           fontSize: 10,
           color: muted,
+        ),
+      ),
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.tag, required this.isDark});
+  final TagEntity tag;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TagColors.styleFor(tag.color, isDark);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: style.bg,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        tag.name,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontSize: 10,
+              color: style.fg,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
+
+class _OverflowChip extends StatelessWidget {
+  const _OverflowChip({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hairline = isDark ? AppColors.darkHairline : AppColors.lightHairline;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        border: Border.all(color: hairline),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        '+$count',
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontSize: 10,
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );
