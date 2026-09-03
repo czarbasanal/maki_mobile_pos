@@ -119,17 +119,33 @@ describe('ReceivingListPage', () => {
     expect(completedRow).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('claims first-run ONLY on All time — a narrow range gets the filtered copy', async () => {
+  it('claims first-run only when every subscription is empty and nothing is filtered', async () => {
     harness([]);
-    // Default range is 30 days: an empty fetch must NOT claim "No receipts
-    // yet" — older history may exist outside the range.
-    expect(screen.queryByText('No receipts yet')).not.toBeInTheDocument();
-    expect(screen.getByText('No receipts match these filters')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('radio', { name: 'All time' }));
+    // Range, month, and drafts all empty with no filters → genuinely new shop.
     expect(screen.getByText('No receipts yet')).toBeInTheDocument();
-    // Offered in the views row AND inside the first-run state.
     expect(screen.getAllByRole('button', { name: /new receiving/i }).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('a filtered-to-nothing view never shows the first-run copy', async () => {
+    harness([receipt({ id: 'r1', referenceNumber: 'RCV-A', supplierName: 'HMJ' })]);
+    await userEvent.type(screen.getByPlaceholderText('Search reference or supplier'), 'zzz');
+    expect(await screen.findByText('No receipts match these filters')).toBeInTheDocument();
+    expect(screen.queryByText('No receipts yet')).not.toBeInTheDocument();
+  });
+
+  it('the Custom pill opens the native date popover; Escape closes it', async () => {
+    harness([receipt()]);
+    await userEvent.click(screen.getByRole('radio', { name: 'Custom' }));
+    expect(screen.getByLabelText('Start date')).toBeInTheDocument();
+    expect(screen.getByLabelText('End date')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByLabelText('Start date')).not.toBeInTheDocument();
+  });
+
+  it('offers Today / 7 days / 30 days / Custom — no All time', () => {
+    harness([receipt()]);
+    const labels = screen.getAllByRole('radio').map((r) => r.textContent);
+    expect(labels).toEqual(['Today', '7 days', '30 days', 'Custom']);
   });
 
   it('the month cards use their own subscription, independent of the range picker', async () => {

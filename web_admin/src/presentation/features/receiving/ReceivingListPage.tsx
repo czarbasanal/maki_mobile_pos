@@ -10,14 +10,14 @@
 // row count all derive from the same scoped set; only the pipeline card is
 // month-scoped, and it says so in its label. Our statuses have no 'partial',
 // so the pipeline is Completed / Drafts / Cancelled.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpTrayIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useReceivings } from '@/presentation/hooks/useReceivings';
 import { useDraftReceivings } from '@/presentation/hooks/useDraftReceivings';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Receiving, ReceivingStatus } from '@/domain/entities';
-import { formatInShopZone } from '@/domain/time/shopTime';
+import { formatInShopZone, instantOf, shopIsoDate, shopWall } from '@/domain/time/shopTime';
 import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
@@ -37,13 +37,13 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 
 type StatusView = 'all' | ReceivingStatus;
-type Range = 'today' | 'last7' | 'last30' | 'allTime';
+type Range = 'today' | 'last7' | 'last30' | 'custom';
 
 const RANGE_OPTIONS: Array<{ value: Range; label: string }> = [
   { value: 'today', label: 'Today' },
   { value: 'last7', label: '7 days' },
   { value: 'last30', label: '30 days' },
-  { value: 'allTime', label: 'All time' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 const STATUS_LABEL: Record<ReceivingStatus, string> = {
@@ -69,6 +69,12 @@ export function ReceivingListPage() {
   const navigate = useNavigate();
 
   const [range, setRange] = useState<Range>('last30');
+  // Custom range: the pill opens a small popover with the browser's own
+  // date inputs (no custom calendar). Dates are SHOP calendar days.
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const customRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<StatusView>('all');
   const [search, setSearch] = useState('');
   const [supplier, setSupplier] = useState('');
@@ -77,11 +83,39 @@ export function ReceivingListPage() {
   const [now] = useState(() => new Date());
 
   const dateRange = useMemo<DateRange>(() => {
-    if (range === 'allTime') {
-      return { start: new Date(2020, 0, 1), end: resolvePreset('today').end };
+    if (range === 'custom') {
+      if (customStart && customEnd) {
+        // Plain yyyy-MM-dd means the SHOP day the operator picked — parsing
+        // via new Date() would shift by the browser zone (same rule as
+        // DateRangePicker's custom inputs).
+        const [sy, sm, sd] = customStart.split('-').map(Number);
+        const [ey, em, ed] = customEnd.split('-').map(Number);
+        return {
+          start: instantOf(shopWall(sy, sm, sd)),
+          end: instantOf(shopWall(ey, em, ed, 23, 59, 59, 999)),
+        };
+      }
+      // Until both dates are picked, keep the default window under the rows.
+      return resolvePreset('last30');
     }
     return resolvePreset(range as Exclude<RangePreset, 'custom'>);
-  }, [range]);
+  }, [range, customStart, customEnd]);
+
+  useEffect(() => {
+    if (!customOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (customRef.current && !customRef.current.contains(e.target as Node)) setCustomOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCustomOpen(false);
+    };
+    document.addEventListener('mousedown', onMouseDown, true);
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [customOpen]);
 
   const { data: ranged, isLoading, error } = useReceivings(dateRange);
   const { data: drafts } = useDraftReceivings();
@@ -192,10 +226,16 @@ export function ReceivingListPage() {
     setPage(1);
   };
 
-  // "No receipts yet" is a first-run claim — never make it while a date range
-  // could be hiding history. Anything short of All time gets the filtered
-  // empty state, whose copy points at the range control.
-  const firstRun = !isLoading && source.length === 0 && range === 'allTime' && !isFiltered;
+  // "No receipts yet" is a first-run claim. With no All-time view the best
+  // available signal is every live subscription coming back empty (picker
+  // range, shop month, and drafts) with nothing filtered — a shop with any
+  // recent activity never sees it.
+  const firstRun =
+    !isLoading &&
+    !isFiltered &&
+    source.length === 0 &&
+    (monthReceipts ?? []).length === 0 &&
+    (drafts ?? []).length === 0;
 
   // Draft rows resume the form; completed and cancelled open the detail.
   const onRow = (r: Receiving) => {
@@ -357,15 +397,44 @@ export function ReceivingListPage() {
           </button>
         ))}
         <div className="ml-auto flex items-center gap-[9px]">
-          <Segmented
-            label="Date range"
-            options={RANGE_OPTIONS}
-            value={range}
-            onChange={(r) => {
-              setRange(r);
-              setPage(1);
-            }}
-          />
+          <div ref={customRef} className="relative">
+            <Segmented
+              label="Date range"
+              options={RANGE_OPTIONS}
+              value={range}
+              onChange={(r) => {
+                setRange(r);
+                setCustomOpen(r === 'custom');
+                setPage(1);
+              }}
+            />
+            {customOpen ? (
+              <div className="absolute right-0 top-[calc(100%+6px)] z-40 flex items-center gap-2 rounded-[12px] border border-line bg-surface p-3 shadow-[0_18px_44px_-14px_rgba(0,0,0,0.3)]">
+                <input
+                  type="date"
+                  aria-label="Start date"
+                  value={customStart}
+                  max={customEnd || shopIsoDate(new Date())}
+                  onChange={(e) => {
+                    setCustomStart(e.target.value);
+                    setPage(1);
+                  }}
+                />
+                <span className="text-ink-3">–</span>
+                <input
+                  type="date"
+                  aria-label="End date"
+                  value={customEnd}
+                  min={customStart}
+                  max={shopIsoDate(new Date())}
+                  onChange={(e) => {
+                    setCustomEnd(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
           {canReceive ? (
             <Button
               variant="primary"
