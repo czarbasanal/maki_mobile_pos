@@ -451,6 +451,40 @@ describe("/products", () => {
     );
   });
 
+  it("cashier CAN update tagIds alone (sweep quick-attach)", async () => {
+    await assertSucceeds(
+      as("cashier").collection("products").doc("p-1").update({
+        tagIds: ["t1", "t2"],
+      })
+    );
+  });
+
+  it("cashier CAN update tagIds with audit fields (updateProductTags shape)", async () => {
+    await assertSucceeds(
+      as("cashier").collection("products").doc("p-1").update({
+        tagIds: ["t1"],
+        updatedAt: new Date(),
+        updatedBy: "cashier-1",
+        updatedByName: "Cashier One",
+      })
+    );
+  });
+
+  it("cashier CANNOT smuggle price alongside tagIds", async () => {
+    await assertFails(
+      as("cashier").collection("products").doc("p-1").update({
+        tagIds: ["t1"],
+        price: 9999,
+      })
+    );
+  });
+
+  it("staff CAN update tagIds", async () => {
+    await assertSucceeds(
+      as("staff").collection("products").doc("p-1").update({ tagIds: ["t1"] })
+    );
+  });
+
   it("inactive admin cannot read products (isActive gate)", async () => {
     await assertFails(as("inactiveAdmin").collection("products").doc("p-1").get());
   });
@@ -1058,6 +1092,7 @@ describe("shared list collections (cashier add/edit, staff full)", () => {
     "void_reasons",
     "mechanics",
     "shop_fees",
+    "product_tags",
   ];
 
   const entry = { name: "Test Entry", isActive: true };

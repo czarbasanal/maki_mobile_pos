@@ -475,6 +475,24 @@ service cloud.firestore {
       allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
+    // ==================== PRODUCT TAGS COLLECTION ====================
+
+    match /product_tags/{tagId} {
+      // All valid users can read tags (inventory chips, tag filter, pickers)
+      allow read: if isValidUser() && isActiveUser();
+
+      // Shared-list grants: any active user may add or edit entries (name,
+      // color, description); only staff/admin may flip isActive
+      // (deactivate/reactivate); delete is staff/admin. Same template as
+      // units / void_reasons / mechanics.
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive']));
+      allow delete: if isStaffOrAdmin() && isActiveUser();
+    }
+
     // ==================== HR COLLECTION ====================
 
     // HR — salary data: admin-only for BOTH read and write (stricter than
