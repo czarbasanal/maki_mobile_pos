@@ -18,6 +18,8 @@ import { EmptyState } from '@/presentation/components/common/EmptyState';
 import { ProductImage } from '@/presentation/components/common/ProductImage';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { Badge } from '@/presentation/components/ui/Badge';
+import { BackButton } from '@/presentation/components/ui/BackButton';
+import { Fact } from '@/presentation/components/ui/Fact';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { statusTone } from '@/presentation/components/ui/statusTone';
@@ -88,16 +90,7 @@ export function ReceivingDetailPage() {
 
   return (
     <div className="flex max-w-[1180px] flex-col gap-3 print:hidden">
-      <button
-        type="button"
-        onClick={() => navigate(RoutePaths.receiving)}
-        className="flex w-fit items-center gap-1.5 whitespace-nowrap rounded-ctl border border-line bg-surface py-2 pl-[11px] pr-3.5 text-ctl-sm font-medium text-ink-2 shadow-card hover:border-accent-line hover:text-ink"
-      >
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" className="shrink-0">
-          <polyline points="12,4.5 6.5,10 12,15.5" />
-        </svg>
-        Back to receiving
-      </button>
+      <BackButton label="Back to receiving" onClick={() => navigate(RoutePaths.receiving)} />
 
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* Band 1 — identity and actions */}
@@ -271,36 +264,6 @@ function Th({ children, className }: { children: React.ReactNode; className?: st
     >
       {children}
     </th>
-  );
-}
-
-function Fact({
-  label,
-  value,
-  sub,
-  mono,
-  dim,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  mono?: boolean;
-  dim?: boolean;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-[5px] px-5 py-3.5">
-      <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{label}</span>
-      <span
-        className={cn(
-          'text-[13.5px] font-semibold tracking-[-0.2px]',
-          dim ? 'text-ink-3' : 'text-ink',
-          mono && 'font-mono',
-        )}
-      >
-        {value}
-      </span>
-      <span className="text-[11px] text-ink-3">{sub}</span>
-    </div>
   );
 }
 

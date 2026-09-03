@@ -21,6 +21,8 @@ import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { FirstRunState, NoMatchesState } from '@/presentation/components/ui/TableEmptyStates';
+import { ViewChips } from '@/presentation/components/ui/ViewChips';
 import { IconButton } from '@/presentation/components/ui/IconButton';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
 import { DateRangeControl } from '@/presentation/components/ui/DateRangeControl';
@@ -303,32 +305,18 @@ export function JobOrdersPage() {
     <div className="flex flex-col gap-3">
       {/* Band 1 — saved views + date range + primary action */}
       <div className="flex flex-wrap items-center gap-2">
-        {(
-          [
-            { value: 'all', label: 'All' },
-            { value: 'open', label: 'Open' },
-            { value: 'billed', label: 'Billed' },
-          ] as const
-        ).map((v) => (
-          <button
-            key={v.value}
-            type="button"
-            aria-pressed={view === v.value}
-            onClick={() => {
-              setView(v.value);
-              setPage(1);
-            }}
-            className={cn(
-              'flex items-center gap-[7px] whitespace-nowrap rounded-pill border px-[13px] py-[7px] text-ctl-sm transition-[color]',
-              view === v.value
-                ? 'border-accent-text bg-accent-soft font-semibold text-accent-text'
-                : 'border-line bg-surface font-medium text-ink-2 hover:text-ink',
-            )}
-          >
-            {v.label}
-            <span className="font-mono text-[11px] opacity-70">{counts[v.value]}</span>
-          </button>
-        ))}
+        <ViewChips
+          options={[
+            { value: 'all', label: 'All', count: counts.all },
+            { value: 'open', label: 'Open', count: counts.open },
+            { value: 'billed', label: 'Billed', count: counts.billed },
+          ]}
+          value={view}
+          onChange={(v) => {
+            setView(v);
+            setPage(1);
+          }}
+        />
         <div className="ml-auto flex items-center gap-2.5">
           <DateRangeControl
             options={DATE_OPTIONS}
@@ -435,44 +423,28 @@ export function JobOrdersPage() {
           minWidth="930px"
           empty={
             firstRun ? (
-              <div className="flex flex-col items-center gap-[5px] px-6 py-16 text-center">
-                <div className="mb-[9px] flex h-[52px] w-[52px] items-center justify-center rounded-[15px] border border-accent-line bg-accent-soft">
+              <FirstRunState
+                icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" strokeWidth="1.6">
                     <rect x="4.5" y="3.5" width="15" height="17" rx="2.6" />
                     <line x1="8.4" y1="8.6" x2="15.6" y2="8.6" />
                     <line x1="8.4" y1="12.4" x2="15.6" y2="12.4" />
                     <line x1="8.4" y1="16.2" x2="12.6" y2="16.2" />
                   </svg>
-                </div>
-                <span className="text-[14.5px] font-semibold tracking-[-0.2px] text-ink">
-                  No job orders yet
-                </span>
-                <span className="max-w-[330px] text-ctl-sm text-ink-3 [text-wrap:pretty]">
-                  Open a ticket when a unit comes in for service. Add parts and labor as the work
-                  goes, then bill it at the register.
-                </span>
-                <div className="mt-3.5">
-                  <Button variant="primary" icon={<PlusIcon className="h-3.5 w-3.5" />} onClick={() => setNewOpen(true)}>
-                    New Job Order
-                  </Button>
-                </div>
-              </div>
+                }
+                title="No job orders yet"
+                description="Open a ticket when a unit comes in for service. Add parts and labor as the work goes, then bill it at the register."
+              >
+                <Button variant="primary" icon={<PlusIcon className="h-3.5 w-3.5" />} onClick={() => setNewOpen(true)}>
+                  New Job Order
+                </Button>
+              </FirstRunState>
             ) : (
-              <div className="flex flex-col items-center gap-[7px] px-5 py-[52px] text-center">
-                <span className="text-[13px] font-medium text-ink-2">
-                  No job orders match these filters
-                </span>
-                <span className="text-[12px] text-ink-3">
-                  Try another date range, mechanic, or clear the search.
-                </span>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="mt-1.5 rounded-ctl border border-line px-3.5 py-2 text-[12px] font-medium text-ink-2 hover:border-accent-line hover:text-ink"
-                >
-                  Clear filters
-                </button>
-              </div>
+              <NoMatchesState
+                title="No job orders match these filters"
+                hint="Try another date range, mechanic, or clear the search."
+                onClear={isFiltered ? clearFilters : undefined}
+              />
             )
           }
         />

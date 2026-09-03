@@ -28,6 +28,9 @@ import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { MoneyCard } from '@/presentation/components/ui/MoneyCard';
+import { FirstRunState, NoMatchesState } from '@/presentation/components/ui/TableEmptyStates';
+import { ViewChips } from '@/presentation/components/ui/ViewChips';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
 import { DateRangeControl } from '@/presentation/components/ui/DateRangeControl';
 import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
@@ -352,33 +355,19 @@ export function ReceivingListPage() {
 
       {/* Views row — chips | New receiving + Import CSV */}
       <div className="flex flex-wrap items-center gap-2">
-        {(
-          [
-            { value: 'all' as const, label: 'All' },
-            { value: 'draft' as const, label: 'Draft' },
-            { value: 'completed' as const, label: 'Completed' },
-            { value: 'cancelled' as const, label: 'Cancelled' },
-          ]
-        ).map((v) => (
-          <button
-            key={v.value}
-            type="button"
-            aria-pressed={view === v.value}
-            onClick={() => {
-              setView(v.value);
-              setPage(1);
-            }}
-            className={cn(
-              'flex items-center gap-[7px] whitespace-nowrap rounded-pill border px-[13px] py-[7px] text-ctl-sm transition-[color]',
-              view === v.value
-                ? 'border-accent-text bg-accent-soft font-semibold text-accent-text'
-                : 'border-line bg-surface font-medium text-ink-2 hover:text-ink',
-            )}
-          >
-            {v.label}
-            <span className="font-mono text-[11px] opacity-70">{viewCounts[v.value]}</span>
-          </button>
-        ))}
+        <ViewChips
+          options={[
+            { value: 'all' as const, label: 'All', count: viewCounts.all },
+            { value: 'draft' as const, label: 'Draft', count: viewCounts.draft },
+            { value: 'completed' as const, label: 'Completed', count: viewCounts.completed },
+            { value: 'cancelled' as const, label: 'Cancelled', count: viewCounts.cancelled },
+          ]}
+          value={view}
+          onChange={(v) => {
+            setView(v);
+            setPage(1);
+          }}
+        />
         <div className="ml-auto flex items-center gap-[9px]">
           <DateRangeControl
             options={RANGE_OPTIONS}
@@ -469,53 +458,37 @@ export function ReceivingListPage() {
           minWidth="900px"
           empty={
             firstRun ? (
-              <div className="flex flex-col items-center gap-[5px] px-6 py-16 text-center">
-                <div className="mb-[9px] flex h-[52px] w-[52px] items-center justify-center rounded-[15px] border border-accent-line bg-accent-soft">
+              <FirstRunState
+                icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" strokeWidth="1.6">
                     <path d="M3.5 8.5h11v8.5h-11z" />
                     <path d="M14.5 11.2h3.4l2.6 2.8v3h-6z" />
                     <circle cx="7" cy="18.4" r="1.6" />
                     <circle cx="17" cy="18.4" r="1.6" />
                   </svg>
-                </div>
-                <span className="text-[14.5px] font-semibold tracking-[-0.2px] text-ink">
-                  No receipts yet
-                </span>
-                <span className="max-w-[340px] text-ctl-sm text-ink-3 [text-wrap:pretty]">
-                  Record a delivery when stock arrives. Counting it in here is what updates
-                  on-hand quantities and the cost the register sells against.
-                </span>
-                <div className="mt-3.5 flex gap-[9px]">
-                  {canReceive ? (
-                    <Button
-                      variant="primary"
-                      icon={<PlusIcon className="h-3.5 w-3.5" />}
-                      onClick={() => navigate(RoutePaths.receivingNew)}
-                    >
-                      New receiving
-                    </Button>
-                  ) : null}
-                  {canImport ? (
-                    <Button onClick={() => navigate(RoutePaths.bulkReceiving)}>Import CSV</Button>
-                  ) : null}
-                </div>
-              </div>
+                }
+                title="No receipts yet"
+                description="Record a delivery when stock arrives. Counting it in here is what updates on-hand quantities and the cost the register sells against."
+              >
+                {canReceive ? (
+                  <Button
+                    variant="primary"
+                    icon={<PlusIcon className="h-3.5 w-3.5" />}
+                    onClick={() => navigate(RoutePaths.receivingNew)}
+                  >
+                    New receiving
+                  </Button>
+                ) : null}
+                {canImport ? (
+                  <Button onClick={() => navigate(RoutePaths.bulkReceiving)}>Import CSV</Button>
+                ) : null}
+              </FirstRunState>
             ) : (
-              <div className="flex flex-col items-center gap-[7px] px-5 py-[52px] text-center">
-                <span className="text-[13px] font-medium text-ink-2">
-                  No receipts match these filters
-                </span>
-                <span className="text-[12px] text-ink-3">
-                  Try another supplier or date range, or clear the search.
-                </span>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="mt-1.5 rounded-ctl border border-line px-3.5 py-2 text-[12px] font-medium text-ink-2 hover:border-accent-line hover:text-ink"
-                >
-                  Clear filters
-                </button>
-              </div>
+              <NoMatchesState
+                title="No receipts match these filters"
+                hint="Try another supplier or date range, or clear the search."
+                onClear={clearFilters}
+              />
             )
           }
         />
@@ -532,18 +505,6 @@ export function ReceivingListPage() {
           />
         ) : null}
       </section>
-    </div>
-  );
-}
-
-function MoneyCard({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-card border border-line bg-surface px-[17px] py-[15px] shadow-card">
-      <span className="text-[11.5px] font-medium text-ink-2">{label}</span>
-      <span className="tnum font-mono text-[22px] font-semibold tracking-[-1px] text-ink">
-        {value}
-      </span>
-      <span className="text-[11px] text-ink-3">{note}</span>
     </div>
   );
 }

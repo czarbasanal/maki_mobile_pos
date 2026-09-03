@@ -37,10 +37,12 @@ import { formatInShopZone } from '@/domain/time/shopTime';
 import { LoadingView } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { EmptyState } from '@/presentation/components/common/EmptyState';
-import { ChevronLeftIcon, PrinterIcon } from '@heroicons/react/24/outline';
+import { PrinterIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
+import { BackButton } from '@/presentation/components/ui/BackButton';
+import { Fact } from '@/presentation/components/ui/Fact';
 import { displaySku } from '@/domain/products/sku';
 
 export function SaleDetailPage() {
@@ -115,15 +117,7 @@ export function SaleDetailPage() {
   return (
     <>
     <div className="flex max-w-[1180px] flex-col gap-3 print:hidden">
-      {/* Same bordered back treatment as the receiving detail. */}
-      <button
-        type="button"
-        onClick={goBack}
-        className="flex w-fit items-center gap-1.5 whitespace-nowrap rounded-ctl border border-line bg-surface py-2 pl-[11px] pr-3.5 text-ctl-sm font-medium text-ink-2 shadow-card hover:border-accent-line hover:text-ink"
-      >
-        <ChevronLeftIcon className="h-3.5 w-3.5 shrink-0" />
-        Back
-      </button>
+      <BackButton label="Back" onClick={goBack} />
 
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* Band 1 — identity and actions */}
@@ -476,27 +470,6 @@ function Th({ children, className }: { children: React.ReactNode; className?: st
     <th className={cn('px-5 py-2 text-left text-micro-caps uppercase text-ink-3', className)}>
       {children}
     </th>
-  );
-}
-
-/** A facts-strip tile: tracked uppercase label, the value, one dim sub line. */
-function Fact({
-  label,
-  value,
-  sub,
-  mono,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="px-5 py-3.5">
-      <p className="text-[10px] uppercase tracking-[1px] text-ink-3">{label}</p>
-      <p className={cn('text-[13.5px] font-semibold text-ink', mono && 'font-mono')}>{value}</p>
-      <p className="text-micro text-ink-3">{sub}</p>
-    </div>
   );
 }
 
