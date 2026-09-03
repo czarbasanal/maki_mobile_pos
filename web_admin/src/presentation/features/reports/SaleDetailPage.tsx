@@ -114,19 +114,20 @@ export function SaleDetailPage() {
 
   return (
     <>
-    <div className="max-w-[1180px] space-y-tk-md print:hidden">
+    <div className="flex max-w-[1180px] flex-col gap-3 print:hidden">
+      {/* Same bordered back treatment as the receiving detail. */}
+      <button
+        type="button"
+        onClick={goBack}
+        className="flex w-fit items-center gap-1.5 whitespace-nowrap rounded-ctl border border-line bg-surface py-2 pl-[11px] pr-3.5 text-ctl-sm font-medium text-ink-2 shadow-card hover:border-accent-line hover:text-ink"
+      >
+        <ChevronLeftIcon className="h-3.5 w-3.5 shrink-0" />
+        Back
+      </button>
+
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
-        {/* Band 1 — identity and actions, led by the back chevron */}
+        {/* Band 1 — identity and actions */}
         <div className="flex flex-wrap items-center gap-tk-sm border-b border-line-2 px-5 py-4">
-          <button
-            type="button"
-            onClick={goBack}
-            aria-label="Back"
-            title="Back"
-            className="-ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-ink-2 hover:bg-surface-3 hover:text-ink"
-          >
-            <ChevronLeftIcon className="h-4 w-4" />
-          </button>
           <h2
             className={cn(
               'flex items-center gap-[7px] font-mono text-[19px] font-semibold tracking-[-0.6px]',

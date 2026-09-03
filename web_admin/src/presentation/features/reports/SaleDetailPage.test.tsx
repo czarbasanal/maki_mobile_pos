@@ -465,17 +465,17 @@ describe('SaleDetailPage — reskin bands (facts strip, line chips, tender)', ()
   });
 });
 
-describe('SaleDetailPage — back chevron in the identity band', () => {
-  it('renders the back button beside the sale number and it navigates back', async () => {
+describe('SaleDetailPage — bordered back button (receiving-detail style)', () => {
+  it('renders the bordered Back above the card and it navigates back', async () => {
     harness(
       { getById: vi.fn().mockResolvedValue(sale()) },
       { entries: ['/sales/day', '/reports/sales/s1'] },
     );
-    const heading = await screen.findByRole('heading', { name: 'OR-0001' });
+    await screen.findByRole('heading', { name: 'OR-0001' });
 
     const back = screen.getByRole('button', { name: 'Back' });
-    // Same band as the sale number — not a standalone row above the card.
-    expect(back.parentElement).toBe(heading.parentElement);
+    // The bordered pill treatment shared with the receiving detail.
+    expect(back).toHaveClass('border-line');
     const { default: userEvent } = await import('@testing-library/user-event');
     await userEvent.click(back);
     expect(screen.getByText('day sales page')).toBeInTheDocument();

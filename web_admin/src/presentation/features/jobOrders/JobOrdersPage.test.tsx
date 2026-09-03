@@ -427,30 +427,39 @@ describe('JobOrdersPage — resume over a non-empty cart (skinned confirm)', () 
 });
 
 describe('JobOrdersPage — custom date range', () => {
-  it('the Custom pill opens the native date popover; Escape closes it', async () => {
+  it('the Custom pill opens the skinned calendar; Escape closes it', async () => {
     harness([jobOrder({ id: 'd1', name: 'JO-TODAY' })]);
     await userEvent.click(screen.getByRole('radio', { name: 'Custom' }));
-    expect(screen.getByLabelText('Start date')).toBeInTheDocument();
-    expect(screen.getByLabelText('End date')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /pick a date range/i })).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
-    expect(screen.queryByLabelText('Start date')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('a picked custom range brings an out-of-preset ticket into view', async () => {
+  it('an applied custom range brings an out-of-preset ticket into view', async () => {
+    const { shopIsoDate } = await import('@/domain/time/shopTime');
     const old = new Date();
-    old.setDate(old.getDate() - 90);
+    old.setDate(old.getDate() - 20);
     harness([
       jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: new Date() }),
-      jobOrder({ id: 'd2', name: 'JO-ANCIENT', createdAt: old, isConverted: true, convertedToSaleId: 's1' }),
+      jobOrder({ id: 'd2', name: 'JO-OLD', createdAt: old, isConverted: true, convertedToSaleId: 's1' }),
     ]);
-    expect(screen.queryByText('JO-ANCIENT')).not.toBeInTheDocument();
+    // Default preset is Today — the 20-day-old ticket is out of view.
+    expect(screen.queryByText('JO-OLD')).not.toBeInTheDocument();
+
+    // Calendar flow: back a month, pick its 1st, forward, pick today, Apply.
+    // [prev-month-1st, today] always contains 20 days ago.
+    const today = shopIsoDate(new Date());
+    const [y, m] = today.split('-').map(Number);
+    const prev = m === 1 ? `${y - 1}-12-01` : `${y}-${String(m - 1).padStart(2, '0')}-01`;
 
     await userEvent.click(screen.getByRole('radio', { name: 'Custom' }));
-    const iso = (d: Date) => d.toISOString().slice(0, 10);
-    const start = new Date();
-    start.setDate(start.getDate() - 120);
-    fireEvent.change(screen.getByLabelText('Start date'), { target: { value: iso(start) } });
-    fireEvent.change(screen.getByLabelText('End date'), { target: { value: iso(new Date()) } });
-    expect(screen.getByText('JO-ANCIENT')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }));
+    await userEvent.click(screen.getByRole('button', { name: prev }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+    await userEvent.click(screen.getByRole('button', { name: today }));
+    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(screen.getByText('JO-OLD')).toBeInTheDocument();
+    expect(screen.getByText('JO-TODAY')).toBeInTheDocument();
   });
 });

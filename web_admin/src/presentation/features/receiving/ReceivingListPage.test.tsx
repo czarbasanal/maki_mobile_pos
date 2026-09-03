@@ -133,13 +133,12 @@ describe('ReceivingListPage', () => {
     expect(screen.queryByText('No receipts yet')).not.toBeInTheDocument();
   });
 
-  it('the Custom pill opens the native date popover; Escape closes it', async () => {
+  it('the Custom pill opens the skinned calendar; Escape closes it', async () => {
     harness([receipt()]);
     await userEvent.click(screen.getByRole('radio', { name: 'Custom' }));
-    expect(screen.getByLabelText('Start date')).toBeInTheDocument();
-    expect(screen.getByLabelText('End date')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /pick a date range/i })).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
-    expect(screen.queryByLabelText('Start date')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('offers Today / 7 days / 30 days / Custom — no All time', () => {
