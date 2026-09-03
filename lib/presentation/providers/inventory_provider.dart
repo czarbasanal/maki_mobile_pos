@@ -6,10 +6,15 @@ import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 // ==================== INVENTORY STATE ====================
 
+/// Tag-filter sentinel: products with no ACTIVE tag. Orphaned ids from
+/// deleted tags count as untagged — they never render as chips either.
+const String kUntaggedFilter = '__untagged__';
+
 /// State for inventory screen filters and settings.
 class InventoryState extends Equatable {
   final String searchQuery;
   final String? categoryFilter;
+  final String? tagFilter;
   final StockFilter stockFilter;
   final bool showCost;
   final InventorySortOption sortOption;
@@ -18,6 +23,7 @@ class InventoryState extends Equatable {
   const InventoryState({
     this.searchQuery = '',
     this.categoryFilter,
+    this.tagFilter,
     this.stockFilter = StockFilter.all,
     this.showCost = false,
     this.sortOption = InventorySortOption.name,
@@ -27,16 +33,19 @@ class InventoryState extends Equatable {
   InventoryState copyWith({
     String? searchQuery,
     String? categoryFilter,
+    String? tagFilter,
     StockFilter? stockFilter,
     bool? showCost,
     InventorySortOption? sortOption,
     bool? sortAscending,
     bool clearCategoryFilter = false,
+    bool clearTagFilter = false,
   }) {
     return InventoryState(
       searchQuery: searchQuery ?? this.searchQuery,
       categoryFilter:
           clearCategoryFilter ? null : (categoryFilter ?? this.categoryFilter),
+      tagFilter: clearTagFilter ? null : (tagFilter ?? this.tagFilter),
       stockFilter: stockFilter ?? this.stockFilter,
       showCost: showCost ?? this.showCost,
       sortOption: sortOption ?? this.sortOption,
@@ -46,7 +55,7 @@ class InventoryState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [searchQuery, categoryFilter, stockFilter, showCost, sortOption, sortAscending];
+      [searchQuery, categoryFilter, tagFilter, stockFilter, showCost, sortOption, sortAscending];
 }
 
 /// Stock level filter options.
@@ -89,6 +98,13 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     );
   }
 
+  void setTagFilter(String? tagIdOrUntagged) {
+    state = state.copyWith(
+      tagFilter: tagIdOrUntagged,
+      clearTagFilter: tagIdOrUntagged == null,
+    );
+  }
+
   void setStockFilter(StockFilter filter) {
     state = state.copyWith(stockFilter: filter);
   }
@@ -124,6 +140,7 @@ final filteredProductsProvider =
     Provider<AsyncValue<List<ProductEntity>>>((ref) {
   final productsAsync = ref.watch(productsProvider);
   final inventoryState = ref.watch(inventoryStateProvider);
+  final activeTagIds = ref.watch(activeTagsProvider).valueOrNull?.map((t) => t.id).toSet() ?? const <String>{};
 
   return productsAsync.when(
     data: (products) {
@@ -148,6 +165,19 @@ final filteredProductsProvider =
         filtered = filtered
             .where((p) => p.category == inventoryState.categoryFilter)
             .toList();
+      }
+
+      // Apply tag filter
+      final tagFilter = inventoryState.tagFilter;
+      if (tagFilter != null) {
+        if (tagFilter == kUntaggedFilter) {
+          filtered = filtered
+              .where((p) => !p.tagIds.any(activeTagIds.contains))
+              .toList();
+        } else {
+          filtered =
+              filtered.where((p) => p.tagIds.contains(tagFilter)).toList();
+        }
       }
 
       // Apply stock filter

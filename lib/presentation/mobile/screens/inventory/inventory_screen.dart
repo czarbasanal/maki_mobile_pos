@@ -428,6 +428,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
                   // Category filter
                   _buildCategoryFilterChip(inventoryState),
+
+                  const SizedBox(width: 8),
+
+                  // Tag filter
+                  _buildTagFilterChip(inventoryState),
                 ],
               ),
             ),
@@ -472,6 +477,57 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ],
           onSelected: (value) {
             ref.read(inventoryStateProvider.notifier).setCategoryFilter(value);
+          },
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildTagFilterChip(InventoryState inventoryState) {
+    final tagsAsync = ref.watch(activeTagsProvider);
+
+    return tagsAsync.when(
+      data: (tags) {
+        if (tags.isEmpty) return const SizedBox.shrink();
+
+        String label = 'Tag';
+        final current = inventoryState.tagFilter;
+        if (current == kUntaggedFilter) {
+          label = 'Untagged';
+        } else if (current != null) {
+          for (final t in tags) {
+            if (t.id == current) {
+              label = t.name;
+              break;
+            }
+          }
+        }
+
+        return PopupMenuButton<String?>(
+          child: Chip(
+            avatar: const Icon(LucideIcons.tag, size: 16),
+            label: Text(label),
+            deleteIcon: current != null ? const Icon(LucideIcons.x, size: 16) : null,
+            onDeleted: current != null
+                ? () => ref
+                    .read(inventoryStateProvider.notifier)
+                    .setTagFilter(null)
+                : null,
+          ),
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: null, child: Text('All Tags')),
+            const PopupMenuItem(
+              value: kUntaggedFilter,
+              child: Text('Untagged'),
+            ),
+            ...tags.map(
+              (t) => PopupMenuItem(value: t.id, child: Text(t.name)),
+            ),
+          ],
+          onSelected: (value) {
+            ref.read(inventoryStateProvider.notifier).setTagFilter(value);
           },
         );
       },
@@ -583,6 +639,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   bool _hasActiveFilters(InventoryState state) {
     return state.searchQuery.isNotEmpty ||
         state.categoryFilter != null ||
+        state.tagFilter != null ||
         state.stockFilter != StockFilter.all;
   }
 
