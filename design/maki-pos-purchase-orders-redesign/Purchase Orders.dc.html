@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#f8fafb; --surface-3:#eef1f4;
+  --border:#e4e8ed; --border-2:#eef1f4;
+  --text:#14171c; --text-2:#69727f; --text-3:#98a1ad;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#fdf4d2; --accent-line:#e0b200; --accent-text:#8a6300;
+  --pos:#12866a; --pos-soft:#e3f4ef; --neg:#c04b38; --neg-soft:#fbeae6;
+  --info:#3f68d6; --info-soft:#e9eefc;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 10px 28px -12px rgba(16,24,40,.10);
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f12; --surface:#15181d; --surface-2:#1a1e24; --surface-3:#222731;
+  --border:#252b34; --border-2:#1e232a;
+  --text:#eceff3; --text-2:#98a1ad; --text-3:#6a7482;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#332a0a; --accent-line:#f0c53a; --accent-text:#f0c53a;
+  --pos:#3fc79f; --pos-soft:#132a25; --neg:#e5806c; --neg-soft:#2c1a17;
+  --info:#7d9bf0; --info-soft:#182034;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -12px rgba(0,0,0,.6);
+}
+html,body{margin:0;padding:0;background:var(--bg);}
+*{box-sizing:border-box;}
+a{color:var(--text);text-decoration:none;}
+a:hover{color:var(--accent-text);}
+input::placeholder{color:var(--text-3);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:3px solid transparent;background-clip:content-box;}
+@keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;width:100%;background:var(--bg);font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--text);">
+
+  <aside style="width:248px;flex:0 0 248px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;">
+    <div style="padding:20px 18px 16px 18px;display:flex;align-items:center;gap:11px;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 34px;box-shadow:0 2px 8px -2px var(--accent-line);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:var(--accent-ink);letter-spacing:-.5px;">M</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+        <span style="font-size:14px;font-weight:600;letter-spacing:.3px;">MAKI MOTOR PARTS</span>
+        <span style="font-size:10.5px;color:var(--text-3);">Point of sale</span>
+      </div>
+    </div>
+
+    <div style="padding:2px 10px;">
+      <button onClick="{{ pickDash }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:13.5px;color:var(--text-2);font-weight:500;" style-hover="background:var(--surface-2);color:var(--text);">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="2.5" y="11.1" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="11.1" width="6.4" height="6.4" rx="1.8"></rect></svg>
+        Dashboard
+      </button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:0 10px 8px 10px;display:flex;flex-direction:column;gap:2px;">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:16px 11px 6px 11px;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-3);font-weight:600;">{{ g.label }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+            <button onClick="{{ it.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:10px;font-size:13.5px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.fw }};">
+              <span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex:0 0 16px;">
+                <span style="width:7px;height:7px;border-radius:2px;background:{{ it.dot }};display:block;"></span>
+              </span>
+              {{ it.name }}
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding:10px;border-top:1px solid var(--border-2);">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;background:var(--surface-2);">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text-2);flex:0 0 32px;">C</div>
+        <div style="display:flex;flex-direction:column;min-width:0;">
+          <span style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">czarbasanal@gmail.com</span>
+          <span style="font-size:10px;letter-spacing:.7px;color:var(--text-3);font-weight:600;">ADMIN</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;">
+
+    <header style="display:flex;align-items:center;gap:14px;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;">
+      <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-.4px;">{{ pageTitle }}</h1>
+        <span style="font-size:12.5px;color:var(--text-3);">{{ pageSub }}</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+        <span style="font-size:12.5px;font-weight:600;letter-spacing:-.1px;padding-right:3px;white-space:nowrap;">Thursday, Sep 3, 2026</span>
+        <div style="display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);white-space:nowrap;">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--pos);"></span>
+          Register open
+        </div>
+        <button onClick="{{ toggleTheme }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);white-space:nowrap;" style-hover="color:var(--text);">
+          {{ themeIcon }} {{ themeLabel }}
+        </button>
+      </div>
+    </header>
+
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;padding:20px 28px 36px 28px;display:flex;flex-direction:column;gap:12px;animation:rise .3s ease both;">
+
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
+            <button onClick="{{ v.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:20px;font-size:12.5px;white-space:nowrap;font-weight:{{ v.fw }};background:{{ v.bg }};color:{{ v.fg }};border:1px solid {{ v.bd }};">
+              {{ v.label }}
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.7;">{{ v.count }}</span>
+            </button>
+          </sc-for>
+          <button onClick="{{ newPo }}" style="all:unset;cursor:pointer;margin-left:auto;display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-weight:600;white-space:nowrap;box-shadow:0 4px 14px -8px var(--accent-line);">
+            <span style="font-size:14px;line-height:1;">+</span> New purchase order
+          </button>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+          <sc-if value="{{ hasOrders }}" hint-placeholder-val="{{ false }}">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;min-width:880px;border-collapse:collapse;">
+                <thead>
+                  <tr style="background:var(--surface-2);">
+                    <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);">Reference</th>
+                    <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);">Status</th>
+                    <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);">Trip</th>
+                    <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);">Created</th>
+                    <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:104px;">Lines</th>
+                    <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);width:132px;">Est. cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ orders }}" as="o" hint-placeholder-count="3">
+                    <tr onClick="{{ o.open }}" style="cursor:pointer;" style-hover="background:var(--surface-2);">
+                      <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:500;">{{ o.ref }}</span>
+                          <button onClick="{{ o.copy }}" title="Copy reference" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;color:var(--text-3);flex:0 0 22px;" style-hover="background:var(--surface-3);color:var(--text-2);">
+                            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="7" width="9.5" height="9.5" rx="2.2"></rect><path d="M13 4.6a2.2 2.2 0 0 0-2.2-2.1H5.7A2.2 2.2 0 0 0 3.5 4.7v5.1a2.2 2.2 0 0 0 2.1 2.2"></path></svg>
+                          </button>
+                        </div>
+                      </td>
+                      <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);">
+                        <span style="font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:{{ o.sBg }};color:{{ o.sFg }};white-space:nowrap;">{{ o.status }}</span>
+                      </td>
+                      <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);font-size:12.5px;font-weight:500;">{{ o.trip }}</td>
+                      <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);">
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ o.date }}</span>
+                          <span style="font-size:10.5px;color:var(--text-3);">{{ o.by }}</span>
+                        </div>
+                      </td>
+                      <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ o.lines }}</td>
+                      <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:-.3px;">{{ o.total }}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ noOrders }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:64px 24px;display:flex;flex-direction:column;align-items:center;gap:5px;">
+              <div style="width:52px;height:52px;border-radius:15px;background:var(--accent-soft);border:1px solid var(--accent-line);display:flex;align-items:center;justify-content:center;margin-bottom:9px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="1.6"><rect x="5" y="3.5" width="14" height="17" rx="2.4"></rect><line x1="8.8" y1="9" x2="15.2" y2="9"></line><line x1="8.8" y1="12.6" x2="15.2" y2="12.6"></line><line x1="8.8" y1="16.2" x2="12.4" y2="16.2"></line></svg>
+              </div>
+              <span style="font-size:14.5px;font-weight:600;letter-spacing:-.2px;">{{ emptyTitle }}</span>
+              <span style="font-size:12.5px;color:var(--text-3);max-width:340px;text-align:center;text-wrap:pretty;">{{ emptyBody }}</span>
+              <button onClick="{{ newPo }}" style="all:unset;cursor:pointer;margin-top:14px;display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-weight:600;box-shadow:0 4px 14px -8px var(--accent-line);">
+                <span style="font-size:14px;line-height:1;">+</span> New purchase order
+              </button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;padding:18px 28px 36px 28px;display:flex;flex-direction:column;gap:12px;animation:rise .3s ease both;">
+
+        <button onClick="{{ back }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;width:fit-content;padding:8px 14px 8px 11px;border-radius:10px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12.5px;font-weight:500;color:var(--text-2);white-space:nowrap;" style-hover="border-color:var(--accent-line);color:var(--text);">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" style="flex:0 0 14px;"><polyline points="12,4.5 6.5,10 12,15.5"></polyline></svg>
+          Back to purchase orders
+        </button>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:15px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+            <span style="font-size:12.5px;font-weight:600;">Suggested quantities</span>
+            <span style="font-size:11.5px;color:var(--text-3);text-wrap:pretty;">Qty starts at what sold in the movement window, scaled to the cover you want on the shelf. Override any line.</span>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11.5px;color:var(--text-2);white-space:nowrap;">Movement window</span>
+              <div style="display:flex;gap:3px;padding:3px;border-radius:10px;background:var(--surface-3);">
+                <sc-for list="{{ windows }}" as="w" hint-placeholder-count="3">
+                  <button onClick="{{ w.pick }}" style="all:unset;cursor:pointer;padding:5px 11px;border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;white-space:nowrap;font-weight:{{ w.fw }};background:{{ w.bg }};color:{{ w.fg }};">{{ w.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11.5px;color:var(--text-2);white-space:nowrap;">Cover</span>
+              <div style="display:flex;gap:3px;padding:3px;border-radius:10px;background:var(--surface-3);">
+                <sc-for list="{{ covers }}" as="c" hint-placeholder-count="3">
+                  <button onClick="{{ c.pick }}" style="all:unset;cursor:pointer;padding:5px 11px;border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;white-space:nowrap;font-weight:{{ c.fw }};background:{{ c.bg }};color:{{ c.fg }};">{{ c.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;width:280px;box-shadow:var(--shadow);">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8" style="flex:0 0 14px;"><circle cx="9" cy="9" r="5.6"></circle><line x1="13.2" y1="13.2" x2="17" y2="17"></line></svg>
+            <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search part, SKU or supplier" style="all:unset;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;color:var(--text);width:100%;" />
+          </div>
+          <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="3">
+            <button onClick="{{ s.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:20px;font-size:12.5px;white-space:nowrap;font-weight:{{ s.fw }};background:{{ s.bg }};color:{{ s.fg }};border:1px solid {{ s.bd }};">
+              {{ s.label }}
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.7;">{{ s.count }}</span>
+            </button>
+          </sc-for>
+          <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ lineCount }}</span>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+          <div style="overflow-x:auto;">
+            <table style="width:100%;min-width:1080px;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--surface-2);">
+                  <th style="padding:11px 0 11px 20px;border-bottom:1px solid var(--border);width:44px;">
+                    <button onClick="{{ toggleAll }}" title="Select all" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:5px;border:1px solid {{ allBox.bd }};background:{{ allBox.bg }};color:var(--accent-ink);font-size:10px;font-weight:700;">{{ allBox.tick }}</button>
+                  </th>
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px 11px 4px;border-bottom:1px solid var(--border);">Part</th>
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:128px;">SKU</th>
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:132px;">Buy from</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:78px;">On hand</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:78px;">{{ soldLabel }}</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:104px;">Qty</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:104px;">Cost</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);width:118px;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+                  <tr style="background:{{ r.rowBg }};" style-hover="background:var(--surface-2);">
+                    <td style="padding:12px 0 12px 20px;border-bottom:1px solid var(--border-2);">
+                      <button onClick="{{ r.toggle }}" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:5px;border:1px solid {{ r.box.bd }};background:{{ r.box.bg }};color:var(--accent-ink);font-size:10px;font-weight:700;">{{ r.box.tick }}</button>
+                    </td>
+                    <td style="padding:12px 14px 12px 4px;border-bottom:1px solid var(--border-2);">
+                      <div style="display:flex;align-items:center;gap:9px;min-width:0;">
+                        <span style="font-size:12.5px;font-weight:500;letter-spacing:-.1px;">{{ r.name }}</span>
+                        <sc-if value="{{ r.isOut }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:9.5px;letter-spacing:.7px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--neg-soft);color:var(--neg);flex:0 0 auto;">OUT</span>
+                        </sc-if>
+                        <sc-if value="{{ r.isLow }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:9.5px;letter-spacing:.7px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent-text);flex:0 0 auto;">LOW</span>
+                        </sc-if>
+                      </div>
+                    </td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);">
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ r.sku }}</span>
+                        <button onClick="{{ r.copy }}" title="Copy SKU" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;color:var(--text-3);flex:0 0 20px;" style-hover="background:var(--surface-3);color:var(--text-2);">
+                          <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="7" width="9.5" height="9.5" rx="2.2"></rect><path d="M13 4.6a2.2 2.2 0 0 0-2.2-2.1H5.7A2.2 2.2 0 0 0 3.5 4.7v5.1a2.2 2.2 0 0 0 2.1 2.2"></path></svg>
+                        </button>
+                      </div>
+                    </td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);">
+                      <span style="font-size:12px;font-weight:{{ r.supFw }};color:{{ r.supFg }};">{{ r.supplier }}</span>
+                    </td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;color:{{ r.onHandFg }};">{{ r.onHand }}</td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ r.sold }}</td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);">
+                      <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                        <input value="{{ r.qty }}" onChange="{{ r.setQty }}" style="all:unset;box-sizing:border-box;width:56px;text-align:right;background:var(--surface-2);border:1px solid {{ r.qtyBd }};border-radius:8px;padding:6px 9px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;color:var(--text);" />
+                        <sc-if value="{{ r.edited }}" hint-placeholder-val="{{ false }}">
+                          <button onClick="{{ r.reset }}" title="Reset to suggested" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;color:var(--accent-text);flex:0 0 20px;" style-hover="background:var(--surface-3);">
+                            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16.2 10a6.2 6.2 0 1 1-2-4.6"></path><polyline points="16.6,3 16.6,6.2 13.4,6.2"></polyline></svg>
+                          </button>
+                        </sc-if>
+                      </div>
+                    </td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-2);">{{ r.cost }}</td>
+                    <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:{{ r.amountFg }};">{{ r.amount }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+
+          <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:52px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:7px;">
+              <span style="font-size:13px;color:var(--text-2);font-weight:500;">No parts match these filters</span>
+              <span style="font-size:12px;color:var(--text-3);">Try another scope, or clear the search.</span>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="position:sticky;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;box-shadow:0 -8px 24px -18px rgba(0,0,0,.35);">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:11.5px;color:var(--text-2);">Lines</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;">{{ selCount }}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:11.5px;color:var(--text-2);">Units</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;">{{ selUnits }}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:11.5px;color:var(--text-2);">Suppliers</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;">{{ selSuppliers }}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:10px;margin-left:auto;">
+          <span style="font-size:12.5px;font-weight:600;">Estimated cost</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:23px;font-weight:600;letter-spacing:-1px;">{{ selTotal }}</span>
+        </div>
+        <div style="display:flex;gap:9px;">
+          <button onClick="{{ saveDraft }}" style="all:unset;cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid var(--border);font-size:12.5px;font-weight:500;color:var(--text-2);white-space:nowrap;" style-hover="border-color:var(--accent-line);color:var(--text);">Save draft</button>
+          <button onClick="{{ createPo }}" style="all:unset;cursor:pointer;padding:11px 17px;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-weight:600;white-space:nowrap;box-shadow:0 6px 18px -8px var(--accent-line);opacity:{{ createOpacity }};">Create purchase order</button>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:10px;padding:11px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--border);box-shadow:0 18px 44px -14px rgba(0,0,0,.35);font-family:'IBM Plex Sans',sans-serif;color:var(--text);animation:rise .18s ease both;">
+      <span style="width:18px;height:18px;border-radius:50%;background:var(--pos-soft);color:var(--pos);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 18px;">✓</span>
+      <span style="font-size:12.5px;font-weight:500;">{{ toast }}</span>
+      <sc-if value="{{ toastDetail }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ toastDetail }}</span>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:950},&quot;showEmptyState&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Preview states&quot;}}">
+const CATALOG = [
+  {sku:'00120004', name:'BATTERY CHAMPION MFB5L',                           sup:'ACM Battery Inc', onHand:0, sold:2,  cost:445},
+  {sku:'PUBL39',   name:'PULLEY BALL SUN CLICK125/150 10G',                 sup:'FUGO',            onHand:0, sold:9,  cost:350},
+  {sku:'00200025', name:'TIRE SEALANT MTR 500ML',                           sup:'HD',              onHand:0, sold:11, cost:50},
+  {sku:'00210027', name:'REAR SHOCK MONO MTR SNIPER150 210MM BLACK',        sup:'HD',              onHand:0, sold:2,  cost:900},
+  {sku:'00210019', name:'REAR SHOCK MONO MTR SNIPER150 210MM RED',          sup:'HD',              onHand:0, sold:1,  cost:900},
+  {sku:'00010001', name:'ALLOY LEVER RCB HONDAVARIO150/CLICK150/AIRBLADE BLUE', sup:'Heng',        onHand:0, sold:2,  cost:790},
+  {sku:'00010003', name:'ALLOY LEVER RCB YAMAHA NMAX BLUE',                 sup:'Heng',            onHand:0, sold:2,  cost:790},
+  {sku:'00050021', name:'BALLRACE PITSBIKE WAVE125',                        sup:'Pitsbike Cebu',   onHand:0, sold:1,  cost:130},
+  {sku:'00020009', name:'AIR FILTER SUNTAL CLICK125/150',                   sup:null,              onHand:0, sold:10, cost:150},
+  {sku:'00020012', name:'AIR FILTER SUNTAL GRAVIS/GEAR',                    sup:null,              onHand:0, sold:9,  cost:140},
+  {sku:'00070025', name:'HENG BOLT FLOWER 6X35 CRANKCASE SILVER',           sup:'Heng',            onHand:0, sold:4,  cost:47},
+  {sku:'00040062', name:'BRAKE SHOE ASK XRM',                               sup:'HD',              onHand:4, sold:22, cost:120},
+  {sku:'00071061', name:'GEAR OIL 120ML',                                   sup:'FUGO',            onHand:2, sold:31, cost:52},
+  {sku:'00120049', name:'SPARKPLUG NGK W100/XRM110/SMASH C7HSA',            sup:'FUGO',            onHand:9, sold:26, cost:96}
+];
+
+const ORDERS = [
+  {ref:'PO-20260902-002', status:'Pending',   trip:'Cebu City run',   date:'Sep 2, 4:12 PM',  by:'by Czar', lines:12, total:30263},
+  {ref:'PO-20260828-001', status:'Completed', trip:'Argao suppliers', date:'Aug 28, 8:40 AM', by:'by Bern', lines:6,  total:12960},
+  {ref:'PO-20260820-003', status:'Cancelled', trip:'Colon parts row', date:'Aug 20, 1:05 PM', by:'by Czar', lines:3,  total:1480}
+];
+
+const STATUS = {
+  'Pending':   {bg:'var(--accent-soft)', fg:'var(--accent-text)'},
+  'Completed': {bg:'var(--pos-soft)',    fg:'var(--pos)'},
+  'Cancelled': {bg:'var(--neg-soft)',    fg:'var(--neg)'}
+};
+
+const EMPTY = {
+  'Pending':   ['Nothing pending', 'Start a purchase order to plan a buying trip.'],
+  'Completed': ['No completed orders', 'Orders you have finished buying against will land here.'],
+  'Cancelled': ['No cancelled orders', 'Orders you abandon keep their trail here.']
+};
+
+const GROUPS = [
+  {label:'SELL',  items:[{name:'POS'}, {name:'Job Orders'}]},
+  {label:'STOCK', items:[{name:'Inventory'}, {name:'Price History'}, {name:'Receiving'}, {name:'Purchase Orders'}, {name:'Suppliers'}]},
+  {label:'MONEY', items:[{name:'Expenses'}, {name:'Reports'}]},
+  {label:'ADMIN', items:[{name:'Void Requests'}, {name:'Users'}, {name:'Activity Logs'}, {name:'HR'}, {name:'Settings'}]}
+];
+
+const peso = (n) => '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+class Component extends DCLogic {
+  state = {
+    theme:'light', screen:'list', active:'Purchase Orders', view:'Pending',
+    win:30, cover:14, query:'', scope:'Needs buying', qty:{}, off:{},
+    toast:null, toastDetail:null
+  };
+
+  componentDidMount(){
+    let t = 'light';
+    try { t = localStorage.getItem('maki-pos-theme') || 'light'; } catch(e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    this.setState({theme:t});
+  }
+  componentWillUnmount(){ clearTimeout(this._t); }
+
+  setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('maki-pos-theme', t); } catch(e) {}
+    this.setState({theme:t});
+  }
+
+  notify(msg, detail){
+    clearTimeout(this._t);
+    this.setState({toast:msg, toastDetail:detail || null});
+    this._t = setTimeout(() => this.setState({toast:null, toastDetail:null}), 1900);
+  }
+
+  chip(on){
+    return on
+      ? {bg:'var(--accent-soft)', fg:'var(--accent-text)', bd:'var(--accent-text)', fw:'600'}
+      : {bg:'var(--surface)', fg:'var(--text-2)', bd:'var(--border)', fw:'500'};
+  }
+
+  box(on){
+    return on
+      ? {bg:'var(--accent)', bd:'var(--accent-line)', tick:'✓'}
+      : {bg:'var(--surface-2)', bd:'var(--border)', tick:''};
+  }
+
+  // suggested qty: what sold in the window, scaled to the cover, less what's on the shelf
+  suggest(p){
+    const rate = p.sold / this.state.win;
+    const need = Math.ceil(rate * this.state.cover) - p.onHand;
+    return Math.max(0, need);
+  }
+
+  copyVal(v){
+    return (e) => {
+      if(e && e.stopPropagation) e.stopPropagation();
+      try { if(navigator.clipboard) navigator.clipboard.writeText(v); } catch(err) {}
+      this.notify('Copied to clipboard', v);
+    };
+  }
+
+  renderVals(){
+    const st = this.state;
+    const q = st.query.trim().toLowerCase();
+
+    const orders = ORDERS.filter(o => o.status === st.view);
+    const showOrders = !this.props.showEmptyState && orders.length > 0;
+
+    const scoped = CATALOG
+      .filter(p => {
+        if(st.scope === 'Out of stock') return p.onHand <= 0;
+        if(st.scope === 'Low stock') return p.onHand > 0 && p.onHand <= 10;
+        return true;
+      })
+      .filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.sup || '').toLowerCase().includes(q));
+
+    const qtyOf = (p) => {
+      const raw = st.qty[p.sku];
+      if(raw === undefined) return this.suggest(p);
+      const n = parseInt(raw, 10);
+      return isFinite(n) && n >= 0 ? n : 0;
+    };
+    const isOn = (p) => !st.off[p.sku] && qtyOf(p) > 0;
+
+    const selected = CATALOG.filter(p => isOn(p));
+    const selUnits = selected.reduce((a, p) => a + qtyOf(p), 0);
+    const selTotal = selected.reduce((a, p) => a + qtyOf(p) * p.cost, 0);
+    const supSet = [];
+    selected.forEach(p => { const n = p.sup || 'Unassigned'; if(supSet.indexOf(n) < 0) supSet.push(n); });
+
+    const allOn = scoped.length > 0 && scoped.every(p => isOn(p));
+    const [eTitle, eBody] = EMPTY[st.view];
+
+    return {
+      pageTitle: st.screen === 'list' ? 'Purchase Orders' : 'New purchase order',
+      pageSub: st.screen === 'list'
+        ? 'One list per buying trip. Where each part is bought is recorded on the line, as you go.'
+        : 'Start from what the shelf needs, then adjust before you go.',
+
+      themeLabel: st.theme === 'light' ? 'Dark' : 'Light',
+      themeIcon: st.theme === 'light' ? '☾' : '☀',
+      toggleTheme: () => this.setTheme(st.theme === 'light' ? 'dark' : 'light'),
+
+      pickDash: () => this.setState({active:'Dashboard'}),
+      navGroups: GROUPS.map(g => ({
+        label:g.label,
+        items: g.items.map(it => {
+          const on = st.active === it.name;
+          return {
+            name:it.name,
+            bg: on ? 'var(--accent-soft)' : 'transparent',
+            fg: on ? 'var(--accent-text)' : 'var(--text-2)',
+            fw: on ? '600' : '500',
+            dot: on ? 'var(--accent-line)' : 'var(--border)',
+            pick: () => this.setState({active:it.name})
+          };
+        })
+      })),
+
+      isList: st.screen === 'list',
+      isBuilder: st.screen === 'builder',
+      back: () => this.setState({screen:'list'}),
+      newPo: () => this.setState({screen:'builder'}),
+
+      views: ['Pending','Completed','Cancelled'].map(v =>
+        Object.assign({
+          label:v,
+          count: this.props.showEmptyState ? 0 : ORDERS.filter(o => o.status === v).length,
+          pick: () => this.setState({view:v})
+        }, this.chip(st.view === v))),
+
+      hasOrders: showOrders,
+      noOrders: !showOrders,
+      emptyTitle: eTitle,
+      emptyBody: eBody,
+
+      orders: orders.map(o => {
+        const s = STATUS[o.status];
+        return Object.assign({}, o, {
+          sBg:s.bg, sFg:s.fg,
+          total: peso(o.total),
+          copy: this.copyVal(o.ref),
+          open: () => this.setState({screen:'builder'})
+        });
+      }),
+
+      windows: [7, 30, 90].map(n => {
+        const on = st.win === n;
+        return {label: n + ' days', bg: on ? 'var(--surface)' : 'transparent',
+          fg: on ? 'var(--text)' : 'var(--text-2)', fw: on ? '600' : '500',
+          pick: () => this.setState({win:n, qty:{}})};
+      }),
+      covers: [7, 14, 30].map(n => {
+        const on = st.cover === n;
+        return {label: n + ' days', bg: on ? 'var(--surface)' : 'transparent',
+          fg: on ? 'var(--text)' : 'var(--text-2)', fw: on ? '600' : '500',
+          pick: () => this.setState({cover:n, qty:{}})};
+      }),
+      soldLabel: 'Sold ' + st.win + 'd',
+
+      query: st.query,
+      onQuery: (e) => this.setState({query:e.target.value}),
+      scopes: ['Needs buying','Out of stock','Low stock'].map(s =>
+        Object.assign({
+          label:s,
+          count: s === 'Out of stock' ? CATALOG.filter(p => p.onHand <= 0).length
+               : s === 'Low stock'    ? CATALOG.filter(p => p.onHand > 0 && p.onHand <= 10).length
+               : CATALOG.length,
+          pick: () => this.setState({scope:s})
+        }, this.chip(st.scope === s))),
+      lineCount: scoped.length + (scoped.length === 1 ? ' part' : ' parts'),
+      noRows: scoped.length === 0,
+
+      allBox: this.box(allOn),
+      toggleAll: () => this.setState(s => {
+        const off = Object.assign({}, s.off);
+        scoped.forEach(p => { if(allOn) off[p.sku] = true; else delete off[p.sku]; });
+        return {off:off};
+      }),
+
+      rows: scoped.map(p => {
+        const qty = qtyOf(p);
+        const on = isOn(p);
+        const sug = this.suggest(p);
+        const edited = st.qty[p.sku] !== undefined && qty !== sug;
+        return {
+          sku:p.sku, name:p.name,
+          supplier: p.sup || 'Not set',
+          supFg: p.sup ? 'var(--text-2)' : 'var(--text-3)',
+          supFw: p.sup ? '500' : '400',
+          isOut: p.onHand <= 0,
+          isLow: p.onHand > 0 && p.onHand <= 10,
+          onHand: p.onHand,
+          onHandFg: p.onHand <= 0 ? 'var(--neg)' : p.onHand <= 10 ? 'var(--accent-text)' : 'var(--text-2)',
+          sold: p.sold,
+          qty: String(qty),
+          qtyBd: edited ? 'var(--accent-text)' : 'var(--border)',
+          edited: edited,
+          cost: peso(p.cost),
+          amount: on ? peso(qty * p.cost) : '—',
+          amountFg: on ? 'var(--text)' : 'var(--text-3)',
+          rowBg: on ? 'transparent' : 'var(--surface-2)',
+          box: this.box(on),
+          toggle: () => this.setState(s => {
+            const off = Object.assign({}, s.off);
+            if(off[p.sku]) delete off[p.sku]; else off[p.sku] = true;
+            return {off:off};
+          }),
+          setQty: (e) => {
+            const v = e.target.value;
+            this.setState(s => ({qty: Object.assign({}, s.qty, {[p.sku]: v})}));
+          },
+          reset: () => this.setState(s => {
+            const next = Object.assign({}, s.qty);
+            delete next[p.sku];
+            return {qty:next};
+          }),
+          copy: this.copyVal(p.sku)
+        };
+      }),
+
+      selCount: selected.length,
+      selUnits: selUnits,
+      selSuppliers: supSet.length,
+      selTotal: peso(selTotal),
+      createOpacity: selected.length > 0 ? '1' : '.45',
+      saveDraft: () => this.notify('Draft saved', 'PO-20260903-001'),
+      createPo: () => {
+        if(!selected.length){ this.notify('Select at least one part'); return; }
+        this.notify('Purchase order created', selected.length + ' lines · ' + peso(selTotal));
+        this.setState({screen:'list', view:'Pending'});
+      },
+
+      toast: st.toast,
+      toastDetail: st.toastDetail
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -10,6 +10,8 @@ const TONE_BY_STATUS: Record<string, Tone> = {
   billed: 'positive',
   pending: 'warning',
   partial: 'warning',
+  // A PO out being bought — unfinished business (PO guide §A).
+  ordered: 'warning',
   'in progress': 'warning',
   in_progress: 'warning',
   // A ticket on the bench is information, not a warning (JO guide §A).

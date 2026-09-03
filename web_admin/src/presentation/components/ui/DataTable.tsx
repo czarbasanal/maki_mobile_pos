@@ -2,6 +2,7 @@
 // in a screen again — extend this instead.
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+import { Checkbox } from './Checkbox';
 import { EmptyState } from './EmptyState';
 import { Skeleton } from './Skeleton';
 
@@ -26,6 +27,17 @@ export interface DataTableProps<T> {
    *  the horizontal scroller, so narrow viewports scroll instead of clipping
    *  the last columns behind the card's rounded overflow:hidden (JO guide §A). */
   minWidth?: string;
+  /** Row selection (PO guide §D): a leading tokenized-checkbox column with an
+   *  all/none/indeterminate header. */
+  selection?: {
+    selectedKeys: ReadonlySet<string>;
+    onToggle: (key: string) => void;
+    onToggleAll: () => void;
+    /** Accessible name for a row's checkbox. */
+    rowLabel: (row: T) => string;
+  };
+  /** Extra class for a row (e.g. greying an unselected line). */
+  rowClassName?: (row: T) => string | undefined;
 }
 
 const alignCls = { left: 'text-left', right: 'text-right', center: 'text-center' } as const;
@@ -39,16 +51,33 @@ export function DataTable<T>({
   skeletonRows = 8,
   empty,
   minWidth,
+  selection,
+  rowClassName,
 }: DataTableProps<T>) {
   if (!loading && rows.length === 0) {
     return <>{empty ?? <EmptyState message="Nothing here yet" />}</>;
   }
+
+  const allSelected =
+    !!selection && rows.length > 0 && rows.every((r) => selection.selectedKeys.has(rowKey(r)));
+  const someSelected =
+    !!selection && !allSelected && rows.some((r) => selection.selectedKeys.has(rowKey(r)));
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse" style={minWidth ? { minWidth } : undefined}>
         <thead>
           <tr className="border-y border-line bg-surface-2">
+            {selection ? (
+              <th className="w-[38px] px-4 py-2">
+                <Checkbox
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onChange={selection.onToggleAll}
+                  label="Select all"
+                />
+              </th>
+            ) : null}
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -64,6 +93,11 @@ export function DataTable<T>({
           {loading
             ? Array.from({ length: skeletonRows }, (_, i) => (
                 <tr key={i} className="border-b border-line-2 last:border-b-0">
+                  {selection ? (
+                    <td className="px-4 py-2.5">
+                      <Skeleton height="12px" />
+                    </td>
+                  ) : null}
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-2.5">
                       <Skeleton height="12px" />
@@ -91,8 +125,18 @@ export function DataTable<T>({
                   className={clsx(
                     'border-b border-line-2 last:border-b-0',
                     onRowClick && 'cursor-pointer hover:bg-surface-2 focus:outline-none focus-visible:bg-surface-2',
+                    rowClassName?.(row),
                   )}
                 >
+                  {selection ? (
+                    <td className="px-4 py-2.5">
+                      <Checkbox
+                        checked={selection.selectedKeys.has(rowKey(row))}
+                        onChange={() => selection.onToggle(rowKey(row))}
+                        label={selection.rowLabel(row)}
+                      />
+                    </td>
+                  ) : null}
                   {columns.map((col) => (
                     <td
                       key={col.key}
