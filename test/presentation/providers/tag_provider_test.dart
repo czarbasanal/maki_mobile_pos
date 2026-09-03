@@ -60,6 +60,7 @@ void main() {
         await container.read(tagOperationsProvider.notifier).create(tag: tag);
 
     expect(created, isNotNull);
+    expect(created!.createdBy, 'u-staff');
     expect(repo.created.single.name, 'Intact');
     expect(repo.created.single.color, 'green');
   });

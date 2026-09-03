@@ -32,7 +32,9 @@ abstract class TagRepository {
     required String updatedBy,
   });
 
-  /// Permanently deletes the entry.
+  /// Permanently deletes the entry. Orphaned ids left on products are
+  /// tolerated — unresolvable ids simply never render as chips; prefer
+  /// setActive(false) to merely hide a tag.
   Future<void> deleteTag(String tagId);
 
   /// Checks whether a tag name already exists (exact match).
