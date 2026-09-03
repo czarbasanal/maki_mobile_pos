@@ -8,6 +8,7 @@
 // select, on clicking the trigger again, on a mousedown anywhere outside the
 // wrapper, and on Escape.
 import { useEffect, useRef, useState } from 'react';
+import { useEscapeLayer } from './escapeLayers';
 import { clsx } from 'clsx';
 import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 
@@ -40,20 +41,14 @@ export function SelectFilter({
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
 
+  useEscapeLayer(open, () => setOpen(false));
   useEffect(() => {
     if (!open) return;
     const onMouseDown = (e: MouseEvent) => {
       if (wrapper.current && !wrapper.current.contains(e.target as Node)) setOpen(false);
     };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
     document.addEventListener('mousedown', onMouseDown, true);
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown, true);
-      document.removeEventListener('keydown', onKeyDown, true);
-    };
+    return () => document.removeEventListener('mousedown', onMouseDown, true);
   }, [open]);
 
   const active = value !== '';

@@ -43,12 +43,29 @@ function harness(entry: string, deactivateFn = vi.fn(async () => {})) {
   const activityLogRepo: Partial<Container['activityLogRepo']> = {
     log: vi.fn(async () => {}),
   };
+  // The live subtitle subscribes to products + receipts.
+  const productRepo = {
+    watchAll: (cb: (p: unknown[]) => void) => {
+      cb([]);
+      return () => {};
+    },
+  };
+  const receivingRepo = {
+    watchAll: (_r: unknown, cb: (x: unknown[]) => void) => {
+      cb([]);
+      return () => {};
+    },
+  };
   render(
     <DiProvider
-      override={{
-        supplierRepo: supplierRepo as Container['supplierRepo'],
-        activityLogRepo: activityLogRepo as Container['activityLogRepo'],
-      }}
+      override={
+        {
+          supplierRepo,
+          activityLogRepo,
+          productRepo,
+          receivingRepo,
+        } as unknown as Container
+      }
     >
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={[entry]}>
@@ -78,19 +95,21 @@ describe('SupplierModal', () => {
     useAuthStore.setState({ user: null, status: 'signedOut' } as never);
   });
 
-  it('add mode renders the embedded form in a dialog over the directory', () => {
+  it('add mode renders the form in the shared Modal over the directory', () => {
     harness('/suppliers/add');
     expect(screen.getByText('DIRECTORY UNDERNEATH')).toBeInTheDocument();
-    expect(screen.getByText('New supplier')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Add supplier' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create supplier' })).toBeInTheDocument();
+    // Payment terms are chips, not a dropdown.
+    expect(screen.getByRole('button', { name: 'Cash' })).toHaveAttribute('aria-pressed', 'true');
     // No deactivate offered while creating.
     expect(screen.queryByRole('button', { name: /deactivate/i })).not.toBeInTheDocument();
   });
 
   it('edit mode offers Deactivate; confirming fires the mutation and closes the modal', async () => {
     const deactivateFn = harness('/suppliers/edit/s1');
-    expect(await screen.findByText('Edit supplier')).toBeInTheDocument();
-
+    // Anchor on the LOADED form (the loading modal briefly holds the same
+    // dialog name and would win a findByRole race).
     await userEvent.click(await screen.findByRole('button', { name: 'Deactivate supplier' }));
     expect(screen.getByText('Deactivate supplier?')).toBeInTheDocument();
     expect(screen.getByText(/keeps referencing it/)).toBeInTheDocument();
@@ -98,14 +117,35 @@ describe('SupplierModal', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Deactivate' }));
     expect(deactivateFn).toHaveBeenCalledWith('s1', 'u1');
     // Navigated back to the directory — the modal route unmounted.
-    expect(screen.queryByText('Edit supplier')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Edit supplier' })).not.toBeInTheDocument();
     expect(screen.getByText('DIRECTORY UNDERNEATH')).toBeInTheDocument();
   });
 
-  it('closing the dialog routes back to the directory', async () => {
+  it('a clean draft closes silently on Escape; a dirty one confirms first', async () => {
     harness('/suppliers/add');
     await userEvent.keyboard('{Escape}');
-    expect(screen.queryByText('New supplier')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Add supplier' })).not.toBeInTheDocument();
     expect(screen.getByText('DIRECTORY UNDERNEATH')).toBeInTheDocument();
+  });
+
+  it('a dirty draft confirms before a stray Escape discards it', async () => {
+    harness('/suppliers/add');
+    await userEvent.type(screen.getByLabelText('Name'), 'HMJ');
+    await userEvent.keyboard('{Escape}');
+    // Still open, asking first.
+    expect(screen.getByText('Discard changes?')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(screen.getByRole('dialog', { name: 'Add supplier' })).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByRole('button', { name: 'Discard' }));
+    expect(screen.queryByRole('dialog', { name: 'Add supplier' })).not.toBeInTheDocument();
+  });
+
+  it('Save is inert while Name is empty; a named draft creates and toasts', async () => {
+    harness('/suppliers/add');
+    await userEvent.click(screen.getByRole('button', { name: 'Create supplier' }));
+    // Still open — nothing saved without a name.
+    expect(screen.getByRole('dialog', { name: 'Add supplier' })).toBeInTheDocument();
   });
 });

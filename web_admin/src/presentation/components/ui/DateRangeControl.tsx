@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Segmented } from './Segmented';
+import { useEscapeLayer } from './escapeLayers';
 import { shopIsoDate } from '@/domain/time/shopTime';
 import { cn } from '@/core/utils/cn';
 
@@ -69,6 +70,10 @@ export function DateRangeControl<T extends string>({
   });
   const wrapper = useRef<HTMLDivElement>(null);
 
+  useEscapeLayer(open, () => {
+    setOpen(false);
+    setHover(null);
+  });
   useEffect(() => {
     if (!open) return;
     const onMouseDown = (e: MouseEvent) => {
@@ -77,18 +82,8 @@ export function DateRangeControl<T extends string>({
         setHover(null);
       }
     };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpen(false);
-        setHover(null);
-      }
-    };
     document.addEventListener('mousedown', onMouseDown, true);
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown, true);
-      document.removeEventListener('keydown', onKeyDown, true);
-    };
+    return () => document.removeEventListener('mousedown', onMouseDown, true);
   }, [open]);
 
   const pickDay = (key: string) => {

@@ -7,6 +7,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useEscapeLayer } from '@/presentation/components/ui/escapeLayers';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/core/utils/cn';
 
@@ -31,18 +32,16 @@ export function Dialog({
   dismissable = true,
   className,
 }: DialogProps) {
+  // Layered: a dropdown (or nested dialog) above this one consumes Escape
+  // first; this closes on the next press.
+  useEscapeLayer(open && dismissable, onClose);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && dismissable) onClose();
-    };
-    document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [open, dismissable, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
