@@ -60,6 +60,7 @@ export const RoutePaths = {
   timezoneSettings: '/settings/timezone',
   manageLists: '/settings/lists',
   mechanics: '/settings/mechanics',
+  productTags: '/settings/tags',
   about: '/settings/about',
 
   userLogs: '/logs',

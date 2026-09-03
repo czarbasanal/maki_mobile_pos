@@ -10,6 +10,7 @@ import {
   InformationCircleIcon,
   KeyIcon,
   QueueListIcon,
+  TagIcon,
   UserIcon,
   UsersIcon,
   WrenchScrewdriverIcon,
@@ -123,6 +124,15 @@ export function SettingsPage() {
             tone="orange"
             title="Mechanics"
             subtitle="Mechanics for labor on service sales"
+          />
+        ) : null}
+        {can(Permission.editLists) ? (
+          <Row
+            to={RoutePaths.productTags}
+            icon={TagIcon}
+            tone="orange"
+            title="Product tags"
+            subtitle="Color-coded markers shown on inventory"
           />
         ) : null}
       </Section>

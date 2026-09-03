@@ -34,6 +34,7 @@ import { InventoryListPage } from '@/presentation/features/inventory/InventoryLi
 import { ProductModal } from '@/presentation/features/inventory/ProductModal';
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
+import { ProductTagsPage } from '@/presentation/features/settings/ProductTagsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
 import { SupplierModal } from '@/presentation/features/suppliers/SupplierModal';
 import { PosPage } from '@/presentation/features/pos/PosPage';
@@ -369,6 +370,14 @@ export const router = createBrowserRouter(
           handle: {
             title: 'Mechanics',
             subtitle: 'Mechanics available for the labor picker on service sales.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.productTags,
+          element: <ProductTagsPage />,
+          handle: {
+            title: 'Product tags',
+            subtitle: 'Color-coded markers shown on inventory rows.',
           } satisfies PageChrome,
         },
         {

@@ -52,6 +52,7 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   // delete are gated in-page by manageCategories.
   [RoutePaths.manageLists, Permission.editLists],
   [RoutePaths.mechanics, Permission.editLists],
+  [RoutePaths.productTags, Permission.editLists],
   [RoutePaths.userLogs, Permission.viewUserLogs],
   [RoutePaths.hr, Permission.manageHr],
   [RoutePaths.hrEmployees, Permission.manageHr],
