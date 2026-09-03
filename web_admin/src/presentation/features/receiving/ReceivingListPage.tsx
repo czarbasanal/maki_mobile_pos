@@ -357,6 +357,15 @@ export function ReceivingListPage() {
           </button>
         ))}
         <div className="ml-auto flex items-center gap-[9px]">
+          <Segmented
+            label="Date range"
+            options={RANGE_OPTIONS}
+            value={range}
+            onChange={(r) => {
+              setRange(r);
+              setPage(1);
+            }}
+          />
           {canReceive ? (
             <Button
               variant="primary"
@@ -402,15 +411,6 @@ export function ReceivingListPage() {
           }}
           allLabel="All suppliers"
           allTriggerLabel="All"
-        />
-        <Segmented
-          label="Date range"
-          options={RANGE_OPTIONS}
-          value={range}
-          onChange={(r) => {
-            setRange(r);
-            setPage(1);
-          }}
         />
         {isFiltered ? (
           <button
