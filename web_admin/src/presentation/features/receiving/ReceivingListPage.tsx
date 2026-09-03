@@ -10,14 +10,14 @@
 // row count all derive from the same scoped set; only the pipeline card is
 // month-scoped, and it says so in its label. Our statuses have no 'partial',
 // so the pipeline is Completed / Drafts / Cancelled.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpTrayIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useReceivings } from '@/presentation/hooks/useReceivings';
 import { useDraftReceivings } from '@/presentation/hooks/useDraftReceivings';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Receiving, ReceivingStatus } from '@/domain/entities';
-import { formatInShopZone, instantOf, shopIsoDate, shopWall } from '@/domain/time/shopTime';
+import { formatInShopZone, instantOf, shopWall } from '@/domain/time/shopTime';
 import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
@@ -29,7 +29,7 @@ import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
-import { Segmented } from '@/presentation/components/ui/Segmented';
+import { DateRangeControl } from '@/presentation/components/ui/DateRangeControl';
 import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
 import { TableFooter } from '@/presentation/components/ui/TableFooter';
 import { statusTone } from '@/presentation/components/ui/statusTone';
@@ -69,12 +69,10 @@ export function ReceivingListPage() {
   const navigate = useNavigate();
 
   const [range, setRange] = useState<Range>('last30');
-  // Custom range: the pill opens a small popover with the browser's own
-  // date inputs (no custom calendar). Dates are SHOP calendar days.
-  const [customOpen, setCustomOpen] = useState(false);
+  // Custom range: the pill opens DateRangeControl's popover with the
+  // browser's own date inputs. Dates are SHOP calendar days.
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const customRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<StatusView>('all');
   const [search, setSearch] = useState('');
   const [supplier, setSupplier] = useState('');
@@ -100,22 +98,6 @@ export function ReceivingListPage() {
     }
     return resolvePreset(range as Exclude<RangePreset, 'custom'>);
   }, [range, customStart, customEnd]);
-
-  useEffect(() => {
-    if (!customOpen) return;
-    const onMouseDown = (e: MouseEvent) => {
-      if (customRef.current && !customRef.current.contains(e.target as Node)) setCustomOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setCustomOpen(false);
-    };
-    document.addEventListener('mousedown', onMouseDown, true);
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown, true);
-      document.removeEventListener('keydown', onKeyDown, true);
-    };
-  }, [customOpen]);
 
   const { data: ranged, isLoading, error } = useReceivings(dateRange);
   const { data: drafts } = useDraftReceivings();
@@ -397,44 +379,24 @@ export function ReceivingListPage() {
           </button>
         ))}
         <div className="ml-auto flex items-center gap-[9px]">
-          <div ref={customRef} className="relative">
-            <Segmented
-              label="Date range"
-              options={RANGE_OPTIONS}
-              value={range}
-              onChange={(r) => {
-                setRange(r);
-                setCustomOpen(r === 'custom');
-                setPage(1);
-              }}
-            />
-            {customOpen ? (
-              <div className="absolute right-0 top-[calc(100%+6px)] z-40 flex items-center gap-2 rounded-[12px] border border-line bg-surface p-3 shadow-[0_18px_44px_-14px_rgba(0,0,0,0.3)]">
-                <input
-                  type="date"
-                  aria-label="Start date"
-                  value={customStart}
-                  max={customEnd || shopIsoDate(new Date())}
-                  onChange={(e) => {
-                    setCustomStart(e.target.value);
-                    setPage(1);
-                  }}
-                />
-                <span className="text-ink-3">–</span>
-                <input
-                  type="date"
-                  aria-label="End date"
-                  value={customEnd}
-                  min={customStart}
-                  max={shopIsoDate(new Date())}
-                  onChange={(e) => {
-                    setCustomEnd(e.target.value);
-                    setPage(1);
-                  }}
-                />
-              </div>
-            ) : null}
-          </div>
+          <DateRangeControl
+            options={RANGE_OPTIONS}
+            value={range}
+            onChange={(r) => {
+              setRange(r);
+              setPage(1);
+            }}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomStart={(v) => {
+              setCustomStart(v);
+              setPage(1);
+            }}
+            onCustomEnd={(v) => {
+              setCustomEnd(v);
+              setPage(1);
+            }}
+          />
           {canReceive ? (
             <Button
               variant="primary"

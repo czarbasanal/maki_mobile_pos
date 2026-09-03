@@ -23,7 +23,7 @@ import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
 import { IconButton } from '@/presentation/components/ui/IconButton';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
-import { Segmented } from '@/presentation/components/ui/Segmented';
+import { DateRangeControl } from '@/presentation/components/ui/DateRangeControl';
 import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
 import { TableFooter } from '@/presentation/components/ui/TableFooter';
 import { statusTone } from '@/presentation/components/ui/statusTone';
@@ -34,15 +34,17 @@ import { Dialog } from '@/presentation/components/common/Dialog';
 import { NewJobOrderDialog } from './NewJobOrderDialog';
 import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
 import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
+import { instantOf, shopWall } from '@/domain/time/shopTime';
 
 type StatusView = 'all' | 'open' | 'billed';
-type DatePreset = Extract<RangePreset, 'today' | 'yesterday' | 'last7' | 'last30'>;
+type DatePreset = Extract<RangePreset, 'today' | 'yesterday' | 'last7' | 'last30'> | 'custom';
 
 const DATE_OPTIONS: Array<{ value: DatePreset; label: string }> = [
   { value: 'today', label: 'Today' },
   { value: 'yesterday', label: 'Yesterday' },
   { value: 'last7', label: '7 days' },
   { value: 'last30', label: '30 days' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 const openedFmt = (d: Date) =>
@@ -65,7 +67,25 @@ export function JobOrdersPage() {
 
   // Today by default: the list is opened to work the day's tickets.
   const [preset, setPreset] = useState<DatePreset>('today');
-  const range = useMemo<DateRange>(() => resolvePreset(preset), [preset]);
+  // Custom range: DateRangeControl's popover with the browser's own date
+  // inputs; picked dates are SHOP calendar days.
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const range = useMemo<DateRange>(() => {
+    if (preset === 'custom') {
+      if (customStart && customEnd) {
+        const [sy, sm, sd] = customStart.split('-').map(Number);
+        const [ey, em, ed] = customEnd.split('-').map(Number);
+        return {
+          start: instantOf(shopWall(sy, sm, sd)),
+          end: instantOf(shopWall(ey, em, ed, 23, 59, 59, 999)),
+        };
+      }
+      // Until both dates are picked, keep the default day under the rows.
+      return resolvePreset('today');
+    }
+    return resolvePreset(preset);
+  }, [preset, customStart, customEnd]);
   const [view, setView] = useState<StatusView>('all');
   const [search, setSearch] = useState('');
   const [mechanicId, setMechanicId] = useState('');
@@ -310,13 +330,22 @@ export function JobOrdersPage() {
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2.5">
-          <Segmented
-            label="Date range"
+          <DateRangeControl
             options={DATE_OPTIONS}
             value={preset}
             onChange={(p) => {
               setPreset(p);
               setShowOutsideOpen(false);
+              setPage(1);
+            }}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomStart={(v) => {
+              setCustomStart(v);
+              setPage(1);
+            }}
+            onCustomEnd={(v) => {
+              setCustomEnd(v);
               setPage(1);
             }}
           />

@@ -240,7 +240,7 @@ describe('JobOrdersPage — date range', () => {
     const labels = within(group)
       .getAllByRole('radio')
       .map((r) => r.textContent);
-    expect(labels).toEqual(['Today', 'Yesterday', '7 days', '30 days']);
+    expect(labels).toEqual(['Today', 'Yesterday', '7 days', '30 days', 'Custom']);
     expect(screen.getByRole('radio', { name: 'Today' })).toHaveAttribute('aria-checked', 'true');
   });
 
@@ -423,5 +423,34 @@ describe('JobOrdersPage — resume over a non-empty cart (skinned confirm)', () 
     // Still on the list, cart untouched.
     expect(useCartStore.getState().lines).toHaveLength(1);
     useCartStore.setState({ lines: [] as never });
+  });
+});
+
+describe('JobOrdersPage — custom date range', () => {
+  it('the Custom pill opens the native date popover; Escape closes it', async () => {
+    harness([jobOrder({ id: 'd1', name: 'JO-TODAY' })]);
+    await userEvent.click(screen.getByRole('radio', { name: 'Custom' }));
+    expect(screen.getByLabelText('Start date')).toBeInTheDocument();
+    expect(screen.getByLabelText('End date')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByLabelText('Start date')).not.toBeInTheDocument();
+  });
+
+  it('a picked custom range brings an out-of-preset ticket into view', async () => {
+    const old = new Date();
+    old.setDate(old.getDate() - 90);
+    harness([
+      jobOrder({ id: 'd1', name: 'JO-TODAY', createdAt: new Date() }),
+      jobOrder({ id: 'd2', name: 'JO-ANCIENT', createdAt: old, isConverted: true, convertedToSaleId: 's1' }),
+    ]);
+    expect(screen.queryByText('JO-ANCIENT')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Custom' }));
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const start = new Date();
+    start.setDate(start.getDate() - 120);
+    fireEvent.change(screen.getByLabelText('Start date'), { target: { value: iso(start) } });
+    fireEvent.change(screen.getByLabelText('End date'), { target: { value: iso(new Date()) } });
+    expect(screen.getByText('JO-ANCIENT')).toBeInTheDocument();
   });
 });
