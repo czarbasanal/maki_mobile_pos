@@ -117,7 +117,7 @@ export function SaleDetailPage() {
   return (
     <>
     <div className="flex flex-col gap-3 print:hidden">
-      <BackButton label="Back" onClick={goBack} />
+      <BackButton onClick={goBack} />
 
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* Band 1 — identity and actions */}

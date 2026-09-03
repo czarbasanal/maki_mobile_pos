@@ -72,7 +72,7 @@ export function PayslipDetailPage() {
   if (!payslip) {
     return (
       <div className="space-y-tk-lg">
-        <PageHeader backTo={RoutePaths.hrPayslips} backLabel="Back to payslips" />
+        <PageHeader backTo={RoutePaths.hrPayslips} backLabel="Back" />
         <EmptyState title="Payslip not found" description="It may have been deleted." />
       </div>
     );
@@ -85,7 +85,7 @@ export function PayslipDetailPage() {
           title={payslip.employeeName}
           description={`${payslip.periodStart} – ${payslip.periodEnd}`}
           backTo={RoutePaths.hrPayslips}
-          backLabel="Back to payslips"
+          backLabel="Back"
         />
         <div className="flex flex-wrap items-center gap-tk-sm">
           {/* html2canvas can take a beat on a long slip and can fail outright

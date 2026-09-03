@@ -2,7 +2,7 @@
 // (receiving-detail reference), shared so the treatment can't drift.
 import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 
-export function BackButton({ label, onClick }: { label: string; onClick: () => void }) {
+export function BackButton({ label = 'Back', onClick }: { label?: string; onClick: () => void }) {
   return (
     <button
       type="button"

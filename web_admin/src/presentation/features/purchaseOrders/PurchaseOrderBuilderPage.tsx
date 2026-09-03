@@ -277,7 +277,7 @@ export function PurchaseOrderBuilderPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <BackButton label="Back to purchase orders" onClick={() => navigate(RoutePaths.purchaseOrders)} />
+      <BackButton onClick={() => navigate(RoutePaths.purchaseOrders)} />
 
       {/* Header card — the two dials that drive every suggested quantity. */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-card border border-line bg-surface px-[17px] py-[15px] shadow-card">

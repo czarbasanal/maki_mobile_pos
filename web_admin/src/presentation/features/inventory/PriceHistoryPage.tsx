@@ -84,7 +84,7 @@ export function PriceHistoryPage() {
             }}
             className="text-bodySmall text-light-text-secondary hover:underline"
           >
-            ← Back to search
+            ← Back
           </button>
           <div>
             <h2 className="text-bodyMedium font-semibold text-light-text">{selected.name}</h2>

@@ -27,7 +27,7 @@ export function BulkReceivingPage() {
           to={RoutePaths.receiving}
           className="text-bodySmall text-light-text-secondary hover:underline"
         >
-          ← Back to receiving
+          ← Back
         </Link>
       </header>
 

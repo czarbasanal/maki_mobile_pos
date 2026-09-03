@@ -109,7 +109,7 @@ export function ReceivingEntryPage() {
           to={RoutePaths.receiving}
           className="text-bodySmall text-light-text-secondary hover:underline"
         >
-          ← Back to receiving
+          ← Back
         </Link>
         <span className="block font-mono text-bodySmall text-light-text-secondary">
           {entry.referenceNumber ?? '…'}

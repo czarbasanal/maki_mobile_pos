@@ -178,7 +178,7 @@ describe('PayslipDetailPage', () => {
 
     await screen.findByText('NET PAY');
 
-    const backLink = screen.getByRole('link', { name: /back to payslips/i });
+    const backLink = screen.getByRole('link', { name: /^back$/i });
     const header = backLink.closest('header');
 
     expect(header).toBeInTheDocument();

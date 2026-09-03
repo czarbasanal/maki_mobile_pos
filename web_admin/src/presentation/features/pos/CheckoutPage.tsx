@@ -123,7 +123,7 @@ export function CheckoutPage() {
   return (
     <div className="mx-auto max-w-xl space-y-tk-md">
       <Link to={RoutePaths.pos} className="text-cell text-ink-2 hover:text-ink">
-        ← Back to cart
+        ← Back
       </Link>
 
       {previousDayUnsettled ? (

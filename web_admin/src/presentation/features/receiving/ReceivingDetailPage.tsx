@@ -62,7 +62,7 @@ export function ReceivingDetailPage() {
             onClick={() => navigate(RoutePaths.receiving)}
             className="text-ink underline"
           >
-            Back to receiving
+            Back
           </button>
         }
       />
@@ -90,7 +90,7 @@ export function ReceivingDetailPage() {
 
   return (
     <div className="flex flex-col gap-3 print:hidden">
-      <BackButton label="Back to receiving" onClick={() => navigate(RoutePaths.receiving)} />
+      <BackButton onClick={() => navigate(RoutePaths.receiving)} />
 
       <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* Band 1 — identity and actions */}
