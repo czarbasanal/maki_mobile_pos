@@ -71,6 +71,7 @@ export function buildProductWrites(
       baseSku: input.baseSku,
       variationNumber: input.variationNumber,
       barcodes: input.barcodes,
+      tagIds: input.tagIds ?? [],
       // Unrestricted at creation — matching how `price` already works (staff
       // may set it at creation, not edit it after; firestore.rules has no
       // create-time restriction on this field either). `?? []` because
@@ -149,7 +150,7 @@ export function buildProductUpdate(
   const valueFields = [
     'sku', 'name', 'costCode', 'cost', 'price', 'quantity', 'reorderLevel',
     'unit', 'supplierId', 'supplierName', 'isActive', 'baseSku',
-    'variationNumber', 'barcodes', 'category', 'imageUrl', 'notes', 'updatedByName',
+    'variationNumber', 'barcodes', 'category', 'imageUrl', 'notes', 'updatedByName', 'tagIds',
   ] as const;
   for (const key of valueFields) {
     if (input[key] !== undefined) data[key] = input[key];

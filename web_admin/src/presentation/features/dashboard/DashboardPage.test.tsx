@@ -82,6 +82,7 @@ function fakeProduct(o: Partial<Product> = {}): Product {
     category: null,
     imageUrl: null,
     notes: null,
+    tagIds: [],
     ...o,
   };
 }

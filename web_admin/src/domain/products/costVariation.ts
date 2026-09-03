@@ -100,6 +100,7 @@ export function buildVariationInput(
     // and applyReceivedItems) carry the URL over.
     imageUrl: existing.imageUrl,
     notes: existing.notes,
+    tagIds: existing.tagIds,
     createdBy: opts.actorId,
     updatedBy: null,
     createdByName: opts.actorName,

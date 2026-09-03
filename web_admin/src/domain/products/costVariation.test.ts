@@ -35,6 +35,7 @@ function product(over: Partial<Product> = {}): Product {
     category: 'Brakes',
     imageUrl: 'https://example.test/img.png',
     notes: 'handle with care',
+    tagIds: ['t1'],
     ...over,
   };
 }
@@ -127,6 +128,7 @@ describe('buildVariationInput', () => {
       { id: 'o1', label: 'Half set', pieces: 2, price: 130 },
     ]);
     expect(input.isActive).toBe(true);
+    expect(input.tagIds).toEqual(['t1']);
   });
 
   it('carries the base product’s image URL, sharing the Storage object', () => {

@@ -28,6 +28,9 @@ export interface Product {
   category: string | null;
   imageUrl: string | null;
   notes: string | null;
+  /** Custom tag ids (product_tags docs). Missing on old docs → []. Orphaned
+   *  ids (deleted tags) are tolerated — unresolvable ids never render. */
+  tagIds: string[];
 }
 
 export const StockStatus = {

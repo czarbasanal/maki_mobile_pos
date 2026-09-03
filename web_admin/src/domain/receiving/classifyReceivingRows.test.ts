@@ -17,6 +17,7 @@ function product(over: Partial<Product> = {}): Product {
     isActive: true, createdAt: new Date(), updatedAt: null, createdBy: null, updatedBy: null,
     createdByName: null, updatedByName: null, searchKeywords: [], baseSku: null,
     variationNumber: null, barcodes: [], sellingOptions: [], category: 'Engine', imageUrl: null, notes: null,
+    tagIds: [],
     ...over,
   };
 }

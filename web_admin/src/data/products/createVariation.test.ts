@@ -36,6 +36,7 @@ function product(over: Partial<Product> = {}): Product {
     category: 'Brakes',
     imageUrl: null,
     notes: null,
+    tagIds: [],
     ...over,
   };
 }

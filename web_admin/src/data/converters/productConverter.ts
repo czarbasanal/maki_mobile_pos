@@ -38,6 +38,7 @@ export const productConverter: FirestoreDataConverter<Product> = {
       category: product.category,
       imageUrl: product.imageUrl,
       notes: product.notes,
+      tagIds: product.tagIds,
     };
   },
   fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Product {
@@ -69,6 +70,9 @@ export const productConverter: FirestoreDataConverter<Product> = {
       category: d.category ?? null,
       imageUrl: d.imageUrl ?? null,
       notes: d.notes ?? null,
+      tagIds: Array.isArray(d.tagIds)
+        ? d.tagIds.filter((t: unknown): t is string => typeof t === 'string')
+        : [],
     };
   },
 };

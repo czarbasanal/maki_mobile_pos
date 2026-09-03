@@ -62,6 +62,7 @@ function productInput(
     barcodes: p.barcodes ?? [],
     sellingOptions: p.sellingOptions ?? [],
     category: p.category, imageUrl: p.imageUrl ?? null, notes: p.notes ?? null,
+    tagIds: [],
     // searchKeywords intentionally omitted — buildProductWrites generates them.
   };
 }

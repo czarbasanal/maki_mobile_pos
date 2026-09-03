@@ -8,7 +8,7 @@
 // FirestoreCategoryRepository.test.ts / FirestoreSaleRepository.test.ts).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Firestore } from 'firebase/firestore';
-import { where } from 'firebase/firestore';
+import { updateDoc, where } from 'firebase/firestore';
 import type { ProductCreateInput } from '@/domain/repositories/ProductRepository';
 
 interface FakeRef {
@@ -146,6 +146,7 @@ function productInput(sku: string): ProductCreateInput {
     category: null,
     imageUrl: null,
     notes: null,
+    tagIds: [],
   };
 }
 
@@ -283,6 +284,38 @@ describe('FirestoreProductRepository.create — searchKeywords follow the alloca
     const keywords = productWrite?.data.searchKeywords as string[];
     expect(keywords).toContain('00070002');
     expect(keywords).not.toContain('00070001');
+  });
+});
+
+describe('FirestoreProductRepository.updateTags', () => {
+  beforeEach(() => {
+    vi.mocked(updateDoc).mockClear();
+  });
+
+  it('writes ONLY tagIds + audit fields — the narrow write every role permits', async () => {
+    const repo = new FirestoreProductRepository({} as unknown as Firestore);
+
+    await repo.updateTags('p1', ['t1'], 'u1', 'Tester');
+
+    expect(vi.mocked(updateDoc)).toHaveBeenCalledTimes(1);
+    const data = vi.mocked(updateDoc).mock.calls[0][1] as unknown as Record<string, unknown>;
+    expect(Object.keys(data).sort()).toEqual(
+      ['tagIds', 'updatedAt', 'updatedBy', 'updatedByName'].sort(),
+    );
+    expect(data.tagIds).toEqual(['t1']);
+    expect(data.updatedBy).toBe('u1');
+    expect(data.updatedByName).toBe('Tester');
+  });
+
+  it('omits updatedByName when actorName is null', async () => {
+    const repo = new FirestoreProductRepository({} as unknown as Firestore);
+
+    await repo.updateTags('p1', ['t1'], 'u1', null);
+
+    const data = vi.mocked(updateDoc).mock.calls[0][1] as unknown as Record<string, unknown>;
+    expect(Object.keys(data).sort()).toEqual(
+      ['tagIds', 'updatedAt', 'updatedBy'].sort(),
+    );
   });
 });
 

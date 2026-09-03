@@ -9,7 +9,7 @@ function p(over: Partial<Product>): Product {
     isActive: true, createdAt: new Date(0), updatedAt: null, createdBy: null,
     updatedBy: null, createdByName: null, updatedByName: null, searchKeywords: [],
     baseSku: null, variationNumber: null, barcodes: [], sellingOptions: [], category: null,
-    imageUrl: null, notes: null, ...over,
+    imageUrl: null, notes: null, tagIds: [], ...over,
   };
 }
 

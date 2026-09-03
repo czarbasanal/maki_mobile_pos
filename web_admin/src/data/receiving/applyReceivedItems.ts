@@ -49,6 +49,7 @@ function buildProductInput(p: NewProductFields, actor: ReceiveContext['actor']):
     baseSku: p.baseSku, variationNumber: p.variationNumber, barcodes: [],
     sellingOptions: p.sellingOptions ?? [],
     category: p.category, imageUrl: p.imageUrl ?? null, notes: null,
+    tagIds: [],
   };
 }
 

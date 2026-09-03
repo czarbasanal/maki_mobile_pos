@@ -31,7 +31,7 @@ function product(): Product {
     createdAt: new Date('2026-01-01'), updatedAt: null,
     createdBy: null, updatedBy: null, createdByName: null, updatedByName: null,
     searchKeywords: [], baseSku: null, variationNumber: null, barcodes: [],
-    sellingOptions: [], category: null, imageUrl: null, notes: null,
+    sellingOptions: [], category: null, imageUrl: null, notes: null, tagIds: [],
   };
 }
 

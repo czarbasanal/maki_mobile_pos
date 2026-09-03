@@ -30,7 +30,7 @@ function product(over: Partial<Product> = {}): Product {
     createdAt: new Date('2026-01-01'), updatedAt: null,
     createdBy: null, updatedBy: null, createdByName: null, updatedByName: null,
     searchKeywords: [], baseSku: null, variationNumber: null, barcodes: [],
-    sellingOptions: [], category: 'Brakes', imageUrl: null, notes: null,
+    sellingOptions: [], category: 'Brakes', imageUrl: null, notes: null, tagIds: [],
     ...over,
   };
 }

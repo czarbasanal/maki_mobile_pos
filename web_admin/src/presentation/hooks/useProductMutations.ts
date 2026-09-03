@@ -129,6 +129,24 @@ export function useUpdateProduct() {
   });
 }
 
+export function useUpdateProductTags() {
+  const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
+  const actor = useAuthStore((s) => s.user);
+  return useMutation<void, Error, { id: string; name: string; tagIds: string[] }>({
+    mutationFn: async ({ id, name, tagIds }) => {
+      if (!actor) throw new Error('Not signed in');
+      await repo.updateTags(id, tagIds, actor.id, actor.displayName.trim() || null);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.inventory,
+        action: `Updated tags: ${name}`,
+        entityId: id,
+        entityType: 'product',
+      }));
+    },
+  });
+}
+
 export function useAdjustStock() {
   const repo = useProductRepo();
   const activityLogRepo = useActivityLogRepo();

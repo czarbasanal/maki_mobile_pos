@@ -63,6 +63,10 @@ export interface ProductRepository {
     actorId: string,
     includeSellingOptions?: boolean,
   ): Promise<void>;
+  /** Writes ONLY tagIds + audit fields — the narrow write every role's rules
+   *  branch permits (cashier included). Used by quick-attach on both list
+   *  surfaces so a tag toggle can never clobber a concurrent field edit. */
+  updateTags(id: string, tagIds: string[], actorId: string, actorName: string | null): Promise<void>;
   adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void>;
   setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;
   deactivate(id: string, actorId: string, actorName: string | null): Promise<void>;

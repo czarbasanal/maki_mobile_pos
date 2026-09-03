@@ -9,7 +9,7 @@ function fakeProduct(overrides: Partial<Product>): Product {
     createdAt: new Date(), updatedAt: null, createdBy: null, updatedBy: null,
     createdByName: null, updatedByName: null, searchKeywords: [], baseSku: null,
     variationNumber: null, barcodes: [], sellingOptions: [], category: null,
-    imageUrl: null, notes: null, ...overrides,
+    imageUrl: null, notes: null, tagIds: [], ...overrides,
   };
 }
 

@@ -52,6 +52,7 @@ function createInput(o: Partial<ProductCreateInput> = {}): ProductCreateInput {
     category: null,
     imageUrl: null,
     notes: null,
+    tagIds: [],
     ...o,
   };
 }
@@ -81,6 +82,17 @@ describe('buildProductWrites — create path (unrestricted, matching how price a
 
     expect(productData.sellingOptions).toEqual([]);
     expect(productData.sellingOptions).not.toBeUndefined();
+  });
+
+  it('buildProductWrites defaults tagIds to []', () => {
+    // Deliberately omits the key, same rationale as the sellingOptions case
+    // above — tagIds can genuinely be absent at runtime.
+    const { tagIds: _omitted, ...rest } = createInput();
+    const input = rest as ProductCreateInput;
+
+    const { productData } = buildProductWrites({} as Firestore, input, 'actor-1', 'p1');
+
+    expect(productData.tagIds).toEqual([]);
   });
 });
 
@@ -118,6 +130,16 @@ describe('buildProductUpdate', () => {
     expect(map).not.toHaveProperty('price');
     expect(map).not.toHaveProperty('cost');
     expect(map).not.toHaveProperty('sku');
+  });
+
+  it('passes tagIds through when supplied', () => {
+    const map = buildProductUpdate({ tagIds: ['t1'] }, 'u1');
+    expect(map.tagIds).toEqual(['t1']);
+  });
+
+  it('does not add a tagIds key when the caller never set it', () => {
+    const map = buildProductUpdate({}, 'u1');
+    expect(map).not.toHaveProperty('tagIds');
   });
 });
 

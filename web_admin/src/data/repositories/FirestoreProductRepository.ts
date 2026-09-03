@@ -493,6 +493,20 @@ export class FirestoreProductRepository implements ProductRepository {
     }
   }
 
+  async updateTags(
+    id: string,
+    tagIds: string[],
+    actorId: string,
+    actorName: string | null,
+  ): Promise<void> {
+    await updateDoc(doc(this.db, FirestoreCollections.products, id), {
+      tagIds,
+      updatedAt: serverTimestamp(),
+      updatedBy: actorId,
+      ...(actorName !== null ? { updatedByName: actorName } : {}),
+    });
+  }
+
   async adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void> {
     await updateDoc(doc(this.db, FirestoreCollections.products, id), {
       quantity: increment(delta),
