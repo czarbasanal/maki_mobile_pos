@@ -39,6 +39,8 @@ export const FirestoreCollections = {
   shopFees: 'shop_fees',
   // Admin-managed + cashier-addable model list for the Job Order picker.
   motorcycleModels: 'motorcycle_models',
+  // Custom product tags (spec 2026-09-03) — attached via products.tagIds.
+  productTags: 'product_tags',
 } as const;
 
 export const SettingsDocs = {

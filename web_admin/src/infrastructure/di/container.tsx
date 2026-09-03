@@ -25,6 +25,7 @@ import { FirestoreShopTimezoneRepository } from '@/data/repositories/FirestoreSh
 import { FirestoreDrawerStateRepository } from '@/data/repositories/FirestoreDrawerStateRepository';
 import { FirestoreShopFeeRepository } from '@/data/repositories/FirestoreShopFeeRepository';
 import { FirestoreMotorcycleModelRepository } from '@/data/repositories/FirestoreMotorcycleModelRepository';
+import { FirestoreTagRepository } from '@/data/repositories/FirestoreTagRepository';
 import type { AuthRepository } from '@/domain/repositories/AuthRepository';
 import type { SaleRepository } from '@/domain/repositories/SaleRepository';
 import type { ProductRepository } from '@/domain/repositories/ProductRepository';
@@ -45,6 +46,7 @@ import type { ShopTimezoneRepository } from '@/domain/repositories/ShopTimezoneR
 import type { DrawerStateRepository } from '@/domain/repositories/DrawerStateRepository';
 import type { ShopFeeRepository } from '@/domain/repositories/ShopFeeRepository';
 import type { MotorcycleModelRepository } from '@/domain/repositories/MotorcycleModelRepository';
+import type { TagRepository } from '@/domain/repositories/TagRepository';
 import { setAmbientShopTimezone } from '@/domain/time/shopTime';
 import type { PurchaseOrderRepository } from '@/domain/repositories/PurchaseOrderRepository';
 import { FirestorePurchaseOrderRepository } from '@/data/repositories/FirestorePurchaseOrderRepository';
@@ -60,6 +62,7 @@ export interface Container {
   receivingRepo: ReceivingRepository;
   categoryRepo: CategoryRepository;
   mechanicRepo: MechanicRepository;
+  tagRepo: TagRepository;
   jobOrderRepo: JobOrderRepository;
   employeeRepo: EmployeeRepository;
   payslipRepo: PayslipRepository;
@@ -85,6 +88,7 @@ function buildDefaultContainer(): Container {
     receivingRepo: new FirestoreReceivingRepository(db, new FirestoreProductRepository(db)),
     categoryRepo: new FirestoreCategoryRepository(db),
     mechanicRepo: new FirestoreMechanicRepository(db),
+    tagRepo: new FirestoreTagRepository(db),
     jobOrderRepo: new FirestoreJobOrderRepository(db),
     employeeRepo: new FirestoreEmployeeRepository(db),
     payslipRepo: new FirestorePayslipRepository(db),
@@ -163,6 +167,10 @@ export function useCategoryRepo(): CategoryRepository {
 
 export function useMechanicRepo(): MechanicRepository {
   return useContainer().mechanicRepo;
+}
+
+export function useTagRepo(): TagRepository {
+  return useContainer().tagRepo;
 }
 
 export function useJobOrderRepo(): JobOrderRepository {
