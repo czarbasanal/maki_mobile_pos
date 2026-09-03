@@ -150,6 +150,16 @@ abstract class ProductRepository {
     String? updatedByName,
   });
 
+  /// Replaces the product's tag list. Writes ONLY tagIds + audit fields —
+  /// the narrow write every role's rules branch permits (cashier included),
+  /// so a quick tag toggle can never clobber a concurrent field edit.
+  Future<void> updateProductTags({
+    required String productId,
+    required List<String> tagIds,
+    required String updatedBy,
+    String? updatedByName,
+  });
+
   /// Sets product stock to a specific quantity.
   ///
   /// [productId] - The product ID

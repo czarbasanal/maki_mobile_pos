@@ -726,6 +726,29 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<void> updateProductTags({
+    required String productId,
+    required List<String> tagIds,
+    required String updatedBy,
+    String? updatedByName,
+  }) async {
+    try {
+      await _productsRef.doc(productId).update({
+        'tagIds': tagIds,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedBy': updatedBy,
+        if (updatedByName != null) 'updatedByName': updatedByName,
+      });
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to update tags: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
   Future<ProductEntity> setStock({
     required String productId,
     required int newQuantity,

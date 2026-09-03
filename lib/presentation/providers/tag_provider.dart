@@ -4,6 +4,7 @@ import 'package:maki_mobile_pos/data/repositories/tag_repository_impl.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/tag_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
@@ -131,4 +132,42 @@ final tagOperationsProvider =
     StateNotifierProvider<TagOperationsNotifier, AsyncValue<void>>(
         (ref) {
   return TagOperationsNotifier(ref);
+});
+
+/// Mutations for a PRODUCT's tag list (quick attach). Kept separate from the
+/// form save path so a toggle writes only tagIds + audit fields.
+class ProductTagOperationsNotifier extends StateNotifier<AsyncValue<void>> {
+  final Ref _ref;
+
+  ProductTagOperationsNotifier(this._ref) : super(const AsyncValue.data(null));
+
+  Future<bool> setTags({
+    required String productId,
+    required List<String> tagIds,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final user = _ref.read(currentUserProvider).valueOrNull;
+      if (user == null) {
+        throw const UnauthenticatedException();
+      }
+      await _ref.read(productRepositoryProvider).updateProductTags(
+            productId: productId,
+            tagIds: tagIds,
+            updatedBy: user.id,
+            updatedByName: user.displayName,
+          );
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+}
+
+final productTagOperationsProvider =
+    StateNotifierProvider<ProductTagOperationsNotifier, AsyncValue<void>>(
+        (ref) {
+  return ProductTagOperationsNotifier(ref);
 });

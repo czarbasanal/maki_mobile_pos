@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
+import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/tag_repository.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/presentation/providers/tag_provider.dart';
 
 class _RecordingTagRepo implements TagRepository {
@@ -28,6 +30,24 @@ class _RecordingTagRepo implements TagRepository {
   }) async {
     setActiveTagIds.add(tagId);
     setActiveValues.add(active);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}
+
+class _RecordingProductRepo implements ProductRepository {
+  final tagWrites = <(String, List<String>)>[];
+
+  @override
+  Future<void> updateProductTags({
+    required String productId,
+    required List<String> tagIds,
+    required String updatedBy,
+    String? updatedByName,
+  }) async {
+    tagWrites.add((productId, tagIds));
   }
 
   @override
@@ -80,5 +100,23 @@ void main() {
     expect(ok, isTrue);
     expect(repo.setActiveTagIds.single, 't1');
     expect(repo.setActiveValues.single, false);
+  });
+
+  test('setTags writes through updateProductTags with the actor', () async {
+    final repo = _RecordingProductRepo();
+    final container = ProviderContainer(overrides: [
+      productRepositoryProvider.overrideWithValue(repo),
+      currentUserProvider.overrideWith((ref) => Stream.value(_staff())),
+    ]);
+    addTearDown(container.dispose);
+    await container.read(currentUserProvider.future);
+
+    final ok = await container
+        .read(productTagOperationsProvider.notifier)
+        .setTags(productId: 'p1', tagIds: ['t1', 't2']);
+
+    expect(ok, isTrue);
+    expect(repo.tagWrites.single.$1, 'p1');
+    expect(repo.tagWrites.single.$2, ['t1', 't2']);
   });
 }

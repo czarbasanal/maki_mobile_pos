@@ -34,6 +34,9 @@ class ProductModel {
   final String? category;
   final String? imageUrl;
   final String? notes;
+  /// Custom tag ids (`product_tags` docs). Mirrors
+  /// [ProductEntity.tagIds].
+  final List<String> tagIds;
   /// Optional ways this product may be sold, e.g. "By 6" and "By 3". Empty
   /// means the product sells at [price] per piece — see
   /// [ProductEntity.sellingOptions] for the full contract.
@@ -65,6 +68,7 @@ class ProductModel {
     this.category,
     this.imageUrl,
     this.notes,
+    this.tagIds = const [],
     this.sellingOptions = const [],
   });
 
@@ -106,6 +110,7 @@ class ProductModel {
       category: map['category'] as String?,
       imageUrl: map['imageUrl'] as String?,
       notes: map['notes'] as String?,
+      tagIds: _parseStringList(map['tagIds']),
       sellingOptions: sellingOptionsFromList(map['sellingOptions']),
     );
   }
@@ -133,6 +138,7 @@ class ProductModel {
       'baseSku': baseSku,
       'variationNumber': variationNumber,
       'barcodes': barcodes,
+      'tagIds': tagIds,
       'category': category,
       'imageUrl': imageUrl,
       'notes': notes,
@@ -241,6 +247,7 @@ class ProductModel {
       category: category,
       imageUrl: imageUrl,
       notes: notes,
+      tagIds: tagIds,
       sellingOptions: sellingOptions,
     );
   }
@@ -273,6 +280,7 @@ class ProductModel {
       category: entity.category,
       imageUrl: entity.imageUrl,
       notes: entity.notes,
+      tagIds: entity.tagIds,
       sellingOptions: entity.sellingOptions,
     );
   }
@@ -444,6 +452,7 @@ class ProductModel {
     String? category,
     String? imageUrl,
     String? notes,
+    List<String>? tagIds,
     List<SellingOptionEntity>? sellingOptions,
   }) {
     return ProductModel(
@@ -472,6 +481,7 @@ class ProductModel {
       category: category ?? this.category,
       imageUrl: imageUrl ?? this.imageUrl,
       notes: notes ?? this.notes,
+      tagIds: tagIds ?? this.tagIds,
       sellingOptions: sellingOptions ?? this.sellingOptions,
     );
   }

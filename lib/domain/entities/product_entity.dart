@@ -95,6 +95,10 @@ class ProductEntity extends Equatable {
   /// Optional notes
   final String? notes;
 
+  /// Custom tag ids (`product_tags` docs). Chips resolve live from the tag
+  /// list; orphaned ids (deleted tags) are tolerated and never rendered.
+  final List<String> tagIds;
+
   /// Optional ways this product may be sold, e.g. "By 6" and "By 3".
   ///
   /// Empty means the product sells at [price] per piece, which is how every
@@ -129,6 +133,7 @@ class ProductEntity extends Equatable {
     this.category,
     this.imageUrl,
     this.notes,
+    this.tagIds = const [],
     this.sellingOptions = const [],
   });
 
@@ -241,6 +246,7 @@ class ProductEntity extends Equatable {
     String? imageUrl,
     bool clearImageUrl = false,
     String? notes,
+    List<String>? tagIds,
     List<SellingOptionEntity>? sellingOptions,
   }) {
     return ProductEntity(
@@ -269,6 +275,7 @@ class ProductEntity extends Equatable {
       category: category ?? this.category,
       imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       notes: notes ?? this.notes,
+      tagIds: tagIds ?? this.tagIds,
       sellingOptions: sellingOptions ?? this.sellingOptions,
     );
   }
@@ -300,6 +307,7 @@ class ProductEntity extends Equatable {
         category,
         imageUrl,
         notes,
+        tagIds,
         sellingOptions,
       ];
 

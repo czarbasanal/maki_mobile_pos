@@ -183,6 +183,36 @@ void main() {
 
       expect(model.barcodes, isEmpty);
     });
+
+    test('fromMap defaults missing tagIds to empty and reads a stored list', () {
+      final legacy = ProductModel.fromMap(<String, dynamic>{'name': 'X'}, 'p-1');
+      expect(legacy.tagIds, isEmpty);
+
+      final tagged = ProductModel.fromMap({
+        'name': 'X',
+        'tagIds': ['t1', 't2'],
+      }, 'p-2');
+      expect(tagged.tagIds, ['t1', 't2']);
+    });
+
+    test('toMap writes tagIds', () {
+      final model = ProductModel(
+        id: 'p1',
+        sku: '00010001',
+        name: 'X',
+        costCode: 'AA',
+        cost: 1,
+        price: 2,
+        quantity: 0,
+        reorderLevel: 10,
+        unit: 'pcs',
+        isActive: true,
+        createdAt: DateTime.now(),
+        tagIds: const ['t1'],
+      );
+
+      expect(model.toMap()['tagIds'], ['t1']);
+    });
   });
 
   group('ProductEntity computed properties', () {
