@@ -23,6 +23,7 @@ export 'purchase_order_entity.dart';
 export 'activity_log_entity.dart';
 export 'category_entity.dart';
 export 'mechanic_entity.dart';
+export 'tag_entity.dart';
 export 'employee_entity.dart';
 export 'hr_settings_entity.dart';
 export 'payslip_entity.dart';
