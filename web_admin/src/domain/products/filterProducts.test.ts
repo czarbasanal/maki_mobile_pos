@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterProducts, type ProductFilter } from './filterProducts';
+import { filterProducts, type ProductFilter, UNTAGGED } from './filterProducts';
 import { StockStatus, type Product } from '../entities/Product';
 
 function p(over: Partial<Product>): Product {
@@ -69,5 +69,27 @@ describe('status axis', () => {
       search: 'retired part', stock: 'all', category: 'all', status: 'inactive',
     });
     expect(out.map((p) => p.id)).toEqual(['b']);
+  });
+});
+
+describe('tag axis', () => {
+  const tagged = p({ id: 'a', name: 'Tagged', tagIds: ['t1'] });
+  const other = p({ id: 'b', name: 'Other', tagIds: ['t2'] });
+  const bare = p({ id: 'c', name: 'Bare', tagIds: [] });
+  const orphan = p({ id: 'd', name: 'Orphan', tagIds: ['deleted-tag'] });
+  const list = [tagged, other, bare, orphan];
+  const ACTIVE = ['t1', 't2'];
+
+  it('is disabled by default (undefined) and by "all"', () => {
+    expect(filterProducts(list, ALL).map((x) => x.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(filterProducts(list, { ...ALL, tag: 'all' }).map((x) => x.id)).toEqual(['a', 'b', 'c', 'd']);
+  });
+  it('matches a specific tag id', () => {
+    expect(filterProducts(list, { ...ALL, tag: 't1' }).map((x) => x.id)).toEqual(['a']);
+  });
+  it('UNTAGGED means no ACTIVE tag — orphaned ids count as untagged', () => {
+    expect(
+      filterProducts(list, { ...ALL, tag: UNTAGGED, activeTagIds: ACTIVE }).map((x) => x.id),
+    ).toEqual(['c', 'd']);
   });
 });
