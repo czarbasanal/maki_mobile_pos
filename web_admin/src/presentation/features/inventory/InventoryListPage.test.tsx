@@ -8,7 +8,12 @@ import { InventoryListPage } from './InventoryListPage';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { formatMoney } from '@/core/utils/money';
-import type { Product } from '@/domain/entities';
+import type { Product, Tag } from '@/domain/entities';
+
+const TAGS: Tag[] = [
+  { id: 't1', name: 'Intact', color: 'green', description: null, isActive: true,
+    createdAt: new Date('2026-09-01'), updatedAt: null, createdBy: null, updatedBy: null },
+];
 
 // Numbers are chosen so no two figures (row cells, unfiltered totals, filtered
 // totals) collide as formatted money strings — collisions would make
@@ -25,6 +30,7 @@ const widget = (o: Partial<Product> = {}): Product =>
     reorderLevel: 1,
     unit: 'pcs',
     isActive: true,
+    tagIds: [],
     ...o,
   }) as Product;
 
@@ -40,6 +46,7 @@ const gadget = (o: Partial<Product> = {}): Product =>
     reorderLevel: 1,
     unit: 'pcs',
     isActive: true,
+    tagIds: [],
     ...o,
   }) as Product;
 
@@ -53,8 +60,19 @@ function harness(list: Product[] = products) {
       return () => {};
     },
   };
+  const tagRepo: Partial<Container['tagRepo']> = {
+    watchAll: (cb: (tags: Tag[]) => void) => {
+      cb(TAGS);
+      return () => {};
+    },
+  };
   return render(
-    <DiProvider override={{ productRepo: productRepo as Container['productRepo'] }}>
+    <DiProvider
+      override={{
+        productRepo: productRepo as Container['productRepo'],
+        tagRepo: tagRepo as Container['tagRepo'],
+      }}
+    >
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/inventory']}>
           <InventoryListPage />
@@ -319,5 +337,20 @@ describe('InventoryListPage — redesign specifics', () => {
     await userEvent.type(screen.getByPlaceholderText('Search by name or SKU'), 'zzz');
     expect(await screen.findByText('No products match these filters')).toBeInTheDocument();
     expect(screen.queryByText('No products yet')).not.toBeInTheDocument();
+  });
+});
+
+describe('InventoryListPage tags', () => {
+  it('shows tag chips on rows and a Tag filter with Untagged', async () => {
+    signIn(UserRole.admin);
+    harness([widget({ tagIds: ['t1'] }), gadget({ tagIds: [] })]);
+
+    expect(screen.getByText('Intact')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Tag/ }));
+    await userEvent.click(screen.getByRole('option', { name: 'Untagged' }));
+
+    expect(screen.getByText('Gadget')).toBeInTheDocument();
+    expect(screen.queryByText('Widget')).not.toBeInTheDocument();
   });
 });

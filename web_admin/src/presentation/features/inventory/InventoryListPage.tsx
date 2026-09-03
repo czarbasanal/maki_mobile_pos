@@ -8,13 +8,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { ArrowDownTrayIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useProducts } from '@/presentation/hooks/useProducts';
+import { useActiveTags } from '@/presentation/hooks/useTags';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { getStockStatus, StockStatus, type Product } from '@/domain/entities';
-import { filterProducts, type ProductFilter } from '@/domain/products/filterProducts';
+import { filterProducts, UNTAGGED, type ProductFilter } from '@/domain/products/filterProducts';
 import { displaySku } from '@/domain/products/sku';
 import { stockTotals } from '@/domain/products/stockTotals';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { ProductImage } from '@/presentation/components/common/ProductImage';
+import { TagChips } from './TagChips';
+import { TagQuickAttachButton } from './TagQuickAttach';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
 import { Button } from '@/presentation/components/ui/Button';
@@ -62,11 +65,14 @@ export function InventoryListPage() {
   }, []);
   const navigate = useNavigate();
   const { data: products, isLoading, error } = useProducts();
+  const { data: activeTags } = useActiveTags();
+  const tagList = activeTags ?? [];
 
   const [search, setSearch] = useState('');
   const [stock, setStock] = useState<ProductFilter['stock']>('all');
   const [category, setCategory] = useState<ProductFilter['category']>('all');
   const [status, setStatus] = useState<ProductFilter['status']>('active');
+  const [tag, setTag] = useState<string | 'all'>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('inventory');
 
@@ -93,9 +99,10 @@ export function InventoryListPage() {
   // Everything EXCEPT the stock view — chip counts must not contradict the
   // rows they'd show (guide §5: statusCounts ignore the status filter but
   // respect category, search, and the active/archived state).
+  const activeTagIds = useMemo(() => tagList.map((t) => t.id), [tagList]);
   const scoped = useMemo(
-    () => filterProducts(all, { search, stock: 'all', category, status }),
-    [all, search, category, status],
+    () => filterProducts(all, { search, stock: 'all', category, status, tag, activeTagIds }),
+    [all, search, category, status, tag, activeTagIds],
   );
   const viewCounts = useMemo(() => {
     const counts: Record<'all' | StockStatus, number> = {
@@ -118,7 +125,7 @@ export function InventoryListPage() {
   // point past the end (or simply be stale), so snap back to page 1.
   useEffect(() => {
     setPage(1);
-  }, [search, stock, category, status]);
+  }, [search, stock, category, status, tag]);
 
   const paged = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
@@ -152,24 +159,43 @@ export function InventoryListPage() {
     }
   }, [categoryOptions, category]);
 
+  // Same rule as the category reset: if the selected tag disappears from the
+  // active list (deleted or deactivated), fall back to All rather than show
+  // a mysteriously-empty table.
+  useEffect(() => {
+    if (tag !== 'all' && tag !== UNTAGGED && !tagList.some((t) => t.id === tag)) {
+      setTag('all');
+    }
+  }, [tagList, tag]);
+
   // The state segmented counts as a filter too — without it, an Inactive
   // view over zero archived products shows a Clear button that does nothing.
   const isFiltered =
-    stock !== 'all' || category !== 'all' || search.trim() !== '' || status !== 'active';
+    stock !== 'all' ||
+    category !== 'all' ||
+    search.trim() !== '' ||
+    status !== 'active' ||
+    tag !== 'all';
   const clearFilters = () => {
     setStock('all');
     setCategory('all');
     setSearch('');
     setStatus('active');
+    setTag('all');
     setPage(1);
   };
 
+  const tagNameById = useMemo(() => new Map(tagList.map((t) => [t.id, t.name])), [tagList]);
+
   const exportCsv = () => {
-    const headers = ['Name', 'SKU', 'Category', 'Stock', ...(canSeeCost ? ['Cost'] : []), 'Price', 'Active'];
+    const headers = [
+      'Name', 'SKU', 'Category', 'Tags', 'Stock', ...(canSeeCost ? ['Cost'] : []), 'Price', 'Active',
+    ];
     const rows = filtered.map((p) => [
       p.name,
       displaySku(p.sku),
       p.category ?? '',
+      p.tagIds.map((id) => tagNameById.get(id)).filter(Boolean).join('; '),
       p.quantity,
       ...(canSeeCost ? [p.cost] : []),
       p.price,
@@ -216,6 +242,15 @@ export function InventoryListPage() {
         ) : (
           <span className="text-ink-3">—</span>
         ),
+    },
+    {
+      key: 'tags', header: 'Tags',
+      render: (p) => (
+        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <TagChips tagIds={p.tagIds} tags={tagList} />
+          <TagQuickAttachButton product={p} tags={tagList} />
+        </div>
+      ),
     },
     {
       key: 'stock', header: 'Stock', width: '190px',
@@ -408,6 +443,20 @@ export function InventoryListPage() {
             setPage(1);
           }}
           allLabel="All categories"
+          allTriggerLabel="All"
+        />
+        <SelectFilter
+          label="Tag"
+          value={tag === 'all' ? '' : tag}
+          options={[
+            { value: UNTAGGED, label: 'Untagged' },
+            ...tagList.map((t) => ({ value: t.id, label: t.name })),
+          ]}
+          onChange={(v) => {
+            setTag(v || 'all');
+            setPage(1);
+          }}
+          allLabel="All tags"
           allTriggerLabel="All"
         />
         <Segmented
