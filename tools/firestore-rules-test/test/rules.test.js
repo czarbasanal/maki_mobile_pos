@@ -232,9 +232,15 @@ describe("/products", () => {
     );
   });
 
-  it("only admin can delete products", async () => {
+  it("only admin can delete products, and only DEACTIVATED ones (deactivate-first)", async () => {
     await assertFails(as("staff").collection("products").doc("p-1").delete());
     await assertFails(as("cashier").collection("products").doc("p-1").delete());
+    // p-1 is seeded active — even admin cannot hard-delete an active part.
+    await assertFails(as("admin").collection("products").doc("p-1").delete());
+    // Deactivate first, then the admin delete goes through.
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("products").doc("p-1").update({ isActive: false })
+    );
     await assertSucceeds(as("admin").collection("products").doc("p-1").delete());
   });
 
