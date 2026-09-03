@@ -27,6 +27,7 @@ export function TagQuickAttachButton({ product, tags }: { product: Product; tags
         aria-label="Edit tags"
         onClick={(e) => {
           e.stopPropagation();
+          setIds(product.tagIds);
           setOpen(true);
         }}
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] text-ink-3 hover:bg-surface-3 hover:text-ink-2"

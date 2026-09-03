@@ -17,7 +17,7 @@ const tags: Tag[] = [
 
 const product = { id: 'p1', name: 'Brake shoe', tagIds: ['t2'] } as Product;
 
-function harness() {
+function harness(initialProduct: Product) {
   useAuthStore.setState({
     user: { id: 'u1', email: 'a@b.co', displayName: 'Tester', role: UserRole.cashier, isActive: true } as never,
   });
@@ -26,25 +26,45 @@ function harness() {
     updateTags: vi.fn().mockResolvedValue(undefined),
   };
   const activityLogRepo = { log: vi.fn().mockResolvedValue(undefined) } as unknown as Container['activityLogRepo'];
-  render(
-    <DiProvider override={{ productRepo: productRepo as Container['productRepo'], activityLogRepo }}>
+  const override = { productRepo: productRepo as Container['productRepo'], activityLogRepo };
+  const renderWith = (p: Product) => (
+    <DiProvider override={override}>
       <QueryClientProvider client={qc}>
-        <TagQuickAttachButton product={product} tags={tags} />
+        <TagQuickAttachButton product={p} tags={tags} />
       </QueryClientProvider>
-    </DiProvider>,
+    </DiProvider>
   );
-  return productRepo;
+  const utils = render(renderWith(initialProduct));
+  const rerenderWithProduct = (p: Product) => utils.rerender(renderWith(p));
+  return { productRepo, rerenderWithProduct };
 }
 
 describe('TagQuickAttachButton', () => {
   it('toggling tags writes the composed array each tap (add, then remove)', async () => {
-    const repo = harness();
+    const { productRepo: repo } = harness(product);
     await userEvent.click(screen.getByRole('button', { name: /edit tags/i }));
     // Add t1: component composes from its LOCAL state (seeded from
     // product.tagIds, updated per toggle) so successive toggles stack.
     await userEvent.click(screen.getByRole('checkbox', { name: 'Intact' }));
     expect(repo.updateTags).toHaveBeenLastCalledWith('p1', ['t2', 't1'], 'u1', 'Tester');
     // Remove t2: the earlier t1 addition must survive.
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Recheck' }));
+    expect(repo.updateTags).toHaveBeenLastCalledWith('p1', ['t1'], 'u1', 'Tester');
+  });
+
+  it('re-seeds from the live tagIds prop on open, not the mount-time snapshot', async () => {
+    // Row mounts while product.tagIds === ['t2']. Another client then tags
+    // the same product with 't1' — the stream update rerenders this row
+    // (still mounted, same DataTable key) with the new tagIds before the
+    // user opens the dialog.
+    const { productRepo: repo, rerenderWithProduct } = harness(product);
+    rerenderWithProduct({ ...product, tagIds: ['t1', 't2'] });
+
+    await userEvent.click(screen.getByRole('button', { name: /edit tags/i }));
+    // Untoggling 't2' should compose from the freshly-seeded ['t1', 't2'],
+    // leaving 't1' (the other client's tag) intact. Composing from the
+    // stale mount-time snapshot (['t2']) would instead write [] — silently
+    // deleting the tag the other client just added.
     await userEvent.click(screen.getByRole('checkbox', { name: 'Recheck' }));
     expect(repo.updateTags).toHaveBeenLastCalledWith('p1', ['t1'], 'u1', 'Tester');
   });

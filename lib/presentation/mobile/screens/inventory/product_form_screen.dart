@@ -383,7 +383,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final tagsAsync = ref.watch(activeTagsProvider);
     return tagsAsync.when(
       data: (tags) {
-        if (tags.isEmpty && _selectedTagIds.isEmpty) {
+        final anyChipWillRender = isNameOnly
+            ? tags.any((t) => _selectedTagIds.contains(t.id))
+            : tags.isNotEmpty;
+        if (!anyChipWillRender) {
           return const SizedBox.shrink();
         }
         final isDark = Theme.of(context).brightness == Brightness.dark;

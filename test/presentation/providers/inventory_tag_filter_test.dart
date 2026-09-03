@@ -37,7 +37,7 @@ void main() {
     _product('d', tagIds: ['deleted-tag']),
   ];
 
-  ProviderContainer _container() {
+  ProviderContainer makeContainer() {
     final container = ProviderContainer(overrides: [
       productsProvider.overrideWith((ref) => Stream.value(products)),
       activeTagsProvider.overrideWith(
@@ -48,7 +48,7 @@ void main() {
     return container;
   }
 
-  Future<List<String>> _idsAfter(
+  Future<List<String>> idsAfter(
     ProviderContainer container,
     String? tagFilter,
   ) async {
@@ -60,14 +60,14 @@ void main() {
   }
 
   test('no tag filter returns everything', () async {
-    expect(await _idsAfter(_container(), null), ['a', 'b', 'c', 'd']);
+    expect(await idsAfter(makeContainer(), null), ['a', 'b', 'c', 'd']);
   });
 
   test('a specific tag id matches only its products', () async {
-    expect(await _idsAfter(_container(), 't1'), ['a']);
+    expect(await idsAfter(makeContainer(), 't1'), ['a']);
   });
 
   test('untagged = no ACTIVE tag; orphaned ids count as untagged', () async {
-    expect(await _idsAfter(_container(), kUntaggedFilter), ['c', 'd']);
+    expect(await idsAfter(makeContainer(), kUntaggedFilter), ['c', 'd']);
   });
 }
