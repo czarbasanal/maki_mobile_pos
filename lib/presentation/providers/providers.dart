@@ -25,6 +25,7 @@ export 'theme_mode_provider.dart';
 export 'user_provider.dart';
 export 'category_provider.dart';
 export 'mechanic_provider.dart';
+export 'tag_provider.dart';
 export 'shop_fee_provider.dart';
 export 'motorcycle_model_provider.dart';
 export 'void_request_provider.dart';

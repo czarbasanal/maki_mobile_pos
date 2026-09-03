@@ -69,6 +69,10 @@ abstract class FirestoreCollections {
   /// picked on Job Orders.
   static const String motorcycleModels = 'motorcycle_models';
 
+  /// Custom product tags (spec 2026-09-03) — colored markers attached to
+  /// products via `products.tagIds`. Managed in Settings > Product Tags.
+  static const String productTags = 'product_tags';
+
   /// Void requests collection - cashier/staff void requests awaiting admin approval
   static const String voidRequests = 'void_requests';
 
