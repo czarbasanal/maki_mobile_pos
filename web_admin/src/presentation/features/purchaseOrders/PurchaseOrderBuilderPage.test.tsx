@@ -2,7 +2,7 @@
 // unchecked rows grey out and blank their Amount, and the sticky bar's
 // primary refuses an empty selection.
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -22,7 +22,7 @@ const product = (o: Partial<Product> = {}): Product =>
     ...o,
   }) as Product;
 
-function harness(products: Product[], createFn = vi.fn()) {
+function harness(products: Product[], createFn = vi.fn(), sales: Sale[] = []) {
   clearSubscriptionCache();
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const override = {
@@ -33,9 +33,9 @@ function harness(products: Product[], createFn = vi.fn()) {
       },
     },
     saleRepo: {
-      // The velocity window reads recent sales; none needed — out-of-stock
-      // parts are listed regardless of velocity.
-      list: vi.fn(async (): Promise<Sale[]> => []),
+      // The velocity window reads recent sales; out-of-stock parts are
+      // listed regardless, low-stock rows need movement to appear.
+      list: vi.fn(async (): Promise<Sale[]> => sales),
     },
     purchaseOrderRepo: { create: createFn },
   } as unknown as Container;
@@ -100,5 +100,64 @@ describe('PurchaseOrderBuilderPage (redesign)', () => {
     // Two chosen lines from two suppliers.
     const suppliers = screen.getByText('Suppliers').nextElementSibling!;
     expect(suppliers.textContent).toBe('2');
+  });
+});
+
+const chainSale = {
+  id: 's1',
+  items: [{ id: 'si1', productId: 'p2', quantity: 30 }],
+  laborLines: [],
+  feeLines: [],
+  status: 'completed',
+  voidedAt: null,
+} as unknown as Sale;
+
+describe('PurchaseOrderBuilderPage — selection vs scope (review pins)', () => {
+  it('switching scope preserves picks and qty overrides', async () => {
+    harness(
+      [
+        product({ id: 'p1', sku: 'A', name: 'Pad', quantity: 0 }),
+        product({ id: 'p2', sku: 'B', name: 'Chain', quantity: 5, reorderLevel: 10 }),
+      ],
+      vi.fn(),
+      [chainSale],
+    );
+    const row = (await screen.findByText('Pad')).closest('tr')!;
+    await userEvent.click(within(row).getByRole('checkbox', { name: /Include Pad/ }));
+    const input = screen.getByLabelText('Quantity for Chain');
+    // Direct change: clearing a controlled number input coerces '' -> 1
+    // mid-typing (known tradeoff), which would turn "type 7" into 17.
+    fireEvent.change(input, { target: { value: '7' } });
+
+    // Scope away and back — the same rows array is only filtered, so the
+    // unchecked line and the override must survive.
+    await userEvent.click(screen.getByRole('button', { name: /Out of stock 1/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Needs buying 2/ }));
+
+    const rowAfter = screen.getByText('Pad').closest('tr')!;
+    expect(within(rowAfter).getByRole('checkbox', { name: /Include Pad/ })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    expect(screen.getByLabelText('Quantity for Chain')).toHaveValue(7);
+  });
+
+  it('the header toggle acts on the VISIBLE scope only', async () => {
+    harness(
+      [
+        product({ id: 'p1', sku: 'A', name: 'Pad', quantity: 0 }),
+        product({ id: 'p2', sku: 'B', name: 'Chain', quantity: 5, reorderLevel: 10 }),
+      ],
+      vi.fn(),
+      [chainSale],
+    );
+    await screen.findByText('Pad');
+    // Narrow to out-of-stock (Pad only), unselect-all there.
+    await userEvent.click(screen.getByRole('button', { name: /Out of stock 1/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
+
+    // Chain (hidden, still picked) keeps the bar's line count at 1.
+    const lines = screen.getByText('Lines').nextElementSibling!;
+    expect(lines.textContent).toBe('1');
   });
 });

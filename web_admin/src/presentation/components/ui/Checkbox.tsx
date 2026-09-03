@@ -26,6 +26,9 @@ export function Checkbox({
         e.stopPropagation();
         onChange();
       }}
+      // Enter/Space on a focused checkbox must not bubble into a selectable
+      // row's keyboard activation (DataTable rows listen for both).
+      onKeyDown={(e) => e.stopPropagation()}
       className={cn(
         'flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[5px] border',
         checked || indeterminate
