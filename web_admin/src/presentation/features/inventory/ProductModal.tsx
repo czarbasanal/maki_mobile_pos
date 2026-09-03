@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { useNavigate, useParams, generatePath } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -100,9 +100,9 @@ function withCurrent(names: string[], current: string | null): string[] {
 export function ProductModal() {
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
-  // Edit sits over the product view it was opened from — closing returns
-  // there rather than throwing away that context; add returns to the list.
-  const exitTo = id ? generatePath(RoutePaths.productDetail, { id }) : RoutePaths.inventory;
+  // Both modes open over (and close back to) the inventory list — the
+  // read-only product view it used to return to is retired.
+  const exitTo = RoutePaths.inventory;
   const navigate = useNavigate();
   const repo = useProductRepo();
   const categoryRepo = useCategoryRepo();

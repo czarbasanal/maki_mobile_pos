@@ -26,7 +26,6 @@ export const RoutePaths = {
   // any path beneath it, so a nested URL lit Inventory up while Price History
   // was the page you were on.
   priceHistory: '/price-history',
-  productDetail: '/inventory/:id',
 
   receiving: '/receiving',
   receivingNew: '/receiving/new',

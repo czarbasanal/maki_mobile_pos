@@ -131,13 +131,13 @@ describe('ProductModal — edit mode', () => {
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
   });
 
-  it('cancelling returns to the product view, not the list', async () => {
+  it('cancelling returns to the list — the read-only product view is retired', async () => {
     signIn();
     harness('/inventory/p9/edit');
     await screen.findByDisplayValue('Brake shoe (Yamaha)');
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(screen.getByText('Product view')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('LIST UNDERNEATH')).toBeInTheDocument());
   });
 });
 

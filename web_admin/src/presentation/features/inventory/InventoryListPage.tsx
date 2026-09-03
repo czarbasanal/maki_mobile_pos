@@ -439,7 +439,7 @@ export function InventoryListPage() {
           columns={columns}
           rows={paged}
           rowKey={(p) => p.id}
-          onRowClick={(p) => navigate(`/inventory/${p.id}`)}
+          onRowClick={(p) => navigate(`/inventory/${p.id}/edit`)}
           loading={isLoading}
           minWidth="1010px"
           empty={

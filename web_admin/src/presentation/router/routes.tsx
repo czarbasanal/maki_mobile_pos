@@ -31,7 +31,6 @@ import { ReceivingDetailPage } from '@/presentation/features/receiving/Receiving
 import { ReceivingEntryPage } from '@/presentation/features/receiving/ReceivingEntryPage';
 import { PriceHistoryPage } from '@/presentation/features/inventory/PriceHistoryPage';
 import { InventoryListPage } from '@/presentation/features/inventory/InventoryListPage';
-import { ProductDrawer } from '@/presentation/features/inventory/ProductDrawer';
 import { ProductModal } from '@/presentation/features/inventory/ProductModal';
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
@@ -63,6 +62,12 @@ function HrPayslipDetailRedirect() {
 // Drafts renamed to Job Orders — these keep old bookmarks/links alive.
 function ProductEditRedirect() {
   const { id = '' } = useParams();
+  return <Navigate to={`/inventory/${id}/edit`} replace />;
+}
+
+/** /inventory/:id was the product drawer; it now opens the edit modal. */
+function ProductViewRedirect() {
+  const { id } = useParams<{ id: string }>();
   return <Navigate to={`/inventory/${id}/edit`} replace />;
 }
 
@@ -146,7 +151,9 @@ export const router = createBrowserRouter(
             // Static 'add' outranks the dynamic ':id' in route matching, so
             // the modal wins over the drawer for /inventory/add.
             { path: 'add', element: <ProductModal /> },
-            { path: ':id', element: <ProductDrawer /> },
+            // The read-only product drawer is retired — a row opens the edit
+            // modal directly. Old /inventory/:id links land there too.
+            { path: ':id', element: <ProductViewRedirect /> },
             { path: ':id/edit', element: <ProductModal /> },
           ],
         },
