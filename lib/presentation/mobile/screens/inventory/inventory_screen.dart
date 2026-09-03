@@ -15,6 +15,7 @@ import 'package:maki_mobile_pos/core/utils/stock_totals.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_tag_sheet.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
 /// Main inventory management screen.
@@ -541,8 +542,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 product: product,
                 showCost: inventoryState.showCost,
                 onTap: () => _navigateToProductDetail(product),
-                onLongPress:
-                    isAdmin ? () => _confirmAndDelete(context, product) : null,
+                onLongPress: () => _showProductActions(context, product, isAdmin),
                 tags: [
                   for (final id in product.tagIds)
                     if (tagById[id] != null) tagById[id]!,
@@ -595,6 +595,42 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   void _navigateToProductDetail(ProductEntity product) {
     context.push('${RoutePaths.inventory}/${product.id}');
+  }
+
+  void _showProductActions(
+    BuildContext context,
+    ProductEntity product,
+    bool isAdmin,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(LucideIcons.tag),
+              title: const Text('Tags…'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                showProductTagSheet(context, product: product);
+              },
+            ),
+            if (isAdmin)
+              ListTile(
+                leading: const Icon(LucideIcons.trash2, color: AppColors.error),
+                title: const Text('Delete product',
+                    style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _confirmAndDelete(context, product);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _confirmAndDelete(
