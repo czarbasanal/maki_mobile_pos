@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#f8fafb; --surface-3:#eef1f4;
+  --border:#e4e8ed; --border-2:#eef1f4;
+  --text:#14171c; --text-2:#69727f; --text-3:#98a1ad;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#fdf4d2; --accent-line:#e0b200; --accent-text:#8a6300;
+  --neg:#c04b38; --neg-soft:#fbeae6;
+  --shadow-lg:0 20px 52px -20px rgba(16,24,40,.16);
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f12; --surface:#15181d; --surface-2:#1a1e24; --surface-3:#222731;
+  --border:#252b34; --border-2:#1e232a;
+  --text:#eceff3; --text-2:#98a1ad; --text-3:#6a7482;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#332a0a; --accent-line:#f0c53a; --accent-text:#f0c53a;
+  --neg:#e5806c; --neg-soft:#2c1a17;
+  --shadow-lg:0 20px 52px -20px rgba(0,0,0,.7);
+}
+html,body{margin:0;padding:0;background:var(--bg);}
+*{box-sizing:border-box;}
+a{color:var(--text);text-decoration:none;}
+a:hover{color:var(--accent-text);}
+input::placeholder{color:var(--text-3);}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes shake{10%,90%{transform:translateX(-1px);}30%,70%{transform:translateX(2px);}50%{transform:translateX(-2px);}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;width:100%;background:var(--bg);font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--text);display:flex;flex-direction:column;align-items:center;padding:28px 24px 32px 24px;">
+
+  <div style="width:100%;max-width:392px;display:flex;justify-content:flex-end;">
+    <button onClick="{{ toggleTheme }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font-size:12.5px;color:var(--text-2);" style-hover="color:var(--text);border-color:var(--text-3);">
+      {{ themeIcon }} {{ themeLabel }}
+    </button>
+  </div>
+
+  <div style="margin:auto 0;width:100%;max-width:392px;display:flex;flex-direction:column;gap:20px;animation:rise .32s ease both;">
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:13px;">
+      <div style="width:44px;height:44px;border-radius:13px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-line);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:19px;color:var(--accent-ink);letter-spacing:-.6px;">M</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <h1 style="margin:0;font-size:21px;font-weight:600;letter-spacing:-.55px;">MAKI POS Admin</h1>
+        <span style="font-size:13px;color:var(--text-2);">Sign in to continue</span>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);padding:22px;display:flex;flex-direction:column;gap:15px;">
+
+      <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;background:var(--neg-soft);border:1px solid var(--neg);animation:shake .3s ease both;">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--neg)" stroke-width="1.8" style="flex:0 0 15px;"><circle cx="10" cy="10" r="7"></circle><line x1="10" y1="6.4" x2="10" y2="10.8"></line><circle cx="10" cy="13.6" r=".6" fill="var(--neg)"></circle></svg>
+          <span style="font-size:12.5px;color:var(--neg);font-weight:500;">{{ error }}</span>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <label for="email" style="font-size:11.5px;font-weight:600;color:var(--text-2);letter-spacing:.1px;">Email</label>
+        <input id="email" type="email" autocomplete="username" value="{{ email }}" onChange="{{ onEmail }}" onFocus="{{ focusEmail }}" onBlur="{{ blurField }}" placeholder="you@makimotorparts.ph" style="all:unset;box-sizing:border-box;width:100%;background:var(--surface-2);border:1px solid {{ emailBd }};border-radius:11px;padding:11px 13px;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;color:var(--text);" />
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <label for="password" style="font-size:11.5px;font-weight:600;color:var(--text-2);letter-spacing:.1px;">Password</label>
+        <div style="display:flex;align-items:center;gap:9px;background:var(--surface-2);border:1px solid {{ passBd }};border-radius:11px;padding:11px 13px;">
+          <input id="password" type="{{ passType }}" autocomplete="current-password" value="{{ password }}" onChange="{{ onPassword }}" onFocus="{{ focusPass }}" onBlur="{{ blurField }}" placeholder="••••••••" style="all:unset;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;color:var(--text);width:100%;" />
+          <button onClick="{{ togglePass }}" title="{{ passTitle }}" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;color:var(--text-3);flex:0 0 24px;" style-hover="background:var(--surface-3);color:var(--text-2);">
+            <sc-if value="{{ passShown }}" hint-placeholder-val="{{ false }}">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10s2.8-4.6 7-4.6S17 10 17 10s-2.8 4.6-7 4.6S3 10 3 10Z"></path><circle cx="10" cy="10" r="1.9"></circle><line x1="4" y1="16" x2="16" y2="4"></line></svg>
+            </sc-if>
+            <sc-if value="{{ passHidden }}" hint-placeholder-val="{{ true }}">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10s2.8-4.6 7-4.6S17 10 17 10s-2.8 4.6-7 4.6S3 10 3 10Z"></path><circle cx="10" cy="10" r="1.9"></circle></svg>
+            </sc-if>
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button onClick="{{ toggleRemember }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:9px;">
+          <span style="width:17px;height:17px;border-radius:5px;border:1px solid {{ remember.bd }};background:{{ remember.bg }};display:flex;align-items:center;justify-content:center;flex:0 0 17px;font-size:10px;font-weight:700;color:var(--accent-ink);">{{ remember.tick }}</span>
+          <span style="font-size:12.5px;color:var(--text-2);">Keep me signed in</span>
+        </button>
+        <a href="#" style="margin-left:auto;font-size:12px;color:var(--text-3);">Forgot password?</a>
+      </div>
+
+      <button onClick="{{ signIn }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;text-align:center;padding:13px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-size:13.5px;font-weight:600;box-shadow:0 6px 18px -8px var(--accent-line);opacity:{{ btnOpacity }};">{{ btnLabel }}</button>
+    </div>
+  </div>
+
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-3);">v1.0.0</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:800}}">
+class Component extends DCLogic {
+  state = {theme:'light', email:'', password:'', show:false, remember:true, focus:null, error:null, loading:false};
+
+  componentDidMount(){
+    let t = 'light';
+    try { t = localStorage.getItem('maki-pos-theme') || 'light'; } catch(e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    this.setState({theme:t});
+  }
+  componentWillUnmount(){ clearTimeout(this._t); }
+
+  setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('maki-pos-theme', t); } catch(e) {}
+    this.setState({theme:t});
+  }
+
+  renderVals(){
+    const st = this.state;
+    const bd = (name) => st.error ? 'var(--neg)' : (st.focus === name ? 'var(--accent-line)' : 'var(--border)');
+
+    return {
+      themeLabel: st.theme === 'light' ? 'Dark' : 'Light',
+      themeIcon: st.theme === 'light' ? '☾' : '☀',
+      toggleTheme: () => this.setTheme(st.theme === 'light' ? 'dark' : 'light'),
+
+      email: st.email,
+      password: st.password,
+      onEmail: (e) => this.setState({email:e.target.value, error:null}),
+      onPassword: (e) => this.setState({password:e.target.value, error:null}),
+      focusEmail: () => this.setState({focus:'email'}),
+      focusPass: () => this.setState({focus:'pass'}),
+      blurField: () => this.setState({focus:null}),
+      emailBd: bd('email'),
+      passBd: bd('pass'),
+
+      passType: st.show ? 'text' : 'password',
+      passShown: st.show,
+      passHidden: !st.show,
+      passTitle: st.show ? 'Hide password' : 'Show password',
+      togglePass: () => this.setState(s => ({show: !s.show})),
+
+      remember: st.remember
+        ? {bg:'var(--accent)', bd:'var(--accent-line)', tick:'✓'}
+        : {bg:'var(--surface-2)', bd:'var(--border)', tick:''},
+      toggleRemember: () => this.setState(s => ({remember: !s.remember})),
+
+      hasError: !!st.error,
+      error: st.error,
+
+      btnLabel: st.loading ? 'Signing in…' : 'Sign in',
+      btnOpacity: st.loading ? '.65' : '1',
+
+      signIn: () => {
+        if(!st.email.trim() || !st.password){
+          this.setState({error:'Enter your email and password to continue.'});
+          return;
+        }
+        this.setState({loading:true, error:null});
+        clearTimeout(this._t);
+        this._t = setTimeout(() => this.setState({loading:false, error:'That email and password don’t match. Try again.'}), 1100);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
