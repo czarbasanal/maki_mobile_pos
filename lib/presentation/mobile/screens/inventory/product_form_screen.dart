@@ -6,6 +6,7 @@ import 'package:maki_mobile_pos/config/router/router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maki_mobile_pos/core/constants/app_constants.dart';
 import 'package:maki_mobile_pos/core/extensions/num_extensions.dart';
+import 'package:maki_mobile_pos/core/constants/tag_colors.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
 import 'package:maki_mobile_pos/core/extensions/navigation_extensions.dart';
 import 'package:maki_mobile_pos/core/theme/theme.dart';
@@ -61,6 +62,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _notesController = TextEditingController();
 
   String? _selectedSupplierId;
+  List<String> _selectedTagIds = [];
   // Mapped scan codes for this product. Edited via the chip input below;
   // a fresh string typed into [_barcodeInputController] is committed via
   // [_addBarcodeFromInput].
@@ -122,6 +124,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _unitController.text.trim(),
         _categoryController.text.trim(),
         _notesController.text.trim(),
+        _selectedTagIds.join(','),
         _selectedSupplierId ?? '',
         _barcodes.join(','),
         _sellingOptionsSig(),
@@ -372,6 +375,67 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         error: (_, __) => const Text('Could not load suppliers'),
       );
 
+  /// Tag chips (toggleable). Read-only for the cashier name-only tier —
+  /// their save path is rebased inside UpdateProductUseCase and never
+  /// writes tags, so hiding unselected chips avoids implying they can add
+  /// one.
+  Widget _tagField(bool isNameOnly) {
+    final tagsAsync = ref.watch(activeTagsProvider);
+    return tagsAsync.when(
+      data: (tags) {
+        if (tags.isEmpty && _selectedTagIds.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tags',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: tags.map((tag) {
+                final style = TagColors.styleFor(tag.color, isDark);
+                final selected = _selectedTagIds.contains(tag.id);
+                if (isNameOnly && !selected) return const SizedBox.shrink();
+                return FilterChip(
+                  label: Text(tag.name),
+                  selected: selected,
+                  showCheckmark: false,
+                  selectedColor: style.bg,
+                  labelStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? style.fg
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  onSelected: isNameOnly
+                      ? null
+                      : (_) {
+                          setState(() {
+                            selected
+                                ? _selectedTagIds.remove(tag.id)
+                                : _selectedTagIds.add(tag.id);
+                          });
+                        },
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
   /// Live margin recap shown under the Pricing pair (only when both > 0 and
   /// cost ≤ price). "Margin 28% · ₱70.00 per unit" — the % bold-green.
   Widget _marginLine() {
@@ -590,6 +654,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           ..addAll(product.barcodes);
         _categoryController.text = product.category ?? '';
         _notesController.text = product.notes ?? '';
+        _selectedTagIds = List.of(product.tagIds);
         _selectedSupplierId = product.supplierId;
         _sellingOptions = List<SellingOptionEntity>.from(
           product.sellingOptions,
@@ -917,6 +982,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               ),
                               maxLines: 3,
                             ),
+                            const SizedBox(height: 14),
+                            _tagField(isNameOnly),
                           ]),
 
                           if (widget.isEditing && _existingProduct != null) ...[
@@ -1359,6 +1426,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
+            tagIds: _selectedTagIds,
             imageUrl: newImageUrl,
             clearImageUrl: clearImage,
             // Locked to the admin tier server-side (Task 13:
@@ -1432,6 +1500,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
+            tagIds: _selectedTagIds,
             imageUrl: newImageUrl,
             clearImageUrl: clearImage,
           );
@@ -1546,6 +1615,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
+          tagIds: _selectedTagIds,
         );
 
         final productOps = ref.read(productOperationsProvider.notifier);
@@ -1635,6 +1705,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
+          tagIds: _selectedTagIds,
           // Create is unrestricted for this field (same as price/cost), and
           // the editor is only reachable here for admins — carry through
           // whatever they authored.
