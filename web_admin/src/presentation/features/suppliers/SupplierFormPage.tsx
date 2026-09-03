@@ -2,7 +2,7 @@
 // both modes. Mirrors the Flutter supplier_form_screen.dart fields:
 // name, address, contact person, contact number + alt, email, terms, notes.
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,9 +11,11 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useSupplierById } from '@/presentation/hooks/useSuppliers';
 import {
   useCreateSupplier,
+  useDeactivateSupplier,
   useUpdateSupplier,
 } from '@/presentation/hooks/useSupplierMutations';
 import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
+import { Dialog } from '@/presentation/components/common/Dialog';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { TransactionType, transactionTypeDisplayName } from '@/domain/enums';
@@ -58,6 +60,8 @@ export function SupplierFormPage() {
   const params = useParams<{ id?: string }>();
   const editingId = params.id;
   const isEditing = !!editingId;
+  const deactivate = useDeactivateSupplier();
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
   const navigate = useNavigate();
 
   const { data: target, isLoading, error } = useSupplierById(editingId);
@@ -256,7 +260,22 @@ export function SupplierFormPage() {
           />
         </Section>
 
-        <div className="flex justify-end gap-tk-sm">
+        <div className="flex items-center gap-tk-sm">
+          {/* Deactivation moved here from the list's per-row menu (redesign
+              dropped row actions). Soft-only — history keeps referencing it. */}
+          {isEditing && target?.isActive ? (
+            <button
+              type="button"
+              onClick={() => {
+                deactivate.reset();
+                setDeactivateOpen(true);
+              }}
+              className="rounded-ctl px-tk-md py-tk-sm text-ctl-sm font-medium text-neg hover:bg-neg-soft"
+            >
+              Deactivate supplier
+            </button>
+          ) : null}
+          <span className="ml-auto" />
           <Link
             to={RoutePaths.suppliers}
             className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
@@ -273,6 +292,49 @@ export function SupplierFormPage() {
           </button>
         </div>
       </form>
+
+      <Dialog
+        open={deactivateOpen}
+        onClose={() => {
+          if (!deactivate.isPending) setDeactivateOpen(false);
+        }}
+        title="Deactivate supplier?"
+        dismissable={!deactivate.isPending}
+      >
+        <p className="text-cell text-ink-2">
+          <span className="font-medium text-ink">{target?.name}</span> disappears from pickers,
+          but every past receipt and purchase order keeps referencing it.
+        </p>
+        {deactivate.error ? (
+          <p className="mt-tk-sm text-ctl-sm text-neg">{deactivate.error.message}</p>
+        ) : null}
+        <div className="mt-tk-md flex justify-end gap-tk-sm">
+          <button
+            type="button"
+            onClick={() => setDeactivateOpen(false)}
+            disabled={deactivate.isPending}
+            className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-md text-ink-2 hover:bg-surface-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={deactivate.isPending}
+            onClick={async () => {
+              if (!editingId) return;
+              try {
+                await deactivate.mutateAsync(editingId);
+                navigate(RoutePaths.suppliers);
+              } catch {
+                // surfaced above
+              }
+            }}
+            className="rounded-ctl bg-neg-soft px-tk-md py-tk-sm text-ctl-md font-medium text-neg hover:brightness-95 disabled:opacity-60"
+          >
+            {deactivate.isPending ? 'Deactivating…' : 'Deactivate'}
+          </button>
+        </div>
+      </Dialog>
     </div>
   );
 }

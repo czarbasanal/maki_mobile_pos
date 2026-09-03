@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
 export type Tone = 'positive' | 'warning' | 'negative' | 'info' | 'neutral';
-export type BadgeShape = 'pill' | 'chip';
+export type BadgeShape = 'pill' | 'chip' | 'tag';
 
 const toneCls: Record<Tone, string> = {
   positive: 'bg-pos-soft text-pos',
@@ -25,9 +25,10 @@ export function Badge({
     <span
       className={clsx(
         'inline-flex items-center whitespace-nowrap',
-        shape === 'pill'
-          ? 'rounded-pill px-2.5 py-0.5 text-pill'
-          : 'rounded-chip px-1.5 py-0.5 font-mono text-micro font-semibold',
+        shape === 'pill' && 'rounded-pill px-2.5 py-0.5 text-pill',
+        shape === 'chip' && 'rounded-chip px-1.5 py-0.5 font-mono text-micro font-semibold',
+        // Non-mono 11px chip (suppliers guide §3 Terms column).
+        shape === 'tag' && 'rounded-chip px-2 py-[3px] text-[11px] font-medium',
         toneCls[tone],
       )}
     >
