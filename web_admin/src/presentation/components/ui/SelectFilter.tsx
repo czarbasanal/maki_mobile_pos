@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEscapeLayer } from './escapeLayers';
 import { clsx } from 'clsx';
+import { cn } from '@/core/utils/cn';
 import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 export interface SelectFilterOption {
@@ -27,6 +28,7 @@ export function SelectFilter({
   /** Shown (and selectable) as the "no filter" row, e.g. "All mechanics". */
   allLabel,
   allTriggerLabel,
+  triggerClassName,
 }: {
   label: string;
   /** '' = no filter (the allLabel row). */
@@ -39,6 +41,9 @@ export function SelectFilter({
   /** Shorter trigger text for the unfiltered state (e.g. "All"); the menu
    *  row keeps the full allLabel. */
   allTriggerLabel?: string;
+  /** Extra classes merged onto the trigger (tailwind-merge) — form contexts
+   *  use it to match input height/surface (e.g. the product modal). */
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -68,9 +73,10 @@ export function SelectFilter({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className={clsx(
+        className={cn(
           'flex min-w-[186px] items-center gap-2 rounded-ctl border bg-surface px-[13px] py-[9px] text-left shadow-card',
           active ? 'border-accent-text' : 'border-line',
+          triggerClassName,
         )}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">

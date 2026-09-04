@@ -922,7 +922,7 @@ export function ProductModal() {
                   same padding/radius as the inputs so it reads as the row's
                   third member, not a card. */}
               {!isEditing || canSeeCost ? (
-                <div className="flex items-center gap-2.5 rounded-ctl bg-surface-2 px-3 py-2.5">
+                <div className={cn(controlH, 'flex items-center gap-2.5 rounded-ctl bg-surface-2 px-3')}>
                   <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">Margin</span>
                   <span className={cn('ml-auto font-mono text-[17px] font-semibold leading-none', marginToneClass(liveMargin))}>
                     {liveMargin === null ? '—' : `${liveMargin}%`}
@@ -967,7 +967,7 @@ export function ProductModal() {
                   {/* Stock moves through an audited adjustment, never by
                       typing over the number (guide §5: a silent overwrite is
                       a stock movement with no record). */}
-                  <div className={cn(inputCls(false), 'cursor-default select-none bg-surface-3 font-mono')}>
+                  <div className={cn(inputCls(false), 'flex cursor-default select-none items-center bg-surface-3 font-mono')}>
                     {target?.quantity ?? 0}
                   </div>
                 </Field>
@@ -989,7 +989,7 @@ export function ProductModal() {
                 <button
                   type="button"
                   onClick={() => setAdjustOpen(true)}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-ctl border border-line px-tk-md py-2.5 text-ctl-sm text-ink hover:bg-surface-2"
+                  className={cn(controlH, 'inline-flex w-full items-center justify-center gap-1.5 rounded-ctl border border-line px-tk-md text-ctl-sm text-ink hover:bg-surface-2')}
                 >
                   <AdjustmentsHorizontalIcon className="h-3.5 w-3.5" /> Adjust stock
                 </button>
@@ -1012,6 +1012,7 @@ export function ProductModal() {
                     value={watch('unit') ?? ''}
                     options={unitOptions.map((u) => ({ value: u, label: u }))}
                     onChange={(v) => setValue('unit', v, { shouldDirty: true, shouldValidate: true })}
+                    triggerClassName={formSelectCls}
                   />
                 )}
               </Field>
@@ -1028,6 +1029,7 @@ export function ProductModal() {
                       setValue('category', v, { shouldDirty: true });
                       applyCategoryForSku(categoryEntityForName(v), autoSku);
                     }}
+                    triggerClassName={formSelectCls}
                   />
                 )}
               </Field>
@@ -1044,6 +1046,7 @@ export function ProductModal() {
                     }))}
                     allLabel="No supplier"
                     onChange={(v) => setValue('supplierId', v, { shouldDirty: true })}
+                    triggerClassName={formSelectCls}
                   />
                 )}
               </Field>
@@ -1562,9 +1565,18 @@ export function ProductModal() {
  *  dropdowns overflow their cells at split-screen widths. */
 const threeColGrid = 'grid grid-cols-[repeat(auto-fit,minmax(186px,1fr))] items-end gap-3';
 
+/** Every control in the shared rows renders at ONE height — inputs, select
+ *  triggers, the Adjust-stock button and the margin tile alike. Mixed natural
+ *  heights (36-42px) made the rows read as misaligned. */
+const controlH = 'h-[42px]';
+
+/** SelectFilter dressed as a form control: input height + input surface, no
+ *  card shadow — the filter-band look doesn't belong inside a form. */
+const formSelectCls = `${controlH} w-full bg-surface-2 shadow-none`;
+
 function inputCls(hasError: boolean): string {
   return cn(
-    'w-full rounded-ctl border bg-surface-2 px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-3',
+    'h-[42px] w-full rounded-ctl border bg-surface-2 px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-3',
     hasError ? 'border-neg' : 'border-line focus:border-accent-line',
   );
 }
