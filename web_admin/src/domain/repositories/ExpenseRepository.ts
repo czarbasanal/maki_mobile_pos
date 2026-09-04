@@ -6,7 +6,6 @@ export interface ExpenseListFilters {
    *  createdAt — mirrors the mobile ExpenseRepositoryImpl.getExpenses query. */
   start?: Date;
   end?: Date;
-  category?: string;
 }
 
 export type ExpenseCreateInput = Omit<

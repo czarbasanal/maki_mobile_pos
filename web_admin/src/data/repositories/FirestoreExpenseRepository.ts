@@ -41,9 +41,11 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     return snap.exists() ? snap.data() : null;
   }
 
-  // Range/category filter on Expense.date — the semantic expense date, not
+  // Range filter on Expense.date — the semantic expense date, not
   // createdAt — matching lib/data/repositories/expense_repository_impl.dart's
-  // getExpenses() query so mobile and web read the same window.
+  // getExpenses() query so mobile and web read the same window. No
+  // server-side category filter — ExpensesPage filters category client-side
+  // on top of this one scoped fetch (one filtering mechanism, not two).
   async list(filters: ExpenseListFilters = {}): Promise<Expense[]> {
     const constraints = [];
     if (filters.start) {
@@ -51,9 +53,6 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     }
     if (filters.end) {
       constraints.push(where('date', '<=', Timestamp.fromDate(filters.end)));
-    }
-    if (filters.category) {
-      constraints.push(where('category', '==', filters.category));
     }
     constraints.push(orderBy('date', 'desc'));
 

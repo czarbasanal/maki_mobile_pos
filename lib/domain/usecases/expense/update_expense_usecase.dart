@@ -28,6 +28,7 @@ class UpdateExpenseUseCase {
 
       final stamped = expense.copyWith(
         updatedBy: actor.id,
+        updatedByName: actor.displayName,
         updatedAt: DateTime.now(),
       );
       final updated = await _repository.updateExpense(stamped);

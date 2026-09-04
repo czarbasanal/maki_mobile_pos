@@ -76,7 +76,7 @@ void main() {
       verify(() => logRepo.logActivity(any())).called(1);
     });
 
-    test('admin update stamps updatedBy + updatedAt', () async {
+    test('admin update stamps updatedBy + updatedByName + updatedAt', () async {
       final captured = <ExpenseEntity>[];
       when(() => repo.updateExpense(any())).thenAnswer((inv) async {
         final stamped = inv.positionalArguments.first as ExpenseEntity;
@@ -90,6 +90,10 @@ void main() {
       );
 
       expect(captured.single.updatedBy, 'u-admin');
+      // Record history's "who last touched this" — mirrors the web admin's
+      // updatedByName, stamped from the actor, never trusted from the
+      // incoming expense.
+      expect(captured.single.updatedByName, 'admin user');
       expect(captured.single.updatedAt, isNotNull);
     });
 

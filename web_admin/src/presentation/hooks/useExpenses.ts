@@ -28,17 +28,13 @@ export function useExpense(id: string | undefined) {
   });
 }
 
-/** List query — range + optional category filter, per ExpenseRepository.list. */
+/** List query — date range only, per ExpenseRepository.list. Category is
+ *  filtered client-side (ExpensesPage) on top of this one scoped fetch —
+ *  there is no server-side category filter to key on. */
 export function useExpenses(filters: ExpenseListFilters = {}): ExpensesResult {
   const repo = useExpenseRepo();
   const query = useQuery({
-    queryKey: [
-      'expenses',
-      'list',
-      filters.start?.getTime(),
-      filters.end?.getTime(),
-      filters.category,
-    ],
+    queryKey: ['expenses', 'list', filters.start?.getTime(), filters.end?.getTime()],
     queryFn: () => repo.list(filters),
   });
 

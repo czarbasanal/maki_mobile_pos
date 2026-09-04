@@ -68,6 +68,7 @@ function harness(opts: {
   del?: ReturnType<typeof vi.fn>;
   getById?: ReturnType<typeof vi.fn>;
   newExpenseId?: ReturnType<typeof vi.fn>;
+  categories?: Category[];
 } = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const expenseRepo: Partial<Container['expenseRepo']> = {
@@ -79,7 +80,7 @@ function harness(opts: {
   };
   const categoryRepo: Partial<Container['categoryRepo']> = {
     watchAll: (kind, cb) => {
-      cb(kind === 'expense' ? expenseCategories : []);
+      cb(kind === 'expense' ? (opts.categories ?? expenseCategories) : []);
       return () => {};
     },
   };
@@ -117,6 +118,29 @@ describe('ExpenseModal — add mode validity', () => {
 
     await userEvent.type(screen.getByLabelText('Amount'), '500');
     expect(save).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('Save goes inert again when the date is cleared, even with description/amount/category filled', async () => {
+    signIn();
+    harness();
+    await userEvent.type(screen.getByLabelText('Description'), 'Fuel');
+    await userEvent.type(screen.getByLabelText('Amount'), '500');
+    const save = screen.getByRole('button', { name: 'Add expense' });
+    // Category auto-defaults to the first option, date defaults to today —
+    // both filled once description/amount are, so Save is live here.
+    expect(save).not.toHaveAttribute('aria-disabled');
+
+    await userEvent.clear(screen.getByLabelText('Date'));
+    expect(save).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('Save stays inert with no category selected (an empty category list never auto-picks one)', async () => {
+    signIn();
+    harness({ categories: [] });
+    await userEvent.type(screen.getByLabelText('Description'), 'Fuel');
+    await userEvent.type(screen.getByLabelText('Amount'), '500');
+
+    expect(screen.getByRole('button', { name: 'Add expense' })).toHaveAttribute('aria-disabled', 'true');
   });
 });
 

@@ -16,7 +16,6 @@
 //    this repo) — ported from the old ExpenseFormPage, restyled to tokens.
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
 import { useExpense, useCreateExpense, useDeleteExpense, useUpdateExpense } from '@/presentation/hooks/useExpenses';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { CategoryKind } from '@/domain/categories/categoryKind';
@@ -25,7 +24,7 @@ import { deleteExpenseReceipt, uploadExpenseReceipt } from '@/data/expenseReceip
 import { PaymentMethod, paymentMethodDisplayName } from '@/domain/enums';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { formatInShopZone, formatShopDateTime } from '@/domain/time/shopTime';
+import { formatInShopZone, formatShopDateTime, shopIsoDate } from '@/domain/time/shopTime';
 import { Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
@@ -45,7 +44,18 @@ interface Draft {
 }
 
 const blank = (s: string) => (s.trim() ? s.trim() : null);
-const todayStr = () => format(new Date(), 'yyyy-MM-dd');
+const todayStr = () => shopIsoDate(new Date());
+
+/** Parses the native date input's `yyyy-MM-dd` string into a Date at shop
+ *  midnight — null for an empty string OR a genuinely invalid one (so a
+ *  malformed value fails validation instead of silently becoming an Invalid
+ *  Date that would reach Timestamp.fromDate downstream). */
+function parseDraftDate(dateStr: string): Date | null {
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+  const d = new Date(`${trimmed}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 const EMPTY: Draft = {
   description: '',
@@ -111,7 +121,7 @@ function ExpenseModalForm({ target }: { target: Expense | null }) {
           amount: String(target.amount),
           category: target.category,
           paidVia: target.paidVia,
-          date: format(target.date, 'yyyy-MM-dd'),
+          date: shopIsoDate(target.date),
           notes: target.notes ?? '',
         }
       : EMPTY,
@@ -167,13 +177,24 @@ function ExpenseModalForm({ target }: { target: Expense | null }) {
   const mutationError = create.error?.message ?? update.error?.message ?? null;
 
   const parsedAmount = Number(draft.amount);
-  const canSave = !busy && draft.description.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0;
+  // Parsed once here — guarded (empty string, or a genuinely invalid date,
+  // both yield null) — and reused in onSubmit rather than re-parsed, so an
+  // invalid date can never reach Timestamp.fromDate as an Invalid Date, and
+  // (on the create path) never gets past canSave to trigger the
+  // upload-before-create receipt flow and leave an orphaned Storage object.
+  const parsedDate = parseDraftDate(draft.date);
+  const canSave =
+    !busy &&
+    draft.description.trim() !== '' &&
+    Number.isFinite(parsedAmount) &&
+    parsedAmount > 0 &&
+    draft.category.trim() !== '' &&
+    parsedDate !== null;
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!canSave) return;
+    if (!canSave || !parsedDate) return;
     setLoadNotice(null);
-    const parsedDate = new Date(`${draft.date}T00:00:00`);
     const description = draft.description.trim();
 
     try {

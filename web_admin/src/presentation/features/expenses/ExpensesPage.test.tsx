@@ -168,6 +168,35 @@ describe('ExpensesPage — filters', () => {
     await userEvent.click(screen.getByText('Clear filters'));
     expect(await screen.findByText('Fuel')).toBeInTheDocument();
   });
+
+  it('switching the date range does not clear a category filter the new range still contains (render-derived healing, not an effect-based reset)', async () => {
+    signIn();
+    harness([
+      // Always in range regardless of the preset picked below.
+      makeExpense({ id: 'e1', description: 'Fuel', amount: 500, category: 'Transportation', date: daysAgo(0) }),
+      // Inside the default last7 window, but outside 'Today' — its category
+      // (Utilities) drops out of categoryOptions when the range narrows.
+      makeExpense({ id: 'e2', description: 'Electric bill', amount: 300, category: 'Utilities', date: daysAgo(3) }),
+    ]);
+    expect(await screen.findByText('Fuel')).toBeInTheDocument();
+    expect(screen.getByText('Electric bill')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Category/ }));
+    await userEvent.click(screen.getByRole('option', { name: /Transportation/ }));
+    expect(screen.getByText('Fuel')).toBeInTheDocument();
+    expect(screen.queryByText('Electric bill')).not.toBeInTheDocument();
+
+    // Narrow the range to 'Today' — Utilities (e2) falls out of scope
+    // entirely, but Transportation (the selected filter) is still valid.
+    await userEvent.click(screen.getByRole('radio', { name: 'Today' }));
+
+    // The selection must survive: still filtered to Transportation, and the
+    // Category control still shows it selected rather than having reset to
+    // "All" during/after the range switch.
+    expect(await screen.findByRole('button', { name: /Category/ })).toHaveTextContent('Transportation');
+    expect(screen.getByText('Fuel')).toBeInTheDocument();
+    expect(screen.queryByText('Electric bill')).not.toBeInTheDocument();
+  });
 });
 
 describe('ExpensesPage — Total shown', () => {

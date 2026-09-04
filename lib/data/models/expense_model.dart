@@ -20,6 +20,7 @@ class ExpenseModel {
   final String createdBy;
   final String createdByName;
   final String? updatedBy;
+  final String? updatedByName;
 
   const ExpenseModel({
     required this.id,
@@ -36,6 +37,7 @@ class ExpenseModel {
     required this.createdBy,
     required this.createdByName,
     this.updatedBy,
+    this.updatedByName,
   });
 
   /// Creates an [ExpenseModel] from a Firestore document snapshot.
@@ -61,6 +63,7 @@ class ExpenseModel {
       createdBy: map['createdBy'] as String? ?? '',
       createdByName: map['createdByName'] as String? ?? '',
       updatedBy: map['updatedBy'] as String?,
+      updatedByName: map['updatedByName'] as String?,
     );
   }
 
@@ -81,6 +84,7 @@ class ExpenseModel {
       createdBy: entity.createdBy,
       createdByName: entity.createdByName,
       updatedBy: entity.updatedBy,
+      updatedByName: entity.updatedByName,
     );
   }
 
@@ -100,6 +104,7 @@ class ExpenseModel {
       'createdBy': createdBy,
       'createdByName': createdByName,
       'updatedBy': updatedBy,
+      'updatedByName': updatedByName,
     };
   }
 
@@ -133,6 +138,7 @@ class ExpenseModel {
       'receiptImageUrl': receiptImageUrl,
       'updatedAt': FieldValue.serverTimestamp(),
       'updatedBy': updatedBy,
+      'updatedByName': updatedByName,
     };
   }
 
@@ -153,6 +159,7 @@ class ExpenseModel {
       createdBy: createdBy,
       createdByName: createdByName,
       updatedBy: updatedBy,
+      updatedByName: updatedByName,
     );
   }
 }

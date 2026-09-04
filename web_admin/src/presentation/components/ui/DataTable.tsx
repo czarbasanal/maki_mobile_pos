@@ -40,9 +40,9 @@ export interface DataTableProps<T> {
   rowClassName?: (row: T) => string | undefined;
   /** Optional summary row (e.g. Expenses' "Total shown") rendered in a
    *  <tfoot> — a plain <tr> of <td>s, so the caller controls colSpan and
-   *  alignment. Only shown alongside actual rows: when rows.length === 0 the
-   *  component returns `empty` instead of the table, so this needs no
-   *  separate hide condition. */
+   *  alignment. Hidden whenever rows.length === 0 (the component returns
+   *  `empty` instead of the table then) AND while `loading` — a stale total
+   *  must never sit under a body of skeleton placeholder rows. */
   foot?: ReactNode;
 }
 
@@ -160,7 +160,7 @@ export function DataTable<T>({
                 </tr>
               ))}
         </tbody>
-        {foot ? <tfoot>{foot}</tfoot> : null}
+        {foot && !loading ? <tfoot>{foot}</tfoot> : null}
       </table>
     </div>
   );

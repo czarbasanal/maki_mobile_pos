@@ -107,10 +107,6 @@ export function ExpensesPage() {
   // Category is applied on top, client-side, for the table only.
   const { expenses: scoped, isLoading, error } = useExpenses({ start: range.start, end: range.end });
 
-  useEffect(() => {
-    setPage(1);
-  }, [range, category, search]);
-
   const byCategory = useMemo(() => {
     const totalsByName = new Map<string, number>();
     for (const e of scoped) totalsByName.set(e.category, (totalsByName.get(e.category) ?? 0) + e.amount);
@@ -140,22 +136,29 @@ export function ExpensesPage() {
   }, [scoped]);
 
   // Category dropped out of the option set (e.g. it only existed outside the
-  // current range) — reset to All so the table isn't mysteriously empty.
+  // current range) reads as unset — a render-derived fallback, not a
+  // setState reset. An effect-based reset would fire (and permanently wipe
+  // the stored selection) during the loading gap between an old scoped array
+  // and a new one, even when the new range still contains the category;
+  // this heals back on its own the moment a scoped array that contains it
+  // renders, with no transient "wiped" flash and no lost selection.
+  const effectiveCategory = categoryOptions.some((c) => c.value === category) ? category : '';
+
   useEffect(() => {
-    if (category && !categoryOptions.some((c) => c.value === category)) setCategory('');
-  }, [categoryOptions, category]);
+    setPage(1);
+  }, [range, effectiveCategory, search]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return scoped.filter((e) => {
-      if (category && e.category !== category) return false;
+      if (effectiveCategory && e.category !== effectiveCategory) return false;
       if (!q) return true;
       const haystack = [e.description, e.notes ?? '', e.category, paymentMethodDisplayName[e.paidVia]]
         .join(' ')
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [scoped, category, search]);
+  }, [scoped, effectiveCategory, search]);
 
   usePageClamp(page, setPage, filtered.length, pageSize);
   const paged = useMemo(
@@ -164,7 +167,7 @@ export function ExpensesPage() {
   );
   const totalShown = useMemo(() => filtered.reduce((n, e) => n + e.amount, 0), [filtered]);
 
-  const isFiltered = category !== '' || search.trim() !== '';
+  const isFiltered = effectiveCategory !== '' || search.trim() !== '';
   const clearFilters = () => {
     setCategory('');
     setSearch('');
@@ -267,14 +270,14 @@ export function ExpensesPage() {
               <span className="text-[12px] text-ink-3">Nothing in range</span>
             ) : (
               byCategory.map((c) => {
-                const active = category === c.name;
+                const active = effectiveCategory === c.name;
                 return (
                   <button
                     key={c.name}
                     type="button"
                     aria-pressed={active}
                     onClick={() => {
-                      setCategory((cur) => (cur === c.name ? '' : c.name));
+                      setCategory(active ? '' : c.name);
                       setPage(1);
                     }}
                     className="flex items-center gap-2 py-[2px] text-left"
@@ -353,7 +356,7 @@ export function ExpensesPage() {
         </div>
         <SelectFilter
           label="Category"
-          value={category}
+          value={effectiveCategory}
           options={categoryOptions}
           onChange={setCategory}
           allLabel="All categories"

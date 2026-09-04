@@ -49,6 +49,11 @@ class ExpenseEntity extends Equatable {
   /// ID of user who last updated this record
   final String? updatedBy;
 
+  /// Display name of user who last updated this record. Null until the
+  /// first edit, or on a legacy record from before this field existed —
+  /// mirrors the web admin's Expense.updatedByName.
+  final String? updatedByName;
+
   const ExpenseEntity({
     required this.id,
     required this.description,
@@ -64,6 +69,7 @@ class ExpenseEntity extends Equatable {
     required this.createdBy,
     required this.createdByName,
     this.updatedBy,
+    this.updatedByName,
   });
 
   ExpenseEntity copyWith({
@@ -84,6 +90,7 @@ class ExpenseEntity extends Equatable {
     String? createdBy,
     String? createdByName,
     String? updatedBy,
+    String? updatedByName,
   }) {
     return ExpenseEntity(
       id: id ?? this.id,
@@ -103,6 +110,7 @@ class ExpenseEntity extends Equatable {
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,
       updatedBy: updatedBy ?? this.updatedBy,
+      updatedByName: updatedByName ?? this.updatedByName,
     );
   }
 
@@ -122,5 +130,6 @@ class ExpenseEntity extends Equatable {
         createdBy,
         createdByName,
         updatedBy,
+        updatedByName,
       ];
 }

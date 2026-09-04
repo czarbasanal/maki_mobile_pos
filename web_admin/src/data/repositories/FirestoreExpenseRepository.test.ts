@@ -1,4 +1,4 @@
-// Covers FirestoreExpenseRepository's CRUD + list() range/category filtering.
+// Covers FirestoreExpenseRepository's CRUD + list() range filtering.
 // There's no Firestore emulator wired into the vitest suite, so this fakes
 // the 'firebase/firestore' SDK surface (same template as
 // FirestoreCategoryRepository.test.ts / FirestoreSaleRepository.test.ts).
@@ -234,13 +234,13 @@ describe('FirestoreExpenseRepository', () => {
   });
 
   describe('list', () => {
-    it('queries by date range + category, ordered by date desc', async () => {
+    it('queries by date range, ordered by date desc — no server-side category filter', async () => {
       state.docsToReturn = [{ id: 'e1', data: baseData() }];
       const repo = new FirestoreExpenseRepository({} as unknown as Firestore);
       const start = new Date('2026-07-01T00:00:00.000Z');
       const end = new Date('2026-07-31T23:59:59.999Z');
 
-      const results = await repo.list({ start, end, category: 'Transportation' });
+      const results = await repo.list({ start, end });
 
       expect(results).toHaveLength(1);
       expect(results[0].description).toBe('Fuel');
@@ -250,8 +250,9 @@ describe('FirestoreExpenseRepository', () => {
       const fields = q.constraints.map((c) => ({ field: c.field, op: c.op, dir: c.dir }));
       expect(fields).toContainEqual({ field: 'date', op: '>=', dir: undefined });
       expect(fields).toContainEqual({ field: 'date', op: '<=', dir: undefined });
-      expect(fields).toContainEqual({ field: 'category', op: '==', dir: undefined });
       expect(fields).toContainEqual({ field: 'date', op: undefined, dir: 'desc' });
+      // Category filtering is client-side (ExpensesPage) — one mechanism only.
+      expect(fields.some((f) => f.field === 'category')).toBe(false);
 
       const startConstraint = q.constraints.find(
         (c) => c.__where && c.field === 'date' && c.op === '>=',
@@ -259,7 +260,7 @@ describe('FirestoreExpenseRepository', () => {
       expect(startConstraint?.value).toEqual({ __ts: start.getTime() });
     });
 
-    it('omits category/range constraints when not provided', async () => {
+    it('omits range constraints when not provided', async () => {
       state.docsToReturn = [];
       const repo = new FirestoreExpenseRepository({} as unknown as Firestore);
 

@@ -99,4 +99,18 @@ describe('DataTable', () => {
     );
     expect(screen.queryByText('Total shown')).not.toBeInTheDocument();
   });
+
+  it('hides the foot row while loading, even when a previous page of rows is still passed in — a stale total must not sit under skeleton rows', () => {
+    const { container } = render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        loading
+        foot={<tr><td colSpan={2}>Total shown</td></tr>}
+      />,
+    );
+    expect(screen.queryByText('Total shown')).not.toBeInTheDocument();
+    expect(container.querySelector('tfoot')).toBeNull();
+  });
 });
