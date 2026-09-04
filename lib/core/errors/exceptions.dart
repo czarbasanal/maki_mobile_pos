@@ -288,3 +288,34 @@ class BarcodeScanException extends AppException {
     super.originalError,
   });
 }
+
+// ==================== STOCK ADJUSTMENT EXCEPTIONS ====================
+//
+// Thrown by ProductRepositoryImpl.adjustStockAudited's transaction — the
+// three abort paths, in the order the transaction checks them: inactive ->
+// stale on-hand -> negative result. Mirrors web_admin's adjustmentErrors.ts.
+
+/// The product's on-hand quantity read inside the transaction didn't match
+/// what the caller started from — someone else adjusted stock concurrently.
+/// Carries the CURRENT quantity so the caller can re-seed the form.
+class StaleOnHandException extends AppException {
+  final int currentOnHand;
+
+  const StaleOnHandException(this.currentOnHand)
+      : super(message: 'stale-on-hand', code: 'stale-on-hand');
+}
+
+/// The product was deactivated between the form opening and the submit
+/// landing — a deactivated product can't be stock-adjusted.
+class ProductInactiveException extends AppException {
+  const ProductInactiveException()
+      : super(message: 'product-inactive', code: 'product-inactive');
+}
+
+/// The resolved after-quantity would be negative. Only reachable via a race
+/// (the caller validates this client-side already, see [adjustmentValidity]
+/// in `core/utils/stock_adjustment.dart`).
+class NegativeResultException extends AppException {
+  const NegativeResultException()
+      : super(message: 'negative-result', code: 'negative-result');
+}

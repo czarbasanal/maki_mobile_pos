@@ -1,3 +1,4 @@
+import 'package:maki_mobile_pos/core/utils/stock_adjustment.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 
 /// Abstract repository contract for Product operations.
@@ -193,6 +194,37 @@ abstract class ProductRepository {
   /// [updatedByName] - Display name of the editor (denormalized for audit info).
   Future<void> reactivateProduct({
     required String productId,
+    required String updatedBy,
+    String? updatedByName,
+  });
+
+  /// Atomically adjusts a product's stock and records an audit-trail entry
+  /// in its `stock_adjustments` subcollection. Transactional so the
+  /// before/after/record write is all-or-nothing.
+  ///
+  /// The transaction reads the live product and aborts, in order:
+  /// 1. [ProductInactiveException] if the product is no longer active.
+  /// 2. [StaleOnHandException] if the live quantity != [expectedOnHand]
+  ///    (someone else adjusted stock since the caller last read it).
+  /// 3. [NegativeResultException] if the resolved after-quantity is
+  ///    negative (the caller should already have validated this via
+  ///    `adjustmentValidity` in `core/utils/stock_adjustment.dart`).
+  ///
+  /// [mode]/[quantity] resolve to the after-quantity per [resolveAdjustment]
+  /// (`add`/`remove`/`set`). [reasonId]/[reasonName] and optional [note]
+  /// are written verbatim onto the adjustment record. [updatedBy] is the
+  /// acting user's ID; [updatedByName] its denormalized display name
+  /// (written on both the product and the adjustment record when non-null).
+  ///
+  /// Returns the resolved before/after/delta.
+  Future<AdjustmentResult> adjustStockAudited({
+    required String productId,
+    required AdjustmentMode mode,
+    required int quantity,
+    required int expectedOnHand,
+    required String reasonId,
+    required String reasonName,
+    String? note,
     required String updatedBy,
     String? updatedByName,
   });

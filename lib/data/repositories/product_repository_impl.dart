@@ -5,6 +5,7 @@ import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
 import 'package:maki_mobile_pos/core/errors/exceptions.dart';
 import 'package:maki_mobile_pos/core/utils/selling_options.dart';
 import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
+import 'package:maki_mobile_pos/core/utils/stock_adjustment.dart';
 import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
@@ -722,6 +723,69 @@ class ProductRepositoryImpl implements ProductRepository {
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to update stock: ${e.message}',
+        code: e.code,
+        originalError: e,
+      );
+    }
+  }
+
+  @override
+  Future<AdjustmentResult> adjustStockAudited({
+    required String productId,
+    required AdjustmentMode mode,
+    required int quantity,
+    required int expectedOnHand,
+    required String reasonId,
+    required String reasonName,
+    String? note,
+    required String updatedBy,
+    String? updatedByName,
+  }) async {
+    try {
+      final productRef = _productsRef.doc(productId);
+      return await _firestore.runTransaction((tx) async {
+        final snap = await tx.get(productRef);
+        final data = snap.data();
+        if (data?['isActive'] != true) {
+          throw const ProductInactiveException();
+        }
+        final before = (data?['quantity'] as num?)?.toInt() ?? 0;
+        if (before != expectedOnHand) {
+          throw StaleOnHandException(before);
+        }
+        final result = resolveAdjustment(mode, before, quantity);
+        if (result.after < 0) {
+          throw const NegativeResultException();
+        }
+
+        tx.update(productRef, {
+          'quantity': result.after,
+          'updatedAt': FieldValue.serverTimestamp(),
+          'updatedBy': updatedBy,
+          if (updatedByName != null) 'updatedByName': updatedByName,
+        });
+        tx.set(
+          productRef.collection(FirestoreCollections.stockAdjustments).doc(),
+          {
+            'mode': mode.name,
+            'quantity': quantity,
+            'delta': result.delta,
+            'before': result.before,
+            'after': result.after,
+            'reasonId': reasonId,
+            'reasonName': reasonName,
+            'note': note,
+            'createdAt': FieldValue.serverTimestamp(),
+            'createdBy': updatedBy,
+            'createdByName': updatedByName,
+          },
+        );
+
+        return result;
+      });
+    } on FirebaseException catch (e) {
+      throw DatabaseException(
+        message: 'Failed to adjust stock: ${e.message}',
         code: e.code,
         originalError: e,
       );
