@@ -172,6 +172,7 @@ service cloud.firestore {
       match /stock_adjustments/{adjustmentId} {
         allow read: if isStaffOrAdmin() && isActiveUser();
         allow create: if isStaffOrAdmin() && isActiveUser() &&
+          request.resource.data.mode in ['add', 'remove', 'set'] &&
           // "Set to" can erase a discrepancy without recording its size —
           // admin only. Add/Remove always carry the delta.
           (request.resource.data.mode != 'set' || isAdmin()) &&

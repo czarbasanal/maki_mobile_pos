@@ -1793,6 +1793,8 @@ describe("/products/*/stock_adjustments (append-only audit)", () => {
   const col = (u) => as(u).collection("products").doc("p-1").collection("stock_adjustments");
 
   beforeEach(async () => {
+    // Seed p-1 ACTIVE for each test (rules-disabled to bypass auth checks).
+    // For inactive cases, seed p-inactive inside the specific test.
     await testEnv.withSecurityRulesDisabled((ctx) =>
       ctx.firestore().collection("products").doc("p-1").set({
         sku: "SKU-001", name: "Coke", price: 25, cost: 12, costCode: "ABF",
@@ -1800,10 +1802,6 @@ describe("/products/*/stock_adjustments (append-only audit)", () => {
       })
     );
   });
-
-  // NOTE: /products beforeEach seeds p-1 ACTIVE — reuse it. For the
-  // inactive case, seed a second product p-inactive with isActive: false
-  // (withSecurityRulesDisabled) inside the test.
 
   it("staff can create an add adjustment", async () => {
     await assertSucceeds(col("staff").add(adj({ createdBy: "staff-1" })));
@@ -1821,6 +1819,9 @@ describe("/products/*/stock_adjustments (append-only audit)", () => {
   it("structural: after must equal before + delta and be >= 0", async () => {
     await assertFails(col("staff").add(adj({ after: 999 })));
     await assertFails(col("staff").add(adj({ mode: "remove", quantity: 200, delta: -200, before: 100, after: -100 })));
+  });
+  it("mode must be one of the three legal values (add/remove/set)", async () => {
+    await assertFails(col("staff").add(adj({ mode: "bogus" })));
   });
   it("inactive product blocks create", async () => {
     await testEnv.withSecurityRulesDisabled((ctx) =>
