@@ -26,6 +26,13 @@ export interface ExpenseRepository {
   /** Pre-allocates a document id — see ExpenseCreateInput.id. */
   newExpenseId(): string;
   create(input: ExpenseCreateInput, actorId: string, actorName: string): Promise<Expense>;
-  update(id: string, input: Partial<Omit<Expense, 'id' | 'createdAt' | 'createdBy' | 'createdByName'>>, actorId: string): Promise<void>;
+  /** actorName is stamped as updatedByName, same posture as updatedBy —
+   *  never trust a client-supplied value in the patch itself. */
+  update(
+    id: string,
+    input: Partial<Omit<Expense, 'id' | 'createdAt' | 'createdBy' | 'createdByName' | 'updatedBy' | 'updatedByName'>>,
+    actorId: string,
+    actorName: string,
+  ): Promise<void>;
   delete(id: string): Promise<void>;
 }

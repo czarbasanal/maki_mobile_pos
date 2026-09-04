@@ -1,9 +1,9 @@
 // useExpenses/useExpenseTotals/mutations — fakes the ExpenseRepository via
 // DiProvider.override (same template as useJobOrder.test.tsx). The totals math
-// test is the important one: it pins that {today, week, month} are three
-// independent range sums over Expense.amount, with week/month using
-// calendar (Monday-start week / 1st-of-month) boundaries, not rolling
-// windows.
+// test is the important one: it pins that {today, last7, last30} are three
+// independent range sums over Expense.amount, each a ROLLING shop-day window
+// ending today (resolvePreset('today'|'last7'|'last30')) — not calendar
+// week/month boundaries (Expenses redesign guide §2's Spend-card exception).
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -69,30 +69,34 @@ describe('useExpenses', () => {
 });
 
 describe('useExpenseTotals', () => {
-  // 2026-07-15 is a Wednesday — Monday-start week is 2026-07-13..2026-07-19.
+  // Shop offset defaults to Asia/Manila (UTC+8) — noon UTC is still Jul 15
+  // shop-side, so this stays clear of any day-boundary edge case.
   const now = new Date('2026-07-15T12:00:00.000Z');
 
-  it('sums today/week/month independently over Expense.amount', async () => {
+  it('sums today/last7/last30 independently over Expense.amount, each a rolling window ending today', async () => {
     const todayExpense = makeExpense({ id: 'today', amount: 100, date: now });
-    const earlierThisWeek = makeExpense({
-      id: 'week',
+    // 5 days back — inside last7 (and last30), outside today.
+    const withinLast7 = makeExpense({
+      id: 'w7',
       amount: 200,
-      date: new Date('2026-07-13T08:00:00.000Z'), // Monday this week, not today
+      date: new Date('2026-07-10T00:00:00.000Z'),
     });
-    const earlierThisMonth = makeExpense({
-      id: 'month',
+    // ~25 days back — outside last7's window (only reaches back 6 days), inside last30.
+    const outside7within30 = makeExpense({
+      id: 'w30',
       amount: 300,
-      date: new Date('2026-07-02T08:00:00.000Z'), // this month, before this week
+      date: new Date('2026-06-20T00:00:00.000Z'),
     });
-    const lastMonth = makeExpense({
-      id: 'lastmonth',
+    // ~75 days back — outside every window.
+    const outsideAll = makeExpense({
+      id: 'old',
       amount: 9999,
-      date: new Date('2026-06-20T08:00:00.000Z'),
+      date: new Date('2026-05-01T00:00:00.000Z'),
     });
 
     // Fake repo mirrors a real range query: filter the full fixture set by
     // the [start,end] window the hook asks for.
-    const all = [todayExpense, earlierThisWeek, earlierThisMonth, lastMonth];
+    const all = [todayExpense, withinLast7, outside7within30, outsideAll];
     const list = vi.fn(
       async ({ start, end }: { start?: Date; end?: Date }) =>
         all.filter((e) => (!start || e.date >= start) && (!end || e.date <= end)),
@@ -103,8 +107,8 @@ describe('useExpenseTotals', () => {
 
     expect(result.current.totals).toEqual({
       today: 100,
-      week: 300, // today (100) + earlierThisWeek (200)
-      month: 600, // week (300) + earlierThisMonth (300)
+      last7: 300, // todayExpense (100) + withinLast7 (200)
+      last30: 600, // last7 (300) + outside7within30 (300)
     });
   });
 });
@@ -149,7 +153,7 @@ describe('expense mutations', () => {
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
 
-  it('useUpdateExpense calls repo.update with the actor id', async () => {
+  it('useUpdateExpense calls repo.update with the actor id and display name (Record history\'s updatedByName)', async () => {
     useAuthStore.setState({
       user: { id: 'u2', displayName: 'Staff', email: 's@x.com' } as never,
       status: 'signedIn',
@@ -162,7 +166,24 @@ describe('expense mutations', () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(update).toHaveBeenCalledWith('e1', { amount: 500 }, 'u2');
+    expect(update).toHaveBeenCalledWith('e1', { amount: 500 }, 'u2', 'Staff');
+    useAuthStore.setState({ user: null, status: 'signedOut' });
+  });
+
+  it("useUpdateExpense falls back to the actor's email when displayName is blank", async () => {
+    useAuthStore.setState({
+      user: { id: 'u3', displayName: '  ', email: 'blank@x.com' } as never,
+      status: 'signedIn',
+    });
+    const update = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useUpdateExpense(), { wrapper: wrap({ update }) });
+
+    act(() => {
+      result.current.mutate({ id: 'e1', patch: { amount: 500 } });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(update).toHaveBeenCalledWith('e1', { amount: 500 }, 'u3', 'blank@x.com');
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
 

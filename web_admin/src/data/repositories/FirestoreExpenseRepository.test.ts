@@ -183,16 +183,17 @@ describe('FirestoreExpenseRepository', () => {
   });
 
   describe('update', () => {
-    it('updates only the provided fields, stamping updatedBy/updatedAt', async () => {
+    it('updates only the provided fields, stamping updatedBy/updatedByName/updatedAt', async () => {
       const repo = new FirestoreExpenseRepository({} as unknown as Firestore);
 
-      await repo.update('e1', { amount: 750 }, 'actor-2');
+      await repo.update('e1', { amount: 750 }, 'actor-2', 'Czar');
 
       const write = state.writes.find((w) => w.kind === 'update' && w.path === 'expenses/e1');
       expect(write).toBeDefined();
       expect(write?.data).toEqual({
         amount: 750,
         updatedBy: 'actor-2',
+        updatedByName: 'Czar',
         updatedAt: 'SERVER_TIMESTAMP',
       });
     });
@@ -200,12 +201,13 @@ describe('FirestoreExpenseRepository', () => {
     it('updates paidVia when provided', async () => {
       const repo = new FirestoreExpenseRepository({} as unknown as Firestore);
 
-      await repo.update('e1', { paidVia: 'maya' }, 'actor-2');
+      await repo.update('e1', { paidVia: 'maya' }, 'actor-2', 'Czar');
 
       const write = state.writes.find((w) => w.kind === 'update' && w.path === 'expenses/e1');
       expect(write?.data).toEqual({
         paidVia: 'maya',
         updatedBy: 'actor-2',
+        updatedByName: 'Czar',
         updatedAt: 'SERVER_TIMESTAMP',
       });
     });

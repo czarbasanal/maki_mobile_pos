@@ -93,11 +93,15 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
 
   async update(
     id: string,
-    input: Partial<Omit<Expense, 'id' | 'createdAt' | 'createdBy' | 'createdByName'>>,
+    input: Partial<
+      Omit<Expense, 'id' | 'createdAt' | 'createdBy' | 'createdByName' | 'updatedBy' | 'updatedByName'>
+    >,
     actorId: string,
+    actorName: string,
   ): Promise<void> {
     const data: Record<string, unknown> = {
       updatedBy: actorId,
+      updatedByName: actorName,
       updatedAt: serverTimestamp(),
     };
     if (input.description !== undefined) data.description = input.description;

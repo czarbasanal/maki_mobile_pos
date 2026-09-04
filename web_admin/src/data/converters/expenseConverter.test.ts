@@ -58,8 +58,48 @@ describe('expenseConverter.toFirestore — paidVia', () => {
       createdBy: 'u1',
       createdByName: 'Cashier',
       updatedBy: null,
+      updatedByName: null,
     };
     const data = expenseConverter.toFirestore(expense as never);
     expect(data.paidVia).toBe('gcash');
+  });
+});
+
+// updatedByName — Record history's "who last touched this" (Expenses redesign
+// §4: two-mode modal panel). Read defaults to null (undefined/legacy docs);
+// write always carries it, mirroring updatedBy.
+describe('expenseConverter.fromFirestore — updatedByName', () => {
+  it('reads a stored updatedByName value', () => {
+    const e = expenseConverter.fromFirestore(snap('e1', baseDoc({ updatedByName: 'Czar' })));
+    expect(e.updatedByName).toBe('Czar');
+  });
+
+  it('defaults to null when missing (never edited, or a legacy doc)', () => {
+    const e = expenseConverter.fromFirestore(snap('e2', baseDoc()));
+    expect(e.updatedByName).toBeNull();
+  });
+});
+
+describe('expenseConverter.toFirestore — updatedByName', () => {
+  it('always writes updatedByName', () => {
+    const expense: Expense = {
+      id: 'e1',
+      description: 'Fuel',
+      amount: 500,
+      category: 'Transportation',
+      date: new Date('2026-07-10T00:00:00.000Z'),
+      paidVia: 'gcash',
+      notes: null,
+      receiptNumber: null,
+      receiptImageUrl: null,
+      createdAt: new Date('2026-07-10T00:00:00.000Z'),
+      updatedAt: new Date('2026-07-12T00:00:00.000Z'),
+      createdBy: 'u1',
+      createdByName: 'Cashier',
+      updatedBy: 'u2',
+      updatedByName: 'Czar',
+    };
+    const data = expenseConverter.toFirestore(expense as never);
+    expect(data.updatedByName).toBe('Czar');
   });
 });

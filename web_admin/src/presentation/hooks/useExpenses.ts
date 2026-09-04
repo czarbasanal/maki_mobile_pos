@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { endOfDay, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 import { useActivityLogRepo, useExpenseRepo } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { logActivity } from '@/application/activityLogger';
 import { ActivityType, type Expense } from '@/domain/entities';
 import type { ExpenseCreateInput, ExpenseListFilters } from '@/domain/repositories/ExpenseRepository';
+import { resolvePreset } from '@/domain/reports/dateRange';
+import { shopDayInt } from '@/domain/time/shopTime';
 
 function invalidateExpenses(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: ['expenses'] });
@@ -50,8 +51,8 @@ export function useExpenses(filters: ExpenseListFilters = {}): ExpensesResult {
 
 export interface ExpenseTotals {
   today: number;
-  week: number;
-  month: number;
+  last7: number;
+  last30: number;
 }
 
 export interface ExpenseTotalsResult {
@@ -60,33 +61,36 @@ export interface ExpenseTotalsResult {
   error: Error | null;
 }
 
-const ZERO_TOTALS: ExpenseTotals = { today: 0, week: 0, month: 0 };
+const ZERO_TOTALS: ExpenseTotals = { today: 0, last7: 0, last30: 0 };
 
 function sumAmount(expenses: Expense[]): number {
   return expenses.reduce((total, e) => total + e.amount, 0);
 }
 
 /**
- * Today / this-(Monday-start)-week / this-calendar-month expense sums, each
- * an independent range query ending at `now` — mirrors the mobile
- * expenses_screen.dart's startOfWeek/startOfMonth extensions (calendar
- * boundaries, not rolling 7/30-day windows).
+ * Today / last-7-days / last-30-days expense sums — the Expenses redesign
+ * guide's Spend-card exception (§2): three FIXED, rolling windows, each
+ * computed from its own range query ending at `now`, independent of the
+ * screen's date-range control. Rolling (resolvePreset), not calendar
+ * week/month — see the guide's §7 "week larger than the month" trap.
  */
 export function useExpenseTotals(now: Date = new Date()): ExpenseTotalsResult {
   const repo = useExpenseRepo();
-  const end = endOfDay(now);
+  const today = resolvePreset('today', now);
+  const last7 = resolvePreset('last7', now);
+  const last30 = resolvePreset('last30', now);
   const query = useQuery({
-    queryKey: ['expenses', 'totals', startOfDay(now).getTime()],
+    queryKey: ['expenses', 'totals', shopDayInt(now)],
     queryFn: async () => {
-      const [today, week, month] = await Promise.all([
-        repo.list({ start: startOfDay(now), end }),
-        repo.list({ start: startOfWeek(now, { weekStartsOn: 1 }), end }),
-        repo.list({ start: startOfMonth(now), end }),
+      const [todayExpenses, last7Expenses, last30Expenses] = await Promise.all([
+        repo.list({ start: today.start, end: today.end }),
+        repo.list({ start: last7.start, end: last7.end }),
+        repo.list({ start: last30.start, end: last30.end }),
       ]);
       return {
-        today: sumAmount(today),
-        week: sumAmount(week),
-        month: sumAmount(month),
+        today: sumAmount(todayExpenses),
+        last7: sumAmount(last7Expenses),
+        last30: sumAmount(last30Expenses),
       } satisfies ExpenseTotals;
     },
   });
@@ -135,7 +139,9 @@ export function useCreateExpense() {
 
 export interface UpdateExpenseInput {
   id: string;
-  patch: Partial<Omit<Expense, 'id' | 'createdAt' | 'createdBy' | 'createdByName'>>;
+  patch: Partial<
+    Omit<Expense, 'id' | 'createdAt' | 'createdBy' | 'createdByName' | 'updatedBy' | 'updatedByName'>
+  >;
 }
 
 export function useUpdateExpense() {
@@ -146,7 +152,8 @@ export function useUpdateExpense() {
   return useMutation<void, Error, UpdateExpenseInput>({
     mutationFn: async ({ id, patch }) => {
       if (!actor) throw new Error('Not signed in');
-      await repo.update(id, patch, actor.id);
+      const actorName = actor.displayName.trim() || actor.email;
+      await repo.update(id, patch, actor.id, actorName);
       logActivity(activityLogRepo, () => ({
         type: ActivityType.expense,
         action: `Updated expense${patch.description ? `: ${patch.description}` : ` ${id}`}`,

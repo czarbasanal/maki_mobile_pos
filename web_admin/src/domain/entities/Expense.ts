@@ -19,4 +19,9 @@ export interface Expense {
   createdBy: string;
   createdByName: string;
   updatedBy: string | null;
+  /** Display name of the actor who last saved this expense — stamped by the
+   *  repository from the session, same posture as Product.updatedByName.
+   *  Null until the first edit, or on a legacy doc from before this field
+   *  existed (Record history then shows the raw updatedAt with no name). */
+  updatedByName: string | null;
 }

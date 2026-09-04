@@ -24,6 +24,7 @@ export const expenseConverter: FirestoreDataConverter<Expense> = {
       createdBy: e.createdBy,
       createdByName: e.createdByName,
       updatedBy: e.updatedBy,
+      updatedByName: e.updatedByName,
     };
   },
   fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Expense {
@@ -46,6 +47,7 @@ export const expenseConverter: FirestoreDataConverter<Expense> = {
       createdBy: d.createdBy ?? '',
       createdByName: d.createdByName ?? '',
       updatedBy: d.updatedBy ?? null,
+      updatedByName: d.updatedByName ?? null,
     };
   },
 };
