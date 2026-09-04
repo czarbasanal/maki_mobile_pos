@@ -33,7 +33,9 @@ export function SelectFilter({
   value: string;
   options: SelectFilterOption[];
   onChange: (value: string) => void;
-  allLabel: string;
+  /** Omit for a plain required select — no "no filter" row is rendered and
+   *  '' is never offered (the product modal's Unit field). */
+  allLabel?: string;
   /** Shorter trigger text for the unfiltered state (e.g. "All"); the menu
    *  row keeps the full allLabel. */
   allTriggerLabel?: string;
@@ -79,7 +81,7 @@ export function SelectFilter({
               active ? 'text-accent-text' : 'text-ink',
             )}
           >
-            {current?.label ?? allTriggerLabel ?? allLabel}
+            {current?.label ?? allTriggerLabel ?? allLabel ?? ''}
           </span>
         </span>
         <ChevronDownIcon
@@ -93,11 +95,13 @@ export function SelectFilter({
           aria-label={label}
           className="absolute left-0 top-[calc(100%+6px)] z-40 max-h-64 min-w-full overflow-y-auto rounded-card border border-line bg-surface p-[5px] shadow-card"
         >
-          <Option
-            label={allLabel}
-            selected={!active}
-            onPick={() => pick('')}
-          />
+          {allLabel !== undefined ? (
+            <Option
+              label={allLabel}
+              selected={!active}
+              onPick={() => pick('')}
+            />
+          ) : null}
           {options.map((o) => (
             <Option
               key={o.value}

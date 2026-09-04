@@ -23,7 +23,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { CategoryKind } from '@/domain/categories/categoryKind';
-import { formatInShopZone } from '@/domain/time/shopTime';
+import { formatShopDateTime } from '@/domain/time/shopTime';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
 import { costsDiffer } from '@/domain/products/costVariation';
 import { composeAutoSku, matchesAutoPattern, displaySku } from '@/domain/products/sku';
@@ -234,7 +234,9 @@ export function ProductModal() {
       price: target.price,
       quantity: target.quantity,
       reorderLevel: target.reorderLevel,
-      unit: target.unit,
+      // Legacy docs can hold unit '' — seed the default instead so the
+      // dropdown never shows a value the form doesn't actually hold.
+      unit: target.unit || 'pcs',
       category: target.category ?? '',
       supplierId: target.supplierId ?? '',
       notes: target.notes ?? '',
@@ -894,7 +896,7 @@ export function ProductModal() {
 
           <section className="flex flex-col gap-2">
             <SectionLabel>Pricing</SectionLabel>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-3">
+            <div className={threeColGrid}>
               {!isEditing || canSeeCost ? (
                 <Field label="Cost" error={errors.cost?.message}>
                   <input type="number" step="0.01" className={inputCls(!!errors.cost)} {...register('cost')} />
@@ -955,7 +957,7 @@ export function ProductModal() {
 
           <section className="flex flex-col gap-2">
             <SectionLabel>Stock &amp; classification</SectionLabel>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-3">
+            <div className={threeColGrid}>
               {!isEditing ? (
                 <Field label="Initial quantity" error={errors.quantity?.message}>
                   <input type="number" className={inputCls(!!errors.quantity)} {...register('quantity')} />
@@ -998,19 +1000,18 @@ export function ProductModal() {
                 stock row above — twelve controls on three shared vertical
                 edges (guide). Unit left its brief chip life: chips are for
                 two-to-five options, and the real unit list is ~ten. */}
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-3">
+            <div className={threeColGrid}>
               <Field group={!nameOnly} label="Unit" error={errors.unit?.message}>
                 {nameOnly ? (
                   <input type="text" readOnly className={cn(inputCls(false), 'cursor-default bg-surface-3')} value={watch('unit')} />
                 ) : (
                   <SelectFilter
                     label="Unit"
-                    // 'pcs' is the app-wide default unit, so it doubles as the
-                    // dropdown's "default" row; '' never reaches the form.
-                    value={watch('unit') === 'pcs' ? '' : (watch('unit') ?? '')}
-                    options={unitOptions.filter((u) => u !== 'pcs').map((u) => ({ value: u, label: u }))}
-                    allLabel="pcs"
-                    onChange={(v) => setValue('unit', v || 'pcs', { shouldDirty: true })}
+                    // No allLabel: a unit is required, so no "no filter" row
+                    // exists and '' is never offered.
+                    value={watch('unit') ?? ''}
+                    options={unitOptions.map((u) => ({ value: u, label: u }))}
+                    onChange={(v) => setValue('unit', v, { shouldDirty: true, shouldValidate: true })}
                   />
                 )}
               </Field>
@@ -1113,7 +1114,7 @@ export function ProductModal() {
           {isEditing && target ? (
             <section className="flex flex-col gap-2">
               <SectionLabel>Record history</SectionLabel>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 rounded-ctl bg-surface-2 px-4 py-3">
+              <div className={cn(threeColGrid, 'rounded-ctl bg-surface-2 px-4 py-3')}>
                 <HistoryEntry label="Created by" who={target.createdByName} when={target.createdAt} />
                 <HistoryEntry label="Last updated by" who={target.updatedByName} when={target.updatedAt} />
               </div>
@@ -1554,6 +1555,13 @@ export function ProductModal() {
   );
 }
 
+/** Pricing, the stock row, the classification row and the history panel all
+ *  share ONE track rule so their controls align on shared vertical edges —
+ *  the guide's core layout decision. The 186px floor (not the guide's 170)
+ *  matches SelectFilter's `min-w-[186px]` trigger: narrower tracks make the
+ *  dropdowns overflow their cells at split-screen widths. */
+const threeColGrid = 'grid grid-cols-[repeat(auto-fit,minmax(186px,1fr))] items-end gap-3';
+
 function inputCls(hasError: boolean): string {
   return cn(
     'w-full rounded-ctl border bg-surface-2 px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-3',
@@ -1596,14 +1604,14 @@ function SectionLabel({ children }: { children: ReactNode }) {
  *  the fact is spoken ("Bern updated it on Sep 1"). Unknown person shows an
  *  em dash rather than repeating the creator (guide). */
 function HistoryEntry({ label, who, when }: { label: string; who: string | null; when: Date | null }) {
+  // Blank-string author names exist in old docs; they get the em dash too.
+  const name = who?.trim() ? who : null;
   return (
     <div className="flex flex-col gap-[3px]">
       <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{label}</span>
-      <span className={cn('text-[12.5px] font-medium', who ? 'text-ink' : 'text-ink-3')}>{who ?? '—'}</span>
+      <span className={cn('text-[12.5px] font-medium', name ? 'text-ink' : 'text-ink-3')}>{name ?? '—'}</span>
       <span className="font-mono text-[10.5px] text-ink-3">
-        {when
-          ? `${formatInShopZone(when, { month: 'short', day: 'numeric', year: 'numeric' })} · ${formatInShopZone(when, { hour: 'numeric', minute: '2-digit', hour12: true })}`
-          : '—'}
+        {when ? formatShopDateTime(when) : '—'}
       </span>
     </div>
   );

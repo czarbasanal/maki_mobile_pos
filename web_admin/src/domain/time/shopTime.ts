@@ -106,11 +106,34 @@ export function shopIsoDate(instant: Date, offsetMinutes = shopOffsetMinutes()):
   return `${y}-${m}-${d}`;
 }
 
+// Intl.DateTimeFormat construction is one of the costliest stdlib
+// constructors; formatters are pure per (options, zone), so cache them.
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function cachedFormatter(options: Intl.DateTimeFormatOptions, timezoneId: string): Intl.DateTimeFormat {
+  const key = `${timezoneId}|${JSON.stringify(options)}`;
+  let fmt = formatterCache.get(key);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-PH', { ...options, timeZone: timezoneId });
+    formatterCache.set(key, fmt);
+  }
+  return fmt;
+}
+
 /** Formats an instant for display in the shop's zone. */
 export function formatInShopZone(
   instant: Date,
   options: Intl.DateTimeFormatOptions,
   timezoneId = ambient.timezoneId,
 ): string {
-  return new Intl.DateTimeFormat('en-PH', { ...options, timeZone: timezoneId }).format(instant);
+  return cachedFormatter(options, timezoneId).format(instant);
+}
+
+/** The one composed date+time display format — `Sep 1, 2026 · 4:18 PM` in
+ *  the shop's zone. Use this instead of hand-joining two formatInShopZone
+ *  calls; the ad-hoc copies had already drifted on the separator. */
+export function formatShopDateTime(instant: Date, timezoneId = ambient.timezoneId): string {
+  const date = formatInShopZone(instant, { month: 'short', day: 'numeric', year: 'numeric' }, timezoneId);
+  const time = formatInShopZone(instant, { hour: 'numeric', minute: '2-digit', hour12: true }, timezoneId);
+  return `${date} · ${time}`;
 }

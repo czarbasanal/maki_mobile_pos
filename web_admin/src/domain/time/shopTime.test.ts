@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   DEFAULT_SHOP_OFFSET_MINUTES,
+  formatShopDateTime,
   DEFAULT_SHOP_TIMEZONE_ID,
   getAmbientShopTimezone,
   instantOf,
@@ -120,5 +121,17 @@ describe('SHOP_TIMEZONES', () => {
   it('mirrors the Dart catalog', () => {
     // Keep in lock-step with lib/core/utils/shop_timezones.dart.
     expect(SHOP_TIMEZONES.length).toBe(15);
+  });
+});
+
+describe('formatShopDateTime', () => {
+  it('composes date · time in the shop zone', () => {
+    // Earlier tests in this file move the ambient zone — pin it back first.
+    setAmbientShopTimezone({
+      timezoneId: DEFAULT_SHOP_TIMEZONE_ID,
+      offsetMinutes: DEFAULT_SHOP_OFFSET_MINUTES,
+    });
+    // 08:18Z is 4:18 PM in the default shop zone (Asia/Manila, +8).
+    expect(formatShopDateTime(new Date('2026-09-01T08:18:00Z'))).toBe('Sep 1, 2026 · 4:18 PM');
   });
 });

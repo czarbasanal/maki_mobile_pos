@@ -2,7 +2,7 @@
 // shows who created and who last touched the part, as plain text above the
 // Danger zone — absolute shop-zone timestamps, never inputs.
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
@@ -98,15 +98,27 @@ describe('ProductModal — record history', () => {
     expect(screen.getByText('Sep 1, 2026 · 4:18 PM')).toBeInTheDocument();
   });
 
-  it('shows an em dash when the editor or creator name is unknown', async () => {
+  it('shows em dashes when the editor is unknown — never repeats the creator', async () => {
     signIn();
     harness('/inventory/p9/edit', product({ updatedByName: null, updatedAt: null }));
     await screen.findByDisplayValue('Brake shoe (Yamaha)');
 
-    expect(screen.getByText('Last updated by')).toBeInTheDocument();
-    // Person and timestamp both fall back to an em dash — never repeat the creator.
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(1);
+    // Scope to the Last-updated-by entry: BOTH its person and timestamp lines
+    // are em dashes, and the creator's name must not leak into it.
+    const entry = screen.getByText('Last updated by').closest('div') as HTMLElement;
+    expect(within(entry).getAllByText('—')).toHaveLength(2);
+    expect(within(entry).queryByText('Czar')).toBeNull();
     expect(screen.queryByText('Sep 1, 2026 · 4:18 PM')).toBeNull();
+  });
+
+  it('a blank-string author name renders as an em dash too', async () => {
+    signIn();
+    harness('/inventory/p9/edit', product({ updatedByName: '   ' }));
+    await screen.findByDisplayValue('Brake shoe (Yamaha)');
+
+    const entry = screen.getByText('Last updated by').closest('div') as HTMLElement;
+    expect(within(entry).getByText('—')).toBeInTheDocument();
+    expect(within(entry).getByText('Sep 1, 2026 · 4:18 PM')).toBeInTheDocument();
   });
 
   it('add mode has no record history panel', () => {
