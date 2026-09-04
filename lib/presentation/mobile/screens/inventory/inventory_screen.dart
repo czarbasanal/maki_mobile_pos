@@ -15,6 +15,7 @@ import 'package:maki_mobile_pos/core/utils/stock_totals.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/inventory_widgets.dart';
+import 'package:maki_mobile_pos/presentation/mobile/screens/pos/barcode_scanner_screen.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/product_tag_sheet.dart';
 import 'package:maki_mobile_pos/presentation/shared/widgets/common/common_widgets.dart';
 
@@ -344,8 +345,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 filled: false,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_searchController.text.isNotEmpty)
+                      IconButton(
                         icon: const Icon(LucideIcons.x, size: 18),
                         onPressed: () {
                           _searchController.clear();
@@ -353,8 +357,17 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                               .read(inventoryStateProvider.notifier)
                               .setSearchQuery('');
                         },
-                      )
-                    : null,
+                      ),
+                    // Scan-to-search: the code lands in the query like typed
+                    // text, so the list filters by it (barcodes are part of
+                    // the search blob).
+                    IconButton(
+                      icon: const Icon(LucideIcons.scanLine, size: 18),
+                      tooltip: 'Scan barcode',
+                      onPressed: _scanToSearch,
+                    ),
+                  ],
+                ),
               ),
               onChanged: (value) {
                 ref.read(inventoryStateProvider.notifier).setSearchQuery(value);
@@ -440,6 +453,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _scanToSearch() async {
+    final barcode = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
+    );
+    if (!mounted) return;
+    final code = barcode?.trim() ?? '';
+    if (code.isEmpty) return;
+    _searchController.text = code;
+    _searchController.selection =
+        TextSelection.collapsed(offset: code.length);
+    ref.read(inventoryStateProvider.notifier).setSearchQuery(code);
   }
 
   Widget _buildCategoryFilterChip(InventoryState inventoryState) {

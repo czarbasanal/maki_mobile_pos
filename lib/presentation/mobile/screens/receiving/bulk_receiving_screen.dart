@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maki_mobile_pos/core/utils/product_search.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -280,12 +281,15 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
           Autocomplete<ProductEntity>(
             textEditingController: _searchController,
             focusNode: _searchFocusNode,
-            optionsBuilder: (textEditingValue) async {
-              if (textEditingValue.text.isEmpty) return [];
-              final products = await ref.read(
-                productSearchProvider(textEditingValue.text).future,
-              );
-              return products;
+            optionsBuilder: (textEditingValue) {
+              final text = textEditingValue.text.trim();
+              if (text.isEmpty) return const Iterable<ProductEntity>.empty();
+              // Local tokenized match over the already-streamed catalog —
+              // the old server prefix-query capped at 20, ORed its terms,
+              // and only indexed 10-char keyword prefixes.
+              final products =
+                  ref.read(productsProvider).valueOrNull ?? const [];
+              return products.where((p) => matchesProductQuery(p, text));
             },
             displayStringForOption: (product) => product.name,
             fieldViewBuilder: (context, controller, focusNode, onSubmitted) {

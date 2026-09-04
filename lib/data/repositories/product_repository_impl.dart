@@ -304,10 +304,13 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<ProductEntity?> getProductByBarcode(String barcode) async {
+    // Scanners occasionally deliver stray whitespace; stored codes are
+    // trimmed on write, so an untrimmed query can never match.
+    final code = barcode.trim();
     try {
       // Primary: array-contains on the new `barcodes` field.
       var snapshot = await _productsRef
-          .where('barcodes', arrayContains: barcode)
+          .where('barcodes', arrayContains: code)
           .where('isActive', isEqualTo: true)
           .limit(1)
           .get();
@@ -321,7 +324,7 @@ class ProductRepositoryImpl implements ProductRepository {
       // [ProductModel.fromMap] lifts that into the `barcodes` list at
       // read time, but the Firestore query above won't match it.
       snapshot = await _productsRef
-          .where('barcode', isEqualTo: barcode)
+          .where('barcode', isEqualTo: code)
           .where('isActive', isEqualTo: true)
           .limit(1)
           .get();
@@ -331,7 +334,7 @@ class ProductRepositoryImpl implements ProductRepository {
       }
 
       // Last fall back: treat the scanned code as a SKU.
-      return getProductBySku(barcode);
+      return getProductBySku(code);
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to get product by barcode: ${e.message}',

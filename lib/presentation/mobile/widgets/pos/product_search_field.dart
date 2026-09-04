@@ -338,13 +338,12 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField>
             );
           }
 
-          // Overlay: compact dropdown capped at 10. Inline: the sheet's
-          // full-height panel scrolls through every match (no silent cap).
+          // Every match renders — the overlay's maxHeight makes the
+          // dropdown scroll, the sheet's panel already does. A silent cap
+          // reads as "the part doesn't exist".
           return ListView.builder(
             shrinkWrap: !widget.inlineResults,
-            itemCount: widget.inlineResults
-                ? products.length
-                : (products.length > 10 ? 10 : products.length),
+            itemCount: products.length,
             itemBuilder: (context, index) => _buildResultRow(products[index]),
           );
         },
@@ -481,8 +480,16 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField>
     );
 
     if (!mounted) return;
-    if (barcode != null && barcode.isNotEmpty) {
-      widget.onBarcodeScanned(barcode);
+    if (barcode != null && barcode.trim().isNotEmpty) {
+      final code = barcode.trim();
+      // Surface the code in the search field FIRST: on a miss the user sees
+      // near-matches (or an honest "No products found") instead of a
+      // dead-end snackbar; on a hit the pick handler clears the field.
+      widget.controller.text = code;
+      widget.controller.selection =
+          TextSelection.collapsed(offset: code.length);
+      if (!widget.inlineResults) widget.focusNode.requestFocus();
+      widget.onBarcodeScanned(code);
     }
   }
 }

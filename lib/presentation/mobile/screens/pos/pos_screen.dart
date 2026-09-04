@@ -576,9 +576,10 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       // Scanning is a back door around the must-pick-an-option rule unless
       // it too goes through _addProductToCart's picker gate.
       await _addProductToCart(product);
-    } else {
-      context.showWarningSnackBar('Product not found: $barcode');
     }
+    // On a miss the search field already holds the code (the scan/submit
+    // path writes it there), so the dropdown shows near-matches or an
+    // honest "No products found" — no dead-end snackbar.
   }
 
   void _updateItemQuantity(String itemId, int quantity) {

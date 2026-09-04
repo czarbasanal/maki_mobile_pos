@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:maki_mobile_pos/core/utils/product_search.dart';
 import 'package:maki_mobile_pos/services/firebase_service.dart';
 import 'package:maki_mobile_pos/core/utils/price_change_report.dart';
 import 'package:maki_mobile_pos/data/repositories/product_repository_impl.dart';
@@ -10,7 +11,6 @@ import 'package:maki_mobile_pos/domain/usecases/product/deactivate_product_useca
 import 'package:maki_mobile_pos/domain/usecases/product/update_product_usecase.dart';
 import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
-import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
 
 // ==================== REPOSITORY PROVIDER ====================
 
@@ -144,23 +144,9 @@ final localProductSearchProvider =
 
   return productsAsync.when(
     data: (products) {
-      final searchTerms = query
-          .toLowerCase()
-          .split(' ')
-          .where((s) => s.isNotEmpty)
-          // SKUs are shown as 0007-0153; fold that back to the stored form.
-          .map(SkuGenerator.normalizeSkuQuery)
+      final results = products
+          .where((product) => matchesProductQuery(product, query))
           .toList();
-
-      final results = products.where((product) {
-        final searchable = [
-          product.name,
-          product.sku,
-          ...product.barcodes,
-          if (product.category != null) product.category!,
-        ].join(' ').toLowerCase();
-        return searchTerms.every((term) => searchable.contains(term));
-      }).take(20).toList();
 
       return AsyncValue.data(results);
     },

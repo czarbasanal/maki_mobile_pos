@@ -93,8 +93,11 @@ class _AddProductsSheetState extends ConsumerState<AddProductsSheet> {
     final p = await ref.read(productByBarcodeProvider(barcode).future);
     if (!mounted) return;
     if (p == null) {
-      context.showWarningSnackBar('Product not found: $barcode');
-    } else if (_dedupe && _added.contains(p.id)) {
+      // The scan/submit path already wrote the code into the search field,
+      // so the inline results show near-matches or "No products found".
+      return;
+    }
+    if (_dedupe && _added.contains(p.id)) {
       // A silent no-op reads as a failed scan — say why nothing changed.
       context.showWarningSnackBar('Already added: ${p.name}');
     } else {

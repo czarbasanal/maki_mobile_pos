@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/presentation/providers/providers.dart';
-import 'package:maki_mobile_pos/core/utils/sku_generator.dart';
+import 'package:maki_mobile_pos/core/utils/product_search.dart';
 
 // ==================== INVENTORY STATE ====================
 
@@ -146,18 +146,12 @@ final filteredProductsProvider =
     data: (products) {
       var filtered = products.toList();
 
-      // Apply search filter
-      if (inventoryState.searchQuery.isNotEmpty) {
-        // Fold a typed 0007-0153 back to the stored 00070153 — that is the
-        // form the list shows, so it is the form people type.
-        final query = SkuGenerator.normalizeSkuQuery(
-          inventoryState.searchQuery.toLowerCase(),
-        );
-        filtered = filtered.where((p) {
-          return p.name.toLowerCase().contains(query) ||
-              p.sku.toLowerCase().contains(query) ||
-              p.barcodes.any((b) => b.toLowerCase().contains(query));
-        }).toList();
+      // Apply search filter — tokenized and order/whitespace-insensitive
+      // over name/sku/barcodes/category (shared matcher, both surfaces).
+      if (inventoryState.searchQuery.trim().isNotEmpty) {
+        filtered = filtered
+            .where((p) => matchesProductQuery(p, inventoryState.searchQuery))
+            .toList();
       }
 
       // Apply category filter
