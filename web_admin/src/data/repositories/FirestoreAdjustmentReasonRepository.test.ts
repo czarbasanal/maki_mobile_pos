@@ -106,9 +106,9 @@ describe('FirestoreAdjustmentReasonRepository', () => {
     expect(state.batchCommitCount).toBe(1);
     // Verify all six seeds are present
     expect(state.batchSets[0].data).toMatchObject({ name: 'Delivery', requiresNote: false });
-    expect(state.batchSets[1].data).toMatchObject({ name: 'Count correction', requiresNote: true });
-    expect(state.batchSets[2].data).toMatchObject({ name: 'Damaged', requiresNote: true });
-    expect(state.batchSets[3].data).toMatchObject({ name: 'Lost', requiresNote: true });
+    expect(state.batchSets[1].data).toMatchObject({ name: 'Count correction', requiresNote: false });
+    expect(state.batchSets[2].data).toMatchObject({ name: 'Damaged', requiresNote: false });
+    expect(state.batchSets[3].data).toMatchObject({ name: 'Lost', requiresNote: false });
     expect(state.batchSets[4].data).toMatchObject({ name: 'Returned', requiresNote: false });
     expect(state.batchSets[5].data).toMatchObject({ name: 'Transfer', requiresNote: false });
     // Verify all have audit fields

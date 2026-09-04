@@ -9,9 +9,9 @@ import 'package:maki_mobile_pos/domain/repositories/adjustment_reason_repository
 /// Used by [AdjustmentReasonRepositoryImpl.seedDefaults] on first initialization.
 const kSeedAdjustmentReasons = <({String name, bool requiresNote})>[
   (name: 'Delivery', requiresNote: false),
-  (name: 'Count correction', requiresNote: true),
-  (name: 'Damaged', requiresNote: true),
-  (name: 'Lost', requiresNote: true),
+  (name: 'Count correction', requiresNote: false),
+  (name: 'Damaged', requiresNote: false),
+  (name: 'Lost', requiresNote: false),
   (name: 'Returned', requiresNote: false),
   (name: 'Transfer', requiresNote: false),
 ];

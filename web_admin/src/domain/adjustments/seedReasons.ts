@@ -3,9 +3,9 @@
 // See spec table: docs/superpowers/specs/2026-09-04-stock-adjustment-audit-design.md
 export const SEED_REASONS = [
   { name: 'Delivery', requiresNote: false },
-  { name: 'Count correction', requiresNote: true },
-  { name: 'Damaged', requiresNote: true },
-  { name: 'Lost', requiresNote: true },
+  { name: 'Count correction', requiresNote: false },
+  { name: 'Damaged', requiresNote: false },
+  { name: 'Lost', requiresNote: false },
   { name: 'Returned', requiresNote: false },
   { name: 'Transfer', requiresNote: false },
 ] as const;
