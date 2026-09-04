@@ -23,6 +23,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { CategoryKind } from '@/domain/categories/categoryKind';
+import { formatInShopZone } from '@/domain/time/shopTime';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
 import { costsDiffer } from '@/domain/products/costVariation';
 import { composeAutoSku, matchesAutoPattern, displaySku } from '@/domain/products/sku';
@@ -42,7 +43,6 @@ import { Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Modal } from '@/presentation/components/ui/Modal';
-import { Chip } from '@/presentation/components/ui/Chip';
 import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
 import { toast } from '@/presentation/components/ui/toast';
 import { marginPct, marginToneClass } from '@/domain/products/margin';
@@ -747,8 +747,10 @@ export function ProductModal() {
         ) : null}
 
         <form id="product-form" onSubmit={onFormSubmit} noValidate className="flex flex-col gap-[18px]">
-          {/* Identity: photo slot beside name, SKU/barcode pair beneath. */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-[14px]">
+          {/* Identity: photo slot beside name, SKU/barcode pair beneath. The
+              slot centres against the WHOLE right-hand block — top-aligned it
+              hangs off a two-row group and reads as misalignment (guide). */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-[14px]">
             <div className="flex shrink-0 flex-col items-start gap-1.5">
               <label
                 className={cn(
@@ -792,7 +794,10 @@ export function ProductModal() {
 
               <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
                 <div className="flex flex-col gap-[6px]">
-                  <span className="flex items-center justify-between text-[11.5px] font-semibold text-ink-2">
+                  {/* Auto sits right AFTER the SKU label — pushed to the
+                      column edge it lands nearer "Barcode" and reads as a
+                      barcode control (guide). */}
+                  <span className="flex items-center gap-[9px] text-[11.5px] font-semibold text-ink-2">
                     SKU
                     {!isEditing ? (
                       <label className="flex cursor-pointer items-center gap-1.5 font-medium text-ink-3">
@@ -889,7 +894,7 @@ export function ProductModal() {
 
           <section className="flex flex-col gap-2">
             <SectionLabel>Pricing</SectionLabel>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-3">
               {!isEditing || canSeeCost ? (
                 <Field label="Cost" error={errors.cost?.message}>
                   <input type="number" step="0.01" className={inputCls(!!errors.cost)} {...register('cost')} />
@@ -909,11 +914,15 @@ export function ProductModal() {
               </Field>
               {/* The buyer should never have to compute the one number that
                   decides whether the price is right. Hidden with Cost — a
-                  margin plus a visible price would leak the cost. */}
+                  margin plus a visible price would leak the cost. Label and
+                  value sit on ONE line — stacked, the tile grows taller than
+                  the inputs beside it and breaks the row's baseline (guide);
+                  same padding/radius as the inputs so it reads as the row's
+                  third member, not a card. */}
               {!isEditing || canSeeCost ? (
-                <div className="flex flex-col justify-center gap-[3px] rounded-ctl bg-surface-2 px-3 py-2">
+                <div className="flex items-center gap-2.5 rounded-ctl bg-surface-2 px-3 py-2.5">
                   <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">Margin</span>
-                  <span className={cn('font-mono text-[17px] font-semibold leading-none', marginToneClass(liveMargin))}>
+                  <span className={cn('ml-auto font-mono text-[17px] font-semibold leading-none', marginToneClass(liveMargin))}>
                     {liveMargin === null ? '—' : `${liveMargin}%`}
                   </span>
                 </div>
@@ -946,7 +955,7 @@ export function ProductModal() {
 
           <section className="flex flex-col gap-2">
             <SectionLabel>Stock &amp; classification</SectionLabel>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-3">
               {!isEditing ? (
                 <Field label="Initial quantity" error={errors.quantity?.message}>
                   <input type="number" className={inputCls(!!errors.quantity)} {...register('quantity')} />
@@ -956,19 +965,8 @@ export function ProductModal() {
                   {/* Stock moves through an audited adjustment, never by
                       typing over the number (guide §5: a silent overwrite is
                       a stock movement with no record). */}
-                  <div className="flex items-center gap-2">
-                    <div className={cn(inputCls(false), 'flex-1 cursor-default select-none bg-surface-3 font-mono')}>
-                      {target?.quantity ?? 0}
-                    </div>
-                    {target && canEditStock ? (
-                      <button
-                        type="button"
-                        onClick={() => setAdjustOpen(true)}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-ctl border border-line px-tk-md py-2.5 text-ctl-sm text-ink hover:bg-surface-2"
-                      >
-                        <AdjustmentsHorizontalIcon className="h-3.5 w-3.5" /> Adjust stock
-                      </button>
-                    ) : null}
+                  <div className={cn(inputCls(false), 'cursor-default select-none bg-surface-3 font-mono')}>
+                    {target?.quantity ?? 0}
                   </div>
                 </Field>
               )}
@@ -981,23 +979,41 @@ export function ProductModal() {
                   {...register('reorderLevel')}
                 />
               </Field>
+              {/* Adjust stock is a GRID CELL, not an inline button — inline it
+                  squeezed the mono quantity to ~90px, and as the third cell it
+                  inherits the shared column edge (guide). Hidden in add mode;
+                  the row falls back to two columns. */}
+              {isEditing && target && canEditStock ? (
+                <button
+                  type="button"
+                  onClick={() => setAdjustOpen(true)}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-ctl border border-line px-tk-md py-2.5 text-ctl-sm text-ink hover:bg-surface-2"
+                >
+                  <AdjustmentsHorizontalIcon className="h-3.5 w-3.5" /> Adjust stock
+                </button>
+              ) : null}
             </div>
 
-            <Field group={!nameOnly} label="Unit" error={errors.unit?.message}>
-              {nameOnly ? (
-                <input type="text" readOnly className={cn(inputCls(false), 'cursor-default bg-surface-3')} value={watch('unit')} />
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {unitOptions.map((u) => (
-                    <Chip key={u} active={watch('unit') === u} onClick={() => setValue('unit', u, { shouldDirty: true })}>
-                      {u}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-            </Field>
-
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+            {/* One three-column row on the SAME grid rule as pricing and the
+                stock row above — twelve controls on three shared vertical
+                edges (guide). Unit left its brief chip life: chips are for
+                two-to-five options, and the real unit list is ~ten. */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-3">
+              <Field group={!nameOnly} label="Unit" error={errors.unit?.message}>
+                {nameOnly ? (
+                  <input type="text" readOnly className={cn(inputCls(false), 'cursor-default bg-surface-3')} value={watch('unit')} />
+                ) : (
+                  <SelectFilter
+                    label="Unit"
+                    // 'pcs' is the app-wide default unit, so it doubles as the
+                    // dropdown's "default" row; '' never reaches the form.
+                    value={watch('unit') === 'pcs' ? '' : (watch('unit') ?? '')}
+                    options={unitOptions.filter((u) => u !== 'pcs').map((u) => ({ value: u, label: u }))}
+                    allLabel="pcs"
+                    onChange={(v) => setValue('unit', v || 'pcs', { shouldDirty: true })}
+                  />
+                )}
+              </Field>
               <Field group={!nameOnly} label="Category" error={errors.category?.message}>
                 {nameOnly ? (
                   <input type="text" readOnly className={cn(inputCls(false), 'cursor-default bg-surface-3')} value={watch('category') || '(none)'} />
@@ -1088,6 +1104,21 @@ export function ProductModal() {
               </Field>
             );
           })()}
+
+          {/* Record history — the last thing before the destructive actions:
+              someone scrolling to delete passes "who touched this, when" on
+              the way (guide). Plain text, never inputs — it is context, not a
+              field to fill in. Absolute shop-zone timestamps; "3 days ago" is
+              useless against a paper invoice dated the 1st. */}
+          {isEditing && target ? (
+            <section className="flex flex-col gap-2">
+              <SectionLabel>Record history</SectionLabel>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 rounded-ctl bg-surface-2 px-4 py-3">
+                <HistoryEntry label="Created by" who={target.createdByName} when={target.createdAt} />
+                <HistoryEntry label="Last updated by" who={target.updatedByName} when={target.updatedAt} />
+              </div>
+            </section>
+          ) : null}
 
           {/* Danger zone — at the bottom of the BODY, behind every field,
               never in the footer beside Save (guide §3: a destructive button
@@ -1557,5 +1588,23 @@ function Field({
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{children}</span>
+  );
+}
+
+/** One record-history entry: label / person / timestamp as a three-line
+ *  stack. Person and timestamp are ONE entry, not two fields — that is how
+ *  the fact is spoken ("Bern updated it on Sep 1"). Unknown person shows an
+ *  em dash rather than repeating the creator (guide). */
+function HistoryEntry({ label, who, when }: { label: string; who: string | null; when: Date | null }) {
+  return (
+    <div className="flex flex-col gap-[3px]">
+      <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{label}</span>
+      <span className={cn('text-[12.5px] font-medium', who ? 'text-ink' : 'text-ink-3')}>{who ?? '—'}</span>
+      <span className="font-mono text-[10.5px] text-ink-3">
+        {when
+          ? `${formatInShopZone(when, { month: 'short', day: 'numeric', year: 'numeric' })} · ${formatInShopZone(when, { hour: 'numeric', minute: '2-digit', hour12: true })}`
+          : '—'}
+      </span>
+    </div>
   );
 }
