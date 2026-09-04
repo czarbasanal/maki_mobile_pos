@@ -97,6 +97,17 @@ describe('ExpensesPage — one scoped array feeds every card (guide §2)', () =>
     // 500 + 300 + 1200 — the table foot and the card must agree.
     expect(screen.getByText('Total shown')).toBeInTheDocument();
     expect(screen.getByTestId('total-shown')).toHaveTextContent(formatMoney(2000));
+
+    // THE literal invariant (guide §2, "twice broken"): parse each rendered
+    // By-category row amount and the Total-shown figure, and assert their
+    // sums are equal — not just that both happen to render the same
+    // formatted-money string somewhere on the page.
+    const parseMoney = (text: string) => Number(text.replace(/[₱,]/g, ''));
+    const rowAmounts = byCategoryCard.getAllByText(/^₱/).map((el) => parseMoney(el.textContent ?? ''));
+    const rowSum = rowAmounts.reduce((a, b) => a + b, 0);
+    const totalShown = parseMoney(screen.getByTestId('total-shown').textContent ?? '');
+    expect(rowSum).toBe(2000);
+    expect(rowSum).toBe(totalShown);
   });
 
   it('the By-category card stays fixed to the scoped range when a category filter narrows the table', async () => {
