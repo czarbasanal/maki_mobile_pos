@@ -41,6 +41,8 @@ export const FirestoreCollections = {
   motorcycleModels: 'motorcycle_models',
   // Custom product tags (spec 2026-09-03) — attached via products.tagIds.
   productTags: 'product_tags',
+  // Stock adjustment reasons (spec 2026-09-04) — soft-deletable audit reasons.
+  adjustmentReasons: 'adjustment_reasons',
 } as const;
 
 export const SettingsDocs = {
