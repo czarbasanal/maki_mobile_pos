@@ -470,6 +470,8 @@ class NewPurchaseOrderScreenState
                       style: AppTextStyles.code.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 1),
                     Text(

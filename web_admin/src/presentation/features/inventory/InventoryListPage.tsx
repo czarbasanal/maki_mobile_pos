@@ -226,7 +226,7 @@ export function InventoryListPage() {
     {
       key: 'sku', header: 'SKU', mono: true, width: '120px',
       render: (p) => (
-        <span className="flex items-center gap-1.5 text-[11.5px] text-ink-2">
+        <span className="flex items-center gap-1.5 whitespace-nowrap text-[11.5px] text-ink-2">
           {displaySku(p.sku)}
           <CopyButton value={p.sku} label="SKU" />
         </span>

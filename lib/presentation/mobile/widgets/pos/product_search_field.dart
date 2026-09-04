@@ -408,6 +408,8 @@ class _ProductSearchFieldState extends ConsumerState<ProductSearchField>
                     Text(
                       '${SkuGenerator.displaySku(product.sku)} · ${product.quantity} in stock',
                       style: AppTextStyles.code.copyWith(color: muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

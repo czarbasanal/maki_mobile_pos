@@ -166,7 +166,7 @@ export function PurchaseOrderBuilderPage() {
     {
       key: 'sku', header: 'SKU', width: '132px', mono: true,
       render: (r) => (
-        <span className="flex items-center gap-1.5 text-[12px] text-ink-2">
+        <span className="flex items-center gap-1.5 whitespace-nowrap text-[12px] text-ink-2">
           {displaySku(r.product.sku)}
           <CopyButton value={r.product.sku} label="SKU" />
         </span>

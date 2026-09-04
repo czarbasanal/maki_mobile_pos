@@ -67,7 +67,7 @@ export function PriceHistoryPage() {
                   className="flex w-full items-center justify-between px-tk-md py-tk-sm text-left text-bodySmall hover:bg-light-subtle"
                 >
                   <span className="text-light-text">{p.name}</span>
-                  <span className="text-light-text-hint">{displaySku(p.sku)}</span>
+                  <span className="whitespace-nowrap text-light-text-hint">{displaySku(p.sku)}</span>
                 </button>
               </li>
             ))}
@@ -98,7 +98,7 @@ export function PriceHistoryPage() {
           </button>
           <div>
             <h2 className="text-bodyMedium font-semibold text-light-text">{selected.name}</h2>
-            <p className="text-bodySmall text-light-text-hint">{displaySku(selected.sku)}</p>
+            <p className="whitespace-nowrap text-bodySmall text-light-text-hint">{displaySku(selected.sku)}</p>
           </div>
           <PriceHistoryView productId={selected.id} />
         </section>

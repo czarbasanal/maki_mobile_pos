@@ -240,7 +240,7 @@ export function SaleDetailPage() {
                         {it.name}
                         {hasOption ? <span className="text-ink-2"> · {it.optionLabel}</span> : null}
                       </div>
-                      <div className="flex items-center gap-[5px] font-mono text-[10.5px] text-ink-3">
+                      <div className="flex items-center gap-[5px] whitespace-nowrap font-mono text-[10.5px] text-ink-3">
                         {displaySku(it.sku)}
                         <CopyButton value={it.sku} label="SKU" />
                       </div>

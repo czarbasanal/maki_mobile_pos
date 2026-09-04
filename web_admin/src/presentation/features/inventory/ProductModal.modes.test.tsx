@@ -128,7 +128,14 @@ describe('ProductModal — edit mode', () => {
     signIn();
     harness('/inventory/p9/edit');
 
-    expect(await screen.findByText('ABC123 · BRAKES · 8 on hand')).toBeInTheDocument();
+    // The SKU sits in its own whitespace-nowrap span (never wraps), so the
+    // subtitle's full text is split across elements — match by combined
+    // textContent rather than a single text node.
+    expect(
+      await screen.findByText(
+        (_, el) => el?.tagName === 'P' && el.textContent === 'ABC123 · BRAKES · 8 on hand',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
   });
 

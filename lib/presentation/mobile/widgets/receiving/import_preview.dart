@@ -280,6 +280,8 @@ class _ClassifiedRowTile extends StatelessWidget {
                     Text(
                       '${SkuGenerator.displaySku(row.sku)} • ${row.quantity} ${row.unit} • cost ${row.cost.toStringAsFixed(2)}',
                       style: AppTextStyles.code.copyWith(color: muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -314,6 +316,8 @@ class _ClassifiedRowTile extends StatelessWidget {
                 fontSize: 12,
                 color: AppColors.warningBadgeText(dark),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             _DuplicateResolutionToggle(

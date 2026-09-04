@@ -91,6 +91,8 @@ class RankRow extends StatelessWidget {
                     Text(
                       subtitle,
                       style: AppTextStyles.code.copyWith(color: muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

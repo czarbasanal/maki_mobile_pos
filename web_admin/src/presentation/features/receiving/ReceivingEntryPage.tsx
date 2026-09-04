@@ -163,7 +163,7 @@ export function ReceivingEntryPage() {
                   <li key={p.id}>
                     <button type="button" onClick={() => pick(p)}
                       className="flex w-full items-center justify-between px-tk-md py-tk-sm text-left text-bodySmall hover:bg-light-subtle">
-                      <span className="text-light-text">{p.name} <span className="text-light-text-hint">{displaySku(p.sku)}</span></span>
+                      <span className="text-light-text">{p.name} <span className="whitespace-nowrap text-light-text-hint">{displaySku(p.sku)}</span></span>
                       <span className="tabular-nums text-light-text-secondary">{formatMoney(p.cost)}</span>
                     </button>
                   </li>
@@ -181,7 +181,7 @@ export function ReceivingEntryPage() {
           <div className="flex flex-wrap items-end gap-tk-sm rounded-md border border-light-hairline bg-light-subtle p-tk-md">
             <div className="text-bodySmall text-light-text">
               <span className="font-medium">{picked.name}</span>{' '}
-              <span className="text-light-text-hint">{displaySku(picked.sku)}</span>
+              <span className="whitespace-nowrap text-light-text-hint">{displaySku(picked.sku)}</span>
             </div>
             <Field label="Qty"><input type="number" className={inputCls} value={qty}
               onChange={(e) => setQty(e.target.value)} /></Field>
@@ -195,7 +195,7 @@ export function ReceivingEntryPage() {
             </Field>
             {costDiffers ? (
               <span className="text-[11px] text-warning-dark">
-                Cost differs → a {picked.baseSku ?? picked.sku}-N variation will be created at this cost and price
+                Cost differs → a <span className="whitespace-nowrap">{picked.baseSku ?? picked.sku}-N</span> variation will be created at this cost and price
               </span>
             ) : null}
             <button type="button" onClick={confirmExisting}

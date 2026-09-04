@@ -364,6 +364,8 @@ class SaleDetailScreen extends ConsumerWidget {
                           style: AppTextStyles.code.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 2),

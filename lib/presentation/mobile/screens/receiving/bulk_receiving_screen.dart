@@ -344,6 +344,8 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
                                   .colorScheme
                                   .onSurfaceVariant,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           trailing: _isAdmin
                               ? Text(

@@ -200,6 +200,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         Text(
                           SkuGenerator.displaySku(item.sku),
                           style: AppTextStyles.code.copyWith(color: muted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         // Sets + total pieces, only once there's more than
                         // one set.

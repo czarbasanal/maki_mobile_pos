@@ -114,7 +114,7 @@ export function PurchaseOrderDetailPage() {
                 <td className="px-tk-md py-tk-sm">
                   <span className="font-medium text-light-text">{i.name}</span>
                   <br />
-                  <span className="font-mono text-[12px] text-light-text-hint">
+                  <span className="whitespace-nowrap font-mono text-[12px] text-light-text-hint">
                     {displaySku(i.sku)}
                   </span>
                 </td>

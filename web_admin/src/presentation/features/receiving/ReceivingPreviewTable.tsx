@@ -47,7 +47,7 @@ export function ReceivingPreviewTable({ rows, resolutions, onResolve }: Receivin
             return (
               <tr key={r.rowNumber} className={cn(c.status === 'error' && 'bg-error-light/30')}>
                 <td className="px-tk-md py-tk-sm tabular-nums text-light-text-hint">{r.rowNumber}</td>
-                <td className="px-tk-md py-tk-sm tabular-nums">{skuCellText(r.sku, r.autoGenerateSku)}</td>
+                <td className="whitespace-nowrap px-tk-md py-tk-sm tabular-nums">{skuCellText(r.sku, r.autoGenerateSku)}</td>
                 <td className="px-tk-md py-tk-sm">
                   <div className="font-medium text-light-text">{r.name || '—'}</div>
                   {note ? (
@@ -58,7 +58,7 @@ export function ReceivingPreviewTable({ rows, resolutions, onResolve }: Receivin
                   {c.status === 'duplicate-name' && c.existing ? (
                     <div className="mt-tk-xs space-y-tk-xs">
                       <div className="text-[12px] text-warning-dark">
-                        Matches existing {c.existing.name} ({displaySku(c.existing.sku)})
+                        Matches existing {c.existing.name} (<span className="whitespace-nowrap">{displaySku(c.existing.sku)}</span>)
                       </div>
                       <select
                         aria-label={`Resolve row ${r.rowNumber}`}

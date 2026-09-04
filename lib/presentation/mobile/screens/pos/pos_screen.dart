@@ -217,6 +217,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               subtitle: Text(
                 '${SkuGenerator.displaySku(product.sku)} • ${product.price.toCurrency()}',
                 style: AppTextStyles.code.copyWith(color: muted),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               trailing: Text(
                 'Stock: ${product.quantity}',

@@ -600,6 +600,8 @@ class _Receipt extends StatelessWidget {
                   style: mono
                       ? AppTextStyles.code.copyWith(color: muted)
                       : TextStyle(fontSize: 12, color: muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (extraCaption != null)
                   Text(extraCaption, style: TextStyle(fontSize: 11, color: muted)),

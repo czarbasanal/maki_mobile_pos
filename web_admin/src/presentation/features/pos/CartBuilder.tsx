@@ -214,7 +214,7 @@ export function CartBuilder({
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-nav text-ink">{p.name}</p>
                       <span
-                        className="flex items-center gap-[7px] font-mono text-pill text-ink-3"
+                        className="flex items-center gap-[7px] whitespace-nowrap font-mono text-pill text-ink-3"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {displaySku(p.sku)}
@@ -287,7 +287,7 @@ export function CartBuilder({
                       <div className="min-w-0">
                         <p className="text-amount font-medium text-ink">{saleItemDisplayName(l)}</p>
                         <p className="flex items-center gap-1.5 font-mono text-micro text-ink-3">
-                          {displaySku(l.sku)} · {formatMoney(l.unitPrice)} / {l.unit}
+                          <span className="whitespace-nowrap">{displaySku(l.sku)}</span> · {formatMoney(l.unitPrice)} / {l.unit}
                           {costCode ? (
                             /* Encoded cost (mobile cost_code_pill parity) —
                                readable by staff without exposing the number. */

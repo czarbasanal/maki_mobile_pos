@@ -73,6 +73,8 @@ class _SellingOptionSheet extends StatelessWidget {
               Text(
                 SkuGenerator.displaySku(product.sku),
                 style: AppTextStyles.code.copyWith(color: muted),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 3),
               Text(

@@ -335,11 +335,17 @@ export function ProductModal() {
     (priceLocked || Number(watch('price')) > 0);
   const liveMargin = marginPct(Number(watch('price')) || 0, Number(watch('cost')) || 0);
   const subtitle =
-    isEditing && target
-      ? [displaySku(target.sku), target.category?.toUpperCase(), `${target.quantity} on hand`]
+    isEditing && target ? (
+      <>
+        <span className="whitespace-nowrap">{displaySku(target.sku)}</span>
+        {[target.category?.toUpperCase(), `${target.quantity} on hand`]
           .filter(Boolean)
-          .join(' · ')
-      : 'Set a cost and a price and the register handles the rest.';
+          .map((part) => ` · ${part}`)
+          .join('')}
+      </>
+    ) : (
+      'Set a cost and a price and the register handles the rest.'
+    );
   const typedMatches =
     !!target &&
     (deleteTyped.trim().toUpperCase() === target.sku.toUpperCase() ||
@@ -1208,9 +1214,9 @@ export function ProductModal() {
       >
         <div className="space-y-tk-md">
           <p className="text-ctl-sm text-ink">
-            <span className="font-mono">{target?.sku}</span>
+            <span className="whitespace-nowrap font-mono">{target?.sku}</span>
             <span className="px-tk-sm text-ink-3">→</span>
-            <span className="font-mono">{skuDialog.values?.sku}</span>
+            <span className="whitespace-nowrap font-mono">{skuDialog.values?.sku}</span>
           </p>
           <ul className="list-disc space-y-tk-xs pl-5 text-ctl-sm text-ink-2">
             <li>Past sales and receiving records keep their original SKU.</li>
@@ -1310,7 +1316,7 @@ export function ProductModal() {
       >
         <div className="space-y-tk-md">
           <p className="text-ctl-sm text-ink">
-            “{dupDialog.existing?.name}” ({displaySku(dupDialog.existing?.sku ?? '')}) is already
+            “{dupDialog.existing?.name}” (<span className="whitespace-nowrap">{displaySku(dupDialog.existing?.sku ?? '')}</span>) is already
             on file in {dupDialog.existing?.category ?? 'no category'}, at a cost of ₱
             {dupDialog.existing?.cost.toFixed(2)} and selling at ₱
             {dupDialog.existing?.price.toFixed(2)}.
@@ -1442,13 +1448,13 @@ export function ProductModal() {
         >
           <div className="space-y-tk-md">
             <p className="text-ctl-sm text-ink-2">
-              “{target.name}” (<span className="font-mono">{displaySku(target.sku)}</span>) is
+              “{target.name}” (<span className="whitespace-nowrap font-mono">{displaySku(target.sku)}</span>) is
               removed from the catalog for good and its SKU is freed for reuse. Past sales,
               receipts and job orders keep their record of it.
             </p>
             <label className="flex flex-col gap-[6px]">
               <span className="text-[11.5px] font-semibold text-ink-2">
-                Type <span className="font-mono">{displaySku(target.sku)}</span> to confirm
+                Type <span className="whitespace-nowrap font-mono">{displaySku(target.sku)}</span> to confirm
               </span>
               <input
                 type="text"
