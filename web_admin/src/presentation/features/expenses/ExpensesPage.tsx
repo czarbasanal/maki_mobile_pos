@@ -1,29 +1,70 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PaperClipIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useDeleteExpense, useExpenses, useExpenseTotals } from '@/presentation/hooks/useExpenses';
-import { useActiveCategories } from '@/presentation/hooks/useCategories';
-import { CategoryKind } from '@/domain/categories/categoryKind';
+// Expenses — per design/maki-pos-expenses-redesign and its reference
+// (Expenses.dc.html). Summary row (Spend · By category · Entries · Largest
+// single), then the action row (date range · Add expense · Export), then the
+// filters row (search · Category · clear · count), then the table card with
+// its "Total shown" foot and pagination. Row click opens the edit modal
+// (rendered via the child route's Outlet, exactly like InventoryListPage).
+//
+// The guide's invariant (§2), broken twice in the original: ONE scoped array
+// (the date-ranged fetch) feeds the table, the By-category card, the Entries
+// count and the Largest-single card. Only the table narrows further by
+// category/search — the cards never do. The Spend card is the deliberate
+// exception: its three rows are FIXED windows (today/last7/last30) from
+// useExpenseTotals, independent of the range control.
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, Outlet } from 'react-router-dom';
+import { ArrowDownTrayIcon, PaperClipIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { useExpenses, useExpenseTotals } from '@/presentation/hooks/useExpenses';
 import { paymentMethodDisplayName } from '@/domain/enums';
-import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
+import { resolvePreset, PRESET_LABELS, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
+import { instantOf, shopWall, formatInShopZone } from '@/domain/time/shopTime';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { deleteExpenseReceipt } from '@/data/expenseReceiptStorage';
-import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
-import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
-import { LoadingView, Spinner } from '@/presentation/components/common/LoadingView';
+import { RoutePaths } from '@/presentation/router/routePaths';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
-import { EmptyState } from '@/presentation/components/common/EmptyState';
-import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
-import { Dialog } from '@/presentation/components/common/Dialog';
+import { Button } from '@/presentation/components/ui/Button';
+import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { MoneyCard } from '@/presentation/components/ui/MoneyCard';
+import { FirstRunState, NoMatchesState } from '@/presentation/components/ui/TableEmptyStates';
+import { SearchInput } from '@/presentation/components/ui/SearchInput';
+import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
+import { DateRangeControl } from '@/presentation/components/ui/DateRangeControl';
+import { TableFooter } from '@/presentation/components/ui/TableFooter';
+import { toast } from '@/presentation/components/ui/toast';
+import { toCsv, downloadCsv } from '@/core/utils/csv';
 import { formatMoney } from '@/core/utils/money';
-import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
 import type { Expense } from '@/domain/entities';
 
-const dateFmt = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' });
+type DatePreset = Extract<RangePreset, 'today' | 'last7' | 'thisMonth'> | 'custom';
+
+const DATE_OPTIONS: Array<{ value: DatePreset; label: string }> = [
+  { value: 'today', label: 'Today' },
+  { value: 'last7', label: '7 days' },
+  { value: 'thisMonth', label: 'This month' },
+  { value: 'custom', label: 'Custom' },
+];
+
+const dateFmt = (d: Date) => formatInShopZone(d, { month: 'short', day: 'numeric', year: 'numeric' });
+
+// A small, fixed swatch of the app's own tokens — every category gets a
+// STABLE color (hashed by name) so it never shifts as totals re-sort the
+// rows, and it never needs a palette of its own.
+const CATEGORY_SWATCH = [
+  'var(--accent)',
+  'var(--pos)',
+  'var(--info)',
+  'var(--accent-line)',
+  'var(--neg)',
+  'var(--text-3)',
+];
+function colorForCategory(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return CATEGORY_SWATCH[hash % CATEGORY_SWATCH.length];
+}
 
 export function ExpensesPage() {
   useEffect(() => {
@@ -31,199 +72,378 @@ export function ExpensesPage() {
   }, []);
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const canDelete = !!user && hasPermission(user.role, Permission.deleteExpense);
+  const canAdd = !!user && hasPermission(user.role, Permission.addExpense);
 
-  const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
+  // Default last7 — matches the page's previous default.
+  const [preset, setPreset] = useState<DatePreset>('last7');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const range = useMemo<DateRange>(() => {
+    if (preset === 'custom') {
+      if (customStart && customEnd) {
+        const [sy, sm, sd] = customStart.split('-').map(Number);
+        const [ey, em, ed] = customEnd.split('-').map(Number);
+        return {
+          start: instantOf(shopWall(sy, sm, sd)),
+          end: instantOf(shopWall(ey, em, ed, 23, 59, 59, 999)),
+        };
+      }
+      return resolvePreset('last7');
+    }
+    return resolvePreset(preset);
+  }, [preset, customStart, customEnd]);
+  const rangeLabel =
+    preset === 'custom' && customStart && customEnd
+      ? `${dateFmt(new Date(`${customStart}T00:00:00`))} – ${dateFmt(new Date(`${customEnd}T00:00:00`))}`
+      : PRESET_LABELS[preset].toLowerCase();
+
+  const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('expenses');
 
   const { totals } = useExpenseTotals();
-  const { data: categories } = useActiveCategories(CategoryKind.expense);
-  const { expenses, isLoading, error } = useExpenses({
-    start: range.start,
-    end: range.end,
-    category: category || undefined,
-  });
-  const del = useDeleteExpense();
-  const [deleting, setDeleting] = useState<Expense | null>(null);
+  // THE scoped array — every card and the table derive from this one fetch.
+  // Category is applied on top, client-side, for the table only.
+  const { expenses: scoped, isLoading, error } = useExpenses({ start: range.start, end: range.end });
 
-  // Filters changed — a page number from the previous result set may now
-  // point past the end (or simply be stale), so snap back to page 1.
   useEffect(() => {
     setPage(1);
-  }, [range, category]);
+  }, [range, category, search]);
 
-  usePageClamp(page, setPage, expenses.length, pageSize);
-  const paged = useMemo(
-    () => expenses.slice((page - 1) * pageSize, page * pageSize),
-    [expenses, page, pageSize],
+  const byCategory = useMemo(() => {
+    const totalsByName = new Map<string, number>();
+    for (const e of scoped) totalsByName.set(e.category, (totalsByName.get(e.category) ?? 0) + e.amount);
+    const grand = scoped.reduce((n, e) => n + e.amount, 0);
+    return [...totalsByName.entries()]
+      .sort(([, a], [, b]) => b - a)
+      .map(([name, amount]) => ({
+        name,
+        amount,
+        pct: grand > 0 ? (amount / grand) * 100 : 0,
+        color: colorForCategory(name),
+      }));
+  }, [scoped]);
+
+  const recorderCount = useMemo(() => new Set(scoped.map((e) => e.createdBy)).size, [scoped]);
+  const largest = useMemo(
+    () => (scoped.length === 0 ? null : scoped.reduce((a, b) => (b.amount > a.amount ? b : a))),
+    [scoped],
   );
 
-  const confirmDelete = async () => {
-    if (!deleting) return;
-    try {
-      await del.mutateAsync({
-        id: deleting.id,
-        description: deleting.description,
-        category: deleting.category,
-        amount: deleting.amount,
-      });
-      if (deleting.receiptImageUrl) {
-        try {
-          await deleteExpenseReceipt(deleting.id);
-        } catch {
-          // best-effort — an orphaned Storage object is harmless.
-        }
-      }
-      setDeleting(null);
-    } catch {
-      // Surfaced via del.error below; confirm dialog stays open.
-    }
+  const categoryOptions = useMemo(() => {
+    const byName = new Map<string, number>();
+    for (const e of scoped) byName.set(e.category, (byName.get(e.category) ?? 0) + 1);
+    return [...byName.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, count]) => ({ value: name, label: name, count }));
+  }, [scoped]);
+
+  // Category dropped out of the option set (e.g. it only existed outside the
+  // current range) — reset to All so the table isn't mysteriously empty.
+  useEffect(() => {
+    if (category && !categoryOptions.some((c) => c.value === category)) setCategory('');
+  }, [categoryOptions, category]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return scoped.filter((e) => {
+      if (category && e.category !== category) return false;
+      if (!q) return true;
+      const haystack = [e.description, e.notes ?? '', e.category, paymentMethodDisplayName[e.paidVia]]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [scoped, category, search]);
+
+  usePageClamp(page, setPage, filtered.length, pageSize);
+  const paged = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page, pageSize],
+  );
+  const totalShown = useMemo(() => filtered.reduce((n, e) => n + e.amount, 0), [filtered]);
+
+  const isFiltered = category !== '' || search.trim() !== '';
+  const clearFilters = () => {
+    setCategory('');
+    setSearch('');
+    setPage(1);
   };
 
+  const exportCsv = () => {
+    const headers = ['Description', 'Note', 'Category', 'Paid via', 'Date', 'Amount', 'Recorded by'];
+    const rows = filtered.map((e) => [
+      e.description,
+      e.notes ?? '',
+      e.category,
+      paymentMethodDisplayName[e.paidVia],
+      dateFmt(e.date),
+      e.amount,
+      e.createdByName,
+    ]);
+    downloadCsv('expenses.csv', toCsv(headers, rows));
+    toast.success('Export ready', `${filtered.length} rows`);
+  };
+
+  const columns: Array<Column<Expense>> = [
+    {
+      key: 'description', header: 'Description',
+      render: (e) => (
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex items-center gap-1.5 text-ctl-sm font-medium tracking-[-0.1px] text-ink">
+            {e.receiptImageUrl ? (
+              <PaperClipIcon className="h-3 w-3 shrink-0 text-ink-3" aria-label="Has receipt" />
+            ) : null}
+            {e.description}
+          </span>
+          {e.notes ? <span className="text-[10.5px] text-ink-3">{e.notes}</span> : null}
+        </div>
+      ),
+    },
+    {
+      key: 'category', header: 'Category', width: '124px',
+      render: (e) => (
+        <span className="whitespace-nowrap rounded-[6px] bg-surface-3 px-2 py-[3px] text-[11px] font-medium text-ink-2">
+          {e.category}
+        </span>
+      ),
+    },
+    {
+      key: 'paidVia', header: 'Paid via', width: '104px',
+      render: (e) => <span className="text-ctl-sm text-ink-2">{paymentMethodDisplayName[e.paidVia]}</span>,
+    },
+    {
+      key: 'date', header: 'Date', width: '150px', mono: true,
+      render: (e) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[12px] text-ink-2">{dateFmt(e.date)}</span>
+          <span className="text-[10.5px] text-ink-3">by {e.createdByName || '—'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'amount', header: 'Amount', align: 'right', width: '132px', mono: true,
+      render: (e) => <span className="text-[13px] font-semibold">{formatMoney(e.amount)}</span>,
+    },
+  ];
+
+  if (error) return <ErrorView title="Could not load expenses" message={error.message} />;
+
+  const firstRun = !isLoading && scoped.length === 0 && !isFiltered;
+
   return (
-    <div className="space-y-tk-xl">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => navigate(RoutePaths.expenseAdd)}
-          className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
+    <div className="flex flex-col gap-3">
+      {/* Summary row — Spend · By category · Entries · Largest single */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(236px,1fr))] gap-3">
+        <div className="flex flex-col gap-[11px] rounded-card border border-line bg-surface px-[17px] py-[15px] shadow-card">
+          <div className="flex items-baseline gap-[9px]">
+            <span className="text-[11.5px] font-medium text-ink-2">Spend</span>
+          </div>
+          <div className="flex flex-col gap-[7px]">
+            <SpendRow label="Today" value={formatMoney(totals.today)} size="13px" />
+            <SpendRow label="Last 7 days" value={formatMoney(totals.last7)} size="17px" />
+            <SpendRow label="Last 30 days" value={formatMoney(totals.last30)} size="13px" />
+          </div>
+        </div>
+
+        <div
+          data-testid="by-category-card"
+          className="flex flex-col gap-[11px] rounded-card border border-line bg-surface px-[17px] py-[15px] shadow-card"
         >
-          <PlusIcon className="h-3.5 w-3.5" /> Add expense
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-3">
-        <SummaryCard title="Today" value={formatMoney(totals.today)} />
-        <SummaryCard title="This Week" value={formatMoney(totals.week)} />
-        <SummaryCard title="This Month" value={formatMoney(totals.month)} />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-tk-sm">
-        <DateRangePicker onChange={setRange} />
-        <select
-          aria-label="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded-md border border-light-border bg-light-card px-tk-sm py-tk-sm text-bodySmall text-light-text"
-        >
-          <option value="">All categories</option>
-          {(categories ?? []).map((c) => (
-            <option key={c.id} value={c.name}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {error ? (
-        <ErrorView title="Could not load expenses" message={error.message} />
-      ) : isLoading ? (
-        <LoadingView label="Loading expenses…" />
-      ) : expenses.length === 0 ? (
-        <EmptyState
-          title="No expenses found"
-          description="Try a different date range or category."
-        />
-      ) : (
-        <div className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
-          <table className="w-full text-bodySmall">
-            <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
-              <tr>
-                <Th>Description</Th>
-                <Th>Category</Th>
-                <Th>Paid via</Th>
-                <Th>Date</Th>
-                <Th className="text-right">Amount</Th>
-                <Th className="text-right">&nbsp;</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-light-hairline">
-              {paged.map((e) => (
-                <tr
-                  key={e.id}
-                  onClick={() => navigate(`/expenses/edit/${e.id}`)}
-                  className="cursor-pointer hover:bg-light-subtle"
-                >
-                  <Td className="font-medium text-light-text">
-                    <span className="inline-flex items-center gap-tk-xs">
-                      {e.receiptImageUrl ? (
-                        <PaperClipIcon
-                          className="h-3.5 w-3.5 shrink-0 text-light-text-hint"
-                          aria-label="Has receipt"
-                        />
-                      ) : null}
-                      {e.description}
-                    </span>
-                  </Td>
-                  <Td className="text-light-text-secondary">{e.category}</Td>
-                  <Td className="text-light-text-secondary">{paymentMethodDisplayName[e.paidVia]}</Td>
-                  <Td className="text-light-text-secondary">{dateFmt.format(e.date)}</Td>
-                  <Td className="text-right text-light-text">{formatMoney(e.amount)}</Td>
-                  <Td className="text-right">
-                    {canDelete ? (
-                      <button
-                        type="button"
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          setDeleting(e);
-                        }}
-                        className="inline-flex items-center gap-1 rounded-md px-tk-sm py-[4px] text-bodySmall text-error-dark hover:bg-error-light/40"
-                      >
-                        <TrashIcon className="h-3.5 w-3.5" /> Delete
-                      </button>
-                    ) : null}
-                  </Td>
-                </tr>
+          <div className="flex items-baseline gap-[9px]">
+            <span className="text-[11.5px] font-medium text-ink-2">By category</span>
+            <span className="ml-auto font-mono text-[11.5px] text-ink-3">{rangeLabel}</span>
+          </div>
+          {byCategory.length > 0 ? (
+            <div className="flex h-2 gap-[2px] overflow-hidden rounded-[4px]">
+              {byCategory.map((c) => (
+                <div key={c.name} style={{ width: `${c.pct}%`, background: c.color }} />
               ))}
-            </tbody>
-          </table>
-          <Pager total={expenses.length} page={page} onPage={setPage} pageSize={pageSize}
-            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
+            </div>
+          ) : null}
+          <div className="flex flex-col gap-[7px]">
+            {byCategory.length === 0 ? (
+              <span className="text-[12px] text-ink-3">Nothing in range</span>
+            ) : (
+              byCategory.map((c) => {
+                const active = category === c.name;
+                return (
+                  <button
+                    key={c.name}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setCategory((cur) => (cur === c.name ? '' : c.name));
+                      setPage(1);
+                    }}
+                    className="flex items-center gap-2 py-[2px] text-left"
+                  >
+                    <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-[2px]" style={{ background: c.color }} />
+                    <span className={cn('text-[12px]', active ? 'font-semibold text-ink' : 'font-medium text-ink-2')}>
+                      {c.name}
+                    </span>
+                    <span className="ml-auto font-mono text-[10.5px] text-ink-3">{c.pct.toFixed(0)}%</span>
+                    <span className="font-mono text-[12.5px] font-semibold text-ink">{formatMoney(c.amount)}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
-      )}
 
-      <Dialog
-        open={deleting !== null}
-        onClose={() => {
-          if (!del.isPending) setDeleting(null);
-        }}
-        title="Delete this expense?"
-        description={
-          deleting ? `"${deleting.description}" will be permanently deleted.` : undefined
-        }
-        dismissable={!del.isPending}
-      >
-        {del.error ? (
-          <p className="mb-tk-md text-bodySmall text-error-dark">{del.error.message}</p>
-        ) : null}
-        <div className="flex justify-end gap-tk-sm">
+        <MoneyCard
+          label="Entries"
+          value={scoped.length.toLocaleString('en-PH')}
+          note={`${recorderCount} ${recorderCount === 1 ? 'person' : 'people'} recording`}
+        />
+        <MoneyCard
+          label="Largest single"
+          value={largest ? formatMoney(largest.amount) : '—'}
+          note={largest ? `${largest.description} · ${dateFmt(largest.date)}` : 'Nothing in range'}
+        />
+      </div>
+
+      {/* Action row — date range · Add expense · Export */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="ml-auto flex items-center gap-2.5">
+          <DateRangeControl
+            options={DATE_OPTIONS}
+            value={preset}
+            onChange={(p) => {
+              setPreset(p);
+              setPage(1);
+            }}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomStart={(v) => {
+              setCustomStart(v);
+              setPage(1);
+            }}
+            onCustomEnd={(v) => {
+              setCustomEnd(v);
+              setPage(1);
+            }}
+          />
+          {canAdd ? (
+            <Button variant="primary" icon={<PlusIcon className="h-3.5 w-3.5" />} onClick={() => navigate(RoutePaths.expenseAdd)}>
+              Add expense
+            </Button>
+          ) : null}
           <button
             type="button"
-            onClick={() => setDeleting(null)}
-            disabled={del.isPending}
-            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
+            title="Export CSV"
+            onClick={exportCsv}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-ctl border border-line bg-surface text-ink-2 hover:border-accent-line hover:text-ink"
           >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={confirmDelete}
-            disabled={del.isPending}
-            className="inline-flex items-center gap-tk-xs rounded-md bg-error px-tk-md py-tk-sm text-bodySmall font-semibold text-white hover:bg-error-dark disabled:opacity-60"
-          >
-            {del.isPending ? <Spinner className="h-3.5 w-3.5" /> : null} Delete
+            <ArrowDownTrayIcon className="h-[15px] w-[15px]" />
           </button>
         </div>
-      </Dialog>
+      </div>
+
+      {/* Filters row */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="w-[290px]">
+          <SearchInput
+            variant="bar"
+            value={search}
+            onChange={setSearch}
+            placeholder="Search description, note, category, or paid via"
+          />
+        </div>
+        <SelectFilter
+          label="Category"
+          value={category}
+          options={categoryOptions}
+          onChange={setCategory}
+          allLabel="All categories"
+          allTriggerLabel="All"
+        />
+        {isFiltered ? (
+          <button type="button" onClick={clearFilters} className="border-b border-line text-[11.5px] text-ink-3 hover:text-neg">
+            Clear filters
+          </button>
+        ) : null}
+        <span className="ml-auto font-mono text-[12px] text-ink-3">
+          {filtered.length.toLocaleString('en-PH')} {filtered.length === 1 ? 'entry' : 'entries'}
+        </span>
+      </div>
+
+      {/* Table card */}
+      <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+        <DataTable
+          columns={columns}
+          rows={paged}
+          rowKey={(e) => e.id}
+          onRowClick={(e) => navigate(`/expenses/edit/${e.id}`)}
+          loading={isLoading}
+          minWidth="860px"
+          foot={
+            <tr className="border-t border-line bg-surface-2">
+              <td colSpan={4} className="px-5 py-3 text-[12px] font-semibold text-ink-2">Total shown</td>
+              <td data-testid="total-shown" className="px-5 py-3 text-right font-mono text-[15px] font-semibold text-ink">
+                {formatMoney(totalShown)}
+              </td>
+            </tr>
+          }
+          empty={
+            firstRun ? (
+              <FirstRunState
+                icon={
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" strokeWidth="1.6">
+                    <path d="M4.5 5.5h15v13h-15z" />
+                    <line x1="8" y1="10" x2="16" y2="10" />
+                    <line x1="8" y1="14" x2="13" y2="14" />
+                  </svg>
+                }
+                title="No expenses yet"
+                description="Record what the shop spends — supplies, fuel, wages, rent. Anything logged here comes off the profit the register reports."
+              >
+                {canAdd ? (
+                  <Button variant="primary" icon={<PlusIcon className="h-3.5 w-3.5" />} onClick={() => navigate(RoutePaths.expenseAdd)}>
+                    Add expense
+                  </Button>
+                ) : null}
+              </FirstRunState>
+            ) : (
+              <NoMatchesState
+                title="No expenses match these filters"
+                hint="Try another category or date range, or clear the search."
+                onClear={isFiltered ? clearFilters : undefined}
+              />
+            )
+          }
+        />
+        {filtered.length > 0 ? (
+          <TableFooter
+            total={filtered.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        ) : null}
+      </section>
+
+      {/* The add/edit modal (/expenses/add, /expenses/edit/:id) renders here, over this list. */}
+      <Outlet />
     </div>
   );
 }
 
-function Th({ children, className }: { children: ReactNode; className?: string }) {
-  return <th className={cn('px-tk-md py-tk-sm text-left font-medium', className)}>{children}</th>;
-}
-function Td({ children, className }: { children: ReactNode; className?: string }) {
-  return <td className={cn('px-tk-md py-tk-sm', className)}>{children}</td>;
+function SpendRow({ label, value, size }: { label: string; value: string; size: '13px' | '17px' }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-[12px] text-ink-2">{label}</span>
+      <span
+        className="ml-auto font-mono font-semibold tracking-[-0.4px] text-ink"
+        style={{ fontSize: size }}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }

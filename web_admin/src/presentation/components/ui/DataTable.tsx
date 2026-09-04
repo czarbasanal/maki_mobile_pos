@@ -38,6 +38,12 @@ export interface DataTableProps<T> {
   };
   /** Extra class for a row (e.g. greying an unselected line). */
   rowClassName?: (row: T) => string | undefined;
+  /** Optional summary row (e.g. Expenses' "Total shown") rendered in a
+   *  <tfoot> — a plain <tr> of <td>s, so the caller controls colSpan and
+   *  alignment. Only shown alongside actual rows: when rows.length === 0 the
+   *  component returns `empty` instead of the table, so this needs no
+   *  separate hide condition. */
+  foot?: ReactNode;
 }
 
 const alignCls = { left: 'text-left', right: 'text-right', center: 'text-center' } as const;
@@ -53,6 +59,7 @@ export function DataTable<T>({
   minWidth,
   selection,
   rowClassName,
+  foot,
 }: DataTableProps<T>) {
   if (!loading && rows.length === 0) {
     return <>{empty ?? <EmptyState message="Nothing here yet" />}</>;
@@ -153,6 +160,7 @@ export function DataTable<T>({
                 </tr>
               ))}
         </tbody>
+        {foot ? <tfoot>{foot}</tfoot> : null}
       </table>
     </div>
   );

@@ -74,4 +74,29 @@ describe('DataTable', () => {
       expect(row).toHaveAttribute('tabIndex', '0');
     });
   });
+
+  it('renders an optional foot row in a <tfoot> when there are rows (Expenses guide §3 "Total shown")', () => {
+    const { container } = render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        foot={<tr><td colSpan={2}>Total shown</td></tr>}
+      />,
+    );
+    expect(screen.getByText('Total shown')).toBeInTheDocument();
+    expect(container.querySelector('tfoot')).not.toBeNull();
+  });
+
+  it('hides the foot row when there are no rows — the empty state renders instead', () => {
+    render(
+      <DataTable
+        columns={columns}
+        rows={[]}
+        rowKey={(r) => r.id}
+        foot={<tr><td colSpan={2}>Total shown</td></tr>}
+      />,
+    );
+    expect(screen.queryByText('Total shown')).not.toBeInTheDocument();
+  });
 });
