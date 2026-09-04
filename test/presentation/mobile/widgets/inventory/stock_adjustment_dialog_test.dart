@@ -1,32 +1,115 @@
-// Manual stock corrections are exactly what an audit trail exists for, and
-// this dialog wrote nothing to user_logs — the same correction made on the
-// web admin was logged. The dialog is the right layer to log from: the repo's
-// updateStock is also called by void-restores, which must not double-log.
+// Audit-grade stock adjustment (spec 2026-09-04): preview strip, three mode
+// chips (Set to admin-only), a stepper-driven quantity field, a REQUIRED
+// reason chip, and a note that's required when the reason demands one. The
+// write goes through ProductRepository.adjustStockAudited (optimistic-
+// concurrency guarded by expectedOnHand) and every apply logs the real
+// reason/note — this dialog used to ask for a reason and throw it away.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:maki_mobile_pos/core/enums/enums.dart';
+import 'package:maki_mobile_pos/core/errors/exceptions.dart';
+import 'package:maki_mobile_pos/core/utils/stock_adjustment.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/activity_log_repository.dart';
 import 'package:maki_mobile_pos/domain/repositories/product_repository.dart';
-import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
-import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
 import 'package:maki_mobile_pos/presentation/mobile/widgets/inventory/stock_adjustment_dialog.dart';
+import 'package:maki_mobile_pos/presentation/providers/adjustment_reason_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/auth_provider.dart';
+import 'package:maki_mobile_pos/presentation/providers/product_provider.dart';
 import 'package:maki_mobile_pos/services/activity_logger.dart';
 
-class _MockProductRepository extends Mock implements ProductRepository {}
+/// One captured call to [ProductRepository.adjustStockAudited].
+class _AdjustCall {
+  _AdjustCall({
+    required this.productId,
+    required this.mode,
+    required this.quantity,
+    required this.expectedOnHand,
+    required this.reasonId,
+    required this.reasonName,
+    required this.note,
+    required this.updatedBy,
+    required this.updatedByName,
+  });
 
-class _MockActivityLogRepository extends Mock
-    implements ActivityLogRepository {}
+  final String productId;
+  final AdjustmentMode mode;
+  final int quantity;
+  final int expectedOnHand;
+  final String reasonId;
+  final String reasonName;
+  final String? note;
+  final String updatedBy;
+  final String? updatedByName;
+}
 
-class _FakeActivityLog extends Fake implements ActivityLogEntity {}
+/// Records every `adjustStockAudited` call. Everything else routes through
+/// `noSuchMethod` — the dialog under test never touches it.
+class _RecordingProductRepository implements ProductRepository {
+  final calls = <_AdjustCall>[];
 
-UserEntity _admin() => UserEntity(
-      id: 'admin-1',
-      email: 'a@test',
-      displayName: 'Admin User',
-      role: UserRole.admin,
+  /// When set, the next call throws this instead of returning a result.
+  Object? nextError;
+
+  @override
+  Future<AdjustmentResult> adjustStockAudited({
+    required String productId,
+    required AdjustmentMode mode,
+    required int quantity,
+    required int expectedOnHand,
+    required String reasonId,
+    required String reasonName,
+    String? note,
+    required String updatedBy,
+    String? updatedByName,
+  }) async {
+    calls.add(_AdjustCall(
+      productId: productId,
+      mode: mode,
+      quantity: quantity,
+      expectedOnHand: expectedOnHand,
+      reasonId: reasonId,
+      reasonName: reasonName,
+      note: note,
+      updatedBy: updatedBy,
+      updatedByName: updatedByName,
+    ));
+    final error = nextError;
+    if (error != null) {
+      nextError = null;
+      throw error;
+    }
+    return resolveAdjustment(mode, expectedOnHand, quantity);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}
+
+/// Records every logged activity. Everything else is unused by the dialog.
+class _RecordingActivityLogRepository implements ActivityLogRepository {
+  final logs = <ActivityLogEntity>[];
+
+  @override
+  Future<ActivityLogEntity> logActivity(ActivityLogEntity log) async {
+    logs.add(log);
+    return log;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}
+
+UserEntity _user({required UserRole role, String name = 'Rico Cruz'}) =>
+    UserEntity(
+      id: 'u-${role.value}',
+      email: '${role.value}@test.com',
+      displayName: name,
+      role: role,
       isActive: true,
       createdAt: DateTime(2026, 1, 1),
     );
@@ -45,89 +128,383 @@ ProductEntity _product({int quantity = 8}) => ProductEntity(
       createdAt: DateTime(2026, 1, 1),
     );
 
+AdjustmentReasonEntity _reason(
+  String id,
+  String name, {
+  bool requiresNote = false,
+}) =>
+    AdjustmentReasonEntity(
+      id: id,
+      name: name,
+      requiresNote: requiresNote,
+      isActive: true,
+      createdAt: DateTime(2026, 1, 1),
+    );
+
 void main() {
-  setUpAll(() {
-    registerFallbackValue(_FakeActivityLog());
-  });
+  late _RecordingProductRepository productRepo;
+  late _RecordingActivityLogRepository logRepo;
+  late Future<bool?> result;
 
-  late _MockProductRepository productRepo;
-  late _MockActivityLogRepository logRepo;
-
-  Future<void> pumpDialog(WidgetTester tester) async {
-    productRepo = _MockProductRepository();
-    logRepo = _MockActivityLogRepository();
-    when(() => logRepo.logActivity(any())).thenAnswer(
-        (inv) async => inv.positionalArguments.first as ActivityLogEntity);
-    when(() => productRepo.updateStock(
-          productId: any(named: 'productId'),
-          quantityChange: any(named: 'quantityChange'),
-          updatedBy: any(named: 'updatedBy'),
-          updatedByName: any(named: 'updatedByName'),
-        )).thenAnswer((_) async => _product(quantity: 13));
-    // Invalidated after a successful adjustment; the rebuilt provider watches
-    // this stream, so the mock must answer it.
-    when(() => productRepo.watchLowStockProducts())
-        .thenAnswer((_) => const Stream.empty());
+  Future<void> pumpDialog(
+    WidgetTester tester, {
+    required UserEntity user,
+    List<AdjustmentReasonEntity> reasons = const [],
+    ProductEntity? product,
+    int seedCallCount = 0,
+  }) async {
+    productRepo = _RecordingProductRepository();
+    logRepo = _RecordingActivityLogRepository();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          currentUserProvider.overrideWith((ref) => Stream.value(_admin())),
+          currentUserProvider.overrideWith((ref) => Stream.value(user)),
           productRepositoryProvider.overrideWithValue(productRepo),
-          activityLoggerProvider
-              .overrideWithValue(ActivityLogger(logRepo)),
+          activityLoggerProvider.overrideWithValue(ActivityLogger(logRepo)),
+          activeAdjustmentReasonsProvider
+              .overrideWith((ref) => Stream.value(reasons)),
         ],
         child: MaterialApp(
-          home: Scaffold(body: StockAdjustmentDialog(product: _product())),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () {
+                  result = StockAdjustmentDialog.show(
+                    context: context,
+                    product: product ?? _product(),
+                  );
+                },
+                child: const Text('open'),
+              ),
+            ),
+          ),
         ),
       ),
     );
-    // Warm the auth stream: the dialog reads currentUserProvider only at tap
-    // time (ref.read), and an unwatched StreamProvider is still loading then.
-    // In the real app the shell watches it long before any dialog opens.
-    final container = ProviderScope.containerOf(
-        tester.element(find.byType(StockAdjustmentDialog)));
-    container.listen(currentUserProvider, (_, __) {});
+
+    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
 
-  testWidgets('applying an adjustment writes a stock_adjustment log entry',
-      (tester) async {
-    await pumpDialog(tester);
+  Future<void> enterQuantity(WidgetTester tester, String value) async {
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Enter quantity').hitTestable(),
+      value,
+    );
+    await tester.pump();
+  }
 
-    await tester.enterText(find.byType(TextField).first, '5');
-    await tester.enterText(find.byType(TextField).last, 'Damaged items');
-    await tester.tap(find.text('Apply Adjustment'));
-    await tester.pumpAndSettle();
+  group('preview strip + apply', () {
+    testWidgets(
+        'applying an add writes adjustStockAudited with expectedOnHand and logs the reason',
+        (tester) async {
+      final admin = _user(role: UserRole.admin);
+      await pumpDialog(
+        tester,
+        user: admin,
+        reasons: [_reason('r1', 'Damaged'), _reason('r2', 'Recount')],
+        product: _product(quantity: 8),
+      );
 
-    final logged = verify(() => logRepo.logActivity(captureAny()))
-        .captured
-        .cast<ActivityLogEntity>()
-        .where((e) => e.type == ActivityType.stockAdjustment)
-        .toList();
-    expect(logged, hasLength(1));
-    expect(logged.single.action, contains('Brake shoe'));
-    // 8 + 5 = 13 — the entry records the movement, not just that one happened.
-    expect(logged.single.details, contains('8 → 13'));
-    expect(logged.single.entityId, 'p1');
+      await enterQuantity(tester, '5');
+      await tester.tap(find.text('Damaged'));
+      await tester.pump();
+
+      expect(find.text('13'), findsOneWidget); // preview: new quantity
+      expect(find.text('+5'), findsOneWidget); // delta chip
+
+      await tester.tap(find.text('Apply adjustment'));
+      await tester.pumpAndSettle();
+
+      expect(productRepo.calls, hasLength(1));
+      final call = productRepo.calls.single;
+      expect(call.productId, 'p1');
+      expect(call.mode, AdjustmentMode.add);
+      expect(call.quantity, 5);
+      expect(call.expectedOnHand, 8);
+      expect(call.reasonId, 'r1');
+      expect(call.reasonName, 'Damaged');
+      expect(call.updatedBy, admin.id);
+      expect(call.updatedByName, admin.displayName);
+
+      final logged = logRepo.logs
+          .where((e) => e.type == ActivityType.stockAdjustment)
+          .toList();
+      expect(logged, hasLength(1));
+      expect(logged.single.metadata?['reasonName'], 'Damaged');
+      expect(logged.single.metadata?['oldQuantity'], 8);
+      expect(logged.single.metadata?['newQuantity'], 13);
+
+      expect(await result, isTrue);
+      expect(find.textContaining('Stock adjusted · +5 → 13 set'),
+          findsOneWidget);
+    });
+
+    testWidgets('the typed note ends up in the log', (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin),
+        reasons: [_reason('r1', 'Damaged')],
+      );
+
+      await enterQuantity(tester, '5');
+      await tester.tap(find.text('Damaged'));
+      await tester.pump();
+      await tester.enterText(find.byType(TextField).last, 'Fell off shelf');
+      await tester.tap(find.text('Apply adjustment'));
+      await tester.pumpAndSettle();
+
+      expect(productRepo.calls.single.note, 'Fell off shelf');
+      expect(logRepo.logs.single.metadata?['note'], 'Fell off shelf');
+    });
+
+    testWidgets('delta chip reads negative for a Remove', (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin),
+        reasons: [_reason('r1', 'Damaged')],
+        product: _product(quantity: 8),
+      );
+
+      await tester.tap(find.text('Remove'));
+      await tester.pump();
+      await enterQuantity(tester, '3');
+
+      expect(find.text('-3'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget); // 8 - 3
+    });
+
+    testWidgets('the +/- steppers adjust the quantity field and floor at 0',
+        (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin),
+        reasons: [_reason('r1', 'Damaged')],
+      );
+
+      await tester.tap(find.byIcon(LucideIcons.plus));
+      await tester.pump();
+      await tester.tap(find.byIcon(LucideIcons.plus));
+      await tester.pump();
+      expect(find.text('2'), findsWidgets);
+
+      await tester.tap(find.byIcon(LucideIcons.minus));
+      await tester.pump();
+      await tester.tap(find.byIcon(LucideIcons.minus));
+      await tester.pump();
+      await tester.tap(find.byIcon(LucideIcons.minus));
+      await tester.pump();
+      // Floors at 0 — never goes negative.
+      expect(
+        tester
+            .widget<TextField>(find.byType(TextField).first)
+            .controller!
+            .text,
+        '0',
+      );
+    });
   });
 
-  testWidgets('the typed reason ends up in the log instead of being discarded',
-      (tester) async {
-    // The dialog has always ASKED for a reason and then thrown it away — the
-    // log entry is where it belongs.
-    await pumpDialog(tester);
+  group('role gating', () {
+    testWidgets('staff sees only Add / Remove, no Set to chip',
+        (tester) async {
+      await pumpDialog(tester, user: _user(role: UserRole.staff));
 
-    await tester.enterText(find.byType(TextField).first, '5');
-    await tester.enterText(find.byType(TextField).last, 'Damaged items');
-    await tester.tap(find.text('Apply Adjustment'));
-    await tester.pumpAndSettle();
+      expect(find.text('Add'), findsOneWidget);
+      expect(find.text('Remove'), findsOneWidget);
+      expect(find.text('Set to'), findsNothing);
+    });
 
-    final logged = verify(() => logRepo.logActivity(captureAny()))
-        .captured
-        .cast<ActivityLogEntity>()
-        .where((e) => e.type == ActivityType.stockAdjustment)
-        .toList();
-    expect(logged.single.details, contains('Damaged items'));
+    testWidgets('admin sees Set to, and picking it relabels the quantity field',
+        (tester) async {
+      await pumpDialog(tester, user: _user(role: UserRole.admin));
+
+      expect(find.text('Set to'), findsOneWidget);
+      expect(find.text('Quantity'), findsWidgets);
+      expect(find.text('Counted quantity'), findsNothing);
+
+      await tester.tap(find.text('Set to'));
+      await tester.pump();
+
+      expect(find.text('Counted quantity'), findsWidgets);
+    });
   });
+
+  group('apply gating', () {
+    testWidgets('Apply is disabled with no quantity or reason entered',
+        (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin),
+        reasons: [_reason('r1', 'Damaged')],
+      );
+
+      final button = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text('Apply adjustment'),
+          matching: find.byType(FilledButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('Apply stays disabled until a note is entered for a reason that requires one',
+        (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin),
+        reasons: [_reason('r1', 'Recount', requiresNote: true)],
+      );
+
+      await enterQuantity(tester, '5');
+      await tester.tap(find.text('Recount'));
+      await tester.pump();
+
+      var button = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text('Apply adjustment'),
+          matching: find.byType(FilledButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+
+      await tester.enterText(find.byType(TextField).last, 'Physical recount');
+      await tester.pump();
+
+      button = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text('Apply adjustment'),
+          matching: find.byType(FilledButton),
+        ),
+      );
+      expect(button.onPressed, isNotNull);
+    });
+
+    testWidgets('Remove past on-hand keeps Apply disabled', (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin),
+        reasons: [_reason('r1', 'Damaged')],
+        product: _product(quantity: 3),
+      );
+
+      await tester.tap(find.text('Remove'));
+      await tester.pump();
+      await enterQuantity(tester, '10');
+      await tester.tap(find.text('Damaged'));
+      await tester.pump();
+
+      final button = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text('Apply adjustment'),
+          matching: find.byType(FilledButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+    });
+  });
+
+  group('stale on-hand', () {
+    testWidgets(
+        'a StaleOnHandException rebases the preview and keeps the typed quantity',
+        (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin),
+        reasons: [_reason('r1', 'Damaged')],
+        product: _product(quantity: 8),
+      );
+
+      productRepo.nextError = const StaleOnHandException(11);
+
+      await enterQuantity(tester, '5');
+      await tester.tap(find.text('Damaged'));
+      await tester.pump();
+      await tester.tap(find.text('Apply adjustment'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+            'Someone else moved this stock — on hand is now 11. Review and apply again.'),
+        findsOneWidget,
+      );
+      // Quantity is preserved and on hand is rebased: 11 + 5 = 16.
+      expect(find.text('5'), findsWidgets); // still in the quantity field
+      expect(find.text('16'), findsOneWidget);
+      expect(productRepo.calls, hasLength(1)); // no auto-retry
+      expect(logRepo.logs, isEmpty);
+
+      // Retrying now sends the rebased on-hand.
+      await tester.tap(find.text('Apply adjustment'));
+      await tester.pumpAndSettle();
+      expect(productRepo.calls, hasLength(2));
+      expect(productRepo.calls.last.expectedOnHand, 11);
+    });
+  });
+
+  group('reason auto-seed', () {
+    testWidgets('an empty active-reasons stream triggers seedDefaults once',
+        (tester) async {
+      final admin = _user(role: UserRole.admin);
+      final seedCalls = <void>[];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith((ref) => Stream.value(admin)),
+            productRepositoryProvider
+                .overrideWithValue(_RecordingProductRepository()),
+            activityLoggerProvider.overrideWithValue(
+                ActivityLogger(_RecordingActivityLogRepository())),
+            activeAdjustmentReasonsProvider
+                .overrideWith((ref) => Stream.value(const [])),
+            adjustmentReasonOperationsProvider.overrideWith((ref) {
+              return _RecordingSeedNotifier(ref, seedCalls);
+            }),
+          ],
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => StockAdjustmentDialog.show(
+                    context: context,
+                    product: _product(),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(seedCalls, hasLength(1));
+    });
+  });
+
+  group('footer', () {
+    testWidgets('shows the acting user display name', (tester) async {
+      await pumpDialog(
+        tester,
+        user: _user(role: UserRole.admin, name: 'Rico Cruz'),
+      );
+
+      expect(find.textContaining('Recorded against Rico Cruz'), findsOneWidget);
+    });
+  });
+}
+
+class _RecordingSeedNotifier extends AdjustmentReasonOperationsNotifier {
+  _RecordingSeedNotifier(super.ref, this.seedCalls);
+  final List<void> seedCalls;
+
+  @override
+  Future<bool> seedDefaults() async {
+    seedCalls.add(null);
+    return true;
+  }
 }
