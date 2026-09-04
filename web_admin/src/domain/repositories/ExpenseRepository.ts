@@ -11,7 +11,7 @@ export interface ExpenseListFilters {
 
 export type ExpenseCreateInput = Omit<
   Expense,
-  'id' | 'createdAt' | 'updatedAt' | 'updatedBy'
+  'id' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'updatedByName'
 > & {
   /** A preset id (from newExpenseId()) lets the caller upload a receipt photo
    *  BEFORE the doc exists, then create() lands the doc on that same id.

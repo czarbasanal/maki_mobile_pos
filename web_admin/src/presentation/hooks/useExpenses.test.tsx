@@ -48,6 +48,7 @@ function makeExpense(overrides: Partial<Expense> = {}): Expense {
     createdBy: 'actor-1',
     createdByName: 'Cashier',
     updatedBy: null,
+    updatedByName: null,
     ...overrides,
   };
 }

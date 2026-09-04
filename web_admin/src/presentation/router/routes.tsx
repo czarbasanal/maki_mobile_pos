@@ -52,7 +52,7 @@ import { PayslipsPage } from '@/presentation/features/hr/PayslipsPage';
 import { PayslipDetailPage } from '@/presentation/features/hr/PayslipDetailPage';
 import { HrSettingsPage } from '@/presentation/features/hr/HrSettingsPage';
 import { ExpensesPage } from '@/presentation/features/expenses/ExpensesPage';
-import { ExpenseFormPage } from '@/presentation/features/expenses/ExpenseFormPage';
+import { ExpenseModal } from '@/presentation/features/expenses/ExpenseModal';
 
 // HR moved back to top-level /hr/* (its own Admin sidebar group) — these keep
 // the interim /settings/hr/* bookmarks/links alive.
@@ -242,19 +242,15 @@ export const router = createBrowserRouter(
           ],
         },
         {
+          // Add/edit render as modals over the list via its Outlet — exactly
+          // like ProductModal/SupplierModal (product-modal guide).
           path: RoutePaths.expenses,
           element: <ExpensesPage />,
           handle: { title: 'Expenses', subtitle: 'Shop expenses and receipts.' } satisfies PageChrome,
-        },
-        {
-          path: RoutePaths.expenseAdd,
-          element: <ExpenseFormPage />,
-          handle: { title: 'New expense' } satisfies PageChrome,
-        },
-        {
-          path: RoutePaths.expenseEdit,
-          element: <ExpenseFormPage />,
-          handle: { title: 'Edit expense' } satisfies PageChrome,
+          children: [
+            { path: 'add', element: <ExpenseModal /> },
+            { path: 'edit/:id', element: <ExpenseModal /> },
+          ],
         },
         {
           path: RoutePaths.reports,
