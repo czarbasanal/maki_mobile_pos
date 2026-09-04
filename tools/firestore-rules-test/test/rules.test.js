@@ -1093,6 +1093,7 @@ describe("cross-cutting", () => {
 // ===================================================================
 describe("shared list collections (cashier add/edit, staff full)", () => {
   const LISTS = [
+    "adjustment_reasons",
     "expense_categories",
     "units",
     "void_reasons",
@@ -1754,5 +1755,90 @@ describe("/drawer_state with a configured timezone", () => {
       as("cashier").collection("drawer_state").doc("state")
         .set({ lastSaleDay: dayAtOffset(540) + 1 }, { merge: true })
     );
+  });
+});
+
+// ===================================================================
+// adjustment_reasons requiresNote guard
+// ===================================================================
+describe("adjustment_reasons requiresNote guard", () => {
+  const entry = { name: "Damaged", requiresNote: true, isActive: true };
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("adjustment_reasons").doc("r1").set(entry)
+    );
+  });
+  it("cashier cannot flip requiresNote", async () => {
+    await assertFails(
+      as("cashier").collection("adjustment_reasons").doc("r1").update({ requiresNote: false })
+    );
+  });
+  it("staff can flip requiresNote", async () => {
+    await assertSucceeds(
+      as("staff").collection("adjustment_reasons").doc("r1").update({ requiresNote: false })
+    );
+  });
+});
+
+// ===================================================================
+// /products/*/stock_adjustments (append-only audit)
+// ===================================================================
+describe("/products/*/stock_adjustments (append-only audit)", () => {
+  const adj = (over = {}) => ({
+    mode: "add", quantity: 12, delta: 12, before: 100, after: 112,
+    reasonId: "r1", reasonName: "Delivery", note: null,
+    createdAt: new Date(), createdBy: "staff-1", createdByName: "Staff One",
+    ...over,
+  });
+  const col = (u) => as(u).collection("products").doc("p-1").collection("stock_adjustments");
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("products").doc("p-1").set({
+        sku: "SKU-001", name: "Coke", price: 25, cost: 12, costCode: "ABF",
+        quantity: 100, isActive: true,
+      })
+    );
+  });
+
+  // NOTE: /products beforeEach seeds p-1 ACTIVE — reuse it. For the
+  // inactive case, seed a second product p-inactive with isActive: false
+  // (withSecurityRulesDisabled) inside the test.
+
+  it("staff can create an add adjustment", async () => {
+    await assertSucceeds(col("staff").add(adj({ createdBy: "staff-1" })));
+  });
+  it("admin can create a set adjustment; staff cannot", async () => {
+    await assertSucceeds(col("admin").add(adj({ mode: "set", quantity: 90, delta: -10, before: 100, after: 90, createdBy: "admin-1" })));
+    await assertFails(col("staff").add(adj({ mode: "set", quantity: 90, delta: -10, before: 100, after: 90, createdBy: "staff-1" })));
+  });
+  it("cashier cannot create", async () => {
+    await assertFails(col("cashier").add(adj({ createdBy: "cashier-1" })));
+  });
+  it("createdBy must be the caller", async () => {
+    await assertFails(col("staff").add(adj({ createdBy: "someone-else" })));
+  });
+  it("structural: after must equal before + delta and be >= 0", async () => {
+    await assertFails(col("staff").add(adj({ after: 999 })));
+    await assertFails(col("staff").add(adj({ mode: "remove", quantity: 200, delta: -200, before: 100, after: -100 })));
+  });
+  it("inactive product blocks create", async () => {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("products").doc("p-inactive").set({ name: "Dead", isActive: false, quantity: 5 })
+    );
+    await assertFails(
+      as("admin").collection("products").doc("p-inactive").collection("stock_adjustments").add(adj({ createdBy: "admin-1" }))
+    );
+  });
+  it("append-only: update and delete fail even for admin", async () => {
+    await testEnv.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().collection("products").doc("p-1").collection("stock_adjustments").doc("a1").set(adj())
+    );
+    await assertFails(col("admin").doc("a1").update({ note: "edited" }));
+    await assertFails(col("admin").doc("a1").delete());
+  });
+  it("staff can read; cashier cannot", async () => {
+    await assertSucceeds(col("staff").get());
+    await assertFails(col("cashier").get());
   });
 });

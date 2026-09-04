@@ -164,6 +164,25 @@ service cloud.firestore {
         allow read: if isAdmin() && isActiveUser();
         allow write: if isAdmin() && isActiveUser();
       }
+
+      // Append-only stock-adjustment audit records (spec 2026-09-04).
+      // Created atomically with the quantity write by adjustStockAudited.
+      // NEVER updated or deleted — an erroneous adjustment is superseded
+      // by another adjustment.
+      match /stock_adjustments/{adjustmentId} {
+        allow read: if isStaffOrAdmin() && isActiveUser();
+        allow create: if isStaffOrAdmin() && isActiveUser() &&
+          // "Set to" can erase a discrepancy without recording its size —
+          // admin only. Add/Remove always carry the delta.
+          (request.resource.data.mode != 'set' || isAdmin()) &&
+          // A deactivated part is out of circulation; reactivate first.
+          get(/databases/$(database)/documents/products/$(productId)).data.isActive == true &&
+          request.resource.data.after == request.resource.data.before + request.resource.data.delta &&
+          request.resource.data.after >= 0 &&
+          request.resource.data.createdBy == request.auth.uid;
+        allow update: if false;
+        allow delete: if false;
+      }
     }
 
     // The price-change report reads price_history via a collection-group query.
@@ -490,6 +509,23 @@ service cloud.firestore {
         (isStaffOrAdmin() ||
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['isActive']));
+      allow delete: if isStaffOrAdmin() && isActiveUser();
+    }
+
+    // ==================== ADJUSTMENT REASONS COLLECTION ====================
+
+    match /adjustment_reasons/{reasonId} {
+      // All valid users can read reasons (adjust dialogs on both surfaces)
+      allow read: if isValidUser() && isActiveUser();
+
+      // Shared-list grants: any active user may add or rename; only
+      // staff/admin may flip isActive OR requiresNote (the note policy is
+      // policy, not naming); delete is staff/admin.
+      allow create: if isValidUser() && isActiveUser();
+      allow update: if isValidUser() && isActiveUser() &&
+        (isStaffOrAdmin() ||
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isActive', 'requiresNote']));
       allow delete: if isStaffOrAdmin() && isActiveUser();
     }
 
