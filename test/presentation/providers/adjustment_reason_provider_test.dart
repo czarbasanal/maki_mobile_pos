@@ -72,8 +72,10 @@ void main() {
     addTearDown(container.dispose);
     await container.read(currentUserProvider.future);
 
-    await container.read(adjustmentReasonOperationsProvider.notifier).seedDefaults();
+    final ok =
+        await container.read(adjustmentReasonOperationsProvider.notifier).seedDefaults();
 
+    expect(ok, isTrue);
     expect(repo.seedDefaultsCalledWith.single, 'u-staff');
   });
 }

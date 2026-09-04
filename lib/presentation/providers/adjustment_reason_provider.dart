@@ -131,15 +131,17 @@ class AdjustmentReasonOperationsNotifier extends StateNotifier<AsyncValue<void>>
   }
 
   /// Seeds the default adjustment reasons. Called once on app startup.
-  Future<void> seedDefaults() async {
+  /// Returns true on success.
+  Future<bool> seedDefaults() async {
     state = const AsyncValue.loading();
     try {
       final actorId = _requireUserId();
       await _repository.seedDefaults(actorId);
       state = const AsyncValue.data(null);
+      return true;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
-      rethrow;
+      return false;
     }
   }
 }
