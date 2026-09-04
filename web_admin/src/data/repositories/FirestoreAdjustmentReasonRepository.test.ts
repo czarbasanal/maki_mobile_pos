@@ -16,6 +16,7 @@ interface FakeBatch {
 
 const state = vi.hoisted(() => ({
   deletes: [] as string[],
+  adds: [] as Array<{ path: string; data: Record<string, unknown> }>,
   batchSets: [] as Array<{ path: string; data: Record<string, unknown> }>,
   batchCommitCount: 0,
 }));
@@ -50,7 +51,8 @@ vi.mock('firebase/firestore', () => ({
     }
     return makeRef(segs.join('/'));
   }),
-  addDoc: vi.fn(async (col: { path: string }) => {
+  addDoc: vi.fn(async (col: { path: string }, data: Record<string, unknown>) => {
+    state.adds.push({ path: col.path, data });
     return makeRef(`${col.path}/new1`);
   }),
   getDoc: vi.fn(async () => ({ data: () => ({ id: 'new1', name: 'Delivery' }) })),
@@ -72,8 +74,23 @@ const { FirestoreAdjustmentReasonRepository } = await import('./FirestoreAdjustm
 describe('FirestoreAdjustmentReasonRepository', () => {
   beforeEach(() => {
     state.deletes = [];
+    state.adds = [];
     state.batchSets = [];
     state.batchCommitCount = 0;
+  });
+
+  it('create writes into adjustment_reasons with requiresNote defaulted false + audit fields', async () => {
+    const repo = new FirestoreAdjustmentReasonRepository({} as unknown as Firestore);
+    await repo.create({ name: 'Delivery' }, 'u1');
+    expect(state.adds).toHaveLength(1);
+    expect(state.adds[0].path).toBe('adjustment_reasons');
+    expect(state.adds[0].data).toMatchObject({
+      name: 'Delivery',
+      requiresNote: false,
+      isActive: true,
+      createdBy: 'u1',
+      updatedBy: 'u1',
+    });
   });
 
   it('delete removes the adjustment reason doc by id', async () => {
