@@ -113,7 +113,8 @@ export function CartBuilder({
   const active = useMemo(() => (products ?? []).filter((p) => p.isActive), [products]);
   const results = useMemo(() => {
     if (!search.trim()) return [];
-    return active.filter((p) => matchesPosQuery(p, search)).slice(0, 50);
+    // No cap — the list scrolls, and the parts counter must tell the truth.
+    return active.filter((p) => matchesPosQuery(p, search));
   }, [active, search]);
   const lowStock = useMemo(() => lowStockLines(lines, active), [lines, active]);
 

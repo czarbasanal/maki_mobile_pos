@@ -4,6 +4,7 @@ import { useProducts } from '@/presentation/hooks/useProducts';
 import type { Product } from '@/domain/entities';
 import { PriceHistoryView } from './PriceHistoryView';
 import { displaySku } from '@/domain/products/sku';
+import { matchesProductQuery } from '@/domain/products/productSearch';
 
 export function PriceHistoryPage() {
   useEffect(() => {
@@ -28,13 +29,9 @@ export function PriceHistoryPage() {
     }
   }, [productIdParam, products, selected]);
 
-  const q = queryText.trim().toLowerCase();
+  const q = queryText.trim();
   const matches =
-    q.length === 0
-      ? []
-      : (products ?? [])
-          .filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
-          .slice(0, 10);
+    q.length === 0 ? [] : (products ?? []).filter((p) => matchesProductQuery(p, q));
 
   return (
     <div className="space-y-tk-xl">
@@ -50,7 +47,7 @@ export function PriceHistoryPage() {
           className="w-full rounded-md border border-light-hairline bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text"
         />
         {!selected && matches.length > 0 ? (
-          <ul className="mt-tk-xs overflow-hidden rounded-md border border-light-hairline bg-light-card">
+          <ul className="mt-tk-xs max-h-64 overflow-y-auto rounded-md border border-light-hairline bg-light-card">
             {matches.map((p) => (
               <li key={p.id}>
                 <button

@@ -2,6 +2,7 @@
 // RELATIVE imports (vitest doesn't resolve @/).
 import { getStockStatus } from '../entities/Product';
 import type { Product, StockStatus } from '../entities/Product';
+import { matchesProductQuery } from './productSearch';
 
 /** Tag-filter sentinel: products with no ACTIVE tag (spec: orphaned ids from
  *  deleted tags count as untagged — they never render as chips either). */
@@ -23,9 +24,10 @@ export interface ProductFilter {
 /** Filters by name/SKU substring (case-insensitive), stock status, category,
  *  active status, and tag. 'all' / '' disable that axis; axes are ANDed. */
 export function filterProducts(products: Product[], f: ProductFilter): Product[] {
-  const q = f.search.trim().toLowerCase();
+  const q = f.search.trim();
   return products.filter((p) => {
-    if (q && !(p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))) {
+    // Tokenized, order/whitespace-insensitive, over name/sku/barcodes/category.
+    if (q && !matchesProductQuery(p, q)) {
       return false;
     }
     if (f.stock !== 'all' && getStockStatus(p) !== f.stock) return false;

@@ -8,16 +8,10 @@
 // normalize away — queries and scans match SKUs verbatim.
 import type { Product } from '@/domain/entities';
 import { normalizeBarcode, normalizeSku } from './sku';
+import { matchesProductQuery } from './productSearch';
 
 export function matchesPosQuery(product: Product, rawQuery: string): boolean {
-  const q = rawQuery.trim().toLowerCase();
-  if (!q) return false;
-  return (
-    product.name.toLowerCase().includes(q) ||
-    product.sku.toLowerCase().includes(q) ||
-    (product.category ?? '').toLowerCase().includes(q) ||
-    product.barcodes.some((b) => b.toLowerCase().includes(q))
-  );
+  return matchesProductQuery(product, rawQuery);
 }
 
 export function findByScannedCode(products: Product[], rawCode: string): Product | null {

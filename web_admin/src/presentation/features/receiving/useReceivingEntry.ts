@@ -84,7 +84,7 @@ export function useReceivingEntry() {
   const matches = useMemo(
     () =>
       search.trim() && products
-        ? filterProducts(products, { search, stock: 'all', category: 'all', status: 'active' }).slice(0, 8)
+        ? filterProducts(products, { search, stock: 'all', category: 'all', status: 'active' })
         : [],
     [search, products],
   );
