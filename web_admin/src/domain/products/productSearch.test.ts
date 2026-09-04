@@ -45,6 +45,21 @@ describe('matchesProductQuery', () => {
     expect(matchesProductQuery(p(), '   ')).toBe(false);
   });
 
+  it('never matches across a field seam', () => {
+    // sku ends '…0153', barcode starts '4800…' — '1534' exists only at the
+    // junction and must not match (a wedge scan would add the WRONG part).
+    expect(matchesProductQuery(p(), '1534')).toBe(false);
+    expect(matchesProductQuery(p(), '01534800')).toBe(false);
+  });
+
+  it('folds a dashed dddd-dddd token to the stored SKU form', () => {
+    expect(matchesProductQuery(p(), '0007-0153')).toBe(true);
+  });
+
+  it('still matches a genuinely dashed stored code by its raw form', () => {
+    expect(matchesProductQuery(p({ barcodes: ['1234-5678'] }), '1234-5678')).toBe(true);
+  });
+
   it('tolerates a null category', () => {
     expect(matchesProductQuery(p({ category: null }), 'brake')).toBe(true);
     // 'brakes' still matches via the concatenation fallback ("brakeshoe…") —

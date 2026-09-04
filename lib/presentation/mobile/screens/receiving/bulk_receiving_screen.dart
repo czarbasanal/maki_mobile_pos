@@ -281,15 +281,19 @@ class _BulkReceivingScreenState extends ConsumerState<BulkReceivingScreen> {
           Autocomplete<ProductEntity>(
             textEditingController: _searchController,
             focusNode: _searchFocusNode,
-            optionsBuilder: (textEditingValue) {
+            optionsBuilder: (textEditingValue) async {
               final text = textEditingValue.text.trim();
               if (text.isEmpty) return const Iterable<ProductEntity>.empty();
-              // Local tokenized match over the already-streamed catalog —
-              // the old server prefix-query capped at 20, ORed its terms,
-              // and only indexed 10-char keyword prefixes.
-              final products =
-                  ref.read(productsProvider).valueOrNull ?? const [];
-              return products.where((p) => matchesProductQuery(p, text));
+              // Local tokenized match over the streamed catalog — the old
+              // server prefix-query capped at 20, ORed its terms, and only
+              // indexed 10-char keyword prefixes. Awaiting the future (not
+              // valueOrNull) covers the cold start: a burst-typed query
+              // before the first snapshot would otherwise stay empty and
+              // read as "part doesn't exist".
+              final products = await ref.read(productsProvider.future);
+              return products
+                  .where((p) => matchesProductQuery(p, text))
+                  .toList();
             },
             displayStringForOption: (product) => product.name,
             fieldViewBuilder: (context, controller, focusNode, onSubmitted) {

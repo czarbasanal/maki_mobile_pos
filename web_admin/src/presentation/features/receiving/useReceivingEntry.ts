@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDebouncedValue } from '@/presentation/hooks/useDebouncedValue';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import { useSuppliers } from '@/presentation/hooks/useSuppliers';
@@ -81,13 +82,23 @@ export function useReceivingEntry() {
     setVersion(existing.data.version);
   }, [id, existing.data]);
 
-  const matches = useMemo(
+  // Debounced + capped with a visible remainder: the suggestion box shows
+  // ~4 rows, and mounting every match per keystroke jams fast entry.
+  const debouncedSearch = useDebouncedValue(search);
+  const allMatches = useMemo(
     () =>
-      search.trim() && products
-        ? filterProducts(products, { search, stock: 'all', category: 'all', status: 'active' })
+      debouncedSearch.trim() && products
+        ? filterProducts(products, {
+            search: debouncedSearch,
+            stock: 'all',
+            category: 'all',
+            status: 'active',
+          })
         : [],
-    [search, products],
+    [debouncedSearch, products],
   );
+  const matches = useMemo(() => allMatches.slice(0, 50), [allMatches]);
+  const moreMatches = allMatches.length - matches.length;
 
   const totals = useMemo(
     () => ({
@@ -252,6 +263,7 @@ export function useReceivingEntry() {
     search,
     setSearch,
     matches,
+    moreMatches,
     lines,
     addExisting,
     addNew,

@@ -334,7 +334,7 @@ describe('InventoryListPage — redesign specifics', () => {
 
     signIn(UserRole.admin);
     harness();
-    await userEvent.type(screen.getByPlaceholderText('Search by name or SKU'), 'zzz');
+    await userEvent.type(screen.getByPlaceholderText('Search name, SKU, barcode, or category'), 'zzz');
     expect(await screen.findByText('No products match these filters')).toBeInTheDocument();
     expect(screen.queryByText('No products yet')).not.toBeInTheDocument();
   });

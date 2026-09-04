@@ -431,7 +431,7 @@ export function InventoryListPage() {
               setSearch(v);
               setPage(1);
             }}
-            placeholder="Search by name or SKU"
+            placeholder="Search name, SKU, barcode, or category"
           />
         </div>
         <SelectFilter

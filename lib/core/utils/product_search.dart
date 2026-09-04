@@ -8,26 +8,44 @@ import 'package:maki_mobile_pos/domain/entities/product_entity.dart';
 /// Semantics: the query is split on whitespace and EVERY token must appear
 /// as a substring of the product's combined name / SKU / barcodes /
 /// category — so word order and extra spaces never matter, and a token can
-/// straddle fields ("0007 brake"). A concatenated query ("brakeshoe") falls
-/// back to matching against the blob with spaces removed. A typed
-/// dddd-dddd SKU is folded back to the stored 8-digit form per token.
+/// straddle words within a field ("0007 brake"). A concatenated query
+/// ("brakeshoe") falls back to matching each field with ITS OWN spaces
+/// removed — fields are joined with a \\u0000 sentinel precisely so no token
+/// can match across a field seam (a "1534" bridging sku "…0153" and barcode
+/// "4800…" must never hit). A dashed dddd-dddd token also matches as its
+/// folded 8-digit SKU form, while the raw token still matches genuinely
+/// dashed stored codes.
+const String _sep = '\u0000';
+final RegExp _whitespace = RegExp(r'\s+');
+
+bool _tokenHits(String blob, String token) {
+  if (blob.contains(token)) return true;
+  final folded = SkuGenerator.normalizeSkuQuery(token);
+  return folded != token && blob.contains(folded);
+}
+
 bool matchesProductQuery(ProductEntity product, String rawQuery) {
   final tokens = rawQuery
       .toLowerCase()
-      .split(RegExp(r'\s+'))
+      .split(_whitespace)
       .where((t) => t.isNotEmpty)
-      .map(SkuGenerator.normalizeSkuQuery)
       .toList();
   if (tokens.isEmpty) return false;
 
-  final blob = [
+  final fields = [
     product.name,
     product.sku,
     ...product.barcodes,
     if (product.category != null) product.category!,
-  ].join(' ').toLowerCase();
+  ];
+  final blob = fields.join(_sep).toLowerCase();
+  if (tokens.every((t) => _tokenHits(blob, t))) return true;
 
-  if (tokens.every(blob.contains)) return true;
-  // "brakeshoe" should still find "BRAKE SHOE".
-  return blob.replaceAll(RegExp(r'\s+'), '').contains(tokens.join());
+  // "brakeshoe" should still find "BRAKE SHOE" — spaces collapse WITHIN a
+  // field only; the sentinel keeps field boundaries unbridgeable.
+  final collapsed = fields
+      .map((f) => f.replaceAll(_whitespace, ''))
+      .join(_sep)
+      .toLowerCase();
+  return _tokenHits(collapsed, tokens.join());
 }

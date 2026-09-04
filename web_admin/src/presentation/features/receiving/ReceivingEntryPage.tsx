@@ -168,6 +168,11 @@ export function ReceivingEntryPage() {
                     </button>
                   </li>
                 ))}
+                {entry.moreMatches > 0 ? (
+                  <li className="px-tk-md py-tk-sm text-bodySmall text-light-text-hint">
+                    {entry.moreMatches} more — keep typing to narrow
+                  </li>
+                ) : null}
               </ul>
             ) : null}
           </div>

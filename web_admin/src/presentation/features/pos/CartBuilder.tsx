@@ -116,6 +116,12 @@ export function CartBuilder({
     // No cap — the list scrolls, and the parts counter must tell the truth.
     return active.filter((p) => matchesPosQuery(p, search));
   }, [active, search]);
+
+  // The counter reports every match; rendering stops at 100 with a visible
+  // remainder row — hundreds of unvirtualized rows re-reconcile on every
+  // arrow-key press otherwise.
+  const shown = results.slice(0, 100);
+  const more = results.length - shown.length;
   const lowStock = useMemo(() => lowStockLines(lines, active), [lines, active]);
 
   useEffect(() => setHighlight(0), [search]);
@@ -140,7 +146,7 @@ export function CartBuilder({
     const code = rawText.trim();
     if (!code) return;
     const scanned = findByScannedCode(active, code);
-    const target = scanned ?? (results.length === 1 ? results[0] : results[highlight] ?? null);
+    const target = scanned ?? (results.length === 1 ? results[0] : shown[highlight] ?? null);
     if (!target) {
       toast.error('Product not found', code);
       return;
@@ -167,7 +173,7 @@ export function CartBuilder({
               submitSearch(currentText);
             } else if (e.key === 'ArrowDown') {
               e.preventDefault();
-              setHighlight((h) => Math.min(results.length - 1, h + 1));
+              setHighlight((h) => Math.min(shown.length - 1, h + 1));
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
               setHighlight((h) => Math.max(0, h - 1));
@@ -195,7 +201,7 @@ export function CartBuilder({
                   <p className="mt-1 text-micro text-ink-3">Check the SKU, or search a shorter term.</p>
                 </div>
               ) : (
-                results.map((p, i) => (
+                shown.map((p, i) => (
                   <div
                     key={p.id}
                     onClick={() => addToCart(p)}
@@ -232,6 +238,11 @@ export function CartBuilder({
                   </div>
                 ))
               )}
+              {more > 0 ? (
+                <div className="px-[18px] py-2.5 text-center text-micro text-ink-3">
+                  {more} more {more === 1 ? 'match' : 'matches'} — keep typing to narrow
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}

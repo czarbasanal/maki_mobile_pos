@@ -93,8 +93,14 @@ class _AddProductsSheetState extends ConsumerState<AddProductsSheet> {
     final p = await ref.read(productByBarcodeProvider(barcode).future);
     if (!mounted) return;
     if (p == null) {
-      // The scan/submit path already wrote the code into the search field,
-      // so the inline results show near-matches or "No products found".
+      if (!ref.read(productsProvider).hasValue) {
+        // Cold start: the catalog stream hasn't emitted, so the results
+        // panel can only show a spinner — say the scan missed.
+        context.showWarningSnackBar('Product not found: $barcode');
+      }
+      // Otherwise the scan/submit path already wrote the code into the
+      // search field, so the inline results show near-matches or an honest
+      // "No products found".
       return;
     }
     if (_dedupe && _added.contains(p.id)) {

@@ -576,8 +576,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       // Scanning is a back door around the must-pick-an-option rule unless
       // it too goes through _addProductToCart's picker gate.
       await _addProductToCart(product);
+    } else if (!ref.read(productsProvider).hasValue) {
+      // Cold start: the catalog stream hasn't emitted, so the dropdown can
+      // only show a spinner — say the scan missed instead of nothing.
+      context.showWarningSnackBar('Product not found: $barcode');
     }
-    // On a miss the search field already holds the code (the scan/submit
+    // Otherwise the search field already holds the code (the scan/submit
     // path writes it there), so the dropdown shows near-matches or an
     // honest "No products found" — no dead-end snackbar.
   }

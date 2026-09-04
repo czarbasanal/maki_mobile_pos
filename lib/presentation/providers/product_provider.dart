@@ -123,7 +123,13 @@ final productVariationChildrenCountProvider =
   return group.where((p) => p.baseSku == parentSku).length;
 });
 
-/// Provides product search results (Firestore query).
+/// SERVER-SIDE search — no in-app callers since bulk receiving moved to the
+/// local [matchesProductQuery] (2026-09-04). Kept because APKs <= +32 still
+/// query `searchKeywords` through [ProductRepository.searchProducts]; the
+/// keyword arrays must keep being written on every product create/update
+/// until those phones are retired. Do not wire new screens to this — its
+/// semantics are the broken ones the local matcher replaced (20-result cap,
+/// ORed prefix terms, 10-char keyword ceiling).
 final productSearchProvider =
     FutureProvider.autoDispose.family<List<ProductEntity>, String>(
         (ref, query) async {

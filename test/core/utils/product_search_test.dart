@@ -65,6 +65,23 @@ void main() {
       expect(matchesProductQuery(_product(), '0007-0153'), isTrue);
     });
 
+    test('never matches across a field seam', () {
+      // sku ends '…0153', barcode starts '4800…' — '1534' exists only at
+      // the junction and must not match (a scan would add the WRONG part).
+      expect(matchesProductQuery(_product(), '1534'), isFalse);
+      expect(matchesProductQuery(_product(), '01534800'), isFalse);
+    });
+
+    test('still matches a genuinely dashed stored code by its raw form', () {
+      expect(
+        matchesProductQuery(
+          _product(barcodes: const ['1234-5678']),
+          '1234-5678',
+        ),
+        isTrue,
+      );
+    });
+
     test('tolerates a null category', () {
       expect(matchesProductQuery(_product(category: null), 'brake'), isTrue);
       expect(matchesProductQuery(_product(category: null), 'clutch'), isFalse);

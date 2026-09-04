@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '@/presentation/hooks/useProducts';
 import type { Product } from '@/domain/entities';
 import { PriceHistoryView } from './PriceHistoryView';
 import { displaySku } from '@/domain/products/sku';
 import { matchesProductQuery } from '@/domain/products/productSearch';
+import { useDebouncedValue } from '@/presentation/hooks/useDebouncedValue';
 
 export function PriceHistoryPage() {
   useEffect(() => {
@@ -29,9 +30,16 @@ export function PriceHistoryPage() {
     }
   }, [productIdParam, products, selected]);
 
-  const q = queryText.trim();
-  const matches =
-    q.length === 0 ? [] : (products ?? []).filter((p) => matchesProductQuery(p, q));
+  const q = useDebouncedValue(queryText.trim());
+  const matches = useMemo(
+    () => (q.length === 0 ? [] : (products ?? []).filter((p) => matchesProductQuery(p, q))),
+    [q, products],
+  );
+  // Render cap with a visible remainder — silent truncation reads as "the
+  // part doesn't exist", but mounting hundreds of rows per keystroke jams
+  // the input.
+  const shown = matches.slice(0, 50);
+  const more = matches.length - shown.length;
 
   return (
     <div className="space-y-tk-xl">
@@ -48,7 +56,7 @@ export function PriceHistoryPage() {
         />
         {!selected && matches.length > 0 ? (
           <ul className="mt-tk-xs max-h-64 overflow-y-auto rounded-md border border-light-hairline bg-light-card">
-            {matches.map((p) => (
+            {shown.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"
@@ -63,6 +71,11 @@ export function PriceHistoryPage() {
                 </button>
               </li>
             ))}
+            {more > 0 ? (
+              <li className="px-tk-md py-tk-sm text-bodySmall text-light-text-hint">
+                {more} more — keep typing to narrow
+              </li>
+            ) : null}
           </ul>
         ) : null}
       </div>

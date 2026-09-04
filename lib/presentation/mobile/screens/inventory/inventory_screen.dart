@@ -335,7 +335,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               style: AppTextStyles.fieldInput,
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search by name, SKU, or barcode...',
+                hintText: 'Search name, SKU, barcode, or category...',
                 prefixIcon: const Icon(LucideIcons.search, size: 18),
                 prefixIconConstraints:
                     const BoxConstraints(minWidth: 30, minHeight: 30),
@@ -456,6 +456,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   Future<void> _scanToSearch() async {
+    // Drop the keyboard before pushing the scanner — a focused search field
+    // would leave the soft keyboard overlapping the camera preview on the
+    // way out (same rule as ProductSearchField._openBarcodeScanner).
+    FocusScope.of(context).unfocus();
     final barcode = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
     );
