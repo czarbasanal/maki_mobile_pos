@@ -123,6 +123,9 @@ export function AdjustStockDialog({
 
   const doApply = async () => {
     if (!canApply || qty === null || !selectedReason) return;
+    // Clear any earlier stale-on-hand banner so two banners can't stack when
+    // a retry fails with a different (or no) error.
+    setStaleNotice(null);
     try {
       const result = await apply.mutateAsync({
         id: product.id,
@@ -242,7 +245,10 @@ export function AdjustStockDialog({
               value={qtyText}
               disabled={busy}
               onChange={(e) => setQtyText(e.target.value.replace(/[^0-9]/g, ''))}
-              className="h-10 w-full rounded-ctl border border-line bg-surface-2 px-3 text-center font-mono text-[16px] text-ink outline-none focus:border-accent-line"
+              className={cn(
+                'h-10 w-full rounded-ctl border bg-surface-2 px-3 text-center font-mono text-[16px] text-ink outline-none',
+                negativeMessage ? 'border-neg' : 'border-line focus:border-accent-line',
+              )}
             />
             <button
               type="button"

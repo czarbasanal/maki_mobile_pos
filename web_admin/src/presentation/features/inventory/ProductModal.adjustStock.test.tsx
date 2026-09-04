@@ -18,6 +18,7 @@ import { defaultCostCode } from '@/domain/entities/CostCode';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { StaleOnHandError } from '@/domain/products/adjustmentErrors';
+import { toast } from '@/presentation/components/ui/toast';
 import type { AdjustmentReason, Product } from '@/domain/entities';
 
 function signIn(role: UserRole = UserRole.admin) {
@@ -259,8 +260,9 @@ describe('AdjustStockDialog — apply', () => {
     );
   });
 
-  it('closes both modals and toasts on success', async () => {
+  it('closes both modals and toasts "Stock adjusted" with the delta → after copy', async () => {
     signIn();
+    const toastSpy = vi.spyOn(toast, 'success');
     harness({
       p: product({ quantity: 8, unit: 'set' }),
       adjustStockAudited: vi.fn().mockResolvedValue({ before: 8, after: 13, delta: 5 }),
@@ -274,6 +276,25 @@ describe('AdjustStockDialog — apply', () => {
     // Both the adjust dialog AND the product modal close.
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Adjust stock' })).toBeNull());
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Edit product' })).toBeNull());
+    expect(toastSpy).toHaveBeenCalledWith('Stock adjusted', '+5 → 13 set');
+    toastSpy.mockRestore();
+  });
+});
+
+describe('AdjustStockDialog — negative result', () => {
+  it('turns the quantity field border --neg and blocks Apply when Remove would go negative', async () => {
+    signIn();
+    harness({ p: product({ quantity: 8 }) });
+    await openDialog();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Quantity' }), '40');
+    await userEvent.click(screen.getByRole('button', { name: 'Delivery' }));
+
+    const qtyInput = screen.getByRole('textbox', { name: 'Quantity' });
+    expect(qtyInput.className).toContain('border-neg');
+    expect(screen.getByText('Removing 40 would leave -32. Stock cannot go negative.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Apply adjustment/ })).toBeDisabled();
   });
 });
 
